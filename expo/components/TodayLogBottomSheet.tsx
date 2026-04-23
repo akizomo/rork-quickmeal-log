@@ -1,0 +1,456 @@
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  Animated,
+  PanResponder,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+import { palette } from '@/constants/theme';
+import { useAppState } from '@/providers/app-state-provider';
+import { FoodLog } from '@/types/nutrition';
+import { summarizeToppings } from '@/utils/nutrition';
+
+type SnapStage = 'peek' | 'half' | 'full';
+
+const SNAP_RATIOS: Record<SnapStage, number> = {
+  peek: 0.12,
+  half: 0.45,
+  full: 0.88,
+};
+
+function formatTime(timestamp: string): string {
+  const date = new Date(timestamp);
+  return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+}
+
+function formatNumber(value: number | null | undefined): string {
+  if (value === null || value === undefined) return '--';
+  return Number.isInteger(value) ? `${value}` : value.toFixed(1);
+}
+
+function MacroPill({ label, value }: { label: string; value: number }) {
+  return (
+    <View style={styles.macroPill}>
+      <Text style={styles.macroPillLabel}>{label}</Text>
+      <Text style={styles.macroPillValue}>{Math.round(value)}</Text>
+    </View>
+  );
+}
+
+function LogListItem({ log }: { log: FoodLog }) {
+  const { adjustLogAmount, deleteLog, setEditorLogId } = useAppState();
+  const toppingSummary = summarizeToppings(log.toppings);
+  const primaryName = log.subTypeLabel ?? log.categoryLabel;
+  return (
+    <Pressable
+      style={styles.logItem}
+      onPress={() => setEditorLogId(log.id)}
+      testID={`log-item-${log.id}`}
+    >
+      <View style={styles.logItemTop}>
+        <View style={styles.logItemTopLeft}>
+          <Text style={styles.logTitle} numberOfLines={1}>
+            {primaryName}
+          </Text>
+          {toppingSummary ? (
+            <Text style={styles.logTopping} numberOfLines={1} testID={`log-topping-${log.id}`}>
+              {toppingSummary}
+            </Text>
+          ) : null}
+          <Text style={styles.logSubtitle}>
+            {formatTime(log.timestamp)} · {log.mode === 'ingredient' ? '食材' : '一皿料理'}
+          </Text>
+        </View>
+        <Text style={styles.logKcal}>{Math.round(log.macro.kcal)} kcal</Text>
+      </View>
+      <View style={styles.logMacroRow}>
+        <MacroPill label="P" value={log.macro.protein} />
+        <MacroPill label="F" value={log.macro.fat} />
+        <MacroPill label="C" value={log.macro.carbs} />
+      </View>
+      <View style={styles.logActionRow}>
+        {log.mode === 'ingredient' ? (
+          <View style={styles.amountRow}>
+            <Pressable
+              style={styles.amountButton}
+              onPress={() => adjustLogAmount(log.id, 'decrease')}
+              testID={`log-decrease-${log.id}`}
+            >
+              <Text style={styles.amountButtonText}>−</Text>
+            </Pressable>
+            <Text style={styles.amountText}>× {formatNumber(log.portionValue ?? log.amountMultiplier ?? 1)}</Text>
+            <Pressable
+              style={styles.amountButton}
+              onPress={() => adjustLogAmount(log.id, 'increase')}
+              testID={`log-increase-${log.id}`}
+            >
+              <Text style={styles.amountButtonText}>＋</Text>
+            </Pressable>
+          </View>
+        ) : (
+          <Text style={styles.amountText}>サイズ {log.size ?? 'regular'}</Text>
+        )}
+        <Pressable
+          style={styles.deleteButton}
+          onPress={() => deleteLog(log.id)}
+          testID={`log-delete-${log.id}`}
+        >
+          <Text style={styles.deleteButtonText}>削除</Text>
+        </Pressable>
+      </View>
+    </Pressable>
+  );
+}
+
+export const TodayLogBottomSheet = memo(function TodayLogBottomSheet() {
+  const { todayLogs, todayMacro } = useAppState();
+  const { height: screenHeight } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+
+  const peekHeight = Math.round(screenHeight * SNAP_RATIOS.peek);
+  const halfHeight = Math.round(screenHeight * SNAP_RATIOS.half);
+  const fullHeight = Math.round(screenHeight * SNAP_RATIOS.full);
+
+  const sheetMaxHeight = fullHeight;
+  const translateY = useRef(new Animated.Value(sheetMaxHeight - peekHeight)).current;
+  const translateYValueRef = useRef<number>(sheetMaxHeight - peekHeight);
+  const [stage, setStage] = useState<SnapStage>('peek');
+
+  const snapTargets = useMemo(() => ({
+    peek: sheetMaxHeight - peekHeight,
+    half: sheetMaxHeight - halfHeight,
+    full: 0,
+  }), [sheetMaxHeight, peekHeight, halfHeight]);
+
+  useEffect(() => {
+    const id = translateY.addListener(({ value }) => {
+      translateYValueRef.current = value;
+    });
+    return () => {
+      translateY.removeListener(id);
+    };
+  }, [translateY]);
+
+  const animateTo = useCallback(
+    (next: SnapStage) => {
+      setStage(next);
+      Animated.spring(translateY, {
+        toValue: snapTargets[next],
+        useNativeDriver: true,
+        bounciness: 4,
+        speed: 14,
+      }).start();
+    },
+    [snapTargets, translateY]
+  );
+
+  useEffect(() => {
+    animateTo(stage);
+  }, [snapTargets]);
+
+  const panResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onMoveShouldSetPanResponder: (_, gesture) => Math.abs(gesture.dy) > 4,
+        onPanResponderGrant: () => {
+          translateY.stopAnimation((v) => {
+            translateYValueRef.current = v;
+          });
+        },
+        onPanResponderMove: (_, gesture) => {
+          const next = Math.max(0, Math.min(sheetMaxHeight - peekHeight, translateYValueRef.current + gesture.dy));
+          translateY.setValue(next);
+        },
+        onPanResponderRelease: (_, gesture) => {
+          const current = translateYValueRef.current + gesture.dy;
+          const velocity = gesture.vy;
+          const targets: { stage: SnapStage; y: number }[] = [
+            { stage: 'peek', y: snapTargets.peek },
+            { stage: 'half', y: snapTargets.half },
+            { stage: 'full', y: snapTargets.full },
+          ];
+
+          let chosen: SnapStage = stage;
+          if (velocity > 0.9) {
+            chosen = stage === 'full' ? 'half' : 'peek';
+          } else if (velocity < -0.9) {
+            chosen = stage === 'peek' ? 'half' : 'full';
+          } else {
+            let minDist = Number.POSITIVE_INFINITY;
+            for (const t of targets) {
+              const d = Math.abs(t.y - current);
+              if (d < minDist) {
+                minDist = d;
+                chosen = t.stage;
+              }
+            }
+          }
+          animateTo(chosen);
+        },
+      }),
+    [animateTo, peekHeight, sheetMaxHeight, snapTargets, stage, translateY]
+  );
+
+  const overlayOpacity = translateY.interpolate({
+    inputRange: [snapTargets.full, snapTargets.half],
+    outputRange: [0.35, 0],
+    extrapolate: 'clamp',
+  });
+
+  const handleHandlePress = () => {
+    if (stage === 'peek') animateTo('half');
+    else if (stage === 'half') animateTo('full');
+    else animateTo('peek');
+  };
+
+  return (
+    <>
+      <Animated.View
+        pointerEvents={stage === 'full' ? 'auto' : 'none'}
+        style={[styles.backdrop, { opacity: overlayOpacity }]}
+      >
+        <Pressable style={StyleSheet.absoluteFill} onPress={() => animateTo('half')} />
+      </Animated.View>
+      <Animated.View
+        style={[
+          styles.sheet,
+          {
+            height: sheetMaxHeight,
+            transform: [{ translateY }],
+          },
+        ]}
+        testID="today-log-sheet"
+      >
+        <View style={styles.handleArea} {...panResponder.panHandlers}>
+          <Pressable onPress={handleHandlePress} style={styles.handlePressable}>
+            <View style={styles.handle} />
+          </Pressable>
+          <View style={styles.headerRow}>
+            <View>
+              <Text style={styles.title}>Today&apos;s Log</Text>
+              <Text style={styles.subtitle}>
+                {todayLogs.length}件 · {Math.round(todayMacro.kcal)} kcal
+              </Text>
+            </View>
+            <Pressable
+              onPress={handleHandlePress}
+              style={styles.stagePill}
+              testID="sheet-stage-toggle"
+            >
+              <Text style={styles.stagePillText}>
+                {stage === 'peek' ? '開く' : stage === 'half' ? '全画面' : '閉じる'}
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingBottom: insets.bottom + 120 },
+          ]}
+          showsVerticalScrollIndicator={false}
+          scrollEnabled={stage !== 'peek'}
+        >
+          {todayLogs.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyTitle}>まだ記録はありません</Text>
+              <Text style={styles.emptyText}>上のボタンから、今の食事をすばやく残せます。</Text>
+            </View>
+          ) : (
+            todayLogs.map((log) => <LogListItem key={log.id} log={log} />)
+          )}
+        </ScrollView>
+      </Animated.View>
+    </>
+  );
+});
+
+const styles = StyleSheet.create({
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#1F2C23',
+  },
+  sheet: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: palette.sheet,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    shadowColor: '#1F2C23',
+    shadowOpacity: 0.12,
+    shadowRadius: 24,
+    shadowOffset: { width: 0, height: -6 },
+    elevation: 12,
+  },
+  handleArea: {
+    paddingTop: 8,
+    paddingHorizontal: 20,
+    paddingBottom: 10,
+  },
+  handlePressable: {
+    alignItems: 'center',
+    paddingVertical: 6,
+  },
+  handle: {
+    width: 44,
+    height: 5,
+    borderRadius: 999,
+    backgroundColor: '#C6C6BD',
+  },
+  headerRow: {
+    marginTop: 6,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#243228',
+  },
+  subtitle: {
+    marginTop: 2,
+    fontSize: 12,
+    color: palette.textMuted,
+  },
+  stagePill: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: palette.card,
+  },
+  stagePillText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: palette.sageDeep,
+  },
+  scroll: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: 18,
+    paddingTop: 4,
+    gap: 10,
+  },
+  emptyState: {
+    backgroundColor: palette.surface,
+    borderRadius: 20,
+    padding: 20,
+    gap: 6,
+  },
+  emptyTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: palette.text,
+  },
+  emptyText: {
+    fontSize: 13,
+    lineHeight: 19,
+    color: palette.textMuted,
+  },
+  logItem: {
+    backgroundColor: palette.surface,
+    borderRadius: 20,
+    padding: 14,
+    gap: 10,
+  },
+  logItemTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: 12,
+  },
+  logItemTopLeft: {
+    flex: 1,
+  },
+  logTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#243128',
+  },
+  logSubtitle: {
+    marginTop: 3,
+    fontSize: 12,
+    color: palette.textMuted,
+  },
+  logTopping: {
+    marginTop: 3,
+    fontSize: 12,
+    color: palette.sageStrong,
+    fontWeight: '600',
+  },
+  logKcal: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: palette.sageDeep,
+  },
+  logMacroRow: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  macroPill: {
+    flexDirection: 'row',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: '#ECE5D9',
+  },
+  macroPillLabel: {
+    fontSize: 11,
+    color: palette.textMuted,
+    fontWeight: '700',
+  },
+  macroPillValue: {
+    fontSize: 11,
+    color: palette.text,
+    fontWeight: '700',
+  },
+  logActionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  amountRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  amountButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: palette.card,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  amountButtonText: {
+    fontSize: 15,
+    color: palette.text,
+    fontWeight: '700',
+  },
+  amountText: {
+    fontSize: 13,
+    color: palette.textMuted,
+  },
+  deleteButton: {
+    backgroundColor: '#F0E2DD',
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  deleteButtonText: {
+    color: palette.danger,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+});
