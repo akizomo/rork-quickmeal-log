@@ -14,6 +14,16 @@ export interface Macro {
 export type BiologicalBasis = 'male_basis' | 'female_basis';
 export type GoalDirection = 'lose' | 'maintain' | 'gain';
 export type BodyStage = 1 | 2 | 3 | 4 | 5;
+export type ActivityLevel = 1 | 2 | 3 | 4;
+export type PaceLevel = 'gentle' | 'standard' | 'strong';
+
+// 9-cell body type matrix: fat axis × muscle axis.
+// 0 = 少なめ / 1 = ふつう / 2 = 多め
+export type BodyAxisLevel = 0 | 1 | 2;
+export interface BodyType9 {
+  fat: BodyAxisLevel;
+  muscle: BodyAxisLevel;
+}
 export type MealStyle = 'home_cooked' | 'eating_out' | 'convenience' | 'mixed' | 'unset';
 export type MealSlotKey = 'breakfast' | 'lunch' | 'dinner' | 'snack';
 export type PortionTendency = 'light' | 'normal' | 'heavy';
@@ -37,6 +47,10 @@ export interface UserProfile {
   goalDirection?: GoalDirection | null;
   currentBodyStage?: BodyStage | null;
   targetBodyStage?: BodyStage | null;
+  currentBodyType9?: BodyType9 | null;
+  targetBodyType9?: BodyType9 | null;
+  activityLevel?: ActivityLevel | null;
+  paceLevel?: PaceLevel | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -45,6 +59,13 @@ export interface WeightEntry {
   id: string;
   date: string;
   weightKg: number;
+  createdAt: string;
+}
+
+export interface BodyFatEntry {
+  id: string;
+  date: string;
+  bodyFatPct: number;
   createdAt: string;
 }
 
@@ -91,6 +112,7 @@ export interface AppSettings {
   portionTendency?: PortionTendency;
   trialStartedAtISO?: string | null;
   subscriptionStatus?: SubscriptionStatus;
+  onboardingCompletedAtISO?: string | null;
 }
 
 export interface QuickCategory {

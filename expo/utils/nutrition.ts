@@ -3,7 +3,14 @@ import { DISH_TOP_CATEGORIES, getDishTopCategory } from '@/constants/dish-master
 import { DishDraft, DishQuickEntryPayload, FoodLog, FoodLogTopping, IngredientDraft, IngredientSubtypeDef, LogMode, Macro, MealSlot, PortionDisplay, PortionStepKey, PortionValue, QuickCategory, SubTypePreset, ToppingPreset, UserProfile } from '@/types/nutrition';
 
 export function formatDateKey(date: Date): string {
-  return date.toISOString().slice(0, 10);
+  // Use local date components so the key reflects the user's calendar date,
+  // not the UTC date. Otherwise startOfDay(today).toISOString() can yield the
+  // previous UTC date in non-UTC timezones (e.g. JST), breaking same-day
+  // comparisons and log lookups.
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const day = date.getDate().toString().padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 export function generateId(prefix: string): string {

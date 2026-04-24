@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { Link, useRouter } from 'expo-router';
-import { ChevronDown, Settings2 } from 'lucide-react-native';
+import { BarChart3, ChevronDown, Settings2 } from 'lucide-react-native';
 import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
@@ -16,13 +16,15 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { BlurView } from 'expo-blur';
 
 import { CalorieOverflowRing } from '@/components/CalorieOverflowRing';
-import { QuickLogSection } from '@/components/QuickLogSection';
+import { HomeDatePager } from '@/components/HomeDatePager';
 import { TodayLogBottomSheet } from '@/components/TodayLogBottomSheet';
 import { additionPresets, portionSnapPoints, sizeOptions } from '@/constants/nutrition-data';
 import { palette } from '@/constants/theme';
+import { useTheme } from '@/design-system';
 import { useAppState } from '@/providers/app-state-provider';
 import { DishDraft, DishSize, IngredientDraft, Macro, PortionValue } from '@/types/nutrition';
-import { buildDishMacro, clampPortion, computeIngredient, draftFromLog, formatMacroText, getDailyFeedback, getIngredientSubtypeDef, getIngredientSubtypeDefs, getQuickCategories, getSubtypes, getToppingsForSubtype, summarizeToppings } from '@/utils/nutrition';
+import { buildDishMacro, clampPortion, computeIngredient, draftFromLog, formatDateKey, formatMacroText, getDailyFeedback, getIngredientSubtypeDef, getIngredientSubtypeDefs, getQuickCategories, getSubtypes, getToppingsForSubtype, summarizeToppings } from '@/utils/nutrition';
+import { formatDayLabel, isSameDay, sumForDate } from '@/utils/history';
 
 function formatNumber(value: number | null | undefined): string {
   if (value === null || value === undefined) return '--';
@@ -49,18 +51,9 @@ function ProgressRow({ label, current, target, color }: { label: string; current
   );
 }
 
-export const Header = memo(function Header() {
-  const { profile, settings } = useAppState();
+export const Header = memo(function Header({ viewedDate }: { viewedDate?: Date }) {
   const router = useRouter();
   const avatarScale = useRef(new Animated.Value(1)).current;
-  const trialLeft = useMemo(() => {
-    if (!settings.trialStartedAtISO || settings.subscriptionStatus !== 'trialing') return null;
-    const started = new Date(settings.trialStartedAtISO).getTime();
-    if (!Number.isFinite(started)) return null;
-    const endMs = started + 7 * 24 * 60 * 60 * 1000;
-    const remaining = Math.ceil((endMs - Date.now()) / (24 * 60 * 60 * 1000));
-    return remaining > 0 ? remaining : null;
-  }, [settings.trialStartedAtISO, settings.subscriptionStatus]);
 
   useEffect(() => {
     Animated.spring(avatarScale, {
@@ -71,73 +64,107 @@ export const Header = memo(function Header() {
     }).start();
   }, [avatarScale]);
 
-  const subtitle = profile.currentWeightKg && profile.targetWeightKg
-    ? `${profile.currentWeightKg} → ${profile.targetWeightKg} kg`
-    : `${profile.name ?? 'You'} の静かな記録`;
+  const dateLabel = useMemo(
+    () => (viewedDate ? formatDayLabel(viewedDate) : '今日'),
+    [viewedDate]
+  );
 
   return (
     <View style={styles.headerRow}>
-      <View style={styles.headerLeft}>
-        <Animated.View style={{ transform: [{ scale: avatarScale }] }}>
-          <Pressable
-            onPress={() => router.push('/status')}
-            style={styles.avatarButton}
-            testID="avatar-button"
-          >
-            <Text style={styles.avatarEmoji}>🧑🏻</Text>
-          </Pressable>
-        </Animated.View>
-        <View>
-          <Text style={styles.appTitle}>Quiet Nutrition</Text>
-          <Text style={styles.appSubtitle}>{subtitle}</Text>
-          {trialLeft !== null ? (
-            <Text style={styles.trialBadge}>無料トライアル 残り{trialLeft}日</Text>
-          ) : null}
-        </View>
-      </View>
-      <Link href="/settings" asChild>
-        <Pressable style={styles.iconButton} testID="settings-link">
-          <Settings2 color={palette.sageStrong} size={20} />
+      <Animated.View style={{ transform: [{ scale: avatarScale }] }}>
+        <Pressable
+          onPress={() => router.push('/status')}
+          style={styles.avatarButton}
+          testID="avatar-button"
+        >
+          <Text style={styles.avatarEmoji}>🧑🏻</Text>
         </Pressable>
-      </Link>
+      </Animated.View>
+      <View style={styles.headerCenter}>
+        <Text style={styles.headerDate} testID="header-date-label">{dateLabel}</Text>
+      </View>
+      <Pressable
+        style={styles.iconButton}
+        onPress={() => router.push('/stats')}
+        testID="stats-link"
+        accessibilityLabel="実績を見る"
+      >
+        <BarChart3 color={palette.sageStrong} size={20} />
+      </Pressable>
     </View>
   );
 });
 
-export const StatusCard = memo(function StatusCard() {
+export const StatusCard = memo(function StatusCard({ viewedDate }: { viewedDate?: Date }) {
   const { profile, todayMacro, logs } = useAppState();
-  const todayLogCount = useMemo(() => {
-    const key = new Date().toISOString().slice(0, 10);
-    return logs.filter((log) => log.date === key).length;
-  }, [logs]);
+  const t = useTheme();
+  const today = useMemo(() => new Date(), []);
+  const targetDate = viewedDate ?? today;
+  const isToday = isSameDay(targetDate, today);
+  const dateKey = formatDateKey(targetDate);
+  const dayMacro = useMemo(
+    () => (isToday ? todayMacro : sumForDate(logs, dateKey)),
+    [isToday, todayMacro, logs, dateKey]
+  );
+  const dayLogCount = useMemo(
+    () => logs.filter((log) => log.date === dateKey).length,
+    [logs, dateKey]
+  );
+
   const [now, setNow] = useState<Date>(() => new Date());
   useEffect(() => {
+    if (!isToday) return;
     const id = setInterval(() => setNow(new Date()), 60 * 1000);
     return () => clearInterval(id);
-  }, []);
-  const feedback = useMemo(
-    () => getDailyFeedback(todayMacro, profile, now, todayLogCount),
-    [todayMacro, profile, now, todayLogCount]
-  );
+  }, [isToday]);
+
+  const feedback = useMemo(() => {
+    if (isToday) {
+      return getDailyFeedback(dayMacro, profile, now, dayLogCount);
+    }
+    if (dayLogCount === 0) {
+      return {
+        subheader: 'この日の記録はありません。',
+        body: '記録は当日のみ追加できます。',
+      };
+    }
+    const ratio = profile.targetCalories > 0 ? dayMacro.kcal / profile.targetCalories : 0;
+    const pct = Math.round(ratio * 100);
+    return {
+      subheader: `${Math.round(dayMacro.kcal)} kcal · 目標比 ${pct}%`,
+      body: `この日は ${dayLogCount} 件の記録がありました。`,
+    };
+  }, [isToday, dayMacro, profile, now, dayLogCount]);
 
   return (
     <LinearGradient colors={[palette.surface, palette.card]} style={styles.statusCard}>
       <View style={styles.statusTopRow}>
         <CalorieOverflowRing
-          consumedKcal={todayMacro.kcal}
+          consumedKcal={dayMacro.kcal}
           targetKcal={profile.targetCalories}
           size={148}
           strokeWidth={16}
-          trackColor="#E7E0D4"
-          progressColor={palette.sage}
-          overflowColor={palette.sageDeep}
-          centerTextColor={palette.text}
-          subTextColor={palette.textMuted}
+          // color props 未指定 → DS の nutrition.calorie.* がデフォルト適用される
         />
         <View style={styles.progressColumn}>
-          <ProgressRow label="Protein" current={todayMacro.protein} target={profile.targetProtein} color={palette.accent} />
-          <ProgressRow label="Fat" current={todayMacro.fat} target={profile.targetFat} color={'#CFC6B6'} />
-          <ProgressRow label="Carbs" current={todayMacro.carbs} target={profile.targetCarbs} color={palette.accentSoft} />
+          <ProgressRow
+            label="Protein"
+            current={dayMacro.protein}
+            target={profile.targetProtein}
+            color={t.colors.nutrition.protein.default}
+          />
+          <ProgressRow
+            label="Fat"
+            current={dayMacro.fat}
+            target={profile.targetFat}
+            color={t.colors.nutrition.fat.default}
+          />
+          <ProgressRow
+            label="Carbs"
+            current={dayMacro.carbs}
+            target={profile.targetCarbs}
+            color={t.colors.nutrition.carbs.default}
+          />
         </View>
       </View>
       <View style={styles.feedbackBlock} testID="daily-feedback">
@@ -385,6 +412,7 @@ export const LogEditorSheet = memo(function LogEditorSheet() {
 });
 
 function IngredientEditorContent({ draft, onChange }: { draft: IngredientDraft; onChange: (draft: IngredientDraft) => void }) {
+  const t = useTheme();
   const categories = getQuickCategories('ingredient');
   const currentCategory = categories.find((item) => item.key === draft.categoryKey);
   const subtypeDefs = getIngredientSubtypeDefs(draft.categoryKey);
@@ -474,7 +502,19 @@ function IngredientEditorContent({ draft, onChange }: { draft: IngredientDraft; 
       <View style={styles.portionSection}>
         <View style={styles.portionHeader}>
           <Text style={styles.portionTitle}>食べた量</Text>
-          <Text style={styles.portionBadge}>{draft.portionValue}x</Text>
+          <Text
+            style={[
+              styles.portionBadge,
+              // 現在の選択値 indicator なので accent (lavender) ではなく
+              // action.primary.container (sage 薄) に寄せる。
+              {
+                backgroundColor: t.colors.action.primary.container,
+                color: t.colors.action.primary.onContainer,
+              },
+            ]}
+          >
+            {draft.portionValue}x
+          </Text>
         </View>
         <Text style={styles.portionNowLine} numberOfLines={1} testID="ingredient-portion-label">
           {computation.portionDisplay.primaryLabel}
@@ -698,17 +738,19 @@ void PreviewCard;
 void getSubtypes;
 
 export function HomeScreen() {
+  const [viewedDate, setViewedDate] = useState<Date>(() => new Date());
+  const today = useMemo(() => new Date(), []);
+  const isViewingToday = isSameDay(viewedDate, today);
   return (
     <View style={styles.page} testID="home-screen">
       <LinearGradient colors={[palette.background, '#F7F4EE']} style={StyleSheet.absoluteFillObject} />
       <SafeAreaView edges={['top']} style={styles.safeArea}>
-        <View style={styles.topContent}>
-          <Header />
-          <StatusCard />
-          <QuickLogSection />
+        <View style={styles.headerWrap}>
+          <Header viewedDate={viewedDate} />
         </View>
+        <HomeDatePager onViewedDateChange={setViewedDate} />
       </SafeAreaView>
-      <TodayLogBottomSheet />
+      {isViewingToday ? <TodayLogBottomSheet /> : null}
       <FloatingFeedback />
       <UndoToast />
       <MyStatusSheet />
@@ -722,8 +764,11 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1 },
   content: { paddingHorizontal: 22, paddingTop: 12, paddingBottom: 160, gap: 24 },
   topContent: { paddingHorizontal: 16, paddingTop: 8, gap: 16 },
+  headerWrap: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 4 },
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  headerCenter: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  headerDate: { fontSize: 16, fontWeight: '700', color: palette.sageDeep },
   avatarButton: { width: 56, height: 56, borderRadius: 28, backgroundColor: palette.sageDeep, alignItems: 'center', justifyContent: 'center', shadowColor: palette.sageDeep, shadowOpacity: 0.18, shadowRadius: 18, shadowOffset: { width: 0, height: 8 }, elevation: 3 },
   avatarEmoji: { fontSize: 28 },
   appTitle: { fontSize: 18, fontWeight: '700', color: palette.sageDeep },

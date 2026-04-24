@@ -6,6 +6,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { DishQuickEntrySheet } from '@/components/DishQuickEntrySheet';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { ThemeProvider } from '@/design-system';
 import { AppStateProvider } from '@/providers/app-state-provider';
 
 void SplashScreen.preventAutoHideAsync();
@@ -20,8 +21,13 @@ function RootLayoutNav() {
       <Stack.Screen name="paywall" options={{ headerShown: false, presentation: 'modal' }} />
       <Stack.Screen name="onboarding" options={{ headerShown: false, gestureEnabled: false }} />
       <Stack.Screen name="status" options={{ title: 'My Status' }} />
+      <Stack.Screen name="stats" options={{ title: '実績' }} />
+      <Stack.Screen name="profile" options={{ title: 'プロフィール' }} />
+      <Stack.Screen name="goal-edit" options={{ title: '目標を変更' }} />
+      <Stack.Screen name="about" options={{ title: 'アプリについて' }} />
       <Stack.Screen name="settings" options={{ title: 'Settings' }} />
       <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'About' }} />
+      {__DEV__ ? <Stack.Screen name="dev" options={{ headerShown: false }} /> : null}
     </Stack>
   );
 }
@@ -37,10 +43,12 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <ErrorBoundary>
-          <AppStateProvider>
-            <RootLayoutNav />
-            <DishQuickEntrySheet />
-          </AppStateProvider>
+          <ThemeProvider>
+            <AppStateProvider>
+              <RootLayoutNav />
+              <DishQuickEntrySheet />
+            </AppStateProvider>
+          </ThemeProvider>
         </ErrorBoundary>
       </GestureHandlerRootView>
     </QueryClientProvider>

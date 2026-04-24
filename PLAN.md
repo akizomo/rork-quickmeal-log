@@ -108,9 +108,23 @@
 
 # 1. オンボでの目標値計算式
 
-## 結論
+## 最新方針 (2026-04-24 更新)
 
-**Mifflin-St Jeor をベース式にしてよい**です。  
+**活動レベルは「運動習慣」1問として聞く方針に変更**しました。当初は固定値運用の予定でしたが、多くのユーザーでTDEEが過小評価になり、タンパク質量の最適化もできないため、1問だけ聞いて精度を優先します。詳細は [docs/PRD.md §6.2 §6.4](./docs/PRD.md) を参照してください。
+
+- 運動習慣: 4段階 (Lv1〜4)、活動係数 1.20 / 1.38 / 1.55 / 1.73
+- タンパク質: **体重kgベース** に変更 (1.2〜1.8 g/kg)
+- kcal調整: **体重%ベース** に変更
+- 体脂肪率あり時: Katch-McArdle採用
+- 脂肪下限: 0.6 g/kg or 総kcal 20% の大きい方
+
+---
+
+## (当初方針・参考) Mifflin-St Jeor + 固定係数案
+
+下記は当初検討した案で、上記最新方針によって上書きされました。履歴として残します。
+
+**Mifflin-St Jeor をベース式にしてよい**です。
 そのうえで、**活動レベルはオンボでは聞かず、「ふつう」固定**で進めて大丈夫です。
 
 Mifflin-St Jeor は RMR 推定式として広く使われており、NIH/NCBI の Endotext でも成人の推定式として掲載されています。式は、男性基準が `9.99×体重 + 6.25×身長 - 4.92×年齢 + 5`、女性基準が `9.99×体重 + 6.25×身長 - 4.92×年齢 - 161` です [Source](https://www.ncbi.nlm.nih.gov/books/NBK278991/table/diet-treatment-obes.table12est/)
@@ -445,4 +459,44 @@ MVPではシンプルに、
 - 1回表示
 - 以後は自動再表示なし
 - My Status から任意再表示
+
+---
+
+## 振り返り (Review) — MVP追加
+
+PRD §6.7 参照。Home横スワイプで過去日を閲覧 + /stats で週/月の簡易実績を提供。
+
+### 仕様意思決定 (2026-04-24, 2026-04-25 改訂)
+- **過去日の遡及記録: 直近7日まで可能** — `MAX_PAST_LOGGING_DAYS = 7` 定数で管理。それより前は読み取り専用
+  - 過去日記録の timestamp はその日付 + 現在時刻 (mealSlot は時刻から自動推定)
+  - 実装: `app-state.loggingDate` を `HomeDatePager` がスワイプに応じて更新。`quickLog`/`openDraftEditor`/`submitDishQuickEntry` 内で `applyLoggingDate(log)` を通して date/timestamp/mealSlot を上書き
+- **スワイプ範囲はオンボ完了日まで** — `AppSettings.onboardingCompletedAtISO` を新設、`completeOnboarding()` で初回時に記録。既存ユーザーは最古ログ日付にフォールバック
+- **設定アイコンを実績アイコンに置換** — Home右上 `Settings2` → `BarChart3`。設定への導線は My Status に追加
+- **ヘッダーは中央に日付ラベル** — アバター(左)+日付(中央)+実績アイコン(右)。アプリ名・サブタイトル・トライアルバッジは削除
+- **週は月曜始まり** — 日本ユーザー向け
+- **月ビューはGoogle Fit風** — 7×6 のカレンダーグリッド、kcalに比例した円
+- **週ビュー → Home遷移** — 日別リストの行タップで `/?date=YYYY-MM-DD` 経由でその日のページへ
+- **TodayLogBottomSheetは当日のみ** — 過去日はインラインの編集可能 (≤7d) / 読み取り専用 (>7d) リスト
+- **`formatDateKey` をローカル日付ベースに修正** — `toISOString().slice(0,10)` だと JST で日付がズレるため、`getFullYear/getMonth/getDate` で組み立て
+
+### 新規ファイル
+- `expo/utils/history.ts` — 集計ユーティリティ (sumForDate, getDailyMacros, getWeekRange, getMonthCalendarCells, averageMacros, getHistoryStartDate, formatDayLabel 等)
+- `expo/components/HomeDatePager.tsx` — 横スワイプ FlatList + DayPage + デートチップ
+- `expo/components/WeeklyStatsView.tsx` — 棒グラフ (react-native-svg) + 週平均カード + 日別リスト
+- `expo/components/MonthlyStatsView.tsx` — カレンダーグリッド + 月平均カード
+- `expo/app/stats.tsx` — 週/月セグメント切替
+
+### 変更
+- `expo/types/nutrition.ts` — `AppSettings.onboardingCompletedAtISO?: string | null`
+- `expo/providers/app-state-provider.tsx` — migration + `completeOnboarding()` で記録
+- `expo/components/nutrition-ui.tsx` — Header の設定→実績アイコン置換、日付ラベル追加。StatusCard を date prop 対応にリファクタ。HomeScreen を HomeDatePager ベースに変更
+- `expo/app/_layout.tsx` — `<Stack.Screen name="stats" />` 追加
+- `expo/app/status.tsx` — 設定リンク追加
+- `docs/PRD.md` — §6.7 追加、§4.1/4.2 更新
+
+### 非対応 (今回スコープ外)
+- 過去日への遡及記録 (P1で再検討)
+- 体重推移グラフ
+- 3ヶ月超のレンジ
+- データエクスポート
 

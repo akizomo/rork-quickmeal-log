@@ -4,11 +4,14 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import * as Haptics from 'expo-haptics';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { defaultProfile, defaultSettings, defaultWeightEntries } from '@/constants/nutrition-data';
+import { defaultBodyFatEntries, defaultProfile, defaultSettings, defaultWeightEntries } from '@/constants/nutrition-data';
 import { getDishTopCategory } from '@/constants/dish-master';
-import { AppSettings, DishDraft, DishQuickEntryPayload, FoodLog, IngredientDraft, LogMode, UserProfile, WeightEntry } from '@/types/nutrition';
+import { AppSettings, BodyFatEntry, DishDraft, DishQuickEntryPayload, FoodLog, IngredientDraft, LogMode, UserProfile, WeightEntry } from '@/types/nutrition';
 void getSubType;
 import { buildDishMacro, clampPortion, computeIngredient, createFoodLogFromDish, createFoodLogFromDishQuickEntry, createFoodLogFromIngredient, formatDateKey, getDefaultModeByTime, getMealSlot, getQuickCategories, getSubType, sumToday } from '@/utils/nutrition';
+import { isSameDay } from '@/utils/history';
+
+export const MAX_PAST_LOGGING_DAYS = 7;
 
 const noop = () => undefined;
 
@@ -17,6 +20,7 @@ interface PersistedState {
   logs: FoodLog[];
   settings: AppSettings;
   weights: WeightEntry[];
+  bodyFatEntries: BodyFatEntry[];
 }
 
 interface FeedbackState {
@@ -37,6 +41,7 @@ const defaultPersistedState: PersistedState = {
   logs: [],
   settings: defaultSettings,
   weights: defaultWeightEntries,
+  bodyFatEntries: defaultBodyFatEntries,
 };
 
 function migrateSettings(raw: Partial<AppSettings> | undefined): AppSettings {
@@ -51,6 +56,7 @@ function migrateSettings(raw: Partial<AppSettings> | undefined): AppSettings {
     portionTendency: raw?.portionTendency ?? 'normal',
     trialStartedAtISO: raw?.trialStartedAtISO ?? null,
     subscriptionStatus: raw?.subscriptionStatus ?? 'none',
+    onboardingCompletedAtISO: raw?.onboardingCompletedAtISO ?? null,
   };
 }
 
@@ -63,8 +69,12 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
   const [logs, setLogs] = useState<FoodLog[]>([]);
   const [settings, setSettings] = useState<AppSettings>(defaultSettings);
   const [weights, setWeights] = useState<WeightEntry[]>(defaultWeightEntries);
+  const [bodyFatEntries, setBodyFatEntries] = useState<BodyFatEntry[]>(defaultBodyFatEntries);
   const [selectedMode, setSelectedMode] = useState<LogMode>(getDefaultModeByTime());
   const [statusSheetVisible, setStatusSheetVisible] = useState<boolean>(false);
+  // When logging on a past day (within MAX_PAST_LOGGING_DAYS), this is set to that day.
+  // null = log to today (default).
+  const [loggingDate, setLoggingDate] = useState<Date | null>(null);
   const [editorLogId, setEditorLogId] = useState<string | null>(null);
   const [dishQuickEntryKey, setDishQuickEntryKey] = useState<string | null>(null);
   const [pendingLogIds, setPendingLogIds] = useState<string[]>([]);
@@ -89,6 +99,7 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
           logs: parsed.logs ?? [],
           settings: migrateSettings(parsed.settings),
           weights: parsed.weights ?? defaultWeightEntries,
+          bodyFatEntries: parsed.bodyFatEntries ?? defaultBodyFatEntries,
         };
       } catch (error) {
         console.log('[app-state] Failed to parse persisted state', error);
@@ -118,15 +129,23 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     setLogs(persistedQuery.data.logs);
     setSettings(persistedQuery.data.settings);
     setWeights(persistedQuery.data.weights);
+    setBodyFatEntries(persistedQuery.data.bodyFatEntries);
   }, [persistedQuery.data]);
 
   const persist = useCallback(
-    (nextProfile: UserProfile, nextLogs: FoodLog[], nextSettings: AppSettings, nextWeights: WeightEntry[]) => {
+    (
+      nextProfile: UserProfile,
+      nextLogs: FoodLog[],
+      nextSettings: AppSettings,
+      nextWeights: WeightEntry[],
+      nextBodyFatEntries: BodyFatEntry[]
+    ) => {
       persistMutation.mutate({
         profile: nextProfile,
         logs: nextLogs,
         settings: nextSettings,
         weights: nextWeights,
+        bodyFatEntries: nextBodyFatEntries,
       });
     },
     [persistMutation]
@@ -172,9 +191,9 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       setLogs(nextLogs);
       triggerFeedback(log);
       triggerUndo(log);
-      persist(profile, nextLogs, settings, weights);
+      persist(profile, nextLogs, settings, weights, bodyFatEntries);
     },
-    [logs, persist, profile, settings, triggerFeedback, triggerUndo, weights]
+    [bodyFatEntries, logs, persist, profile, settings, triggerFeedback, triggerUndo, weights]
   );
 
   const pushPendingLog = useCallback(
@@ -187,9 +206,29 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       const nextLogs = [log, ...logs];
       setLogs(nextLogs);
       setPendingLogIds((prev) => [...prev, log.id]);
-      persist(profile, nextLogs, settings, weights);
+      persist(profile, nextLogs, settings, weights, bodyFatEntries);
     },
-    [logs, persist, profile, settings, weights]
+    [bodyFatEntries, logs, persist, profile, settings, weights]
+  );
+
+  // Rewrite a freshly-created log so it lands on `loggingDate` (a past day) when
+  // the user is viewing a past page. Keeps the time-of-day from "now" so the meal
+  // slot inference still feels natural.
+  const applyLoggingDate = useCallback(
+    (log: FoodLog): FoodLog => {
+      if (!loggingDate) return log;
+      const now = new Date();
+      if (isSameDay(loggingDate, now)) return log;
+      const t = new Date(loggingDate);
+      t.setHours(now.getHours(), now.getMinutes(), now.getSeconds(), now.getMilliseconds());
+      return {
+        ...log,
+        date: formatDateKey(t),
+        timestamp: t.toISOString(),
+        mealSlot: getMealSlot(t),
+      };
+    },
+    [loggingDate]
   );
 
   const quickLog = useCallback(
@@ -203,33 +242,35 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
         }
       }
 
-      const log = selectedMode === 'ingredient'
+      const baseLog = selectedMode === 'ingredient'
         ? createFoodLogFromIngredient(categoryKey)
         : createFoodLogFromDish(categoryKey);
 
-      if (!log) {
+      if (!baseLog) {
         console.log('[app-state] Failed to create quick log', { categoryKey, selectedMode });
         return null;
       }
 
+      const log = applyLoggingDate(baseLog);
       await pushLog(log);
       return log;
     },
-    [pushLog, selectedMode]
+    [applyLoggingDate, pushLog, selectedMode]
   );
 
   const submitDishQuickEntry = useCallback(
     async (payload: DishQuickEntryPayload) => {
-      const log = createFoodLogFromDishQuickEntry(payload);
-      if (!log) {
+      const baseLog = createFoodLogFromDishQuickEntry(payload);
+      if (!baseLog) {
         console.log('[app-state] Failed to create dish quick entry');
         return null;
       }
+      const log = applyLoggingDate(baseLog);
       await pushLog(log);
       setDishQuickEntryKey(null);
       return log;
     },
-    [pushLog]
+    [applyLoggingDate, pushLog]
   );
 
   const openDraftEditor = useCallback(
@@ -242,16 +283,17 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
         }
       }
 
-      const log = selectedMode === 'ingredient'
+      const baseLog = selectedMode === 'ingredient'
         ? createFoodLogFromIngredient(categoryKey)
         : createFoodLogFromDish(categoryKey);
 
-      if (!log) return null;
+      if (!baseLog) return null;
+      const log = applyLoggingDate(baseLog);
       await pushPendingLog(log);
       setEditorLogId(log.id);
       return log;
     },
-    [pushPendingLog, selectedMode]
+    [applyLoggingDate, pushPendingLog, selectedMode]
   );
 
   const commitPendingLog = useCallback(
@@ -276,11 +318,11 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
         const nextLogs = logs.filter((item) => item.id !== id);
         console.log('[app-state] Canceling pending log', id);
         setLogs(nextLogs);
-        persist(profile, nextLogs, settings, weights);
+        persist(profile, nextLogs, settings, weights, bodyFatEntries);
         return prev.filter((p) => p !== id);
       });
     },
-    [logs, persist, profile, settings, weights]
+    [bodyFatEntries, logs, persist, profile, settings, weights]
   );
 
   const undoLastLog = useCallback(() => {
@@ -292,8 +334,8 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     console.log('[app-state] Undoing log', undoState.log.id);
     setLogs(nextLogs);
     setUndoState(null);
-    persist(profile, nextLogs, settings, weights);
-  }, [logs, persist, profile, settings, undoState, weights]);
+    persist(profile, nextLogs, settings, weights, bodyFatEntries);
+  }, [bodyFatEntries, logs, persist, profile, settings, undoState, weights]);
 
   const deleteLog = useCallback(
     (id: string) => {
@@ -304,9 +346,9 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       if (target) {
         triggerUndo(target);
       }
-      persist(profile, nextLogs, settings, weights);
+      persist(profile, nextLogs, settings, weights, bodyFatEntries);
     },
-    [logs, persist, profile, settings, triggerUndo, weights]
+    [bodyFatEntries, logs, persist, profile, settings, triggerUndo, weights]
   );
 
   const updateIngredientLog = useCallback(
@@ -337,9 +379,9 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
 
       console.log('[app-state] Updating ingredient log', { id, draft });
       setLogs(nextLogs);
-      persist(profile, nextLogs, settings, weights);
+      persist(profile, nextLogs, settings, weights, bodyFatEntries);
     },
-    [logs, persist, profile, settings, weights]
+    [bodyFatEntries, logs, persist, profile, settings, weights]
   );
 
   const updateDishLog = useCallback(
@@ -366,9 +408,9 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
 
       console.log('[app-state] Updating dish log', { id, draft });
       setLogs(nextLogs);
-      persist(profile, nextLogs, settings, weights);
+      persist(profile, nextLogs, settings, weights, bodyFatEntries);
     },
-    [logs, persist, profile, settings, weights]
+    [bodyFatEntries, logs, persist, profile, settings, weights]
   );
 
   const adjustLogAmount = useCallback(
@@ -399,9 +441,9 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       };
       console.log('[app-state] Updating profile');
       setProfile(nextProfile);
-      persist(nextProfile, logs, settings, weights);
+      persist(nextProfile, logs, settings, weights, bodyFatEntries);
     },
-    [logs, persist, profile, settings, weights]
+    [bodyFatEntries, logs, persist, profile, settings, weights]
   );
 
   const updateSettingsValues = useCallback(
@@ -412,18 +454,18 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       };
       console.log('[app-state] Updating settings');
       setSettings(nextSettings);
-      persist(profile, logs, nextSettings, weights);
+      persist(profile, logs, nextSettings, weights, bodyFatEntries);
     },
-    [logs, persist, profile, settings, weights]
+    [bodyFatEntries, logs, persist, profile, settings, weights]
   );
 
   const markIntroSeen = useCallback(
     (version: number) => {
       const next: AppSettings = { ...settings, introSeenVersion: version };
       setSettings(next);
-      persist(profile, logs, next, weights);
+      persist(profile, logs, next, weights, bodyFatEntries);
     },
-    [logs, persist, profile, settings, weights]
+    [bodyFatEntries, logs, persist, profile, settings, weights]
   );
 
   const startTrial = useCallback(() => {
@@ -434,38 +476,43 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       subscriptionStatus: 'trialing',
     };
     setSettings(next);
-    persist(profile, logs, next, weights);
+    persist(profile, logs, next, weights, bodyFatEntries);
     console.log('[app-state] Trial started', startedAtISO);
-  }, [logs, persist, profile, settings, weights]);
+  }, [bodyFatEntries, logs, persist, profile, settings, weights]);
 
   const restorePurchase = useCallback(() => {
     const next: AppSettings = { ...settings, subscriptionStatus: 'active' };
     setSettings(next);
-    persist(profile, logs, next, weights);
+    persist(profile, logs, next, weights, bodyFatEntries);
     console.log('[app-state] Restore purchase stub');
-  }, [logs, persist, profile, settings, weights]);
+  }, [bodyFatEntries, logs, persist, profile, settings, weights]);
 
   const setOnboardingStep = useCallback(
     (step: number) => {
       const next: AppSettings = { ...settings, onboardingStep: step };
       setSettings(next);
-      persist(profile, logs, next, weights);
+      persist(profile, logs, next, weights, bodyFatEntries);
     },
-    [logs, persist, profile, settings, weights]
+    [bodyFatEntries, logs, persist, profile, settings, weights]
   );
 
   const completeOnboarding = useCallback(() => {
-    const next: AppSettings = { ...settings, onboardingCompleted: true, onboardingStep: 0 };
+    const next: AppSettings = {
+      ...settings,
+      onboardingCompleted: true,
+      onboardingStep: 0,
+      onboardingCompletedAtISO: settings.onboardingCompletedAtISO ?? new Date().toISOString(),
+    };
     setSettings(next);
-    persist(profile, logs, next, weights);
+    persist(profile, logs, next, weights, bodyFatEntries);
     console.log('[app-state] Onboarding complete');
-  }, [logs, persist, profile, settings, weights]);
+  }, [bodyFatEntries, logs, persist, profile, settings, weights]);
 
   const resetOnboarding = useCallback(() => {
     const next: AppSettings = { ...settings, onboardingCompleted: false, onboardingStep: 0, introSeenVersion: 0 };
     setSettings(next);
-    persist(profile, logs, next, weights);
-  }, [logs, persist, profile, settings, weights]);
+    persist(profile, logs, next, weights, bodyFatEntries);
+  }, [bodyFatEntries, logs, persist, profile, settings, weights]);
 
   const addWeightEntry = useCallback(
     (weightKg: number) => {
@@ -479,9 +526,26 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       const nextWeights = [nextEntry, ...weights.filter((item) => item.date !== nextEntry.date)];
       setWeights(nextWeights);
       updateProfileValues({ currentWeightKg: weightKg });
-      persist(profile, logs, settings, nextWeights);
+      persist(profile, logs, settings, nextWeights, bodyFatEntries);
     },
-    [logs, persist, profile, settings, updateProfileValues, weights]
+    [bodyFatEntries, logs, persist, profile, settings, updateProfileValues, weights]
+  );
+
+  const addBodyFatEntry = useCallback(
+    (bodyFatPct: number) => {
+      const now = new Date();
+      const nextEntry: BodyFatEntry = {
+        id: `bf-${now.getTime()}`,
+        date: formatDateKey(now),
+        bodyFatPct,
+        createdAt: now.toISOString(),
+      };
+      const nextBodyFatEntries = [nextEntry, ...bodyFatEntries.filter((item) => item.date !== nextEntry.date)];
+      setBodyFatEntries(nextBodyFatEntries);
+      updateProfileValues({ currentBodyFatPct: bodyFatPct });
+      persist(profile, logs, settings, weights, nextBodyFatEntries);
+    },
+    [bodyFatEntries, logs, persist, profile, settings, updateProfileValues, weights]
   );
 
   const todayKey = formatDateKey(new Date());
@@ -497,6 +561,7 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     todayMacro,
     settings,
     weights,
+    bodyFatEntries,
     selectedMode,
     statusSheetVisible,
     editorLog,
@@ -505,6 +570,8 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     isHydrating: persistedQuery.isLoading,
     isPersisting: persistMutation.isPending,
     setSelectedMode,
+    loggingDate,
+    setLoggingDate,
     setStatusSheetVisible,
     setEditorLogId,
     dishQuickEntryKey,
@@ -523,6 +590,7 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     updateProfileValues,
     updateSettingsValues,
     addWeightEntry,
+    addBodyFatEntry,
     getMealSlot,
     markIntroSeen,
     startTrial,
