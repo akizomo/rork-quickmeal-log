@@ -1,0 +1,105 @@
+name: ✨ 機能追加・改善
+description: 新機能や既存機能の改善を提案します
+title: "[Feature] "
+labels: ["type: feature"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## ✨ 機能追加・改善
+
+        まずは `docs/PRD.md` を参照し、既存スコープ・受け入れ条件と整合するか確認してください。
+
+  - type: textarea
+    id: background
+    attributes:
+      label: 背景・課題
+      description: なぜこの機能が必要か。どのユーザーのどんな課題を解決するか。
+      placeholder: |
+        例) 体型推定後にユーザーが目標体型を選びにくい (PRD §6.3)。
+            現状はテキストのみで視覚的な手がかりが不足している。
+    validations:
+      required: true
+
+  - type: textarea
+    id: user-story
+    attributes:
+      label: ユーザーストーリー
+      description: "「〜として、〜したい、なぜなら〜」形式で。"
+      placeholder: |
+        ペルソナA (体型を整えたい人) として、
+        現在体型と目標体型を同じマトリクスで比較したい、
+        なぜなら方向性 (減量/維持/増量) が直感的に判断できるから。
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 提案する解決策
+      description: 実装イメージ・UI 案・データ構造など分かる範囲で。
+    validations:
+      required: false
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: 受け入れ条件 (AC)
+      description: 完了したと判断できる条件を箇条書きで。
+      value: |
+        - [ ]
+        - [ ]
+        - [ ] PRD 該当節の AC を満たす
+    validations:
+      required: true
+
+  - type: input
+    id: prd-section
+    attributes:
+      label: PRD 参照節
+      description: 関連する PRD のセクション番号 (例 §6.3)。新規領域なら "新規"。
+      placeholder: "§6.x"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: 優先度の希望
+      description: 最終決定はトリアージで行います。
+      options:
+        - "P0 (MVP 必須)"
+        - "P1 (MVP 後)"
+        - "P2 (将来検討)"
+        - "未定"
+      default: 3
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: 機能領域
+      multiple: false
+      options:
+        - app-intro
+        - paywall
+        - onboarding
+        - body-matrix
+        - goal-setting
+        - quick-log
+        - my-status
+        - review
+        - その他
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: 確認事項
+      options:
+        - label: PRD §4 のスコープ外でないことを確認した
+          required: true
+        - label: 既存の Issue / Discussion と重複していないか確認した
+          required: true

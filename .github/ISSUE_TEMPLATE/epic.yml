@@ -1,0 +1,76 @@
+name: 🗂 エピック
+description: 複数の Issue を束ねる大粒度タスク
+title: "[Epic] "
+labels: ["type: epic"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 🗂 エピック
+
+        PRD §6 の機能ブロック単位、または横断的な改善 (例: アクセシビリティ全面対応) で使用します。
+
+  - type: textarea
+    id: goal
+    attributes:
+      label: ゴール
+      description: このエピックが完了した時にユーザー/プロダクトがどうなっているか。
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: スコープ
+      description: 含むもの / 含まないもの。
+    validations:
+      required: true
+
+  - type: textarea
+    id: child-issues
+    attributes:
+      label: 子タスク
+      description: このエピックに紐づく Issue (作成後にチェックリスト化)。
+      value: |
+        - [ ] #
+        - [ ] #
+        - [ ] #
+    validations:
+      required: false
+
+  - type: input
+    id: prd-section
+    attributes:
+      label: PRD 参照節
+      placeholder: "§6.x"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: 優先度
+      options:
+        - "P0 (MVP 必須)"
+        - "P1 (MVP 後)"
+        - "P2 (将来検討)"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: 機能領域
+      multiple: false
+      options:
+        - app-intro
+        - paywall
+        - onboarding
+        - body-matrix
+        - goal-setting
+        - quick-log
+        - my-status
+        - review
+        - cross-cutting
+    validations:
+      required: true

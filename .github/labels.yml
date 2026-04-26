@@ -1,0 +1,114 @@
+# GitHub ラベル定義 (EndBug/label-sync 用)
+# このファイルを編集 → main に push すると Actions が自動同期します。
+# 手順: docs/github-projects-setup.md を参照。
+
+# ─────────────────────────────────────
+# 種別 (type)
+# ─────────────────────────────────────
+- name: "type: feature"
+  color: "1d76db"
+  description: "新機能・機能改善"
+
+- name: "type: bug"
+  color: "d73a4a"
+  description: "バグ修正"
+
+- name: "type: chore"
+  color: "cfd3d7"
+  description: "リファクタ・依存更新・運用タスク"
+
+- name: "type: docs"
+  color: "0075ca"
+  description: "ドキュメント更新"
+
+- name: "type: epic"
+  color: "5319e7"
+  description: "複数 Issue を束ねるエピック"
+
+# ─────────────────────────────────────
+# 優先度 (priority) — PRD §13
+# ─────────────────────────────────────
+- name: "priority: p0"
+  color: "b60205"
+  description: "MVP 必須 (リリースブロッカー)"
+
+- name: "priority: p1"
+  color: "fbca04"
+  description: "MVP 後の機能改善"
+
+- name: "priority: p2"
+  color: "0e8a16"
+  description: "将来検討"
+
+# ─────────────────────────────────────
+# 機能領域 (area) — PRD §6
+# ─────────────────────────────────────
+- name: "area: app-intro"
+  color: "c5def5"
+  description: "アプリ紹介画面 (PRD §6.1)"
+
+- name: "area: paywall"
+  color: "c5def5"
+  description: "Paywall / 課金 (PRD §6.1)"
+
+- name: "area: onboarding"
+  color: "c5def5"
+  description: "オンボーディング (PRD §6.2)"
+
+- name: "area: body-matrix"
+  color: "c5def5"
+  description: "9分類体型マトリクス・SVG (PRD §3.2 / §7)"
+
+- name: "area: goal-setting"
+  color: "c5def5"
+  description: "目標体型・数値提案 (PRD §6.3 / §6.4)"
+
+- name: "area: quick-log"
+  color: "c5def5"
+  description: "クイックログ (PRD §6.5)"
+
+- name: "area: my-status"
+  color: "c5def5"
+  description: "My Status Hub (PRD §6.6)"
+
+- name: "area: review"
+  color: "c5def5"
+  description: "振り返り・統計 (PRD §6.7)"
+
+- name: "area: cross-cutting"
+  color: "c5def5"
+  description: "横断タスク (アクセシビリティ・パフォーマンス等)"
+
+# ─────────────────────────────────────
+# 状態補助 (Project の Status と並行)
+# ─────────────────────────────────────
+- name: "status: blocked"
+  color: "000000"
+  description: "外部要因や別 Issue 待ちで進行不能"
+
+- name: "status: needs-design"
+  color: "d4c5f9"
+  description: "設計・仕様確定が必要"
+
+- name: "status: ready"
+  color: "0e8a16"
+  description: "着手可能 (仕様確定済み)"
+
+# ─────────────────────────────────────
+# 補助
+# ─────────────────────────────────────
+- name: "good first issue"
+  color: "7057ff"
+  description: "初めての貢献に向いた Issue"
+
+- name: "help wanted"
+  color: "008672"
+  description: "コントリビュート歓迎"
+
+- name: "duplicate"
+  color: "cfd3d7"
+  description: "重複 Issue"
+
+- name: "wontfix"
+  color: "ffffff"
+  description: "対応しない"

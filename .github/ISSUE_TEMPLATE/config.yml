@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📘 PRD (プロダクト要件定義)
+    url: https://github.com/akizomo/rork-quickmeal-log/blob/main/docs/PRD.md
+    about: 機能・データ・UX 方針・KPI・受け入れ条件はここを参照してください
+  - name: 📝 PLAN.md (実装仕様メモ)
+    url: https://github.com/akizomo/rork-quickmeal-log/blob/main/PLAN.md
+    about: 計算式・選択肢・UI 構成の意思決定根拠
+  - name: 💬 Discussions
+    url: https://github.com/akizomo/rork-quickmeal-log/discussions
+    about: 質問・アイデア出しはまず Discussions へ

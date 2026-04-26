@@ -1,0 +1,30 @@
+name: 🧹 リファクタ・雑務
+description: リファクタリング・依存更新・ビルド設定・運用タスクなど
+title: "[Chore] "
+labels: ["type: chore"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: 内容
+      description: 何を行うか。なぜ必要か。
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: 影響範囲
+      description: 変更が及ぶファイル/モジュール/挙動の想定。
+    validations:
+      required: false
+
+  - type: textarea
+    id: definition-of-done
+    attributes:
+      label: 完了条件
+      value: |
+        - [ ]
+        - [ ]
+    validations:
+      required: true

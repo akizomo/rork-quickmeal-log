@@ -1,0 +1,102 @@
+name: 🐛 バグ報告
+description: 不具合・期待と異なる挙動を報告します
+title: "[Bug] "
+labels: ["type: bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 🐛 バグ報告
+
+        再現手順を具体的に書いてもらえると修正が速くなります。
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: 概要
+      description: 何が起きているか 1〜2 行で。
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: 再現手順
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期待挙動
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: 実挙動
+    validations:
+      required: true
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: 発生プラットフォーム
+      multiple: true
+      options:
+        - iOS (Simulator)
+        - iOS (実機)
+        - Android (Emulator)
+        - Android (実機)
+        - Web
+    validations:
+      required: true
+
+  - type: input
+    id: env
+    attributes:
+      label: 環境
+      description: OS バージョン / Expo SDK / デバイスモデルなど分かる範囲で。
+      placeholder: "iOS 17.4 / Expo SDK 52 / iPhone 15 Pro"
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: ログ・スクリーンショット
+      description: コンソールログ、スタックトレース、画面キャプチャなど。
+      render: shell
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: 機能領域
+      multiple: false
+      options:
+        - app-intro
+        - paywall
+        - onboarding
+        - body-matrix
+        - goal-setting
+        - quick-log
+        - my-status
+        - review
+        - その他
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: 深刻度
+      options:
+        - "Critical (機能が全く使えない / クラッシュ)"
+        - "High (主要機能が破綻)"
+        - "Medium (回避策あり)"
+        - "Low (見た目のずれ等)"
+    validations:
+      required: true
