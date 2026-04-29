@@ -12,6 +12,10 @@ import { palette } from '@/constants/theme';
 import { useAppState } from '@/providers/app-state-provider';
 import { QuickCategory } from '@/types/nutrition';
 import { getQuickCategories } from '@/utils/nutrition';
+import type { BucketKey } from '@/types/identity';
+import { getIdentitiesInBucket, getBucketDef } from '@/constants/identity';
+// MVP では非表示 (PRD v1.5 §4.2 / §13 P0)。P1-C 再有効化時に import コメントを外す。
+// import { IdentitySearchBar } from '@/components/IdentitySearchBar';
 
 export const QUICK_LOG_TOKENS = {
   sectionPaddingHorizontal: 16,
@@ -22,8 +26,8 @@ export const QUICK_LOG_TOKENS = {
   segmentBottomSpacing: 8,
   gridColumns: 3,
   gridGap: 8,
-  buttonHeightCompact: 60,
-  buttonHeightDefault: 64,
+  buttonHeightCompact: 52,
+  buttonHeightDefault: 56,
   buttonHeightLarge: 68,
   buttonRadius: 15,
   iconContainerSize: 32,
@@ -45,28 +49,32 @@ const QUICK_LOG_COLORS = {
   labelText: '#2E3B35',
 };
 
+// Identity-first IA bucket labels (PRD-aligned ≤6 char names).
+// Mirrors `INGREDIENT_BUCKETS` / `DISH_BUCKETS` from constants/identity/index.ts;
+// kept inline here so the home grid stays decoupled from full registry imports.
 const INGREDIENT_SHORT_LABEL: Record<string, string> = {
-  staple: '主食',
-  lean_protein: '低脂P',
+  staple: 'ごはんパン麺',
+  lean_protein: '肉魚(低脂)',
   egg: '卵',
-  fatty_protein: '脂ありP',
+  fatty_protein: '脂あり肉魚',
   dairy_soy: '乳・大豆',
-  veggies: '野菜',
+  veggies: '野菜・汁物',
   fruit: '果物',
-  added_fat: '脂質',
-  snack_drink: '間食',
+  added_fat: '油・調味',
+  snack_drink: 'おやつ甘飲',
 };
 
 const DISH_SHORT_LABEL: Record<string, string> = {
-  rice_dish: 'ごはん',
+  rice_dish: 'どんぶり',
   curry: 'カレー',
-  chinese_noodles: '中華麺',
-  japanese_noodles: '和麺',
+  chinese_noodles: 'ラーメン',
+  japanese_noodles: 'うどん蕎麦',
   pasta: 'パスタ',
   sushi: '寿司',
-  sandwich: 'サンド',
+  sandwich: 'サンドバーガー',
   pizza: 'ピザ',
-  set_meal: '定食弁当',
+  set_meal: '定食・単品',
+  misc_dish: '定食・単品',
 };
 
 export function getQuickLogButtonHeight(screenWidth: number): number {
@@ -82,7 +90,11 @@ function getIconSize(screenWidth: number): number {
 }
 
 function getLabelFontSize(screenWidth: number): number {
-  if (screenWidth <= 360) return 10;
+  // Identity-first labels can run up to 7 chars (e.g. サンドバーガー /
+  // ラーメン中華麺), so the base size is one step smaller than before to keep
+  // numberOfLines: 1 honored on narrow screens.
+  if (screenWidth <= 360) return 9;
+  if (screenWidth <= 414) return 10;
   return 11;
 }
 
@@ -107,7 +119,7 @@ function QuickLogButton({
   iconContainerSize: number;
   labelFontSize: number;
 }) {
-  const { quickLog, openDraftEditor } = useAppState();
+  const { openDraftEditor, openIdentityLogSheet, quickLogIdentity } = useAppState();
   const scale = useRef(new Animated.Value(1)).current;
 
   const shortLabel = mode === 'ingredient'
@@ -130,12 +142,40 @@ function QuickLogButton({
     }).start();
   };
 
+  // Most legacy `QuickCategory.key` values align 1-to-1 with the new
+  // Identity-first BucketKey set. The one renamed bucket — legacy `set_meal`
+  // is now `misc_dish` (定食・単品) — needs a small translation so the new
+  // sheet can resolve it.
+  const LEGACY_TO_NEW_BUCKET: Record<string, BucketKey> = { set_meal: 'misc_dish' };
+  const bucketKey = (LEGACY_TO_NEW_BUCKET[item.key] ?? item.key) as BucketKey;
+  const hasNewBucket = getIdentitiesInBucket(bucketKey).length > 0;
+
   const handlePress = () => {
-    void quickLog(item.key);
+    // Per PRD §6.5 / IA spec: tap = instant record at default amount on the
+    // bucket's representative Identity (first chip in the bucket).
+    // Exception: if the bucket OR its first Identity has quickTapDisabled
+    // (overly wide Attribute / Identity diversity), open the detail sheet
+    // so the user picks consciously.
+    if (hasNewBucket) {
+      const bucketDef = getBucketDef(bucketKey);
+      const first = getIdentitiesInBucket(bucketKey)[0];
+      if (bucketDef?.quickTapDisabled || first?.quickTapDisabled) {
+        openIdentityLogSheet(bucketKey);
+        return;
+      }
+      if (first) void quickLogIdentity(first.id);
+    }
   };
 
   const handleLongPress = () => {
-    void openDraftEditor(item.key);
+    // Long-press = open detail sheet so the user can pick an Identity / adjust
+    // Attribute, Style, amount, and add-ons.
+    if (hasNewBucket) {
+      openIdentityLogSheet(bucketKey);
+    } else if (mode === 'dish') {
+      // Fallback to legacy dish editor for buckets not yet in the new IA.
+      void openDraftEditor(item.key);
+    }
   };
 
   return (
@@ -221,6 +261,15 @@ export const QuickLogSection = memo(function QuickLogSection() {
 
   return (
     <View style={styles.section} testID="quick-log-section">
+      {/*
+        Identity 検索バーは MVP では非表示 (PRD v1.5 §4.2 / §13 P0)。
+        9 ボタン × 自動学習の効果を純粋に計測するため一旦オフ。
+        P1-C で `quick_log_unfound_event` (§10.2.1) を見て再有効化を判断する。
+        開発時の動作確認は app/dev/identity-log.tsx 経由で可能。
+      */}
+      {/* <View style={{ marginBottom: QUICK_LOG_TOKENS.segmentBottomSpacing }}>
+        <IdentitySearchBar />
+      </View> */}
       <SegmentedControl />
       <View style={styles.grid}>
         {rows.map((row, rowIndex) => (

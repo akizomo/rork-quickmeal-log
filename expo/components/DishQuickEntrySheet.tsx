@@ -1,9 +1,6 @@
 import React, { memo, useEffect, useMemo, useState } from 'react';
 import {
-  Modal,
-  Platform,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -13,7 +10,6 @@ import {
 import {
   ChineseNoodlePrimaryDef,
   DISH_TOP_CATEGORIES,
-  DishPortionOption,
   DishSubcategory,
   DishTopCategoryDef,
   PizzaTypeDef,
@@ -24,9 +20,11 @@ import {
   multiplyMacroSimple,
 } from '@/constants/dish-master';
 import { palette } from '@/constants/theme';
+import { BottomSheet } from '@/design-system';
 import { useAppState } from '@/providers/app-state-provider';
 import {
   ChineseNoodlesPrimaryType,
+  DishPortionOption,
   DishQuickEntryPayload,
   Macro,
   PizzaType,
@@ -524,94 +522,36 @@ export const DishQuickEntrySheet = memo(function DishQuickEntrySheet() {
   };
 
   return (
-    <Modal
+    <BottomSheet
       visible={visible}
-      transparent
-      animationType={Platform.OS === 'ios' ? 'slide' : 'fade'}
-      onRequestClose={handleClose}
+      onClose={handleClose}
+      title={category?.label ?? ''}
+      testID="dqe"
     >
-      <Pressable style={styles.backdrop} onPress={handleClose} testID="dqe-backdrop">
-        <Pressable style={styles.sheet} onPress={() => undefined}>
-          <View style={styles.handle} />
-          <View style={styles.header}>
-            <Text style={styles.title}>{category?.label ?? ''}</Text>
-            <Pressable onPress={handleClose} testID="dqe-close" hitSlop={10}>
-              <Text style={styles.close}>閉じる</Text>
-            </Pressable>
-          </View>
-          <ScrollView
-            contentContainerStyle={styles.scrollContent}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-          >
-            {category ? (
-              <>
-                {category.quickEntry.kind === 'instant_save' ? (
-                  <InstantSaveBody category={category} onSubmit={handleSubmit} />
-                ) : null}
-                {category.quickEntry.kind === 'chinese_noodles' ? (
-                  <ChineseNoodlesBody category={category} onSubmit={handleSubmit} />
-                ) : null}
-                {category.quickEntry.kind === 'sushi_count' ? (
-                  <SushiBody category={category} onSubmit={handleSubmit} />
-                ) : null}
-                {category.quickEntry.kind === 'pizza_slices' ? (
-                  <PizzaBody category={category} onSubmit={handleSubmit} />
-                ) : null}
-                {category.quickEntry.kind === 'set_meal_select' ? (
-                  <SetMealBody category={category} onSubmit={handleSubmit} />
-                ) : null}
-              </>
-            ) : null}
-          </ScrollView>
-        </Pressable>
-      </Pressable>
-    </Modal>
+      {category ? (
+        <>
+          {category.quickEntry.kind === 'instant_save' ? (
+            <InstantSaveBody category={category} onSubmit={handleSubmit} />
+          ) : null}
+          {category.quickEntry.kind === 'chinese_noodles' ? (
+            <ChineseNoodlesBody category={category} onSubmit={handleSubmit} />
+          ) : null}
+          {category.quickEntry.kind === 'sushi_count' ? (
+            <SushiBody category={category} onSubmit={handleSubmit} />
+          ) : null}
+          {category.quickEntry.kind === 'pizza_slices' ? (
+            <PizzaBody category={category} onSubmit={handleSubmit} />
+          ) : null}
+          {category.quickEntry.kind === 'set_meal_select' ? (
+            <SetMealBody category={category} onSubmit={handleSubmit} />
+          ) : null}
+        </>
+      ) : null}
+    </BottomSheet>
   );
 });
 
 const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(20, 30, 26, 0.45)',
-    justifyContent: 'flex-end',
-  },
-  sheet: {
-    backgroundColor: palette.sheet,
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    paddingHorizontal: 20,
-    paddingTop: 10,
-    paddingBottom: 24,
-    maxHeight: '88%',
-  },
-  handle: {
-    alignSelf: 'center',
-    width: 44,
-    height: 5,
-    borderRadius: 999,
-    backgroundColor: '#C6C6BD',
-    marginBottom: 10,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: palette.text,
-  },
-  close: {
-    fontSize: 13,
-    color: palette.textMuted,
-    fontWeight: '600',
-  },
-  scrollContent: {
-    paddingBottom: 12,
-  },
   sectionLabel: {
     fontSize: 12,
     fontWeight: '700',

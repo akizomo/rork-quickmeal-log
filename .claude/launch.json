@@ -1,0 +1,33 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "expo-web",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["expo", "start", "--web", "--port", "8081"],
+      "cwd": "expo",
+      "port": 8081,
+      "autoPort": true
+    },
+    {
+      "name": "static-proxy",
+      "runtimeExecutable": "/Users/akihiro.uezono/.bun/bin/bun",
+      "runtimeArgs": [
+        "-e",
+        "Bun.serve({ port: Number(process.env.PORT ?? 0), fetch: () => new Response('preview-stub: dev verification at http://localhost:8081/dev/components') })"
+      ],
+      "port": 0,
+      "autoPort": true
+    },
+    {
+      "name": "legal-web",
+      "runtimeExecutable": "/Users/akihiro.uezono/.bun/bin/bun",
+      "runtimeArgs": [
+        "-e",
+        "import { file } from 'bun'; import { join, normalize } from 'node:path'; const root = './web/public'; Bun.serve({ port: Number(process.env.PORT ?? 5173), async fetch(req) { const url = new URL(req.url); let p = decodeURIComponent(url.pathname); if (p.endsWith('/')) p += 'index.html'; const candidates = [p, p + '.html']; for (const c of candidates) { const fp = normalize(join(root, c)); if (!fp.startsWith(normalize(root))) continue; const f = file(fp); if (await f.exists()) return new Response(f); } return new Response('not found', { status: 404 }); } });"
+      ],
+      "port": 5173,
+      "autoPort": true
+    }
+  ]
+}

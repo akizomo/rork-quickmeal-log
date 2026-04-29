@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { SettingsDivider, SettingsLinkRow, SettingsListCard, SettingsSectionLabel } from '@/components/SettingsList';
 import { TRIAL_DURATION_DAYS } from '@/constants/onboarding';
 import { Body, Caption, Card, Heading, useTheme } from '@/design-system';
 import { useAppState } from '@/providers/app-state-provider';
@@ -78,7 +79,7 @@ export default function StatusRoute() {
     <>
       <Stack.Screen
         options={{
-          title: 'My Status',
+          title: 'ステータス',
           headerStyle: { backgroundColor: theme.colors.surface.default },
           headerTintColor: theme.colors.content.primary,
           headerShadowVisible: false,
@@ -105,6 +106,9 @@ export default function StatusRoute() {
                   style={[styles.recordButton, { backgroundColor: theme.colors.action.primary.default }]}
                   onPress={() => setWeightSheetVisible(true)}
                   testID="status-update-weight"
+                  accessibilityRole="button"
+                  accessibilityLabel="体重を記録"
+                  accessibilityHint="今日の体重を入力するシートを開きます"
                 >
                   <Text style={[styles.recordButtonText, { color: theme.colors.content.onAction }]}>体重を記録</Text>
                 </Pressable>
@@ -112,6 +116,9 @@ export default function StatusRoute() {
                   style={[styles.recordButton, { backgroundColor: theme.colors.action.primary.default }]}
                   onPress={() => setBfSheetVisible(true)}
                   testID="status-update-bf"
+                  accessibilityRole="button"
+                  accessibilityLabel="体脂肪率を記録"
+                  accessibilityHint="今日の体脂肪率を入力するシートを開きます"
                 >
                   <Text style={[styles.recordButtonText, { color: theme.colors.content.onAction }]}>体脂肪を記録</Text>
                 </Pressable>
@@ -119,7 +126,13 @@ export default function StatusRoute() {
             </Card>
 
             {/* GOAL CARD */}
-            <Pressable onPress={() => router.push('/goal-edit')} testID="status-goal-card">
+            <Pressable
+              onPress={() => router.push('/goal-edit')}
+              testID="status-goal-card"
+              accessibilityRole="button"
+              accessibilityLabel="目標を変更"
+              accessibilityHint="目的とプランの設定画面を開きます"
+            >
               <Card variant="raised" style={{ gap: theme.spacing['3'] }}>
                 <View style={styles.goalHeader}>
                   <Body weight="bold">目標</Body>
@@ -145,21 +158,42 @@ export default function StatusRoute() {
               </Card>
             </Pressable>
 
-            {/* LINK ROWS */}
-            <Card variant="raised" style={{ gap: 0 }}>
-              <LinkRow label="プロフィール" onPress={() => router.push('/profile')} testID="status-link-profile" />
-              <Divider />
-              <LinkRow
-                label="サブスクリプション"
-                sub={subscriptionLabel}
-                onPress={() => router.push('/paywall')}
-                testID="status-link-subscription"
-              />
-              <Divider />
-              <LinkRow label="設定" onPress={() => router.push('/settings')} testID="status-link-settings" />
-              <Divider />
-              <LinkRow label="アプリについて" onPress={() => router.push('/about')} testID="status-link-about" last />
-            </Card>
+            {/* §あなた */}
+            <View style={styles.section}>
+              <SettingsSectionLabel>あなた</SettingsSectionLabel>
+              <SettingsListCard>
+                <SettingsLinkRow
+                  label="プロフィール"
+                  onPress={() => router.push('/profile')}
+                  testID="status-link-profile"
+                />
+              </SettingsListCard>
+            </View>
+
+            {/* §アプリ */}
+            <View style={styles.section}>
+              <SettingsSectionLabel>アプリ</SettingsSectionLabel>
+              <SettingsListCard>
+                <SettingsLinkRow
+                  label="サブスクリプション"
+                  sub={subscriptionLabel}
+                  onPress={() => router.push('/subscription')}
+                  testID="status-link-subscription"
+                />
+                <SettingsDivider />
+                <SettingsLinkRow
+                  label="設定"
+                  onPress={() => router.push('/settings')}
+                  testID="status-link-settings"
+                />
+                <SettingsDivider />
+                <SettingsLinkRow
+                  label="アプリについて"
+                  onPress={() => router.push('/about')}
+                  testID="status-link-about"
+                />
+              </SettingsListCard>
+            </View>
           </ScrollView>
         </SafeAreaView>
       </View>
@@ -205,40 +239,6 @@ function PfcCell({ label, value, color }: { label: string; value: number; color:
   );
 }
 
-function LinkRow({
-  label,
-  sub,
-  onPress,
-  testID,
-  last = false,
-}: {
-  label: string;
-  sub?: string;
-  onPress: () => void;
-  testID?: string;
-  last?: boolean;
-}) {
-  const theme = useTheme();
-  return (
-    <Pressable
-      style={[styles.linkRow, last ? null : { paddingBottom: theme.spacing['4'] }]}
-      onPress={onPress}
-      testID={testID}
-    >
-      <View style={{ flex: 1 }}>
-        <Body>{label}</Body>
-        {sub ? <Caption tone="tertiary">{sub}</Caption> : null}
-      </View>
-      <ChevronRight size={16} color={theme.colors.content.tertiary} />
-    </Pressable>
-  );
-}
-
-function Divider() {
-  const theme = useTheme();
-  return <View style={[styles.divider, { backgroundColor: theme.colors.border.subtle }]} />;
-}
-
 function BodyFatSheet({
   visible,
   onClose,
@@ -260,7 +260,12 @@ function BodyFatSheet({
     currentBfPct !== null && value !== '' ? Number((Number(value) - currentBfPct).toFixed(1)) : null;
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable style={styles.modalOverlay} onPress={onClose}>
+      <Pressable
+        style={styles.modalOverlay}
+        onPress={onClose}
+        accessibilityRole="button"
+        accessibilityLabel="シートを閉じる"
+      >
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <Pressable
             style={[
@@ -296,6 +301,8 @@ function BodyFatSheet({
               style={[styles.weightSubmit, { backgroundColor: theme.colors.action.primary.default }]}
               onPress={onSubmit}
               testID="bf-submit"
+              accessibilityRole="button"
+              accessibilityLabel="体脂肪率を保存"
             >
               <Text style={[styles.weightSubmitText, { color: theme.colors.content.onAction }]}>保存</Text>
             </Pressable>
@@ -326,7 +333,12 @@ function WeightSheet({
   const diff = avg7 !== null && value !== '' ? Number((Number(value) - avg7).toFixed(1)) : null;
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable style={styles.modalOverlay} onPress={onClose}>
+      <Pressable
+        style={styles.modalOverlay}
+        onPress={onClose}
+        accessibilityRole="button"
+        accessibilityLabel="シートを閉じる"
+      >
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <Pressable
             style={[
@@ -362,6 +374,8 @@ function WeightSheet({
               style={[styles.weightSubmit, { backgroundColor: theme.colors.action.primary.default }]}
               onPress={onSubmit}
               testID="weight-submit"
+              accessibilityRole="button"
+              accessibilityLabel="体重を保存"
             >
               <Text style={[styles.weightSubmitText, { color: theme.colors.content.onAction }]}>保存</Text>
             </Pressable>
@@ -374,7 +388,7 @@ function WeightSheet({
 
 const styles = StyleSheet.create({
   page: { flex: 1 },
-  scroll: { padding: 18, gap: 14, paddingBottom: 40 },
+  scroll: { padding: 18, gap: 22, paddingBottom: 40 },
   heroMetricRow: { flexDirection: 'row', alignItems: 'center' },
   heroMetric: { flex: 1, alignItems: 'center', gap: 4 },
   heroDivider: { width: StyleSheet.hairlineWidth, height: 48, marginHorizontal: 8 },
@@ -388,8 +402,7 @@ const styles = StyleSheet.create({
   pfcCell: { flex: 1, borderRadius: 12, paddingVertical: 8, alignItems: 'center' },
   pfcLabel: { fontSize: 11, fontWeight: '700' },
   pfcValue: { fontSize: 14, fontWeight: '700', marginTop: 2 },
-  linkRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14 },
-  divider: { height: StyleSheet.hairlineWidth, marginHorizontal: -16 },
+  section: { gap: 6 },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(20, 28, 24, 0.4)', justifyContent: 'flex-end' },
   weightSheet: { borderTopLeftRadius: 26, borderTopRightRadius: 26, paddingHorizontal: 22, paddingTop: 12, gap: 16 },
   sheetGrabber: { alignSelf: 'center', width: 44, height: 5, borderRadius: 3, marginBottom: 8 },

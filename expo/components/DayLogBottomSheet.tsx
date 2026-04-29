@@ -14,12 +14,19 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { palette } from '@/constants/theme';
 import { useAppState } from '@/providers/app-state-provider';
 import { FoodLog } from '@/types/nutrition';
-import { summarizeToppings } from '@/utils/nutrition';
+import { formatShortDay, isSameDay, logsForDate, sumForDate } from '@/utils/history';
+import { formatDateKey, summarizeToppings } from '@/utils/nutrition';
 
 type SnapStage = 'peek' | 'half' | 'full';
 
-const SNAP_RATIOS: Record<SnapStage, number> = {
-  peek: 0.12,
+/**
+ * peek は画面サイズに依らず親指圏内 (画面下端から ~120px) で固定。
+ * 画面が大きいほど上部に空白ができるが、操作可能エリアが届かない位置に
+ * ずれることを防ぐため、ratio ではなく固定 px 値を使う。
+ */
+export const PEEK_HEIGHT_PX = 120;
+
+const SNAP_RATIOS: Record<Exclude<SnapStage, 'peek'>, number> = {
   half: 0.45,
   full: 0.88,
 };
@@ -108,12 +115,31 @@ function LogListItem({ log }: { log: FoodLog }) {
   );
 }
 
-export const TodayLogBottomSheet = memo(function TodayLogBottomSheet() {
-  const { todayLogs, todayMacro } = useAppState();
+interface Props {
+  viewedDate: Date;
+}
+
+export const DayLogBottomSheet = memo(function DayLogBottomSheet({ viewedDate }: Props) {
+  const { logs, todayLogs, todayMacro } = useAppState();
   const { height: screenHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
 
-  const peekHeight = Math.round(screenHeight * SNAP_RATIOS.peek);
+  const today = useMemo(() => new Date(), []);
+  const isToday = isSameDay(viewedDate, today);
+  const dateKey = formatDateKey(viewedDate);
+
+  const dayLogs = useMemo(
+    () => (isToday ? todayLogs : logsForDate(logs, dateKey)),
+    [isToday, todayLogs, logs, dateKey]
+  );
+  const dayMacro = useMemo(
+    () => (isToday ? todayMacro : sumForDate(logs, dateKey)),
+    [isToday, todayMacro, logs, dateKey]
+  );
+
+  const titleText = isToday ? '今日のログ' : `${formatShortDay(viewedDate)} のログ`;
+
+  const peekHeight = PEEK_HEIGHT_PX;
   const halfHeight = Math.round(screenHeight * SNAP_RATIOS.half);
   const fullHeight = Math.round(screenHeight * SNAP_RATIOS.full);
 
@@ -225,7 +251,7 @@ export const TodayLogBottomSheet = memo(function TodayLogBottomSheet() {
             transform: [{ translateY }],
           },
         ]}
-        testID="today-log-sheet"
+        testID="day-log-sheet"
       >
         <View style={styles.handleArea} {...panResponder.panHandlers}>
           <Pressable onPress={handleHandlePress} style={styles.handlePressable}>
@@ -233,9 +259,9 @@ export const TodayLogBottomSheet = memo(function TodayLogBottomSheet() {
           </Pressable>
           <View style={styles.headerRow}>
             <View>
-              <Text style={styles.title}>Today&apos;s Log</Text>
+              <Text style={styles.title}>{titleText}</Text>
               <Text style={styles.subtitle}>
-                {todayLogs.length}件 · {Math.round(todayMacro.kcal)} kcal
+                {dayLogs.length}件 · {Math.round(dayMacro.kcal)} kcal
               </Text>
             </View>
             <Pressable
@@ -258,13 +284,13 @@ export const TodayLogBottomSheet = memo(function TodayLogBottomSheet() {
           showsVerticalScrollIndicator={false}
           scrollEnabled={stage !== 'peek'}
         >
-          {todayLogs.length === 0 ? (
+          {dayLogs.length === 0 ? (
             <View style={styles.emptyState}>
               <Text style={styles.emptyTitle}>まだ記録はありません</Text>
-              <Text style={styles.emptyText}>上のボタンから、今の食事をすばやく残せます。</Text>
+              <Text style={styles.emptyText}>上のボタンから、その日の食事をすばやく残せます。</Text>
             </View>
           ) : (
-            todayLogs.map((log) => <LogListItem key={log.id} log={log} />)
+            dayLogs.map((log) => <LogListItem key={log.id} log={log} />)
           )}
         </ScrollView>
       </Animated.View>
@@ -292,13 +318,13 @@ const styles = StyleSheet.create({
     elevation: 12,
   },
   handleArea: {
-    paddingTop: 8,
+    paddingTop: 4,
     paddingHorizontal: 20,
-    paddingBottom: 10,
+    paddingBottom: 6,
   },
   handlePressable: {
     alignItems: 'center',
-    paddingVertical: 6,
+    paddingVertical: 3,
   },
   handle: {
     width: 44,
@@ -307,7 +333,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#C6C6BD',
   },
   headerRow: {
-    marginTop: 6,
+    marginTop: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',

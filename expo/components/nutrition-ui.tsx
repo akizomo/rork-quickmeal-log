@@ -4,26 +4,24 @@ import { BarChart3, ChevronDown, Settings2 } from 'lucide-react-native';
 import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
-  Modal,
   PanResponder,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BlurView } from 'expo-blur';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CalorieOverflowRing } from '@/components/CalorieOverflowRing';
 import { HomeDatePager } from '@/components/HomeDatePager';
-import { TodayLogBottomSheet } from '@/components/TodayLogBottomSheet';
+import { DayLogBottomSheet } from '@/components/DayLogBottomSheet';
 import { additionPresets, portionSnapPoints, sizeOptions } from '@/constants/nutrition-data';
 import { palette } from '@/constants/theme';
-import { useTheme } from '@/design-system';
+import { Badge, BottomSheet, Caption, useTheme } from '@/design-system';
 import { useAppState } from '@/providers/app-state-provider';
 import { DishDraft, DishSize, IngredientDraft, Macro, PortionValue } from '@/types/nutrition';
-import { buildDishMacro, clampPortion, computeIngredient, draftFromLog, formatDateKey, formatMacroText, getDailyFeedback, getIngredientSubtypeDef, getIngredientSubtypeDefs, getQuickCategories, getSubtypes, getToppingsForSubtype, summarizeToppings } from '@/utils/nutrition';
+import { buildDishMacro, clampPortion, computeIngredient, draftFromLog, formatDateKey, formatMacroText, getIngredientSubtypeDef, getIngredientSubtypeDefs, getQuickCategories, getSubtypes, getToppingsForSubtype, summarizeToppings } from '@/utils/nutrition';
 import { formatDayLabel, isSameDay, sumForDate } from '@/utils/history';
 
 function formatNumber(value: number | null | undefined): string {
@@ -36,17 +34,25 @@ function formatTime(timestamp: string): string {
   return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
 }
 
-function ProgressRow({ label, current, target, color }: { label: string; current: number; target: number; color: string }) {
+function MiniProgressBar({ letter, label, current, target, color }: {
+  letter: string;
+  label: string;
+  current: number;
+  target: number;
+  color: string;
+}) {
   const progress = target > 0 ? Math.min(current / target, 1) : 0;
   return (
-    <View style={styles.progressRow}>
-      <View style={styles.progressHeader}>
-        <Text style={styles.progressLabel}>{label}</Text>
-        <Text style={styles.progressValue}>{Math.round(current)}g</Text>
+    <View style={styles.miniBarItem}>
+      <Text style={styles.miniBarLabel}>
+        <Text style={[styles.miniBarLetter, { color }]}>{letter}</Text>
+        {' '}
+        {label}
+      </Text>
+      <View style={styles.miniBarTrack}>
+        <View style={[styles.miniBarFill, { width: `${progress * 100}%`, backgroundColor: color }]} />
       </View>
-      <View style={styles.progressTrack}>
-        <View style={[styles.progressFill, { width: `${progress * 100}%`, backgroundColor: color }]} />
-      </View>
+      <Text style={styles.miniBarValue}>{Math.round(current)} / {Math.round(target)} g</Text>
     </View>
   );
 }
@@ -98,6 +104,7 @@ export const Header = memo(function Header({ viewedDate }: { viewedDate?: Date }
 export const StatusCard = memo(function StatusCard({ viewedDate }: { viewedDate?: Date }) {
   const { profile, todayMacro, logs } = useAppState();
   const t = useTheme();
+  const { width: screenWidth } = useWindowDimensions();
   const today = useMemo(() => new Date(), []);
   const targetDate = viewedDate ?? today;
   const isToday = isSameDay(targetDate, today);
@@ -106,72 +113,49 @@ export const StatusCard = memo(function StatusCard({ viewedDate }: { viewedDate?
     () => (isToday ? todayMacro : sumForDate(logs, dateKey)),
     [isToday, todayMacro, logs, dateKey]
   );
-  const dayLogCount = useMemo(
-    () => logs.filter((log) => log.date === dateKey).length,
-    [logs, dateKey]
-  );
 
-  const [now, setNow] = useState<Date>(() => new Date());
-  useEffect(() => {
-    if (!isToday) return;
-    const id = setInterval(() => setNow(new Date()), 60 * 1000);
-    return () => clearInterval(id);
-  }, [isToday]);
-
-  const feedback = useMemo(() => {
-    if (isToday) {
-      return getDailyFeedback(dayMacro, profile, now, dayLogCount);
-    }
-    if (dayLogCount === 0) {
-      return {
-        subheader: 'この日の記録はありません。',
-        body: '記録は当日のみ追加できます。',
-      };
-    }
-    const ratio = profile.targetCalories > 0 ? dayMacro.kcal / profile.targetCalories : 0;
-    const pct = Math.round(ratio * 100);
-    return {
-      subheader: `${Math.round(dayMacro.kcal)} kcal · 目標比 ${pct}%`,
-      body: `この日は ${dayLogCount} 件の記録がありました。`,
-    };
-  }, [isToday, dayMacro, profile, now, dayLogCount]);
+  // 画面幅に比例した可変リング径 (120–180 でクランプ)。
+  // strokeWidth は径の 11% でバランス維持。
+  const ringSize = Math.round(Math.min(180, Math.max(120, screenWidth * 0.36)));
+  const ringStroke = Math.round(ringSize * 0.11);
 
   return (
-    <LinearGradient colors={[palette.surface, palette.card]} style={styles.statusCard}>
-      <View style={styles.statusTopRow}>
+    <View style={styles.statusCard}>
+      {/* 縦組み 2 ブロック: Ring (center に 残り kcal) → PFC 3 列ミニバー。 */}
+      <View style={styles.ringWrap}>
         <CalorieOverflowRing
           consumedKcal={dayMacro.kcal}
           targetKcal={profile.targetCalories}
-          size={148}
-          strokeWidth={16}
-          // color props 未指定 → DS の nutrition.calorie.* がデフォルト適用される
+          size={ringSize}
+          strokeWidth={ringStroke}
+          statusMode="auto"
         />
-        <View style={styles.progressColumn}>
-          <ProgressRow
-            label="Protein"
-            current={dayMacro.protein}
-            target={profile.targetProtein}
-            color={t.colors.nutrition.protein.default}
-          />
-          <ProgressRow
-            label="Fat"
-            current={dayMacro.fat}
-            target={profile.targetFat}
-            color={t.colors.nutrition.fat.default}
-          />
-          <ProgressRow
-            label="Carbs"
-            current={dayMacro.carbs}
-            target={profile.targetCarbs}
-            color={t.colors.nutrition.carbs.default}
-          />
-        </View>
       </View>
-      <View style={styles.feedbackBlock} testID="daily-feedback">
-        <Text style={styles.subheaderText} testID="daily-feedback-subheader">{feedback.subheader}</Text>
-        <Text style={styles.bodyText} testID="daily-feedback-body">{feedback.body}</Text>
+
+      <View style={styles.pfcMiniRow}>
+        <MiniProgressBar
+          letter="P"
+          label="タンパク質"
+          current={dayMacro.protein}
+          target={profile.targetProtein}
+          color={t.colors.nutrition.protein.default}
+        />
+        <MiniProgressBar
+          letter="F"
+          label="脂肪"
+          current={dayMacro.fat}
+          target={profile.targetFat}
+          color={t.colors.nutrition.fat.default}
+        />
+        <MiniProgressBar
+          letter="C"
+          label="炭水化物"
+          current={dayMacro.carbs}
+          target={profile.targetCarbs}
+          color={t.colors.nutrition.carbs.default}
+        />
       </View>
-    </LinearGradient>
+    </View>
   );
 });
 
@@ -291,48 +275,6 @@ export const UndoToast = memo(function UndoToast() {
   );
 });
 
-export const MyStatusSheet = memo(function MyStatusSheet() {
-  const { profile, statusSheetVisible, setStatusSheetVisible, todayMacro, weights } = useAppState();
-  const insets = useSafeAreaInsets();
-  const latestDelta = useMemo(() => {
-    if (weights.length < 2) return null;
-    return Number((weights[0].weightKg - weights[1].weightKg).toFixed(1));
-  }, [weights]);
-
-  return (
-    <Modal visible={statusSheetVisible} transparent animationType="slide" onRequestClose={() => setStatusSheetVisible(false)}>
-      <BlurView intensity={24} tint="dark" style={StyleSheet.absoluteFill} />
-      <Pressable style={styles.modalOverlay} onPress={() => setStatusSheetVisible(false)} testID="status-sheet-overlay">
-        <Pressable style={[styles.modalSheet, { paddingBottom: 30 + insets.bottom }]} onPress={() => undefined} testID="status-sheet">
-          <View style={styles.sheetGrabber} />
-          <View style={styles.sheetHero}>
-            <View style={styles.statusAvatarLarge}><Text style={styles.statusAvatarEmoji}>🧑🏻</Text></View>
-            <Text style={styles.sheetHeroTitle}>My Status</Text>
-            <Text style={styles.sheetHeroSubtitle}>今の自分と目標を静かに確認できます。</Text>
-          </View>
-          <View style={styles.statusInfoGrid}>
-            <View style={styles.statusInfoCard}><Text style={styles.infoLabel}>身長</Text><Text style={styles.infoValue}>{formatNumber(profile.heightCm)} cm</Text></View>
-            <View style={styles.statusInfoCard}><Text style={styles.infoLabel}>現在体重</Text><Text style={styles.infoValue}>{formatNumber(profile.currentWeightKg)} kg</Text></View>
-            <View style={styles.statusInfoCard}><Text style={styles.infoLabel}>目標体重</Text><Text style={styles.infoValue}>{formatNumber(profile.targetWeightKg)} kg</Text></View>
-            <View style={styles.statusInfoCard}><Text style={styles.infoLabel}>目標タイプ</Text><Text style={styles.infoValue}>{profile.goalType}</Text></View>
-          </View>
-          <View style={styles.statusGoalCard}>
-            <Text style={styles.goalCardTitle}>Daily Goal</Text>
-            <Text style={styles.goalCalories}>{profile.targetCalories.toLocaleString()} kcal</Text>
-            <View style={styles.goalMacroRow}>
-              <MacroPill label="P" value={profile.targetProtein} />
-              <MacroPill label="F" value={profile.targetFat} />
-              <MacroPill label="C" value={profile.targetCarbs} />
-            </View>
-            <Text style={styles.goalHint}>今日の進捗 {Math.round(todayMacro.kcal)} kcal</Text>
-            <Text style={styles.goalHint}>最近の体重変化 {latestDelta === null ? '--' : `${latestDelta > 0 ? '+' : ''}${latestDelta} kg`}</Text>
-          </View>
-        </Pressable>
-      </Pressable>
-    </Modal>
-  );
-});
-
 export const LogEditorSheet = memo(function LogEditorSheet() {
   const { editorLog, setEditorLogId, updateDishLog, updateIngredientLog, deleteLog, editorIsPending, commitPendingLog, cancelPendingLog } = useAppState();
 
@@ -359,7 +301,6 @@ export const LogEditorSheet = memo(function LogEditorSheet() {
     }
     setEditorLogId(null);
   };
-  const insets = useSafeAreaInsets();
   const ingredientDraft = useMemo<IngredientDraft | null>(() => {
     if (!editorLog || editorLog.mode !== 'ingredient') return null;
     return draftFromLog(editorLog);
@@ -374,45 +315,50 @@ export const LogEditorSheet = memo(function LogEditorSheet() {
     };
   }, [editorLog]);
 
-  if (!editorLog) return null;
+  // editorLog が null になっても BottomSheet を即時 unmount しないことで退場アニメ
+  // を完走させる。BottomSheet 内部で children をキャッシュしているのでここでは
+  // 「visible=false の間も最後の編集対象を渡す」必要はないが、props の参照崩れ
+  // を避けるため早期 return しない。
+  const visible = editorLog != null;
+  const log = editorLog; // 早期 return 削除に伴い nullable アクセスを許容
+  const title = log
+    ? editorIsPending
+      ? log.mode === 'ingredient' ? '食材を追加' : '料理を追加'
+      : log.mode === 'ingredient' ? '食材を編集' : '料理を編集'
+    : '';
 
   return (
-    <Modal visible transparent animationType="slide" onRequestClose={handleClose}>
-      <BlurView intensity={24} tint="dark" style={StyleSheet.absoluteFill} />
-      <Pressable style={styles.modalOverlay} onPress={handleClose} testID="log-editor-overlay">
-        <Pressable style={[styles.editorSheet, { paddingBottom: 20 + insets.bottom }]} onPress={() => undefined} testID="log-editor-sheet">
-          <View style={styles.sheetGrabber} />
-          <Text style={styles.editorTitle}>{editorIsPending ? (editorLog.mode === 'ingredient' ? '食材を追加' : '料理を追加') : (editorLog.mode === 'ingredient' ? 'Ingredient Edit' : 'Dish Edit')}</Text>
-          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.editorBody}>
-            {editorLog.mode === 'ingredient' && ingredientDraft ? (
-              <IngredientEditorContent
-                draft={ingredientDraft}
-                onChange={(next) => updateIngredientLog(editorLog.id, next)}
-              />
-            ) : null}
-            {editorLog.mode === 'dish' && dishDraft ? (
-              <DishEditorContent
-                draft={dishDraft}
-                onChange={(next) => updateDishLog(editorLog.id, next)}
-              />
-            ) : null}
-            <View style={styles.editorFooter}>
-              <Pressable style={styles.secondaryButton} onPress={handleDelete} testID="editor-delete-button">
-                <Text style={styles.secondaryButtonText}>{editorIsPending ? 'キャンセル' : '削除'}</Text>
-              </Pressable>
-              <Pressable style={styles.primaryButton} onPress={handleDone} testID="editor-done-button">
-                <Text style={styles.primaryButtonText}>{editorIsPending ? '追加' : '完了'}</Text>
-              </Pressable>
-            </View>
-          </ScrollView>
-        </Pressable>
-      </Pressable>
-    </Modal>
+    <BottomSheet
+      visible={visible}
+      onClose={handleClose}
+      title={title}
+      secondaryAction={{
+        label: editorIsPending ? 'キャンセル' : '削除',
+        onPress: handleDelete,
+      }}
+      primaryAction={{
+        label: editorIsPending ? '追加' : '完了',
+        onPress: handleDone,
+      }}
+      testID="log-editor-sheet"
+    >
+      {log?.mode === 'ingredient' && ingredientDraft ? (
+        <IngredientEditorContent
+          draft={ingredientDraft}
+          onChange={(next) => updateIngredientLog(log.id, next)}
+        />
+      ) : null}
+      {log?.mode === 'dish' && dishDraft ? (
+        <DishEditorContent
+          draft={dishDraft}
+          onChange={(next) => updateDishLog(log.id, next)}
+        />
+      ) : null}
+    </BottomSheet>
   );
 });
 
 function IngredientEditorContent({ draft, onChange }: { draft: IngredientDraft; onChange: (draft: IngredientDraft) => void }) {
-  const t = useTheme();
   const categories = getQuickCategories('ingredient');
   const currentCategory = categories.find((item) => item.key === draft.categoryKey);
   const subtypeDefs = getIngredientSubtypeDefs(draft.categoryKey);
@@ -485,7 +431,7 @@ function IngredientEditorContent({ draft, onChange }: { draft: IngredientDraft; 
 
       {subtypeDefs.length > 0 ? (
         <View style={styles.subSection}>
-          <Text style={styles.editorSectionTitle}>種類</Text>
+          <Caption tone="secondary" style={styles.editorSectionTitle}>種類</Caption>
           <View style={styles.optionWrap}>
             {subtypeDefs.map((item) => (
               <Chip
@@ -502,19 +448,7 @@ function IngredientEditorContent({ draft, onChange }: { draft: IngredientDraft; 
       <View style={styles.portionSection}>
         <View style={styles.portionHeader}>
           <Text style={styles.portionTitle}>食べた量</Text>
-          <Text
-            style={[
-              styles.portionBadge,
-              // 現在の選択値 indicator なので accent (lavender) ではなく
-              // action.primary.container (sage 薄) に寄せる。
-              {
-                backgroundColor: t.colors.action.primary.container,
-                color: t.colors.action.primary.onContainer,
-              },
-            ]}
-          >
-            {draft.portionValue}x
-          </Text>
+          <Badge tone="brand">{draft.portionValue}x</Badge>
         </View>
         <Text style={styles.portionNowLine} numberOfLines={1} testID="ingredient-portion-label">
           {computation.portionDisplay.primaryLabel}
@@ -525,7 +459,7 @@ function IngredientEditorContent({ draft, onChange }: { draft: IngredientDraft; 
 
       {toppings.length > 0 ? (
         <View style={styles.subSection}>
-          <Text style={styles.editorSectionTitle}>トッピング</Text>
+          <Caption tone="secondary" style={styles.editorSectionTitle}>トッピング</Caption>
           <View style={styles.optionWrap}>
             {toppings.map((item) => (
               <Chip
@@ -662,7 +596,7 @@ function DishEditorContent({ draft, onChange }: { draft: DishDraft; onChange: (d
 
   return (
     <View style={styles.editorSection}>
-      <Text style={styles.editorSectionTitle}>種類</Text>
+      <Caption tone="secondary" style={styles.editorSectionTitle}>種類</Caption>
       <View style={styles.optionWrap}>
         {categories.map((item) => (
           <Chip key={item.key} label={`${item.emoji} ${item.label}`} active={draft.categoryKey === item.key} onPress={() => onChange({ ...draft, categoryKey: item.key, subTypeKey: undefined })} />
@@ -670,7 +604,7 @@ function DishEditorContent({ draft, onChange }: { draft: DishDraft; onChange: (d
       </View>
       {subtypes.length > 0 ? (
         <>
-          <Text style={styles.editorSectionTitle}>味・タイプ</Text>
+          <Caption tone="secondary" style={styles.editorSectionTitle}>味・タイプ</Caption>
           <View style={styles.optionWrap}>
             {subtypes.map((item) => (
               <Chip key={item.key} label={item.label} active={draft.subTypeKey === item.key} onPress={() => onChange({ ...draft, subTypeKey: item.key })} />
@@ -678,7 +612,7 @@ function DishEditorContent({ draft, onChange }: { draft: DishDraft; onChange: (d
           </View>
         </>
       ) : null}
-      <Text style={styles.editorSectionTitle}>高影響追加</Text>
+      <Caption tone="secondary" style={styles.editorSectionTitle}>高影響追加</Caption>
       <View style={styles.optionWrap}>
         {additionPresets.map((item) => {
           const active = draft.additions.includes(item.key);
@@ -701,7 +635,7 @@ function DishEditorContent({ draft, onChange }: { draft: DishDraft; onChange: (d
           );
         })}
       </View>
-      <Text style={styles.editorSectionTitle}>サイズ</Text>
+      <Caption tone="secondary" style={styles.editorSectionTitle}>サイズ</Caption>
       <View style={styles.optionWrap}>
         {sizeOptions.map((size) => (
           <Chip key={size} label={size} active={draft.size === size} onPress={() => onChange({ ...draft, size: size as DishSize })} />
@@ -739,8 +673,6 @@ void getSubtypes;
 
 export function HomeScreen() {
   const [viewedDate, setViewedDate] = useState<Date>(() => new Date());
-  const today = useMemo(() => new Date(), []);
-  const isViewingToday = isSameDay(viewedDate, today);
   return (
     <View style={styles.page} testID="home-screen">
       <LinearGradient colors={[palette.background, '#F7F4EE']} style={StyleSheet.absoluteFillObject} />
@@ -750,10 +682,9 @@ export function HomeScreen() {
         </View>
         <HomeDatePager onViewedDateChange={setViewedDate} />
       </SafeAreaView>
-      {isViewingToday ? <TodayLogBottomSheet /> : null}
+      <DayLogBottomSheet viewedDate={viewedDate} />
       <FloatingFeedback />
       <UndoToast />
-      <MyStatusSheet />
       <LogEditorSheet />
     </View>
   );
@@ -769,31 +700,21 @@ const styles = StyleSheet.create({
   headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   headerCenter: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   headerDate: { fontSize: 16, fontWeight: '700', color: palette.sageDeep },
-  avatarButton: { width: 56, height: 56, borderRadius: 28, backgroundColor: palette.sageDeep, alignItems: 'center', justifyContent: 'center', shadowColor: palette.sageDeep, shadowOpacity: 0.18, shadowRadius: 18, shadowOffset: { width: 0, height: 8 }, elevation: 3 },
-  avatarEmoji: { fontSize: 28 },
+  avatarButton: { width: 42, height: 42, borderRadius: 21, backgroundColor: palette.sageDeep, alignItems: 'center', justifyContent: 'center' },
+  avatarEmoji: { fontSize: 20 },
   appTitle: { fontSize: 18, fontWeight: '700', color: palette.sageDeep },
   appSubtitle: { fontSize: 13, color: palette.textMuted, marginTop: 2 },
   trialBadge: { fontSize: 11, color: palette.sageStrong, marginTop: 2, fontWeight: '600' },
   iconButton: { width: 42, height: 42, borderRadius: 21, backgroundColor: palette.surface, alignItems: 'center', justifyContent: 'center' },
-  statusCard: { borderRadius: 34, padding: 22, gap: 18, shadowColor: '#6C766A', shadowOpacity: 0.1, shadowRadius: 24, shadowOffset: { width: 0, height: 12 }, elevation: 3 },
-  statusTopRow: { flexDirection: 'row', alignItems: 'center', gap: 20 },
-  ringWrap: { width: 138, height: 138, alignItems: 'center', justifyContent: 'center' },
-  ringBackground: { position: 'absolute', width: 138, height: 138, borderRadius: 69, borderWidth: 14, borderColor: '#E7E0D4' },
-  ringProgress: { position: 'absolute', width: 138, height: 138, borderRadius: 69, borderWidth: 14, borderColor: palette.sage, borderTopColor: palette.sage, borderRightColor: palette.sage, borderBottomColor: palette.sage, borderLeftColor: 'transparent' },
-  ringCenter: { alignItems: 'center', justifyContent: 'center' },
-  kcalValue: { fontSize: 28, fontWeight: '700', color: palette.text },
-  kcalTarget: { marginTop: 2, fontSize: 18, color: palette.textMuted },
-  progressColumn: { flex: 1, gap: 14 },
-  progressRow: { gap: 6 },
-  progressHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  progressLabel: { fontSize: 16, color: palette.text },
-  progressValue: { fontSize: 16, color: '#232824' },
-  progressTrack: { height: 14, borderRadius: 999, backgroundColor: '#E2DDD4', overflow: 'hidden' },
-  progressFill: { height: '100%', borderRadius: 999 },
-  messageText: { fontSize: 14, color: palette.textMuted },
-  feedbackBlock: { gap: 4 },
-  subheaderText: { fontSize: 14, color: palette.text, fontWeight: '600', lineHeight: 20 },
-  bodyText: { fontSize: 13, color: palette.textMuted, lineHeight: 19 },
+  statusCard: { paddingVertical: 4, gap: 16 },
+  ringWrap: { alignItems: 'center', justifyContent: 'center' },
+  pfcMiniRow: { flexDirection: 'row', gap: 12 },
+  miniBarItem: { flex: 1, gap: 4 },
+  miniBarLabel: { fontSize: 13, color: palette.textMuted, fontWeight: '600' },
+  miniBarLetter: { fontWeight: '700' },
+  miniBarTrack: { height: 6, borderRadius: 999, backgroundColor: '#E2DDD4', overflow: 'hidden' },
+  miniBarFill: { height: '100%', borderRadius: 999 },
+  miniBarValue: { fontSize: 13, color: palette.text, fontWeight: '600' },
   sectionTitle: { fontSize: 18, fontWeight: '700', color: '#1F2C23', marginBottom: 14 },
   segmentedWrap: { flexDirection: 'row', backgroundColor: palette.card, borderRadius: 18, padding: 5, marginBottom: 14 },
   segmentButton: { flex: 1, borderRadius: 14, paddingVertical: 10, alignItems: 'center' },

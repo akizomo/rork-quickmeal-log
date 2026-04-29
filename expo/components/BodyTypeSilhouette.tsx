@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import Svg, { Ellipse, Path } from 'react-native-svg';
 
 import { palette } from '@/constants/theme';
+import { useTheme } from '@/design-system';
 import { BiologicalBasis, BodyStage } from '@/types/nutrition';
 
 interface BodyParams {
@@ -83,11 +84,13 @@ export const BodyTypeSilhouette = memo(function BodyTypeSilhouette({
   size = 90,
   testID,
 }: BodyTypeSilhouetteProps) {
+  const t = useTheme();
   const params = basis === 'male_basis' ? MALE_STAGES[stage] : FEMALE_STAGES[stage];
   const bodyPath = buildPath(params);
-  const strokeColor = active ? palette.sageDeep : palette.border;
-  const fillColor = active ? palette.accentSoft : palette.surface;
-  const headColor = active ? palette.sageDeep : '#D8D1C3';
+  // active 時は SelectCard/Matrix と同じ DS 意匠 (sage focus + sage container fill) に統一。
+  const strokeColor = active ? t.colors.border.focus : t.colors.border.default;
+  const fillColor = active ? t.colors.action.primary.container : t.colors.surface.overlay;
+  const headColor = active ? t.colors.border.focus : t.colors.border.subtle;
 
   return (
     <View style={{ width: size, height: size * 1.7 }} testID={testID}>

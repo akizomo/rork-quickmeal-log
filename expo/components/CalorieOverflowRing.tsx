@@ -2,6 +2,8 @@ import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 
+import { useTheme } from '@/design-system';
+
 export type RingStatusMode = 'auto' | 'remaining' | 'over' | 'percent';
 
 export interface CalorieOverflowRingProps {
@@ -21,17 +23,22 @@ export interface CalorieOverflowRingProps {
   showStatusText?: boolean;
   statusMode?: RingStatusMode;
 
+  /** デフォルトは theme.colors.nutrition.calorie.track */
   trackColor?: string;
+  /** デフォルトは theme.colors.nutrition.calorie.within */
   progressColor?: string;
+  /** デフォルトは theme.colors.nutrition.calorie.severeExceed */
   overflowColor?: string;
+  /** デフォルトは theme.colors.content.primary */
   centerTextColor?: string;
+  /** デフォルトは theme.colors.content.secondary */
   subTextColor?: string;
 
   accessibilityLabel?: string;
   testID?: string;
 }
 
-const DEFAULTS = {
+const SHAPE_DEFAULTS = {
   size: 164,
   strokeWidth: 18,
   startAngle: -90,
@@ -42,11 +49,6 @@ const DEFAULTS = {
   showCenterLabel: true,
   showStatusText: true,
   statusMode: 'auto' as RingStatusMode,
-  trackColor: '#DCE6E1',
-  progressColor: '#7FAE9A',
-  overflowColor: '#5E8778',
-  centerTextColor: '#25312C',
-  subTextColor: '#6E7A74',
 };
 
 function formatKcal(value: number): string {
@@ -54,24 +56,25 @@ function formatKcal(value: number): string {
 }
 
 export const CalorieOverflowRing = memo(function CalorieOverflowRing(props: CalorieOverflowRingProps) {
+  const t = useTheme();
   const {
     consumedKcal,
     targetKcal,
-    size = DEFAULTS.size,
-    strokeWidth = DEFAULTS.strokeWidth,
-    startAngle = DEFAULTS.startAngle,
-    maxVisualLaps = DEFAULTS.maxVisualLaps,
-    animate = DEFAULTS.animate,
-    animationDurationMs = DEFAULTS.animationDurationMs,
-    numberAnimationDurationMs = DEFAULTS.numberAnimationDurationMs,
-    showCenterLabel = DEFAULTS.showCenterLabel,
-    showStatusText = DEFAULTS.showStatusText,
-    statusMode = DEFAULTS.statusMode,
-    trackColor = DEFAULTS.trackColor,
-    progressColor = DEFAULTS.progressColor,
-    overflowColor = DEFAULTS.overflowColor,
-    centerTextColor = DEFAULTS.centerTextColor,
-    subTextColor = DEFAULTS.subTextColor,
+    size = SHAPE_DEFAULTS.size,
+    strokeWidth = SHAPE_DEFAULTS.strokeWidth,
+    startAngle = SHAPE_DEFAULTS.startAngle,
+    maxVisualLaps = SHAPE_DEFAULTS.maxVisualLaps,
+    animate = SHAPE_DEFAULTS.animate,
+    animationDurationMs = SHAPE_DEFAULTS.animationDurationMs,
+    numberAnimationDurationMs = SHAPE_DEFAULTS.numberAnimationDurationMs,
+    showCenterLabel = SHAPE_DEFAULTS.showCenterLabel,
+    showStatusText = SHAPE_DEFAULTS.showStatusText,
+    statusMode = SHAPE_DEFAULTS.statusMode,
+    trackColor = t.colors.nutrition.calorie.track,
+    progressColor = t.colors.nutrition.calorie.within,
+    overflowColor = t.colors.nutrition.calorie.severeExceed,
+    centerTextColor = t.colors.content.primary,
+    subTextColor = t.colors.content.secondary,
     accessibilityLabel,
     testID,
   } = props;

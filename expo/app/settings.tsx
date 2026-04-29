@@ -1,105 +1,123 @@
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import React from 'react';
-import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Switch, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { palette } from '@/constants/theme';
+import { SettingsDivider, SettingsLinkRow, SettingsListCard, SettingsSectionLabel } from '@/components/SettingsList';
+import { Body, Caption, Card, useTheme } from '@/design-system';
 import { useAppState } from '@/providers/app-state-provider';
 
 export default function SettingsRoute() {
-  const { settings, updateSettingsValues } = useAppState();
+  const router = useRouter();
+  const theme = useTheme();
+  const { settings, updateSettingsValues, resetOnboarding } = useAppState();
+
+  const confirmReset = () => {
+    Alert.alert(
+      'データをリセット',
+      'プロフィール・目標・体重・体脂肪・食事ログなど、この端末に保存されているすべてのデータが消去されます。よろしいですか？',
+      [
+        { text: 'キャンセル', style: 'cancel' },
+        {
+          text: 'リセットする',
+          style: 'destructive',
+          onPress: () => {
+            resetOnboarding();
+            router.replace('/intro');
+          },
+        },
+      ]
+    );
+  };
 
   return (
     <>
       <Stack.Screen
         options={{
-          title: 'Settings',
-          headerStyle: { backgroundColor: palette.background },
-          headerTintColor: palette.text,
+          title: '設定',
+          headerStyle: { backgroundColor: theme.colors.surface.default },
+          headerTintColor: theme.colors.content.primary,
+          headerShadowVisible: false,
         }}
       />
-      <ScrollView style={styles.page} contentContainerStyle={styles.content} testID="settings-screen">
-        <View style={styles.card}>
-          <Text style={styles.title}>Quiet Nutrition</Text>
-          <Text style={styles.description}>Home中心のMVPなので、設定は必要最小限にしています。</Text>
-        </View>
+      <View style={[styles.page, { backgroundColor: theme.colors.surface.default }]}>
+        <SafeAreaView edges={['bottom']} style={{ flex: 1 }}>
+          <ScrollView contentContainerStyle={styles.scroll} testID="settings-screen">
 
-        <View style={styles.card}>
-          <View style={styles.row}>
-            <Text style={styles.label}>Haptics</Text>
-            <Switch
-              value={settings.hapticsEnabled}
-              onValueChange={(value) => updateSettingsValues({ hapticsEnabled: value })}
-              testID="settings-haptics-switch"
-            />
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>Sound</Text>
-            <Switch
-              value={settings.soundEnabled}
-              onValueChange={(value) => updateSettingsValues({ soundEnabled: value })}
-              testID="settings-sound-switch"
-            />
-          </View>
-        </View>
+            {/* §音とハプティクス */}
+            <View style={styles.section}>
+              <SettingsSectionLabel>音とハプティクス</SettingsSectionLabel>
+              <SettingsListCard>
+                <SettingsLinkRow
+                  label="ハプティクス"
+                  showChevron={false}
+                  trailing={
+                    <Switch
+                      value={settings.hapticsEnabled}
+                      onValueChange={(value) => updateSettingsValues({ hapticsEnabled: value })}
+                      testID="settings-haptics-switch"
+                    />
+                  }
+                />
+                <SettingsDivider />
+                <SettingsLinkRow
+                  label="効果音"
+                  showChevron={false}
+                  trailing={
+                    <Switch
+                      value={settings.soundEnabled}
+                      onValueChange={(value) => updateSettingsValues({ soundEnabled: value })}
+                      testID="settings-sound-switch"
+                    />
+                  }
+                />
+              </SettingsListCard>
+            </View>
 
-        <View style={styles.card}>
-          <Text style={styles.label}>この先の拡張</Text>
-          <Text style={styles.description}>プロフィール編集や体重入力は次フェーズで強化できます。</Text>
-          <Pressable style={styles.secondaryButton} testID="settings-done-button">
-            <Text style={styles.secondaryButtonText}>このままでOK</Text>
-          </Pressable>
-        </View>
-      </ScrollView>
+            {/* §データ */}
+            <View style={styles.section}>
+              <SettingsSectionLabel>データ</SettingsSectionLabel>
+              <Card variant="raised" style={{ gap: theme.spacing['2'] }}>
+                <Body weight="bold">データの保存について</Body>
+                <Caption tone="secondary">
+                  Hachibu はアカウント不要で使えるかわりに、記録したデータはこの端末内にのみ保存されます。アプリを削除したり、機種変更すると食事ログ・体重・体脂肪率などのデータは失われます。
+                </Caption>
+                <Caption tone="tertiary">
+                  サブスクリプションは Apple ID / Google アカウントに紐付くため、再インストール時に「購入を復元」から再開できます。
+                </Caption>
+              </Card>
+              <SettingsListCard>
+                <SettingsLinkRow
+                  label="データをリセット"
+                  destructive
+                  showChevron={false}
+                  onPress={confirmReset}
+                  testID="settings-reset-data"
+                />
+              </SettingsListCard>
+            </View>
+
+            {/* §情報 */}
+            <View style={styles.section}>
+              <SettingsSectionLabel>情報</SettingsSectionLabel>
+              <SettingsListCard>
+                <SettingsLinkRow
+                  label="アプリについて"
+                  onPress={() => router.push('/about')}
+                  testID="settings-link-about"
+                />
+              </SettingsListCard>
+            </View>
+
+          </ScrollView>
+        </SafeAreaView>
+      </View>
     </>
   );
 }
 
 const styles = StyleSheet.create({
-  page: {
-    flex: 1,
-    backgroundColor: palette.background,
-  },
-  content: {
-    padding: 20,
-    gap: 14,
-  },
-  card: {
-    backgroundColor: palette.surface,
-    borderRadius: 28,
-    padding: 20,
-    gap: 12,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: palette.text,
-  },
-  description: {
-    fontSize: 14,
-    lineHeight: 22,
-    color: palette.textMuted,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  label: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: palette.text,
-  },
-  secondaryButton: {
-    marginTop: 4,
-    alignSelf: 'flex-start',
-    backgroundColor: palette.card,
-    borderRadius: 999,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-  },
-  secondaryButtonText: {
-    color: palette.text,
-    fontSize: 14,
-    fontWeight: '700',
-  },
+  page: { flex: 1 },
+  scroll: { padding: 18, gap: 22, paddingBottom: 40 },
+  section: { gap: 6 },
 });

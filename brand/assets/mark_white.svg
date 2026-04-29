@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" width="1000" height="1000">
+  <title>Hachibu mark</title>
+  <circle cx="375.00" cy="375.00" r="80.00" fill="#FFFFFF" opacity="1.0"/>
+  <circle cx="625.00" cy="375.00" r="80.00" fill="#FFFFFF" opacity="1.0"/>
+  <circle cx="875.00" cy="375.00" r="80.00" fill="#FFFFFF" opacity="1.0"/>
+  <circle cx="375.00" cy="625.00" r="80.00" fill="#FFFFFF" opacity="1.0"/>
+  <circle cx="625.00" cy="625.00" r="80.00" fill="#FFFFFF" opacity="1.0"/>
+  <circle cx="875.00" cy="625.00" r="80.00" fill="#FFFFFF" opacity="1.0"/>
+  <circle cx="375.00" cy="875.00" r="80.00" fill="#FFFFFF" opacity="1.0"/>
+  <circle cx="625.00" cy="875.00" r="80.00" fill="#FFFFFF" opacity="0.2"/>
+</svg>

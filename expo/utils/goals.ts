@@ -1,5 +1,102 @@
-import { BiologicalBasis, BodyStage, GoalDirection, Macro } from '@/types/nutrition';
-import { BODY_STAGE_INFO } from '@/constants/onboarding';
+import { ActivityLevel, BiologicalBasis, BodyStage, BodyType9, GoalDirection, Macro, PaceLevel } from '@/types/nutrition';
+import {
+  getCellBodyFatTypical,
+  getCellRef,
+} from '@/constants/body-matrix';
+import {
+  ACTIVITY_LEVEL_OPTIONS,
+  BODY_STAGE_INFO,
+  PACE_OPTIONS,
+} from '@/constants/onboarding';
+
+/**
+ * Auto-derive the goal direction from current/target 9-matrix body types.
+ * Edge case (fat↑ muscle↓) is flagged as 'warning' by deriveTransitionWarning.
+ */
+export function deriveDirection(current: BodyType9, target: BodyType9): GoalDirection {
+  const fatDelta = target.fat - current.fat;
+  const muscleDelta = target.muscle - current.muscle;
+  if (fatDelta === 0 && muscleDelta === 0) return 'maintain';
+  if (fatDelta < 0) return 'lose';
+  if (fatDelta > 0) return 'gain';
+  // fatDelta === 0
+  if (muscleDelta > 0) return 'gain';
+  if (muscleDelta < 0) return 'lose';
+  return 'maintain';
+}
+
+/** Returns a warning string if the transition is considered non-recommended. */
+export function deriveTransitionWarning(
+  current: BodyType9,
+  target: BodyType9
+): string | null {
+  const fatDelta = target.fat - current.fat;
+  const muscleDelta = target.muscle - current.muscle;
+  if (fatDelta > 0 && muscleDelta < 0) {
+    return '脂肪を増やしつつ筋量を減らす方向は非推奨です。別の目標を検討してください。';
+  }
+  return null;
+}
+
+export interface PlanOutcome {
+  /** negative for lose, positive for gain, 0 for maintain */
+  totalKgDelta: number;
+  /** per-month delta (averaged) */
+  monthlyKgDelta: number;
+  finalWeightKg: number;
+  /** rough estimated final body fat percentage */
+  finalBodyFatPct: number;
+  /** true when delta exceeds ~4% of current weight (≒ body type level change) */
+  reachesTargetCell: boolean;
+}
+
+/**
+ * Compute outcome of a given pace + direction over a fixed duration.
+ *
+ * Rate base (ACSM / ISSN):
+ *   - lose standard: 0.5%/week
+ *   - gain standard: 0.25%/week
+ *   pace multiplier (0.5/1.0/1.5) modulates these base rates.
+ */
+export function computePlanOutcome(
+  currentWeightKg: number,
+  currentBodyFatPct: number | null,
+  pace: PaceLevel,
+  direction: GoalDirection,
+  durationMonths = 3
+): PlanOutcome {
+  const baseWeekly = direction === 'lose' ? 0.005 : direction === 'gain' ? 0.0025 : 0;
+  const multi = PACE_OPTIONS.find((p) => p.key === pace)?.multiplier ?? 1;
+  const weeklyRate = baseWeekly * multi;
+  const weeks = durationMonths * 4.345;
+  const totalPct = weeklyRate * weeks * (direction === 'lose' ? -1 : direction === 'gain' ? 1 : 0);
+  const totalKgDelta = currentWeightKg * totalPct;
+  const finalWeight = currentWeightKg + totalKgDelta;
+  const bf0 = currentBodyFatPct ?? 0;
+
+  // Rough BF% projection:
+  // lose — assume 75% of weight loss is fat mass (rest is lean)
+  // gain — if fat-direction bulk, assume 50% of gain is fat; muscle-direction, 20%
+  let finalBF = bf0;
+  if (direction === 'lose' && bf0 > 0 && finalWeight > 0) {
+    const fatMassCurrent = currentWeightKg * (bf0 / 100);
+    const fatMassAfter = Math.max(0, fatMassCurrent + totalKgDelta * 0.75);
+    finalBF = (fatMassAfter / finalWeight) * 100;
+  } else if (direction === 'gain' && bf0 > 0 && finalWeight > 0) {
+    const fatMassCurrent = currentWeightKg * (bf0 / 100);
+    // Assume muscle-led gain: 30% of gain is fat
+    const fatMassAfter = fatMassCurrent + totalKgDelta * 0.3;
+    finalBF = (fatMassAfter / finalWeight) * 100;
+  }
+
+  return {
+    totalKgDelta: Math.round(totalKgDelta * 10) / 10,
+    monthlyKgDelta: Math.round((totalKgDelta / durationMonths) * 10) / 10,
+    finalWeightKg: Math.round(finalWeight * 10) / 10,
+    finalBodyFatPct: Math.round(finalBF),
+    reachesTargetCell: Math.abs(totalKgDelta) >= currentWeightKg * 0.04,
+  };
+}
 
 const ACTIVITY_FACTOR: Record<BiologicalBasis, number> = {
   male_basis: 1.11,
@@ -18,6 +115,11 @@ export interface GoalInputs {
   ageYears: number | null;
   basis: BiologicalBasis | null;
   direction: GoalDirection | null;
+  activityLevel: ActivityLevel | null;
+  paceLevel: PaceLevel | null; // null allowed when direction === 'maintain'
+  targetBodyType9: BodyType9 | null;
+  currentBodyFatPct?: number | null;
+  /** Legacy 5-stage body stages (not used in new logic, kept for back-compat). */
   currentStage?: BodyStage | null;
   targetStage?: BodyStage | null;
 }
@@ -72,35 +174,133 @@ export function estimateTargetWeight(
   };
 }
 
+/**
+ * Calculates the daily kcal adjustment based on direction + pace.
+ * Uses the 7700 kcal/kg body-weight thermodynamic conversion.
+ *   - 1% body weight/week ≒ 1100 kcal/day (in grams) ≒ 1 kg/week
+ *   - standard lose  = 0.5%/week, standard gain = 0.25%/week
+ *   - pace multiplier (0.5/1.0/1.5) scales the base rate
+ */
+function computeKcalDelta(
+  weightKg: number,
+  direction: GoalDirection,
+  paceLevel: PaceLevel | null
+): number {
+  if (direction === 'maintain') return 0;
+  if (!paceLevel) return 0;
+  const multi = PACE_OPTIONS.find((p) => p.key === paceLevel)?.multiplier ?? 1;
+  const baseWeekly = direction === 'lose' ? 0.005 : 0.0025;
+  const sign = direction === 'lose' ? -1 : 1;
+  const weeklyPct = baseWeekly * multi;
+  const weeklyKcal = weightKg * weeklyPct * 7700;
+  return Math.round((sign * weeklyKcal) / 7);
+}
+
+/**
+ * PFC macro calculator: weight-based protein, fat-floor enforcement,
+ * remainder to carbs. Used by both `recommendGoal` and on-the-fly
+ * kcal adjustments in the preview.
+ *
+ * Protein: activityLevel.proteinPerKg + direction bonus (+0.3 lose, +0.2 gain)
+ * Fat:     max(0.6 g/kg, 20% of kcal / 9) — ISSN / ACSM
+ * Carbs:   remaining kcal
+ */
+export function computePfc(
+  kcal: number,
+  weightKg: number,
+  activityLevel: ActivityLevel,
+  direction: GoalDirection
+): { proteinG: number; fatG: number; carbsG: number } {
+  const activityInfo = ACTIVITY_LEVEL_OPTIONS.find((a) => a.level === activityLevel);
+  const proteinBase = activityInfo?.proteinPerKg ?? 1.4;
+  const proteinBonus = direction === 'lose' ? 0.3 : direction === 'gain' ? 0.2 : 0;
+  const proteinG = Math.round((proteinBase + proteinBonus) * weightKg);
+
+  const fatMinByWeight = 0.6 * weightKg;
+  const fatMinByKcal = (kcal * 0.2) / 9;
+  const fatG = Math.round(Math.max(fatMinByWeight, fatMinByKcal));
+
+  const proteinKcal = proteinG * 4;
+  const fatKcal = fatG * 9;
+  const carbKcal = Math.max(0, kcal - proteinKcal - fatKcal);
+  const carbsG = Math.round(carbKcal / 4);
+
+  return { proteinG, fatG, carbsG };
+}
+
 export function recommendGoal(input: GoalInputs): GoalRecommendation | null {
-  const { heightCm, weightKg, ageYears, basis, direction } = input;
-  if (!heightCm || !weightKg || !ageYears || !basis || !direction) return null;
-
-  const rmr = calcRMR(weightKg, heightCm, ageYears, basis);
-  const tdee = calcTDEE(rmr, basis);
-  const rawKcal = tdee + KCAL_ADJUST_BY_DIRECTION[direction];
-  const targetKcal = Math.max(1200, Math.round(rawKcal / 10) * 10);
-
-  const proteinKcalRatio = direction === 'lose' ? 0.22 : direction === 'gain' ? 0.2 : 0.18;
-  const fatKcalRatio = direction === 'lose' ? 0.25 : 0.28;
-  const carbKcalRatio = 1 - proteinKcalRatio - fatKcalRatio;
-
-  const proteinG = Math.round((targetKcal * proteinKcalRatio) / 4);
-  const fatG = Math.round((targetKcal * fatKcalRatio) / 9);
-  const carbsG = Math.round((targetKcal * carbKcalRatio) / 4);
-
-  const { targetWeightKg, targetBodyFatPct } = estimateTargetWeight(
-    weightKg,
+  const {
     heightCm,
-    input.currentStage,
-    input.targetStage,
+    weightKg,
+    ageYears,
     basis,
-    direction
-  );
+    direction,
+    activityLevel,
+    paceLevel,
+    targetBodyType9,
+    currentBodyFatPct,
+  } = input;
+  if (!heightCm || !weightKg || !ageYears || !basis || !direction || !activityLevel || !targetBodyType9) {
+    return null;
+  }
+  if (direction !== 'maintain' && !paceLevel) return null;
 
-  const stageDelta = Math.abs((input.targetStage ?? 3) - (input.currentStage ?? 3));
+  // 1. RMR: Katch-McArdle when BF% known, Mifflin-St Jeor otherwise
+  let rmr: number;
+  if (currentBodyFatPct != null && currentBodyFatPct > 0) {
+    const lbm = weightKg * (1 - currentBodyFatPct / 100);
+    rmr = Math.max(800, Math.round(370 + 21.6 * lbm));
+  } else {
+    rmr = calcRMR(weightKg, heightCm, ageYears, basis);
+  }
+
+  // 2. TDEE with activity factor
+  const activityInfo = ACTIVITY_LEVEL_OPTIONS.find((a) => a.level === activityLevel);
+  const factor = activityInfo?.factor ?? 1.375;
+  const tdee = Math.round(rmr * factor);
+
+  // 3. kcal with pace adjustment, floor
+  const kcalDelta = computeKcalDelta(weightKg, direction, paceLevel);
+  const minKcal = basis === 'male_basis' ? 1500 : 1200;
+  const rawKcal = tdee + kcalDelta;
+  const targetKcal = Math.max(minKcal, Math.round(rawKcal / 10) * 10);
+
+  // 4. PFC
+  const { proteinG, fatG, carbsG } = computePfc(targetKcal, weightKg, activityLevel, direction);
+
+  // 5. Target weight / BF%:
+  //    Priority 1 — plan outcome: derived from *current* weight/BF% via pace-driven
+  //    3-month projection. This is what actually matches the user's real state.
+  //    Priority 2 — 9-matrix cell (fallback when pace is not selected yet).
+  //    For maintain: target = current (no change over the window).
+  let targetWeightKg: number;
+  let targetBodyFatPct: number;
+  if (direction === 'maintain') {
+    targetWeightKg = Math.round(weightKg * 10) / 10;
+    targetBodyFatPct =
+      currentBodyFatPct != null
+        ? Math.round(currentBodyFatPct)
+        : getCellBodyFatTypical(getCellRef(basis, targetBodyType9));
+  } else if (paceLevel) {
+    const outcome = computePlanOutcome(weightKg, currentBodyFatPct ?? null, paceLevel, direction);
+    targetWeightKg = outcome.finalWeightKg;
+    targetBodyFatPct =
+      currentBodyFatPct != null
+        ? outcome.finalBodyFatPct
+        : getCellBodyFatTypical(getCellRef(basis, targetBodyType9));
+  } else {
+    const ref = getCellRef(basis, targetBodyType9);
+    const h = heightCm / 100;
+    const targetBmi = (ref.bmiMin + ref.bmiMax) / 2;
+    targetWeightKg = Math.round(targetBmi * h * h * 10) / 10;
+    targetBodyFatPct = getCellBodyFatTypical(ref);
+  }
+
+  // 6. Note
   let note: string | undefined;
-  if (stageDelta >= 3) note = '少し強度の高い目標です。無理のない範囲で進めましょう。';
+  if (rawKcal < minKcal) {
+    note = `下限 ${minKcal}kcal を適用しました。`;
+  }
 
   return {
     rmr,
@@ -115,10 +315,20 @@ export function recommendGoal(input: GoalInputs): GoalRecommendation | null {
   };
 }
 
+/**
+ * Legacy helper kept for back-compat. Prefer `computePfc` which uses
+ * weight + activity level for evidence-based macro calculation.
+ */
 export function recomputePfcFromKcal(
   kcal: number,
-  direction: GoalDirection | null | undefined
+  direction: GoalDirection | null | undefined,
+  weightKg?: number | null,
+  activityLevel?: ActivityLevel | null
 ): { proteinG: number; fatG: number; carbsG: number } {
+  if (weightKg && activityLevel) {
+    return computePfc(kcal, weightKg, activityLevel, direction ?? 'maintain');
+  }
+  // Fallback: old ratio-based calc (for when weight/activity are not available)
   const d = direction ?? 'maintain';
   const proteinKcalRatio = d === 'lose' ? 0.22 : d === 'gain' ? 0.2 : 0.18;
   const fatKcalRatio = d === 'lose' ? 0.25 : 0.28;

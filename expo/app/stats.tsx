@@ -6,15 +6,24 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { MonthlyStatsView } from '@/components/MonthlyStatsView';
 import { WeeklyStatsView } from '@/components/WeeklyStatsView';
 import { palette } from '@/constants/theme';
+import { useTheme } from '@/design-system';
 
 type StatsTab = 'week' | 'month';
 
 export default function StatsScreen() {
+  const theme = useTheme();
   const [tab, setTab] = useState<StatsTab>('week');
 
   return (
     <View style={styles.root}>
-      <Stack.Screen options={{ title: '実績' }} />
+      <Stack.Screen
+        options={{
+          title: '実績',
+          headerStyle: { backgroundColor: theme.colors.surface.default },
+          headerTintColor: theme.colors.content.primary,
+          headerShadowVisible: false,
+        }}
+      />
       <SafeAreaView edges={['bottom']} style={styles.safe}>
         <View style={styles.segmentWrap} testID="stats-segment">
           {(['week', 'month'] as const).map((key) => {

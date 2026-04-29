@@ -110,12 +110,13 @@ export function MonthlyStatsView() {
             const r = kcal > 0 ? Math.max(minR + 2, ratio * maxR) : minR;
             const color = (() => {
               if (kcal === 0) return 'transparent';
-              if (targetKcal === 0) return t.colors.nutrition.calorie.track;
+              if (targetKcal === 0) return t.colors.nutrition.calorie.within;
               const overall = kcal / targetKcal;
-              // 0-0.85: 不足 (muted track)、0.85-1.1: 予算内 (moss)、>1.1: 超過 (amber)
-              if (overall < 0.85) return t.colors.nutrition.calorie.track;
+              // 〜110%: 予算内 (moss)、110〜130%: 軽度超過 (amber)、130%超: 大幅超過 (clay)
+              // 不足はサイズで表現し、色はカロリー予算カラーに統一する。
               if (overall <= 1.1) return t.colors.nutrition.calorie.within;
-              return t.colors.nutrition.calorie.mildExceed;
+              if (overall <= 1.3) return t.colors.nutrition.calorie.mildExceed;
+              return t.colors.nutrition.calorie.severeExceed;
             })();
             const dim = !cell.inMonth || future;
             return (

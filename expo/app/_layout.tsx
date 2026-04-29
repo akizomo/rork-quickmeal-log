@@ -6,8 +6,12 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { DishQuickEntrySheet } from '@/components/DishQuickEntrySheet';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { IdentityLogSheet } from '@/components/IdentityLogSheet';
+import { QuickIngredientSheet } from '@/components/QuickIngredientSheet';
 import { ThemeProvider } from '@/design-system';
 import { AppStateProvider } from '@/providers/app-state-provider';
+import { initIap } from '@/utils/iap';
+import { initSentry } from '@/utils/sentry';
 
 void SplashScreen.preventAutoHideAsync();
 
@@ -15,17 +19,20 @@ const queryClient = new QueryClient();
 
 function RootLayoutNav() {
   return (
-    <Stack screenOptions={{ headerBackTitle: 'Back' }}>
+    <Stack screenOptions={{ headerBackTitle: '戻る' }}>
       <Stack.Screen name="index" options={{ headerShown: false }} />
       <Stack.Screen name="intro" options={{ headerShown: false }} />
       <Stack.Screen name="paywall" options={{ headerShown: false, presentation: 'modal' }} />
       <Stack.Screen name="onboarding" options={{ headerShown: false, gestureEnabled: false }} />
-      <Stack.Screen name="status" options={{ title: 'My Status' }} />
+      <Stack.Screen name="status" options={{ title: 'ステータス' }} />
       <Stack.Screen name="stats" options={{ title: '実績' }} />
       <Stack.Screen name="profile" options={{ title: 'プロフィール' }} />
       <Stack.Screen name="goal-edit" options={{ title: '目標を変更' }} />
+      <Stack.Screen name="subscription" options={{ title: 'サブスクリプション' }} />
       <Stack.Screen name="about" options={{ title: 'アプリについて' }} />
-      <Stack.Screen name="settings" options={{ title: 'Settings' }} />
+      <Stack.Screen name="legal/privacy" options={{ title: 'プライバシーポリシー' }} />
+      <Stack.Screen name="legal/terms" options={{ title: '利用規約' }} />
+      <Stack.Screen name="settings" options={{ title: '設定' }} />
       <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'About' }} />
       {__DEV__ ? <Stack.Screen name="dev" options={{ headerShown: false }} /> : null}
     </Stack>
@@ -34,8 +41,12 @@ function RootLayoutNav() {
 
 export default function RootLayout() {
   useEffect(() => {
+    initSentry(); // Crash reporting (no-op if DSN not configured)
     SplashScreen.hideAsync().catch((error) => {
       console.log('[root-layout] Failed to hide splash screen', error);
+    });
+    initIap().catch((error) => {
+      console.log('[root-layout] Failed to init IAP', error);
     });
   }, []);
 
@@ -47,6 +58,8 @@ export default function RootLayout() {
             <AppStateProvider>
               <RootLayoutNav />
               <DishQuickEntrySheet />
+              <QuickIngredientSheet />
+              <IdentityLogSheet />
             </AppStateProvider>
           </ThemeProvider>
         </ErrorBoundary>

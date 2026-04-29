@@ -1,4 +1,4 @@
-import { AdditionPreset, AppSettings, DishSize, IngredientSubtypeDef, PortionDisplay, PortionStepKey, QuickCategory, SubTypePreset, UserProfile, WeightEntry } from '@/types/nutrition';
+import { AdditionPreset, AppSettings, BodyFatEntry, DishSize, IngredientSubtypeDef, PortionDisplay, PortionStepKey, QuickCategory, SubTypePreset, UserProfile, WeightEntry } from '@/types/nutrition';
 
 export const ingredientCategories: QuickCategory[] = [
   { key: 'staple', label: '主食', emoji: '🍚', baseMacro: { kcal: 240, protein: 4, fat: 0.5, carbs: 53 } },
@@ -713,11 +713,14 @@ export const defaultProfile: UserProfile = {
   goalDirection: null,
   currentBodyStage: null,
   targetBodyStage: null,
+  activityLevel: null,
   createdAt: now,
   updatedAt: now,
 };
 
 export const defaultWeightEntries: WeightEntry[] = [];
+
+export const defaultBodyFatEntries: BodyFatEntry[] = [];
 
 export const defaultSettings: AppSettings = {
   defaultTabByTime: {

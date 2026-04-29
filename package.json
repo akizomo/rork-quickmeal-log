@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@sentry/react-native": "^8.9.1"
+  }
+}

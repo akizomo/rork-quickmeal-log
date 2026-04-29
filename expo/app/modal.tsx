@@ -12,7 +12,7 @@ export default function AboutModalRoute() {
       <Modal animationType="fade" transparent visible onRequestClose={() => router.back()}>
         <Pressable style={styles.overlay} onPress={() => router.back()} testID="about-modal-overlay">
           <Pressable style={styles.card} onPress={() => undefined} testID="about-modal-card">
-            <Text style={styles.eyebrow}>Quiet Nutrition</Text>
+            <Text style={styles.eyebrow}>Hachibu</Text>
             <Text style={styles.title}>迷わず記録できる食事ログ</Text>
             <Text style={styles.description}>1タップ入力、Undo、再編集までを静かに気持ちよくまとめたMVPです。</Text>
             <Pressable style={styles.button} onPress={() => router.back()} testID="about-modal-close-button">

@@ -94,6 +94,19 @@ export interface FoodLog {
   size?: DishSize;
   amountMultiplier?: number;
   macro: Macro;
+  // QuickIngredient sheet (long-press) detail fields. All optional — older logs
+  // remain valid without these set.
+  attrKey?: string;
+  partKey?: string;
+  methodKey?: string;
+  amountValue?: number;
+  amountUnit?: 'g' | 'ml' | 'piece';
+  amountLabel?: string;
+  // Identity-first IA fields (Phase 2+). Optional for backward compatibility:
+  // older logs use categoryKey/subTypeKey only and have no identityId.
+  identityId?: string;        // recordIdentity (after migration)
+  originIdentityId?: string;  // entry-point Identity the user picked
+  styleKey?: string;
 }
 
 export interface AppSettings {
@@ -113,6 +126,23 @@ export interface AppSettings {
   trialStartedAtISO?: string | null;
   subscriptionStatus?: SubscriptionStatus;
   onboardingCompletedAtISO?: string | null;
+  paywallSeenAtISO?: string | null;
+  /**
+   * Per-category history of long-press quick-log selections (most recent first,
+   * capped per category). Used to seed default values on the next sheet open
+   * via "recent → most-frequent → system default" priority.
+   * The value type is intentionally typed loosely here to avoid a circular
+   * dependency with `quick-log.ts`. The persisted shape matches
+   * `QuickLogHistoryMap` from `@/types/quick-log`.
+   */
+  quickLogHistory?: Record<string, unknown[]>;
+  /**
+   * Identity-first IA schema version applied to the persisted FoodLog list.
+   * Bumped when a one-shot backfill of `identityId` runs at boot.
+   *   undefined / 0 — never migrated yet
+   *   1 — LEGACY_TO_IDENTITY_MAP has been applied (Phase 5)
+   */
+  iaSchemaVersion?: number;
 }
 
 export interface QuickCategory {

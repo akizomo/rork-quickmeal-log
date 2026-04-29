@@ -3,179 +3,104 @@ import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from '
 import {
   FlatList,
   ListRenderItemInfo,
-  Pressable,
-  ScrollView,
   StyleSheet,
-  Text,
   useWindowDimensions,
   View,
 } from 'react-native';
 
-import { palette } from '@/constants/theme';
 import { MAX_PAST_LOGGING_DAYS, useAppState } from '@/providers/app-state-provider';
-import type { FoodLog } from '@/types/nutrition';
 import {
   addDays,
   diffInDays,
-  formatShortDay,
   getHistoryStartDate,
-  logsForDate,
   startOfDay,
 } from '@/utils/history';
 import { formatDateKey } from '@/utils/nutrition';
 
-import { QuickLogSection } from '@/components/QuickLogSection';
+import { PEEK_HEIGHT_PX } from '@/components/DayLogBottomSheet';
+import { getQuickLogButtonHeight, QUICK_LOG_TOKENS, QuickLogSection } from '@/components/QuickLogSection';
 import { StatusCard } from '@/components/nutrition-ui';
+
+// QuickLog を BottomSheet peek の角丸 top に密着させる (gap=0)。peek 内側余白圧縮で
+// 視覚的近接感を別途確保。
+const QUICKLOG_BOTTOM_GAP = 0;
+
+// QuickLogSection の自然高さ (search bar コメントアウト中の前提):
+// sectionPaddingTop + segmentHeight + segmentBottomSpacing
+// + 3 * buttonHeight + 2 * gridGap + sectionPaddingBottom
+function computeQuickLogHeight(screenWidth: number): number {
+  const buttonH = getQuickLogButtonHeight(screenWidth);
+  const t = QUICK_LOG_TOKENS;
+  return (
+    t.sectionPaddingTop +
+    t.segmentHeight +
+    t.segmentBottomSpacing +
+    3 * buttonH +
+    2 * t.gridGap +
+    t.sectionPaddingBottom
+  );
+}
 
 interface HomeDatePagerProps {
   onViewedDateChange?: (date: Date) => void;
 }
 
-function formatTime(timestamp: string): string {
-  const date = new Date(timestamp);
-  return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
-}
-
-const PastDayLogItem = memo(function PastDayLogItem({
-  log,
-  editable,
-}: {
-  log: FoodLog;
-  editable: boolean;
-}) {
-  const { setEditorLogId, deleteLog } = useAppState();
-  const inner = (
-    <View style={styles.logItem} testID={`past-log-${log.id}`}>
-      <View style={styles.logTopRow}>
-        <Text style={styles.logTitle} numberOfLines={1}>
-          {log.subTypeLabel ?? log.categoryLabel}
-        </Text>
-        <Text style={styles.logKcal}>{Math.round(log.macro.kcal)} kcal</Text>
-      </View>
-      <Text style={styles.logSub}>
-        {formatTime(log.timestamp)} · P{Math.round(log.macro.protein)} F{Math.round(log.macro.fat)} C{Math.round(log.macro.carbs)}
-      </Text>
-      {editable ? (
-        <View style={styles.logActionRow}>
-          <Pressable
-            style={styles.deleteButton}
-            onPress={() => deleteLog(log.id)}
-            testID={`past-log-delete-${log.id}`}
-          >
-            <Text style={styles.deleteButtonText}>削除</Text>
-          </Pressable>
-        </View>
-      ) : null}
-    </View>
-  );
-  if (!editable) return inner;
-  return (
-    <Pressable onPress={() => setEditorLogId(log.id)} testID={`past-log-press-${log.id}`}>
-      {inner}
-    </Pressable>
-  );
-});
-
-const DayLogList = memo(function DayLogList({
-  date,
-  editable,
-}: {
-  date: Date;
-  editable: boolean;
-}) {
-  const { logs } = useAppState();
-  const dateKey = formatDateKey(date);
-  const dayLogs = useMemo(() => logsForDate(logs, dateKey), [logs, dateKey]);
-  const totalKcal = useMemo(
-    () => dayLogs.reduce((acc, log) => acc + log.macro.kcal, 0),
-    [dayLogs]
-  );
-
-  return (
-    <View style={styles.dayListWrap}>
-      <View style={styles.pastListHeader}>
-        <Text style={styles.pastListTitle}>{formatShortDay(date)} の記録</Text>
-        <Text style={styles.pastListMeta}>
-          {dayLogs.length}件 · {Math.round(totalKcal)} kcal
-        </Text>
-      </View>
-      {dayLogs.length === 0 ? (
-        <View style={styles.emptyCard}>
-          <Text style={styles.emptyTitle}>この日の記録はありません</Text>
-          <Text style={styles.emptyText}>
-            {editable
-              ? '下のボタンからこの日の食事を追加できます。'
-              : '記録は当日と直近7日のみ追加できます。'}
-          </Text>
-        </View>
-      ) : (
-        dayLogs.map((log) => (
-          <PastDayLogItem key={log.id} log={log} editable={editable} />
-        ))
-      )}
-    </View>
-  );
-});
-
 interface DayPageProps {
   date: Date;
-  daysAgo: number;
   width: number;
+  height: number;
+  bottomReserve: number;
 }
 
-const DayPage = memo(function DayPage({ date, daysAgo, width }: DayPageProps) {
-  const isToday = daysAgo === 0;
-  const editable = daysAgo >= 0 && daysAgo <= MAX_PAST_LOGGING_DAYS;
-
-  if (isToday) {
+const DayPage = memo(function DayPage({ date, width, height, bottomReserve }: DayPageProps) {
+  // height === 0 (初回 layout 前) は flex:1 にフォールバック。
+  // 確定したら明示 height + 中央寄せ + 下端リザーブで StatusCard を画面中央に配置。
+  if (height <= 0) {
     return (
       <View style={[styles.page, { width }]}>
-        <View style={styles.statusCardWrap}>
-          <StatusCard viewedDate={date} />
-        </View>
-        <QuickLogSection />
+        <StatusCard viewedDate={date} />
       </View>
     );
   }
-
   return (
-    <View style={[styles.page, { width }]}>
-      <ScrollView
-        style={styles.pastScroll}
-        contentContainerStyle={styles.pastScrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <StatusCard viewedDate={date} />
-        {editable ? (
-          <View style={styles.pastBanner} testID={`past-banner-${formatDateKey(date)}`}>
-            <Text style={styles.pastBannerText}>
-              {formatShortDay(date)} に記録します
-            </Text>
-          </View>
-        ) : (
-          <View style={styles.pastBannerReadonly}>
-            <Text style={styles.pastBannerReadonlyText}>
-              {MAX_PAST_LOGGING_DAYS}日以上前の日付には記録を追加できません
-            </Text>
-          </View>
-        )}
-        {editable ? <QuickLogSection /> : null}
-        <DayLogList date={date} editable={editable} />
-      </ScrollView>
+    <View
+      style={{
+        width,
+        height,
+        paddingHorizontal: 16,
+        paddingTop: 6,
+        paddingBottom: bottomReserve,
+        justifyContent: 'center',
+      }}
+    >
+      <StatusCard viewedDate={date} />
     </View>
   );
 });
 
 export const HomeDatePager = memo(function HomeDatePager({ onViewedDateChange }: HomeDatePagerProps) {
-  const { settings, logs, setLoggingDate } = useAppState();
+  // Defensive default — useAppState() can momentarily return undefined during
+  // ErrorBoundary recovery / fast HMR re-mounts before the provider context is
+  // wired up. Read each field through optional chaining + per-field fallbacks
+  // (instead of one wide `as never` cast) so downstream type inference is
+  // preserved.
+  const appState = useAppState() as ReturnType<typeof useAppState> | undefined;
+  const settings = appState?.settings ?? ({ onboardingCompletedAtISO: null } as ReturnType<typeof useAppState>['settings']);
+  const logs = appState?.logs ?? [];
+  const setLoggingDate = appState?.setLoggingDate ?? ((_: Date | null) => undefined);
   const { width } = useWindowDimensions();
   const params = useLocalSearchParams<{ date?: string }>();
 
   const today = useMemo(() => startOfDay(new Date()), []);
-  const startDate = useMemo(
-    () => getHistoryStartDate(settings.onboardingCompletedAtISO ?? null, logs),
-    [settings.onboardingCompletedAtISO, logs]
-  );
+
+  // HOME pager は編集可能ウィンドウ (今日 〜 MAX_PAST_LOGGING_DAYS 日前) のみを対象とする。
+  // それより古いログは Stats ページから振り返る。新規ユーザー (onboarding 直後) で
+  // まだ 7 日経っていないケースは onboarding 開始日を起点にする。
+  const startDate = useMemo(() => {
+    const historyStart = getHistoryStartDate(settings.onboardingCompletedAtISO ?? null, logs);
+    const earliestEditable = addDays(today, -MAX_PAST_LOGGING_DAYS);
+    return historyStart > earliestEditable ? historyStart : earliestEditable;
+  }, [settings.onboardingCompletedAtISO, logs, today]);
 
   // Total number of pages (start ... today inclusive)
   const totalDays = useMemo(() => Math.max(1, diffInDays(today, startDate) + 1), [today, startDate]);
@@ -201,6 +126,21 @@ export const HomeDatePager = memo(function HomeDatePager({ onViewedDateChange }:
   const listRef = useRef<FlatList<Date>>(null);
   const [currentIndex, setCurrentIndex] = useState<number>(initialIndex);
 
+  // FlatList の親コンテナ高さ実測値。FlatList horizontal の item は RN-Web 上で
+  // 親 height を継承しないため、measured height を DayPage に明示的に渡す。
+  const [pagerHeight, setPagerHeight] = useState<number>(0);
+  const onContainerLayout = useCallback(
+    (e: { nativeEvent: { layout: { height: number } } }) => {
+      const h = e.nativeEvent.layout.height;
+      setPagerHeight((prev) => (Math.abs(prev - h) > 0.5 ? h : prev));
+    },
+    []
+  );
+
+  // QuickLog の自然高さ + peek 領域 = DayPage 下端で空けておくべきエリア
+  const quickLogHeight = useMemo(() => computeQuickLogHeight(width), [width]);
+  const bottomReserve = PEEK_HEIGHT_PX + QUICKLOG_BOTTOM_GAP + quickLogHeight;
+
   // Notify parent and sync loggingDate so QuickLog writes to the viewed day.
   useEffect(() => {
     const viewed = dates[currentIndex];
@@ -209,10 +149,9 @@ export const HomeDatePager = memo(function HomeDatePager({ onViewedDateChange }:
     const daysAgo = diffInDays(today, viewed);
     if (daysAgo === 0) {
       setLoggingDate(null); // log to today (default)
-    } else if (daysAgo > 0 && daysAgo <= MAX_PAST_LOGGING_DAYS) {
-      setLoggingDate(viewed);
     } else {
-      setLoggingDate(null); // outside editable range, no logging anyway
+      // pager 範囲はクランプ済みなので、ここに来るのは編集可能日のみ
+      setLoggingDate(viewed);
     }
   }, [currentIndex, dates, onViewedDateChange, setLoggingDate, today]);
 
@@ -246,9 +185,9 @@ export const HomeDatePager = memo(function HomeDatePager({ onViewedDateChange }:
 
   const renderItem = useCallback(
     ({ item }: ListRenderItemInfo<Date>) => (
-      <DayPage date={item} daysAgo={diffInDays(today, item)} width={width} />
+      <DayPage date={item} width={width} height={pagerHeight} bottomReserve={bottomReserve} />
     ),
-    [today, width]
+    [width, pagerHeight, bottomReserve]
   );
 
   const getItemLayout = useCallback(
@@ -263,7 +202,7 @@ export const HomeDatePager = memo(function HomeDatePager({ onViewedDateChange }:
   const keyExtractor = useCallback((d: Date) => formatDateKey(d), []);
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} onLayout={onContainerLayout}>
       <FlatList
         ref={listRef}
         data={dates}
@@ -280,6 +219,12 @@ export const HomeDatePager = memo(function HomeDatePager({ onViewedDateChange }:
         removeClippedSubviews
         testID="home-date-pager"
       />
+      {/* QuickLog は FlatList の兄弟として absolute で画面下端に固定する。
+          bottom = PEEK_HEIGHT_PX + 余白 で DayLogBottomSheet の peek (画面下端 120px)
+          に隠れないようにする。日付スワイプとは独立して常に同じ位置に表示される。 */}
+      <View style={styles.quickLogPin}>
+        <QuickLogSection />
+      </View>
     </View>
   );
 });
@@ -292,113 +237,10 @@ const styles = StyleSheet.create({
     paddingTop: 6,
     gap: 12,
   },
-  statusCardWrap: {},
-  pastScroll: {
-    flex: 1,
-  },
-  pastScrollContent: {
-    paddingTop: 6,
-    paddingBottom: 40,
-    gap: 8,
-  },
-  pastListHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 4,
-    paddingBottom: 4,
-  },
-  pastListTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: palette.text,
-  },
-  pastListMeta: {
-    fontSize: 12,
-    color: palette.textMuted,
-  },
-  dayListWrap: {
-    gap: 8,
-  },
-  pastBanner: {
-    backgroundColor: '#E9E2D2',
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    alignSelf: 'flex-start',
-  },
-  pastBannerText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: palette.sageDeep,
-  },
-  pastBannerReadonly: {
-    backgroundColor: '#F0E8D8',
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-  },
-  pastBannerReadonlyText: {
-    fontSize: 12,
-    color: palette.textMuted,
-  },
-  logActionRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    marginTop: 4,
-  },
-  deleteButton: {
-    backgroundColor: '#F0E2DD',
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  deleteButtonText: {
-    color: palette.danger,
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  logItem: {
-    backgroundColor: palette.surface,
-    borderRadius: 16,
-    padding: 12,
-    gap: 4,
-  },
-  logTopRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: 12,
-  },
-  logTitle: {
-    flex: 1,
-    fontSize: 14,
-    fontWeight: '700',
-    color: palette.text,
-  },
-  logKcal: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: palette.sageDeep,
-  },
-  logSub: {
-    fontSize: 12,
-    color: palette.textMuted,
-  },
-  emptyCard: {
-    backgroundColor: palette.surface,
-    borderRadius: 16,
-    padding: 18,
-    gap: 6,
-  },
-  emptyTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: palette.text,
-  },
-  emptyText: {
-    fontSize: 12,
-    color: palette.textMuted,
-    lineHeight: 18,
+  quickLogPin: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    bottom: PEEK_HEIGHT_PX + QUICKLOG_BOTTOM_GAP,
   },
 });

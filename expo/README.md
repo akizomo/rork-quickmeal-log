@@ -43,10 +43,12 @@ bun i
 bun run start-web
 
 # Step 5: Start iOS preview
-# Option A (recommended):
+# Option A (recommended - 実機 + LAN):
 bun run start  # then press "i" in the terminal to open iOS Simulator
-# Option B (if supported by your environment):
-bun run start -- --ios
+# Option B (iOS Simulator 直接起動 / ネット不要):
+bun run start:ios
+# Option C (Android Emulator):
+bun run start:android
 ```
 
 ### **Edit a file directly in GitHub**
@@ -68,38 +70,54 @@ This project is built with the most popular native mobile cross-platform technic
 
 ## How can I test my app?
 
-### **On your phone (Recommended)**
+> **社内ポリシー注意**: Woven の AUP により ngrok の利用は禁止されています。`--tunnel` モードは使わず、下記の LAN / Simulator / Web のいずれかの経路で確認してください。`bun run start` は `--lan` を明示指定しているため tunnel には落ちません。
 
-1. **iOS**: Download the [Rork app from the App Store](https://apps.apple.com/app/rork) or [Expo Go](https://apps.apple.com/app/expo-go/id982107779)
-2. **Android**: Download the [Expo Go app from Google Play](https://play.google.com/store/apps/details?id=host.exp.exponent)
-3. Run `bun run start` and scan the QR code from your development server
+### **A. 実機 (Expo Go) + LAN ー 推奨**
 
-### **In your browser**
+前提: PC とスマホが同じ Wi-Fi に接続され、クライアント分離 (AP isolation) が無いこと。
 
-Run `bun start-web` to test in a web browser. Note: The browser preview is great for quick testing, but some native features may not be available.
+1. **iOS**: [Rork app](https://apps.apple.com/app/rork) または [Expo Go](https://apps.apple.com/app/expo-go/id982107779) をインストール
+2. **Android**: [Expo Go](https://play.google.com/store/apps/details?id=host.exp.exponent) をインストール
+3. PC で `bun run start` (LAN モード固定)
+4. 表示された QR コードをスマホでスキャン → アプリがロードされる
+5. Metro は port 8081。macOS Firewall で `node` / `bun` を許可しておく
 
-### **iOS Simulator / Android Emulator**
+### **B. iOS Simulator (ネットワーク不要・最速)**
 
-You can test Rork apps in Expo Go or Rork iOS app. You don't need XCode or Android Studio for most features.
-
-**When do you need Custom Development Builds?**
-
-- Native authentication (Face ID, Touch ID, Apple Sign In)
-- In-app purchases and subscriptions
-- Push notifications
-- Custom native modules
-
-Learn more: [Expo Custom Development Builds Guide](https://docs.expo.dev/develop/development-builds/introduction/)
-
-If you have XCode (iOS) or Android Studio installed:
+Xcode がインストールされている Mac:
 
 ```bash
-# iOS Simulator
-bun run start -- --ios
-
-# Android Emulator
-bun run start -- --android
+bun run start:ios
 ```
+
+`--localhost` モードで動作するため Wi-Fi の状態に依存しません。社内 Wi-Fi で実機接続が不安定な時はこちらが確実。
+
+### **C. Android Emulator (ネットワーク不要)**
+
+Android Studio のエミュレータを起動した上で:
+
+```bash
+bun run start:android
+```
+
+### **D. Web ブラウザ プレビュー**
+
+```bash
+bun run start-web
+```
+
+ブラウザで素早く確認できます。ただしネイティブ機能 (Haptics、Image Picker、Location など) は一部制限があります。
+
+---
+
+**Custom Development Builds が必要になるケース**:
+
+- ネイティブ認証 (Face ID / Touch ID / Apple Sign In)
+- In-App Purchase / サブスクリプション
+- Push 通知
+- カスタム ネイティブ モジュール
+
+詳細: [Expo Custom Development Builds Guide](https://docs.expo.dev/develop/development-builds/introduction/)
 
 ## How can I deploy this project?
 
@@ -293,11 +311,19 @@ For mobile apps, you'll configure your app's deep linking scheme in `app.json`.
 
 ## Troubleshooting
 
-### **App not loading on device?**
+### **App not loading on device? (LAN モードで繋がらない時)**
 
-1. Make sure your phone and computer are on the same WiFi network
-2. Try using tunnel mode: `bun start -- --tunnel`
-3. Check if your firewall is blocking the connection
+**前提**: 社内ポリシーで ngrok tunnel (`--tunnel`) は禁止。LAN モードで解決するか、他経路に切り替える方針。
+
+1. PC とスマホが**同じ Wi-Fi SSID** に居ることを確認 (ゲスト SSID / 5GHz と 2.4GHz が分離されていないか)
+2. macOS Firewall で `node` / `bun` を許可 (システム設定 > ネットワーク > ファイアウォール)
+3. Metro が listen しているか: `lsof -i :8081`
+4. 社内 Wi-Fi が **client isolation** している場合は LAN 接続不可 → **iOS Simulator / Android Emulator 経路 (B / C)** に切替 (`bun run start:ios` / `bun run start:android`)
+5. ブラウザだけで十分なら `bun run start-web`
+6. どうしても実機で確認が必要な時は **EAS Build の internal distribution** を検討:
+   - iOS: TestFlight / Ad-Hoc 配布 ([docs](https://docs.expo.dev/build/internal-distribution/))
+   - Android: APK 直配布
+7. **やってはいけない**: `--tunnel` / `expo start --tunnel` / `@expo/ngrok` の手動起動 (AUP 違反)
 
 ### **Build failing?**
 

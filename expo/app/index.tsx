@@ -20,25 +20,36 @@ export default function HomeRoute() {
     const trialOrSubscribed =
       settings.subscriptionStatus === 'trialing' || settings.subscriptionStatus === 'active';
     const onboardingDone = settings.onboardingCompleted === true;
+    const paywallSeen = settings.paywallSeenAtISO != null;
 
+    console.log('[index] state', { introSeen, onboardingDone, trialOrSubscribed, paywallSeen, status: settings.subscriptionStatus });
+
+    // Flow: intro → onboarding → paywall → home (value-first)
     if (!introSeen) {
       redirectedRef.current = true;
       console.log('[index] redirect -> /intro');
       router.replace('/intro');
       return;
     }
-    if (!trialOrSubscribed && !onboardingDone) {
-      redirectedRef.current = true;
-      console.log('[index] redirect -> /paywall');
-      router.replace('/paywall');
-      return;
-    }
     if (!onboardingDone) {
       redirectedRef.current = true;
       console.log('[index] redirect -> /onboarding');
       router.replace('/onboarding');
+      return;
     }
-  }, [isHydrating, router, settings.introSeenVersion, settings.onboardingCompleted, settings.subscriptionStatus]);
+    if (!trialOrSubscribed && !paywallSeen) {
+      redirectedRef.current = true;
+      console.log('[index] redirect -> /paywall (post-onboarding)');
+      router.replace('/paywall');
+    }
+  }, [
+    isHydrating,
+    router,
+    settings.introSeenVersion,
+    settings.onboardingCompleted,
+    settings.subscriptionStatus,
+    settings.paywallSeenAtISO,
+  ]);
 
   if (isHydrating) {
     return (

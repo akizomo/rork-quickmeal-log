@@ -1,0 +1,6 @@
+{
+  "name": "hachibu-legal-web",
+  "private": true,
+  "version": "0.0.1",
+  "description": "Hachibu legal pages (privacy / terms) — static hosting on Vercel"
+}

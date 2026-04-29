@@ -6,12 +6,47 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { defaultBodyFatEntries, defaultProfile, defaultSettings, defaultWeightEntries } from '@/constants/nutrition-data';
 import { getDishTopCategory } from '@/constants/dish-master';
-import { AppSettings, BodyFatEntry, DishDraft, DishQuickEntryPayload, FoodLog, IngredientDraft, LogMode, UserProfile, WeightEntry } from '@/types/nutrition';
-void getSubType;
-import { buildDishMacro, clampPortion, computeIngredient, createFoodLogFromDish, createFoodLogFromDishQuickEntry, createFoodLogFromIngredient, formatDateKey, getDefaultModeByTime, getMealSlot, getQuickCategories, getSubType, sumToday } from '@/utils/nutrition';
+import { getQuickLogCategory, getQuickLogSubcategory } from '@/constants/quick-log-master';
+import type { CustomerInfo } from 'react-native-purchases';
+
+import { AppSettings, BodyFatEntry, DishDraft, DishQuickEntryPayload, FoodLog, IngredientDraft, LogMode, SubscriptionStatus, UserProfile, WeightEntry } from '@/types/nutrition';
+import { ENTITLEMENT_ID } from '@/constants/iap';
+import { addCustomerInfoListener, getCustomerInfo, restorePurchases as iapRestore } from '@/utils/iap';
+import { IngredientQuickDraft, QuickLogHistoryMap } from '@/types/quick-log';
+import { buildDishMacro, clampPortion, computeIngredient, createFoodLogFromDish, createFoodLogFromDishQuickEntry, createFoodLogFromIngredient, formatDateKey, generateId, getDefaultModeByTime, getMealSlot, getQuickCategories, getSubType, sumToday } from '@/utils/nutrition';
 import { isSameDay } from '@/utils/history';
+import { castHistoryMap, recordSelection, selectionFromDraft } from '@/utils/quick-log-history';
+import { computeQuickLogMacro } from '@/utils/quick-log-macro';
+import { resolveLog, ResolveInput, ResolveResult } from '@/utils/identity-resolver';
+import { logDraftToFoodLog } from '@/utils/identity-log-bridge';
+import { getIdentity } from '@/constants/identity';
+import { lookupLegacyIdentity } from '@/constants/identity/migration-map';
+import type { BucketKey } from '@/types/identity';
+void getSubType;
 
 export const MAX_PAST_LOGGING_DAYS = 7;
+
+/** Bump when LEGACY_TO_IDENTITY_MAP changes and we want to re-run backfill.
+ *  Aligned with docs/IA-identity-spec.md §7.2 (target schema version = 2). */
+const IA_SCHEMA_VERSION = 2;
+
+/**
+ * Opportunistic backfill: walk legacy logs and add `identityId` /
+ * `originIdentityId` when we have a known mapping. Old fields stay intact
+ * for backward compatibility (per "旧キーはそのまま残す" decision).
+ * Returns a new array only if anything actually changed.
+ */
+function backfillIdentityIds(logs: FoodLog[]): { logs: FoodLog[]; changed: boolean } {
+  let changed = false;
+  const next = logs.map((log) => {
+    if (log.identityId) return log;
+    const newId = lookupLegacyIdentity(log.categoryKey, log.subTypeKey);
+    if (!newId) return log;
+    changed = true;
+    return { ...log, identityId: newId, originIdentityId: log.originIdentityId ?? newId };
+  });
+  return { logs: changed ? next : logs, changed };
+}
 
 const noop = () => undefined;
 
@@ -57,11 +92,25 @@ function migrateSettings(raw: Partial<AppSettings> | undefined): AppSettings {
     trialStartedAtISO: raw?.trialStartedAtISO ?? null,
     subscriptionStatus: raw?.subscriptionStatus ?? 'none',
     onboardingCompletedAtISO: raw?.onboardingCompletedAtISO ?? null,
+    paywallSeenAtISO: raw?.paywallSeenAtISO ?? null,
+    quickLogHistory: castHistoryMap(raw?.quickLogHistory),
   };
 }
 
 function migrateProfile(raw: Partial<UserProfile> | undefined): UserProfile {
   return { ...defaultProfile, ...(raw ?? {}) };
+}
+
+function mapCustomerInfoToStatus(info: CustomerInfo): SubscriptionStatus {
+  const ent = info.entitlements.active[ENTITLEMENT_ID];
+  if (ent) {
+    if (ent.periodType === 'TRIAL' || ent.periodType === 'INTRO') return 'trialing';
+    return 'active';
+  }
+  // Active not present — check if previously held entitlement
+  const all = info.entitlements.all[ENTITLEMENT_ID];
+  if (all && all.expirationDate) return 'expired';
+  return 'none';
 }
 
 export const [AppStateProvider, useAppState] = createContextHook(() => {
@@ -71,12 +120,17 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
   const [weights, setWeights] = useState<WeightEntry[]>(defaultWeightEntries);
   const [bodyFatEntries, setBodyFatEntries] = useState<BodyFatEntry[]>(defaultBodyFatEntries);
   const [selectedMode, setSelectedMode] = useState<LogMode>(getDefaultModeByTime());
-  const [statusSheetVisible, setStatusSheetVisible] = useState<boolean>(false);
   // When logging on a past day (within MAX_PAST_LOGGING_DAYS), this is set to that day.
   // null = log to today (default).
   const [loggingDate, setLoggingDate] = useState<Date | null>(null);
   const [editorLogId, setEditorLogId] = useState<string | null>(null);
   const [dishQuickEntryKey, setDishQuickEntryKey] = useState<string | null>(null);
+  const [quickIngredientSheetCategory, setQuickIngredientSheetCategory] = useState<string | null>(null);
+  const [identityLogSheet, setIdentityLogSheet] = useState<{
+    visible: boolean;
+    bucketKey?: BucketKey;
+    identityId?: string;
+  }>({ visible: false });
   const [pendingLogIds, setPendingLogIds] = useState<string[]>([]);
   const [feedback, setFeedback] = useState<FeedbackState | null>(null);
   const [undoState, setUndoState] = useState<UndoState | null>(null);
@@ -126,11 +180,59 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
 
     console.log('[app-state] Hydrating state from storage');
     setProfile(persistedQuery.data.profile);
-    setLogs(persistedQuery.data.logs);
     setSettings(persistedQuery.data.settings);
     setWeights(persistedQuery.data.weights);
     setBodyFatEntries(persistedQuery.data.bodyFatEntries);
+
+    // Identity-first IA backfill (Phase 5). Runs once per schema bump.
+    const needsMigration =
+      (persistedQuery.data.settings.iaSchemaVersion ?? 0) < IA_SCHEMA_VERSION;
+    if (needsMigration) {
+      const { logs: migratedLogs, changed } = backfillIdentityIds(persistedQuery.data.logs);
+      const nextSettings: AppSettings = {
+        ...persistedQuery.data.settings,
+        iaSchemaVersion: IA_SCHEMA_VERSION,
+      };
+      setLogs(migratedLogs);
+      setSettings(nextSettings);
+      console.log('[app-state] IA backfill', { changed, count: migratedLogs.length });
+      // Persist the bumped schema version + (possibly) updated logs.
+      persistMutation.mutate({
+        profile: persistedQuery.data.profile,
+        logs: migratedLogs,
+        settings: nextSettings,
+        weights: persistedQuery.data.weights,
+        bodyFatEntries: persistedQuery.data.bodyFatEntries,
+      });
+    } else {
+      setLogs(persistedQuery.data.logs);
+    }
+    // persistMutation intentionally omitted from deps — it's stable across renders.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [persistedQuery.data]);
+
+  // Subscribe to RevenueCat customer info updates and sync subscriptionStatus
+  useEffect(() => {
+    let mounted = true;
+
+    const sync = (info: CustomerInfo | null) => {
+      if (!mounted || !info) return;
+      const next = mapCustomerInfoToStatus(info);
+      setSettings((prev) => {
+        if (prev.subscriptionStatus === next) return prev;
+        const updated: AppSettings = { ...prev, subscriptionStatus: next };
+        console.log('[app-state] Subscription status →', next);
+        return updated;
+      });
+    };
+
+    getCustomerInfo().then(sync).catch(() => undefined);
+    const unsub = addCustomerInfoListener((info) => sync(info));
+    return () => {
+      mounted = false;
+      unsub();
+    };
+  }, []);
 
   const persist = useCallback(
     (
@@ -256,6 +358,118 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       return log;
     },
     [applyLoggingDate, pushLog, selectedMode]
+  );
+
+  const openQuickIngredientSheet = useCallback((categoryKey: string) => {
+    setQuickIngredientSheetCategory(categoryKey);
+  }, []);
+
+  const closeQuickIngredientSheet = useCallback(() => {
+    setQuickIngredientSheetCategory(null);
+  }, []);
+
+  const submitQuickIngredient = useCallback(
+    async (draft: IngredientQuickDraft) => {
+      const category = getQuickLogCategory(draft.categoryKey);
+      const sub = getQuickLogSubcategory(draft.categoryKey, draft.subcategoryKey);
+      const computation = computeQuickLogMacro(draft);
+      if (!category || !sub || !computation) {
+        console.log('[app-state] Failed to compute quick ingredient', draft);
+        return null;
+      }
+
+      const now = new Date();
+      const baseLog: FoodLog = {
+        id: generateId('log'),
+        date: formatDateKey(now),
+        timestamp: now.toISOString(),
+        mealSlot: getMealSlot(now),
+        mode: 'ingredient',
+        categoryKey: category.key,
+        categoryLabel: category.label,
+        subTypeKey: sub.key,
+        subTypeLabel: sub.label,
+        baseMacro: computation.baseMacro,
+        macro: computation.total,
+        attrKey: draft.attrKey,
+        partKey: draft.partKey,
+        methodKey: draft.methodKey,
+        amountValue: draft.amountValue,
+        amountUnit: draft.amountUnit,
+        amountLabel: draft.amountLabel,
+      };
+      const log = applyLoggingDate(baseLog);
+      await pushLog(log);
+
+      // Record selection in history (recent + frequency)
+      const sel = selectionFromDraft(draft);
+      if (sel) {
+        const currentHistory = (settings.quickLogHistory ?? {}) as QuickLogHistoryMap;
+        const nextHistory = recordSelection(currentHistory, sel);
+        const nextSettings: AppSettings = { ...settings, quickLogHistory: nextHistory };
+        setSettings(nextSettings);
+        // Persist with the freshly-pushed log already in `logs`. pushLog has
+        // updated the in-memory state, but we re-persist with the new settings
+        // here. Read the latest logs through the closure used by pushLog.
+        // Note: pushLog persists itself; this second persist captures the
+        // updated history map.
+        persist(profile, [log, ...logs], nextSettings, weights, bodyFatEntries);
+      }
+
+      setQuickIngredientSheetCategory(null);
+      return log;
+    },
+    [applyLoggingDate, bodyFatEntries, logs, persist, profile, pushLog, settings, weights]
+  );
+
+  // ----- Identity-first IA (Phase 2+) -----
+
+  const openIdentityLogSheet = useCallback((bucketKey: BucketKey, identityId?: string) => {
+    setIdentityLogSheet({ visible: true, bucketKey, identityId });
+  }, []);
+
+  const closeIdentityLogSheet = useCallback(() => {
+    setIdentityLogSheet({ visible: false });
+  }, []);
+
+  /**
+   * Persist a resolved IdentityLogDraft as a FoodLog. The Identity registry
+   * is the source of truth — `submitIdentityLog` only handles persistence
+   * and history bookkeeping.
+   */
+  const submitIdentityLog = useCallback(
+    async (resolved: ResolveResult) => {
+      const now = new Date();
+      const baseLog = logDraftToFoodLog(resolved, {
+        id: generateId('log'),
+        date: formatDateKey(now),
+        timestamp: now.toISOString(),
+        mealSlot: getMealSlot(now),
+      });
+      const log = applyLoggingDate(baseLog);
+      await pushLog(log);
+      setIdentityLogSheet({ visible: false });
+      return log;
+    },
+    [applyLoggingDate, pushLog]
+  );
+
+  /**
+   * Tap-to-record at default amount (no detail editing).
+   * Used by single-tap on a chip outside the bottom sheet.
+   */
+  const quickLogIdentity = useCallback(
+    async (identityId: string) => {
+      const identity = getIdentity(identityId);
+      if (!identity) {
+        console.log('[app-state] quickLogIdentity: unknown identity', identityId);
+        return null;
+      }
+      const input: ResolveInput = { originIdentityId: identityId };
+      const resolved = resolveLog(input);
+      return submitIdentityLog(resolved);
+    },
+    [submitIdentityLog]
   );
 
   const submitDishQuickEntry = useCallback(
@@ -468,6 +682,12 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     [bodyFatEntries, logs, persist, profile, settings, weights]
   );
 
+  const markPaywallSeen = useCallback(() => {
+    const next: AppSettings = { ...settings, paywallSeenAtISO: new Date().toISOString() };
+    setSettings(next);
+    persist(profile, logs, next, weights, bodyFatEntries);
+  }, [bodyFatEntries, logs, persist, profile, settings, weights]);
+
   const startTrial = useCallback(() => {
     const startedAtISO = new Date().toISOString();
     const next: AppSettings = {
@@ -480,11 +700,15 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     console.log('[app-state] Trial started', startedAtISO);
   }, [bodyFatEntries, logs, persist, profile, settings, weights]);
 
-  const restorePurchase = useCallback(() => {
-    const next: AppSettings = { ...settings, subscriptionStatus: 'active' };
+  const restorePurchase = useCallback(async () => {
+    console.log('[app-state] Restoring purchases via RevenueCat');
+    const info = await iapRestore();
+    if (!info) return false;
+    const status = mapCustomerInfoToStatus(info);
+    const next: AppSettings = { ...settings, subscriptionStatus: status };
     setSettings(next);
     persist(profile, logs, next, weights, bodyFatEntries);
-    console.log('[app-state] Restore purchase stub');
+    return status === 'active' || status === 'trialing';
   }, [bodyFatEntries, logs, persist, profile, settings, weights]);
 
   const setOnboardingStep = useCallback(
@@ -509,7 +733,16 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
   }, [bodyFatEntries, logs, persist, profile, settings, weights]);
 
   const resetOnboarding = useCallback(() => {
-    const next: AppSettings = { ...settings, onboardingCompleted: false, onboardingStep: 0, introSeenVersion: 0 };
+    const next: AppSettings = {
+      ...settings,
+      onboardingCompleted: false,
+      onboardingStep: 0,
+      introSeenVersion: 0,
+      paywallSeenAtISO: null,
+      onboardingCompletedAtISO: null,
+      subscriptionStatus: 'none',
+      trialStartedAtISO: null,
+    };
     setSettings(next);
     persist(profile, logs, next, weights, bodyFatEntries);
   }, [bodyFatEntries, logs, persist, profile, settings, weights]);
@@ -563,7 +796,6 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     weights,
     bodyFatEntries,
     selectedMode,
-    statusSheetVisible,
     editorLog,
     feedback,
     undoState,
@@ -572,11 +804,19 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     setSelectedMode,
     loggingDate,
     setLoggingDate,
-    setStatusSheetVisible,
     setEditorLogId,
     dishQuickEntryKey,
     setDishQuickEntryKey,
     submitDishQuickEntry,
+    quickIngredientSheetCategory,
+    openQuickIngredientSheet,
+    closeQuickIngredientSheet,
+    submitQuickIngredient,
+    identityLogSheet,
+    openIdentityLogSheet,
+    closeIdentityLogSheet,
+    submitIdentityLog,
+    quickLogIdentity,
     quickLog,
     openDraftEditor,
     commitPendingLog,
@@ -593,6 +833,7 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     addBodyFatEntry,
     getMealSlot,
     markIntroSeen,
+    markPaywallSeen,
     startTrial,
     restorePurchase,
     setOnboardingStep,
