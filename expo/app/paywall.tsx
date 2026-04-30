@@ -82,8 +82,8 @@ export default function PaywallRoute() {
     router.replace('/');
   }, [markPaywallSeen, router]);
 
-  const openLegal = (path: string) => {
-    router.push(path as never);
+  const openLegal = (url: string) => {
+    Linking.openURL(url).catch((e) => console.warn('[paywall] failed to open legal URL', e));
   };
 
   const monthlyPkg = offering?.monthly ?? offering?.availablePackages.find((p) => p.packageType === 'MONTHLY');

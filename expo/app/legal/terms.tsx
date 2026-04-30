@@ -91,7 +91,7 @@ export default function TermsRoute() {
 
             <Section title="9. お問い合わせ">
               <Body>
-                本規約に関するお問い合わせは、本アプリの開発者までご連絡ください。
+                本規約に関するお問い合わせは、contact@akizony.com までご連絡ください。
               </Body>
             </Section>
           </ScrollView>

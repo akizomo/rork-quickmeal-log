@@ -72,7 +72,9 @@ export default function PrivacyRoute() {
             </Section>
 
             <Section title="7. お問い合わせ">
-              <Body>本ポリシーに関するお問い合わせは、本アプリの開発者までご連絡ください。</Body>
+              <Body>
+                本ポリシーに関するお問い合わせは、contact@akizony.com までご連絡ください。
+              </Body>
             </Section>
           </ScrollView>
         </SafeAreaView>

@@ -1,7 +1,7 @@
 import Constants from 'expo-constants';
-import { Stack, useRouter } from 'expo-router';
+import { Stack } from 'expo-router';
 import React from 'react';
-import { Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { Linking, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Logo } from '@/components/Logo';
@@ -11,10 +11,9 @@ import { Body, Caption, useTheme } from '@/design-system';
 
 export default function AboutRoute() {
   const theme = useTheme();
-  const router = useRouter();
 
-  const openLink = (path: string) => {
-    router.push(path as never);
+  const openLink = (url: string) => {
+    Linking.openURL(url).catch((e) => console.warn('[about] failed to open legal URL', e));
   };
 
   const version = Constants.expoConfig?.version ?? '1.0.0';

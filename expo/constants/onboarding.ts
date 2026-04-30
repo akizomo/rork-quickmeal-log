@@ -158,15 +158,14 @@ export const DEFAULT_MEAL_STYLE_BY_SLOT: Record<MealSlotKey, MealStyle> = {
 export const TRIAL_DURATION_DAYS = 7;
 
 /**
- * 法的情報へのアクセスパス。
- * - terms / privacy: アプリ内画面 (router.push で開く)
- * - manageSubscription: 外部リンク (Apple のサブスク管理画面)
+ * 法的情報へのアクセス URL。すべて外部リンク (Linking.openURL で開く)。
+ * - terms / privacy: Vercel ホスティング (https://hachibu.vercel.app)
+ * - manageSubscription: Apple のサブスク管理画面
  *
- * App Store 提出には公開URL も必要なので、ホスティング先ができたら
- * App Store Connect / Play Console 側のメタデータに登録する。
+ * App Store Connect / Play Console のメタデータにも同 URL を登録すること。
  */
 export const LEGAL_LINKS = {
-  terms: '/legal/terms',
-  privacy: '/legal/privacy',
+  terms: 'https://hachibu.vercel.app/terms',
+  privacy: 'https://hachibu.vercel.app/privacy',
   manageSubscription: 'https://apps.apple.com/account/subscriptions',
 } as const;

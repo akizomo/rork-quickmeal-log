@@ -71,8 +71,8 @@ export default function IntroRoute() {
     router.replace('/onboarding');
   }, [markIntroSeen, router]);
 
-  const openLegal = (path: string) => {
-    router.push(path as never);
+  const openLegal = (url: string) => {
+    Linking.openURL(url).catch((e) => console.warn('[intro] failed to open legal URL', e));
   };
 
   return (
