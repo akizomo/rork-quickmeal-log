@@ -15,7 +15,7 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.akizony.hachibu",
+      "bundleIdentifier": "app.akizony.hachibu",
       "buildNumber": "1",
       "privacyManifests": {
         "NSPrivacyTracking": false,
@@ -46,7 +46,7 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#FBF8F2"
       },
-      "package": "com.akizony.hachibu",
+      "package": "app.akizony.hachibu",
       "versionCode": 1
     },
     "web": {
