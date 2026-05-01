@@ -21,6 +21,8 @@ import { palette } from '@/constants/theme';
 import { Badge, BottomSheet, Caption, useTheme } from '@/design-system';
 import { useAppState } from '@/providers/app-state-provider';
 import { DishDraft, DishSize, IngredientDraft, Macro, PortionValue } from '@/types/nutrition';
+import { getIdentity } from '@/constants/identity';
+import { getLogDisplayInfo } from '@/utils/log-display';
 import { buildDishMacro, clampPortion, computeIngredient, draftFromLog, formatDateKey, formatMacroText, getIngredientSubtypeDef, getIngredientSubtypeDefs, getQuickCategories, getSubtypes, getToppingsForSubtype, summarizeToppings } from '@/utils/nutrition';
 import { formatDayLabel, isSameDay, sumForDate } from '@/utils/history';
 
@@ -195,13 +197,37 @@ function MacroPill({ label, value }: { label: string; value: number }) {
 }
 
 function LogListItemLegacy({ log }: { log: import('@/types/nutrition').FoodLog }) {
-  const { adjustLogAmount, deleteLog, setEditorLogId } = useAppState();
+  const { deleteLog, setEditorLogId, openIdentityLogSheet } = useAppState();
+  const display = getLogDisplayInfo(log);
+  const handlePress = () => {
+    if (log.identityId) {
+      const id = getIdentity(log.identityId);
+      if (id) {
+        openIdentityLogSheet(id.primaryHome.bucket, {
+          identityId: log.originIdentityId ?? log.identityId,
+          editingLogId: log.id,
+        });
+        return;
+      }
+    }
+    setEditorLogId(log.id);
+  };
   return (
-    <Pressable style={styles.logItem} onPress={() => setEditorLogId(log.id)} testID={`log-item-${log.id}`}>
+    <Pressable style={styles.logItem} onPress={handlePress} testID={`log-item-${log.id}`}>
       <View style={styles.logItemTop}>
         <View>
-          <Text style={styles.logTitle}>{log.categoryLabel}{log.subTypeLabel ? ` · ${log.subTypeLabel}` : ''}</Text>
-          <Text style={styles.logSubtitle}>{formatTime(log.timestamp)} · {log.mode === 'ingredient' ? '食材' : '一皿料理'}</Text>
+          <Text style={styles.logTitle}>{display.title}{display.bucketHint ? `  · ${display.bucketHint}` : ''}</Text>
+          {display.subtitle ? (
+            <Text style={[styles.logSubtitle, { fontWeight: '500' }]} testID={`log-attr-${log.id}`}>
+              {display.subtitle}
+            </Text>
+          ) : null}
+          {display.addonsText ? (
+            <Text style={styles.logSubtitle} testID={`log-topping-${log.id}`}>
+              {display.addonsText}
+            </Text>
+          ) : null}
+          <Text style={styles.logSubtitle}>{formatTime(log.timestamp)} · {display.amountText}</Text>
         </View>
         <Text style={styles.logKcal}>{Math.round(log.macro.kcal)} kcal</Text>
       </View>
@@ -211,19 +237,6 @@ function LogListItemLegacy({ log }: { log: import('@/types/nutrition').FoodLog }
         <MacroPill label="C" value={log.macro.carbs} />
       </View>
       <View style={styles.logActionRow}>
-        {log.mode === 'ingredient' ? (
-          <View style={styles.amountRow}>
-            <Pressable style={styles.amountButton} onPress={() => adjustLogAmount(log.id, 'decrease')} testID={`log-decrease-${log.id}`}>
-              <Text style={styles.amountButtonText}>−</Text>
-            </Pressable>
-            <Text style={styles.amountText}>× {formatNumber(log.amountMultiplier ?? 1)}</Text>
-            <Pressable style={styles.amountButton} onPress={() => adjustLogAmount(log.id, 'increase')} testID={`log-increase-${log.id}`}>
-              <Text style={styles.amountButtonText}>＋</Text>
-            </Pressable>
-          </View>
-        ) : (
-          <Text style={styles.amountText}>サイズ {log.size ?? 'regular'}</Text>
-        )}
         <Pressable style={styles.deleteButton} onPress={() => deleteLog(log.id)} testID={`log-delete-${log.id}`}>
           <Text style={styles.deleteButtonText}>削除</Text>
         </Pressable>
@@ -234,6 +247,14 @@ function LogListItemLegacy({ log }: { log: import('@/types/nutrition').FoodLog }
 
 void LogListItemLegacy;
 
+/**
+ * FloatingFeedback — post-save confirmation bubble at the calorie-ring
+ * position (top: 340). Green sageDeep, slide-up spring animation.
+ *
+ * The pre-save live preview is rendered by `LivePreviewOverlay` (in
+ * IdentityLogSheet.tsx) on a separate higher-z Modal layer so it stays
+ * visible above the open BottomSheet.
+ */
 export const FloatingFeedback = memo(function FloatingFeedback() {
   const { feedback } = useAppState();
   const opacity = useRef(new Animated.Value(0)).current;
@@ -251,10 +272,20 @@ export const FloatingFeedback = memo(function FloatingFeedback() {
 
   if (!feedback) return null;
 
+  const label = feedback.label;
+  const macro = feedback.macro;
+  const bubbleStyle = styles.feedbackBubble;
+  const labelStyle = styles.feedbackText;
+  const macroStyle = styles.feedbackMacro;
+
   return (
-    <Animated.View style={[styles.feedbackBubble, { opacity, transform: [{ translateY }] }]} testID="floating-feedback">
-      <Text style={styles.feedbackText}>{feedback.label}</Text>
-      <Text style={styles.feedbackMacro}>{formatMacroText(feedback.macro)}</Text>
+    <Animated.View
+      style={[bubbleStyle, { opacity, transform: [{ translateY }] }]}
+      testID="floating-feedback"
+      pointerEvents="none"
+    >
+      <Text style={labelStyle}>{label}</Text>
+      <Text style={macroStyle}>{formatMacroText(macro)}</Text>
     </Animated.View>
   );
 });
@@ -752,6 +783,12 @@ const styles = StyleSheet.create({
   feedbackBubble: { position: 'absolute', top: 340, alignSelf: 'center', backgroundColor: palette.sageDeep, paddingHorizontal: 16, paddingVertical: 12, borderRadius: 20, alignItems: 'center', shadowColor: palette.sageDeep, shadowOpacity: 0.24, shadowRadius: 16, shadowOffset: { width: 0, height: 10 }, elevation: 4 },
   feedbackText: { color: palette.white, fontSize: 16, fontWeight: '700' },
   feedbackMacro: { color: 'rgba(255,255,255,0.82)', fontSize: 12, marginTop: 2 },
+  // Live preview state (sheet open, before save). Same position as feedbackBubble
+  // but cream/sage-pale to read as "tentative". Pointer-events disabled so it
+  // doesn't intercept taps on the open sheet.
+  feedbackBubbleLive: { position: 'absolute', top: 340, alignSelf: 'center', backgroundColor: palette.surface, borderWidth: 1.5, borderColor: palette.sageStrong, paddingHorizontal: 16, paddingVertical: 12, borderRadius: 20, alignItems: 'center', shadowColor: palette.sageStrong, shadowOpacity: 0.16, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 2 },
+  feedbackTextLive: { color: palette.sageDeep, fontSize: 16, fontWeight: '700' },
+  feedbackMacroLive: { color: palette.textMuted, fontSize: 12, marginTop: 2 },
   undoToast: { position: 'absolute', left: 18, right: 18, bottom: 24, borderRadius: 22, backgroundColor: '#29322C', paddingHorizontal: 18, paddingVertical: 15, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   undoTitle: { color: palette.white, fontSize: 14, fontWeight: '700' },
   undoText: { color: 'rgba(255,255,255,0.72)', fontSize: 12, marginTop: 4 },

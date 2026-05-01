@@ -131,10 +131,15 @@ export const LEGACY_TO_IDENTITY_MAP: Record<string, string> = {
   'sandwich/burger': 'burger',
   'sandwich/sand_default': 'cold_sand',
 
-  // ---- Dish: pizza ----
-  'pizza/light': 'pizza_light',
-  'pizza/regular': 'pizza_regular',
-  'pizza/heavy': 'pizza_heavy',
+  // ---- Dish: pizza (旧 light/regular/heavy → 新 種類別 4 Identity に再分類) ----
+  // 旧 light = マルゲリータ系 (薄め)
+  'pizza/light': 'pizza_simple',
+  // 旧 regular = ペペロニ等の標準ピザ
+  'pizza/regular': 'pizza_meat',
+  // 旧 heavy = チーズ多め(クアトロ等)
+  'pizza/heavy': 'pizza_cheese',
+  // 旧 'pizza' (バケットdefault) も meat (一般的なピザ) に寄せる
+  'pizza/pizza_default': 'pizza_meat',
 
   // ---- Dish: set_meal → misc_dish/teishoku|bento ----
   'set_meal/teishoku': 'teishoku',

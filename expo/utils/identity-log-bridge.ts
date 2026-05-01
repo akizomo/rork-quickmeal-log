@@ -19,6 +19,8 @@ export interface BridgeMeta {
   date: string;
   timestamp: string;
   mealSlot?: MealSlot;
+  /** True when called from quickLogIdentity (single-tap on bucket button). */
+  wasShortTap?: boolean;
 }
 
 /**
@@ -53,6 +55,13 @@ export function logDraftToFoodLog(draft: ResolveResult, meta: BridgeMeta): FoodL
     amountLabel: buildAmountLabel(recordIdentity, draft.amountValue),
     identityId: recordIdentity.id,
     originIdentityId: draft.originIdentityId,
+    appliedAddons: draft.addons?.map((a) => ({
+      refId: a.refId,
+      refType: a.refType,
+      units: a.units,
+      addedMacro: a.addedMacro,
+    })),
+    wasShortTap: meta.wasShortTap,
   };
 }
 

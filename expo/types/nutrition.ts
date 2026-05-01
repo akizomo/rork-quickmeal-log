@@ -107,6 +107,26 @@ export interface FoodLog {
   identityId?: string;        // recordIdentity (after migration)
   originIdentityId?: string;  // entry-point Identity the user picked
   styleKey?: string;
+  /** Resolved add-ons applied to this log (Identity流用 or pure Addon ID). */
+  appliedAddons?: FoodLogAddon[];
+  /**
+   * True when this log was created via a single tap on a bucket button (no
+   * detail editing). Used by the log list display to show the bucket label
+   * instead of the specific Identity name (matches user expectation that
+   * "I tapped 肉魚(低脂)" shows as "肉魚(低脂)" not "鶏むね・ささみ").
+   */
+  wasShortTap?: boolean;
+}
+
+/**
+ * Add-on entry persisted on FoodLog. Mirrors `AppliedAddon` from
+ * `@/types/identity` but kept in nutrition.ts to avoid circular imports.
+ */
+export interface FoodLogAddon {
+  refId: string;                    // 'egg' | 'mentaiko' | ...
+  refType: 'identity' | 'addon';
+  units: number;
+  addedMacro: Macro;
 }
 
 export interface AppSettings {

@@ -9,14 +9,12 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ScrollView, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 import {
-  Body,
   BottomSheet,
   Caption,
   Chip,
-  Heading,
   NumberField,
   useTheme,
 } from '@/design-system';
@@ -30,13 +28,14 @@ import {
 import {
   AmountUnit,
   Identity,
-  AppliedAddon,
 } from '@/types/identity';
 import {
   resolveLog,
   ResolveAddonInput,
   ResolveResult,
 } from '@/utils/identity-resolver';
+import { palette } from '@/constants/theme';
+import { Macro } from '@/types/nutrition';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -125,6 +124,9 @@ export function IdentityLogSheet() {
     identityLogSheet,
     closeIdentityLogSheet,
     submitIdentityLog,
+    updateLivePreview,
+    livePreview,
+    logs,
   } = useAppState();
 
   const visible = identityLogSheet.visible;
@@ -143,6 +145,12 @@ export function IdentityLogSheet() {
   const [amountValue, setAmountValue] = useState<number>(0);
   const [addons, setAddons] = useState<ResolveAddonInput[]>([]);
 
+  // When in edit mode, use the existing log to pre-fill state.
+  const editingLog = useMemo(() => {
+    if (!identityLogSheet.editingLogId) return null;
+    return logs.find((l) => l.id === identityLogSheet.editingLogId) ?? null;
+  }, [identityLogSheet.editingLogId, logs]);
+
   // Initialize when sheet opens / target identity changes
   useEffect(() => {
     if (!visible || !bucketKey) {
@@ -153,6 +161,25 @@ export function IdentityLogSheet() {
       setAddons([]);
       return;
     }
+    // Edit mode: pre-fill from the existing log
+    if (editingLog) {
+      const id = editingLog.originIdentityId ?? editingLog.identityId ?? identitiesInBucket[0]?.id;
+      if (!id) return;
+      const identity = getIdentity(id);
+      setOriginIdentityId(id);
+      setAttributeKey(editingLog.attrKey ?? defaultAttributeKey(identity));
+      setStyleKey(editingLog.styleKey ?? defaultStyleKey(identity));
+      setAmountValue(editingLog.amountValue ?? identity?.amount.default ?? 1);
+      setAddons(
+        (editingLog.appliedAddons ?? []).map((a) => ({
+          refId: a.refId,
+          refType: a.refType,
+          units: a.units,
+        }))
+      );
+      return;
+    }
+    // Insert mode: default state
     const initialId = identityLogSheet.identityId ?? identitiesInBucket[0]?.id;
     if (!initialId) return;
     const identity = getIdentity(initialId);
@@ -161,7 +188,7 @@ export function IdentityLogSheet() {
     setStyleKey(defaultStyleKey(identity));
     setAmountValue(identity?.amount.default ?? 1);
     setAddons([]);
-  }, [visible, bucketKey, identityLogSheet.identityId, identitiesInBucket]);
+  }, [visible, bucketKey, identityLogSheet.identityId, identitiesInBucket, editingLog]);
 
   const origin = originIdentityId ? getIdentity(originIdentityId) : undefined;
 
@@ -223,10 +250,27 @@ export function IdentityLogSheet() {
     }
   }, [origin, attributeKey, styleKey, amountValue, addons]);
 
+  // Push live preview whenever resolved changes (sheet visible only).
+  // FloatingFeedback renders this in a "tentative" style at the calorie-ring
+  // position, transitioning to the green confirmed feedback after save.
+  useEffect(() => {
+    if (!visible || !resolved || !origin) {
+      return;
+    }
+    if (resolved.totalMacro.kcal <= 0) {
+      return;
+    }
+    updateLivePreview({
+      label: origin.label,
+      macro: resolved.totalMacro,
+    });
+  }, [visible, resolved, origin, updateLivePreview]);
+
   const handleSave = useCallback(async () => {
     if (!resolved) return;
+    updateLivePreview(null); // clear preview; submitIdentityLog will fire green feedback
     await submitIdentityLog(resolved);
-  }, [resolved, submitIdentityLog]);
+  }, [resolved, submitIdentityLog, updateLivePreview]);
 
   const canSave = !!resolved && resolved.totalMacro.kcal > 0;
 
@@ -247,6 +291,15 @@ export function IdentityLogSheet() {
       maxHeightRatio={0.6}
       expandToFull
       testID="identity-log-sheet"
+      topAccessory={
+        livePreview && resolved && resolved.totalMacro.kcal > 0 ? (
+          <LivePreviewBubble
+            label={livePreview.label}
+            macro={livePreview.macro}
+            sheetRatio={0.6}
+          />
+        ) : null
+      }
     >
       {bucket && origin ? (
         <>
@@ -336,6 +389,11 @@ export function IdentityLogSheet() {
                 testID="ils-amount-input"
               />
             </View>
+            {origin.referenceDescription ? (
+              <Caption tone="tertiary" style={{ marginTop: t.spacing['2'] }} testID="ils-amount-ref">
+                目安: {origin.referenceDescription}
+              </Caption>
+            ) : null}
           </Section>
 
           {/* Add-ons */}
@@ -373,41 +431,68 @@ export function IdentityLogSheet() {
             </View>
           ) : null}
 
-          {/* Macro preview */}
-          {resolved ? (
-            <View
-              style={{
-                marginTop: t.spacing['2'],
-                padding: t.spacing['4'],
-                backgroundColor: t.colors.surface.sunken,
-                borderRadius: t.radius.lg,
-              }}
-            >
-              <Caption tone="secondary">合計</Caption>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'baseline',
-                  gap: t.spacing['2'],
-                  marginTop: 2,
-                }}
-              >
-                <Heading size="lg">{Math.round(resolved.totalMacro.kcal)}</Heading>
-                <Body tone="secondary">kcal</Body>
-              </View>
-              <Caption tone="tertiary" style={{ marginTop: 2 }}>
-                P {resolved.totalMacro.protein} / F {resolved.totalMacro.fat} / C{' '}
-                {resolved.totalMacro.carbs}
-              </Caption>
-              {resolved.addons && resolved.addons.length > 0 ? (
-                <Caption tone="tertiary" style={{ marginTop: 4 }}>
-                  + {resolved.addons.map((a: AppliedAddon) => getAddonLabel(a.refId, a.refType)).join(' / ')}
-                </Caption>
-              ) : null}
-            </View>
-          ) : null}
+          {/* Macro preview is rendered by LivePreviewOverlay (separate Modal
+              layer above the sheet), so we don't show it inside the sheet. */}
         </>
       ) : null}
     </BottomSheet>
   );
 }
+
+// ---------------------------------------------------------------------------
+// LivePreviewBubble — passed to BottomSheet's `topAccessory` slot. This
+// renders INSIDE the BottomSheet's own Modal (no extra Modal layer), so it
+// floats above the sheet without intercepting touches. Position: 24px above
+// the sheet's top edge (sheet has fixed maxHeightRatio so we can compute it).
+// After save, this unmounts and FloatingFeedback fires the green "confirmed"
+// bubble at the calorie-ring position — creating preview → confirmation flow.
+// ---------------------------------------------------------------------------
+
+function LivePreviewBubble({
+  label,
+  macro,
+  sheetRatio,
+}: {
+  label: string;
+  macro: Macro;
+  sheetRatio: number;
+}) {
+  const { height: screenHeight } = useWindowDimensions();
+  // BottomSheet covers `sheetRatio * 100`% from bottom. Bubble bottom edge sits
+  // 24 px above the sheet's top edge.
+  const bubbleBottom = Math.round(screenHeight * sheetRatio) + 24;
+  return (
+    <View
+      style={[bubbleStyles.bubble, { bottom: bubbleBottom }]}
+      pointerEvents="none"
+    >
+      <Text style={bubbleStyles.label}>{label}</Text>
+      <Text style={bubbleStyles.macro}>{formatPreviewMacro(macro)}</Text>
+    </View>
+  );
+}
+
+function formatPreviewMacro(m: Macro): string {
+  return `${Math.round(m.kcal)} kcal · P${Math.round(m.protein)} F${Math.round(m.fat)} C${Math.round(m.carbs)}`;
+}
+
+const bubbleStyles = StyleSheet.create({
+  bubble: {
+    position: 'absolute',
+    alignSelf: 'center',
+    backgroundColor: palette.surface,
+    borderWidth: 1.5,
+    borderColor: palette.sageStrong,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    borderRadius: 22,
+    alignItems: 'center',
+    shadowColor: palette.sageStrong,
+    shadowOpacity: 0.22,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 8,
+  },
+  label: { color: palette.sageDeep, fontSize: 15, fontWeight: '700' },
+  macro: { color: palette.textMuted, fontSize: 12, marginTop: 2 },
+});

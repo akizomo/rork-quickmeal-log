@@ -42,7 +42,7 @@ export function IdentitySearchBar() {
 
   const handleSelect = useCallback(
     (identity: Identity) => {
-      openIdentityLogSheet(identity.primaryHome.bucket, identity.id);
+      openIdentityLogSheet(identity.primaryHome.bucket, { identityId: identity.id });
       setQuery('');
       setDebounced('');
     },

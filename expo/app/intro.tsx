@@ -1,54 +1,193 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
 import React, { useCallback, useRef, useState } from 'react';
-import { Dimensions, FlatList, Linking, Pressable, StyleSheet, Text, View, ViewToken } from 'react-native';
+import {
+  FlatList,
+  Image,
+  ImageSourcePropType,
+  Linking,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  ViewToken,
+  useWindowDimensions,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Svg, {
+  Circle,
+  Defs,
+  LinearGradient as SvgLinearGradient,
+  Path,
+  Stop,
+} from 'react-native-svg';
 
 import { Logo } from '@/components/Logo';
 import { INTRO_VERSION, LEGAL_LINKS } from '@/constants/onboarding';
 import { palette } from '@/constants/theme';
 import { useAppState } from '@/providers/app-state-provider';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+type SlideMedia =
+  | { kind: 'image'; source: ImageSourcePropType }
+  | { kind: 'illustration' };
 
 interface Slide {
   key: string;
   title: string;
   subtitle: string;
-  /** 将来差し替え予定のスクリーンショット/動画 placeholder のキャプション */
-  mediaCaption: string;
+  /** ヒーロー領域の背景色 ('transparent' で親グラデを透かす) */
   accent: string;
+  media: SlideMedia;
 }
 
 const SLIDES: Slide[] = [
   {
     key: 's1',
-    title: '最短で記録できる',
-    subtitle: 'タップで即記録、長押しでそっと量を整える。',
-    mediaCaption: 'Quick Log デモ',
-    accent: palette.accentSoft,
+    title: '9ボタンで、8割いける。',
+    subtitle: '食材タップひとつで、ざっくり記録。',
+    accent: '#E8E0D0', // kinari (warm paper)
+    media: { kind: 'image', source: require('@/assets/images/intro/screen_quicklog.png') },
   },
   {
     key: 's2',
-    title: '見るべき数字を、一目で',
-    subtitle: '総カロリーと P/F/C の進捗を、静かに表示。',
-    mediaCaption: 'ダッシュボード',
-    accent: '#E8E2D1',
+    title: '急ぎはタップ、余裕は長押し。',
+    subtitle: '量や調理法を選びたい日だけ、もう一歩ふみこめる。',
+    accent: '#DDE8D6', // sage soft
+    media: { kind: 'image', source: require('@/assets/images/intro/screen_detail.png') },
   },
   {
     key: 's3',
-    title: 'あなたに合った目標',
-    subtitle: '現状を伝えるだけで、納得感のある提案。',
-    mediaCaption: '目標設定',
-    accent: '#DDE8D6',
+    title: '進みは、ひと目で。',
+    subtitle: '目標と今の差が、グラフでそのまま見える。',
+    accent: palette.accentSoft, // lavender
+    media: { kind: 'illustration' },
   },
 ];
+
+// ── Intro 専用 進捗イラスト ───────────────────────────────────
+// kcal リング + 体重スパークライン + PFC バー の 3 カード合成。
+// intro 以外で再利用する見込みが無いため、ローカル定義。
+const ILLUST_COLORS = {
+  protein: '#A55B5B', // clay 系
+  fat: '#E8E0D0', // kinari
+  carb: palette.sageStrong,
+} as const;
+
+function IntroProgressIllustration() {
+  const { height: screenHeight } = useWindowDimensions();
+  // 画面高さに応じて 0.6〜1.0 の範囲でスケール。
+  // ヒーロー利用可能高さ ≒ screenHeight - 349 (TopBar + footer + textBlock 等のクローム概算)。
+  // 474 = 3 カード合計のベース高 410 + wrap の paddingVertical 32×2 = 64。
+  // これで 600〜950px の縦幅でもカードと上下余白が収まる。
+  const scale = Math.max(0.6, Math.min(1, (screenHeight - 349) / 474));
+
+  const pfcRows: { l: 'P' | 'F' | 'C'; v: number; c: string }[] = [
+    { l: 'P', v: 0.62, c: ILLUST_COLORS.protein },
+    { l: 'F', v: 0.41, c: ILLUST_COLORS.fat },
+    { l: 'C', v: 0.35, c: ILLUST_COLORS.carb },
+  ];
+
+  return (
+    <View style={[illustStyles.wrap, { transform: [{ scale }] }]}>
+      {/* Card 1 — kcal リング */}
+      <View style={illustStyles.card}>
+        <View style={illustStyles.ringBox}>
+          <Svg width={120} height={120} viewBox="0 0 120 120">
+            <Circle
+              cx={60}
+              cy={60}
+              r={46}
+              stroke={palette.border}
+              strokeWidth={9}
+              fill="none"
+            />
+            <Circle
+              cx={60}
+              cy={60}
+              r={46}
+              stroke={palette.sageDeep}
+              strokeWidth={9}
+              fill="none"
+              strokeDasharray="289"
+              strokeDashoffset="92"
+              strokeLinecap="round"
+              transform="rotate(-90 60 60)"
+            />
+          </Svg>
+          <View style={illustStyles.ringCenter} pointerEvents="none">
+            <Text style={illustStyles.ringNumber}>1,438</Text>
+            <Text style={illustStyles.ringUnit}>/ 2,070 kcal</Text>
+          </View>
+        </View>
+      </View>
+
+      {/* Card 2 — 体重トレンド */}
+      <View style={[illustStyles.card, illustStyles.cardSpark]}>
+        <View style={illustStyles.sparkHeader}>
+          <Text style={illustStyles.sparkLabel}>体重 ・ 12週</Text>
+          <Text style={illustStyles.sparkDelta}>-2.3kg</Text>
+        </View>
+        <Svg
+          width="100%"
+          height={56}
+          viewBox="0 0 220 56"
+          preserveAspectRatio="none"
+        >
+          <Defs>
+            <SvgLinearGradient id="sparkfill" x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0%" stopColor={palette.sageDeep} stopOpacity={0.18} />
+              <Stop offset="100%" stopColor={palette.sageDeep} stopOpacity={0} />
+            </SvgLinearGradient>
+          </Defs>
+          <Path
+            d="M0,18 L20,16 L40,22 L60,20 L80,28 L100,30 L120,34 L140,32 L160,40 L180,38 L200,44 L220,46 L220,56 L0,56 Z"
+            fill="url(#sparkfill)"
+          />
+          <Path
+            d="M0,18 L20,16 L40,22 L60,20 L80,28 L100,30 L120,34 L140,32 L160,40 L180,38 L200,44 L220,46"
+            stroke={palette.sageDeep}
+            strokeWidth={2}
+            fill="none"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <Circle cx={220} cy={46} r={3.5} fill={palette.sageDeep} />
+        </Svg>
+        <View style={illustStyles.sparkAxis}>
+          <Text style={illustStyles.sparkAxisText}>1月</Text>
+          <Text style={illustStyles.sparkAxisText}>3月</Text>
+          <Text style={illustStyles.sparkAxisText}>目標</Text>
+        </View>
+      </View>
+
+      {/* Card 3 — PFC ミニバー */}
+      <View style={[illustStyles.card, illustStyles.cardPfc]}>
+        {pfcRows.map((row) => (
+          <View key={row.l} style={illustStyles.pfcRow}>
+            <Text style={illustStyles.pfcLabel}>{row.l}</Text>
+            <View style={illustStyles.pfcTrack}>
+              <View
+                style={[
+                  illustStyles.pfcFill,
+                  { width: `${row.v * 100}%`, backgroundColor: row.c },
+                ]}
+              />
+            </View>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
 
 export default function IntroRoute() {
   const router = useRouter();
   const { markIntroSeen } = useAppState();
   const [index, setIndex] = useState<number>(0);
+  const [listHeight, setListHeight] = useState<number>(0);
   const listRef = useRef<FlatList<Slide>>(null);
+  const { width: screenWidth } = useWindowDimensions();
 
   const onViewable = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
     const first = viewableItems[0];
@@ -81,10 +220,10 @@ export default function IntroRoute() {
       <View style={styles.page} testID="intro-screen">
         <LinearGradient colors={[palette.background, '#F7F4EE']} style={StyleSheet.absoluteFillObject} />
         <SafeAreaView edges={['top', 'bottom']} style={styles.safe}>
-          {/* TOP BAR: brand + skip (compact, 56px) */}
+          {/* TOP BAR: brand + skip */}
           <View style={styles.topBar}>
             <View style={styles.brandRow}>
-              <Logo size={24} color={palette.sageDeep} />
+              <Logo size={22} color={palette.sageDeep} />
               <Text style={styles.brandText}>Hachibu</Text>
             </View>
             <Pressable
@@ -99,7 +238,7 @@ export default function IntroRoute() {
             </Pressable>
           </View>
 
-          {/* SLIDES — media (top large) + text (bottom compact) */}
+          {/* SLIDES */}
           <FlatList
             ref={listRef}
             data={SLIDES}
@@ -110,15 +249,37 @@ export default function IntroRoute() {
             onViewableItemsChanged={onViewable}
             viewabilityConfig={{ itemVisiblePercentThreshold: 60 }}
             style={styles.slideList}
+            onLayout={(e) => setListHeight(e.nativeEvent.layout.height)}
             renderItem={({ item }) => (
-              <View style={[styles.slide, { width: SCREEN_WIDTH }]} testID={`intro-slide-${item.key}`}>
-                {/* HERO MEDIA — 約 60% */}
-                <View style={[styles.mediaWrap, { backgroundColor: item.accent }]}>
-                  <Text style={styles.mediaCaption}>{item.mediaCaption}</Text>
-                  <Text style={styles.mediaHint}>(スクリーンショットを差し込みます)</Text>
+              <View
+                style={[
+                  styles.slide,
+                  { width: screenWidth },
+                  listHeight > 0 ? { height: listHeight } : null,
+                ]}
+                testID={`intro-slide-${item.key}`}
+              >
+                {/* HERO */}
+                <View
+                  style={[
+                    styles.heroWrap,
+                    item.media.kind === 'image' ? styles.heroWrapImage : null,
+                    { backgroundColor: item.accent },
+                  ]}
+                >
+                  {item.media.kind === 'image' ? (
+                    <Image
+                      source={item.media.source}
+                      resizeMode="contain"
+                      style={styles.heroImage}
+                      accessibilityIgnoresInvertColors
+                    />
+                  ) : (
+                    <IntroProgressIllustration />
+                  )}
                 </View>
 
-                {/* TEXT — タイトル + サブタイトル (下部、compact) */}
+                {/* TEXT */}
                 <View style={styles.textBlock}>
                   <Text style={styles.title}>{item.title}</Text>
                   <Text style={styles.subtitle}>{item.subtitle}</Text>
@@ -127,7 +288,7 @@ export default function IntroRoute() {
             )}
           />
 
-          {/* BOTTOM: dots + CTA + legal */}
+          {/* FOOTER */}
           <View style={styles.footer}>
             <View style={styles.dots}>
               {SLIDES.map((_, i) => (
@@ -161,6 +322,28 @@ export default function IntroRoute() {
   );
 }
 
+const HERO_SHADOW = Platform.select({
+  ios: {
+    shadowColor: '#000',
+    shadowOpacity: 0.12,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 18 },
+  },
+  android: { elevation: 6 },
+  default: {},
+});
+
+const CARD_SHADOW = Platform.select({
+  ios: {
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 24,
+    shadowOffset: { width: 0, height: 8 },
+  },
+  android: { elevation: 2 },
+  default: {},
+});
+
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: palette.background },
   safe: { flex: 1 },
@@ -174,31 +357,112 @@ const styles = StyleSheet.create({
     height: 48,
   },
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  brandText: { fontSize: 16, fontWeight: '700', color: palette.text, letterSpacing: 0.3 },
-  skipText: { color: palette.textMuted, fontSize: 13, fontWeight: '600' },
+  brandText: { fontSize: 15, fontWeight: '700', color: palette.text, letterSpacing: 0.3 },
+  skipText: { color: palette.textMuted, fontSize: 12.5, fontWeight: '600' },
   slideList: { flex: 1 },
   slide: { flex: 1, paddingHorizontal: 20, paddingTop: 8 },
-  mediaWrap: {
+  heroWrap: {
     flex: 1,
+    minHeight: 0,
     width: '100%',
     borderRadius: 28,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    overflow: 'hidden',
     marginBottom: 24,
   },
-  mediaCaption: { fontSize: 14, fontWeight: '700', color: palette.text },
-  mediaHint: { fontSize: 12, color: palette.textMuted },
-  textBlock: { gap: 8, paddingBottom: 8 },
-  title: { fontSize: 24, fontWeight: '700', color: palette.text, lineHeight: 32 },
-  subtitle: { fontSize: 14, lineHeight: 22, color: palette.textMuted },
+  // Image スライド (S1 / S2): デバイスを上に寄せて下 ~10% を見切れさせる
+  // 画面高さが変わっても比率を保つため position:absolute + % で縦をスケール
+  heroWrapImage: {
+    // overflow / borderRadius は heroWrap で適用済
+  },
+  heroImage: {
+    position: 'absolute',
+    top: '5%',
+    height: '105%',          // hero の 105% 高 → 下端は約 10% 見切れる
+    aspectRatio: 300 / 615,  // 画像の元 aspect (300×615) を維持
+    alignSelf: 'center',
+    ...HERO_SHADOW,
+  },
+  textBlock: { gap: 6, paddingBottom: 8 },
+  title: { fontSize: 24, fontWeight: '700', color: palette.text, lineHeight: 32, letterSpacing: 0.2 },
+  subtitle: { fontSize: 13.5, lineHeight: 23, color: palette.textMuted },
   footer: { paddingHorizontal: 20, paddingBottom: 12, gap: 14 },
   dots: { flexDirection: 'row', justifyContent: 'center', gap: 6 },
   dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: palette.border },
   dotActive: { backgroundColor: palette.sageDeep, width: 18 },
-  cta: { backgroundColor: palette.sageDeep, borderRadius: 999, paddingVertical: 16, alignItems: 'center' },
-  ctaText: { color: palette.white, fontSize: 15, fontWeight: '700' },
+  cta: {
+    backgroundColor: palette.sageDeep,
+    borderRadius: 999,
+    paddingVertical: 15,
+    alignItems: 'center',
+  },
+  ctaText: { color: palette.white, fontSize: 14.5, fontWeight: '700', letterSpacing: 0.2 },
   legalRow: { flexDirection: 'row', justifyContent: 'center', gap: 8 },
-  legalLink: { fontSize: 12, color: palette.textMuted, textDecorationLine: 'underline' },
-  legalSep: { fontSize: 12, color: palette.textMuted },
+  legalLink: { fontSize: 11.5, color: palette.textMuted, textDecorationLine: 'underline' },
+  legalSep: { fontSize: 11.5, color: palette.textMuted },
+});
+
+const illustStyles = StyleSheet.create({
+  // hero の縦をフルに使い、3 カードを均等に縦中央寄せ。
+  // 画面高さが変わっても各カードの比率と余白が保たれる。
+  wrap: {
+    width: '78%',
+    flex: 1,
+    flexDirection: 'column',
+    justifyContent: 'center',
+    gap: 14,
+    paddingVertical: 32,
+  },
+  card: {
+    backgroundColor: palette.surface,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: palette.border,
+    paddingVertical: 20,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    ...CARD_SHADOW,
+  },
+  cardSpark: { paddingVertical: 18, paddingHorizontal: 20, alignItems: 'stretch', gap: 10 },
+  cardPfc: { paddingVertical: 16, paddingHorizontal: 20, alignItems: 'stretch', gap: 9 },
+  // Card 1
+  ringBox: { position: 'relative', width: 120, height: 120 },
+  ringCenter: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ringNumber: { fontSize: 26, fontWeight: '700', color: palette.text, lineHeight: 28 },
+  ringUnit: { fontSize: 10.5, color: palette.textMuted, marginTop: 4 },
+  // Card 2
+  sparkHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+  },
+  sparkLabel: { fontSize: 11.5, color: palette.textMuted, letterSpacing: 0.5 },
+  sparkDelta: { fontSize: 12, color: palette.sageStrong, fontWeight: '600' },
+  sparkAxis: { flexDirection: 'row', justifyContent: 'space-between' },
+  sparkAxisText: { fontSize: 10, color: palette.textMuted, letterSpacing: 0.3 },
+  // Card 3
+  pfcRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  pfcLabel: {
+    width: 12,
+    fontSize: 12,
+    fontWeight: '700',
+    color: palette.text,
+  },
+  pfcTrack: {
+    flex: 1,
+    height: 6,
+    borderRadius: 99,
+    backgroundColor: palette.border,
+    overflow: 'hidden',
+  },
+  pfcFill: { height: '100%', borderRadius: 99 },
 });

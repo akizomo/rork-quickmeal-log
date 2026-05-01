@@ -64,6 +64,17 @@ interface FeedbackState {
   macro: FoodLog['macro'];
 }
 
+/**
+ * Live preview state shown while the IdentityLogSheet is open.
+ * Renders at the same position as FloatingFeedback (under calorie ring),
+ * but in a "tentative" style (cream/sage pale) until the user saves —
+ * at which point it transitions to the green confirmed feedback.
+ */
+interface LivePreviewState {
+  label: string;
+  macro: FoodLog['macro'];
+}
+
 interface UndoState {
   log: FoodLog;
   expiresAt: number;
@@ -130,9 +141,12 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     visible: boolean;
     bucketKey?: BucketKey;
     identityId?: string;
+    /** When set, the sheet edits this existing FoodLog instead of creating new. */
+    editingLogId?: string;
   }>({ visible: false });
   const [pendingLogIds, setPendingLogIds] = useState<string[]>([]);
   const [feedback, setFeedback] = useState<FeedbackState | null>(null);
+  const [livePreview, setLivePreview] = useState<LivePreviewState | null>(null);
   const [undoState, setUndoState] = useState<UndoState | null>(null);
   const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -298,6 +312,21 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     [bodyFatEntries, logs, persist, profile, settings, triggerFeedback, triggerUndo, weights]
   );
 
+  /** Replace an existing log in place (edit mode), preserving its position in the list. */
+  const replaceLog = useCallback(
+    async (updated: FoodLog) => {
+      const idx = logs.findIndex((l) => l.id === updated.id);
+      if (idx < 0) {
+        console.log('[app-state] replaceLog: log not found', updated.id);
+        return;
+      }
+      const nextLogs = [...logs.slice(0, idx), updated, ...logs.slice(idx + 1)];
+      setLogs(nextLogs);
+      persist(profile, nextLogs, settings, weights, bodyFatEntries);
+    },
+    [bodyFatEntries, logs, persist, profile, settings, weights]
+  );
+
   const pushPendingLog = useCallback(
     async (log: FoodLog) => {
       if (settings.hapticsEnabled) {
@@ -424,12 +453,29 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
 
   // ----- Identity-first IA (Phase 2+) -----
 
-  const openIdentityLogSheet = useCallback((bucketKey: BucketKey, identityId?: string) => {
-    setIdentityLogSheet({ visible: true, bucketKey, identityId });
-  }, []);
+  const openIdentityLogSheet = useCallback(
+    (bucketKey: BucketKey, opts?: { identityId?: string; editingLogId?: string }) => {
+      setIdentityLogSheet({
+        visible: true,
+        bucketKey,
+        identityId: opts?.identityId,
+        editingLogId: opts?.editingLogId,
+      });
+    },
+    []
+  );
 
   const closeIdentityLogSheet = useCallback(() => {
     setIdentityLogSheet({ visible: false });
+    setLivePreview(null); // clear preview when sheet is dismissed without saving
+  }, []);
+
+  /**
+   * Live preview push — called by IdentityLogSheet as the user edits.
+   * Pass null to clear (e.g. on save complete).
+   */
+  const updateLivePreview = useCallback((next: LivePreviewState | null) => {
+    setLivePreview(next);
   }, []);
 
   /**
@@ -438,20 +484,41 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
    * and history bookkeeping.
    */
   const submitIdentityLog = useCallback(
-    async (resolved: ResolveResult) => {
+    async (resolved: ResolveResult, opts?: { editingLogId?: string; wasShortTap?: boolean }) => {
+      const editingLogId = opts?.editingLogId ?? identityLogSheet.editingLogId;
+
+      // Edit-mode: update the existing FoodLog in place (preserve id/date/timestamp/mealSlot).
+      if (editingLogId) {
+        const existing = logs.find((l) => l.id === editingLogId);
+        if (existing) {
+          const updated = logDraftToFoodLog(resolved, {
+            id: existing.id,
+            date: existing.date,
+            timestamp: existing.timestamp,
+            mealSlot: existing.mealSlot,
+            wasShortTap: existing.wasShortTap, // preserve original origin flag
+          });
+          await replaceLog(updated);
+          setIdentityLogSheet({ visible: false });
+          return updated;
+        }
+        // Fall through to insert if the original is missing (shouldn't happen).
+      }
+
       const now = new Date();
       const baseLog = logDraftToFoodLog(resolved, {
         id: generateId('log'),
         date: formatDateKey(now),
         timestamp: now.toISOString(),
         mealSlot: getMealSlot(now),
+        wasShortTap: opts?.wasShortTap,
       });
       const log = applyLoggingDate(baseLog);
       await pushLog(log);
       setIdentityLogSheet({ visible: false });
       return log;
     },
-    [applyLoggingDate, pushLog]
+    [identityLogSheet.editingLogId, logs, replaceLog, applyLoggingDate, pushLog]
   );
 
   /**
@@ -798,6 +865,8 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     selectedMode,
     editorLog,
     feedback,
+    livePreview,
+    updateLivePreview,
     undoState,
     isHydrating: persistedQuery.isLoading,
     isPersisting: persistMutation.isPending,

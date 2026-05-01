@@ -221,6 +221,13 @@ export interface Identity {
    * Attribute to represent the typical case (e.g., teishoku 焼魚 vs トンカツ).
    */
   quickTapDisabled?: boolean;
+
+  /**
+   * Human-readable hint shown near the amount input describing what the
+   * default amount represents (e.g., "1人前 ≒ 麺250g + トマトソース").
+   * Helps users understand what a "1人前" / "1切" / "5本" etc. assumes.
+   */
+  referenceDescription?: string;
 }
 
 // ---------------------------------------------------------------------------

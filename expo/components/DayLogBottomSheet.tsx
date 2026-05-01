@@ -12,10 +12,12 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { palette } from '@/constants/theme';
+import { getIdentity } from '@/constants/identity';
 import { useAppState } from '@/providers/app-state-provider';
 import { FoodLog } from '@/types/nutrition';
 import { formatShortDay, isSameDay, logsForDate, sumForDate } from '@/utils/history';
-import { formatDateKey, summarizeToppings } from '@/utils/nutrition';
+import { getLogDisplayInfo } from '@/utils/log-display';
+import { formatDateKey } from '@/utils/nutrition';
 
 type SnapStage = 'peek' | 'half' | 'full';
 
@@ -51,27 +53,53 @@ function MacroPill({ label, value }: { label: string; value: number }) {
 }
 
 function LogListItem({ log }: { log: FoodLog }) {
-  const { adjustLogAmount, deleteLog, setEditorLogId } = useAppState();
-  const toppingSummary = summarizeToppings(log.toppings);
-  const primaryName = log.subTypeLabel ?? log.categoryLabel;
+  const { deleteLog, setEditorLogId, openIdentityLogSheet } = useAppState();
+  const display = getLogDisplayInfo(log);
+  const handlePress = () => {
+    // New IA log → open IdentityLogSheet in edit mode (preload from log)
+    if (log.identityId) {
+      const id = getIdentity(log.identityId);
+      if (id) {
+        openIdentityLogSheet(id.primaryHome.bucket, {
+          identityId: log.originIdentityId ?? log.identityId,
+          editingLogId: log.id,
+        });
+        return;
+      }
+    }
+    // Legacy log fallback → old editor
+    setEditorLogId(log.id);
+  };
   return (
     <Pressable
       style={styles.logItem}
-      onPress={() => setEditorLogId(log.id)}
+      onPress={handlePress}
       testID={`log-item-${log.id}`}
     >
       <View style={styles.logItemTop}>
         <View style={styles.logItemTopLeft}>
-          <Text style={styles.logTitle} numberOfLines={1}>
-            {primaryName}
-          </Text>
-          {toppingSummary ? (
+          <View style={styles.logTitleRow}>
+            <Text style={styles.logTitle} numberOfLines={1}>
+              {display.title}
+            </Text>
+            {display.bucketHint ? (
+              <Text style={styles.logBucketHint} numberOfLines={1}>
+                {display.bucketHint}
+              </Text>
+            ) : null}
+          </View>
+          {display.subtitle ? (
+            <Text style={styles.logSubAttr} numberOfLines={1} testID={`log-attr-${log.id}`}>
+              {display.subtitle}
+            </Text>
+          ) : null}
+          {display.addonsText ? (
             <Text style={styles.logTopping} numberOfLines={1} testID={`log-topping-${log.id}`}>
-              {toppingSummary}
+              {display.addonsText}
             </Text>
           ) : null}
           <Text style={styles.logSubtitle}>
-            {formatTime(log.timestamp)} · {log.mode === 'ingredient' ? '食材' : '一皿料理'}
+            {formatTime(log.timestamp)} · {display.amountText}
           </Text>
         </View>
         <Text style={styles.logKcal}>{Math.round(log.macro.kcal)} kcal</Text>
@@ -82,27 +110,6 @@ function LogListItem({ log }: { log: FoodLog }) {
         <MacroPill label="C" value={log.macro.carbs} />
       </View>
       <View style={styles.logActionRow}>
-        {log.mode === 'ingredient' ? (
-          <View style={styles.amountRow}>
-            <Pressable
-              style={styles.amountButton}
-              onPress={() => adjustLogAmount(log.id, 'decrease')}
-              testID={`log-decrease-${log.id}`}
-            >
-              <Text style={styles.amountButtonText}>−</Text>
-            </Pressable>
-            <Text style={styles.amountText}>× {formatNumber(log.portionValue ?? log.amountMultiplier ?? 1)}</Text>
-            <Pressable
-              style={styles.amountButton}
-              onPress={() => adjustLogAmount(log.id, 'increase')}
-              testID={`log-increase-${log.id}`}
-            >
-              <Text style={styles.amountButtonText}>＋</Text>
-            </Pressable>
-          </View>
-        ) : (
-          <Text style={styles.amountText}>サイズ {log.size ?? 'regular'}</Text>
-        )}
         <Pressable
           style={styles.deleteButton}
           onPress={() => deleteLog(log.id)}
@@ -398,10 +405,31 @@ const styles = StyleSheet.create({
   logItemTopLeft: {
     flex: 1,
   },
+  logTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 8,
+    flexWrap: 'wrap',
+  },
   logTitle: {
     fontSize: 15,
     fontWeight: '700',
     color: '#243128',
+  },
+  logBucketHint: {
+    fontSize: 11,
+    color: palette.textMuted,
+    backgroundColor: '#ECE5D9',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    overflow: 'hidden',
+  },
+  logSubAttr: {
+    marginTop: 3,
+    fontSize: 12,
+    color: palette.text,
+    fontWeight: '500',
   },
   logSubtitle: {
     marginTop: 3,

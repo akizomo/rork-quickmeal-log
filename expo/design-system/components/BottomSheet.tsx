@@ -141,6 +141,14 @@ export type BottomSheetProps = {
   testID?: string;
   /** Optional accessibility label for the sheet container. */
   accessibilityLabel?: string;
+
+  /**
+   * Optional content rendered inside the sheet's Modal but ABOVE the sheet
+   * itself (e.g. live preview bubble that floats above the sheet). Positioned
+   * via the consumer's own absolute styles. Wrapped in `pointerEvents="none"`
+   * so it never intercepts taps on the sheet.
+   */
+  topAccessory?: React.ReactNode;
 };
 
 // ---------------------------------------------------------------------------
@@ -162,6 +170,7 @@ export function BottomSheet({
   expandToFull = false,
   testID,
   accessibilityLabel,
+  topAccessory,
 }: BottomSheetProps) {
   const t = useTheme();
   const insets = useSafeAreaInsets();
@@ -373,6 +382,16 @@ export function BottomSheet({
             <View style={styles.scrimTint} />
           </TouchableWithoutFeedback>
         </Animated.View>
+
+        {/* topAccessory — content above the sheet (e.g. live preview bubble).
+            Wrapped with pointerEvents="box-none" so taps fall through to the
+            scrim / sheet, except where the accessory's own children declare
+            otherwise. */}
+        {topAccessory ? (
+          <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
+            {topAccessory}
+          </View>
+        ) : null}
 
         <Animated.View
           onLayout={(e) => {
