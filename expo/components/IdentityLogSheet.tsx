@@ -9,7 +9,8 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
+import { Trash2, X } from 'lucide-react-native';
 
 import {
   BottomSheet,
@@ -125,7 +126,7 @@ export function IdentityLogSheet() {
     closeIdentityLogSheet,
     submitIdentityLog,
     updateLivePreview,
-    livePreview,
+    deleteLog,
     logs,
   } = useAppState();
 
@@ -272,6 +273,26 @@ export function IdentityLogSheet() {
     await submitIdentityLog(resolved);
   }, [resolved, submitIdentityLog, updateLivePreview]);
 
+  const confirmDelete = useCallback(() => {
+    if (!editingLog) return;
+    Alert.alert(
+      '記録を削除',
+      'この記録を削除しますか？',
+      [
+        { text: 'キャンセル', style: 'cancel' },
+        {
+          text: '削除',
+          style: 'destructive',
+          onPress: () => {
+            deleteLog(editingLog.id);
+            updateLivePreview(null);
+            closeIdentityLogSheet();
+          },
+        },
+      ],
+    );
+  }, [editingLog, deleteLog, updateLivePreview, closeIdentityLogSheet]);
+
   const canSave = !!resolved && resolved.totalMacro.kcal > 0;
 
   // Default add-on chips visible (origin Identity's defaultAddonIds)
@@ -282,8 +303,36 @@ export function IdentityLogSheet() {
       visible={visible}
       onClose={closeIdentityLogSheet}
       title={bucket ? `${bucket.emoji} ${bucket.label}` : ''}
-      primaryAction={{ label: '保存して追加', onPress: handleSave, disabled: !canSave }}
-      secondaryAction={{ label: 'キャンセル', onPress: closeIdentityLogSheet }}
+      primaryAction={{
+        label: editingLog ? '更新' : '保存して追加',
+        onPress: handleSave,
+        disabled: !canSave,
+      }}
+      footerLeft={<FooterPreview macro={resolved?.totalMacro ?? null} />}
+      headerRight={
+        <View style={{ flexDirection: 'row', gap: t.spacing['3'], alignItems: 'center' }}>
+          {editingLog ? (
+            <Pressable
+              onPress={confirmDelete}
+              accessibilityRole="button"
+              accessibilityLabel="この記録を削除"
+              hitSlop={8}
+              testID="ils-delete"
+            >
+              <Trash2 size={22} color={palette.danger} />
+            </Pressable>
+          ) : null}
+          <Pressable
+            onPress={closeIdentityLogSheet}
+            accessibilityRole="button"
+            accessibilityLabel="閉じる"
+            hitSlop={8}
+            testID="ils-close"
+          >
+            <X size={22} color={t.colors.content.secondary} />
+          </Pressable>
+        </View>
+      }
       // Fixed half-screen sheet. `expandToFull` keeps the sheet from shrinking
       // to its intrinsic content height, so chip rows / Add-on toggles / amount
       // edits don't cause the sheet to "jump" up and down while the user is
@@ -291,15 +340,6 @@ export function IdentityLogSheet() {
       maxHeightRatio={0.6}
       expandToFull
       testID="identity-log-sheet"
-      topAccessory={
-        livePreview && resolved && resolved.totalMacro.kcal > 0 ? (
-          <LivePreviewBubble
-            label={livePreview.label}
-            macro={livePreview.macro}
-            sheetRatio={0.6}
-          />
-        ) : null
-      }
     >
       {bucket && origin ? (
         <>
@@ -384,7 +424,7 @@ export function IdentityLogSheet() {
                 value={amountValue.toString()}
                 onChangeText={handleEditAmount}
                 suffix={origin.amount.unitLabel ?? UNIT_LABEL[origin.amount.unit]}
-                size="2xl"
+                size="lg"
                 decimal
                 testID="ils-amount-input"
               />
@@ -431,8 +471,8 @@ export function IdentityLogSheet() {
             </View>
           ) : null}
 
-          {/* Macro preview is rendered by LivePreviewOverlay (separate Modal
-              layer above the sheet), so we don't show it inside the sheet. */}
+          {/* Macro preview (kcal + PFC) is rendered in the footer's left slot
+              via `footerLeft={<FooterPreview ... />}`, EC-cart style. */}
         </>
       ) : null}
     </BottomSheet>
@@ -440,59 +480,39 @@ export function IdentityLogSheet() {
 }
 
 // ---------------------------------------------------------------------------
-// LivePreviewBubble — passed to BottomSheet's `topAccessory` slot. This
-// renders INSIDE the BottomSheet's own Modal (no extra Modal layer), so it
-// floats above the sheet without intercepting touches. Position: 24px above
-// the sheet's top edge (sheet has fixed maxHeightRatio so we can compute it).
-// After save, this unmounts and FloatingFeedback fires the green "confirmed"
-// bubble at the calorie-ring position — creating preview → confirmation flow.
+// FooterPreview — passed to BottomSheet's `footerLeft` slot. Renders
+// `kcal` + `P/F/C` next to the primary CTA, EC-cart style. Shows muted
+// placeholder text when no resolvable amount is set so the footer never
+// appears empty.
 // ---------------------------------------------------------------------------
 
-function LivePreviewBubble({
-  label,
-  macro,
-  sheetRatio,
-}: {
-  label: string;
-  macro: Macro;
-  sheetRatio: number;
-}) {
-  const { height: screenHeight } = useWindowDimensions();
-  // BottomSheet covers `sheetRatio * 100`% from bottom. Bubble bottom edge sits
-  // 24 px above the sheet's top edge.
-  const bubbleBottom = Math.round(screenHeight * sheetRatio) + 24;
+function FooterPreview({ macro }: { macro: Macro | null }) {
+  const t = useTheme();
+  const ready = !!macro && macro.kcal > 0;
   return (
-    <View
-      style={[bubbleStyles.bubble, { bottom: bubbleBottom }]}
-      pointerEvents="none"
-    >
-      <Text style={bubbleStyles.label}>{label}</Text>
-      <Text style={bubbleStyles.macro}>{formatPreviewMacro(macro)}</Text>
+    <View style={{ flex: 1, justifyContent: 'center' }}>
+      <Text
+        style={{
+          fontSize: t.typography.fontSize.lg,
+          fontWeight: '700',
+          color: ready ? palette.sageDeep : t.colors.content.tertiary,
+        }}
+        testID="ils-preview-kcal"
+      >
+        {ready ? `${Math.round(macro!.kcal)} kcal` : '— kcal'}
+      </Text>
+      <Text
+        style={{
+          fontSize: t.typography.fontSize.xs,
+          color: palette.textMuted,
+          marginTop: 2,
+        }}
+        testID="ils-preview-pfc"
+      >
+        {ready
+          ? `P${Math.round(macro!.protein)} · F${Math.round(macro!.fat)} · C${Math.round(macro!.carbs)}`
+          : 'P— · F— · C—'}
+      </Text>
     </View>
   );
 }
-
-function formatPreviewMacro(m: Macro): string {
-  return `${Math.round(m.kcal)} kcal · P${Math.round(m.protein)} F${Math.round(m.fat)} C${Math.round(m.carbs)}`;
-}
-
-const bubbleStyles = StyleSheet.create({
-  bubble: {
-    position: 'absolute',
-    alignSelf: 'center',
-    backgroundColor: palette.surface,
-    borderWidth: 1.5,
-    borderColor: palette.sageStrong,
-    paddingHorizontal: 18,
-    paddingVertical: 12,
-    borderRadius: 22,
-    alignItems: 'center',
-    shadowColor: palette.sageStrong,
-    shadowOpacity: 0.22,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 8,
-  },
-  label: { color: palette.sageDeep, fontSize: 15, fontWeight: '700' },
-  macro: { color: palette.textMuted, fontSize: 12, marginTop: 2 },
-});

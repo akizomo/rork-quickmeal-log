@@ -119,8 +119,15 @@ export type BottomSheetProps = {
 
   /** Right-side primary CTA. */
   primaryAction?: BottomSheetAction;
-  /** Left-side secondary CTA. */
+  /** Left-side secondary CTA. Ignored when `footerLeft` is provided. */
   secondaryAction?: BottomSheetAction;
+  /**
+   * Custom node rendered on the left side of the footer in place of
+   * `secondaryAction`. Useful for EC-style cart footers where the left side
+   * shows a live preview (e.g. kcal · PFC) and the right side shows a single
+   * primary CTA.
+   */
+  footerLeft?: React.ReactNode;
 
   /** Tap on scrim closes the sheet. Default: true. */
   dismissOnBackdropPress?: boolean;
@@ -171,6 +178,7 @@ export function BottomSheet({
   testID,
   accessibilityLabel,
   topAccessory,
+  footerLeft,
 }: BottomSheetProps) {
   const t = useTheme();
   const insets = useSafeAreaInsets();
@@ -183,9 +191,9 @@ export function BottomSheet({
 
   // Cache children/title/actions while close animation is running so the body
   // does not vanish if the parent unmounts/clears its data on visible=false.
-  const cachedRef = useRef({ children, title, headerRight, primaryAction, secondaryAction });
+  const cachedRef = useRef({ children, title, headerRight, primaryAction, secondaryAction, footerLeft });
   if (visible) {
-    cachedRef.current = { children, title, headerRight, primaryAction, secondaryAction };
+    cachedRef.current = { children, title, headerRight, primaryAction, secondaryAction, footerLeft };
   }
   const cached = cachedRef.current;
 
@@ -322,7 +330,7 @@ export function BottomSheet({
   });
 
   const bottomInset = Math.max(insets.bottom, t.spacing['4']);
-  const hasFooter = !!(cached.primaryAction || cached.secondaryAction);
+  const hasFooter = !!(cached.primaryAction || cached.secondaryAction || cached.footerLeft);
 
   // Built-in × button (overridable via headerRight)
   const renderHeaderRight = (): React.ReactNode => {
@@ -492,9 +500,13 @@ export function BottomSheet({
                 },
               ]}
             >
-              {cached.secondaryAction
-                ? renderActionButton(cached.secondaryAction, 'ghost')
-                : <View style={styles.actionItem} />}
+              {cached.footerLeft !== undefined && cached.footerLeft !== null ? (
+                <View style={styles.actionItem}>{cached.footerLeft}</View>
+              ) : cached.secondaryAction ? (
+                renderActionButton(cached.secondaryAction, 'ghost')
+              ) : (
+                <View style={styles.actionItem} />
+              )}
               {cached.primaryAction
                 ? renderActionButton(cached.primaryAction, 'primary')
                 : <View style={styles.actionItem} />}
