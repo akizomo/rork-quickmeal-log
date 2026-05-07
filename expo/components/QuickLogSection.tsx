@@ -52,13 +52,15 @@ const QUICK_LOG_COLORS = {
 // Identity-first IA bucket labels (PRD-aligned ≤6 char names).
 // Mirrors `INGREDIENT_BUCKETS` / `DISH_BUCKETS` from constants/identity/index.ts;
 // kept inline here so the home grid stays decoupled from full registry imports.
+// v1.2 (2026-05): veggies「野菜・汁物」→「野菜」、misc_dish「定食・単品」→「定食・単品・汁」 同期。
+//                 legacy `set_meal` キーは削除 (現行 IA に存在しない)。
 const INGREDIENT_SHORT_LABEL: Record<string, string> = {
   staple: 'ごはんパン麺',
   lean_protein: '肉魚(低脂)',
   egg: '卵',
   fatty_protein: '脂あり肉魚',
   dairy_soy: '乳・大豆',
-  veggies: '野菜・汁物',
+  veggies: '野菜',
   fruit: '果物',
   added_fat: '油・調味',
   snack_drink: 'おやつ甘飲',
@@ -73,8 +75,7 @@ const DISH_SHORT_LABEL: Record<string, string> = {
   sushi: '寿司',
   sandwich: 'サンドバーガー',
   pizza: 'ピザ',
-  set_meal: '定食・単品',
-  misc_dish: '定食・単品',
+  misc_dish: '定食・単品・汁',
 };
 
 export function getQuickLogButtonHeight(screenWidth: number): number {
