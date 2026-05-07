@@ -3,8 +3,6 @@ import { Stack, useRouter } from 'expo-router';
 import React, { useCallback, useRef, useState } from 'react';
 import {
   FlatList,
-  Image,
-  ImageSourcePropType,
   Linking,
   Platform,
   Pressable,
@@ -24,13 +22,15 @@ import Svg, {
 } from 'react-native-svg';
 
 import { Logo } from '@/components/Logo';
+import { ButtonGridIllustration, GestureDemoIllustration } from '@/components/onboarding-illustrations';
 import { INTRO_VERSION, LEGAL_LINKS } from '@/constants/onboarding';
 import { palette } from '@/constants/theme';
 import { useAppState } from '@/providers/app-state-provider';
 
 type SlideMedia =
-  | { kind: 'image'; source: ImageSourcePropType }
-  | { kind: 'illustration' };
+  | { kind: 'buttonGrid' }
+  | { kind: 'gestureDemo' }
+  | { kind: 'progress' };
 
 interface Slide {
   key: string;
@@ -45,23 +45,23 @@ const SLIDES: Slide[] = [
   {
     key: 's1',
     title: '9ボタンで、8割いける。',
-    subtitle: '食材タップひとつで、ざっくり記録。',
+    subtitle: 'ふだんの食事は、タップひとつで残せる。',
     accent: '#E8E0D0', // kinari (warm paper)
-    media: { kind: 'image', source: require('@/assets/images/intro/screen_quicklog.png') },
+    media: { kind: 'buttonGrid' },
   },
   {
     key: 's2',
     title: '急ぎはタップ、余裕は長押し。',
-    subtitle: '量や調理法を選びたい日だけ、もう一歩ふみこめる。',
+    subtitle: 'ちゃんと記録したい日だけ、もう一歩ふみこめる。',
     accent: '#DDE8D6', // sage soft
-    media: { kind: 'image', source: require('@/assets/images/intro/screen_detail.png') },
+    media: { kind: 'gestureDemo' },
   },
   {
     key: 's3',
     title: '進みは、ひと目で。',
     subtitle: '目標と今の差が、グラフでそのまま見える。',
-    accent: palette.accentSoft, // lavender
-    media: { kind: 'illustration' },
+    accent: palette.accentSoft, // ai (indigo)
+    media: { kind: 'progress' },
   },
 ];
 
@@ -181,6 +181,8 @@ function IntroProgressIllustration() {
   );
 }
 
+// Slide 1/2 のイラストは help 画面と共通化済み。`onboarding-illustrations.tsx` を参照。
+
 export default function IntroRoute() {
   const router = useRouter();
   const { markIntroSeen } = useAppState();
@@ -263,17 +265,13 @@ export default function IntroRoute() {
                 <View
                   style={[
                     styles.heroWrap,
-                    item.media.kind === 'image' ? styles.heroWrapImage : null,
                     { backgroundColor: item.accent },
                   ]}
                 >
-                  {item.media.kind === 'image' ? (
-                    <Image
-                      source={item.media.source}
-                      resizeMode="contain"
-                      style={styles.heroImage}
-                      accessibilityIgnoresInvertColors
-                    />
+                  {item.media.kind === 'buttonGrid' ? (
+                    <ButtonGridIllustration />
+                  ) : item.media.kind === 'gestureDemo' ? (
+                    <GestureDemoIllustration />
                   ) : (
                     <IntroProgressIllustration />
                   )}
@@ -322,17 +320,6 @@ export default function IntroRoute() {
   );
 }
 
-const HERO_SHADOW = Platform.select({
-  ios: {
-    shadowColor: '#000',
-    shadowOpacity: 0.12,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 18 },
-  },
-  android: { elevation: 6 },
-  default: {},
-});
-
 const CARD_SHADOW = Platform.select({
   ios: {
     shadowColor: '#000',
@@ -370,19 +357,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
     marginBottom: 24,
-  },
-  // Image スライド (S1 / S2): デバイスを上に寄せて下 ~10% を見切れさせる
-  // 画面高さが変わっても比率を保つため position:absolute + % で縦をスケール
-  heroWrapImage: {
-    // overflow / borderRadius は heroWrap で適用済
-  },
-  heroImage: {
-    position: 'absolute',
-    top: '5%',
-    height: '105%',          // hero の 105% 高 → 下端は約 10% 見切れる
-    aspectRatio: 300 / 615,  // 画像の元 aspect (300×615) を維持
-    alignSelf: 'center',
-    ...HERO_SHADOW,
   },
   textBlock: { gap: 6, paddingBottom: 8 },
   title: { fontSize: 24, fontWeight: '700', color: palette.text, lineHeight: 32, letterSpacing: 0.2 },
@@ -466,3 +440,5 @@ const illustStyles = StyleSheet.create({
   },
   pfcFill: { height: '100%', borderRadius: 99 },
 });
+
+// (gridStyles / gestureStyles は components/onboarding-illustrations.tsx に移動)
