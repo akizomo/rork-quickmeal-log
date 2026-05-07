@@ -380,7 +380,7 @@ const BUCKET_SUSHI: Identity[] = [
     id: 'sushi_plate',
     label: '回転寿司 (皿)',
     primaryHome: { tab: 'dish', bucket: 'sushi' },
-    defaultMacro: { kcal: 880, protein: 48, fat: 19, carbs: 131 },
+    defaultMacro: { kcal: 1040, protein: 56, fat: 32, carbs: 131 }, // 8皿分合計 (1皿=130kcal)
     referenceDescription: '1皿=2貫 (シャリ40g+ネタ20g/皿)',
     amount: { unit: 'plate', default: 8 },
   },
@@ -388,7 +388,7 @@ const BUCKET_SUSHI: Identity[] = [
     id: 'sushi_piece',
     label: 'セット寿司 (貫)',
     primaryHome: { tab: 'dish', bucket: 'sushi' },
-    defaultMacro: { kcal: 55, protein: 3, fat: 1.2, carbs: 8.2 }, // 1貫あたり
+    defaultMacro: { kcal: 650, protein: 35, fat: 20, carbs: 82 }, // 10貫分合計 (1貫=65kcal)
     referenceDescription: '1貫=シャリ20g+ネタ10g',
     amount: { unit: 'piece', default: 10, unitLabel: '貫' },
   },
@@ -541,8 +541,11 @@ const BUCKET_PIZZA: Identity[] = [
 ];
 
 // ---------------------------------------------------------------------------
-// Bucket 9: 定食・単品 (misc_dish) — 12 Identity
+// Bucket 9: 定食・単品・汁 (misc_dish) — 14 Identity (v1.2: 汁物4 Identity 追加)
 // (Note: teishoku/bento are placed first as the most frequent daily entries.)
+// (v1.2: miso_soup / tonjiru / soup_western / soup_creamy を veggies から移送。
+//        「スープ=料理」観点で素材ベース食品から分離。本バケットは quickTapDisabled
+//        なので汁物単独ログは長押しシートで Identity を選ぶ運用。)
 // ---------------------------------------------------------------------------
 
 const BUCKET_MISC_DISH: Identity[] = [
@@ -716,6 +719,47 @@ const BUCKET_MISC_DISH: Identity[] = [
       { key: 'white_fish', label: '白身魚', factor: { kcal: 0.7, fat: 0.3 } },
       { key: 'ika_tako', label: 'イカ・タコ', factor: { kcal: 0.6, fat: 0.2 } },
     ],
+  },
+  // ---- v1.2: 汁物 4 Identity (旧 veggies bucket から移送) ----
+  {
+    id: 'miso_soup',
+    label: '味噌汁・お吸い物',
+    primaryHome: { tab: 'dish', bucket: 'misc_dish' },
+    defaultMacro: { kcal: 40, protein: 2.5, fat: 1, carbs: 4 },
+    referenceDescription: '1杯=200ml相当',
+    amount: { unit: 'piece', default: 1, unitLabel: '杯', chips: [{ label: '1杯', value: 1 }, { label: '大', value: 1.5 }] },
+    attributes: [
+      { key: 'light', label: '具薄', isDefault: true },
+      { key: 'rich', label: '具沢山', factor: { kcal: 2.0, protein: 2.0, fat: 3.0, carbs: 2.0 } },
+    ],
+  },
+  {
+    id: 'tonjiru',
+    label: '豚汁・けんちん汁',
+    primaryHome: { tab: 'dish', bucket: 'misc_dish' },
+    defaultMacro: { kcal: 165, protein: 8, fat: 8, carbs: 15 },
+    referenceDescription: '1杯=200ml相当 (豚肉・根菜入り)',
+    amount: { unit: 'piece', default: 1, unitLabel: '杯', chips: [{ label: '1杯', value: 1 }, { label: '大', value: 1.5 }] },
+  },
+  {
+    id: 'soup_western',
+    label: '洋風スープ (薄)',
+    primaryHome: { tab: 'dish', bucket: 'misc_dish' },
+    defaultMacro: { kcal: 50, protein: 2, fat: 1.4, carbs: 8 },
+    referenceDescription: 'コンソメ・ミネストローネ等',
+    amount: { unit: 'ml', default: 200, chips: [{ label: '200', value: 200 }, { label: '大', value: 300 }] },
+    defaultAddonIds: ['cheese', 'crouton'],
+    allowedAddonIds: ['cheese', 'crouton', 'corn_top'],
+  },
+  {
+    id: 'soup_creamy',
+    label: 'クリームスープ',
+    primaryHome: { tab: 'dish', bucket: 'misc_dish' },
+    defaultMacro: { kcal: 140, protein: 3, fat: 6, carbs: 18 },
+    referenceDescription: 'コーン・ポタージュ等',
+    amount: { unit: 'ml', default: 200, chips: [{ label: '200', value: 200 }, { label: '大', value: 300 }] },
+    defaultAddonIds: ['crouton', 'cheese'],
+    allowedAddonIds: ['crouton', 'cheese', 'corn_top'],
   },
 ];
 

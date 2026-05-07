@@ -1,8 +1,24 @@
-# 食事入力IA — Identity辞書 仕様 v1.1
+# 食事入力IA — Identity辞書 仕様 v1.2
 
 > 関連: [PRD.md](./PRD.md) / [IA-catalog.xlsx](./IA-catalog.xlsx)
 > ステータス: 確定版
-> 最終更新: 2026-04-26
+> 最終更新: 2026-05-01
+>
+> **v1.2 変更点 (2026-05-01)**
+> - 評価軸を **modal-set内のPFC収束** に再定義 (§1.4)。「bucket全体PFC収束」前提を改訂し、bucket内全Identity収束は要件としない
+> - 汁物4 Identity (`miso_soup` `tonjiru` `soup_western` `soup_creamy`) を **veggies → misc_dish** へ移送 (「スープ=料理」観点)
+> - 食材バケット6 ラベル: 「野菜・汁物」→ **「野菜」**
+> - 一皿料理バケット9 ラベル: 「定食・単品」→ **「定食・単品・汁」**
+> - default Identity 並び替え:
+>   - fatty_protein: `beef_pork` → **`chicken_thigh`** (modal-set F median)
+>   - fruit: `apple_pear` → **`banana`** (NHNS摂取量第1位 + median)
+> - snack_drink bucket に **`quickTapDisabled: true`** 追加 (modal特定不能のため長押し誘導)
+> - **modal-set 1食量の整合化**:
+>   - 脂P modal-set: `ham` `bacon_sausage` 除外 (主菜1食量ではなく副菜・トッピング扱い)
+>   - 低脂P modal-set: `canned_lean_fish` 除外 (1缶=サブ食材スケール、主菜1食量ではない)
+>   - `white_fish` `seafood_lean` の default amount を **80g→100g 化** (chicken_lean/red_meat と1食量を揃える)
+>   - `red_meat` に Attribute 部位分岐追加 (もも・ヒレ default / 肩ロース赤身)。default 135→**130/22/4/0** (牛豚もも・ヒレ中央値)
+>   - 結果: 脂P modal-set kcal±7%/F幅4.5g、低脂P modal-set kcal±37%/F幅3.3g (density由来の幅)
 >
 > **v1.1 変更点 (2026-04-26)**
 > - 食材タブ バケット2/4 のラベル統一: 「肉魚(低脂肪)」/「脂あり肉魚」
@@ -19,8 +35,8 @@
 
 | # | 思想 | 概要 |
 |---|---|---|
-| ① | 9ボタン×2タブ構成 | タップ=代表値で即記録、長押し=詳細調整。1ボタンは1つのPFC収束クラスタ |
-| ② | PFC収束軸 (食材タブ) | 同一バケット内のkcal/PFCが類似 (1サービング比較で kcal±20% / F±3g以内) |
+| ① | 9ボタン×2タブ構成 | 短押し=modal Identity代表値で即記録、長押し=long-tail Identity含む詳細調整 |
+| ② | modal-set軸 (食材タブ) | bucket内 modal-set (日本人として日常的に食べるIdentity) のkcal/PFCが類似。long-tail Identityは長押し前提なので bucket全体収束は要件としない |
 | ③ | ジャンル・スタイル軸 (一皿料理タブ) | 組合せでPFCが崩れる料理は、ジャンル + スタイル単位で代表値を担保 |
 | ④ | 情報過多回避 | 水・お茶・ブラックコーヒー・塩・醤油等の無カロリーは記録対象外 |
 | ⑤ | 専門用語排除 | 「低脂P」ではなく「鶏むね魚」のような直感ラベル (5〜6文字以内) |
@@ -39,11 +55,29 @@
 - **PFC崩壊遮断**: Style/Attribute選択でPFCが大きく崩れる場合、内部的に別バケット (主に misc_dish) に強制移動。例: ジャガイモ + 揚げ → misc_dish/fries
 - **マルチエントランス**: primary Home以外のバケットからも検索ヒット可。chipには出さない。例: プロテインバーは脂P primary だが、おやつ甘飲タブで検索すればヒット
 
-### 1.4 統合判定ルール
+### 1.4 統合判定ルール (modal-set基準)
 
-> **同じバケット内で kcal差±20%以内 AND F差±3g以内 (1サービング比較) なら 1つの Identity に統合**
+> **bucket内 modal-set のkcal差±20%以内 AND F差±3g以内 (1サービング比較) を維持する**
+>
+> modal-set = 日本人として日常的に食べるIdentityの集合 (NHNS摂取量シェア等の客観データで判定)
 
-これにより、1タップ代表値が栄養学的事実と±20%以内に収まる(=ユーザーゴール「90%一致」)を担保。
+これにより、modal Identityを意図して短押ししたユーザーに対する1タップ代表値が栄養学的事実と±20%以内に収まる。
+
+**なぜbucket全体ではなくmodal-set内基準なのか**:
+- short-tap時のdefault Identityはbucket modal (ex: 主食=ごはん)
+- non-modalユーザー (オートミール等) は最初から「これは特殊」と自覚し長押しで明示選択
+- bucket内に long-tail Identityがあること自体は長押し時のリーチ性メリット
+- 短押し精度の指標は「modal-set内収束 × default Identityの品質」であり、bucket内全Identity分散は短押し精度の指標として誤認
+
+**default Identity の選定基準**:
+- modal-set内の **median PFC** に近いIdentityを default 配置
+- 摂取量シェア最大 (modal-frequency) も同等の重み
+- bucket先頭Identity = default という暗黙ルールに依存しているため、配列順を意図的に管理
+
+**modal-set内 PFC収束を満たさないbucket** (modal-set自体がPFC profile多様):
+- snack_drink (chocolate/cookie/ice/snack/sweet_bread が拮抗) → `quickTapDisabled: true` で長押し誘導
+- misc_dish (定食/弁当/汁/単品が混在) → 既に `quickTapDisabled: true`
+- chinese_noodles, sushi, pizza → 既に `quickTapDisabled: true`
 
 ---
 
@@ -72,9 +106,9 @@
 |---|---|---|---|---|---|
 | `chicken_lean` | 鶏むね・ささみ | 皮なし(default)/皮あり | 揚げ★ | 105/23/1.5/0 (100g 皮なし) | 揚げ→misc_dish/fried_main(Attr=唐揚げ) |
 | `salad_chicken` | サラダチキン | – | – | 110/25/1.7/0.5 (1パック) | – |
-| `white_fish` | 白身魚・赤身魚 | – | 衣付揚げ★ | 60-80/13-16/0.2-1.5/0 (1切80g) | 衣付揚げ→misc_dish/fried_main(Attr=魚介揚げ) |
-| `seafood_lean` | イカ・タコ・エビ・貝 | – | 衣付揚げ★ | 45-85/9-18/0.2-1/0-2 (50-100g) | 衣付揚げ→misc_dish/fried_main(Attr=エビフライ) |
-| `red_meat` | 赤身肉 | – | – | 130-145/21/4-7/0 (100g) | – |
+| `white_fish` | 白身魚・赤身魚 | – | 衣付揚げ★ | 75/16/0.7/0 (100g) | 衣付揚げ→misc_dish/fried_main(Attr=魚介揚げ) |
+| `seafood_lean` | イカ・タコ・エビ・貝 | – | 衣付揚げ★ | 88/17.5/0.8/1 (100g) | 衣付揚げ→misc_dish/fried_main(Attr=エビフライ) |
+| `red_meat` | 赤身肉 (牛・豚) | もも・ヒレ(default)/肩ロース赤身 | – | 130/22/4/0 (もも・ヒレ100g)、肩ロース系 150/22/6.8/0 | – |
 | `canned_lean_fish` | 缶詰魚 (水煮) | – | – | 50/11/0.5/0.1 (1缶70g) | – |
 | `protein_drink` | プロテイン (ドリンク・プリン) | ドリンク市販/パウダー水溶/シェイク自家製/プリン | – | 100-160/11-25/0.5-2/5-12 (1食) | searchable from snack_drink, dairy_soy |
 | `jerky` | ジャーキー類 | – | – | 80-90/14-15/1-3/3-4 (30g) | – |
@@ -87,11 +121,13 @@
 
 #### バケット4 「脂あり肉魚」 (脂P) — 9 Identity
 
+> v1.2 で default を `chicken_thigh` (modal-set F median 14g/100g) に変更。`beef_pork` (F16.5g) は modal-set 内では F最大寄り、`chicken_thigh` の方が短押し時の F誤差を縮める。
+
 | ID | 表示名 | Attribute | Style (special) | 代表PFC | Migration |
 |---|---|---|---|---|---|
+| `chicken_thigh` ⭐default | 鶏もも・手羽 | 皮あり(default)/皮なし★ | 揚げ★ | 200/17/14/0 (100g 皮あり) | Attribute=皮なし→食材/lean_protein 側で記録 (PFC 130/21/5/0), Style=揚げ→misc_dish/fried_main(Attr=唐揚げ) |
 | `beef_pork` | 牛・豚 (普通脂) | 牛/豚 (default) | 衣付揚げ★ | 220-240/17-18/15-18/0 (100g) | 衣付揚げ(豚)→misc_dish/fried_main(Attr=とんかつ), 衣付揚げ(牛)→misc_dish/fried_main(Attr=メンチカツ) |
 | `beef_pork_fatty` | 牛・豚 (高脂) | バラ/サーロイン/ホルモン/タン | – | 320-470/14-21/20-46/0 (100g) | – |
-| `chicken_thigh` | 鶏もも・手羽 | 皮あり(default)/皮なし★ | 揚げ★ | 200/17/14/0 (100g 皮あり) | Attribute=皮なし→食材/lean_protein 側で記録 (PFC 130/21/5/0), Style=揚げ→misc_dish/fried_main(Attr=唐揚げ) |
 | `fatty_fish` | 脂魚 | – | – | 160-290/16-23/9-24/0-3 (1切) | – |
 | `canned_fatty_fish` | 缶詰魚 (脂魚) | – | – | 180-380/18-38/11-22/0.4-0.7 (1缶) | searchable from lean_protein |
 | `ham` | ハム | – | – | 40/5/2.5/1 (2枚20g) | – |
@@ -113,7 +149,11 @@
 | `natto` | 納豆 | – | – | 80/6.6/4/5 (1パック40g) | – |
 | `edamame_soy` | 大豆・枝豆 | 枝豆/大豆水煮 | – | 65-70/6-7/3-4.5/3-4 (50g) | – |
 
-#### バケット6 「野菜・汁物」 — 9 Identity
+#### バケット6 「野菜」 — 5 Identity
+
+> v1.2で汁物4 Identity (`miso_soup` `tonjiru` `soup_western` `soup_creamy`) を misc_dish へ移送。「スープ=料理」観点で素材ベース食品から分離。
+>
+> default = `salad_raw` (modal-set: salad_raw/veg_cooked/side_seasoned/pickles で modal適合・kcal min側だが日本人modal)
 
 | ID | 表示名 | Attribute | Style (special) | 代表PFC | Migration |
 |---|---|---|---|---|---|
@@ -122,17 +162,15 @@
 | `side_seasoned` | 副菜 (煮物・和え) | – | – | 50-65/1.5-2/2-3.5/4-8 (50g) | – |
 | `side_creamy` | 副菜 (クリーミー) | ポテサラ/マカロニ/コールスロー | – | 50-145/0.7-3/3.5-8/4-15 (50-100g) | – |
 | `pickles` | 漬物 | キムチ/梅干し/浅漬け | – | 12-35/0.5-1.5/0.1-0.2/2-7 (30g) | – |
-| `miso_soup` | 味噌汁・お吸い物 | 具薄/具沢山 | – | 35-80/2.5-5/1-3/3.5-8 (1杯) | – |
-| `tonjiru` | 豚汁・けんちん汁 | – | – | 150-180/7-9/7-9/15 (1杯) | – |
-| `soup_western` | 洋風スープ (薄) | – | – | 36-70/1.2-3/0.8-2/6-10 (1杯) | – |
-| `soup_creamy` | クリームスープ | コーン/ポタージュ | – | 130-150/3/5-7/18 (1杯) | – |
 
 #### バケット7 「果物」 — 5 Identity
 
+> v1.2 で default を `banana` (NHNS摂取量第1位 + modal-set kcal median) に変更。`apple_pear` (135kcal) は kcal 上限側、`banana` (86kcal) は modal{citrus 50, banana 86, apple 135} の median。
+
 | ID | 表示名 | Attribute | Style | 代表PFC | Migration |
 |---|---|---|---|---|---|
+| `banana` ⭐default | バナナ | – | – | 86/1.1/0.2/22 (1本100g) | – |
 | `apple_pear` | りんご・梨 | – | – | 135/0.5/0.5/35 (1個250g) | – |
-| `banana` | バナナ | – | – | 86/1.1/0.2/22 (1本100g) | – |
 | `citrus` | 柑橘 | – | – | 36-70/0.6-1.4/0.1-0.2/9-17 (1個) | – |
 | `berry` | ベリー | いちご/ブルベリ/ぶどう | – | 25-30/0.2-0.7/0.1-0.2/6-8 (50g) | – |
 | `fruit_other` | カットフルーツ・他 | パイン/マンゴー/キウイ/桃/柿/すいか | – | 50-90/0.6-1/0.1-0.3/9-22 (100-150g) | – |
@@ -148,6 +186,8 @@
 | `avocado` | アボカド | – | – | 180/2/18/1 (半個100g) | searchable from fruit |
 
 #### バケット9 「おやつ甘飲」 — 11 Identity
+
+> v1.2 で **`quickTapDisabled: true`** 追加。modal-set内 (chocolate/cookie/ice/snack/sweet_bread) の F幅 12.5g、kcal±49% で modal-set収束未達。短押しで default 1個に丸めると誤差が大きく、長押しでIdentity明示選択する運用が誠実。
 
 | ID | 表示名 | Attribute | Style | 代表PFC | Migration |
 |---|---|---|---|---|---|
@@ -245,9 +285,11 @@
 | `pizza_regular` | ふつう | ペペロニ/クアトロ/シーフード | 150-180/6-7/6-8/18-20 |
 | `pizza_heavy` | こってり | テリヤキチキン/厚切り | 230-240/10/11-12/22 |
 
-#### バケット9 「定食・単品」 (★misc_dish) — 12 Identity
+#### バケット9 「定食・単品・汁」 (★misc_dish) — 16 Identity
 
 > 注: `teishoku` / `bento` を**先頭に配置**して頻度高い1日入力 (定食・コンビニ弁当) を即タップで取れるようにする。
+>
+> v1.2 で汁物4 Identity (`miso_soup` `tonjiru` `soup_western` `soup_creamy`) を **veggies から移送**。「スープは食材ではなく料理」の整理に基づく。本バケットは `quickTapDisabled: true` のため、汁物単独ログは長押しシートから miso_soup 等を選ぶ運用。
 
 | ID | 表示名 | Attribute | 含まれる例 | 代表PFC |
 |---|---|---|---|---|
@@ -263,6 +305,10 @@
 | `sashimi` | 刺身盛り | 刺身盛り合わせ/カルパッチョ | 250/30/8/4 |
 | `grilled_fish_solo` | 焼魚単品 | 焼魚 (ご飯なし) | 180/21/9/0.5 |
 | `fries` | フライドポテト | フライドポテト | 320/3.8/15/40 |
+| `miso_soup` | 味噌汁・お吸い物 | 具薄/具沢山 | 味噌汁・吸い物 | 35-80/2.5-5/1-3/3.5-8 (1杯) |
+| `tonjiru` | 豚汁・けんちん汁 | – | 豚汁・けんちん汁 | 150-180/7-9/7-9/15 (1杯) |
+| `soup_western` | 洋風スープ (薄) | – | コンソメ・ミネストローネ等 | 36-70/1.2-3/0.8-2/6-10 (1杯) |
+| `soup_creamy` | クリームスープ | コーン/ポタージュ | コーン・ポタージュ等 | 130-150/3/5-7/18 (1杯) |
 
 ---
 
@@ -480,8 +526,8 @@ interface AmountSpec {
 | `potato` | g | 100 | [小 70g, 1個 100g, 大 180g] |
 | `sweet_potato` | g | 100 | [小 70g, 100g, 大 200g] |
 | `chicken_lean` | g | 100 | [100g, 150g, 200g] |
-| `white_fish` | g | 80 | [1切 80g, 100g, 2切 160g] |
-| `seafood_lean` | g | 80 | [80g, 100g, 150g] |
+| `white_fish` | g | 100 | [1切 80g, 1食 100g, 2切 160g] |
+| `seafood_lean` | g | 100 | [80g, 1食 100g, 150g] |
 | `red_meat` | g | 100 | [100g, 150g, 200g] |
 | `canned_lean_fish` | piece | 1 | [半缶, 1缶, 2缶] |
 | `protein_drink` | piece | 1 | [1食, 2食] |
@@ -507,10 +553,6 @@ interface AmountSpec {
 | `side_seasoned` | g | 50 | [小鉢 50g, 1皿 100g] |
 | `side_creamy` | g | 100 | [小 50g, 100g] |
 | `pickles` | g | 30 | [少 15g, 小皿 30g] |
-| `miso_soup` | piece | 1 | [1杯, 大 (1.5)] |
-| `tonjiru` | piece | 1 | [1杯, 大 (1.5)] |
-| `soup_western` | ml | 200 | [200ml, 大 300ml] |
-| `soup_creamy` | ml | 200 | [200ml, 大 300ml] |
 | `berry` | g | 50 | [50g, 100g] |
 | `oil` | ml | 15 | [小さじ 5, 大さじ 15] |
 | `butter_cream` | g | 10 | [5g, 10g, 大さじ 15g] |
@@ -575,6 +617,10 @@ interface AmountSpec {
 | `fries` | g | 150 | [S 100g, M 150g, L 200g] |
 | `teishoku` (定食) | serving | 1.0 | [軽め 0.7, 1食 1.0, しっかり 1.5] |
 | `bento` (弁当) | serving | 1.0 | [軽め 0.7, 1食 1.0, しっかり 1.5] |
+| `miso_soup` (味噌汁) | piece | 1 | [1杯, 大 (1.5)] |
+| `tonjiru` (豚汁) | piece | 1 | [1杯, 大 (1.5)] |
+| `soup_western` (洋風スープ) | ml | 200 | [200ml, 大 300ml] |
+| `soup_creamy` (クリームスープ) | ml | 200 | [200ml, 大 300ml] |
 
 ### 6.5 UI実装ガイドライン
 
@@ -589,11 +635,13 @@ interface AmountSpec {
 
 | タブ | バケット数 | Identity合計 |
 |---|---|---|
-| 食材 | 9 | 66 |
-| 一皿料理 | 9 | 50 |
-| **合計** | **18** | **116** |
+| 食材 | 9 | 62 (汁物4移送後) |
+| 一皿料理 | 9 | 52 (汁物4追加後) |
+| **合計** | **18** | **114** |
 
-参考: 現状実装は 食材47 sub + 一皿料理~30 sub = 約77個。新案で +39個 (主に「ない物」追加 + PFC収束のための分離 + misc_dish刷新 + teishoku/bento保持)。
+> 注: v1.2 で食材バケット6から一皿料理バケット9へ汁物4 Identity移送。タブ別 Identity 数は変動するが合計は移送なので不変。
+>
+> 参考: 現状実装は 食材47 sub + 一皿料理~30 sub = 約77個。新案で +37個 (主に「ない物」追加 + PFC収束のための分離 + misc_dish刷新 + teishoku/bento保持)。
 
 ---
 

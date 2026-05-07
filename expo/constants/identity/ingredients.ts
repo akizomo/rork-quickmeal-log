@@ -269,8 +269,9 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
     id: 'white_fish',
     label: '白身魚・赤身魚',
     primaryHome: { tab: 'ingredient', bucket: 'lean_protein' },
-    defaultMacro: { kcal: 60, protein: 13, fat: 0.5, carbs: 0 },
-    amount: { unit: 'g', default: 80, chips: [{ label: '1切', value: 80 }, { label: '100', value: 100 }, { label: '2切', value: 160 }] },
+    // v1.2: default 80g→100g 化 (modal-set 1食量を chicken_lean/red_meat と揃える)
+    defaultMacro: { kcal: 75, protein: 16, fat: 0.7, carbs: 0 },
+    amount: { unit: 'g', default: 100, chips: [{ label: '1切', value: 80 }, { label: '1食', value: 100 }, { label: '2切', value: 160 }] },
     styles: [
       { key: 'raw', label: '生・刺身', isDefault: true },
       { key: 'light', label: 'あっさり', factor: { kcal: 1.1 } },
@@ -291,8 +292,9 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
     id: 'seafood_lean',
     label: 'イカ・タコ・エビ・貝',
     primaryHome: { tab: 'ingredient', bucket: 'lean_protein' },
-    defaultMacro: { kcal: 70, protein: 14, fat: 0.6, carbs: 1 },
-    amount: { unit: 'g', default: 80, chips: [{ label: '80', value: 80 }, { label: '100', value: 100 }, { label: '150', value: 150 }] },
+    // v1.2: default 80g→100g 化 (modal-set 1食量を chicken_lean/red_meat と揃える)
+    defaultMacro: { kcal: 88, protein: 17.5, fat: 0.8, carbs: 1 },
+    amount: { unit: 'g', default: 100, chips: [{ label: '80', value: 80 }, { label: '1食', value: 100 }, { label: '150', value: 150 }] },
     styles: [
       { key: 'raw', label: '生・刺身', isDefault: true },
       { key: 'light', label: 'あっさり' },
@@ -313,8 +315,16 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
     id: 'red_meat',
     label: '赤身肉 (牛・豚)',
     primaryHome: { tab: 'ingredient', bucket: 'lean_protein' },
-    defaultMacro: { kcal: 135, protein: 21, fat: 5, carbs: 0 },
+    // v1.2: Attribute 部位分岐追加。default は もも・ヒレ (純赤身、modal-set median 寄り)。
+    // 旧 default 135/21/5 (牛もも基準) → 新 130/22/4 (牛豚もも・ヒレ平均)。
+    defaultMacro: { kcal: 130, protein: 22, fat: 4, carbs: 0 },
     amount: { unit: 'g', default: 100, chips: [{ label: '100', value: 100 }, { label: '150', value: 150 }, { label: '200', value: 200 }] },
+    attributes: [
+      { key: 'momo_hire', label: 'もも・ヒレ', isDefault: true },
+      // 牛もも 138 / 豚もも 119 / 牛豚ヒレ 117-130 → 平均130/F4
+      { key: 'shoulder_loin', label: '肩ロース・ロース赤身', factor: { kcal: 1.15, fat: 1.7 } },
+      // → 150 / P22 / F6.8 / 0 (牛肩ロース赤身 152/F8.6 寄り)
+    ],
     styles: [
       { key: 'light', label: 'あっさり', isDefault: true },
       { key: 'oil', label: '油あり', factor: { kcal: 1.2, fat: 1.6 } },
@@ -406,6 +416,40 @@ const BUCKET_EGG: Identity[] = [
 // ---------------------------------------------------------------------------
 
 const BUCKET_FATTY_PROTEIN: Identity[] = [
+  // v1.2: chicken_thigh を bucket先頭 (=default) に変更。modal-set内 F median (F14g)。
+  // 旧 default の beef_pork (F16.5g) は modal-set 内 F最大寄りで、短押し時の F誤差を縮める。
+  // 旧 chicken_thigh の quickTapDisabled は削除 (modal-set default として短押し対象に)。
+  // 皮なし派は長押しで attribute 変更 → silent migration が走る。
+  {
+    id: 'chicken_thigh',
+    label: '鶏もも・手羽',
+    primaryHome: { tab: 'ingredient', bucket: 'fatty_protein' },
+    defaultMacro: { kcal: 200, protein: 17, fat: 14, carbs: 0 },
+    amount: { unit: 'g', default: 100, chips: [{ label: '100', value: 100 }, { label: '150', value: 150 }, { label: '1枚', value: 250 }] },
+    attributes: [
+      { key: 'with_skin', label: '皮あり', isDefault: true },
+      {
+        key: 'no_skin',
+        label: '皮なし',
+        // Silent migration to lean_protein
+        migration: { bucketKey: 'lean_protein', identityKey: 'chicken_lean' },
+      },
+    ],
+    styles: [
+      { key: 'light', label: 'あっさり', isDefault: true },
+      { key: 'oil', label: '油あり', factor: { kcal: 1.18, fat: 1.5 } },
+      {
+        key: 'fried',
+        label: '揚げ',
+        migration: {
+          bucketKey: 'misc_dish',
+          identityKey: 'fried_main',
+          attributeKey: 'karaage',
+          confirmMessage: '唐揚げとして記録します',
+        },
+      },
+    ],
+  },
   {
     id: 'beef_pork',
     label: '牛・豚 (普通脂)',
@@ -453,37 +497,6 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
       { key: 'sirloin', label: 'サーロイン', factor: { kcal: 0.84, fat: 0.8 } },
       { key: 'horumon', label: 'ホルモン', factor: { kcal: 0.58, protein: 0.94, fat: 0.49 } },
       { key: 'tan', label: 'タン', factor: { kcal: 0.71, protein: 1.31, fat: 0.57 } },
-    ],
-  },
-  {
-    id: 'chicken_thigh',
-    label: '鶏もも・手羽',
-    primaryHome: { tab: 'ingredient', bucket: 'fatty_protein' },
-    quickTapDisabled: true, // Attribute 皮あり/皮なし で kcal -35%, F -9g
-    defaultMacro: { kcal: 200, protein: 17, fat: 14, carbs: 0 },
-    amount: { unit: 'g', default: 100, chips: [{ label: '100', value: 100 }, { label: '150', value: 150 }, { label: '1枚', value: 250 }] },
-    attributes: [
-      { key: 'with_skin', label: '皮あり', isDefault: true },
-      {
-        key: 'no_skin',
-        label: '皮なし',
-        // Silent migration to lean_protein
-        migration: { bucketKey: 'lean_protein', identityKey: 'chicken_lean' },
-      },
-    ],
-    styles: [
-      { key: 'light', label: 'あっさり', isDefault: true },
-      { key: 'oil', label: '油あり', factor: { kcal: 1.18, fat: 1.5 } },
-      {
-        key: 'fried',
-        label: '揚げ',
-        migration: {
-          bucketKey: 'misc_dish',
-          identityKey: 'fried_main',
-          attributeKey: 'karaage',
-          confirmMessage: '唐揚げとして記録します',
-        },
-      },
     ],
   },
   {
@@ -779,42 +792,8 @@ const BUCKET_VEGGIES: Identity[] = [
       defaultLabel: 'キムチを追加',
     },
   },
-  {
-    id: 'miso_soup',
-    label: '味噌汁・お吸い物',
-    primaryHome: { tab: 'ingredient', bucket: 'veggies' },
-    defaultMacro: { kcal: 40, protein: 2.5, fat: 1, carbs: 4 },
-    amount: { unit: 'piece', default: 1, chips: [{ label: '1杯', value: 1 }, { label: '大', value: 1.5 }] },
-    attributes: [
-      { key: 'light', label: '具薄', isDefault: true },
-      { key: 'rich', label: '具沢山', factor: { kcal: 2.0, protein: 2.0, fat: 3.0, carbs: 2.0 } },
-    ],
-  },
-  {
-    id: 'tonjiru',
-    label: '豚汁・けんちん汁',
-    primaryHome: { tab: 'ingredient', bucket: 'veggies' },
-    defaultMacro: { kcal: 165, protein: 8, fat: 8, carbs: 15 },
-    amount: { unit: 'piece', default: 1, chips: [{ label: '1杯', value: 1 }, { label: '大', value: 1.5 }] },
-  },
-  {
-    id: 'soup_western',
-    label: '洋風スープ (薄)',
-    primaryHome: { tab: 'ingredient', bucket: 'veggies' },
-    defaultMacro: { kcal: 50, protein: 2, fat: 1.4, carbs: 8 },
-    amount: { unit: 'ml', default: 200, chips: [{ label: '200', value: 200 }, { label: '大', value: 300 }] },
-    defaultAddonIds: ['cheese', 'crouton'],
-    allowedAddonIds: ['cheese', 'crouton', 'corn_top'],
-  },
-  {
-    id: 'soup_creamy',
-    label: 'クリームスープ',
-    primaryHome: { tab: 'ingredient', bucket: 'veggies' },
-    defaultMacro: { kcal: 140, protein: 3, fat: 6, carbs: 18 },
-    amount: { unit: 'ml', default: 200, chips: [{ label: '200', value: 200 }, { label: '大', value: 300 }] },
-    defaultAddonIds: ['crouton', 'cheese'],
-    allowedAddonIds: ['crouton', 'cheese', 'corn_top'],
-  },
+  // v1.2: 汁物 4 Identity (miso_soup / tonjiru / soup_western / soup_creamy) は
+  // 「スープ=料理」の整理に基づき misc_dish (dishes.ts) へ移送。
 ];
 
 // ---------------------------------------------------------------------------
@@ -822,19 +801,8 @@ const BUCKET_VEGGIES: Identity[] = [
 // ---------------------------------------------------------------------------
 
 const BUCKET_FRUIT: Identity[] = [
-  {
-    id: 'apple_pear',
-    label: 'りんご・梨',
-    primaryHome: { tab: 'ingredient', bucket: 'fruit' },
-    defaultMacro: { kcal: 135, protein: 0.5, fat: 0.5, carbs: 35 },
-    amount: { unit: 'piece', default: 1 },
-    asAddon: {
-      unit: 'g',
-      unitAmount: 50,
-      addedMacro: { kcal: 27, protein: 0.1, fat: 0.1, carbs: 7 },
-      defaultLabel: 'りんご追加',
-    },
-  },
+  // v1.2: banana を bucket先頭 (=default) に変更。
+  // NHNS 摂取量第1位 + modal-set kcal median (citrus 50 / banana 86 / apple 135 の中央)。
   {
     id: 'banana',
     label: 'バナナ',
@@ -846,6 +814,19 @@ const BUCKET_FRUIT: Identity[] = [
       unitAmount: 50,
       addedMacro: { kcal: 45, protein: 0.5, fat: 0.1, carbs: 11 },
       defaultLabel: 'バナナ追加',
+    },
+  },
+  {
+    id: 'apple_pear',
+    label: 'りんご・梨',
+    primaryHome: { tab: 'ingredient', bucket: 'fruit' },
+    defaultMacro: { kcal: 135, protein: 0.5, fat: 0.5, carbs: 35 },
+    amount: { unit: 'piece', default: 1 },
+    asAddon: {
+      unit: 'g',
+      unitAmount: 50,
+      addedMacro: { kcal: 27, protein: 0.1, fat: 0.1, carbs: 7 },
+      defaultLabel: 'りんご追加',
     },
   },
   {

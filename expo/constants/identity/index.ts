@@ -31,10 +31,12 @@ export const INGREDIENT_BUCKETS: BucketDef[] = [
   { key: 'egg',            tab: 'ingredient', label: '卵',           shortLabel: '卵',       emoji: '🥚' },
   { key: 'fatty_protein',  tab: 'ingredient', label: '脂あり肉魚',   shortLabel: '脂P',     emoji: '🥩' },
   { key: 'dairy_soy',      tab: 'ingredient', label: '乳・大豆',     shortLabel: '乳大豆',   emoji: '🥛' },
-  { key: 'veggies',        tab: 'ingredient', label: '野菜・汁物',   shortLabel: '野菜汁',   emoji: '🥦' },
+  // v1.2: 「野菜・汁物」→「野菜」 (汁物4 Identityをmisc_dishへ移送)
+  { key: 'veggies',        tab: 'ingredient', label: '野菜',         shortLabel: '野菜',     emoji: '🥦' },
   { key: 'fruit',          tab: 'ingredient', label: '果物',         shortLabel: '果物',     emoji: '🍎' },
   { key: 'added_fat',      tab: 'ingredient', label: '油・調味',     shortLabel: '油調味',   emoji: '🧈' },
-  { key: 'snack_drink',    tab: 'ingredient', label: 'おやつ甘飲',   shortLabel: 'おやつ',   emoji: '🍩' },
+  // v1.2: snack_drink に quickTapDisabled 追加 (modal-set内 F幅12.5g、kcal±49% で modal特定不能)
+  { key: 'snack_drink',    tab: 'ingredient', label: 'おやつ甘飲',   shortLabel: 'おやつ',   emoji: '🍩', quickTapDisabled: true },
 ];
 
 export const DISH_BUCKETS: BucketDef[] = [
@@ -46,7 +48,8 @@ export const DISH_BUCKETS: BucketDef[] = [
   { key: 'sushi',             tab: 'dish', label: '寿司',             shortLabel: '寿司',      emoji: '🍣', quickTapDisabled: true },
   { key: 'sandwich',          tab: 'dish', label: 'サンドバーガー',   shortLabel: 'サンド',    emoji: '🥪' },
   { key: 'pizza',             tab: 'dish', label: 'ピザ',             shortLabel: 'ピザ',      emoji: '🍕', quickTapDisabled: true },
-  { key: 'misc_dish',         tab: 'dish', label: '定食・単品',       shortLabel: '定食単品',  emoji: '🍱', quickTapDisabled: true },
+  // v1.2: 「定食・単品」→「定食・単品・汁」 (汁物4 Identityを veggies から移送)
+  { key: 'misc_dish',         tab: 'dish', label: '定食・単品・汁',   shortLabel: '定食汁',    emoji: '🍱', quickTapDisabled: true },
 ];
 
 export const ALL_BUCKETS: BucketDef[] = [...INGREDIENT_BUCKETS, ...DISH_BUCKETS];
