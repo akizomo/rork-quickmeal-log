@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { Link, useRouter } from 'expo-router';
-import { BarChart3, ChevronDown, Settings2 } from 'lucide-react-native';
+import { BarChart3, ChevronDown, HelpCircle, Settings2 } from 'lucide-react-native';
 import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
@@ -88,17 +88,27 @@ export const Header = memo(function Header({ viewedDate }: { viewedDate?: Date }
           <Text style={styles.avatarEmoji}>🧑🏻</Text>
         </Pressable>
       </Animated.View>
-      <View style={styles.headerCenter}>
+      <View style={styles.headerCenter} pointerEvents="none">
         <Text style={styles.headerDate} testID="header-date-label">{dateLabel}</Text>
       </View>
-      <Pressable
-        style={styles.iconButton}
-        onPress={() => router.push('/stats')}
-        testID="stats-link"
-        accessibilityLabel="実績を見る"
-      >
-        <BarChart3 color={palette.sageStrong} size={20} />
-      </Pressable>
+      <View style={styles.headerRight}>
+        <Pressable
+          style={styles.iconButton}
+          onPress={() => router.push('/help')}
+          testID="help-link"
+          accessibilityLabel="使い方を見る"
+        >
+          <HelpCircle color={palette.sageStrong} size={20} />
+        </Pressable>
+        <Pressable
+          style={styles.iconButton}
+          onPress={() => router.push('/stats')}
+          testID="stats-link"
+          accessibilityLabel="実績を見る"
+        >
+          <BarChart3 color={palette.sageStrong} size={20} />
+        </Pressable>
+      </View>
     </View>
   );
 });
@@ -727,9 +737,20 @@ const styles = StyleSheet.create({
   content: { paddingHorizontal: 22, paddingTop: 12, paddingBottom: 160, gap: 24 },
   topContent: { paddingHorizontal: 16, paddingTop: 8, gap: 16 },
   headerWrap: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 4 },
-  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  // 左右非対称 (avatar 42px vs icon×2 + gap 92px) でも center を視覚的に中央寄せするため、
+  // headerCenter は absolute positioning。pointerEvents="none" でタップ素通り。
+  headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', position: 'relative' },
   headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 14 },
-  headerCenter: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  headerCenter: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   headerDate: { fontSize: 16, fontWeight: '700', color: palette.sageDeep },
   avatarButton: { width: 42, height: 42, borderRadius: 21, backgroundColor: palette.sageDeep, alignItems: 'center', justifyContent: 'center' },
   avatarEmoji: { fontSize: 20 },

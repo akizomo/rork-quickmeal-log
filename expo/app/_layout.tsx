@@ -30,6 +30,7 @@ function RootLayoutNav() {
       <Stack.Screen name="goal-edit" options={{ title: '目標を変更' }} />
       <Stack.Screen name="subscription" options={{ title: 'サブスクリプション' }} />
       <Stack.Screen name="about" options={{ title: 'アプリについて' }} />
+      <Stack.Screen name="help" options={{ title: 'Hachibu の使い方' }} />
       <Stack.Screen name="legal/privacy" options={{ title: 'プライバシーポリシー' }} />
       <Stack.Screen name="legal/terms" options={{ title: '利用規約' }} />
       <Stack.Screen name="settings" options={{ title: '設定' }} />
