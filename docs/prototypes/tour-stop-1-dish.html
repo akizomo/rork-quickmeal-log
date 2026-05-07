@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tour Stop 1 (料理タブ版) — 精度infographic Prototype</title>
+<style>
+  :root {
+    --bg: #FAFAF7;
+    --bg-card: #FFFFFF;
+    --text: #2D2D2D;
+    --text-soft: #707070;
+    --text-mute: #A0A0A0;
+    --accent: #6B8E6B;
+    --accent-soft: #C8D8C8;
+    --accent-bg: #F0F4EF;
+    --border: #E5E5E0;
+    --bar-bg: #EDEDE8;
+    --disabled: #C5C5BD;
+    --overlay: rgba(40, 40, 40, 0.55);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic UI", sans-serif;
+    background: #ECECE8;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 30px 20px;
+    color: var(--text);
+  }
+  .page-title {
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  .phone-frame {
+    width: 375px;
+    height: 812px;
+    background: var(--bg);
+    border: 8px solid #1a1a1a;
+    border-radius: 38px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+  }
+
+  /* ---- Behind: actual quick log screen (dimmed) ---- */
+  .bg-screen {
+    width: 100%;
+    height: 100%;
+    padding: 50px 16px 16px 16px;
+    filter: blur(0.5px) brightness(0.65);
+  }
+  .status-bar { height: 12px; text-align: center; font-size: 10px; color: var(--text-soft); margin-bottom: 12px; }
+  .header { display: flex; justify-content: space-between; align-items: center; padding: 0 4px 12px 4px; }
+  .header-title { font-size: 16px; font-weight: 600; }
+  .header-icons { display: flex; gap: 12px; font-size: 18px; color: var(--text-soft); }
+  .ring-section { display: flex; flex-direction: column; align-items: center; margin: 16px 0 20px 0; }
+  .ring {
+    width: 130px; height: 130px;
+    border-radius: 50%;
+    border: 12px solid var(--accent-soft);
+    border-top-color: var(--accent);
+    border-right-color: var(--accent);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: var(--bg-card);
+  }
+  .ring-num { font-size: 26px; font-weight: 600; color: var(--text); }
+  .ring-unit { font-size: 11px; color: var(--text-soft); margin-top: 2px; }
+  .tab-bar { display: flex; background: #F0EFEA; border-radius: 10px; padding: 3px; margin-bottom: 16px; }
+  .tab { flex: 1; text-align: center; padding: 8px; font-size: 13px; color: var(--text-soft); border-radius: 8px; }
+  .tab.active { background: var(--bg-card); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,0.05); font-weight: 600; }
+  .button-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .qbtn {
+    aspect-ratio: 1;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 4px;
+  }
+  .qbtn-emoji { font-size: 26px; }
+  .qbtn-label { font-size: 11px; color: var(--text); }
+
+  /* ---- Tour overlay ---- */
+  .tour-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: var(--overlay);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+  .tour-card {
+    background: var(--bg-card);
+    border-radius: 24px 24px 0 0;
+    padding: 24px 20px 28px 20px;
+    box-shadow: 0 -8px 30px rgba(0,0,0,0.18);
+    max-height: 78%;
+    overflow-y: auto;
+  }
+  .tour-progress { display: flex; gap: 4px; margin-bottom: 16px; justify-content: center; }
+  .tour-progress .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border); }
+  .tour-progress .dot.active { background: var(--accent); width: 18px; border-radius: 3px; }
+  .tour-title {
+    font-size: 17px;
+    font-weight: 600;
+    line-height: 1.4;
+    margin-bottom: 4px;
+    color: var(--text);
+  }
+  .tour-sub {
+    font-size: 12px;
+    color: var(--text-soft);
+    margin-bottom: 16px;
+    line-height: 1.6;
+  }
+  .infographic {
+    background: var(--accent-bg);
+    border-radius: 14px;
+    padding: 14px 12px;
+    margin-bottom: 14px;
+  }
+
+  /* 2-row grid: row1 = ラベル+range bar+kcal, row2 = ラベル下のタグ */
+  .bucket-row {
+    display: grid;
+    grid-template-columns: 18px 56px 1fr 56px;
+    grid-template-rows: auto auto;
+    column-gap: 6px;
+    row-gap: 2px;
+    padding: 7px 0;
+    font-size: 11px;
+    align-items: center;
+  }
+  .bucket-row .emoji {
+    grid-column: 1;
+    grid-row: 1 / 3;
+    font-size: 14px;
+    text-align: center;
+    align-self: center;
+  }
+  .bucket-row .label {
+    grid-column: 2;
+    grid-row: 1;
+    color: var(--text);
+    font-weight: 500;
+  }
+  .bucket-row > .range-track {
+    grid-column: 3;
+    grid-row: 1 / 3;
+    align-self: center;
+    position: relative;
+    height: 14px;
+    background: transparent;
+  }
+  .range-track::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 0; right: 0;
+    height: 1px;
+    background: var(--bar-bg);
+    transform: translateY(-50%);
+  }
+  .range-bar {
+    position: absolute;
+    top: 50%;
+    height: 5px;
+    background: var(--accent-soft);
+    border-radius: 3px;
+    transform: translateY(-50%);
+  }
+  .range-bar.disabled {
+    background: repeating-linear-gradient(
+      90deg,
+      var(--disabled),
+      var(--disabled) 4px,
+      transparent 4px,
+      transparent 8px
+    );
+    height: 2px;
+  }
+  .range-dot {
+    position: absolute;
+    top: 50%;
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid var(--bg-card);
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 0 1px var(--accent);
+  }
+  .bucket-row > .kcal {
+    grid-column: 4;
+    grid-row: 1 / 3;
+    align-self: center;
+    font-size: 10px;
+    color: var(--text-soft);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  .bucket-row .kcal.disabled-text {
+    color: var(--text-mute);
+    font-size: 9px;
+  }
+
+  /* PFC tag chips - ラベル真下に配置 */
+  .pfc-tag {
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: start;
+    display: inline-block;
+    padding: 1px 5px;
+    border-radius: 8px;
+    font-size: 8px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    line-height: 1.4;
+    margin: 0;
+  }
+  .tag-c        { background: #F0F2D5; color: #4A4F0F; }
+  .tag-c-light  { background: #F8F9E8; color: #6E7519; }
+  .tag-p        { background: #F5DCE0; color: #863848; }
+  .tag-f        { background: #F3DCC4; color: #6B2E0E; }
+  .tag-pf       { background: linear-gradient(90deg, #F5DCE0 50%, #F3DCC4 50%); color: #4E2009; }
+  .tag-fc       { background: linear-gradient(90deg, #F3DCC4 50%, #F0F2D5 50%); color: #3E430C; }
+  .tag-pc       { background: linear-gradient(90deg, #F5DCE0 50%, #F0F2D5 50%); color: #3F1820; }
+  .tag-balance  { background: linear-gradient(90deg, #F5DCE0 33%, #F3DCC4 33% 66%, #F0F2D5 66%); color: #4E2009; }
+
+  .pfc-legend {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    font-size: 9px;
+    color: var(--text-soft);
+    padding: 0 2px 8px 0;
+  }
+  .pfc-legend .lg-item { display: flex; align-items: center; gap: 4px; }
+  .pfc-legend .lg-dot { display: inline-block; width: 14px; height: 10px; border-radius: 6px; }
+  .lg-p { background: #F5DCE0; border: 1px solid #C57A88; }
+  .lg-f { background: #F3DCC4; border: 1px solid #B07640; }
+  .lg-c { background: #F0F2D5; border: 1px solid #98A050; }
+
+  .footnotes {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 16px 0;
+    font-size: 9px;
+    line-height: 1.55;
+    color: var(--text-mute);
+  }
+  .footnotes li { padding: 1px 0; text-indent: -10px; padding-left: 10px; }
+  .footnotes strong { color: var(--text-soft); font-weight: 600; }
+
+  .nav-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .skip-btn { background: none; border: none; color: var(--text-mute); font-size: 13px; padding: 12px 4px; cursor: pointer; }
+  .next-btn {
+    flex: 1;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 14px 24px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .annotations {
+    width: 375px;
+    margin-top: 30px;
+    padding: 20px;
+    background: white;
+    border-radius: 12px;
+    font-size: 12px;
+    line-height: 1.7;
+    color: #444;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+  .annotations h3 { font-size: 13px; margin-bottom: 10px; color: var(--accent); }
+  .annotations ul { padding-left: 18px; }
+</style>
+</head>
+<body>
+
+<div class="page-title">Tour Stop 1 (料理タブ版) — 精度infographic プロトタイプ</div>
+
+<div class="phone-frame">
+  <div class="bg-screen">
+    <div class="status-bar">9:41</div>
+    <div class="header">
+      <div class="header-title">今日</div>
+      <div class="header-icons">⚙</div>
+    </div>
+    <div class="ring-section">
+      <div class="ring">
+        <div class="ring-num">0</div>
+        <div class="ring-unit">/ 2200 kcal</div>
+      </div>
+    </div>
+    <div class="tab-bar">
+      <div class="tab">食材</div>
+      <div class="tab active">料理</div>
+    </div>
+    <div class="button-grid">
+      <div class="qbtn"><span class="qbtn-emoji">🍚</span><span class="qbtn-label">丼</span></div>
+      <div class="qbtn"><span class="qbtn-emoji">🍛</span><span class="qbtn-label">カレー</span></div>
+      <div class="qbtn"><span class="qbtn-emoji">🍜</span><span class="qbtn-label">中華麺</span></div>
+      <div class="qbtn"><span class="qbtn-emoji">🍲</span><span class="qbtn-label">和麺</span></div>
+      <div class="qbtn"><span class="qbtn-emoji">🍝</span><span class="qbtn-label">パスタ</span></div>
+      <div class="qbtn"><span class="qbtn-emoji">🍣</span><span class="qbtn-label">寿司</span></div>
+      <div class="qbtn"><span class="qbtn-emoji">🥪</span><span class="qbtn-label">サンド</span></div>
+      <div class="qbtn"><span class="qbtn-emoji">🍕</span><span class="qbtn-label">ピザ</span></div>
+      <div class="qbtn"><span class="qbtn-emoji">🍱</span><span class="qbtn-label">定食汁</span></div>
+    </div>
+  </div>
+
+  <div class="tour-overlay">
+    <div class="tour-card">
+      <div class="tour-progress">
+        <div class="dot active"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </div>
+
+      <div class="tour-title">料理ボタンも代表値で記録できます</div>
+      <div class="tour-sub">
+        タップで「ふだんの一食の代表値」が記録されます。<br>
+        記録を続けると、よく食べる料理と量に合わせてパーソナライズされます。
+      </div>
+
+      <div class="infographic">
+        <div class="pfc-legend">
+          <span class="lg-item"><span class="lg-dot lg-p"></span>P</span>
+          <span class="lg-item"><span class="lg-dot lg-f"></span>F</span>
+          <span class="lg-item"><span class="lg-dot lg-c"></span>C</span>
+        </div>
+
+        <!-- 丼: gyudon_class 660 (modal: 580-720) -->
+        <div class="bucket-row">
+          <span class="emoji">🍚</span>
+          <span class="label">丼</span>
+          <div class="range-track">
+            <div class="range-bar" style="left:38.7%; right:52%;"></div>
+            <div class="range-dot" style="left:44%;"></div>
+          </div>
+          <span class="kcal">580–720</span>
+          <span class="pfc-tag tag-c">C 多め</span>
+        </div>
+
+        <!-- カレー: curry_class 720 (modal: 720-980) -->
+        <div class="bucket-row">
+          <span class="emoji">🍛</span>
+          <span class="label">カレー</span>
+          <div class="range-track">
+            <div class="range-bar" style="left:48%; right:34.7%;"></div>
+            <div class="range-dot" style="left:48%;"></div>
+          </div>
+          <span class="kcal">720–980</span>
+          <span class="pfc-tag tag-fc">C + F</span>
+        </div>
+
+        <!-- 中華麺 (disabled): 660-1020 (modal disabled, range broad) -->
+        <div class="bucket-row">
+          <span class="emoji">🍜</span>
+          <span class="label">中華麺</span>
+          <div class="range-track">
+            <div class="range-bar disabled" style="left:0; right:0;"></div>
+          </div>
+          <span class="kcal disabled-text">長押し</span>
+          <span class="pfc-tag tag-fc">C + F</span>
+        </div>
+
+        <!-- 和麺: udon 510 (modal: 460-510) -->
+        <div class="bucket-row">
+          <span class="emoji">🍲</span>
+          <span class="label">和麺</span>
+          <div class="range-track">
+            <div class="range-bar" style="left:30.7%; right:66%;"></div>
+            <div class="range-dot" style="left:34%;"></div>
+          </div>
+          <span class="kcal">460–510</span>
+          <span class="pfc-tag tag-c">C 主体</span>
+        </div>
+
+        <!-- パスタ: pasta_tomato 680 (modal: 620-780) -->
+        <div class="bucket-row">
+          <span class="emoji">🍝</span>
+          <span class="label">パスタ</span>
+          <div class="range-track">
+            <div class="range-bar" style="left:41.3%; right:48%;"></div>
+            <div class="range-dot" style="left:45.3%;"></div>
+          </div>
+          <span class="kcal">620–780</span>
+          <span class="pfc-tag tag-fc">C + F</span>
+        </div>
+
+        <!-- 寿司 (disabled): 55-880 -->
+        <div class="bucket-row">
+          <span class="emoji">🍣</span>
+          <span class="label">寿司</span>
+          <div class="range-track">
+            <div class="range-bar disabled" style="left:0; right:0;"></div>
+          </div>
+          <span class="kcal disabled-text">長押し</span>
+          <span class="pfc-tag tag-c">C 多め</span>
+        </div>
+
+        <!-- サンド: cold_sand 345 (modal: 345-460) -->
+        <div class="bucket-row">
+          <span class="emoji">🥪</span>
+          <span class="label">サンド</span>
+          <div class="range-track">
+            <div class="range-bar" style="left:23%; right:69.3%;"></div>
+            <div class="range-dot" style="left:23%;"></div>
+          </div>
+          <span class="kcal">345–460</span>
+          <span class="pfc-tag tag-fc">F + C</span>
+        </div>
+
+        <!-- ピザ (disabled): 105-220 -->
+        <div class="bucket-row">
+          <span class="emoji">🍕</span>
+          <span class="label">ピザ</span>
+          <div class="range-track">
+            <div class="range-bar disabled" style="left:0; right:0;"></div>
+          </div>
+          <span class="kcal disabled-text">長押し</span>
+          <span class="pfc-tag tag-fc">F + C</span>
+        </div>
+
+        <!-- 定食・単品・汁 (disabled): 50-1000 wide -->
+        <div class="bucket-row">
+          <span class="emoji">🍱</span>
+          <span class="label">定食汁</span>
+          <div class="range-track">
+            <div class="range-bar disabled" style="left:0; right:0;"></div>
+          </div>
+          <span class="kcal disabled-text">長押し</span>
+          <span class="pfc-tag tag-balance">バランス</span>
+        </div>
+      </div>
+
+      <ul class="footnotes">
+        <li>※ <strong>●</strong> はタップ時に記録される代表値、<strong>バー</strong> は日本人がよく食べる料理の幅</li>
+        <li>※ <strong>「よく食べる」基準</strong>: 国民健康・栄養調査 (NHNS) における各バケット内の摂取量シェア上位の料理を採用</li>
+        <li>※ <strong>「長押し」</strong> 表記のバケットは種類により値が大きく変動するため、毎回明示選択</li>
+      </ul>
+
+      <div class="nav-row">
+        <button class="skip-btn">スキップ</button>
+        <button class="next-btn">次へ</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="annotations">
+  <h3>📝 デザインノート (料理タブ版)</h3>
+  <ul>
+    <li><strong>食材タブ版との違い</strong>: kcal scale が 0-1000 (料理は1食まるごとなので桁が大きい)</li>
+    <li><strong>長押しバケットが半数 (中華麺/寿司/ピザ/定食汁)</strong>: 料理タブは種類で値が大きく変動するbucketが多い。点線バーで「長押しで選択」を明示</li>
+    <li><strong>PFCタグ</strong>: 料理は米/麺/パン+主菜+油の組合せでC+F+Pになりがち。タグは「C多め/C主体/C+F/F+C/バランス」で差別化</li>
+    <li><strong>料理代表値の例</strong>:
+      <ul>
+        <li>丼 default = gyudon_class (660kcal) — 牛丼/親子丼系</li>
+        <li>カレー default = curry_class (720kcal) — 普通カレーライス</li>
+        <li>和麺 default = udon (510kcal) — うどん</li>
+        <li>パスタ default = pasta_tomato (680kcal) — トマト系</li>
+        <li>サンド default = cold_sand (345kcal) — コンビニサンド</li>
+      </ul>
+    </li>
+  </ul>
+  <h3 style="margin-top:14px;">🔗 食材タブ版との関係</h3>
+  <ul>
+    <li>食材タブの Tour Stop 1 と同じテンプレート (range bar + PFCタグ + 脚注)</li>
+    <li>tour 表示タイミング: タブ切替時に1度だけ自動表示 or "ⓘ" から手動再表示</li>
+    <li>料理タブは長押し前提が半数 → infographicも「タップで足る」訴求はやや弱め</li>
+  </ul>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>オンボーディング 画面 1/2 — Prototype</title>
+<style>
+  :root {
+    --bg: #FAFAF7;
+    --bg-card: #FFFFFF;
+    --text: #2D2D2D;
+    --text-soft: #707070;
+    --text-mute: #A0A0A0;
+    --accent: #6B8E6B;
+    --accent-soft: #C8D8C8;
+    --accent-bg: #F0F4EF;
+    --border: #E5E5E0;
+    --bar-bg: #EDEDE8;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic UI", sans-serif;
+    background: #ECECE8;
+    min-height: 100vh;
+    padding: 30px 20px;
+    color: var(--text);
+  }
+  .page-title {
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  .grid-of-screens {
+    display: flex;
+    gap: 30px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .screen-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .screen-label {
+    font-size: 12px;
+    color: #555;
+    margin-bottom: 10px;
+    font-weight: 600;
+  }
+
+  .phone-frame {
+    width: 375px;
+    height: 812px;
+    background: var(--bg);
+    border: 8px solid #1a1a1a;
+    border-radius: 38px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .status-bar {
+    padding: 14px 0 8px 0;
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-soft);
+  }
+
+  .onboarding-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 30px 28px 30px 28px;
+  }
+
+  /* ---- 共通: 進捗ドット ---- */
+  .progress {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    margin-bottom: 40px;
+  }
+  .progress .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--border);
+  }
+  .progress .dot.active {
+    background: var(--accent);
+    width: 24px;
+    border-radius: 4px;
+  }
+
+  /* ---- 共通: タイトル/サブ ---- */
+  .ob-title {
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1.4;
+    margin-bottom: 14px;
+    color: var(--text);
+    text-align: center;
+  }
+  .ob-sub {
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--text-soft);
+    text-align: center;
+    margin-bottom: 30px;
+  }
+
+  /* ---- 共通: ナビ (下部CTA) ---- */
+  .ob-footer {
+    padding: 0 0 16px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .cta-btn {
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 14px;
+    padding: 16px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .skip-link {
+    text-align: center;
+    font-size: 13px;
+    color: var(--text-mute);
+    background: none;
+    border: none;
+    padding: 6px;
+    cursor: pointer;
+  }
+
+  /* ---- 画面1: ヒーローエリア (ボタンの集合イラスト) ---- */
+  .hero-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  .hero-buttons {
+    display: grid;
+    grid-template-columns: repeat(3, 70px);
+    gap: 14px;
+    margin-bottom: 36px;
+  }
+  .hero-btn {
+    width: 70px; height: 70px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 4px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+  }
+  .hero-btn .e { font-size: 28px; }
+  .hero-btn .l { font-size: 10px; color: var(--text-soft); }
+  .hero-btn.highlight {
+    border-color: var(--accent);
+    background: var(--accent-bg);
+    transform: scale(1.05);
+    box-shadow: 0 4px 14px rgba(107, 142, 107, 0.2);
+  }
+
+  /* ---- 画面2: 操作デモ (タップ vs 長押し) ---- */
+  .demo-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .demo-block {
+    margin-bottom: 24px;
+  }
+  .demo-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+  .demo-action {
+    width: 84px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .demo-action .gesture {
+    font-size: 28px;
+  }
+  .demo-action .gesture-label {
+    font-size: 10px;
+    color: var(--text-soft);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+  .demo-arrow {
+    font-size: 20px;
+    color: var(--accent);
+  }
+  .demo-result {
+    flex: 1;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .demo-result-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .demo-result-sub {
+    font-size: 11px;
+    color: var(--text-soft);
+  }
+  .demo-tip {
+    font-size: 12px;
+    color: var(--text-mute);
+    text-align: center;
+    margin-top: 12px;
+    padding: 0 8px;
+    line-height: 1.6;
+  }
+
+  /* ---- ノート ---- */
+  .annotations {
+    width: 100%;
+    max-width: 800px;
+    margin: 30px auto 0 auto;
+    padding: 20px;
+    background: white;
+    border-radius: 12px;
+    font-size: 12px;
+    line-height: 1.7;
+    color: #444;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+  .annotations h3 { font-size: 13px; margin-bottom: 10px; color: var(--accent); }
+  .annotations ul { padding-left: 18px; }
+  .annotations h3:not(:first-child) { margin-top: 14px; }
+</style>
+</head>
+<body>
+
+<div class="page-title">オンボーディング 画面1 + 画面2 プロトタイプ (Tour Stop 1 の前段)</div>
+
+<div class="grid-of-screens">
+
+  <!-- 画面1: コンセプト -->
+  <div class="screen-wrap">
+    <div class="screen-label">画面 1: コンセプト</div>
+    <div class="phone-frame">
+      <div class="status-bar">9:41</div>
+      <div class="onboarding-content">
+        <div class="progress">
+          <div class="dot active"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
+        </div>
+
+        <div class="hero-area">
+          <div class="hero-buttons">
+            <div class="hero-btn"><span class="e">🍚</span><span class="l">主食</span></div>
+            <div class="hero-btn"><span class="e">🐓</span><span class="l">低脂P</span></div>
+            <div class="hero-btn"><span class="e">🥚</span><span class="l">卵</span></div>
+            <div class="hero-btn"><span class="e">🥩</span><span class="l">脂P</span></div>
+            <div class="hero-btn highlight"><span class="e">🥛</span><span class="l">乳大豆</span></div>
+            <div class="hero-btn"><span class="e">🥦</span><span class="l">野菜</span></div>
+            <div class="hero-btn"><span class="e">🍎</span><span class="l">果物</span></div>
+            <div class="hero-btn"><span class="e">🧈</span><span class="l">油調味</span></div>
+            <div class="hero-btn"><span class="e">🍩</span><span class="l">おやつ</span></div>
+          </div>
+
+          <div class="ob-title">9ボタンで、<br>8割いける。</div>
+          <div class="ob-sub">
+            ふだんの食事は、<br>
+            タップひとつで残せる。
+          </div>
+        </div>
+
+        <div class="ob-footer">
+          <button class="cta-btn">次へ →</button>
+          <button class="skip-link">スキップ</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 画面2: 操作モデル -->
+  <div class="screen-wrap">
+    <div class="screen-label">画面 2: 操作モデル</div>
+    <div class="phone-frame">
+      <div class="status-bar">9:41</div>
+      <div class="onboarding-content">
+        <div class="progress">
+          <div class="dot"></div>
+          <div class="dot active"></div>
+          <div class="dot"></div>
+        </div>
+
+        <div class="ob-title" style="font-size:22px;">急ぎはタップ、<br>余裕は長押し。</div>
+        <div class="ob-sub" style="margin-bottom:24px;">
+          ちゃんと記録したい日だけ、<br>
+          もう一歩ふみこめる。
+        </div>
+
+        <div class="demo-section">
+          <!-- タップ デモ -->
+          <div class="demo-block">
+            <div class="demo-row">
+              <div class="demo-action">
+                <div class="gesture">👆</div>
+                <div class="gesture-label">タップ</div>
+              </div>
+              <div class="demo-arrow">→</div>
+              <div class="demo-result">
+                <div class="demo-result-title">ご飯1杯 234 kcal</div>
+                <div class="demo-result-sub">代表値で即記録</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 長押し デモ -->
+          <div class="demo-block">
+            <div class="demo-row">
+              <div class="demo-action">
+                <div class="gesture">✋</div>
+                <div class="gesture-label">長押し</div>
+              </div>
+              <div class="demo-arrow">→</div>
+              <div class="demo-result">
+                <div class="demo-result-title">種類・量を選択</div>
+                <div class="demo-result-sub">パン / 麺 / 大盛 …</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="demo-tip">
+            ふだんの食事はタップで記録<br>
+            違うものや量を変えたい時は長押し
+          </div>
+        </div>
+
+        <div class="ob-footer">
+          <button class="cta-btn">はじめる</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="annotations">
+  <h3>📝 デザインノート</h3>
+
+  <h3 style="font-size:12px; color:#444;">画面 1: コンセプト</h3>
+  <ul>
+    <li><strong>ヒーローエリア</strong>: 9個のボタングリッドをミニチュアで表示。実画面で何を扱うかを視覚で予告</li>
+    <li><strong>1ボタンに視線誘導 (highlight)</strong>: 牛乳ボタンに緑枠+拡大効果。「これがボタンの単位」を直感伝達</li>
+    <li><strong>コピー軸</strong>: 「料理名・食材名を細かく覚えなくてOK」= 簡素化価値訴求</li>
+    <li><strong>進捗</strong>: 3/3のうち1つ目アクティブ (画面1 → 画面2 → Tour Stop 1)</li>
+  </ul>
+
+  <h3 style="font-size:12px; color:#444;">画面 2: 操作モデル</h3>
+  <ul>
+    <li><strong>タップ vs 長押し を 2行で並列表示</strong>: 比較で記憶定着しやすい</li>
+    <li><strong>ジェスチャ絵文字 (👆 / ✋)</strong>: 操作を視覚化。文字より直感的</li>
+    <li><strong>結果カード</strong>: タップ=「ご飯1杯234kcal」/ 長押し=「種類・量を選択」を具体的に提示</li>
+    <li><strong>下部 tip</strong>: 「ふだんはタップ、違う時は長押し」の使い分けルールをそのまま明示</li>
+    <li><strong>CTA</strong>: 「はじめる」で直接 メイン画面へ → 自動でTour Stop 1 起動</li>
+  </ul>
+
+  <h3>🔗 オンボ全体フロー</h3>
+  <ul>
+    <li>画面1 (コンセプト) → 画面2 (操作モデル) → [はじめる] → メイン画面 → 自動的に Tour Stop 1 (精度infographic) → Stop 2 → Stop 3 → 完了</li>
+    <li>各画面でスキップ可能。スキップした場合も Tour は表示される (重要な精度情報を確実に1度は見せる)</li>
+    <li>Tour 完了後、初回タップで coachmark (代表値補強メッセージ) が出る</li>
+  </ul>
+
+  <h3>⚠ 検討項目</h3>
+  <ul>
+    <li>画面1の hero illustration: ボタングリッドそのまま vs もう少しイラスト寄り (アイコン+「タップ」アニメ風) のどちらがインパクト強いか</li>
+    <li>画面2 の絵文字 (👆 ✋) を SF Symbols / カスタムアイコンに置き換えるかは実装時判断</li>
+    <li>「3秒で記録」の数字根拠: テレメトリで実測してから明示するか、感覚値として書き続けるか</li>
+    <li>画面1の "highlight" ボタン: ランダム化して毎回違うボタンを目立たせると印象が変わるかも</li>
+  </ul>
+</div>
+
+</body>
+</html>
