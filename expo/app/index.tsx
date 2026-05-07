@@ -3,9 +3,9 @@ import React, { useEffect, useRef } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { HomeScreen } from '@/components/nutrition-ui';
-import { INTRO_VERSION } from '@/constants/onboarding';
 import { palette } from '@/constants/theme';
 import { useAppState } from '@/providers/app-state-provider';
+import { decideInitialRoute } from '@/utils/initial-route';
 
 export default function HomeRoute() {
   const router = useRouter();
@@ -13,42 +13,16 @@ export default function HomeRoute() {
   const redirectedRef = useRef<boolean>(false);
 
   useEffect(() => {
-    if (isHydrating) return;
-    if (redirectedRef.current) return;
-
-    const introSeen = (settings.introSeenVersion ?? 0) >= INTRO_VERSION;
-    const trialOrSubscribed =
-      settings.subscriptionStatus === 'trialing' || settings.subscriptionStatus === 'active';
-    const onboardingDone = settings.onboardingCompleted === true;
-    const paywallSeen = settings.paywallSeenAtISO != null;
-
-    console.log('[index] state', { introSeen, onboardingDone, trialOrSubscribed, paywallSeen, status: settings.subscriptionStatus });
-
-    // Flow: intro → onboarding → paywall → home (value-first)
-    if (!introSeen) {
-      redirectedRef.current = true;
-      console.log('[index] redirect -> /intro');
-      router.replace('/intro');
-      return;
-    }
-    if (!onboardingDone) {
-      redirectedRef.current = true;
-      console.log('[index] redirect -> /onboarding');
-      router.replace('/onboarding');
-      return;
-    }
-    if (!trialOrSubscribed && !paywallSeen) {
-      redirectedRef.current = true;
-      console.log('[index] redirect -> /paywall (post-onboarding)');
-      router.replace('/paywall');
-    }
+    if (isHydrating || redirectedRef.current) return;
+    const route = decideInitialRoute(settings);
+    console.log('[index] decideInitialRoute →', route);
+    if (route === 'home') return;
+    redirectedRef.current = true;
+    router.replace(`/${route}`);
   }, [
     isHydrating,
     router,
-    settings.introSeenVersion,
-    settings.onboardingCompleted,
-    settings.subscriptionStatus,
-    settings.paywallSeenAtISO,
+    settings,
   ]);
 
   if (isHydrating) {

@@ -1,6 +1,9 @@
 import { ActivityLevel, BiologicalBasis, BodyStage, MealSlotKey, MealStyle, PaceLevel } from '@/types/nutrition';
 
-export const INTRO_VERSION = 1;
+// INTRO_VERSION を bump すると、onboarding 未完了の新規ユーザーにのみ
+// 新しい intro が再表示される。onboarding 完了済みの既存ユーザーは
+// 影響を受けない (decideInitialRoute / utils/initial-route.ts 参照)。
+export const INTRO_VERSION = 2;
 
 export const BODY_STAGES: BodyStage[] = [1, 2, 3, 4, 5];
 
