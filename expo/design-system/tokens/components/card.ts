@@ -26,7 +26,7 @@ export const makeCardTokens = (sc: SemanticColors): CardTokens => ({
     raised: {
       background: sc.surface.raised,
       border: { width: 0, color: 'transparent' },
-      shadow: elevation.sm,
+      shadow: elevation.none,
     },
     flat: {
       background: sc.surface.overlay,

@@ -7,10 +7,12 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { getQuickLogCategory } from '@/constants/quick-log-master';
-import { Body, BottomSheet, Caption, Chip, Heading, NumberField, useTheme } from '@/design-system';
+import { Body, BottomSheet, Caption, Chip, Heading, useTheme } from '@/design-system';
+import { AmountEditDialog } from '@/components/AmountEditDialog';
+import { buildIngredientAmountEditConfig } from '@/utils/amount-edit';
 import { useAppState } from '@/providers/app-state-provider';
 import {
   AmountCandidate,
@@ -30,13 +32,6 @@ const UNIT_LABEL: Record<NormalizedUnit, string> = {
   ml: 'ml',
   piece: '個',
 };
-
-function parseAmountInput(text: string): number {
-  const cleaned = text.replace(/[^\d.]/g, '');
-  if (cleaned.length === 0) return 0;
-  const parsed = parseFloat(cleaned);
-  return Number.isFinite(parsed) ? parsed : 0;
-}
 
 function findCandidateByValue(
   candidates: AmountCandidate[],
@@ -80,6 +75,7 @@ export function QuickIngredientSheet() {
   const category = visible ? getQuickLogCategory(quickIngredientSheetCategory!) : undefined;
 
   const [draft, setDraft] = useState<IngredientQuickDraft | null>(null);
+  const [amountEditorOpen, setAmountEditorOpen] = useState(false);
 
   // Build initial draft when sheet opens
   useEffect(() => {
@@ -132,31 +128,37 @@ export function QuickIngredientSheet() {
     );
   }, []);
 
-  const handleEditAmount = useCallback(
-    (text: string) => {
-      const value = parseAmountInput(text);
+  const handleAmountDialogClose = useCallback(
+    (next: number | null) => {
+      setAmountEditorOpen(false);
+      if (next === null) return;
       setDraft((d) => {
         if (!d) return d;
         const candidates = sub?.amountCandidates ?? [];
-        const matched = findCandidateByValue(candidates, value, d.amountUnit);
+        const matched = findCandidateByValue(candidates, next, d.amountUnit);
         if (matched) {
           return {
             ...d,
-            amountValue: value,
+            amountValue: next,
             amountLabel: matched.label,
             amountCandidateKey: matched.key,
           };
         }
         return {
           ...d,
-          amountValue: value,
+          amountValue: next,
           amountLabel: undefined,
           amountCandidateKey: undefined,
         };
       });
     },
-    [sub]
+    [sub],
   );
+
+  const amountConfig = useMemo(() => {
+    if (!sub) return null;
+    return buildIngredientAmountEditConfig(sub.amountCandidates, draft?.amountUnit ?? 'g');
+  }, [sub, draft?.amountUnit]);
 
   const handleSave = useCallback(async () => {
     if (!draft || !sub) return;
@@ -254,23 +256,37 @@ export function QuickIngredientSheet() {
                   />
                 ))}
               </ChipRow>
-              <View
-                style={{
-                  marginTop: t.spacing['3'],
-                  backgroundColor: t.colors.surface.raised,
-                  borderRadius: t.radius.lg,
-                  paddingHorizontal: t.spacing['4'],
-                }}
+              <Pressable
+                onPress={() => setAmountEditorOpen(true)}
+                style={[
+                  qisStyles.amountRow,
+                  {
+                    marginTop: t.spacing['3'],
+                    backgroundColor: t.colors.surface.raised,
+                    borderRadius: t.radius.lg,
+                  },
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel={`量を変更。現在 ${draft.amountValue}${UNIT_LABEL[draft.amountUnit]}`}
+                testID="qis-amount-row"
               >
-                <NumberField
-                  value={draft.amountValue.toString()}
-                  onChangeText={handleEditAmount}
-                  suffix={UNIT_LABEL[draft.amountUnit]}
-                  size="3xl"
-                  decimal
-                  testID="qis-amount-input"
+                <Text style={[qisStyles.amountRowValue, { color: t.colors.content.primary, fontSize: t.typography.fontSize['2xl'] }]}>
+                  {draft.amountValue}
+                  <Text style={{ color: t.colors.content.secondary, fontSize: t.typography.fontSize.sm }}>
+                    {' '}{UNIT_LABEL[draft.amountUnit]}
+                  </Text>
+                </Text>
+                <Text style={[qisStyles.amountRowIcon, { color: t.colors.content.tertiary }]}>✎</Text>
+              </Pressable>
+              {amountConfig ? (
+                <AmountEditDialog
+                  visible={amountEditorOpen}
+                  config={amountConfig}
+                  initialValue={draft.amountValue}
+                  onClose={handleAmountDialogClose}
+                  testID="qis-amount-dialog"
                 />
-              </View>
+              ) : null}
             </Section>
           ) : null}
 
@@ -306,3 +322,20 @@ export function QuickIngredientSheet() {
     </BottomSheet>
   );
 }
+
+const qisStyles = StyleSheet.create({
+  amountRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    minHeight: 48,
+  },
+  amountRowValue: {
+    fontWeight: '700',
+  },
+  amountRowIcon: {
+    fontSize: 16,
+  },
+});

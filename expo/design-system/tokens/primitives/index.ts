@@ -18,5 +18,5 @@ export type {
 } from './typography';
 export { elevation } from './elevation';
 export type { ElevationToken } from './elevation';
-export { duration, easing } from './motion';
-export type { DurationToken, EasingToken } from './motion';
+export { duration, easing, spring } from './motion';
+export type { DurationToken, EasingToken, SpringToken } from './motion';

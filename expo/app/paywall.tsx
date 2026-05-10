@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
-import { Check, X } from 'lucide-react-native';
+import { Check } from 'lucide-react-native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -12,6 +12,11 @@ import { palette } from '@/constants/theme';
 import { Badge } from '@/design-system';
 import { useAppState } from '@/providers/app-state-provider';
 import { fetchOffering, purchase } from '@/utils/iap';
+import {
+  cancelTrialExpiryNotification,
+  requestTrialNotificationPermission,
+  scheduleTrialExpiryNotification,
+} from '@/utils/trial-notifications';
 
 const BENEFITS = [
   '食材・一皿料理の両方を最短で記録',
@@ -22,7 +27,7 @@ const BENEFITS = [
 
 export default function PaywallRoute() {
   const router = useRouter();
-  const { restorePurchase, markPaywallSeen, settings } = useAppState();
+  const { restorePurchase, markPaywallSeen, completePurchase, settings, updateSettingsValues } = useAppState();
 
   const [offering, setOffering] = useState<PurchasesOffering | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -52,9 +57,19 @@ export default function PaywallRoute() {
       setPurchasing(pkg.identifier);
       try {
         const info = await purchase(pkg);
-        if (info && info.entitlements.active['premium']) {
-          // CustomerInfo listener in app-state-provider will sync subscriptionStatus
-          markPaywallSeen();
+        // info が non-null = RevenueCat が購入を受け付けた証拠。
+        // entitlement はサーバー処理遅延で即座に反映されないことがあるため
+        // エンタイトルメントチェックを購入成功の判定には使わない。
+        if (info) {
+          // subscriptionStatus を即座に更新してからナビゲート (タイミング問題を防ぐ)
+          completePurchase(info);
+
+          // トライアル開始 → 終了48h前のローカル通知をスケジュール
+          // 通知許諾は購入完了直後に文脈一致でリクエスト (ユーザー保護のため)
+          await requestTrialNotificationPermission();
+          const trialStartedAtISO = new Date().toISOString();
+          await scheduleTrialExpiryNotification(trialStartedAtISO, TRIAL_DAYS);
+
           router.replace('/');
         }
       } catch (e: unknown) {
@@ -64,23 +79,24 @@ export default function PaywallRoute() {
         setPurchasing(null);
       }
     },
-    [purchasing, markPaywallSeen, router]
+    [purchasing, completePurchase, router]
   );
 
   const handleRestore = useCallback(async () => {
     const restored = await restorePurchase();
     if (restored) {
       markPaywallSeen();
+      // 復元成功 = 既に課金済 or トライアル中。残期間中の通知をキャンセル。
+      // (本登録に切り替わっている場合は不要、トライアル復元なら既にスケジュール済)
+      await cancelTrialExpiryNotification();
       router.replace('/');
     } else {
       Alert.alert('復元できる購入が見つかりません', 'Apple IDかGoogleアカウントをご確認ください。');
     }
   }, [restorePurchase, markPaywallSeen, router]);
 
-  const handleLater = useCallback(() => {
-    markPaywallSeen();
-    router.replace('/');
-  }, [markPaywallSeen, router]);
+  // 強制課金型 (PRD §6.1): paywall は「あとで」スキップ不可。
+  // ユーザーは「購読する」or「復元する」のいずれかでホームへ進む。
 
   const openLegal = (url: string) => {
     Linking.openURL(url).catch((e) => console.warn('[paywall] failed to open legal URL', e));
@@ -95,17 +111,8 @@ export default function PaywallRoute() {
       <View style={styles.page} testID="paywall-screen">
         <LinearGradient colors={[palette.background, '#F7F4EE']} style={StyleSheet.absoluteFillObject} />
         <SafeAreaView edges={['top', 'bottom']} style={styles.safe}>
-          <View style={styles.closeRow}>
-            <Pressable
-              onPress={handleLater}
-              style={styles.closeButton}
-              testID="paywall-close"
-              accessibilityRole="button"
-              accessibilityLabel="閉じる"
-            >
-              <X size={18} color={palette.textMuted} />
-            </Pressable>
-          </View>
+          {/* 強制課金型なので閉じるボタンなし。ヘッダー余白だけ確保。 */}
+          <View style={styles.closeRow} />
 
           <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
             <Badge tone="accent" size="md">{TRIAL_DAYS}日間無料</Badge>
@@ -166,6 +173,19 @@ export default function PaywallRoute() {
           </ScrollView>
 
           <View style={styles.footer}>
+            {__DEV__ ? (
+              <Pressable
+                onPress={() => {
+                  updateSettingsValues({ subscriptionStatus: 'trialing' });
+                  router.replace('/');
+                }}
+                style={{ alignItems: 'center', paddingVertical: 6 }}
+              >
+                <Text style={{ fontSize: 11, color: '#9b2335', fontWeight: '700' }}>
+                  [DEV] Paywall スキップ
+                </Text>
+              </Pressable>
+            ) : null}
             <View style={styles.secondaryRow}>
               <Pressable
                 onPress={handleRestore}
@@ -174,16 +194,6 @@ export default function PaywallRoute() {
                 accessibilityLabel="購入を復元"
               >
                 <Text style={styles.secondaryText}>購入を復元</Text>
-              </Pressable>
-              <Text style={styles.legalSep}>·</Text>
-              <Pressable
-                onPress={handleLater}
-                testID="paywall-later"
-                accessibilityRole="button"
-                accessibilityLabel="あとで"
-                accessibilityHint="購読しないでホーム画面に戻ります"
-              >
-                <Text style={styles.secondaryText}>あとで</Text>
               </Pressable>
             </View>
             <View style={styles.legalRow}>

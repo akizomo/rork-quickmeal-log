@@ -21,9 +21,8 @@ import { PEEK_HEIGHT_PX } from '@/components/DayLogBottomSheet';
 import { getQuickLogButtonHeight, QUICK_LOG_TOKENS, QuickLogSection } from '@/components/QuickLogSection';
 import { StatusCard } from '@/components/nutrition-ui';
 
-// QuickLog を BottomSheet peek の角丸 top に密着させる (gap=0)。peek 内側余白圧縮で
-// 視覚的近接感を別途確保。
-const QUICKLOG_BOTTOM_GAP = 0;
+// QuickLog と BottomSheet peek の間のギャップ (左右パディングと揃える)
+const QUICKLOG_BOTTOM_GAP = 16;
 
 // QuickLogSection の自然高さ (search bar コメントアウト中の前提):
 // sectionPaddingTop + segmentHeight + segmentBottomSpacing

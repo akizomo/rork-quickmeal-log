@@ -129,6 +129,17 @@ export interface FoodLogAddon {
   addedMacro: Macro;
 }
 
+export interface ExerciseLog {
+  id: string;
+  date: string;
+  timestamp: string;
+  exerciseType: string;
+  exerciseLabel: string;
+  minutes: number;
+  grossKcal: number;
+  netKcal: number;
+}
+
 export interface AppSettings {
   defaultTabByTime: {
     morning: LogMode;

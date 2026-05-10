@@ -4,9 +4,9 @@
  * セットアップ手順:
  *   1. https://app.revenuecat.com でアカウント作成 (無料)
  *   2. プロジェクト「Hachibu」を新規作成
- *   3. iOS / Android アプリを登録 (Bundle ID: app.akihiro.hachibu)
+ *   3. iOS / Android アプリを登録 (Bundle ID: app.akizony.hachibu)
  *   4. App Store Connect / Play Console で IAP プロダクト登録 (下記 PRODUCT_IDS)
- *   5. RevenueCat でエンタイトルメント "premium" を作成し、両プロダクトを紐付け
+ *   5. RevenueCat でエンタイトルメント "Hachibu" を作成し、両プロダクトを紐付け
  *   6. Offering "default" を作成し、monthly / annual パッケージを紐付け
  *   7. ダッシュボードから API key を取得し、環境変数 or 直接置換
  *
@@ -19,12 +19,12 @@ import { Platform } from 'react-native';
 
 /** App Store Connect / Play Console で登録する Product ID */
 export const PRODUCT_IDS = {
-  monthly: 'hachibu_premium_monthly',
-  annual: 'hachibu_premium_annual',
+  monthly: 'hachibu_monthly:monthly-base',
+  annual: 'hachibu_monthly:base-annual-2',
 } as const;
 
 /** RevenueCat のエンタイトルメント識別子 (= プレミアム機能アクセス権) */
-export const ENTITLEMENT_ID = 'premium';
+export const ENTITLEMENT_ID = 'Hachibu';
 
 /** RevenueCat の Offering 識別子 (デフォルト) */
 export const OFFERING_ID = 'default';
@@ -37,7 +37,7 @@ export const OFFERING_ID = 'default';
  */
 export const REVENUECAT_API_KEY = {
   ios: 'appl_REPLACE_ME',
-  android: 'goog_REPLACE_ME',
+  android: 'goog_EYQHJObVfiJIBsGfANhwzWKUGHS',
 } as const;
 
 export function getRevenueCatApiKey(): string {

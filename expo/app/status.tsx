@@ -89,6 +89,40 @@ export default function StatusRoute() {
         <SafeAreaView edges={['bottom']} style={{ flex: 1 }}>
           <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} testID="status-screen">
 
+            {/* TRIAL STATUS — トライアル中のみ表示 (PRD §6.1) */}
+            {settings.subscriptionStatus === 'trialing' ? (
+              <Pressable
+                onPress={() => router.push('/subscription')}
+                testID="status-trial-card"
+                accessibilityRole="button"
+                accessibilityLabel="トライアル詳細"
+                accessibilityHint="サブスクリプション画面を開きます"
+              >
+                <Card
+                  variant="raised"
+                  style={{
+                    gap: theme.spacing['1'],
+                    borderLeftWidth: 3,
+                    borderLeftColor: trialDays <= 2
+                      ? theme.colors.status.warning
+                      : theme.colors.action.primary.default,
+                  }}
+                >
+                  <View style={styles.trialRow}>
+                    <Body weight="bold">
+                      無料トライアル中{trialDays > 0 ? ` · 残り${trialDays}日` : ''}
+                    </Body>
+                    <ChevronRight size={14} color={theme.colors.content.tertiary} />
+                  </View>
+                  <Caption tone="tertiary">
+                    {trialDays <= 2
+                      ? `あと${trialDays}日で本登録に切り替わります。継続される場合は何もしなくてOK。`
+                      : 'いつでも解約できます。詳細はサブスクリプション画面から。'}
+                  </Caption>
+                </Card>
+              </Pressable>
+            ) : null}
+
             {/* HERO */}
             <Card variant="raised" style={{ gap: theme.spacing['4'] }}>
               <View style={styles.heroMetricRow}>
@@ -396,6 +430,7 @@ const styles = StyleSheet.create({
   recordButton: { flex: 1, borderRadius: 999, paddingVertical: 12, alignItems: 'center' },
   recordButtonText: { fontSize: 14, fontWeight: '700' },
   goalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  trialRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   changeRow: { flexDirection: 'row', alignItems: 'center', gap: 2 },
   kcalRow: { flexDirection: 'row', alignItems: 'flex-end' },
   pfcRow: { flexDirection: 'row', gap: 8 },

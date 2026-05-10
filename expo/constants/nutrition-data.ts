@@ -1,7 +1,7 @@
 import { AdditionPreset, AppSettings, BodyFatEntry, DishSize, IngredientSubtypeDef, PortionDisplay, PortionStepKey, QuickCategory, SubTypePreset, UserProfile, WeightEntry } from '@/types/nutrition';
 
 export const ingredientCategories: QuickCategory[] = [
-  { key: 'staple', label: '主食', emoji: '🍚', baseMacro: { kcal: 240, protein: 4, fat: 0.5, carbs: 53 } },
+  { key: 'staple', label: 'ごはんパン麺', emoji: '🍚', baseMacro: { kcal: 240, protein: 4, fat: 0.5, carbs: 53 } },
   { key: 'lean_protein', label: '低脂P', emoji: '🐓', baseMacro: { kcal: 120, protein: 22, fat: 3, carbs: 0 } },
   { key: 'egg', label: '卵', emoji: '🥚', baseMacro: { kcal: 80, protein: 6, fat: 5.5, carbs: 0 } },
   { key: 'fatty_protein', label: '脂ありP', emoji: '🥩', baseMacro: { kcal: 220, protein: 18, fat: 15, carbs: 0 } },
@@ -13,12 +13,12 @@ export const ingredientCategories: QuickCategory[] = [
 ];
 
 export const dishCategories: QuickCategory[] = [
-  { key: 'rice_dish', label: 'ごはんもの', emoji: '🍚', baseMacro: { kcal: 650, protein: 24, fat: 20, carbs: 90 } },
+  { key: 'rice_dish', label: 'ごはんもの', emoji: '🥣', baseMacro: { kcal: 650, protein: 24, fat: 20, carbs: 90 } },
   { key: 'curry', label: 'カレー', emoji: '🍛', baseMacro: { kcal: 720, protein: 21, fat: 23, carbs: 103 } },
   { key: 'chinese_noodles', label: '中華麺', emoji: '🍜', baseMacro: { kcal: 650, protein: 25, fat: 14, carbs: 96 } },
   { key: 'japanese_noodles', label: '和麺', emoji: '🍲', baseMacro: { kcal: 485, protein: 15, fat: 7, carbs: 88 } },
   { key: 'pasta', label: 'パスタ', emoji: '🍝', baseMacro: { kcal: 680, protein: 22, fat: 25, carbs: 91 } },
-  { key: 'sushi', label: '寿司', emoji: '🍣', baseMacro: { kcal: 110, protein: 6, fat: 2.4, carbs: 16.4 } },
+  { key: 'sushi', label: '寿司', emoji: '🍣', baseMacro: { kcal: 130, protein: 7, fat: 4, carbs: 16.4 } },
   { key: 'sandwich', label: 'サンド', emoji: '🥪', baseMacro: { kcal: 360, protein: 16, fat: 19, carbs: 32 } },
   { key: 'pizza', label: 'ピザ', emoji: '🍕', baseMacro: { kcal: 150, protein: 6, fat: 6, carbs: 18 } },
   { key: 'set_meal', label: '定食・弁当', emoji: '🍱', baseMacro: { kcal: 820, protein: 32, fat: 30, carbs: 102 } },

@@ -40,7 +40,7 @@ export const INGREDIENT_BUCKETS: BucketDef[] = [
 ];
 
 export const DISH_BUCKETS: BucketDef[] = [
-  { key: 'rice_dish',         tab: 'dish', label: 'どんぶり',         shortLabel: '丼',        emoji: '🍚' },
+  { key: 'rice_dish',         tab: 'dish', label: 'どんぶり',         shortLabel: '丼',        emoji: '🥣' },
   { key: 'curry',             tab: 'dish', label: 'カレー',           shortLabel: 'カレー',    emoji: '🍛' },
   { key: 'chinese_noodles',   tab: 'dish', label: 'ラーメン中華麺',   shortLabel: '中華麺',    emoji: '🍜', quickTapDisabled: true },
   { key: 'japanese_noodles',  tab: 'dish', label: 'うどん蕎麦',       shortLabel: '和麺',      emoji: '🍲' },

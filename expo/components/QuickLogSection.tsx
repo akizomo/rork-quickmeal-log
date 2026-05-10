@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 
 import { palette } from '@/constants/theme';
+import { SegmentedControl } from '@/components/SegmentedControl';
 import { useAppState } from '@/providers/app-state-provider';
 import { QuickCategory } from '@/types/nutrition';
 import { getQuickCategories } from '@/utils/nutrition';
@@ -44,7 +45,7 @@ const QUICK_LOG_COLORS = {
   segmentText: '#7B857E',
   segmentSelectedText: '#315347',
   buttonBg: '#FBF8F1',
-  buttonBorder: 'rgba(49, 83, 71, 0.06)',
+  buttonBorder: 'rgba(49, 83, 71, 0.13)',
   iconBg: '#FFFFFF',
   labelText: '#2E3B35',
 };
@@ -214,37 +215,13 @@ function QuickLogButton({
   );
 }
 
-function SegmentedControl() {
-  const { selectedMode, setSelectedMode } = useAppState();
-  return (
-    <View style={styles.segmentWrap}>
-      {([
-        { key: 'ingredient', label: '食材' },
-        { key: 'dish', label: '一皿料理' },
-      ] as const).map((item) => {
-        const active = item.key === selectedMode;
-        return (
-          <Pressable
-            key={item.key}
-            onPress={() => setSelectedMode(item.key)}
-            accessibilityRole="button"
-            accessibilityState={{ selected: active }}
-            accessibilityLabel={`${item.label}${active ? '、選択中' : ''}`}
-            style={[styles.segmentButton, active ? styles.segmentButtonActive : null]}
-            testID={`mode-tab-${item.key}`}
-          >
-            <Text style={[styles.segmentText, active ? styles.segmentTextActive : null]}>
-              {item.label}
-            </Text>
-          </Pressable>
-        );
-      })}
-    </View>
-  );
-}
+const QUICK_LOG_SEGMENT_OPTIONS = [
+  { key: 'ingredient' as const, label: '食材' },
+  { key: 'dish' as const, label: '一皿料理' },
+];
 
 export const QuickLogSection = memo(function QuickLogSection() {
-  const { selectedMode } = useAppState();
+  const { selectedMode, setSelectedMode } = useAppState();
   const { width: screenWidth } = useWindowDimensions();
 
   const categories = useMemo(() => getQuickCategories(selectedMode), [selectedMode]);
@@ -271,7 +248,13 @@ export const QuickLogSection = memo(function QuickLogSection() {
       {/* <View style={{ marginBottom: QUICK_LOG_TOKENS.segmentBottomSpacing }}>
         <IdentitySearchBar />
       </View> */}
-      <SegmentedControl />
+      <SegmentedControl
+        options={QUICK_LOG_SEGMENT_OPTIONS}
+        value={selectedMode}
+        onChange={setSelectedMode}
+        style={{ marginBottom: QUICK_LOG_TOKENS.segmentBottomSpacing }}
+        testID="mode-tab"
+      />
       <View style={styles.grid}>
         {rows.map((row, rowIndex) => (
           <View
@@ -310,37 +293,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     width: '100%',
   },
-  segmentWrap: {
-    flexDirection: 'row',
-    height: QUICK_LOG_TOKENS.segmentHeight,
-    borderRadius: QUICK_LOG_TOKENS.segmentRadius,
-    backgroundColor: QUICK_LOG_COLORS.segmentBg,
-    padding: 3,
-    marginBottom: QUICK_LOG_TOKENS.segmentBottomSpacing,
-  },
-  segmentButton: {
-    flex: 1,
-    borderRadius: QUICK_LOG_TOKENS.segmentRadius - 3,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  segmentButtonActive: {
-    backgroundColor: QUICK_LOG_COLORS.segmentSelectedBg,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 1,
-  },
-  segmentText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: QUICK_LOG_COLORS.segmentText,
-  },
-  segmentTextActive: {
-    color: QUICK_LOG_COLORS.segmentSelectedText,
-    fontWeight: '700',
-  },
   grid: {
     width: '100%',
   },
@@ -365,9 +317,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.04,
+    shadowRadius: 2,
+    shadowOffset: { width: 0, height: 1 },
     elevation: 1,
   },
   iconContainer: {

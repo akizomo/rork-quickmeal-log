@@ -11,6 +11,7 @@ import {
   averageLoggedDays,
   countLoggedDays,
   formatMonthLabel,
+  formatShortDay,
   getDailyMacros,
   getHistoryStartDate,
   getMonthCalendarCells,
@@ -38,6 +39,14 @@ export function MonthlyStatsView() {
   const monthDailyMap = useMemo(() => getDailyMacros(logs, monthRange), [logs, monthRange]);
   const avgMacro = useMemo(() => averageLoggedDays(monthDailyMap), [monthDailyMap]);
   const loggedDays = useMemo(() => countLoggedDays(monthDailyMap), [monthDailyMap]);
+  // 今日以前の日付のみ、新しい順で表示
+  const monthDailyEntries = useMemo(
+    () =>
+      Array.from(monthDailyMap.entries())
+        .filter(([key]) => new Date(key) <= today)
+        .reverse(),
+    [monthDailyMap, today]
+  );
 
   const canGoPrev = useMemo(() => {
     const prevMonth = new Date(anchor.getFullYear(), anchor.getMonth() - 1, 1);
@@ -166,6 +175,38 @@ export function MonthlyStatsView() {
         <Text style={styles.summaryMeta}>記録した日: {loggedDays} 日</Text>
         <Text style={styles.summaryHint}>円の大きさ = その日の摂取カロリー量</Text>
       </View>
+
+      <View style={styles.listSection}>
+        <Text style={styles.listTitle}>日別の記録</Text>
+        {monthDailyEntries.map(([key, macro]) => {
+          const date = new Date(key);
+          const hasLog = macro.kcal > 0;
+          return (
+            <Pressable
+              key={key}
+              style={styles.dayRow}
+              onPress={() => hasLog && onTapDay(key, true, false)}
+              disabled={!hasLog}
+              testID={`month-day-row-${key}`}
+            >
+              <View style={styles.dayRowLeft}>
+                <Text style={styles.dayLabel}>{formatShortDay(date)}</Text>
+                {!hasLog ? <Text style={styles.dayNoLog}>記録なし</Text> : null}
+              </View>
+              {hasLog ? (
+                <View style={styles.dayRowRight}>
+                  <Text style={styles.dayKcal}>{Math.round(macro.kcal)} kcal</Text>
+                  <Text style={styles.dayMacroLine}>
+                    P{Math.round(macro.protein)} F{Math.round(macro.fat)} C{Math.round(macro.carbs)}
+                  </Text>
+                </View>
+              ) : (
+                <Text style={styles.dayDash}>—</Text>
+              )}
+            </Pressable>
+          );
+        })}
+      </View>
     </ScrollView>
   );
 }
@@ -266,6 +307,55 @@ const styles = StyleSheet.create({
   summaryHint: {
     marginTop: 6,
     fontSize: 11,
+    color: palette.textMuted,
+  },
+  listSection: {
+    gap: 6,
+  },
+  listTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: palette.text,
+    paddingHorizontal: 4,
+    marginBottom: 4,
+  },
+  dayRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: palette.surface,
+    borderRadius: 14,
+    padding: 12,
+  },
+  dayRowLeft: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 8,
+  },
+  dayLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: palette.text,
+  },
+  dayNoLog: {
+    fontSize: 11,
+    color: palette.textMuted,
+  },
+  dayRowRight: {
+    alignItems: 'flex-end',
+  },
+  dayKcal: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: palette.sageDeep,
+  },
+  dayMacroLine: {
+    fontSize: 11,
+    color: palette.textMuted,
+    marginTop: 2,
+  },
+  dayDash: {
+    fontSize: 14,
     color: palette.textMuted,
   },
 });

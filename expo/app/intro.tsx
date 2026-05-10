@@ -4,7 +4,6 @@ import React, { useCallback, useRef, useState } from 'react';
 import {
   FlatList,
   Linking,
-  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -320,16 +319,6 @@ export default function IntroRoute() {
   );
 }
 
-const CARD_SHADOW = Platform.select({
-  ios: {
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 24,
-    shadowOffset: { width: 0, height: 8 },
-  },
-  android: { elevation: 2 },
-  default: {},
-});
 
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: palette.background },
@@ -396,7 +385,6 @@ const illustStyles = StyleSheet.create({
     paddingVertical: 20,
     paddingHorizontal: 20,
     alignItems: 'center',
-    ...CARD_SHADOW,
   },
   cardSpark: { paddingVertical: 18, paddingHorizontal: 20, alignItems: 'stretch', gap: 10 },
   cardPfc: { paddingVertical: 16, paddingHorizontal: 20, alignItems: 'stretch', gap: 9 },

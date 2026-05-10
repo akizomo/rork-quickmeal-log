@@ -132,6 +132,8 @@ export interface SushiModeDef {
   min: number;
   max: number;
   macroPerUnit: Macro;
+  /** Step between valid counts. Defaults to 1 when absent. */
+  step?: number;
 }
 
 export interface SushiConfig {
@@ -152,6 +154,8 @@ export interface PizzaConfig {
   presetSlices: number[];
   minSlices: number;
   maxSlices: number;
+  /** Step between valid slice counts. Defaults to 1 when absent. */
+  step?: number;
 }
 
 export interface SetMealOptionDef {
@@ -189,7 +193,7 @@ export const DISH_TOP_CATEGORIES: DishTopCategoryDef[] = [
     key: 'rice_dish',
     label: 'ごはんもの',
     shortLabel: 'ごはん',
-    emoji: '🍚',
+    emoji: '🥣',
     quickEntry: { kind: 'instant_save', defaultSubcategoryKey: 'rice_default', defaultPortionFactor: 1 },
     subcategories: [
       { key: 'gyudon', label: '牛丼', baseMacroAt1x: M(700, 25, 22, 95), portionOptions: PO.riceDish, allowedToppingIds: ['egg', 'cheese', 'kimchi'] },
@@ -278,8 +282,8 @@ export const DISH_TOP_CATEGORIES: DishTopCategoryDef[] = [
       kind: 'sushi_count',
       defaultMode: 'plate',
       modes: [
-        { key: 'plate', label: '回転寿司（皿）', unitLabel: '皿', presetCounts: [4, 6, 8, 10, 12, 15], min: 1, max: 30, macroPerUnit: M(110, 6, 2.4, 16.4) },
-        { key: 'piece', label: 'セット寿司（貫）', unitLabel: '貫', presetCounts: [6, 8, 10, 12, 16, 20], min: 1, max: 40, macroPerUnit: M(55, 3, 1.2, 8.2) },
+        { key: 'plate', label: '回転寿司（皿）', unitLabel: '皿', presetCounts: [4, 6, 8, 10, 12, 15], min: 1, max: 30, macroPerUnit: M(130, 7, 4, 16.4) },
+        { key: 'piece', label: 'セット寿司（貫）', unitLabel: '貫', presetCounts: [6, 8, 10, 12, 16, 20], min: 1, max: 40, macroPerUnit: M(65, 3.5, 2, 8.2) },
       ],
     },
     subcategories: [],

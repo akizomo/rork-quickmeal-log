@@ -16,7 +16,7 @@
 import { Identity } from '@/types/identity';
 
 // ---------------------------------------------------------------------------
-// Bucket 1: ごはんパン麺 (staple) — 10 Identity
+// Bucket 1: ごはんパン麺 (staple) — 13 Identity
 // ---------------------------------------------------------------------------
 
 const BUCKET_STAPLE: Identity[] = [
@@ -216,6 +216,57 @@ const BUCKET_STAPLE: Identity[] = [
     ],
     defaultAddonIds: ['butter_cream', 'honey'],
     allowedAddonIds: ['butter_cream', 'honey', 'kinako'],
+  },
+  {
+    id: 'noodle_udon',
+    label: 'うどん・蕎麦',
+    primaryHome: { tab: 'ingredient', bucket: 'staple' },
+    defaultMacro: { kcal: 210, protein: 5.2, fat: 0.8, carbs: 43 }, // 茹でうどん 200g
+    amount: {
+      unit: 'g',
+      default: 200,
+      chips: [
+        { label: '1玉', value: 200 },
+        { label: '大盛', value: 280 },
+      ],
+    },
+    attributes: [
+      { key: 'udon', label: 'うどん', isDefault: true },
+      { key: 'soba', label: '蕎麦', factor: { kcal: 1.26, protein: 1.85, fat: 1.25, carbs: 1.21 } },
+    ],
+  },
+  {
+    id: 'noodle_pasta',
+    label: 'パスタ麺',
+    primaryHome: { tab: 'ingredient', bucket: 'staple' },
+    defaultMacro: { kcal: 284, protein: 10.2, fat: 1.4, carbs: 59 }, // 乾燥パスタ 80g
+    amount: {
+      unit: 'g',
+      default: 80,
+      chips: [
+        { label: '60g', value: 60 },
+        { label: '80g', value: 80 },
+        { label: '100g', value: 100 },
+      ],
+    },
+    attributes: [
+      { key: 'regular', label: '普通', isDefault: true },
+      { key: 'whole', label: '全粒粉', factor: { kcal: 0.97, protein: 1.1, fat: 1.5, carbs: 0.92 } },
+    ],
+  },
+  {
+    id: 'noodle_ramen',
+    label: '中華麺',
+    primaryHome: { tab: 'ingredient', bucket: 'staple' },
+    defaultMacro: { kcal: 203, protein: 6.4, fat: 0.6, carbs: 42 }, // 茹で中華麺 120g
+    amount: {
+      unit: 'g',
+      default: 120,
+      chips: [
+        { label: '1玉', value: 120 },
+        { label: '大盛', value: 180 },
+      ],
+    },
   },
 ];
 
@@ -837,14 +888,30 @@ const BUCKET_FRUIT: Identity[] = [
     amount: { unit: 'piece', default: 1 },
   },
   {
+    id: 'ichigo',
+    label: 'いちご',
+    primaryHome: { tab: 'ingredient', bucket: 'fruit' },
+    defaultMacro: { kcal: 44, protein: 1.2, fat: 0.1, carbs: 11 }, // 10粒分
+    amount: {
+      unit: 'piece',
+      unitLabel: '粒',
+      default: 10,
+      chips: [
+        { label: '5粒',  value: 5  },
+        { label: '10粒', value: 10 },
+        { label: '15粒', value: 15 },
+      ],
+    },
+    searchTags: ['ストロベリー'],
+  },
+  {
     id: 'berry',
-    label: 'ベリー',
+    label: 'ベリー・ぶどう',
     primaryHome: { tab: 'ingredient', bucket: 'fruit' },
     defaultMacro: { kcal: 28, protein: 0.5, fat: 0.2, carbs: 7 },
     amount: { unit: 'g', default: 50, chips: [{ label: '50', value: 50 }, { label: '100', value: 100 }] },
     attributes: [
-      { key: 'strawberry', label: 'いちご', isDefault: true },
-      { key: 'blueberry', label: 'ブルーベリー' },
+      { key: 'blueberry', label: 'ブルーベリー', isDefault: true },
       { key: 'grape', label: 'ぶどう', factor: { kcal: 1.07, carbs: 1.14 } },
     ],
     asAddon: {
@@ -1045,7 +1112,7 @@ const BUCKET_SNACK_DRINK: Identity[] = [
     label: '甘飲料',
     primaryHome: { tab: 'ingredient', bucket: 'snack_drink' },
     defaultMacro: { kcal: 140, protein: 0, fat: 0, carbs: 35 },
-    amount: { unit: 'ml', default: 350, chips: [{ label: '200', value: 200 }, { label: '350', value: 350 }, { label: '500', value: 500 }] },
+    amount: { unit: 'ml', default: 350, chips: [{ label: 'コップ1杯', value: 200 }, { label: '缶1本', value: 350 }, { label: '1本(500)', value: 500 }] },
     searchTags: ['ジュース', 'コーラ', 'スポドリ', '炭酸'],
   },
   {
@@ -1053,7 +1120,7 @@ const BUCKET_SNACK_DRINK: Identity[] = [
     label: '甘飲料 (こってり)',
     primaryHome: { tab: 'ingredient', bucket: 'snack_drink' },
     defaultMacro: { kcal: 280, protein: 5, fat: 10, carbs: 50 },
-    amount: { unit: 'ml', default: 350, chips: [{ label: 'Tall', value: 350 }, { label: 'Grande', value: 470 }] },
+    amount: { unit: 'ml', default: 350, chips: [{ label: 'M/Tall', value: 350 }, { label: 'L/Grande', value: 470 }, { label: '完飲', value: 500 }] },
     searchTags: ['フラペチーノ', 'タピオカ', 'ミルクティー'],
   },
 ];

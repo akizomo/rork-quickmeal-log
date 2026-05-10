@@ -3,8 +3,15 @@ import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 
 import { useTheme } from '@/design-system';
+import { duration } from '@/design-system/tokens/primitives/motion';
+import { fontSize, fontWeight, letterSpacing } from '@/design-system/tokens/primitives/typography';
 
 export type RingStatusMode = 'auto' | 'remaining' | 'over' | 'percent';
+
+/** Controls what number is displayed large in the ring center.
+ *  'consumed' (default) — shows consumed kcal (legacy behaviour).
+ *  'remaining'          — shows remaining kcal (max 0); target shown as secondary. */
+export type RingCenterMode = 'consumed' | 'remaining';
 
 export interface CalorieOverflowRingProps {
   consumedKcal: number;
@@ -22,6 +29,7 @@ export interface CalorieOverflowRingProps {
   showCenterLabel?: boolean;
   showStatusText?: boolean;
   statusMode?: RingStatusMode;
+  centerMode?: RingCenterMode;
 
   /** デフォルトは theme.colors.nutrition.calorie.track */
   trackColor?: string;
@@ -44,11 +52,12 @@ const SHAPE_DEFAULTS = {
   startAngle: -90,
   maxVisualLaps: 2,
   animate: true,
-  animationDurationMs: 450,
-  numberAnimationDurationMs: 350,
+  animationDurationMs: duration.long,     // 450ms: プログレスリング入場
+  numberAnimationDurationMs: duration.medium, // 300ms: 数値カウントアップ
   showCenterLabel: true,
   showStatusText: true,
   statusMode: 'auto' as RingStatusMode,
+  centerMode: 'consumed' as RingCenterMode,
 };
 
 function formatKcal(value: number): string {
@@ -70,6 +79,7 @@ export const CalorieOverflowRing = memo(function CalorieOverflowRing(props: Calo
     showCenterLabel = SHAPE_DEFAULTS.showCenterLabel,
     showStatusText = SHAPE_DEFAULTS.showStatusText,
     statusMode = SHAPE_DEFAULTS.statusMode,
+    centerMode = SHAPE_DEFAULTS.centerMode,
     trackColor = t.colors.nutrition.calorie.track,
     progressColor = t.colors.nutrition.calorie.within,
     overflowColor = t.colors.nutrition.calorie.severeExceed,
@@ -87,9 +97,19 @@ export const CalorieOverflowRing = memo(function CalorieOverflowRing(props: Calo
   const center = size / 2;
   const circumference = 2 * Math.PI * radius;
 
+  const isOver = safeConsumed > safeTarget;
+  const safeRemaining = Math.max(safeTarget - safeConsumed, 0);
+  const overAmount = Math.max(safeConsumed - safeTarget, 0);
+  // In remaining mode: show over amount when exceeded, remaining otherwise
+  const centerValue = centerMode === 'remaining'
+    ? (isOver ? overAmount : safeRemaining)
+    : safeConsumed;
+
   const progressAnim = useRef(new Animated.Value(rawProgress)).current;
-  const consumedAnim = useRef(new Animated.Value(safeConsumed)).current;
+  const centerAnim = useRef(new Animated.Value(centerValue)).current;
   const [animatedProgress, setAnimatedProgress] = useState<number>(rawProgress);
+  const [animatedCenter, setAnimatedCenter] = useState<number>(centerValue);
+  // Keep consumedAnim for statusText calculation (legacy)
   const [animatedConsumed, setAnimatedConsumed] = useState<number>(safeConsumed);
   const statusOpacity = useRef(new Animated.Value(1)).current;
 
@@ -103,18 +123,20 @@ export const CalorieOverflowRing = memo(function CalorieOverflowRing(props: Calo
   }, [progressAnim]);
 
   useEffect(() => {
-    const id = consumedAnim.addListener(({ value }) => {
-      setAnimatedConsumed(value);
+    const id = centerAnim.addListener(({ value }) => {
+      setAnimatedCenter(value);
+      if (centerMode === 'consumed') setAnimatedConsumed(value);
+      else setAnimatedConsumed(safeTarget - value); // remaining → consumed
     });
     return () => {
-      consumedAnim.removeListener(id);
+      centerAnim.removeListener(id);
     };
-  }, [consumedAnim]);
+  }, [centerAnim, centerMode, safeTarget]);
 
   useEffect(() => {
     if (!animate) {
       progressAnim.setValue(rawProgress);
-      consumedAnim.setValue(safeConsumed);
+      centerAnim.setValue(centerValue);
       return;
     }
     Animated.timing(progressAnim, {
@@ -123,8 +145,8 @@ export const CalorieOverflowRing = memo(function CalorieOverflowRing(props: Calo
       easing: Easing.out(Easing.cubic),
       useNativeDriver: false,
     }).start();
-    Animated.timing(consumedAnim, {
-      toValue: safeConsumed,
+    Animated.timing(centerAnim, {
+      toValue: centerValue,
       duration: numberAnimationDurationMs,
       easing: Easing.out(Easing.quad),
       useNativeDriver: false,
@@ -132,10 +154,10 @@ export const CalorieOverflowRing = memo(function CalorieOverflowRing(props: Calo
     statusOpacity.setValue(0);
     Animated.timing(statusOpacity, {
       toValue: 1,
-      duration: 180,
+      duration: duration.short,
       useNativeDriver: true,
     }).start();
-  }, [animate, animationDurationMs, consumedAnim, numberAnimationDurationMs, progressAnim, rawProgress, safeConsumed, statusOpacity]);
+  }, [animate, animationDurationMs, centerAnim, centerValue, numberAnimationDurationMs, progressAnim, rawProgress, statusOpacity]);
 
   const visibleLapCount = Math.min(Math.floor(animatedProgress), maxVisualLaps);
   const firstLapProgress = Math.min(animatedProgress, 1);
@@ -159,13 +181,20 @@ export const CalorieOverflowRing = memo(function CalorieOverflowRing(props: Calo
     if (statusMode === 'over') {
       return `${Math.max(consumedInt - targetInt, 0).toLocaleString()} kcal over`;
     }
-    if (consumedInt < targetInt) {
-      return `${(targetInt - consumedInt).toLocaleString()} kcal left`;
+    const over = consumedInt - targetInt;
+    if (over <= 0) {
+      return over === 0
+        ? '目標達成'
+        : `あと ${Math.abs(over).toLocaleString()} kcal`;
     }
-    if (consumedInt === targetInt) {
-      return 'Goal reached';
+    const overRatio = over / safeTarget;
+    if (overRatio <= 0.10) {
+      return `+${over.toLocaleString()} kcal`;
     }
-    return `${(consumedInt - targetInt).toLocaleString()} kcal over`;
+    if (overRatio <= 0.25) {
+      return `+${over.toLocaleString()} kcal 多め`;
+    }
+    return `+${over.toLocaleString()} kcal`;
   }, [animatedConsumed, safeTarget, showStatusText, statusMode]);
 
   return (
@@ -215,13 +244,18 @@ export const CalorieOverflowRing = memo(function CalorieOverflowRing(props: Calo
 
       {showCenterLabel ? (
         <View style={styles.centerWrap} pointerEvents="none">
-          <Text style={[styles.kcalValue, { color: centerTextColor }]} numberOfLines={1}>
-            {formatKcal(animatedConsumed)}
+          {centerMode === 'remaining' ? (
+            <Text style={[styles.centerModeLabel, { color: isOver ? overflowColor : subTextColor }]} numberOfLines={1}>
+              {isOver ? 'オーバー' : 'のこり'}
+            </Text>
+          ) : null}
+          <Text style={[styles.kcalValue, { color: isOver && centerMode === 'remaining' ? overflowColor : centerTextColor }]} numberOfLines={1}>
+            {formatKcal(animatedCenter)}
           </Text>
           <Text style={[styles.kcalTarget, { color: subTextColor }]} numberOfLines={1}>
             / {formatKcal(safeTarget)} kcal
           </Text>
-          {showStatusText ? (
+          {showStatusText && centerMode === 'consumed' ? (
             <Animated.Text
               style={[styles.statusText, { color: subTextColor, opacity: statusOpacity }]}
               numberOfLines={1}
@@ -245,15 +279,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  centerModeLabel: {
+    fontSize: fontSize.xs,
+    fontWeight: fontWeight.semibold,
+    marginBottom: 1,
+  },
   kcalValue: {
-    fontSize: 28,
-    fontWeight: '700',
-    letterSpacing: -0.5,
+    fontSize: fontSize['4xl'],
+    fontWeight: fontWeight.bold,
+    letterSpacing: letterSpacing.tighter,
   },
   kcalTarget: {
-    marginTop: 2,
-    fontSize: 12,
-    fontWeight: '600',
+    marginTop: 4,
+    fontSize: fontSize.xs,
+    fontWeight: fontWeight.medium,
   },
   statusText: {
     marginTop: 4,

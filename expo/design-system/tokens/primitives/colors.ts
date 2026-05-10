@@ -4,13 +4,14 @@
  * ここには「意味」を持たせない。意味付けは semantic 層で行う。
  * カラー名は **hue (色相) のみ** を表す。
  *   NG: `danger`, `success`, `accent`, `primary` — これらは役割
- *   OK: `sage`, `clay`, `moss`, `tan`, `amber`, `slate` — これらは色相
+ *   OK: `sage`, `ai`, `fog`, `tan`, `amber`, `slate` — これらは色相
  *
  * 10段階 (50/100/200/300/400/500/600/700/800/900) を基本とする。
  *
  * 設計根拠:
  * - 既存 palette の値 (`#B9C9B1` 等) を破壊せず、300/400/500 などに配置
  * - iOS HIG / Material いずれにも対応するため、中性度を高めに取る
+ * - 案A · 藍 (Ai): accent=ai(藍), info=fog(霧), PFC=terracotta/kogecha/seagrass
  */
 
 export const colors = {
@@ -59,20 +60,20 @@ export const colors = {
     900: '#1C1C1A',
   },
 
-  // Lavender — muted / dusty lavender hue (accent 専用)。
-  // cinnamon (fat) / amber (warning) / clay (danger) など暖色系と hue family を
-  // 分離するため cool 側 (~H=270°) を採用。ネオンにならないよう低彩度。
-  lavender: {
-    50: '#F5F2FA',
-    100: '#E6DEF3', // accent.subtle
-    200: '#D1C4E8',
-    300: '#B6A2D4', // accent.default (大人しい紫)
-    400: '#977CBE',
-    500: '#7A5FA3',
-    600: '#5F4880',
-    700: '#45335D',
-    800: '#2C203A',
-    900: '#16101D',
+  // Ai (藍) — 伝統的な藍染めの indigo blue。accent 専用。
+  // 暖色系 PFC (terracotta/kogecha) と hue family を分離するため cool 側 (~H=220°) を採用。
+  // 彩度を抑えた大人しい藍。
+  ai: {
+    50:  '#EDF0FA',
+    100: '#D0D9F5', // accent.subtle
+    200: '#ADBAE9',
+    300: '#8498D8',
+    400: '#617AC4',
+    500: '#4660AF',
+    600: '#374E98', // accent.default
+    700: '#2A3C7E', // Badge fg
+    800: '#1D2C5E',
+    900: '#101840',
   },
 
   // Clay — 土っぽい赤。sage と同じウェルネス感の中で使える warm red。
@@ -117,61 +118,64 @@ export const colors = {
     900: '#261903',
   },
 
-  // Slate — 青みがかったブルーグレー hue。
-  slate: {
-    50: '#EDF3F6',
-    100: '#D1E0E8',
-    200: '#ABC6D4',
-    300: '#81A9BD',
-    400: '#5A8BA3',
-    500: '#406F87',
-    600: '#32586B',
-    700: '#26424F',
-    800: '#192C35',
-    900: '#0D171C',
+  // Fog (霧) — 霞がかった青みグレー。info/中性情報 専用。
+  // slate より低彩度・もやがかった印象。H≈205°
+  fog: {
+    50:  '#EDF3F7',
+    100: '#CDD9E3', // info bg
+    200: '#A4BFD0',
+    300: '#7AA3BB',
+    400: '#5488A5',
+    500: '#3C6F8A',
+    600: '#2E5770',
+    700: '#224055', // info fg
+    800: '#162B3A',
+    900: '#0B1820',
   },
 
-  // Rose — pink-red hue (nutrition.protein 専用)。clay (status.danger) と区別。
-  rose: {
-    50: '#FBEDEF',
-    100: '#F5CDD4',
-    200: '#EAA2AD',
-    300: '#D97583',
-    400: '#C35362',
-    500: '#A84A5A',
-    600: '#863848',
-    700: '#622733',
-    800: '#3F1820',
-    900: '#200C11',
+  // Terracotta (テラコッタ) — 煉瓦・肌色の warm red-orange。nutrition.protein 専用。
+  // clay (status.danger) より orange 寄りの H≈14°。
+  terracotta: {
+    50:  '#FCF0EC',
+    100: '#F5D3C5',
+    200: '#ECAD98',
+    300: '#E07F66',
+    400: '#C75A3E',
+    500: '#A5402A',
+    600: '#83301D',
+    700: '#612213',
+    800: '#41150B',
+    900: '#220A05',
   },
 
-  // Cinnamon — red-brown hue (nutrition.fat 専用)。
-  // amber (status.warning) のクリアな黄金とは別 hue family (赤みの強い茶色)。
-  cinnamon: {
-    50: '#FAEDE3',
-    100: '#F0CCAD',
-    200: '#E3A675',
-    300: '#CE7A40',
-    400: '#AD571E',
-    500: '#8B3E14',
-    600: '#6B2E0E',
-    700: '#4E2009',
-    800: '#301305',
-    900: '#180902',
+  // Kogecha (焦茶) — 焦げ茶色。nutrition.fat 専用。
+  // amber (status.warning) より赤みが強く暗い brown。H≈24°
+  kogecha: {
+    50:  '#FAF0E6',
+    100: '#F0D0AB',
+    200: '#E2A870',
+    300: '#CC7A3B',
+    400: '#AB5B1C',
+    500: '#8A4413',
+    600: '#6C310D',
+    700: '#4F2208',
+    800: '#321404',
+    900: '#1A0A02',
   },
 
-  // Olive — yellow-green hue (nutrition.carbs 専用)。moss (status.success) と区別。
-  olive: {
-    50: '#F6F6E1',
-    100: '#E7E8AE',
-    200: '#D0D278',
-    300: '#B1B548',
-    400: '#8C9128',
-    500: '#6E7519',
-    600: '#565B13',
-    700: '#3E430C',
-    800: '#272A07',
-    900: '#131502',
+  // Seagrass (海草) — 海草・海浜植物の blue-green。nutrition.carbs 専用。
+  // moss (status.success, H≈120°) と区別するため teal 側 (~H=160°) を採用。
+  seagrass: {
+    50:  '#EAFAF5',
+    100: '#C5EFE2',
+    200: '#96DDCA',
+    300: '#64C7B0',
+    400: '#3EAF97',
+    500: '#2D8F7A',
+    600: '#237162',
+    700: '#1A564B',
+    800: '#113B34',
+    900: '#08201C',
   },
 
   // Absolutes

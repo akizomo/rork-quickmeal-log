@@ -1,11 +1,13 @@
-import React, { memo, useEffect, useMemo, useState } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Pressable,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
+
+import { AmountEditDialog } from '@/components/AmountEditDialog';
+import { buildPizzaAmountEditConfig, buildSushiAmountEditConfig } from '@/utils/amount-edit';
 
 import {
   ChineseNoodlePrimaryDef,
@@ -225,22 +227,19 @@ function SushiBody({
   const [modeKey, setModeKey] = useState<SushiCountMode>(config.defaultMode);
   const mode: SushiModeDef = config.modes.find((m) => m.key === modeKey) ?? config.modes[0];
   const [count, setCount] = useState<number>(mode.presetCounts[1] ?? mode.presetCounts[0]);
-  const [input, setInput] = useState<string>('');
+  const [editorOpen, setEditorOpen] = useState(false);
 
   useEffect(() => {
     setCount(mode.presetCounts[1] ?? mode.presetCounts[0]);
-    setInput('');
   }, [modeKey]);
 
-  const effectiveCount = useMemo(() => {
-    const parsed = parseInt(input, 10);
-    if (!Number.isNaN(parsed) && parsed > 0) {
-      return Math.min(Math.max(parsed, mode.min), mode.max);
-    }
-    return count;
-  }, [count, input, mode]);
+  const amountConfig = useMemo(() => buildSushiAmountEditConfig(mode), [mode]);
+  const macro = useMemo(() => multiplyMacroSimple(mode.macroPerUnit, count), [mode, count]);
 
-  const macro = useMemo(() => multiplyMacroSimple(mode.macroPerUnit, effectiveCount), [mode, effectiveCount]);
+  const handleAmountClose = useCallback((next: number | null) => {
+    setEditorOpen(false);
+    if (next !== null) setCount(next);
+  }, []);
 
   return (
     <>
@@ -258,33 +257,20 @@ function SushiBody({
       </View>
 
       <Text style={styles.sectionLabel}>{mode.unitLabel}数</Text>
-      <View style={styles.row}>
-        {mode.presetCounts.map((c) => (
-          <Chip
-            key={c}
-            label={`${c}${mode.unitLabel}`}
-            active={c === effectiveCount && input === ''}
-            onPress={() => {
-              setCount(c);
-              setInput('');
-            }}
-            testID={`dqe-sushi-count-${c}`}
-          />
-        ))}
-      </View>
-      <TextInput
-        style={styles.input}
-        placeholder={`直接入力 (${mode.min}〜${mode.max})`}
-        placeholderTextColor={palette.textMuted}
-        value={input}
-        onChangeText={setInput}
-        keyboardType="number-pad"
-        testID="dqe-sushi-input"
-      />
+      <Pressable
+        onPress={() => setEditorOpen(true)}
+        accessibilityRole="button"
+        accessibilityLabel={`量を変更。現在 ${count}${mode.unitLabel}`}
+        style={styles.amountRow}
+        testID="dqe-sushi-amount-row"
+      >
+        <Text style={styles.amountRowValue}>{count}{mode.unitLabel}</Text>
+        <Text style={styles.amountRowIcon}>✎</Text>
+      </Pressable>
 
       <InstantPreview
         subcategoryLabel={mode.label}
-        portionLabel={`${effectiveCount}${mode.unitLabel}`}
+        portionLabel={`${count}${mode.unitLabel}`}
         macro={macro}
       />
 
@@ -296,11 +282,19 @@ function SushiBody({
             subcategoryKey: modeKey === 'plate' ? 'kaiten_sushi' : 'nigiri_set',
             subcategoryLabel: mode.label,
             sushiMode: modeKey,
-            sushiCount: effectiveCount,
-            portionPrimaryLabel: `${effectiveCount}${mode.unitLabel}`,
+            sushiCount: count,
+            portionPrimaryLabel: `${count}${mode.unitLabel}`,
             macro,
           })
         }
+      />
+
+      <AmountEditDialog
+        visible={editorOpen}
+        config={amountConfig}
+        initialValue={count}
+        onClose={handleAmountClose}
+        testID="dqe-sushi-amount-dialog"
       />
     </>
   );
@@ -318,17 +312,15 @@ function PizzaBody({
   const [typeKey, setTypeKey] = useState<PizzaType>('regular');
   const type: PizzaTypeDef = config.pizzaTypes.find((t) => t.key === typeKey) ?? config.pizzaTypes[1] ?? config.pizzaTypes[0];
   const [slices, setSlices] = useState<number>(2);
-  const [input, setInput] = useState<string>('');
+  const [editorOpen, setEditorOpen] = useState(false);
 
-  const effectiveSlices = useMemo(() => {
-    const parsed = parseInt(input, 10);
-    if (!Number.isNaN(parsed) && parsed > 0) {
-      return Math.min(Math.max(parsed, config.minSlices), config.maxSlices);
-    }
-    return slices;
-  }, [slices, input, config]);
+  const amountConfig = useMemo(() => buildPizzaAmountEditConfig(config), [config]);
+  const macro = useMemo(() => multiplyMacroSimple(type.macroPerSlice, slices), [type, slices]);
 
-  const macro = useMemo(() => multiplyMacroSimple(type.macroPerSlice, effectiveSlices), [type, effectiveSlices]);
+  const handleAmountClose = useCallback((next: number | null) => {
+    setEditorOpen(false);
+    if (next !== null) setSlices(next);
+  }, []);
 
   return (
     <>
@@ -346,33 +338,20 @@ function PizzaBody({
       </View>
 
       <Text style={styles.sectionLabel}>切れ数</Text>
-      <View style={styles.row}>
-        {config.presetSlices.map((c) => (
-          <Chip
-            key={c}
-            label={`${c}切`}
-            active={c === effectiveSlices && input === ''}
-            onPress={() => {
-              setSlices(c);
-              setInput('');
-            }}
-            testID={`dqe-pizza-slice-${c}`}
-          />
-        ))}
-      </View>
-      <TextInput
-        style={styles.input}
-        placeholder={`直接入力 (${config.minSlices}〜${config.maxSlices})`}
-        placeholderTextColor={palette.textMuted}
-        value={input}
-        onChangeText={setInput}
-        keyboardType="number-pad"
-        testID="dqe-pizza-input"
-      />
+      <Pressable
+        onPress={() => setEditorOpen(true)}
+        accessibilityRole="button"
+        accessibilityLabel={`量を変更。現在 ${slices}切`}
+        style={styles.amountRow}
+        testID="dqe-pizza-amount-row"
+      >
+        <Text style={styles.amountRowValue}>{slices}切</Text>
+        <Text style={styles.amountRowIcon}>✎</Text>
+      </Pressable>
 
       <InstantPreview
         subcategoryLabel={`ピザ ${type.label}`}
-        portionLabel={`${effectiveSlices}切`}
+        portionLabel={`${slices}切`}
         macro={macro}
       />
 
@@ -384,11 +363,19 @@ function PizzaBody({
             subcategoryKey: `pizza_${type.key}`,
             subcategoryLabel: `ピザ ${type.label}`,
             pizzaType: type.key,
-            pizzaSliceCount: effectiveSlices,
-            portionPrimaryLabel: `${effectiveSlices}切`,
+            pizzaSliceCount: slices,
+            portionPrimaryLabel: `${slices}切`,
             macro,
           })
         }
+      />
+
+      <AmountEditDialog
+        visible={editorOpen}
+        config={amountConfig}
+        initialValue={slices}
+        onClose={handleAmountClose}
+        testID="dqe-pizza-amount-dialog"
       />
     </>
   );
@@ -585,14 +572,26 @@ const styles = StyleSheet.create({
   chipLabelActive: {
     color: palette.white,
   },
-  input: {
-    marginTop: 10,
+  amountRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 4,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
     backgroundColor: palette.card,
     borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    fontSize: 14,
+    minHeight: 44,
+  },
+  amountRowValue: {
+    fontSize: 15,
+    fontWeight: '700',
     color: palette.text,
+    flex: 1,
+  },
+  amountRowIcon: {
+    fontSize: 14,
+    color: palette.textMuted,
   },
   previewCard: {
     marginTop: 18,

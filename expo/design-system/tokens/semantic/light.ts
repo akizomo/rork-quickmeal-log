@@ -8,8 +8,8 @@
  *   - ivory  = surface / 通常 border (紙・面の家系、light & dark 両方をカバー)
  *   - stone  = content / text / icon / 強い border (描画物の家系)
  *   - sage   = ブランド / 操作 (action.*, focus, text link)
- *   - tan    = アクセント / ハイライト
- *   - moss / amber / clay / slate = status
+ *   - ai     = アクセント / ハイライト (藍)
+ *   - moss / amber / clay / fog = status
  */
 
 import { colors } from '../primitives';
@@ -71,22 +71,22 @@ export const lightColors: SemanticColors = {
     success: colors.moss[500],
     warning: colors.amber[500],
     danger: colors.clay[400],
-    info: colors.slate[500],
+    info: colors.fog[500], // 霧色 — slate から fog へ
   },
 
   accent: {
-    default: colors.lavender[300], // dusty lavender — 暖色系 PFC と hue family が別
-    subtle: colors.lavender[100],
+    default: colors.ai[600], // 藍 (indigo) — 暖色系 PFC と hue family が別
+    subtle: colors.ai[100],
   },
 
   nutrition: {
     // PFC macros — status 色 (clay/amber/moss) と衝突しないよう専用 hue を使う。
-    //   rose     = 肉・筋肉 (clay より pink 寄り)
-    //   cinnamon = 油・バター (amber より赤み強めの brown)
-    //   olive    = 穀物・野菜 (moss より yellow-green 寄り)
-    protein: { default: colors.rose[500],     container: colors.rose[100]     },
-    fat:     { default: colors.cinnamon[500], container: colors.cinnamon[100] },
-    carbs:   { default: colors.olive[500],    container: colors.olive[100]    },
+    //   terracotta = 肉・筋肉 (煉瓦色, clay より orange 寄り)
+    //   kogecha    = 油・バター (焦茶, amber より赤み強めの brown)
+    //   seagrass   = 穀物・野菜 (海草色, moss より teal 寄り)
+    protein: { default: colors.terracotta[500], container: colors.terracotta[100] },
+    fat:     { default: colors.kogecha[500],    container: colors.kogecha[100]    },
+    carbs:   { default: colors.seagrass[500],   container: colors.seagrass[100]   },
 
     // カロリー予算 (3段階) — status の意味と重なる "アラート" 系なので
     // moss/amber/clay を再利用してOK。

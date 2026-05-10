@@ -1,7 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { Link, useRouter } from 'expo-router';
-import { BarChart3, ChevronDown, HelpCircle, Settings2 } from 'lucide-react-native';
-import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { BarChart3, ChevronDown, HelpCircle, Plus, Settings2, User } from 'lucide-react-native';
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
   PanResponder,
@@ -14,15 +14,19 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CalorieOverflowRing } from '@/components/CalorieOverflowRing';
+import { ExerciseSheet } from '@/components/ExerciseSheet';
 import { HomeDatePager } from '@/components/HomeDatePager';
 import { DayLogBottomSheet } from '@/components/DayLogBottomSheet';
 import { additionPresets, portionSnapPoints, sizeOptions } from '@/constants/nutrition-data';
+import { TRIAL_DURATION_DAYS } from '@/constants/onboarding';
 import { palette } from '@/constants/theme';
 import { Badge, BottomSheet, Caption, useTheme } from '@/design-system';
+import { duration, spring } from '@/design-system/tokens/primitives/motion';
 import { useAppState } from '@/providers/app-state-provider';
 import { DishDraft, DishSize, IngredientDraft, Macro, PortionValue } from '@/types/nutrition';
 import { getIdentity } from '@/constants/identity';
 import { getLogDisplayInfo } from '@/utils/log-display';
+import { trialDaysRemaining } from '@/utils/goals';
 import { buildDishMacro, clampPortion, computeIngredient, draftFromLog, formatDateKey, formatMacroText, getIngredientSubtypeDef, getIngredientSubtypeDefs, getQuickCategories, getSubtypes, getToppingsForSubtype, summarizeToppings } from '@/utils/nutrition';
 import { formatDayLabel, isSameDay, sumForDate } from '@/utils/history';
 
@@ -61,14 +65,14 @@ function MiniProgressBar({ letter, label, current, target, color }: {
 
 export const Header = memo(function Header({ viewedDate }: { viewedDate?: Date }) {
   const router = useRouter();
-  const avatarScale = useRef(new Animated.Value(1)).current;
+  const { settings } = useAppState();
+  const avatarScale = useRef(new Animated.Value(0.88)).current;
 
   useEffect(() => {
     Animated.spring(avatarScale, {
       toValue: 1,
       useNativeDriver: true,
-      speed: 18,
-      bounciness: 6,
+      ...spring.pop,
     }).start();
   }, [avatarScale]);
 
@@ -76,6 +80,13 @@ export const Header = memo(function Header({ viewedDate }: { viewedDate?: Date }
     () => (viewedDate ? formatDayLabel(viewedDate) : '今日'),
     [viewedDate]
   );
+
+  // トライアル残り≤2日でアバターにバッジ表示 (PRD §6.1)
+  const showTrialBadge = useMemo(() => {
+    if (settings.subscriptionStatus !== 'trialing') return false;
+    const remaining = trialDaysRemaining(settings.trialStartedAtISO, TRIAL_DURATION_DAYS);
+    return remaining > 0 && remaining <= 2;
+  }, [settings.subscriptionStatus, settings.trialStartedAtISO]);
 
   return (
     <View style={styles.headerRow}>
@@ -85,7 +96,8 @@ export const Header = memo(function Header({ viewedDate }: { viewedDate?: Date }
           style={styles.avatarButton}
           testID="avatar-button"
         >
-          <Text style={styles.avatarEmoji}>🧑🏻</Text>
+          <User size={20} color={palette.sageDeep} strokeWidth={1.8} />
+          {showTrialBadge ? <View style={styles.avatarBadge} testID="avatar-trial-badge" /> : null}
         </Pressable>
       </Animated.View>
       <View style={styles.headerCenter} pointerEvents="none">
@@ -114,9 +126,11 @@ export const Header = memo(function Header({ viewedDate }: { viewedDate?: Date }
 });
 
 export const StatusCard = memo(function StatusCard({ viewedDate }: { viewedDate?: Date }) {
-  const { profile, todayMacro, logs } = useAppState();
+  const { profile, todayMacro, logs, todayGrossExerciseKcal, todayAdjustedTargetKcal } = useAppState();
   const t = useTheme();
   const { width: screenWidth } = useWindowDimensions();
+  const [exerciseSheetVisible, setExerciseSheetVisible] = useState(false);
+
   const today = useMemo(() => new Date(), []);
   const targetDate = viewedDate ?? today;
   const isToday = isSameDay(targetDate, today);
@@ -126,24 +140,60 @@ export const StatusCard = memo(function StatusCard({ viewedDate }: { viewedDate?
     [isToday, todayMacro, logs, dateKey]
   );
 
+  // 今日のみ運動連動。過去日表示時は base ターゲットを使う。
+  const effectiveTarget = isToday ? todayAdjustedTargetKcal : profile.targetCalories;
+  const effectiveExerciseKcal = isToday ? todayGrossExerciseKcal : 0;
+
+  const openExerciseSheet = useCallback(() => setExerciseSheetVisible(true), []);
+  const closeExerciseSheet = useCallback(() => setExerciseSheetVisible(false), []);
+
   // 画面幅に比例した可変リング径 (120–180 でクランプ)。
-  // strokeWidth は径の 11% でバランス維持。
-  const ringSize = Math.round(Math.min(180, Math.max(120, screenWidth * 0.36)));
+  const ringSize = Math.round(Math.min(180, Math.max(120, screenWidth * 0.38)));
   const ringStroke = Math.round(ringSize * 0.11);
 
   return (
     <View style={styles.statusCard}>
-      {/* 縦組み 2 ブロック: Ring (center に 残り kcal) → PFC 3 列ミニバー。 */}
-      <View style={styles.ringWrap}>
+      {/* 3-column: 食事 | Ring(残り) | 消費 */}
+      <View style={styles.ringRow}>
+        {/* Left: 食事 */}
+        <View style={styles.sideColumn}>
+          <Text style={styles.sideLabel}>食事</Text>
+          <Text style={styles.sideValue}>{Math.round(dayMacro.kcal).toLocaleString()}</Text>
+          <Text style={styles.sideUnit}>kcal</Text>
+        </View>
+
+        {/* Center: Ring */}
         <CalorieOverflowRing
           consumedKcal={dayMacro.kcal}
-          targetKcal={profile.targetCalories}
+          targetKcal={effectiveTarget}
           size={ringSize}
           strokeWidth={ringStroke}
           statusMode="auto"
+          centerMode="remaining"
+          showStatusText={false}
         />
+
+        {/* Right: 消費 + [+] */}
+        <View style={styles.sideColumn}>
+          <View style={styles.sideLabelRow}>
+            {/* Spacer mirrors the button width to keep label centered */}
+            <View style={styles.exerciseButtonSpacer} />
+            <Text style={styles.sideLabel}>消費</Text>
+            <Pressable
+              style={styles.exerciseAddButton}
+              onPress={openExerciseSheet}
+              testID="exercise-add-button"
+              accessibilityLabel="運動を記録"
+            >
+              <Plus size={11} color={palette.textMuted} strokeWidth={2.5} />
+            </Pressable>
+          </View>
+          <Text style={styles.sideValue}>{effectiveExerciseKcal > 0 ? effectiveExerciseKcal.toLocaleString() : '—'}</Text>
+          <Text style={styles.sideUnit}>kcal</Text>
+        </View>
       </View>
 
+      {/* PFC mini bars */}
       <View style={styles.pfcMiniRow}>
         <MiniProgressBar
           letter="P"
@@ -167,6 +217,8 @@ export const StatusCard = memo(function StatusCard({ viewedDate }: { viewedDate?
           color={t.colors.nutrition.carbs.default}
         />
       </View>
+
+      <ExerciseSheet visible={exerciseSheetVisible} onClose={closeExerciseSheet} />
     </View>
   );
 });
@@ -275,8 +327,8 @@ export const FloatingFeedback = memo(function FloatingFeedback() {
     opacity.setValue(0);
     translateY.setValue(8);
     Animated.parallel([
-      Animated.timing(opacity, { toValue: 1, duration: 120, useNativeDriver: true }),
-      Animated.spring(translateY, { toValue: -16, useNativeDriver: true, speed: 18, bounciness: 6 }),
+      Animated.timing(opacity, { toValue: 1, duration: duration.fast, useNativeDriver: true }),
+      Animated.spring(translateY, { toValue: -16, useNativeDriver: true, ...spring.pop }),
     ]).start();
   }, [feedback, opacity, translateY]);
 
@@ -752,14 +804,41 @@ const styles = StyleSheet.create({
   },
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   headerDate: { fontSize: 16, fontWeight: '700', color: palette.sageDeep },
-  avatarButton: { width: 42, height: 42, borderRadius: 21, backgroundColor: palette.sageDeep, alignItems: 'center', justifyContent: 'center' },
-  avatarEmoji: { fontSize: 20 },
+  avatarButton: { width: 42, height: 42, borderRadius: 21, backgroundColor: palette.surface, alignItems: 'center', justifyContent: 'center', position: 'relative' },
+  // トライアル残り≤2日で表示するバッジ (右上の小さい丸)
+  avatarBadge: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    width: 11,
+    height: 11,
+    borderRadius: 6,
+    backgroundColor: '#D9534F',
+    borderWidth: 2,
+    borderColor: palette.background,
+  },
   appTitle: { fontSize: 18, fontWeight: '700', color: palette.sageDeep },
   appSubtitle: { fontSize: 13, color: palette.textMuted, marginTop: 2 },
   trialBadge: { fontSize: 11, color: palette.sageStrong, marginTop: 2, fontWeight: '600' },
   iconButton: { width: 42, height: 42, borderRadius: 21, backgroundColor: palette.surface, alignItems: 'center', justifyContent: 'center' },
   statusCard: { paddingVertical: 4, gap: 16 },
-  ringWrap: { alignItems: 'center', justifyContent: 'center' },
+  ringRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  sideColumn: { flex: 1, alignItems: 'center', gap: 2 },
+  sideLabel: { fontSize: 11, fontWeight: '600', color: palette.textMuted, letterSpacing: 0.4 },
+  sideLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 4, justifyContent: 'center' },
+  exerciseButtonSpacer: { width: 20, height: 20 },
+  sideValue: { fontSize: 18, fontWeight: '700', color: palette.text, letterSpacing: -0.3 },
+  sideUnit: { fontSize: 11, fontWeight: '500', color: palette.textMuted },
+  exerciseAddButton: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: palette.border,
+    backgroundColor: 'transparent',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   pfcMiniRow: { flexDirection: 'row', gap: 12 },
   miniBarItem: { flex: 1, gap: 4 },
   miniBarLabel: { fontSize: 13, color: palette.textMuted, fontWeight: '600' },
@@ -774,10 +853,10 @@ const styles = StyleSheet.create({
   segmentText: { color: palette.textMuted, fontSize: 14, fontWeight: '600' },
   segmentTextActive: { color: palette.text, fontWeight: '700' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 14 },
-  quickButton: { width: '31.5%', aspectRatio: 1, backgroundColor: palette.surface, borderRadius: 28, alignItems: 'center', justifyContent: 'center', gap: 10, shadowColor: '#838073', shadowOpacity: 0.08, shadowRadius: 18, shadowOffset: { width: 0, height: 10 }, elevation: 2 },
+  quickButton: { width: '31.5%', aspectRatio: 1, backgroundColor: palette.surface, borderRadius: 28, alignItems: 'center', justifyContent: 'center', gap: 10 },
   quickEmoji: { fontSize: 31 },
   quickLabel: { fontSize: 14, color: '#354137', textAlign: 'center', fontWeight: '500' },
-  sheetCard: { marginTop: 6, backgroundColor: palette.sheet, borderRadius: 32, padding: 18, paddingBottom: 22, shadowColor: '#7D7A72', shadowOpacity: 0.08, shadowRadius: 20, shadowOffset: { width: 0, height: -2 }, elevation: 2 },
+  sheetCard: { marginTop: 6, backgroundColor: palette.sheet, borderRadius: 32, padding: 18, paddingBottom: 22 },
   sheetHandle: { width: 52, height: 6, borderRadius: 999, backgroundColor: '#C6C6BD', alignSelf: 'center', marginBottom: 18 },
   sheetHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
   sheetTitle: { fontSize: 17, fontWeight: '700', color: '#243228' },

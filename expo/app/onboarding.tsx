@@ -3,6 +3,7 @@ import { Stack, useRouter } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  InputAccessoryView,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -55,6 +56,7 @@ import { computePlanOutcome, recommendGoal, type GoalRecommendation } from '@/ut
 // 0=basis, 1=height, 2=weight, 3=age, 4=activity,
 // 5=current-body, 6=direction, 7=plan, 8=preview
 const TOTAL_STEPS = 9;
+const ACCESSORY_ID = 'onboarding-next';
 
 type Step = number;
 
@@ -256,7 +258,7 @@ export default function OnboardingRoute() {
             </Caption>
           </View>
 
-          <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
             <ScrollView
               contentContainerStyle={{
                 paddingHorizontal: t.spacing['5'],
@@ -277,6 +279,8 @@ export default function OnboardingRoute() {
                   suffix="cm"
                   keyboardType="decimal-pad"
                   testID="onboarding-height"
+                  inputAccessoryViewID={Platform.OS === 'ios' ? ACCESSORY_ID : undefined}
+                  onSubmitEditing={() => { if (canNext) goNext(); }}
                 />
               ) : null}
 
@@ -289,6 +293,8 @@ export default function OnboardingRoute() {
                   suffix="kg"
                   keyboardType="decimal-pad"
                   testID="onboarding-weight"
+                  inputAccessoryViewID={Platform.OS === 'ios' ? ACCESSORY_ID : undefined}
+                  onSubmitEditing={() => { if (canNext) goNext(); }}
                 />
               ) : null}
 
@@ -301,6 +307,8 @@ export default function OnboardingRoute() {
                   suffix="歳"
                   keyboardType="number-pad"
                   testID="onboarding-age"
+                  inputAccessoryViewID={Platform.OS === 'ios' ? ACCESSORY_ID : undefined}
+                  onSubmitEditing={() => { if (canNext) goNext(); }}
                 />
               ) : null}
 
@@ -377,6 +385,36 @@ export default function OnboardingRoute() {
           </KeyboardAvoidingView>
         </SafeAreaView>
       </View>
+      {Platform.OS === 'ios' && (
+        <InputAccessoryView nativeID={ACCESSORY_ID}>
+          <View
+            style={{
+              paddingHorizontal: t.spacing['5'],
+              paddingTop: t.spacing['2'],
+              paddingBottom: t.spacing['2'],
+              gap: t.spacing['2'],
+              backgroundColor: t.colors.surface.default,
+              borderTopWidth: StyleSheet.hairlineWidth,
+              borderTopColor: t.colors.border.default,
+            }}
+          >
+            {!canNext && disabledHint ? (
+              <Caption tone="secondary" align="center">
+                {disabledHint}
+              </Caption>
+            ) : null}
+            <Button
+              label={step === TOTAL_STEPS - 1 ? 'はじめる' : '次へ'}
+              variant="primary"
+              size="lg"
+              fullWidth
+              disabled={!canNext}
+              onPress={goNext}
+              testID="onboarding-next-accessory"
+            />
+          </View>
+        </InputAccessoryView>
+      )}
     </>
   );
 }
@@ -415,6 +453,8 @@ function StepNumber({
   placeholder,
   keyboardType,
   testID,
+  inputAccessoryViewID,
+  onSubmitEditing,
 }: {
   title: string;
   subtitle: string;
@@ -424,6 +464,8 @@ function StepNumber({
   placeholder?: string;
   keyboardType?: 'number-pad' | 'decimal-pad';
   testID?: string;
+  inputAccessoryViewID?: string;
+  onSubmitEditing?: () => void;
 }) {
   return (
     <View style={stepWrap}>
@@ -440,6 +482,9 @@ function StepNumber({
           placeholder={placeholder}
           autoFocus
           testID={testID}
+          inputAccessoryViewID={inputAccessoryViewID}
+          returnKeyType="next"
+          onSubmitEditing={onSubmitEditing}
         />
       </View>
     </View>
@@ -543,6 +588,7 @@ function StepCurrentBody({
                   onChangeText={onBodyFatChange}
                   keyboardType="decimal-pad"
                   testID="onboarding-bodyfat"
+                  inputAccessoryViewID={Platform.OS === 'ios' ? ACCESSORY_ID : undefined}
                 />
                 <Caption tone="secondary" weight="semibold">
                   %

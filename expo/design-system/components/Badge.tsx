@@ -99,7 +99,7 @@ export function Badge({
 function resolveBadgePalette(t: Theme, tone: BadgeTone): { bg: string; fg: string } {
   switch (tone) {
     case 'accent':
-      return { bg: t.colors.accent.subtle, fg: t.tokens.colors.lavender[700] };
+      return { bg: t.colors.accent.subtle, fg: t.tokens.colors.ai[700] };
     case 'brand':
       return {
         bg: t.colors.action.primary.container,
@@ -112,7 +112,7 @@ function resolveBadgePalette(t: Theme, tone: BadgeTone): { bg: string; fg: strin
     case 'danger':
       return { bg: t.tokens.colors.clay[100], fg: t.tokens.colors.clay[700] };
     case 'info':
-      return { bg: t.tokens.colors.slate[100], fg: t.tokens.colors.slate[700] };
+      return { bg: t.tokens.colors.fog[100], fg: t.tokens.colors.fog[700] };
     case 'neutral':
     default:
       return { bg: t.colors.surface.sunken, fg: t.colors.content.secondary };

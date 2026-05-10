@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { palette } from '@/constants/theme';
 import { getIdentity } from '@/constants/identity';
+import { spring } from '@/design-system/tokens/primitives/motion';
 import { useAppState } from '@/providers/app-state-provider';
 import { FoodLog } from '@/types/nutrition';
 import { formatShortDay, isSameDay, logsForDate, sumForDate } from '@/utils/history';
@@ -26,7 +27,7 @@ type SnapStage = 'peek' | 'half' | 'full';
  * 画面が大きいほど上部に空白ができるが、操作可能エリアが届かない位置に
  * ずれることを防ぐため、ratio ではなく固定 px 値を使う。
  */
-export const PEEK_HEIGHT_PX = 120;
+export const PEEK_HEIGHT_PX = 88;
 
 const SNAP_RATIOS: Record<Exclude<SnapStage, 'peek'>, number> = {
   half: 0.45,
@@ -176,8 +177,7 @@ export const DayLogBottomSheet = memo(function DayLogBottomSheet({ viewedDate }:
       Animated.spring(translateY, {
         toValue: snapTargets[next],
         useNativeDriver: true,
-        bounciness: 4,
-        speed: 14,
+        ...spring.enter,
       }).start();
     },
     [snapTargets, translateY]
@@ -325,33 +325,33 @@ const styles = StyleSheet.create({
     elevation: 12,
   },
   handleArea: {
-    paddingTop: 4,
+    paddingTop: 6,
     paddingHorizontal: 20,
-    paddingBottom: 6,
+    paddingBottom: 4,
   },
   handlePressable: {
     alignItems: 'center',
-    paddingVertical: 3,
+    paddingVertical: 2,
   },
   handle: {
-    width: 44,
-    height: 5,
+    width: 40,
+    height: 4,
     borderRadius: 999,
     backgroundColor: '#C6C6BD',
   },
   headerRow: {
-    marginTop: 1,
+    marginTop: 4,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
   title: {
-    fontSize: 17,
+    fontSize: 15,
     fontWeight: '700',
     color: '#243228',
   },
   subtitle: {
-    marginTop: 2,
+    marginTop: 1,
     fontSize: 12,
     color: palette.textMuted,
   },

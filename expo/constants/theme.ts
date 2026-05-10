@@ -9,7 +9,7 @@
  *   background / card / sheet / surface / border  →  ivory 家系 (surface.*, border.*)
  *   text / textMuted                               →  stone 家系 (content.*)
  *   sage / sageStrong / sageDeep                   →  sage primitive 各段
- *   accent / accentSoft                            →  lavender primitive
+ *   accent / accentSoft                            →  ai primitive (藍 indigo)
  *   danger                                         →  clay primitive
  */
 
@@ -33,9 +33,9 @@ export const palette = {
   sageStrong: colors.sage[600],
   sageDeep: colors.sage[800],
 
-  // Accent — dusty lavender (暖色系 PFC とは別 hue family)
-  accent: colors.lavender[300],
-  accentSoft: colors.lavender[100],
+  // Accent — 藍 (ai primitive, 暖色系 PFC とは別 hue family)
+  accent: colors.ai[600],
+  accentSoft: colors.ai[100],
 
   // Status
   danger: lightColors.status.danger,           // clay[400]

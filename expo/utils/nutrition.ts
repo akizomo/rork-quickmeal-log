@@ -44,10 +44,7 @@ export function multiplyMacro(macro: Macro, factor: number): Macro {
 }
 
 export function getDefaultModeByTime(): LogMode {
-  const hour = new Date().getHours();
-  if (hour < 11) return 'ingredient';
-  if (hour < 17) return 'dish';
-  return 'dish';
+  return 'ingredient';
 }
 
 export function getMealSlot(date: Date): MealSlot {

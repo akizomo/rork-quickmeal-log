@@ -13,7 +13,7 @@
  */
 
 import React from 'react';
-import { Platform, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
 import { palette } from '@/constants/theme';
 
@@ -92,21 +92,6 @@ export function GestureDemoIllustration() {
 }
 
 // ---------------------------------------------------------------------------
-// Shared shadow
-// ---------------------------------------------------------------------------
-
-const CARD_SHADOW = Platform.select({
-  ios: {
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 24,
-    shadowOffset: { width: 0, height: 8 },
-  },
-  android: { elevation: 2 },
-  default: {},
-});
-
-// ---------------------------------------------------------------------------
 // Styles
 // ---------------------------------------------------------------------------
 
@@ -135,7 +120,6 @@ const gridStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 4,
-    ...CARD_SHADOW,
   },
   btnHighlight: {
     borderColor: palette.sageDeep,
@@ -185,7 +169,6 @@ const gestureStyles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
     gap: 4,
-    ...CARD_SHADOW,
   },
   resultTitle: {
     fontSize: 13,

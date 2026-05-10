@@ -9,16 +9,17 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Trash2, X } from 'lucide-react-native';
 
 import {
   BottomSheet,
   Caption,
   Chip,
-  NumberField,
   useTheme,
 } from '@/design-system';
+import { AmountEditDialog } from '@/components/AmountEditDialog';
+import { buildIdentityAmountEditConfig } from '@/utils/amount-edit';
 import { useAppState } from '@/providers/app-state-provider';
 import {
   getBucketDef,
@@ -52,11 +53,10 @@ const UNIT_LABEL: Record<AmountUnit, string> = {
   cut: '切れ',
 };
 
-function parseAmountInput(text: string): number {
-  const cleaned = text.replace(/[^\d.]/g, '');
-  if (cleaned.length === 0) return 0;
-  const parsed = parseFloat(cleaned);
-  return Number.isFinite(parsed) ? parsed : 0;
+const NUMERIC_RE = /^\d+(\.\d+)?$/;
+
+function chipDisplayLabel(label: string, unitLabel: string): string {
+  return NUMERIC_RE.test(label.trim()) ? `${label}${unitLabel}` : label;
 }
 
 function defaultAttributeKey(identity: Identity | undefined): string | undefined {
@@ -144,6 +144,7 @@ export function IdentityLogSheet() {
   const [attributeKey, setAttributeKey] = useState<string | undefined>(undefined);
   const [styleKey, setStyleKey] = useState<string | undefined>(undefined);
   const [amountValue, setAmountValue] = useState<number>(0);
+  const [amountEditorOpen, setAmountEditorOpen] = useState(false);
   const [addons, setAddons] = useState<ResolveAddonInput[]>([]);
 
   // When in edit mode, use the existing log to pre-fill state.
@@ -213,9 +214,10 @@ export function IdentityLogSheet() {
     setAmountValue(value);
   }, []);
 
-  const handleEditAmount = useCallback((text: string) => {
-    setAmountValue(parseAmountInput(text));
-  }, []);
+  const amountConfig = useMemo(
+    () => (origin ? buildIdentityAmountEditConfig(origin.amount) : null),
+    [origin],
+  );
 
   const toggleAddon = useCallback(
     (refId: string) => {
@@ -403,7 +405,7 @@ export function IdentityLogSheet() {
                 {origin.amount.chips.map((c) => (
                   <Chip
                     key={`${c.label}-${c.value}`}
-                    label={c.label}
+                    label={chipDisplayLabel(c.label, origin.amount.unitLabel ?? UNIT_LABEL[origin.amount.unit])}
                     selected={amountValue === c.value}
                     onPress={() => handleSelectAmountChip(c.value)}
                     size="sm"
@@ -412,23 +414,40 @@ export function IdentityLogSheet() {
                 ))}
               </ChipRow>
             ) : null}
-            <View
-              style={{
-                marginTop: origin.amount.chips ? t.spacing['2'] : 0,
-                backgroundColor: t.colors.surface.raised,
-                borderRadius: t.radius.lg,
-                paddingHorizontal: t.spacing['3'],
-              }}
+            <Pressable
+              onPress={() => setAmountEditorOpen(true)}
+              style={[
+                ilsStyles.amountRow,
+                {
+                  marginTop: origin.amount.chips ? t.spacing['2'] : 0,
+                  backgroundColor: t.colors.surface.raised,
+                  borderRadius: t.radius.lg,
+                },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel={`量を変更。現在 ${amountValue}${origin.amount.unitLabel ?? UNIT_LABEL[origin.amount.unit]}`}
+              testID="ils-amount-row"
             >
-              <NumberField
-                value={amountValue.toString()}
-                onChangeText={handleEditAmount}
-                suffix={origin.amount.unitLabel ?? UNIT_LABEL[origin.amount.unit]}
-                size="lg"
-                decimal
-                testID="ils-amount-input"
+              <Text style={[ilsStyles.amountRowValue, { color: t.colors.content.primary, fontSize: t.typography.fontSize['2xl'] }]}>
+                {amountValue}
+                <Text style={{ color: t.colors.content.secondary, fontSize: t.typography.fontSize.sm }}>
+                  {' '}{origin.amount.unitLabel ?? UNIT_LABEL[origin.amount.unit]}
+                </Text>
+              </Text>
+              <Text style={[ilsStyles.amountRowIcon, { color: t.colors.content.tertiary }]}>✎</Text>
+            </Pressable>
+            {amountConfig ? (
+              <AmountEditDialog
+                visible={amountEditorOpen}
+                config={amountConfig}
+                initialValue={amountValue}
+                onClose={(next) => {
+                  setAmountEditorOpen(false);
+                  if (next !== null) setAmountValue(next);
+                }}
+                testID="ils-amount-dialog"
               />
-            </View>
+            ) : null}
             {origin.referenceDescription ? (
               <Caption tone="tertiary" style={{ marginTop: t.spacing['2'] }} testID="ils-amount-ref">
                 目安: {origin.referenceDescription}
@@ -478,6 +497,27 @@ export function IdentityLogSheet() {
     </BottomSheet>
   );
 }
+
+// ---------------------------------------------------------------------------
+// Styles
+// ---------------------------------------------------------------------------
+
+const ilsStyles = StyleSheet.create({
+  amountRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    minHeight: 48,
+  },
+  amountRowValue: {
+    fontWeight: '700',
+  },
+  amountRowIcon: {
+    fontSize: 16,
+  },
+});
 
 // ---------------------------------------------------------------------------
 // FooterPreview — passed to BottomSheet's `footerLeft` slot. Renders

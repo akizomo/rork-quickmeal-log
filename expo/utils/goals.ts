@@ -344,6 +344,69 @@ export function macroFromGrams(kcal: number, proteinG: number, fatG: number, car
   return { kcal, protein: proteinG, fat: fatG, carbs: carbsG };
 }
 
+// ---------------------------------------------------------------------------
+// Exercise calorie calculation (Issue #3 — リアルタイム目標連動)
+// ---------------------------------------------------------------------------
+
+/**
+ * Baseline calories per exercise session that are already accounted for
+ * in the user's TDEE via their activity level factor. We subtract this
+ * before adding exercise calories to the daily target to avoid double-counting.
+ *
+ * Values are rough per-session estimates (not per-day):
+ *   Lv1 sedentary  → no exercise built in → 0 kcal baseline
+ *   Lv2 light      → light strolls already in TDEE → ~50 kcal baseline
+ *   Lv3 moderate   → regular workouts already in TDEE → ~150 kcal baseline
+ *   Lv4 active     → heavy training already in TDEE → ~300 kcal baseline
+ */
+export const EXERCISE_BASELINE_KCAL: Record<ActivityLevel, number> = {
+  1: 0,
+  2: 50,
+  3: 150,
+  4: 300,
+};
+
+export const EXERCISE_TYPES = [
+  { key: 'walking', label: 'ウォーキング', emoji: '🚶', met: 3.5 },
+  { key: 'running', label: 'ランニング', emoji: '🏃', met: 7.0 },
+  { key: 'cycling', label: 'サイクリング', emoji: '🚴', met: 4.0 },
+  { key: 'strength', label: '筋トレ', emoji: '🏋', met: 3.5 },
+  { key: 'yoga', label: 'ヨガ', emoji: '🧘', met: 2.5 },
+  { key: 'swimming', label: '水泳', emoji: '🏊', met: 6.0 },
+  { key: 'hiit', label: 'HIIT', emoji: '💪', met: 8.0 },
+  { key: 'other', label: 'スポーツ', emoji: '🏅', met: 5.0 },
+] as const;
+
+export type ExerciseTypeKey = (typeof EXERCISE_TYPES)[number]['key'];
+
+/** MET-based gross calorie burn: kcal = MET × weight(kg) × (minutes / 60) */
+export function calcExerciseGrossKcal(met: number, weightKg: number, minutes: number): number {
+  return Math.max(0, Math.round(met * weightKg * (minutes / 60)));
+}
+
+/**
+ * Net (additive) kcal after subtracting the activity-level baseline.
+ * This prevents double-counting calories already built into the user's TDEE.
+ */
+export function calcExerciseNetKcal(grossKcal: number, activityLevel: ActivityLevel): number {
+  const baseline = EXERCISE_BASELINE_KCAL[activityLevel] ?? 0;
+  return Math.max(0, grossKcal - baseline);
+}
+
+/**
+ * Adjusted daily kcal target = base target + sum of net exercise kcal for the given date.
+ */
+export function adjustedTargetKcal(
+  baseTargetKcal: number,
+  exerciseLogs: { date: string; netKcal: number }[],
+  dateKey: string
+): number {
+  const dayNet = exerciseLogs
+    .filter((e) => e.date === dateKey)
+    .reduce((sum, e) => sum + e.netKcal, 0);
+  return baseTargetKcal + dayNet;
+}
+
 export function trialDaysRemaining(startedAtISO: string | null | undefined, trialDays: number): number {
   if (!startedAtISO) return 0;
   const started = new Date(startedAtISO).getTime();

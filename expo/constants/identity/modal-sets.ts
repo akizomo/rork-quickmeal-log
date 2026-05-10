@@ -34,7 +34,7 @@ import { getIdentitiesInBucket, getBucketDef } from './index';
  */
 export const MODAL_SETS: Record<BucketKey, string[]> = {
   // ---- ingredient ----
-  staple: ['rice', 'bread'],
+  staple: ['rice', 'bread', 'noodle_udon', 'noodle_pasta', 'noodle_ramen'],
   lean_protein: ['chicken_lean', 'white_fish', 'seafood_lean', 'red_meat'],
   egg: ['egg'],
   fatty_protein: ['chicken_thigh', 'beef_pork', 'fatty_fish'],

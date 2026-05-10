@@ -26,10 +26,22 @@ export default function SubscriptionRoute() {
 
   const statusSub =
     status === 'trialing'
-      ? `残り ${trialDays} 日`
+      ? `残り ${trialDays} 日 · 終了2日前にお知らせします`
       : status === 'active'
       ? '自動更新が有効です'
       : 'プランを購入してフル機能を解放できます';
+
+  // トライアル終了日 (表示用)
+  const trialEndDate =
+    status === 'trialing' && settings.trialStartedAtISO
+      ? new Date(
+          new Date(settings.trialStartedAtISO).getTime() +
+            TRIAL_DURATION_DAYS * 24 * 60 * 60 * 1000
+        )
+      : null;
+  const trialEndLabel = trialEndDate
+    ? `${trialEndDate.getMonth() + 1}月${trialEndDate.getDate()}日 (${trialDays}日後)`
+    : null;
 
   const handleRestore = async () => {
     const restored = await restorePurchase();
@@ -63,9 +75,30 @@ export default function SubscriptionRoute() {
             {/* §現在のステータス */}
             <View style={styles.section}>
               <SettingsSectionLabel>現在のステータス</SettingsSectionLabel>
-              <Card variant="raised" style={{ gap: theme.spacing['1'] }}>
+              <Card
+                variant="raised"
+                style={{
+                  gap: theme.spacing['1'],
+                  borderLeftWidth: status === 'trialing' && trialDays <= 2 ? 3 : 0,
+                  borderLeftColor:
+                    status === 'trialing' && trialDays <= 2
+                      ? theme.colors.status.warning
+                      : 'transparent',
+                }}
+              >
                 <Body weight="bold">{statusLabel}</Body>
                 <Caption tone="secondary">{statusSub}</Caption>
+                {trialEndLabel ? (
+                  <Caption tone="tertiary" style={{ marginTop: 4 }}>
+                    本登録切替日: {trialEndLabel}
+                  </Caption>
+                ) : null}
+                {status === 'trialing' ? (
+                  <Caption tone="tertiary" style={{ marginTop: 4 }}>
+                    本登録後は月額¥480 または 年額¥4,800 で自動更新されます。
+                    解約は Google Play のサブスクリプション設定からいつでも可能です。
+                  </Caption>
+                ) : null}
               </Card>
             </View>
 

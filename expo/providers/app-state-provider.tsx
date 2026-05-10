@@ -9,11 +9,12 @@ import { getDishTopCategory } from '@/constants/dish-master';
 import { getQuickLogCategory, getQuickLogSubcategory } from '@/constants/quick-log-master';
 import type { CustomerInfo } from 'react-native-purchases';
 
-import { AppSettings, BodyFatEntry, DishDraft, DishQuickEntryPayload, FoodLog, IngredientDraft, LogMode, SubscriptionStatus, UserProfile, WeightEntry } from '@/types/nutrition';
+import { AppSettings, BodyFatEntry, DishDraft, DishQuickEntryPayload, ExerciseLog, FoodLog, IngredientDraft, LogMode, SubscriptionStatus, UserProfile, WeightEntry } from '@/types/nutrition';
 import { ENTITLEMENT_ID } from '@/constants/iap';
 import { addCustomerInfoListener, getCustomerInfo, restorePurchases as iapRestore } from '@/utils/iap';
 import { IngredientQuickDraft, QuickLogHistoryMap } from '@/types/quick-log';
 import { buildDishMacro, clampPortion, computeIngredient, createFoodLogFromDish, createFoodLogFromDishQuickEntry, createFoodLogFromIngredient, formatDateKey, generateId, getDefaultModeByTime, getMealSlot, getQuickCategories, getSubType, sumToday } from '@/utils/nutrition';
+import { adjustedTargetKcal, calcExerciseGrossKcal, calcExerciseNetKcal, EXERCISE_TYPES } from '@/utils/goals';
 import { isSameDay } from '@/utils/history';
 import { castHistoryMap, recordSelection, selectionFromDraft } from '@/utils/quick-log-history';
 import { computeQuickLogMacro } from '@/utils/quick-log-macro';
@@ -56,6 +57,7 @@ interface PersistedState {
   settings: AppSettings;
   weights: WeightEntry[];
   bodyFatEntries: BodyFatEntry[];
+  exerciseLogs: ExerciseLog[];
 }
 
 interface FeedbackState {
@@ -88,6 +90,7 @@ const defaultPersistedState: PersistedState = {
   settings: defaultSettings,
   weights: defaultWeightEntries,
   bodyFatEntries: defaultBodyFatEntries,
+  exerciseLogs: [],
 };
 
 function migrateSettings(raw: Partial<AppSettings> | undefined): AppSettings {
@@ -130,6 +133,11 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
   const [settings, setSettings] = useState<AppSettings>(defaultSettings);
   const [weights, setWeights] = useState<WeightEntry[]>(defaultWeightEntries);
   const [bodyFatEntries, setBodyFatEntries] = useState<BodyFatEntry[]>(defaultBodyFatEntries);
+  const [exerciseLogs, setExerciseLogs] = useState<ExerciseLog[]>([]);
+  // Becomes true only after AsyncStorage data has been fully applied to local state.
+  // Must NOT use persistedQuery.isLoading because setSettings() runs in a separate useEffect,
+  // meaning isLoading=false but settings is still defaultSettings — causing onboarding/paywall loops.
+  const [isHydrated, setIsHydrated] = useState(false);
   const [selectedMode, setSelectedMode] = useState<LogMode>(getDefaultModeByTime());
   // When logging on a past day (within MAX_PAST_LOGGING_DAYS), this is set to that day.
   // null = log to today (default).
@@ -168,6 +176,7 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
           settings: migrateSettings(parsed.settings),
           weights: parsed.weights ?? defaultWeightEntries,
           bodyFatEntries: parsed.bodyFatEntries ?? defaultBodyFatEntries,
+          exerciseLogs: parsed.exerciseLogs ?? [],
         };
       } catch (error) {
         console.log('[app-state] Failed to parse persisted state', error);
@@ -197,6 +206,7 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     setSettings(persistedQuery.data.settings);
     setWeights(persistedQuery.data.weights);
     setBodyFatEntries(persistedQuery.data.bodyFatEntries);
+    setExerciseLogs(persistedQuery.data.exerciseLogs ?? []);
 
     // Identity-first IA backfill (Phase 5). Runs once per schema bump.
     const needsMigration =
@@ -221,6 +231,7 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     } else {
       setLogs(persistedQuery.data.logs);
     }
+    setIsHydrated(true);
     // persistMutation intentionally omitted from deps — it's stable across renders.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [persistedQuery.data]);
@@ -254,7 +265,8 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       nextLogs: FoodLog[],
       nextSettings: AppSettings,
       nextWeights: WeightEntry[],
-      nextBodyFatEntries: BodyFatEntry[]
+      nextBodyFatEntries: BodyFatEntry[],
+      nextExerciseLogs?: ExerciseLog[]
     ) => {
       persistMutation.mutate({
         profile: nextProfile,
@@ -262,9 +274,10 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
         settings: nextSettings,
         weights: nextWeights,
         bodyFatEntries: nextBodyFatEntries,
+        exerciseLogs: nextExerciseLogs ?? exerciseLogs,
       });
     },
-    [persistMutation]
+    [persistMutation, exerciseLogs]
   );
 
   const triggerFeedback = useCallback((log: FoodLog) => {
@@ -767,6 +780,21 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     console.log('[app-state] Trial started', startedAtISO);
   }, [bodyFatEntries, logs, persist, profile, settings, weights]);
 
+  const completePurchase = useCallback(
+    (info: CustomerInfo) => {
+      const mapped = mapCustomerInfoToStatus(info);
+      // RC のレスポンスにエンタイトルメントがまだ反映されていない場合 (遅延)、
+      // 'none'/'expired' になることがある。購入直後は trialing に fallback する。
+      const status: SubscriptionStatus =
+        mapped === 'none' || mapped === 'expired' ? 'trialing' : mapped;
+      const next: AppSettings = { ...settings, subscriptionStatus: status, paywallSeenAtISO: new Date().toISOString() };
+      setSettings(next);
+      persist(profile, logs, next, weights, bodyFatEntries);
+      console.log('[app-state] Purchase completed, status →', status, '(mapped:', mapped, ')');
+    },
+    [bodyFatEntries, logs, persist, profile, settings, weights]
+  );
+
   const restorePurchase = useCallback(async () => {
     console.log('[app-state] Restoring purchases via RevenueCat');
     const info = await iapRestore();
@@ -848,9 +876,56 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     [bodyFatEntries, logs, persist, profile, settings, updateProfileValues, weights]
   );
 
+  const logExercise = useCallback(
+    (exerciseType: string, minutes: number) => {
+      const type = EXERCISE_TYPES.find((t) => t.key === exerciseType);
+      if (!type) {
+        console.log('[app-state] logExercise: unknown type', exerciseType);
+        return;
+      }
+      const weightKg = profile.currentWeightKg ?? 60;
+      const activityLevel = profile.activityLevel ?? 1;
+      const grossKcal = calcExerciseGrossKcal(type.met, weightKg, minutes);
+      const netKcal = calcExerciseNetKcal(grossKcal, activityLevel);
+      const now = new Date();
+      const entry: ExerciseLog = {
+        id: generateId('ex'),
+        date: formatDateKey(loggingDate ?? now),
+        timestamp: now.toISOString(),
+        exerciseType,
+        exerciseLabel: type.label,
+        minutes,
+        grossKcal,
+        netKcal,
+      };
+      const nextExerciseLogs = [entry, ...exerciseLogs];
+      setExerciseLogs(nextExerciseLogs);
+      persist(profile, logs, settings, weights, bodyFatEntries, nextExerciseLogs);
+      console.log('[app-state] Exercise logged', entry);
+    },
+    [bodyFatEntries, exerciseLogs, logs, loggingDate, persist, profile, settings, weights]
+  );
+
+  const deleteExerciseLog = useCallback(
+    (id: string) => {
+      const nextExerciseLogs = exerciseLogs.filter((e) => e.id !== id);
+      setExerciseLogs(nextExerciseLogs);
+      persist(profile, logs, settings, weights, bodyFatEntries, nextExerciseLogs);
+      console.log('[app-state] Exercise log deleted', id);
+    },
+    [bodyFatEntries, exerciseLogs, logs, persist, profile, settings, weights]
+  );
+
   const todayKey = formatDateKey(new Date());
   const todayLogs = useMemo(() => logs.filter((item) => item.date === todayKey), [logs, todayKey]);
   const todayMacro = useMemo(() => sumToday(logs, todayKey), [logs, todayKey]);
+  const todayExerciseLogs = useMemo(() => exerciseLogs.filter((e) => e.date === todayKey), [exerciseLogs, todayKey]);
+  const todayGrossExerciseKcal = useMemo(() => todayExerciseLogs.reduce((s, e) => s + e.grossKcal, 0), [todayExerciseLogs]);
+  const todayNetExerciseKcal = useMemo(() => todayExerciseLogs.reduce((s, e) => s + e.netKcal, 0), [todayExerciseLogs]);
+  const todayAdjustedTargetKcal = useMemo(
+    () => adjustedTargetKcal(profile.targetCalories, exerciseLogs, todayKey),
+    [exerciseLogs, profile.targetCalories, todayKey]
+  );
   const editorLog = useMemo(() => logs.find((item) => item.id === editorLogId) ?? null, [editorLogId, logs]);
   const editorIsPending = useMemo(() => (editorLogId ? pendingLogIds.includes(editorLogId) : false), [editorLogId, pendingLogIds]);
 
@@ -859,6 +934,13 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     logs,
     todayLogs,
     todayMacro,
+    exerciseLogs,
+    todayExerciseLogs,
+    todayGrossExerciseKcal,
+    todayNetExerciseKcal,
+    todayAdjustedTargetKcal,
+    logExercise,
+    deleteExerciseLog,
     settings,
     weights,
     bodyFatEntries,
@@ -868,7 +950,7 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     livePreview,
     updateLivePreview,
     undoState,
-    isHydrating: persistedQuery.isLoading,
+    isHydrating: !isHydrated,
     isPersisting: persistMutation.isPending,
     setSelectedMode,
     loggingDate,
@@ -903,6 +985,7 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     getMealSlot,
     markIntroSeen,
     markPaywallSeen,
+    completePurchase,
     startTrial,
     restorePurchase,
     setOnboardingStep,

@@ -492,7 +492,7 @@ const SNACK_DRINK: QuickLogSubcategory[] = [
 // ---------------------------------------------------------------------------
 
 export const quickLogMaster: QuickLogCategoryDef[] = [
-  { key: 'staple', label: '主食', emoji: '🍚', subcategories: STAPLE },
+  { key: 'staple', label: 'ごはんパン麺', emoji: '🍚', subcategories: STAPLE },
   { key: 'lean_protein', label: '低脂P', emoji: '🐓', subcategories: LEAN_PROTEIN },
   { key: 'egg', label: '卵', emoji: '🥚', subcategories: EGG },
   { key: 'fatty_protein', label: '脂ありP', emoji: '🥩', subcategories: FATTY_PROTEIN },

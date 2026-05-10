@@ -3,7 +3,6 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import React, { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-
 import { DishQuickEntrySheet } from '@/components/DishQuickEntrySheet';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { IdentityLogSheet } from '@/components/IdentityLogSheet';
@@ -19,7 +18,11 @@ const queryClient = new QueryClient();
 
 function RootLayoutNav() {
   return (
-    <Stack screenOptions={{ headerBackTitle: '戻る' }}>
+    <Stack
+      screenOptions={{
+        headerBackTitle: '戻る',
+      }}
+    >
       <Stack.Screen name="index" options={{ headerShown: false }} />
       <Stack.Screen name="intro" options={{ headerShown: false }} />
       <Stack.Screen name="paywall" options={{ headerShown: false, presentation: 'modal' }} />
