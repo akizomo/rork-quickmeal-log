@@ -53,13 +53,28 @@ describe('decideInitialRoute', () => {
     ).toBe('home');
   });
 
-  it('onboarding 完了 + paywall 表示済み は home へ', () => {
+  it('onboarding 完了 + paywall 表示済みだが未課金 は paywall へ (強制課金型)', () => {
+    // paywallSeenAtISO はルーティングに影響しない。subscriptionStatus が判断基準。
     expect(
       decideInitialRoute(
         make({
           introSeenVersion: INTRO_VERSION,
           onboardingCompleted: true,
           paywallSeenAtISO: new Date().toISOString(),
+          subscriptionStatus: 'none',
+        })
+      )
+    ).toBe('paywall');
+  });
+
+  it('onboarding 完了 + paywall 表示済み + 課金済み は home へ', () => {
+    expect(
+      decideInitialRoute(
+        make({
+          introSeenVersion: INTRO_VERSION,
+          onboardingCompleted: true,
+          paywallSeenAtISO: new Date().toISOString(),
+          subscriptionStatus: 'trialing',
         })
       )
     ).toBe('home');

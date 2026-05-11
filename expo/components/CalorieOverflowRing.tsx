@@ -249,7 +249,7 @@ export const CalorieOverflowRing = memo(function CalorieOverflowRing(props: Calo
               {isOver ? 'オーバー' : 'のこり'}
             </Text>
           ) : null}
-          <Text style={[styles.kcalValue, { color: isOver && centerMode === 'remaining' ? overflowColor : centerTextColor }]} numberOfLines={1}>
+          <Text style={[styles.kcalValue, { color: centerTextColor }]} numberOfLines={1}>
             {formatKcal(animatedCenter)}
           </Text>
           <Text style={[styles.kcalTarget, { color: subTextColor }]} numberOfLines={1}>

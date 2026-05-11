@@ -244,6 +244,15 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       if (!mounted || !info) return;
       const next = mapCustomerInfoToStatus(info);
       setSettings((prev) => {
+        // RC がサーバー側処理遅延で 'none' を返すことがある。
+        // trialing/active を持つユーザーを 'none' でダウングレードしない。
+        // 'expired' は明示的な失効信号なので許可する。
+        if (
+          next === 'none' &&
+          (prev.subscriptionStatus === 'trialing' || prev.subscriptionStatus === 'active')
+        ) {
+          return prev;
+        }
         if (prev.subscriptionStatus === next) return prev;
         const updated: AppSettings = { ...prev, subscriptionStatus: next };
         console.log('[app-state] Subscription status →', next);
