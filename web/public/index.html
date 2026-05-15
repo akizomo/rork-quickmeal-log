@@ -38,33 +38,47 @@
     <main class="lp-main">
       <!-- HERO -->
       <section class="lp-hero" aria-labelledby="hero-title">
-        <p class="lp-eyebrow">Android クローズドテスト 募集中</p>
-        <h1 id="hero-title" class="lp-hero-title">
-          ざっくりで、<br />続く食事ログ。
-        </h1>
-        <p class="lp-hero-sub">9つのボタンを、タップだけで。</p>
-        <p class="lp-hero-tagline">計らない、調べない、迷わない。</p>
+        <div class="lp-hero-grid">
+          <div class="lp-hero-copy">
+            <p class="lp-eyebrow">Android クローズドテスト 募集中</p>
+            <h1 id="hero-title" class="lp-hero-title">
+              ざっくりで、<br />続く食事ログ。
+            </h1>
+            <p class="lp-hero-sub">9つのボタンを、タップだけで。</p>
+            <p class="lp-hero-tagline">計らない、調べない、迷わない。</p>
 
-        <div class="lp-cta-row">
-          <!-- TODO(LP): Google Form URL を差し込む -->
-          <a
-            class="cta cta-primary"
-            href="#"
-            data-cta="ios-notify"
-            aria-label="iPhone 向けに知らせを受け取る (メーリングリスト)"
-          >
-            知らせを受け取る
-          </a>
-          <!-- TODO(LP): Play Console opt-in URL を差し込む -->
-          <a
-            class="cta cta-secondary"
-            href="#"
-            data-cta="android-test"
-            aria-label="Android クローズドテストに参加する"
-          >
-            <span class="cta-mute">Android を使っている?</span>
-            <span class="cta-strong">Androidで試す</span>
-          </a>
+            <div class="lp-cta-row">
+              <!-- TODO(LP): Google Form URL を差し込む -->
+              <a
+                class="cta cta-primary"
+                href="#"
+                data-cta="ios-notify"
+                aria-label="iPhone 向けに知らせを受け取る (メーリングリスト)"
+              >
+                知らせを受け取る
+              </a>
+              <!-- TODO(LP): Play Console opt-in URL を差し込む -->
+              <a
+                class="cta cta-secondary"
+                href="#"
+                data-cta="android-test"
+                aria-label="Android クローズドテストに参加する"
+              >
+                <span class="cta-mute">Android を使っている?</span>
+                <span class="cta-strong">Androidで試す</span>
+              </a>
+            </div>
+          </div>
+          <figure class="lp-hero-figure" aria-hidden="true">
+            <img
+              src="/lp/hero-phone.png"
+              alt="Hachibu アプリのホーム画面。9つのボタンと +105 kcal プレビュー。"
+              width="300"
+              height="615"
+              loading="eager"
+              decoding="async"
+            />
+          </figure>
         </div>
       </section>
 
@@ -94,6 +108,16 @@
 
         <div class="lp-feature-grid">
           <article class="lp-feature">
+            <figure class="lp-feature-figure" aria-hidden="true">
+              <img
+                src="/lp/feature-quicklog.png"
+                alt="Quick Log 画面: タブと9バケットで1タップ登録"
+                width="389"
+                height="705"
+                loading="lazy"
+                decoding="async"
+              />
+            </figure>
             <p class="lp-feature-num">01</p>
             <h3 class="lp-feature-title">Quick Log</h3>
             <p class="lp-feature-lead">
@@ -119,6 +143,16 @@
           </article>
 
           <article class="lp-feature">
+            <figure class="lp-feature-figure" aria-hidden="true">
+              <img
+                src="/lp/feature-longpress.png"
+                alt="Long-press Detail シート: 種類・調理法・量を3軸で記録"
+                width="389"
+                height="705"
+                loading="lazy"
+                decoding="async"
+              />
+            </figure>
             <p class="lp-feature-num">02</p>
             <h3 class="lp-feature-title">Long-press Detail</h3>
             <p class="lp-feature-lead">
