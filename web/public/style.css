@@ -494,15 +494,6 @@ body.lp-body {
   text-align: left;
 }
 
-.lp-page-mark {
-  font-family: var(--serif);
-  font-style: italic;
-  font-size: 13px;
-  color: var(--ink-mute);
-  margin-top: 64px;
-  letter-spacing: 0.04em;
-}
-
 /* ---------- §02 Features ---------- */
 .lp-feature-grid {
   display: grid;
