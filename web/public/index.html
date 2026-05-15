@@ -354,5 +354,128 @@
         <span class="lp-footer-copy">© 2026 Hachibu</span>
       </div>
     </footer>
+
+    <!-- iOS リリース通知メーリングリスト登録モーダル -->
+    <dialog id="subscribe-modal" class="lp-modal" aria-labelledby="subscribe-title">
+      <button
+        type="button"
+        class="lp-modal-close"
+        aria-label="閉じる"
+        onclick="document.getElementById('subscribe-modal').close()"
+      >
+        ×
+      </button>
+
+      <div class="lp-modal-body" data-state="form">
+        <h2 id="subscribe-title" class="lp-modal-title">
+          iOS版の準備ができたら、<br />お知らせします。
+        </h2>
+        <p class="lp-modal-sub">
+          登録はメールアドレスだけ。他には何も聞きません。
+        </p>
+
+        <form
+          id="subscribe-form"
+          action="https://formsubmit.co/contact@akizony.com"
+          method="POST"
+        >
+          <input type="hidden" name="_subject" value="Hachibu iOS版 お知らせ希望" />
+          <input type="hidden" name="_captcha" value="false" />
+          <input type="hidden" name="_template" value="table" />
+          <input type="hidden" name="_honey" value="" />
+
+          <label class="lp-modal-field">
+            <span class="lp-modal-label">メールアドレス</span>
+            <input
+              type="email"
+              name="email"
+              placeholder="your@email.com"
+              required
+              autocomplete="email"
+              inputmode="email"
+              class="lp-modal-input"
+            />
+          </label>
+
+          <ul class="lp-modal-bullets" aria-label="ポリシー">
+            <li>iOSローンチ時の1通のみ送信します</li>
+            <li>他社への共有・販売はありません</li>
+            <li>退会は1クリックで完了します</li>
+          </ul>
+
+          <button type="submit" class="cta cta-primary lp-modal-submit">
+            登録する
+          </button>
+
+          <p class="lp-modal-finep">
+            登録すると <a href="/privacy">プライバシーポリシー</a> に同意したものとみなします。
+          </p>
+        </form>
+      </div>
+
+      <div class="lp-modal-thanks" data-state="thanks" hidden>
+        <h2 class="lp-modal-title">ありがとうございます。</h2>
+        <p class="lp-modal-sub">
+          iOSローンチの準備ができたら、<br />
+          ご登録いただいたアドレスへ 1 通だけお知らせします。
+        </p>
+        <p class="lp-modal-sub">他の用途には一切使いません。</p>
+        <button
+          type="button"
+          class="cta cta-primary lp-modal-submit"
+          onclick="document.getElementById('subscribe-modal').close()"
+        >
+          閉じる
+        </button>
+      </div>
+    </dialog>
+
+    <script>
+      (function () {
+        var modal = document.getElementById('subscribe-modal');
+        if (!modal) return;
+
+        // 各 iOS notify CTA: クリックでモーダルを開く (JS 無効時は mailto: にフォールバック)
+        document.querySelectorAll('a[data-cta="ios-notify"]').forEach(function (a) {
+          a.addEventListener('click', function (e) {
+            if (typeof modal.showModal === 'function') {
+              e.preventDefault();
+              modal.showModal();
+            }
+          });
+        });
+
+        // 背景クリックで閉じる
+        modal.addEventListener('click', function (e) {
+          if (e.target === modal) modal.close();
+        });
+
+        // フォーム送信 → fetch で送り、成功状態に切替
+        var form = document.getElementById('subscribe-form');
+        var body = modal.querySelector('[data-state="form"]');
+        var thanks = modal.querySelector('[data-state="thanks"]');
+        form.addEventListener('submit', function (e) {
+          e.preventDefault();
+          var btn = form.querySelector('button[type="submit"]');
+          btn.disabled = true;
+          btn.textContent = '送信中...';
+          fetch(form.action, {
+            method: 'POST',
+            body: new FormData(form),
+            headers: { Accept: 'application/json' }
+          })
+            .then(function (r) {
+              if (!r.ok) throw new Error('submission failed');
+              body.hidden = true;
+              thanks.hidden = false;
+            })
+            .catch(function () {
+              btn.disabled = false;
+              btn.textContent = '登録する';
+              alert('送信に失敗しました。お手数ですが時間をおいて再度お試しください。');
+            });
+        });
+      })();
+    </script>
   </body>
 </html>

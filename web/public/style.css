@@ -771,6 +771,216 @@ body.lp-body {
   font-weight: 700;
 }
 
+/* ---------- Subscribe Modal (iOS notify) ---------- */
+.lp-modal {
+  border: none;
+  padding: 0;
+  background: var(--paper-soft);
+  color: var(--ink);
+  border-radius: 16px;
+  max-width: 460px;
+  width: calc(100% - 40px);
+  box-shadow: 0 24px 64px rgba(28, 28, 26, 0.24);
+  overflow: visible;
+  position: fixed;
+  inset: 0;
+  margin: auto;
+}
+
+.lp-modal::backdrop {
+  background: rgba(28, 28, 26, 0.55);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+.lp-modal[open] {
+  animation: lp-modal-in 0.18s ease-out;
+}
+
+@keyframes lp-modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.lp-modal-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  font-size: 24px;
+  line-height: 1;
+  color: var(--ink-mute);
+  cursor: pointer;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lp-modal-close:hover {
+  background: var(--paper-sub);
+  color: var(--ink);
+}
+
+.lp-modal-body,
+.lp-modal-thanks {
+  padding: 40px 32px 32px;
+}
+
+.lp-modal-title {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.45;
+  margin: 0 0 12px;
+  color: var(--ink);
+  letter-spacing: 0.005em;
+}
+
+.lp-modal-sub {
+  font-size: 14px;
+  color: var(--ink-soft);
+  margin: 0 0 24px;
+  line-height: 1.7;
+}
+
+.lp-modal-field {
+  display: block;
+  margin-bottom: 20px;
+}
+
+.lp-modal-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  letter-spacing: 0.04em;
+  margin-bottom: 8px;
+}
+
+.lp-modal-input {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  font-size: 16px;
+  color: var(--ink);
+  background: var(--paper);
+  font-family: inherit;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.lp-modal-input:focus {
+  outline: none;
+  border-color: var(--sage);
+  box-shadow: 0 0 0 3px var(--sage-bg);
+}
+
+.lp-modal-bullets {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 24px;
+  display: grid;
+  gap: 6px;
+}
+
+.lp-modal-bullets li {
+  font-size: 12px;
+  color: var(--ink-soft);
+  padding-left: 18px;
+  position: relative;
+  line-height: 1.6;
+}
+
+.lp-modal-bullets li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: var(--sage);
+  font-weight: 700;
+}
+
+.lp-modal-submit {
+  width: 100%;
+  margin-top: 4px;
+}
+
+.lp-modal-finep {
+  font-size: 11px;
+  color: var(--ink-mute);
+  margin: 16px 0 0;
+  text-align: center;
+  line-height: 1.6;
+}
+
+.lp-modal-finep a {
+  color: var(--ink-soft);
+  text-decoration: underline;
+}
+
+/* honeypot hidden (formsubmit anti-spam) */
+.lp-modal input[name="_honey"] {
+  display: none;
+}
+
+@media (max-width: 480px) {
+  .lp-modal-body,
+  .lp-modal-thanks {
+    padding: 32px 22px 24px;
+  }
+  .lp-modal-title {
+    font-size: 20px;
+  }
+}
+
+/* Dark mode modal */
+@media (prefers-color-scheme: dark) {
+  .lp-modal {
+    background: #2A2520;
+    color: #F7F7F6;
+  }
+  .lp-modal::backdrop {
+    background: rgba(0, 0, 0, 0.7);
+  }
+  .lp-modal-close {
+    color: #BFBFB9;
+  }
+  .lp-modal-close:hover {
+    background: #403A2E;
+    color: #F7F7F6;
+  }
+  .lp-modal-title {
+    color: #F7F7F6;
+  }
+  .lp-modal-sub,
+  .lp-modal-label,
+  .lp-modal-bullets li {
+    color: #BFBFB9;
+  }
+  .lp-modal-input {
+    background: #1D1913;
+    border-color: #403A2E;
+    color: #F7F7F6;
+  }
+  .lp-modal-input:focus {
+    border-color: #9AB594;
+    box-shadow: 0 0 0 3px rgba(154, 181, 148, 0.2);
+  }
+  .lp-modal-finep,
+  .lp-modal-finep a {
+    color: #ADABA5;
+  }
+}
+
 /* ---------- Footer ---------- */
 .lp-footer {
   background: var(--paper);
