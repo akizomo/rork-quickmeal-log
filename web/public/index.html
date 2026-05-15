@@ -73,39 +73,30 @@
             <p class="lp-hero-tagline">計らない、調べない、迷わない。</p>
 
             <div class="lp-cta-row">
-              <div class="lp-cta-primary-wrap">
-                <!--
-                  TODO(LP): Tally Form ID 確定後に差し替え
-                  1. tally.so で 1 フィールドのフォーム (email のみ) を作成
-                  2. URL から ID 抽出 (例: tally.so/r/wM5p2x → "wM5p2x")
-                  3. data-tally-open="REPLACE_WITH_TALLY_FORM_ID" を 2 箇所 (Hero と §05) 置換
-                  4. head の Tally embed script のコメントアウトを外す
-                -->
-                <a
-                  class="cta cta-primary"
-                  href="mailto:contact@akizony.com?subject=Hachibu%20iOS%E7%89%88%20%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B%E5%B8%8C%E6%9C%9B&body=iOS%E7%89%88%E3%81%8C%E3%83%AA%E3%83%AA%E3%83%BC%E3%82%B9%E3%81%95%E3%82%8C%E3%81%9F%E3%82%89%E3%81%93%E3%81%AE%E3%83%A1%E3%83%BC%E3%83%AB%E3%82%A2%E3%83%89%E3%83%AC%E3%82%B9%E3%81%B8%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B%E3%82%92%E3%81%8A%E9%A1%98%E3%81%84%E3%81%97%E3%81%BE%E3%81%99%E3%80%82"
-                  data-tally-open="REPLACE_WITH_TALLY_FORM_ID"
-                  data-tally-layout="modal"
-                  data-tally-width="500"
-                  data-tally-overlay="1"
-                  data-cta="ios-notify"
-                  aria-label="iOS リリース通知メーリングリストに登録する"
-                >
-                  知らせを受け取る
-                </a>
-                <p class="lp-cta-note">iOSローンチ時の1通のみ・退会1クリック</p>
-              </div>
+              <!-- Primary: Android (アクティブな募集中の動線) -->
               <a
-                class="cta cta-secondary"
+                class="cta cta-primary"
                 href="https://play.google.com/store/apps/details?id=app.akizony.hachibu"
                 target="_blank"
                 rel="noopener noreferrer"
                 data-cta="android-test"
                 aria-label="Google Play で Android クローズドテストに参加する"
               >
-                <span class="cta-mute">Android を使っている?</span>
-                <span class="cta-strong">Androidで試す</span>
+                Androidで試す
               </a>
+              <!-- Secondary: iPhone notify (iOS リリース待ち層) -->
+              <div class="lp-cta-secondary-wrap">
+                <a
+                  class="cta cta-secondary"
+                  href="mailto:contact@akizony.com?subject=Hachibu%20iOS%E7%89%88%20%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B%E5%B8%8C%E6%9C%9B&body=iOS%E7%89%88%E3%81%8C%E3%83%AA%E3%83%AA%E3%83%BC%E3%82%B9%E3%81%95%E3%82%8C%E3%81%9F%E3%82%89%E3%81%93%E3%81%AE%E3%83%A1%E3%83%BC%E3%83%AB%E3%82%A2%E3%83%89%E3%83%AC%E3%82%B9%E3%81%B8%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B%E3%82%92%E3%81%8A%E9%A1%98%E3%81%84%E3%81%97%E3%81%BE%E3%81%99%E3%80%82"
+                  data-cta="ios-notify"
+                  aria-label="iOS リリース通知メーリングリストに登録する"
+                >
+                  <span class="cta-mute">iPhone をお使いなら</span>
+                  <span class="cta-strong">知らせを受け取る</span>
+                </a>
+                <p class="lp-cta-note">iOSローンチ時の1通のみ・退会1クリック</p>
+              </div>
             </div>
           </div>
           <figure class="lp-hero-figure" aria-hidden="true">
@@ -312,33 +303,28 @@
         </ul>
 
         <div class="lp-cta-row">
-          <div class="lp-cta-primary-wrap">
-            <!-- TODO(LP): Tally Form ID を差し替え (上 Hero 側と同じ手順) -->
-            <a
-              class="cta cta-primary"
-              href="mailto:contact@akizony.com?subject=Hachibu%20iOS%E7%89%88%20%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B%E5%B8%8C%E6%9C%9B&body=iOS%E7%89%88%E3%81%8C%E3%83%AA%E3%83%AA%E3%83%BC%E3%82%B9%E3%81%95%E3%82%8C%E3%81%9F%E3%82%89%E3%81%93%E3%81%AE%E3%83%A1%E3%83%BC%E3%83%AB%E3%82%A2%E3%83%89%E3%83%AC%E3%82%B9%E3%81%B8%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B%E3%82%92%E3%81%8A%E9%A1%98%E3%81%84%E3%81%97%E3%81%BE%E3%81%99%E3%80%82"
-              data-tally-open="REPLACE_WITH_TALLY_FORM_ID"
-              data-tally-layout="modal"
-              data-tally-width="500"
-              data-tally-overlay="1"
-              data-cta="ios-notify"
-              aria-label="iOS リリース通知メーリングリストに登録する"
-            >
-              知らせを受け取る
-            </a>
-            <p class="lp-cta-note">iOSローンチ時の1通のみ・退会1クリック</p>
-          </div>
           <a
-            class="cta cta-secondary"
+            class="cta cta-primary"
             href="https://play.google.com/store/apps/details?id=app.akizony.hachibu"
             target="_blank"
             rel="noopener noreferrer"
             data-cta="android-test"
             aria-label="Google Play で Android クローズドテストに参加する"
           >
-            <span class="cta-mute">Android を使っている?</span>
-            <span class="cta-strong">Androidで試す</span>
+            Androidで試す
           </a>
+          <div class="lp-cta-secondary-wrap">
+            <a
+              class="cta cta-secondary"
+              href="mailto:contact@akizony.com?subject=Hachibu%20iOS%E7%89%88%20%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B%E5%B8%8C%E6%9C%9B&body=iOS%E7%89%88%E3%81%8C%E3%83%AA%E3%83%AA%E3%83%BC%E3%82%B9%E3%81%95%E3%82%8C%E3%81%9F%E3%82%89%E3%81%93%E3%81%AE%E3%83%A1%E3%83%BC%E3%83%AB%E3%82%A2%E3%83%89%E3%83%AC%E3%82%B9%E3%81%B8%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B%E3%82%92%E3%81%8A%E9%A1%98%E3%81%84%E3%81%97%E3%81%BE%E3%81%99%E3%80%82"
+              data-cta="ios-notify"
+              aria-label="iOS リリース通知メーリングリストに登録する"
+            >
+              <span class="cta-mute">iPhone をお使いなら</span>
+              <span class="cta-strong">知らせを受け取る</span>
+            </a>
+            <p class="lp-cta-note">iOSローンチ時の1通のみ・退会1クリック</p>
+          </div>
         </div>
       </section>
     </main>

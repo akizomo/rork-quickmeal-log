@@ -411,7 +411,7 @@ body.lp-body {
   align-items: flex-start;
 }
 
-.lp-cta-primary-wrap {
+.lp-cta-secondary-wrap {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -1109,7 +1109,7 @@ body.lp-body {
     align-items: stretch;
   }
 
-  .lp-cta-primary-wrap {
+  .lp-cta-secondary-wrap {
     width: 100%;
     align-items: center;
   }
