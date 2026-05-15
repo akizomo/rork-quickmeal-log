@@ -21,10 +21,13 @@ on:
           - android
           - ios
           - all
+  push:
+    branches:
+      - eas-build-trigger
 
 jobs:
   build:
-    name: EAS Build (${{ inputs.profile }} / ${{ inputs.platform }})
+    name: EAS Build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -47,4 +50,7 @@ jobs:
 
       - name: Build
         working-directory: expo
-        run: eas build --profile ${{ inputs.profile }} --platform ${{ inputs.platform }} --non-interactive
+        run: |
+          PROFILE=${{ github.event.inputs.profile || 'production' }}
+          PLATFORM=${{ github.event.inputs.platform || 'android' }}
+          eas build --profile $PROFILE --platform $PLATFORM --non-interactive
