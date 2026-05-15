@@ -23,6 +23,8 @@
       href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;1,400;1,500&display=swap"
     />
     <link rel="stylesheet" href="/style.css" />
+    <!-- TALLY_SCRIPT: Tally Form ID 確定後にこの行のコメントを外す -->
+    <!-- <script async src="https://tally.so/widgets/embed.js"></script> -->
   </head>
   <body class="lp-body">
     <header class="lp-header" aria-label="サイトヘッダー">
@@ -54,15 +56,28 @@
             <p class="lp-hero-tagline">計らない、調べない、迷わない。</p>
 
             <div class="lp-cta-row">
-              <!-- TODO(LP): Google Form URL を差し込む -->
-              <a
-                class="cta cta-primary"
-                href="#"
-                data-cta="ios-notify"
-                aria-label="iPhone 向けに知らせを受け取る (メーリングリスト)"
-              >
-                知らせを受け取る
-              </a>
+              <div class="lp-cta-primary-wrap">
+                <!--
+                  TODO(LP): Tally Form ID 確定後に差し替え
+                  1. tally.so で 1 フィールドのフォーム (email のみ) を作成
+                  2. URL から ID 抽出 (例: tally.so/r/wM5p2x → "wM5p2x")
+                  3. data-tally-open="REPLACE_WITH_TALLY_FORM_ID" を 2 箇所 (Hero と §05) 置換
+                  4. head の Tally embed script のコメントアウトを外す
+                -->
+                <a
+                  class="cta cta-primary"
+                  href="#"
+                  data-tally-open="REPLACE_WITH_TALLY_FORM_ID"
+                  data-tally-layout="modal"
+                  data-tally-width="500"
+                  data-tally-overlay="1"
+                  data-cta="ios-notify"
+                  aria-label="iOS リリース通知メーリングリストに登録する"
+                >
+                  知らせを受け取る
+                </a>
+                <p class="lp-cta-note">iOSローンチ時の1通のみ・退会1クリック</p>
+              </div>
               <a
                 class="cta cta-secondary"
                 href="https://play.google.com/store/apps/details?id=app.akizony.hachibu"
@@ -281,15 +296,22 @@
         </ul>
 
         <div class="lp-cta-row">
-          <!-- TODO(LP): Google Form URL を差し込む -->
-          <a
-            class="cta cta-primary"
-            href="#"
-            data-cta="ios-notify"
-            aria-label="iPhone 向けに知らせを受け取る (メーリングリスト)"
-          >
-            知らせを受け取る
-          </a>
+          <div class="lp-cta-primary-wrap">
+            <!-- TODO(LP): Tally Form ID を差し替え (上 Hero 側と同じ手順) -->
+            <a
+              class="cta cta-primary"
+              href="#"
+              data-tally-open="REPLACE_WITH_TALLY_FORM_ID"
+              data-tally-layout="modal"
+              data-tally-width="500"
+              data-tally-overlay="1"
+              data-cta="ios-notify"
+              aria-label="iOS リリース通知メーリングリストに登録する"
+            >
+              知らせを受け取る
+            </a>
+            <p class="lp-cta-note">iOSローンチ時の1通のみ・退会1クリック</p>
+          </div>
           <a
             class="cta cta-secondary"
             href="https://play.google.com/store/apps/details?id=app.akizony.hachibu"
