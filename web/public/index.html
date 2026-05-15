@@ -6,31 +6,267 @@
     <meta name="robots" content="index,follow" />
     <meta
       name="description"
-      content="Hachibu — 体型理解 × 目標設定 × 食事クイックログ。プライバシーポリシーと利用規約はこちら。"
+      content="Hachibu — ざっくりで、続く食事ログ。9つのボタンを、タップだけで。Android クローズドテスト 募集中。"
     />
-    <title>Hachibu — Legal</title>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Hachibu — ざっくりで、続く食事ログ。" />
+    <meta
+      property="og:description"
+      content="9つのボタンを、タップだけで。計らない、調べない、迷わない。Android クローズドテスト 募集中。"
+    />
+    <meta name="theme-color" content="#FAFAF7" />
+    <title>Hachibu — ざっくりで、続く食事ログ。</title>
     <link rel="stylesheet" href="/style.css" />
   </head>
-  <body>
-    <main>
-      <header class="page-header">
-        <h1>Hachibu</h1>
-        <p class="last-updated">体型理解 × 目標設定 × 食事クイックログ</p>
-      </header>
+  <body class="lp-body">
+    <header class="lp-header" aria-label="サイトヘッダー">
+      <div class="lp-header-inner">
+        <a href="/" class="lp-brand" aria-label="Hachibu トップへ">Hachibu</a>
+        <nav class="lp-nav" aria-label="主要ナビゲーション">
+          <a href="#features">機能</a>
+          <a href="#why">なぜ8割</a>
+          <a href="#start">テスター</a>
+        </nav>
+        <div class="lp-header-platforms" aria-hidden="true">
+          <span>Android</span>
+          <span class="dot-sep">/</span>
+          <span>iPhone</span>
+        </div>
+      </div>
+    </header>
 
-      <p class="intro">
-        本ページは Hachibu の法的書類を公開しています。
-      </p>
+    <main class="lp-main">
+      <!-- HERO -->
+      <section class="lp-hero" aria-labelledby="hero-title">
+        <p class="lp-eyebrow">Android クローズドテスト 募集中</p>
+        <h1 id="hero-title" class="lp-hero-title">
+          ざっくりで、<br />続く食事ログ。
+        </h1>
+        <p class="lp-hero-sub">9つのボタンを、タップだけで。</p>
+        <p class="lp-hero-tagline">計らない、調べない、迷わない。</p>
 
-      <nav class="landing-links" aria-label="法的書類">
-        <a href="/privacy">プライバシーポリシー</a>
-        <a href="/terms">利用規約</a>
-      </nav>
+        <div class="lp-cta-row">
+          <!-- TODO(LP): Google Form URL を差し込む -->
+          <a
+            class="cta cta-primary"
+            href="#"
+            data-cta="ios-notify"
+            aria-label="iPhone 向けに知らせを受け取る (メーリングリスト)"
+          >
+            知らせを受け取る
+          </a>
+          <!-- TODO(LP): Play Console opt-in URL を差し込む -->
+          <a
+            class="cta cta-secondary"
+            href="#"
+            data-cta="android-test"
+            aria-label="Android クローズドテストに参加する"
+          >
+            <span class="cta-mute">Android を使っている?</span>
+            <span class="cta-strong">Androidで試す</span>
+          </a>
+        </div>
+      </section>
 
-      <footer class="page-footer">
-        <span class="brand">Hachibu</span>
-        <span>© Hachibu</span>
-      </footer>
+      <!-- §01 CONCEPT -->
+      <section id="concept" class="lp-section lp-concept" aria-labelledby="concept-title">
+        <p class="lp-section-num">§ 01 — Concept</p>
+        <h2 id="concept-title" class="lp-section-h">
+          食事記録のいちばんの敵は、<br />
+          <em>「ちゃんと書こう」</em>という気持ち。
+        </h2>
+        <p class="lp-section-body">
+          続かない理由は、だいたい入力にある。<br />
+          だから Hachibu は、ちゃんと書かなくても、<br />
+          ざっくりで成立する設計から始めました。
+        </p>
+        <p class="lp-page-mark">p.01</p>
+      </section>
+
+      <!-- §02 FEATURES -->
+      <section id="features" class="lp-section lp-features" aria-labelledby="features-title">
+        <div class="lp-section-head">
+          <p class="lp-section-num">§ 02 — Features</p>
+          <h2 id="features-title" class="lp-section-h">
+            ふたつの深さで、残す。
+          </h2>
+        </div>
+
+        <div class="lp-feature-grid">
+          <article class="lp-feature">
+            <p class="lp-feature-num">01</p>
+            <h3 class="lp-feature-title">Quick Log</h3>
+            <p class="lp-feature-lead">
+              食事は、<strong>9つのボタン</strong>から。
+            </p>
+            <p class="lp-feature-body">
+              タブと9バケットから、いつものご飯を選ぶだけ。手入力ゼロ、1タップで記録は完了します。
+            </p>
+            <dl class="lp-feature-meta">
+              <div>
+                <dt>食材 / 一皿料理</dt>
+                <dd>タブで切替</dd>
+              </div>
+              <div>
+                <dt>9バケット</dt>
+                <dd>1タップで登録</dd>
+              </div>
+              <div>
+                <dt>kcal · PFC</dt>
+                <dd>即時にスナップ</dd>
+              </div>
+            </dl>
+          </article>
+
+          <article class="lp-feature">
+            <p class="lp-feature-num">02</p>
+            <h3 class="lp-feature-title">Long-press Detail</h3>
+            <p class="lp-feature-lead">
+              急ぎはタップ、<strong>余裕は長押し</strong>。
+            </p>
+            <p class="lp-feature-body">
+              同じボタンに、ふたつの深さ。書きたい日に、書きたい分だけ深く残せる設計です。
+            </p>
+            <dl class="lp-feature-meta">
+              <div>
+                <dt>種類・部位</dt>
+                <dd>鶏ささみ / 白身魚 …</dd>
+              </div>
+              <div>
+                <dt>調理法</dt>
+                <dd>あっさり / 油あり / 揚げ</dd>
+              </div>
+              <div>
+                <dt>量</dt>
+                <dd>3段グラム + 微調整</dd>
+              </div>
+            </dl>
+          </article>
+        </div>
+      </section>
+
+      <!-- §03 WHY -->
+      <section id="why" class="lp-section lp-why" aria-labelledby="why-title">
+        <div class="lp-section-head">
+          <p class="lp-section-num">§ 03 — Why roughly works</p>
+          <h2 id="why-title" class="lp-section-h">
+            ざっくり、でも8割。
+          </h2>
+        </div>
+
+        <div class="lp-why-grid">
+          <article class="lp-why-card">
+            <p class="lp-why-num">01</p>
+            <p class="lp-why-stat">346 → 9</p>
+            <p class="lp-why-label">食品 → ボタン</p>
+            <h3 class="lp-why-h">名前ではなく、栄養で分ける。</h3>
+            <p class="lp-why-body">
+              日常の346項目をPFC観点で再クラスタリング。同じボタンの中の食材は、kcalもマクロも近い。
+            </p>
+          </article>
+
+          <article class="lp-why-card">
+            <p class="lp-why-num">02</p>
+            <p class="lp-why-stat">105 / 200</p>
+            <p class="lp-why-label">kcal · 鶏むね vs もも</p>
+            <h3 class="lp-why-h">入口で、代表値が決まる。</h3>
+            <p class="lp-why-body">
+              同じ鶏肉でも「低脂タンパク」からなら皮なし、「脂タンパク」からなら皮つき。文脈で値が切り替わる。
+            </p>
+          </article>
+
+          <article class="lp-why-card">
+            <p class="lp-why-num">03</p>
+            <p class="lp-why-stat">&lt; 5%</p>
+            <p class="lp-why-label">集約された誤差</p>
+            <h3 class="lp-why-h">無視できる差は、集める。</h3>
+            <p class="lp-why-body">
+              ホエイ/ソイの差や白米/雑穀米の銘柄差は1つに集約。PFCを動かさないものは、最初から記録対象外。
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <!-- §04 FAQ -->
+      <section id="faq" class="lp-section lp-faq" aria-labelledby="faq-title">
+        <div class="lp-section-head">
+          <p class="lp-section-num">§ 04 — FAQ</p>
+          <h2 id="faq-title" class="lp-section-h">先に、3つだけ。</h2>
+        </div>
+
+        <div class="lp-faq-list">
+          <details class="lp-faq-item">
+            <summary>なぜまず Android なの?</summary>
+            <p>
+              配信導線が軽いからです。Play Console のクローズドテストで200人にだけ配り、安定が見えた段階でiOSを判断します。
+            </p>
+          </details>
+          <details class="lp-faq-item">
+            <summary>何をすればいい?</summary>
+            <p>
+              普段の食事を、いつもどおり残してもらえれば十分。気づいたら一行送ってください。
+            </p>
+          </details>
+          <details class="lp-faq-item">
+            <summary>お金はかかる?</summary>
+            <p>
+              テスト期間中は完全無料です。クレカ登録もありません。
+            </p>
+          </details>
+        </div>
+      </section>
+
+      <!-- §05 START -->
+      <section id="start" class="lp-section lp-start" aria-labelledby="start-title">
+        <p class="lp-section-num">§ 05 — Start</p>
+        <h2 id="start-title" class="lp-section-h lp-start-h">
+          9つのボタンから、<br />はじめてみる。
+        </h2>
+        <p class="lp-start-sub">
+          いまは Android のクローズドテスト期間。<br />
+          iPhone の方は、動き出したら一番に知らせます。
+        </p>
+
+        <ul class="lp-start-bullets" aria-label="テスト参加条件">
+          <li>全機能、無料</li>
+          <li>クレカ不要</li>
+          <li>いつでも離脱</li>
+        </ul>
+
+        <div class="lp-cta-row">
+          <!-- TODO(LP): Google Form URL を差し込む -->
+          <a
+            class="cta cta-primary"
+            href="#"
+            data-cta="ios-notify"
+            aria-label="iPhone 向けに知らせを受け取る (メーリングリスト)"
+          >
+            知らせを受け取る
+          </a>
+          <!-- TODO(LP): Play Console opt-in URL を差し込む -->
+          <a
+            class="cta cta-secondary"
+            href="#"
+            data-cta="android-test"
+            aria-label="Android クローズドテストに参加する"
+          >
+            <span class="cta-mute">Android を使っている?</span>
+            <span class="cta-strong">Androidで試す</span>
+          </a>
+        </div>
+      </section>
     </main>
+
+    <footer class="lp-footer">
+      <div class="lp-footer-inner">
+        <span class="lp-footer-brand">Hachibu</span>
+        <nav class="lp-footer-nav" aria-label="フッターリンク">
+          <a href="/terms">利用規約</a>
+          <a href="/privacy">プライバシー</a>
+          <a href="mailto:contact@akizony.com">お問い合わせ</a>
+        </nav>
+        <span class="lp-footer-copy">© 2026 Hachibu</span>
+      </div>
+    </footer>
   </body>
 </html>
