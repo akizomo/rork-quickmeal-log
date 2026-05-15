@@ -257,16 +257,30 @@ body.lp-body {
   color: var(--sage);
 }
 
-.lp-header-platforms {
-  color: var(--ink-mute);
-  font-size: 12px;
-  letter-spacing: 0.06em;
-  display: flex;
-  gap: 6px;
+.lp-header-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 0 18px;
+  border-radius: 999px;
+  background: var(--sage);
+  color: var(--on-action);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  transition: background-color 0.2s ease, transform 0.15s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
-.lp-header-platforms .dot-sep {
-  color: var(--border-soft);
+.lp-header-cta:hover {
+  background: var(--sage-dark);
+}
+
+.lp-header-cta:active {
+  transform: translateY(1px);
 }
 
 /* ---------- Main / Sections ---------- */
@@ -815,16 +829,20 @@ body.lp-body {
 /* ---------- Responsive ---------- */
 @media (max-width: 760px) {
   .lp-header-inner {
-    padding: 14px 20px;
-    gap: 16px;
+    padding: 12px 20px;
+    gap: 12px;
   }
 
+  /* Mobile: ナビ非表示でロゴ + CTA のみに集約 */
   .lp-nav {
-    gap: 16px;
+    display: none;
   }
 
-  .lp-header-platforms {
-    display: none;
+  .lp-header-cta {
+    margin-left: auto;
+    height: 32px;
+    padding: 0 14px;
+    font-size: 12px;
   }
 
   .lp-main {
