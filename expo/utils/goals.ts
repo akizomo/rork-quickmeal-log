@@ -1,4 +1,4 @@
-import { ActivityLevel, BiologicalBasis, BodyStage, BodyType9, GoalDirection, Macro, PaceLevel } from '@/types/nutrition';
+import { ActivityLevel, AppSettings, BiologicalBasis, BodyStage, BodyType9, GoalDirection, Macro, PaceLevel, SubscriptionStatus } from '@/types/nutrition';
 import {
   getCellBodyFatTypical,
   getCellRef,
@@ -415,4 +415,29 @@ export function trialDaysRemaining(startedAtISO: string | null | undefined, tria
   const remainingMs = endMs - Date.now();
   if (remainingMs <= 0) return 0;
   return Math.ceil(remainingMs / (24 * 60 * 60 * 1000));
+}
+
+/**
+ * トライアル表記をローカル時刻でオーバーライドする派生値。
+ * 「無料トライアル中」表示の見た目バグを直すための UI 専用ヘルパー。
+ *
+ * 重要: RC が 'trialing'/'active' を返す = サブスク登録が存在する限り、
+ * 'expired'/'none' に降格しない (ペイウォールへ蹴り出さない)。
+ * トライアルが経過済みなら 'active' (本登録扱い) として返す。
+ * RC が明示的に 'expired' を返すまではアクセスを維持する。
+ *
+ * - `subscriptionStatus !== 'trialing'` → そのまま返す
+ * - `trialing` & `trialStartedAtISO` 未記録 → そのまま `trialing`
+ * - `trialing` & 残日数 > 0 → `trialing`
+ * - `trialing` & 残日数 <= 0 → `active` (登録は残しつつ表記だけ切替)
+ */
+export function getEffectiveSubscriptionStatus(
+  settings: Pick<AppSettings, 'subscriptionStatus' | 'trialStartedAtISO'>,
+  trialDays: number
+): SubscriptionStatus {
+  const current = settings.subscriptionStatus ?? 'none';
+  if (current !== 'trialing') return current;
+  if (!settings.trialStartedAtISO) return current;
+  const remaining = trialDaysRemaining(settings.trialStartedAtISO, trialDays);
+  return remaining <= 0 ? 'active' : 'trialing';
 }

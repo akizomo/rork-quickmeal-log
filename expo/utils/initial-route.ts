@@ -11,7 +11,9 @@ export type InitialRoute = 'home' | 'intro' | 'onboarding' | 'paywall';
  *     (INTRO_VERSION が bump されても影響を受けない)
  *   - 新規ユーザーは intro → onboarding → paywall → home の順で進む
  *   - **強制課金型** (PRD §6.1): 未課金/未トライアルのユーザーは毎回 paywall に戻される。
- *     paywallSeenAtISO によるスキップ動線は撤廃済み (旧フリーミアム想定の遺物)。
+ *   - RC が 'trialing'/'active' を返す = サブスク登録あり → ペイウォールへ蹴らない。
+ *     ローカル時刻ベースで満了に見えても RC の判定を優先する
+ *     (RC 遅延でも登録があるユーザーをロックアウトしない)。
  */
 export function decideInitialRoute(settings: AppSettings): InitialRoute {
   const onboardingDone = settings.onboardingCompleted === true;

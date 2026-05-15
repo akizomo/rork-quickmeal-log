@@ -7,7 +7,7 @@ import { SettingsDivider, SettingsLinkRow, SettingsListCard, SettingsSectionLabe
 import { LEGAL_LINKS, TRIAL_DURATION_DAYS } from '@/constants/onboarding';
 import { Body, Caption, Card, useTheme } from '@/design-system';
 import { useAppState } from '@/providers/app-state-provider';
-import { trialDaysRemaining } from '@/utils/goals';
+import { getEffectiveSubscriptionStatus, trialDaysRemaining } from '@/utils/goals';
 
 export default function SubscriptionRoute() {
   const router = useRouter();
@@ -15,7 +15,7 @@ export default function SubscriptionRoute() {
   const { settings, restorePurchase } = useAppState();
 
   const trialDays = trialDaysRemaining(settings.trialStartedAtISO, TRIAL_DURATION_DAYS);
-  const status = settings.subscriptionStatus;
+  const status = getEffectiveSubscriptionStatus(settings, TRIAL_DURATION_DAYS);
 
   const statusLabel =
     status === 'trialing'
