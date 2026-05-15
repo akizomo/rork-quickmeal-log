@@ -351,7 +351,7 @@ body.lp-body {
 }
 
 .lp-hero-title {
-  font-size: clamp(40px, 7vw, 76px);
+  font-size: clamp(34px, 7vw, 76px);
   font-weight: 700;
   letter-spacing: -0.01em;
   line-height: 1.18;
@@ -572,6 +572,17 @@ body.lp-body {
   gap: 32px;
 }
 
+@media (max-width: 960px) {
+  .lp-why-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+  }
+  .lp-why-grid > .lp-why-card:last-child {
+    grid-column: 1 / -1;
+    max-width: calc(50% - 12px);
+  }
+}
+
 .lp-why-card {
   background: var(--paper-sub);
   border: 1px solid var(--border-soft);
@@ -625,10 +636,16 @@ body.lp-body {
 }
 
 /* ---------- §04 FAQ ---------- */
+.lp-faq .lp-section-head,
+.lp-faq-list {
+  max-width: 720px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 .lp-faq-list {
   display: grid;
   gap: 0;
-  max-width: 720px;
 }
 
 .lp-faq-item {
@@ -784,37 +801,56 @@ body.lp-body {
 
   .lp-section,
   .lp-hero {
-    padding: 64px 0;
+    padding: 48px 0;
+  }
+
+  .lp-hero {
+    padding-top: 40px;
+    padding-bottom: 56px;
   }
 
   .lp-section-head {
-    margin-bottom: 40px;
+    margin-bottom: 28px;
   }
 
   .lp-hero-title {
-    line-height: 1.2;
+    line-height: 1.18;
+    margin-bottom: 16px;
+  }
+
+  .lp-hero-sub {
+    margin-bottom: 8px;
+  }
+
+  .lp-hero-tagline {
+    margin-bottom: 32px;
+  }
+
+  .lp-eyebrow {
+    margin-bottom: 24px;
   }
 
   .lp-hero-grid {
     grid-template-columns: 1fr;
-    gap: 40px;
+    gap: 32px;
   }
 
+  /* Mobile: text first, phone as proof below CTAs */
   .lp-hero-figure {
-    order: -1;
+    order: 2;
   }
 
   .lp-hero-figure img {
-    max-width: 280px;
+    max-width: 200px;
   }
 
   .lp-feature-figure {
-    padding: 28px 16px 20px;
-    margin-bottom: 24px;
+    padding: 24px 16px 16px;
+    margin-bottom: 20px;
   }
 
   .lp-feature-figure img {
-    max-width: 240px;
+    max-width: 200px;
   }
 
   .lp-cta-row {
@@ -834,12 +870,33 @@ body.lp-body {
 
   .lp-feature-grid {
     grid-template-columns: 1fr;
-    gap: 48px;
+    gap: 40px;
   }
 
   .lp-why-grid {
     grid-template-columns: 1fr;
     gap: 16px;
+  }
+
+  .lp-why-grid > .lp-why-card:last-child {
+    grid-column: auto;
+    max-width: none;
+  }
+
+  .lp-why-card {
+    padding: 24px 20px;
+  }
+
+  .lp-faq-item {
+    padding: 20px 0;
+  }
+
+  .lp-faq-item summary {
+    font-size: 16px;
+  }
+
+  .lp-start {
+    padding-bottom: 80px;
   }
 
   .lp-footer-inner {
