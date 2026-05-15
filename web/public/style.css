@@ -871,8 +871,13 @@ body.lp-body {
   .lp-hero-sub,
   .lp-feature-lead,
   .lp-why-h,
+  .lp-faq-item summary,
   .lp-footer-brand {
     color: #F7F7F6;
+  }
+
+  .lp-faq-item summary::after {
+    color: #9AB594;               /* sage[400] for dark contrast */
   }
 
   .lp-nav a,
