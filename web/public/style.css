@@ -217,11 +217,26 @@ body.lp-body {
 }
 
 .lp-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font-weight: 700;
   letter-spacing: 0.04em;
   font-size: 16px;
   color: var(--ink);
   text-decoration: none;
+}
+
+.lp-brand-mark {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  /* fill="currentColor" → .lp-brand の color を継承
+     (ライト: --ink, ダーク: #F7F7F6 をダークモードルールで上書き) */
+}
+
+.lp-brand-text {
+  display: inline-block;
 }
 
 .lp-nav {
