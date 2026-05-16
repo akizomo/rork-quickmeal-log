@@ -5,6 +5,8 @@
   - 実装・設計の意思決定は必ずこのPRDを参照すること
   - 議論によって変更が生じた場合は、PRDを更新してから実装する
 - **[PLAN.md](./PLAN.md)** — 実装仕様の詳細メモ (計算式・選択肢・UI構成の意思決定根拠)
+- **[docs/BUILD.md](./docs/BUILD.md)** — EAS Build 手順 (GitHub Actions / ローカル CLI)・トラブルシュート・リリースノート規約。**ビルドを作成する際は必ずこのドキュメントに従う。**
+- **[docs/PLAY_STORE.md](./docs/PLAY_STORE.md)** — Play Console 提出時の文言・カテゴリ・連絡先テンプレート
 
 ## プロジェクト概要
 体型理解 × 目標設定 × 食事クイックログ最適化アプリ。Expo Router (React Native) 実装。
