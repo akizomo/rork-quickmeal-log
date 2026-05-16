@@ -21,6 +21,7 @@ export {
   Chip,
   Badge,
   BottomSheet,
+  Dialog,
 } from './components';
 export type {
   ButtonProps,
@@ -37,6 +38,8 @@ export type {
   BadgeSize,
   BottomSheetProps,
   BottomSheetAction,
+  DialogProps,
+  DialogAction,
 } from './components';
 
 // Tokens (エスケープハッチ — 原則 useTheme 経由で取得する)

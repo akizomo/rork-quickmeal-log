@@ -14,3 +14,5 @@ export { Badge } from './Badge';
 export type { BadgeProps, BadgeTone, BadgeSize } from './Badge';
 export { BottomSheet } from './BottomSheet';
 export type { BottomSheetProps, BottomSheetAction } from './BottomSheet';
+export { Dialog } from './Dialog';
+export type { DialogProps, DialogAction } from './Dialog';
