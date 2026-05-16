@@ -37,7 +37,7 @@ function RootLayoutNav() {
       <Stack.Screen name="legal/privacy" options={{ title: 'プライバシーポリシー' }} />
       <Stack.Screen name="legal/terms" options={{ title: '利用規約' }} />
       <Stack.Screen name="settings" options={{ title: '設定' }} />
-      <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'About' }} />
+      <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'アプリについて' }} />
       {__DEV__ ? <Stack.Screen name="dev" options={{ headerShown: false }} /> : null}
     </Stack>
   );
