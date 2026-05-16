@@ -350,6 +350,7 @@ export default function OnboardingRoute() {
                   currentBodyFatPct={bodyFatPct ? Number(bodyFatPct) : null}
                   paceLevel={paceLevel}
                   onPace={setPaceLevel}
+                  recommendation={recommendation}
                 />
               ) : null}
 
@@ -691,6 +692,7 @@ function StepPlan({
   currentBodyFatPct,
   paceLevel,
   onPace,
+  recommendation,
 }: {
   basis: BiologicalBasis;
   direction: GoalDirection | null;
@@ -699,16 +701,58 @@ function StepPlan({
   currentBodyFatPct: number | null;
   paceLevel: PaceLevel | null;
   onPace: (p: PaceLevel) => void;
+  recommendation: GoalRecommendation | null;
 }) {
   const t = useTheme();
 
-  if (direction === 'maintain' || !direction) {
+  if (!direction) {
     return (
       <View style={stepWrap}>
-        <Heading size="2xl">プランは不要です</Heading>
+        <Heading size="2xl">プラン</Heading>
+        <Body tone="secondary">前のステップで目的を選んでください。</Body>
+      </View>
+    );
+  }
+
+  if (direction === 'maintain') {
+    if (!recommendation) {
+      return (
+        <View style={stepWrap}>
+          <Heading size="2xl">今の体格をキープするプラン</Heading>
+          <Body tone="secondary">前のステップの入力が必要です。</Body>
+        </View>
+      );
+    }
+    return (
+      <View style={stepWrap}>
+        <Heading size="2xl">今の体格をキープするプラン</Heading>
         <Body tone="secondary">
-          → 今の体格をキープする目標なので、ペース指定は不要です。このまま次へ進んでください。
+          → ペース指定は不要です。現在の体格を維持する目安はこちらです。
         </Body>
+        <Card variant="raised" style={{ gap: t.spacing['3'] }}>
+          <SummaryRow label="目標体重" value={`${recommendation.targetWeightKg.toFixed(1)} kg`} />
+          <SummaryRow label="目標体脂肪率" value={`${recommendation.targetBodyFatPct} %`} />
+          <View style={{ height: 1, backgroundColor: t.colors.border.subtle }} />
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Body tone="secondary" weight="semibold">
+              1日の目標
+            </Body>
+            <Heading size="xl" tone="link">
+              {recommendation.targetKcal} kcal
+            </Heading>
+          </View>
+          <PfcRow
+            t={t}
+            protein={recommendation.proteinG}
+            fat={recommendation.fatG}
+            carbs={recommendation.carbsG}
+          />
+          {recommendation.note ? (
+            <Body size="sm" weight="semibold" style={{ color: t.colors.status.warning }}>
+              {recommendation.note}
+            </Body>
+          ) : null}
+        </Card>
       </View>
     );
   }
