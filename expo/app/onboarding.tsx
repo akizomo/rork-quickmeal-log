@@ -143,22 +143,6 @@ export default function OnboardingRoute() {
     }
   }, [activityLevel, ageOk, basis, currentBodyType9, direction, heightOk, paceLevel, recommendation, step, weightOk]);
 
-  const disabledHint = useMemo(() => {
-    switch (step) {
-      case 0: return basis ? null : '身体基準を選んでください';
-      case 1: return heightOk ? null : '120〜220cm の範囲で入力してください';
-      case 2: return weightOk ? null : '30〜200kg の範囲で入力してください';
-      case 3: return ageOk ? null : '13〜100歳 の範囲で入力してください';
-      case 4: return activityLevel ? null : '普段の運動習慣を選んでください';
-      case 5: return currentBodyType9 !== null ? null : '今の体格を選んでください';
-      case 6: return direction ? null : '目的を選んでください';
-      case 7:
-        if (direction === 'maintain') return null;
-        return paceLevel ? null : 'プランを選んでください';
-      default: return null;
-    }
-  }, [activityLevel, ageOk, basis, currentBodyType9, direction, heightOk, paceLevel, step, weightOk]);
-
   const saveAllCurrent = useCallback(() => {
     updateProfileValues({
       heightCm: Number(heightCm) || null,
@@ -377,11 +361,6 @@ export default function OnboardingRoute() {
                 gap: t.spacing['2'],
               }}
             >
-              {!canNext && disabledHint ? (
-                <Caption tone="secondary" align="center" testID="onboarding-hint">
-                  {disabledHint}
-                </Caption>
-              ) : null}
               <Button
                 label={step === TOTAL_STEPS - 1 ? 'はじめる' : '次へ'}
                 variant="primary"
@@ -408,11 +387,6 @@ export default function OnboardingRoute() {
               borderTopColor: t.colors.border.default,
             }}
           >
-            {!canNext && disabledHint ? (
-              <Caption tone="secondary" align="center">
-                {disabledHint}
-              </Caption>
-            ) : null}
             <Button
               label={step === TOTAL_STEPS - 1 ? 'はじめる' : '次へ'}
               variant="primary"
