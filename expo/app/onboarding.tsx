@@ -182,23 +182,32 @@ export default function OnboardingRoute() {
     });
   }, [activityLevel, ageYears, basis, bodyFatPct, currentBodyType9, currentPfc.carbsG, currentPfc.fatG, currentPfc.proteinG, currentStage, direction, heightCm, paceLevel, recommendation, targetBodyType9, targetStage, updateProfileValues, weightKg]);
 
+  // 維持目標はペース選択が不要なため、step 7 (StepPlan) を飛ばす。
+  const skipPlanStep = direction === 'maintain';
+
   const goNext = useCallback(() => {
     saveAllCurrent();
     if (step < TOTAL_STEPS - 1) {
-      setStep((s) => s + 1);
+      const nextStep = step === 6 && skipPlanStep ? 8 : step + 1;
+      setStep(nextStep);
     } else {
       completeOnboarding();
       router.replace('/');
     }
-  }, [completeOnboarding, router, saveAllCurrent, step]);
+  }, [completeOnboarding, router, saveAllCurrent, skipPlanStep, step]);
 
   const goBack = useCallback(() => {
     if (step === 0) {
       router.back();
       return;
     }
-    setStep((s) => s - 1);
-  }, [router, step]);
+    const prevStep = step === 8 && skipPlanStep ? 6 : step - 1;
+    setStep(prevStep);
+  }, [router, skipPlanStep, step]);
+
+  // 進捗表示も維持時は 8 ステップ扱いにする (step 7 をスキップした分を縮める)。
+  const totalDisplaySteps = skipPlanStep ? TOTAL_STEPS - 1 : TOTAL_STEPS;
+  const displayStep = skipPlanStep && step > 7 ? step : step + 1;
 
   return (
     <>
@@ -247,14 +256,14 @@ export default function OnboardingRoute() {
               <View
                 style={{
                   height: '100%',
-                  width: `${((step + 1) / TOTAL_STEPS) * 100}%`,
+                  width: `${(displayStep / totalDisplaySteps) * 100}%`,
                   backgroundColor: t.colors.action.primary.default,
                   borderRadius: t.radius.xs,
                 }}
               />
             </View>
             <Caption weight="semibold">
-              {step + 1}/{TOTAL_STEPS}
+              {displayStep}/{totalDisplaySteps}
             </Caption>
           </View>
 
