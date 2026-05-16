@@ -839,7 +839,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  pfcMiniRow: { flexDirection: 'row', gap: 12 },
+  pfcMiniRow: { flexDirection: 'row', gap: 12, marginHorizontal: 8 },
   miniBarItem: { flex: 1, gap: 4 },
   miniBarLabel: { fontSize: 13, color: palette.textMuted, fontWeight: '600' },
   miniBarLetter: { fontWeight: '700' },
