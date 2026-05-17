@@ -535,6 +535,67 @@ describe('buildIdentityAmountEditConfig', () => {
     // min should be ≤ first chip
     expect(config.min).toBeLessThanOrEqual(100);
   });
+
+  // -------------------------------------------------------------------------
+  // percent unit (人前/食 → % 化)
+  // -------------------------------------------------------------------------
+
+  it('percent unit falls back to "%" suffix', () => {
+    const spec = { unit: 'percent' as const, default: 100 };
+    const config = buildIdentityAmountEditConfig(spec);
+    expect(config.unitLabel).toBe('%');
+  });
+
+  it('percent unit with step=10, chips at 50/100/150 builds valid config', () => {
+    const spec = {
+      unit: 'percent' as const,
+      default: 100,
+      step: 10,
+      min: 10,
+      max: 400,
+      chips: [
+        { label: '小', value: 50 },
+        { label: '1人前', value: 100 },
+        { label: '大盛', value: 150 },
+        { label: '特盛', value: 200 },
+      ],
+    };
+    const config = buildIdentityAmountEditConfig(spec);
+    expect(config.step).toBe(10);
+    expect(config.decimals).toBe(0);
+    expect(config.min).toBe(10);
+    expect(config.max).toBe(400);
+    expect(config.presets).toEqual([50, 100, 150, 200]);
+    expect(config.defaultValue).toBe(100);
+    expect(config.unitLabel).toBe('%');
+    for (const p of config.presets) {
+      expect(isValidAmount(p, config)).toBe(true);
+    }
+  });
+
+  it('percent: snapToStep(30) with step=10 stays at 30', () => {
+    const config: AmountEditConfig = {
+      min: 10, max: 400, step: 10, decimals: 0, unitLabel: '%',
+      presets: [50, 100], defaultValue: 100,
+    };
+    expect(snapToStep(30, config)).toBe(30);
+  });
+
+  it('percent: snapToStep(34) with step=10 snaps to 30', () => {
+    const config: AmountEditConfig = {
+      min: 10, max: 400, step: 10, decimals: 0, unitLabel: '%',
+      presets: [50, 100], defaultValue: 100,
+    };
+    expect(snapToStep(34, config)).toBe(30);
+  });
+
+  it('percent: incrementBy(50, step=10) → 60', () => {
+    const config: AmountEditConfig = {
+      min: 10, max: 400, step: 10, decimals: 0, unitLabel: '%',
+      presets: [50, 100], defaultValue: 100,
+    };
+    expect(incrementBy(50, config)).toBe(60);
+  });
 });
 
 // ---------------------------------------------------------------------------

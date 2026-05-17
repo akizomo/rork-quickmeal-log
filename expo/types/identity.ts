@@ -117,7 +117,8 @@ export type AmountUnit =
   | 'g'
   | 'ml'
   | 'piece'   // 個 / 本 / パック / 枚 etc.
-  | 'serving' // factor (1.0 = standard portion)
+  | 'serving' // legacy: factor (1.0 = standard portion). Kept for backward-compat with old FoodLog entries; new content should use 'percent'.
+  | 'percent' // 1人前 / 1食 = 100. Integer step (10% recommended) for foods whose physical amount varies per product.
   | 'plate'   // 皿 (sushi)
   | 'slice'   // 切 (pizza, fish)
   | 'cut';    // 切れ
@@ -153,6 +154,12 @@ export interface AmountSpec {
    * Pattern B (g/ml/serving/half-units) defines 2–5 chips as shortcuts.
    */
   chips?: AmountChip[];
+  /** Lower bound for direct edit. Falls back to 1 when omitted. */
+  min?: number;
+  /** Upper bound for direct edit. Derived from last chip × 4 when omitted. */
+  max?: number;
+  /** Step granularity for stepper / TextInput. Falls back to 1 when omitted (= integers). */
+  step?: number;
   /** P2 future: brand/chain-store presets. */
   brandChips?: BrandChip[];
 }

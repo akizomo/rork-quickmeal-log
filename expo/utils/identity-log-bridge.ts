@@ -83,10 +83,16 @@ function toLegacyAmountUnit(identity: Identity): 'g' | 'ml' | 'piece' {
 
 function buildAmountLabel(identity: Identity, amountValue: number): string {
   const u = identity.amount.unit;
+  // chip-aware: if value matches a defined chip exactly, prefer its human label
+  // (e.g. "1人前", "大盛"). Falls back to numeric + suffix otherwise.
+  const chipHit = identity.amount.chips?.find((c) => c.value === amountValue);
+  if (chipHit) return chipHit.label;
   if (u === 'g' || u === 'ml') return `${amountValue}${u}`;
-  if (u === 'piece') return `${amountValue}個`;
+  if (u === 'piece') return `${amountValue}${identity.amount.unitLabel ?? '個'}`;
   if (u === 'plate') return `${amountValue}皿`;
   if (u === 'slice') return `${amountValue}切`;
   if (u === 'cut') return `${amountValue}切れ`;
+  if (u === 'percent') return `${amountValue}%`;
+  if (u === 'serving') return `${amountValue}${identity.amount.unitLabel ?? '人前'}`;
   return `${amountValue}`;
 }

@@ -184,7 +184,7 @@ export const PURE_ADDONS: Addon[] = [
     unitAmount: 50,
     unitLabel: '50g',
     addedMacro: { kcal: 30, protein: 2, fat: 0.2, carbs: 6.4 },
-    allowedIdentityIds: ['soba', 'gyudon_class'],
+    allowedIdentityIds: ['soba', 'udon', 'gyudon_class'],
   },
 
   // ---- Salad-only items ----

@@ -410,7 +410,7 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
     label: 'プロテイン (ドリンク・プリン)',
     primaryHome: { tab: 'ingredient', bucket: 'lean_protein' },
     defaultMacro: { kcal: 130, protein: 22, fat: 1.5, carbs: 8 },
-    amount: { unit: 'piece', default: 1, unitLabel: '食', chips: [{ label: '1食', value: 1 }, { label: '2食', value: 2 }] },
+    amount: { unit: 'percent', default: 100, chips: [{ label: '1/2食', value: 50 }, { label: '1食', value: 100 }, { label: '2食', value: 200 }] },
     attributes: [
       { key: 'commercial_drink', label: 'ドリンク市販', isDefault: true },
       { key: 'powder_water', label: 'パウダー水溶', factor: { kcal: 0.85, fat: 0.5 } },
