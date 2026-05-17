@@ -14,3 +14,11 @@ export { Badge } from './Badge';
 export type { BadgeProps, BadgeTone, BadgeSize } from './Badge';
 export { BottomSheet } from './BottomSheet';
 export type { BottomSheetProps, BottomSheetAction } from './BottomSheet';
+export { MacroChip } from './MacroChip';
+export type { MacroChipProps, MacroChipKind, MacroChipSize } from './MacroChip';
+export { MealLogCard } from './MealLogCard';
+export type {
+  MealLogCardProps,
+  MealLogCardHeaderProps,
+  MealLogCardBodyProps,
+} from './MealLogCard';

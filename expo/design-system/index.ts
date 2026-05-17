@@ -21,6 +21,8 @@ export {
   Chip,
   Badge,
   BottomSheet,
+  MacroChip,
+  MealLogCard,
 } from './components';
 export type {
   ButtonProps,
@@ -37,6 +39,12 @@ export type {
   BadgeSize,
   BottomSheetProps,
   BottomSheetAction,
+  MacroChipProps,
+  MacroChipKind,
+  MacroChipSize,
+  MealLogCardProps,
+  MealLogCardHeaderProps,
+  MealLogCardBodyProps,
 } from './components';
 
 // Tokens (エスケープハッチ — 原則 useTheme 経由で取得する)
