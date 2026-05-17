@@ -653,7 +653,9 @@ body.lp-body {
 }
 
 .lp-why-stat {
-  font-family: var(--font-latin);
+  /* font-text = Lato → Noto Sans JP の per-glyph fallback。
+     "346 → 9" などは Lato、"ざっくり" は Noto Sans JP で描画される */
+  font-family: var(--font-text);
   font-style: normal;
   font-size: clamp(36px, 4vw, 48px);
   font-weight: 700;
