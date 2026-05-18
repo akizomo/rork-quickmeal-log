@@ -261,8 +261,23 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
         ) {
           return prev;
         }
-        if (prev.subscriptionStatus === next) return prev;
-        const updated: AppSettings = { ...prev, subscriptionStatus: next };
+        // status 不変だが、trialing で trialStartedAtISO 未記録なら best-effort で補完
+        // (修正前に発行されたトライアルの後方互換)。
+        if (prev.subscriptionStatus === next) {
+          if (next === 'trialing' && !prev.trialStartedAtISO) {
+            console.log('[app-state] Backfilling trialStartedAtISO');
+            return { ...prev, trialStartedAtISO: new Date().toISOString() };
+          }
+          return prev;
+        }
+        const updated: AppSettings = {
+          ...prev,
+          subscriptionStatus: next,
+          trialStartedAtISO:
+            next === 'trialing' && !prev.trialStartedAtISO
+              ? new Date().toISOString()
+              : prev.trialStartedAtISO,
+        };
         console.log('[app-state] Subscription status →', next);
         return updated;
       });
@@ -812,7 +827,17 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       // 'none'/'expired' になることがある。購入直後は trialing に fallback する。
       const status: SubscriptionStatus =
         mapped === 'none' || mapped === 'expired' ? 'trialing' : mapped;
-      const next: AppSettings = { ...settings, subscriptionStatus: status, paywallSeenAtISO: new Date().toISOString() };
+      // 'trialing' に遷移するなら開始時刻を必ず記録する (ローカル時刻ベースの満了判定に必要)。
+      const nextTrialStartedAtISO =
+        status === 'trialing' && !settings.trialStartedAtISO
+          ? new Date().toISOString()
+          : settings.trialStartedAtISO;
+      const next: AppSettings = {
+        ...settings,
+        subscriptionStatus: status,
+        paywallSeenAtISO: new Date().toISOString(),
+        trialStartedAtISO: nextTrialStartedAtISO,
+      };
       setSettings(next);
       persist(profile, logs, next, weights, bodyFatEntries);
       console.log('[app-state] Purchase completed, status →', status, '(mapped:', mapped, ')');

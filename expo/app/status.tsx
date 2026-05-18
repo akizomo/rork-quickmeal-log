@@ -20,7 +20,7 @@ import { TRIAL_DURATION_DAYS } from '@/constants/onboarding';
 import { Body, Caption, Card, Heading, useTheme } from '@/design-system';
 import { useHealthSync } from '@/hooks/use-health-sync';
 import { useAppState } from '@/providers/app-state-provider';
-import { trialDaysRemaining } from '@/utils/goals';
+import { getEffectiveSubscriptionStatus, trialDaysRemaining } from '@/utils/goals';
 
 export default function StatusRoute() {
   const router = useRouter();
@@ -45,10 +45,11 @@ export default function StatusRoute() {
   }, [weights]);
 
   const trialDays = trialDaysRemaining(settings.trialStartedAtISO, TRIAL_DURATION_DAYS);
+  const effectiveStatus = getEffectiveSubscriptionStatus(settings, TRIAL_DURATION_DAYS);
   const subscriptionLabel =
-    settings.subscriptionStatus === 'trialing'
+    effectiveStatus === 'trialing'
       ? `無料トライアル中 (残り${trialDays}日)`
-      : settings.subscriptionStatus === 'active'
+      : effectiveStatus === 'active'
       ? '有効'
       : '未加入';
 
@@ -93,7 +94,7 @@ export default function StatusRoute() {
           <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} testID="status-screen">
 
             {/* TRIAL STATUS — トライアル中のみ表示 (PRD §6.1) */}
-            {settings.subscriptionStatus === 'trialing' ? (
+            {effectiveStatus === 'trialing' ? (
               <Pressable
                 onPress={() => router.push('/subscription')}
                 testID="status-trial-card"

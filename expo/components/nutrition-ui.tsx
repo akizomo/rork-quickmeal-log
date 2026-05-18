@@ -27,7 +27,7 @@ import { useAppState } from '@/providers/app-state-provider';
 import { DishDraft, DishSize, IngredientDraft, Macro, PortionValue } from '@/types/nutrition';
 import { getIdentity } from '@/constants/identity';
 import { getLogDisplayInfo } from '@/utils/log-display';
-import { trialDaysRemaining } from '@/utils/goals';
+import { getEffectiveSubscriptionStatus, trialDaysRemaining } from '@/utils/goals';
 import { buildDishMacro, clampPortion, computeIngredient, draftFromLog, formatDateKey, formatMacroText, getIngredientSubtypeDef, getIngredientSubtypeDefs, getQuickCategories, getSubtypes, getToppingsForSubtype, summarizeToppings } from '@/utils/nutrition';
 import { formatDayLabel, isSameDay, sumForDate } from '@/utils/history';
 
@@ -84,10 +84,10 @@ export const Header = memo(function Header({ viewedDate }: { viewedDate?: Date }
 
   // トライアル残り≤2日でアバターにバッジ表示 (PRD §6.1)
   const showTrialBadge = useMemo(() => {
-    if (settings.subscriptionStatus !== 'trialing') return false;
+    if (getEffectiveSubscriptionStatus(settings, TRIAL_DURATION_DAYS) !== 'trialing') return false;
     const remaining = trialDaysRemaining(settings.trialStartedAtISO, TRIAL_DURATION_DAYS);
     return remaining > 0 && remaining <= 2;
-  }, [settings.subscriptionStatus, settings.trialStartedAtISO]);
+  }, [settings]);
 
   return (
     <View style={styles.headerRow}>
