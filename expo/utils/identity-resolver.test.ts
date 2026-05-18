@@ -221,3 +221,68 @@ describe('resolveLog — Add-ons', () => {
     expect(result.totalMacro.kcal).toBeCloseTo(259, 0);
   });
 });
+
+describe('resolveLog — percent unit (Identity migrated from serving)', () => {
+  it('udon at 100% (= default) → full macro', () => {
+    // After migration, udon is unit:'percent', default:100
+    const result = resolveLog({ originIdentityId: 'udon', amountValue: 100 });
+    expect(result.amountValue).toBe(100);
+    // udon defaultMacro is unchanged; factor = 100/100 = 1
+    expect(result.baseMacro).toEqual(getIdentity('udon')!.defaultMacro);
+  });
+
+  it('udon at 50% → half macro', () => {
+    const result = resolveLog({ originIdentityId: 'udon', amountValue: 50 });
+    expect(result.amountValue).toBe(50);
+    const def = getIdentity('udon')!.defaultMacro;
+    expect(result.baseMacro.kcal).toBeCloseTo(def.kcal * 0.5, 1);
+    expect(result.baseMacro.protein).toBeCloseTo(def.protein * 0.5, 1);
+  });
+
+  it('udon at 150% (大盛) → 1.5× macro', () => {
+    const result = resolveLog({ originIdentityId: 'udon', amountValue: 150 });
+    const def = getIdentity('udon')!.defaultMacro;
+    expect(result.baseMacro.kcal).toBeCloseTo(def.kcal * 1.5, 1);
+  });
+
+  it('udon without amountValue → defaults to 100%', () => {
+    const result = resolveLog({ originIdentityId: 'udon' });
+    expect(result.amountValue).toBe(100);
+  });
+
+  it('protein_drink at 30% (= ~30g protein for a 1食=100g shake)', () => {
+    // protein_drink is now percent-based: 1食 = 100%
+    const result = resolveLog({ originIdentityId: 'protein_drink', amountValue: 30 });
+    expect(result.amountValue).toBe(30);
+    const def = getIdentity('protein_drink')!.defaultMacro;
+    expect(result.baseMacro.kcal).toBeCloseTo(def.kcal * 0.3, 1);
+    expect(result.baseMacro.protein).toBeCloseTo(def.protein * 0.3, 1);
+  });
+});
+
+describe('Identity master integrity (FB1 & FB2 scope)', () => {
+  it('udon has tororo in allowed and default add-ons (FB1)', () => {
+    const udon = getIdentity('udon')!;
+    expect(udon.defaultAddonIds).toContain('tororo');
+    expect(udon.allowedAddonIds).toContain('tororo');
+  });
+
+  it('udon is on unit:percent with default 100; step defaults to 10 via builder', () => {
+    const udon = getIdentity('udon')!;
+    expect(udon.amount.unit).toBe('percent');
+    expect(udon.amount.default).toBe(100);
+    // step is derived by buildIdentityAmountEditConfig (10 for percent unit)
+    // — kept off the master data to avoid repeating it on all 32 Identities.
+  });
+
+  it('protein_drink is unit:percent', () => {
+    const drink = getIdentity('protein_drink')!;
+    expect(drink.amount.unit).toBe('percent');
+    expect(drink.amount.default).toBe(100);
+  });
+
+  it('okonomi is unit:piece (not percent)', () => {
+    const okonomi = getIdentity('okonomi')!;
+    expect(okonomi.amount.unit).toBe('piece');
+  });
+});

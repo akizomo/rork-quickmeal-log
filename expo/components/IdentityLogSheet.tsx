@@ -36,6 +36,7 @@ import {
   ResolveAddonInput,
   ResolveResult,
 } from '@/utils/identity-resolver';
+import { migrateAmountValueForUnit } from '@/utils/amount-migration';
 import { palette } from '@/constants/theme';
 import { Macro } from '@/types/nutrition';
 
@@ -48,6 +49,7 @@ const UNIT_LABEL: Record<AmountUnit, string> = {
   ml: 'ml',
   piece: '個',
   serving: '人前',
+  percent: '%',
   plate: '皿',
   slice: '切',
   cut: '切れ',
@@ -172,7 +174,13 @@ export function IdentityLogSheet() {
       setOriginIdentityId(id);
       setAttributeKey(editingLog.attrKey ?? defaultAttributeKey(identity));
       setStyleKey(editingLog.styleKey ?? defaultStyleKey(identity));
-      setAmountValue(editingLog.amountValue ?? identity?.amount.default ?? 1);
+      // Translate legacy 'serving' values when the Identity has since moved to 'percent'
+      const rawAmount = editingLog.amountValue ?? identity?.amount.default ?? 1;
+      const targetUnit = identity?.amount.unit;
+      const migrated = targetUnit
+        ? migrateAmountValueForUnit(rawAmount, editingLog.amountUnit, targetUnit)
+        : rawAmount;
+      setAmountValue(migrated);
       setAddons(
         (editingLog.appliedAddons ?? []).map((a) => ({
           refId: a.refId,

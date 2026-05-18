@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { palette } from '@/constants/theme';
 import { getIdentity } from '@/constants/identity';
+import { MealLogCard } from '@/design-system';
 import { spring } from '@/design-system/tokens/primitives/motion';
 import { useAppState } from '@/providers/app-state-provider';
 import { FoodLog } from '@/types/nutrition';
@@ -39,20 +40,6 @@ function formatTime(timestamp: string): string {
   return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
 }
 
-function formatNumber(value: number | null | undefined): string {
-  if (value === null || value === undefined) return '--';
-  return Number.isInteger(value) ? `${value}` : value.toFixed(1);
-}
-
-function MacroPill({ label, value }: { label: string; value: number }) {
-  return (
-    <View style={styles.macroPill}>
-      <Text style={styles.macroPillLabel}>{label}</Text>
-      <Text style={styles.macroPillValue}>{Math.round(value)}</Text>
-    </View>
-  );
-}
-
 function LogListItem({ log }: { log: FoodLog }) {
   const { deleteLog, setEditorLogId, openIdentityLogSheet } = useAppState();
   const display = getLogDisplayInfo(log);
@@ -72,54 +59,26 @@ function LogListItem({ log }: { log: FoodLog }) {
     setEditorLogId(log.id);
   };
   return (
-    <Pressable
-      style={styles.logItem}
-      onPress={handlePress}
-      testID={`log-item-${log.id}`}
-    >
-      <View style={styles.logItemTop}>
-        <View style={styles.logItemTopLeft}>
-          <View style={styles.logTitleRow}>
-            <Text style={styles.logTitle} numberOfLines={1}>
-              {display.title}
-            </Text>
-            {display.bucketHint ? (
-              <Text style={styles.logBucketHint} numberOfLines={1}>
-                {display.bucketHint}
-              </Text>
-            ) : null}
-          </View>
-          {display.subtitle ? (
-            <Text style={styles.logSubAttr} numberOfLines={1} testID={`log-attr-${log.id}`}>
-              {display.subtitle}
-            </Text>
-          ) : null}
-          {display.addonsText ? (
-            <Text style={styles.logTopping} numberOfLines={1} testID={`log-topping-${log.id}`}>
-              {display.addonsText}
-            </Text>
-          ) : null}
-          <Text style={styles.logSubtitle}>
-            {formatTime(log.timestamp)} · {display.amountText}
-          </Text>
-        </View>
-        <Text style={styles.logKcal}>{Math.round(log.macro.kcal)} kcal</Text>
-      </View>
-      <View style={styles.logMacroRow}>
-        <MacroPill label="P" value={log.macro.protein} />
-        <MacroPill label="F" value={log.macro.fat} />
-        <MacroPill label="C" value={log.macro.carbs} />
-      </View>
-      <View style={styles.logActionRow}>
-        <Pressable
-          style={styles.deleteButton}
-          onPress={() => deleteLog(log.id)}
-          testID={`log-delete-${log.id}`}
-        >
-          <Text style={styles.deleteButtonText}>削除</Text>
-        </Pressable>
-      </View>
-    </Pressable>
+    <MealLogCard onPress={handlePress} testID={`log-item-${log.id}`}>
+      <MealLogCard.Header
+        title={display.title}
+        bucket={display.bucketHint}
+        kcal={log.macro.kcal}
+        time={formatTime(log.timestamp)}
+        onDelete={() => deleteLog(log.id)}
+        deleteTestID={`log-delete-${log.id}`}
+      />
+      <MealLogCard.Body
+        amount={display.amountText}
+        subtitle={display.subtitle}
+        addons={display.addonsText}
+        protein={log.macro.protein}
+        fat={log.macro.fat}
+        carbs={log.macro.carbs}
+        subtitleTestID={`log-attr-${log.id}`}
+        addonsTestID={`log-topping-${log.id}`}
+      />
+    </MealLogCard>
   );
 }
 
@@ -400,122 +359,5 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 19,
     color: palette.textMuted,
-  },
-  logItem: {
-    backgroundColor: palette.surface,
-    borderRadius: 20,
-    padding: 14,
-    gap: 10,
-  },
-  logItemTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    gap: 12,
-  },
-  logItemTopLeft: {
-    flex: 1,
-  },
-  logTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: 8,
-    flexWrap: 'wrap',
-  },
-  logTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#243128',
-  },
-  logBucketHint: {
-    fontSize: 11,
-    color: palette.textMuted,
-    backgroundColor: '#ECE5D9',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
-    overflow: 'hidden',
-  },
-  logSubAttr: {
-    marginTop: 3,
-    fontSize: 12,
-    color: palette.text,
-    fontWeight: '500',
-  },
-  logSubtitle: {
-    marginTop: 3,
-    fontSize: 12,
-    color: palette.textMuted,
-  },
-  logTopping: {
-    marginTop: 3,
-    fontSize: 12,
-    color: palette.sageStrong,
-    fontWeight: '600',
-  },
-  logKcal: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: palette.sageDeep,
-  },
-  logMacroRow: {
-    flexDirection: 'row',
-    gap: 6,
-  },
-  macroPill: {
-    flexDirection: 'row',
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 999,
-    backgroundColor: '#ECE5D9',
-  },
-  macroPillLabel: {
-    fontSize: 11,
-    color: palette.textMuted,
-    fontWeight: '700',
-  },
-  macroPillValue: {
-    fontSize: 11,
-    color: palette.text,
-    fontWeight: '700',
-  },
-  logActionRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  amountRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  amountButton: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: palette.card,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  amountButtonText: {
-    fontSize: 15,
-    color: palette.text,
-    fontWeight: '700',
-  },
-  amountText: {
-    fontSize: 13,
-    color: palette.textMuted,
-  },
-  deleteButton: {
-    backgroundColor: '#F0E2DD',
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-  },
-  deleteButtonText: {
-    color: palette.danger,
-    fontSize: 12,
-    fontWeight: '700',
   },
 });

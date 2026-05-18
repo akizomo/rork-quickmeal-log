@@ -16,3 +16,11 @@ export { BottomSheet } from './BottomSheet';
 export type { BottomSheetProps, BottomSheetAction } from './BottomSheet';
 export { Dialog } from './Dialog';
 export type { DialogProps, DialogAction } from './Dialog';
+export { MacroChip } from './MacroChip';
+export type { MacroChipProps, MacroChipKind, MacroChipSize } from './MacroChip';
+export { MealLogCard } from './MealLogCard';
+export type {
+  MealLogCardProps,
+  MealLogCardHeaderProps,
+  MealLogCardBodyProps,
+} from './MealLogCard';

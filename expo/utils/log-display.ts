@@ -28,12 +28,14 @@ import {
   StyleOption,
 } from '@/types/identity';
 import { FoodLog, FoodLogAddon } from '@/types/nutrition';
+import { migrateAmountValueForUnit } from './amount-migration';
 
 const UNIT_SUFFIX: Record<AmountUnit, string> = {
   g: 'g',
   ml: 'ml',
   piece: '個',
   serving: '人前',
+  percent: '%',
   plate: '皿',
   slice: '切',
   cut: '切れ',
@@ -109,7 +111,13 @@ function buildSubtitle(identity: Identity, log: FoodLog): string | undefined {
 // ---------------------------------------------------------------------------
 
 function buildAmountText(identity: Identity, log: FoodLog): string {
-  const value = log.amountValue ?? identity.amount.default;
+  const rawValue = log.amountValue ?? identity.amount.default;
+  // Translate legacy 'serving' values into the Identity's current unit (e.g. percent).
+  const value = migrateAmountValueForUnit(rawValue, log.amountUnit, identity.amount.unit);
+  // chip-aware: prefer human label ("1人前", "大盛") when the saved value
+  // matches a defined chip exactly.
+  const chipHit = identity.amount.chips?.find((c) => c.value === value);
+  if (chipHit) return chipHit.label;
   const suffix = identity.amount.unitLabel ?? UNIT_SUFFIX[identity.amount.unit];
   return `${formatAmountValue(value)} ${suffix}`;
 }

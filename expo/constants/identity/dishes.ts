@@ -23,13 +23,13 @@ const BUCKET_RICE_DISH: Identity[] = [
     defaultMacro: { kcal: 660, protein: 25, fat: 18, carbs: 88 },
     referenceDescription: 'ご飯200g + 主菜80g (1人前)',
     amount: {
-      unit: 'serving',
-      default: 1.0,
+      unit: 'percent',
+      default: 100,
       chips: [
-        { label: '小盛', value: 0.7 },
-        { label: '並', value: 1.0 },
-        { label: '大盛', value: 1.5 },
-        { label: '特盛', value: 2.0 },
+        { label: '小盛', value: 70 },
+        { label: '並', value: 100 },
+        { label: '大盛', value: 150 },
+        { label: '特盛', value: 200 },
       ],
     },
     attributes: [
@@ -49,7 +49,7 @@ const BUCKET_RICE_DISH: Identity[] = [
     primaryHome: { tab: 'dish', bucket: 'rice_dish' },
     defaultMacro: { kcal: 580, protein: 28, fat: 10, carbs: 88 },
     referenceDescription: 'ご飯200g + 海鮮ネタ80g',
-    amount: { unit: 'serving', default: 1.0, chips: [{ label: '小盛', value: 0.7 }, { label: '並', value: 1.0 }, { label: '大盛', value: 1.5 }] },
+    amount: { unit: 'percent', default: 100, chips: [{ label: '小盛', value: 70 }, { label: '並', value: 100 }, { label: '大盛', value: 150 }] },
   },
   {
     id: 'fried_rice_omurice',
@@ -57,7 +57,7 @@ const BUCKET_RICE_DISH: Identity[] = [
     primaryHome: { tab: 'dish', bucket: 'rice_dish' },
     defaultMacro: { kcal: 720, protein: 20, fat: 26, carbs: 94 },
     referenceDescription: 'ご飯200g + 卵2個・具',
-    amount: { unit: 'serving', default: 1.0, chips: [{ label: '小', value: 0.7 }, { label: '1人前', value: 1.0 }, { label: '大盛', value: 1.5 }] },
+    amount: { unit: 'percent', default: 100, chips: [{ label: '小', value: 70 }, { label: '1人前', value: 100 }, { label: '大盛', value: 150 }] },
     attributes: [
       { key: 'chahan', label: 'チャーハン', isDefault: true },
       { key: 'omurice', label: 'オムライス', factor: { kcal: 1.13, protein: 1.22, fat: 1.17, carbs: 1.04 } },
@@ -71,7 +71,7 @@ const BUCKET_RICE_DISH: Identity[] = [
     primaryHome: { tab: 'dish', bucket: 'rice_dish' },
     defaultMacro: { kcal: 850, protein: 27, fat: 29, carbs: 109 },
     referenceDescription: 'ご飯200g + カツ/天ぷら + 卵',
-    amount: { unit: 'serving', default: 1.0, chips: [{ label: '並', value: 1.0 }, { label: '大盛', value: 1.5 }] },
+    amount: { unit: 'percent', default: 100, chips: [{ label: '並', value: 100 }, { label: '大盛', value: 150 }] },
     attributes: [
       { key: 'katsudon', label: 'カツ丼', isDefault: true },
       { key: 'tendon', label: '天丼', factor: { kcal: 0.94, protein: 0.69, fat: 0.97, carbs: 1.09 } },
@@ -83,7 +83,7 @@ const BUCKET_RICE_DISH: Identity[] = [
     primaryHome: { tab: 'dish', bucket: 'rice_dish' },
     defaultMacro: { kcal: 650, protein: 23, fat: 16, carbs: 95 },
     referenceDescription: 'ご飯200g + ナムル・肉80g',
-    amount: { unit: 'serving', default: 1.0, chips: [{ label: '並', value: 1.0 }, { label: '大盛', value: 1.5 }] },
+    amount: { unit: 'percent', default: 100, chips: [{ label: '並', value: 100 }, { label: '大盛', value: 150 }] },
     attributes: [
       { key: 'bibimbap', label: '普通', isDefault: true },
       { key: 'stone', label: '石焼', factor: { kcal: 1.08, fat: 1.13 } },
@@ -104,7 +104,7 @@ const BUCKET_CURRY: Identity[] = [
     primaryHome: { tab: 'dish', bucket: 'curry' },
     defaultMacro: { kcal: 720, protein: 21, fat: 23, carbs: 100 },
     referenceDescription: 'ご飯200g + ルー・具',
-    amount: { unit: 'serving', default: 1.0, chips: [{ label: '並', value: 1.0 }, { label: '大盛', value: 1.5 }, { label: '特盛', value: 2.0 }] },
+    amount: { unit: 'percent', default: 100, chips: [{ label: '並', value: 100 }, { label: '大盛', value: 150 }, { label: '特盛', value: 200 }] },
     attributes: [
       { key: 'curry', label: 'カレーライス', isDefault: true },
       { key: 'keema', label: 'キーマカレー', factor: { kcal: 0.93 } },
@@ -121,7 +121,7 @@ const BUCKET_CURRY: Identity[] = [
     primaryHome: { tab: 'dish', bucket: 'curry' },
     defaultMacro: { kcal: 980, protein: 29, fat: 38, carbs: 126 },
     referenceDescription: 'ご飯200g + カツ + ルー',
-    amount: { unit: 'serving', default: 1.0, chips: [{ label: '並', value: 1.0 }, { label: '大盛', value: 1.5 }] },
+    amount: { unit: 'percent', default: 100, chips: [{ label: '並', value: 100 }, { label: '大盛', value: 150 }] },
     defaultAddonIds: ['cheese'],
     allowedAddonIds: ['cheese', 'egg'],
   },
@@ -131,7 +131,7 @@ const BUCKET_CURRY: Identity[] = [
     primaryHome: { tab: 'dish', bucket: 'curry' },
     defaultMacro: { kcal: 780, protein: 22, fat: 40, carbs: 72 },
     referenceDescription: 'ご飯200g + バターチキン (or ナンで代用可)',
-    amount: { unit: 'serving', default: 1.0, chips: [{ label: '並', value: 1.0 }, { label: '大盛', value: 1.5 }] },
+    amount: { unit: 'percent', default: 100, chips: [{ label: '並', value: 100 }, { label: '大盛', value: 150 }] },
     defaultAddonIds: ['cheese'],
     allowedAddonIds: ['cheese'],
   },
@@ -141,7 +141,7 @@ const BUCKET_CURRY: Identity[] = [
     primaryHome: { tab: 'dish', bucket: 'curry' },
     defaultMacro: { kcal: 600, protein: 22, fat: 22, carbs: 74 },
     referenceDescription: 'ご飯150g + スープカレー',
-    amount: { unit: 'serving', default: 1.0, chips: [{ label: '並', value: 1.0 }, { label: '大盛', value: 1.5 }] },
+    amount: { unit: 'percent', default: 100, chips: [{ label: '並', value: 100 }, { label: '大盛', value: 150 }] },
     attributes: [
       { key: 'soup', label: 'スープカレー', isDefault: true },
       { key: 'green', label: 'グリーンカレー' },
@@ -165,7 +165,7 @@ const BUCKET_CHINESE_NOODLES: Identity[] = [
     primaryHome: { tab: 'dish', bucket: 'chinese_noodles' },
     defaultMacro: { kcal: 660, protein: 25, fat: 13, carbs: 100 },
     referenceDescription: '麺150g + スープ・基本具',
-    amount: { unit: 'serving', default: 1.0, chips: [{ label: '小さめ', value: 0.75 }, { label: '普通', value: 1.0 }, { label: '大盛', value: 1.5 }] },
+    amount: { unit: 'percent', default: 100, chips: [{ label: '小さめ', value: 75 }, { label: '普通', value: 100 }, { label: '大盛', value: 150 }] },
     attributes: [
       { key: 'shoyu', label: '醤油', isDefault: true },
       { key: 'shio', label: '塩', factor: { kcal: 0.91 } },
@@ -179,7 +179,7 @@ const BUCKET_CHINESE_NOODLES: Identity[] = [
     primaryHome: { tab: 'dish', bucket: 'chinese_noodles' },
     defaultMacro: { kcal: 1020, protein: 32, fat: 39, carbs: 99 },
     referenceDescription: '麺150g + こってりスープ・チャーシュー',
-    amount: { unit: 'serving', default: 1.0, chips: [{ label: '小さめ', value: 0.75 }, { label: '普通', value: 1.0 }, { label: '大盛', value: 1.5 }] },
+    amount: { unit: 'percent', default: 100, chips: [{ label: '小さめ', value: 75 }, { label: '普通', value: 100 }, { label: '大盛', value: 150 }] },
     attributes: [
       { key: 'miso', label: '味噌', isDefault: true },
       { key: 'tonkotsu', label: 'とんこつ', factor: { kcal: 0.88, fat: 0.94 } },
@@ -194,7 +194,7 @@ const BUCKET_CHINESE_NOODLES: Identity[] = [
     primaryHome: { tab: 'dish', bucket: 'chinese_noodles' },
     defaultMacro: { kcal: 1500, protein: 55, fat: 75, carbs: 150 },
     referenceDescription: '麺300g + 大量野菜+豚 (1人前=小)',
-    amount: { unit: 'serving', default: 1.0, chips: [{ label: '麺少', value: 0.75 }, { label: '小', value: 1.0 }, { label: '大', value: 1.5 }] },
+    amount: { unit: 'percent', default: 100, chips: [{ label: '麺少', value: 75 }, { label: '小', value: 100 }, { label: '大', value: 150 }] },
     defaultAddonIds: ['chashu', 'seabura'],
   },
   {
@@ -203,7 +203,7 @@ const BUCKET_CHINESE_NOODLES: Identity[] = [
     primaryHome: { tab: 'dish', bucket: 'chinese_noodles' },
     defaultMacro: { kcal: 925, protein: 32, fat: 33, carbs: 121 },
     referenceDescription: '麺200g + つけ汁',
-    amount: { unit: 'serving', default: 1.0, chips: [{ label: '小さめ', value: 0.75 }, { label: '普通', value: 1.0 }, { label: '大盛', value: 1.5 }] },
+    amount: { unit: 'percent', default: 100, chips: [{ label: '小さめ', value: 75 }, { label: '普通', value: 100 }, { label: '大盛', value: 150 }] },
     attributes: [
       { key: 'tsukemen', label: 'つけ麺', isDefault: true },
       { key: 'mazesoba', label: 'まぜそば', factor: { kcal: 1.06, fat: 1.36 } },
@@ -216,7 +216,7 @@ const BUCKET_CHINESE_NOODLES: Identity[] = [
     primaryHome: { tab: 'dish', bucket: 'chinese_noodles' },
     defaultMacro: { kcal: 780, protein: 25, fat: 30, carbs: 90 },
     referenceDescription: '麺150g + 担々スープ',
-    amount: { unit: 'serving', default: 1.0, chips: [{ label: '普通', value: 1.0 }, { label: '大盛', value: 1.5 }] },
+    amount: { unit: 'percent', default: 100, chips: [{ label: '普通', value: 100 }, { label: '大盛', value: 150 }] },
     defaultAddonIds: ['seasoned_egg', 'chashu', 'menma', 'rayu'],
     allowedAddonIds: ['seasoned_egg', 'chashu', 'menma', 'rayu', 'seabura', 'nori_furikake'],
   },
@@ -226,7 +226,7 @@ const BUCKET_CHINESE_NOODLES: Identity[] = [
     primaryHome: { tab: 'dish', bucket: 'chinese_noodles' },
     defaultMacro: { kcal: 820, protein: 24, fat: 30, carbs: 112 },
     referenceDescription: '麺150g + 具炒め+ソース',
-    amount: { unit: 'serving', default: 1.0, chips: [{ label: '小', value: 0.75 }, { label: '1人前', value: 1.0 }, { label: '大盛', value: 1.5 }] },
+    amount: { unit: 'percent', default: 100, chips: [{ label: '小', value: 75 }, { label: '1人前', value: 100 }, { label: '大盛', value: 150 }] },
     defaultAddonIds: ['sauce', 'egg'],
     allowedAddonIds: ['sauce', 'egg', 'katsuobushi'],
   },
@@ -236,7 +236,7 @@ const BUCKET_CHINESE_NOODLES: Identity[] = [
     primaryHome: { tab: 'dish', bucket: 'chinese_noodles' },
     defaultMacro: { kcal: 660, protein: 23, fat: 13, carbs: 106 },
     referenceDescription: '麺150g + 具+冷スープ',
-    amount: { unit: 'serving', default: 1.0, chips: [{ label: '小', value: 0.75 }, { label: '1人前', value: 1.0 }, { label: '大盛', value: 1.5 }] },
+    amount: { unit: 'percent', default: 100, chips: [{ label: '小', value: 75 }, { label: '1人前', value: 100 }, { label: '大盛', value: 150 }] },
     attributes: [
       { key: 'hiyashi_chuka', label: '冷やし中華', isDefault: true },
       { key: 'reimen', label: '韓国冷麺', factor: { kcal: 0.91 } },
@@ -257,7 +257,7 @@ const BUCKET_JAPANESE_NOODLES: Identity[] = [
     primaryHome: { tab: 'dish', bucket: 'japanese_noodles' },
     defaultMacro: { kcal: 510, protein: 16, fat: 9, carbs: 92 },
     referenceDescription: '麺250g (生1玉) + 出汁',
-    amount: { unit: 'serving', default: 1.0, chips: [{ label: '小', value: 0.5 }, { label: '1人前', value: 1.0 }, { label: '大盛', value: 1.5 }, { label: '特盛', value: 2.0 }] },
+    amount: { unit: 'percent', default: 100, chips: [{ label: '小', value: 50 }, { label: '1人前', value: 100 }, { label: '大盛', value: 150 }, { label: '特盛', value: 200 }] },
     attributes: [
       { key: 'kake', label: 'かけ', isDefault: true },
       { key: 'bukkake', label: 'ぶっかけ' },
@@ -265,8 +265,8 @@ const BUCKET_JAPANESE_NOODLES: Identity[] = [
       { key: 'tsukimi', label: '月見', factor: { kcal: 1.09, protein: 1.25, fat: 1.11 } },
       { key: 'kamaage', label: '釜揚げ' },
     ],
-    defaultAddonIds: ['egg', 'tempura_top', 'kitsune_top'],
-    allowedAddonIds: ['egg', 'tempura_top', 'kitsune_top', 'butter_cream'],
+    defaultAddonIds: ['egg', 'tempura_top', 'tororo'],
+    allowedAddonIds: ['egg', 'tempura_top', 'kitsune_top', 'tororo'],
   },
   {
     id: 'soba',
@@ -274,7 +274,7 @@ const BUCKET_JAPANESE_NOODLES: Identity[] = [
     primaryHome: { tab: 'dish', bucket: 'japanese_noodles' },
     defaultMacro: { kcal: 460, protein: 17, fat: 5, carbs: 87 },
     referenceDescription: '麺250g (生1玉) + つゆ',
-    amount: { unit: 'serving', default: 1.0, chips: [{ label: '小', value: 0.5 }, { label: '1人前', value: 1.0 }, { label: '大盛', value: 1.5 }, { label: '特盛', value: 2.0 }] },
+    amount: { unit: 'percent', default: 100, chips: [{ label: '小', value: 50 }, { label: '1人前', value: 100 }, { label: '大盛', value: 150 }, { label: '特盛', value: 200 }] },
     attributes: [
       { key: 'kake', label: 'かけ', isDefault: true },
       { key: 'zaru', label: 'ざる', factor: { kcal: 0.89 } },
@@ -289,7 +289,7 @@ const BUCKET_JAPANESE_NOODLES: Identity[] = [
     primaryHome: { tab: 'dish', bucket: 'japanese_noodles' },
     defaultMacro: { kcal: 665, protein: 22, fat: 17, carbs: 98 },
     referenceDescription: '麺250g + 天ぷら2-3個',
-    amount: { unit: 'serving', default: 1.0, chips: [{ label: '1人前', value: 1.0 }, { label: '大盛', value: 1.5 }] },
+    amount: { unit: 'percent', default: 100, chips: [{ label: '1人前', value: 100 }, { label: '大盛', value: 150 }] },
     attributes: [
       { key: 'tempura_soba', label: '天そば', isDefault: true },
       { key: 'tempura_udon', label: '天ぷらうどん' },
@@ -302,7 +302,7 @@ const BUCKET_JAPANESE_NOODLES: Identity[] = [
     primaryHome: { tab: 'dish', bucket: 'japanese_noodles' },
     defaultMacro: { kcal: 560, protein: 18, fat: 16, carbs: 86 },
     referenceDescription: '麺250g + 具炒め',
-    amount: { unit: 'serving', default: 1.0, chips: [{ label: '1人前', value: 1.0 }, { label: '大盛', value: 1.5 }] },
+    amount: { unit: 'percent', default: 100, chips: [{ label: '1人前', value: 100 }, { label: '大盛', value: 150 }] },
     defaultAddonIds: ['katsuobushi', 'sauce'],
     allowedAddonIds: ['katsuobushi', 'sauce', 'egg'],
   },
@@ -312,7 +312,7 @@ const BUCKET_JAPANESE_NOODLES: Identity[] = [
     primaryHome: { tab: 'dish', bucket: 'japanese_noodles' },
     defaultMacro: { kcal: 430, protein: 12, fat: 4, carbs: 86 },
     referenceDescription: '麺100g (乾麺) + つゆ',
-    amount: { unit: 'serving', default: 1.0, chips: [{ label: '1人前', value: 1.0 }, { label: '大盛', value: 1.5 }] },
+    amount: { unit: 'percent', default: 100, chips: [{ label: '1人前', value: 100 }, { label: '大盛', value: 150 }] },
   },
 ];
 
@@ -327,7 +327,7 @@ const BUCKET_PASTA: Identity[] = [
     primaryHome: { tab: 'dish', bucket: 'pasta' },
     defaultMacro: { kcal: 680, protein: 22, fat: 19, carbs: 102 },
     referenceDescription: '麺250g (茹で) + トマトソース・基本具',
-    amount: { unit: 'serving', default: 1.0, chips: [{ label: '小', value: 0.5 }, { label: '1皿', value: 1.0 }, { label: '大盛', value: 1.5 }, { label: 'しっかり', value: 2.0 }] },
+    amount: { unit: 'percent', default: 100, chips: [{ label: '小', value: 50 }, { label: '1皿', value: 100 }, { label: '大盛', value: 150 }, { label: 'しっかり', value: 200 }] },
     defaultAddonIds: ['cheese', 'bacon_sausage'],
     allowedAddonIds: ['cheese', 'bacon_sausage', 'egg'],
   },
@@ -337,7 +337,7 @@ const BUCKET_PASTA: Identity[] = [
     primaryHome: { tab: 'dish', bucket: 'pasta' },
     defaultMacro: { kcal: 700, protein: 20, fat: 28, carbs: 88 },
     referenceDescription: '麺250g + オイル+ガーリック・少量具',
-    amount: { unit: 'serving', default: 1.0, chips: [{ label: '小', value: 0.5 }, { label: '1皿', value: 1.0 }, { label: '大盛', value: 1.5 }] },
+    amount: { unit: 'percent', default: 100, chips: [{ label: '小', value: 50 }, { label: '1皿', value: 100 }, { label: '大盛', value: 150 }] },
     defaultAddonIds: ['cheese'], // oil 重複は冗長なので allowed のみに
     allowedAddonIds: ['cheese', 'oil', 'bacon_sausage'],
   },
@@ -347,7 +347,7 @@ const BUCKET_PASTA: Identity[] = [
     primaryHome: { tab: 'dish', bucket: 'pasta' },
     defaultMacro: { kcal: 780, protein: 24, fat: 36, carbs: 86 },
     referenceDescription: '麺250g + クリームソース・チーズ',
-    amount: { unit: 'serving', default: 1.0, chips: [{ label: '小', value: 0.5 }, { label: '1皿', value: 1.0 }, { label: '大盛', value: 1.5 }] },
+    amount: { unit: 'percent', default: 100, chips: [{ label: '小', value: 50 }, { label: '1皿', value: 100 }, { label: '大盛', value: 150 }] },
     defaultAddonIds: ['cheese', 'bacon_sausage'],
   },
   {
@@ -356,7 +356,7 @@ const BUCKET_PASTA: Identity[] = [
     primaryHome: { tab: 'dish', bucket: 'pasta' },
     defaultMacro: { kcal: 690, protein: 26, fat: 22, carbs: 96 },
     referenceDescription: '麺250g + ミートソース',
-    amount: { unit: 'serving', default: 1.0, chips: [{ label: '小', value: 0.5 }, { label: '1皿', value: 1.0 }, { label: '大盛', value: 1.5 }] },
+    amount: { unit: 'percent', default: 100, chips: [{ label: '小', value: 50 }, { label: '1皿', value: 100 }, { label: '大盛', value: 150 }] },
     defaultAddonIds: ['cheese'],
   },
   {
@@ -365,7 +365,7 @@ const BUCKET_PASTA: Identity[] = [
     primaryHome: { tab: 'dish', bucket: 'pasta' },
     defaultMacro: { kcal: 620, protein: 20, fat: 20, carbs: 88 },
     referenceDescription: '麺250g + 醤油・和風具',
-    amount: { unit: 'serving', default: 1.0, chips: [{ label: '小', value: 0.5 }, { label: '1皿', value: 1.0 }, { label: '大盛', value: 1.5 }] },
+    amount: { unit: 'percent', default: 100, chips: [{ label: '小', value: 50 }, { label: '1皿', value: 100 }, { label: '大盛', value: 150 }] },
     defaultAddonIds: ['egg', 'nori_furikake'],
     allowedAddonIds: ['egg', 'nori_furikake', 'cheese'],
   },
@@ -398,7 +398,7 @@ const BUCKET_SUSHI: Identity[] = [
     primaryHome: { tab: 'dish', bucket: 'sushi' },
     defaultMacro: { kcal: 600, protein: 28, fat: 14, carbs: 90 },
     referenceDescription: 'ご飯200g + 海鮮5切+錦糸卵',
-    amount: { unit: 'serving', default: 1.0, chips: [{ label: '並', value: 1.0 }, { label: '大盛', value: 1.5 }] },
+    amount: { unit: 'percent', default: 100, chips: [{ label: '並', value: 100 }, { label: '大盛', value: 150 }] },
   },
   {
     id: 'maki',
@@ -557,13 +557,13 @@ const BUCKET_MISC_DISH: Identity[] = [
     defaultMacro: { kcal: 850, protein: 32, fat: 30, carbs: 108 },
     referenceDescription: 'ご飯200g+主菜+副菜+味噌汁',
     amount: {
-      unit: 'serving',
-      default: 1.0,
+      unit: 'percent',
+      default: 100,
       unitLabel: '食',
       chips: [
-        { label: '軽め', value: 0.7 },
-        { label: '1食', value: 1.0 },
-        { label: 'しっかり', value: 1.5 },
+        { label: '軽め', value: 70 },
+        { label: '1食', value: 100 },
+        { label: 'しっかり', value: 150 },
       ],
     },
     attributes: [
@@ -582,13 +582,13 @@ const BUCKET_MISC_DISH: Identity[] = [
     defaultMacro: { kcal: 700, protein: 23, fat: 20, carbs: 98 },
     referenceDescription: 'ご飯+主菜+副菜 (お弁当箱1食)',
     amount: {
-      unit: 'serving',
-      default: 1.0,
+      unit: 'percent',
+      default: 100,
       unitLabel: '食',
       chips: [
-        { label: '軽め', value: 0.7 },
-        { label: '1食', value: 1.0 },
-        { label: 'しっかり', value: 1.5 },
+        { label: '軽め', value: 70 },
+        { label: '1食', value: 100 },
+        { label: 'しっかり', value: 150 },
       ],
     },
     // 主菜タイプで Attribute 分け (旧 コンビニ/手作り/幕の内/駅弁 はPFC収束しないので廃止)
@@ -610,7 +610,7 @@ const BUCKET_MISC_DISH: Identity[] = [
     quickTapDisabled: true, // Attribute お好み焼き/広島/もんじゃ/たこ焼き: kcal 420-852
     defaultMacro: { kcal: 580, protein: 20, fat: 24, carbs: 70 },
     referenceDescription: '1枚=生地+具+卵 (お好み焼き相当)',
-    amount: { unit: 'serving', default: 1.0, unitLabel: '枚', chips: [{ label: '半分', value: 0.5 }, { label: '1枚', value: 1.0 }] },
+    amount: { unit: 'piece', default: 1, unitLabel: '枚', step: 0.5, chips: [{ label: '半分', value: 50 }, { label: '1枚', value: 1 }, { label: '2枚', value: 2 }] },
     attributes: [
       { key: 'okonomiyaki', label: 'お好み焼き', isDefault: true },
       { key: 'hiroshima', label: '広島お好み焼き', factor: { kcal: 1.47, protein: 1.6, fat: 1.33, carbs: 1.54 } },
@@ -682,7 +682,7 @@ const BUCKET_MISC_DISH: Identity[] = [
     primaryHome: { tab: 'dish', bucket: 'misc_dish' },
     defaultMacro: { kcal: 700, protein: 33, fat: 35, carbs: 41 },
     referenceDescription: '肉150g+野菜+つゆ (1人前)',
-    amount: { unit: 'serving', default: 1.0, chips: [{ label: '軽め', value: 0.7 }, { label: '1人前', value: 1.0 }, { label: 'しっかり', value: 1.5 }] },
+    amount: { unit: 'percent', default: 100, chips: [{ label: '軽め', value: 70 }, { label: '1人前', value: 100 }, { label: 'しっかり', value: 150 }] },
     attributes: [
       { key: 'sukiyaki', label: 'すき焼き', isDefault: true },
       { key: 'shabu', label: 'しゃぶしゃぶ', factor: { kcal: 0.93, fat: 0.86 } },
@@ -694,7 +694,7 @@ const BUCKET_MISC_DISH: Identity[] = [
     primaryHome: { tab: 'dish', bucket: 'misc_dish' },
     defaultMacro: { kcal: 450, protein: 28, fat: 14, carbs: 42 },
     referenceDescription: '肉100g+野菜+出汁 (1人前)',
-    amount: { unit: 'serving', default: 1.0, chips: [{ label: '軽め', value: 0.7 }, { label: '1人前', value: 1.0 }, { label: 'しっかり', value: 1.5 }] },
+    amount: { unit: 'percent', default: 100, chips: [{ label: '軽め', value: 70 }, { label: '1人前', value: 100 }, { label: 'しっかり', value: 150 }] },
     // おでんは具のばらつきが大きすぎるため除外。食材タブから個別記録推奨
     attributes: [
       { key: 'yose', label: '寄せ鍋', isDefault: true },
@@ -727,7 +727,7 @@ const BUCKET_MISC_DISH: Identity[] = [
     primaryHome: { tab: 'dish', bucket: 'misc_dish' },
     defaultMacro: { kcal: 40, protein: 2.5, fat: 1, carbs: 4 },
     referenceDescription: '1杯=200ml相当',
-    amount: { unit: 'piece', default: 1, unitLabel: '杯', chips: [{ label: '1杯', value: 1 }, { label: '大', value: 1.5 }] },
+    amount: { unit: 'piece', default: 1, unitLabel: '杯', chips: [{ label: '1杯', value: 1 }, { label: '大', value: 150 }] },
     attributes: [
       { key: 'light', label: '具薄', isDefault: true },
       { key: 'rich', label: '具沢山', factor: { kcal: 2.0, protein: 2.0, fat: 3.0, carbs: 2.0 } },
@@ -739,7 +739,7 @@ const BUCKET_MISC_DISH: Identity[] = [
     primaryHome: { tab: 'dish', bucket: 'misc_dish' },
     defaultMacro: { kcal: 165, protein: 8, fat: 8, carbs: 15 },
     referenceDescription: '1杯=200ml相当 (豚肉・根菜入り)',
-    amount: { unit: 'piece', default: 1, unitLabel: '杯', chips: [{ label: '1杯', value: 1 }, { label: '大', value: 1.5 }] },
+    amount: { unit: 'piece', default: 1, unitLabel: '杯', chips: [{ label: '1杯', value: 1 }, { label: '大', value: 150 }] },
   },
   {
     id: 'soup_western',

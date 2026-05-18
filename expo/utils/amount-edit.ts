@@ -284,6 +284,7 @@ const UNIT_LABEL_FALLBACK: Record<AmountUnit, string> = {
   ml: 'ml',
   piece: '個',
   serving: '人前',
+  percent: '%',
   plate: '皿',
   slice: '切',
   cut: '切れ',
@@ -298,13 +299,21 @@ const UNIT_LABEL_FALLBACK: Record<AmountUnit, string> = {
 export function buildIdentityAmountEditConfig(
   spec: AmountSpec & { min?: number; max?: number; step?: number },
 ): AmountEditConfig {
-  const step = spec.step ?? 1;
+  // Percent unit gets a coarser default step (10) and a wider min/max envelope
+  // that matches what user can sensibly express: 10% – 400% (= 1/10 to 4 servings).
+  const isPercent = spec.unit === 'percent';
+  const step = spec.step ?? (isPercent ? 10 : 1);
   const presets: number[] = (spec.chips ?? []).map((c) => c.value);
 
-  const derivedMin = spec.min ?? 1;
+  const derivedMin = spec.min ?? (isPercent ? 10 : 1);
   const lastChipValue = presets.at(-1);
   const derivedMax =
-    spec.max ?? (lastChipValue !== undefined ? lastChipValue * 4 : spec.default * 4);
+    spec.max ??
+    (isPercent
+      ? Math.max((lastChipValue ?? spec.default) * 2, 400)
+      : lastChipValue !== undefined
+      ? lastChipValue * 4
+      : spec.default * 4);
 
   const unitLabel = spec.unitLabel ?? UNIT_LABEL_FALLBACK[spec.unit] ?? spec.unit;
 
