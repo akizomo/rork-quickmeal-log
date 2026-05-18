@@ -24,19 +24,27 @@
         "NSPrivacyAccessedAPITypes": [
           {
             "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
-            "NSPrivacyAccessedAPIReasons": ["CA92.1"]
+            "NSPrivacyAccessedAPIReasons": [
+              "CA92.1"
+            ]
           },
           {
             "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryFileTimestamp",
-            "NSPrivacyAccessedAPIReasons": ["C617.1"]
+            "NSPrivacyAccessedAPIReasons": [
+              "C617.1"
+            ]
           },
           {
             "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategorySystemBootTime",
-            "NSPrivacyAccessedAPIReasons": ["35F9.1"]
+            "NSPrivacyAccessedAPIReasons": [
+              "35F9.1"
+            ]
           },
           {
             "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryDiskSpace",
-            "NSPrivacyAccessedAPIReasons": ["E174.1"]
+            "NSPrivacyAccessedAPIReasons": [
+              "E174.1"
+            ]
           }
         ]
       }
@@ -64,7 +72,15 @@
           "healthUpdatePermission": "Hachibu からヘルスデータを書き込むことはありません。"
         }
       ],
-      "react-native-health-connect"
+      "react-native-health-connect",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "minSdkVersion": 26
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
