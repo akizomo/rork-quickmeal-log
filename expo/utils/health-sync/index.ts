@@ -7,8 +7,13 @@
  * に混入することを防ぐ。
  */
 
+import { Linking, Platform } from 'react-native';
+
 import { healthAdapter } from './adapter';
 import type { HealthSyncResult, HealthSyncStatus } from './types';
+
+/** Android Health Connect provider のパッケージ名 */
+const HEALTH_CONNECT_PACKAGE = 'com.google.android.apps.healthdata';
 
 export type {
   HealthBodyFatSample,
@@ -43,4 +48,23 @@ export function syncFromHealth(
 /** 現在の同期権限状態 */
 export function getHealthSyncStatus(): Promise<HealthSyncStatus> {
   return healthAdapter.getStatus();
+}
+
+/**
+ * Android: Health Connect プロバイダの Play Store ページを開く。
+ * iOS / Web では何もしない。
+ *
+ * - market:// が解決できない端末 (Play Store 未インストール) では
+ *   通常の https の Play Store URL にフォールバックする。
+ */
+export async function openHealthConnectInstallPage(): Promise<void> {
+  if (Platform.OS !== 'android') return;
+  const marketUrl = `market://details?id=${HEALTH_CONNECT_PACKAGE}`;
+  const webUrl = `https://play.google.com/store/apps/details?id=${HEALTH_CONNECT_PACKAGE}`;
+  try {
+    const canOpen = await Linking.canOpenURL(marketUrl);
+    await Linking.openURL(canOpen ? marketUrl : webUrl);
+  } catch {
+    await Linking.openURL(webUrl).catch(() => undefined);
+  }
 }

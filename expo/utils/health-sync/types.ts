@@ -8,7 +8,13 @@
 
 export type HealthMetricSource = 'manual' | 'health';
 
-export type HealthSyncStatus = 'unsupported' | 'unauthorized' | 'authorized' | 'unknown';
+export type HealthSyncStatus =
+  | 'unsupported'              // OS/プラットフォーム自体が非対応 (Web, 旧Android, など)
+  | 'provider_missing'         // Android: Health Connect プロバイダ未インストール
+  | 'provider_update_required' // Android: Health Connect プロバイダのアップデート要
+  | 'unauthorized'             // SDK 利用可能だが権限未許可
+  | 'authorized'               // 権限許可済み
+  | 'unknown';
 
 export interface HealthWeightSample {
   /** YYYY-MM-DD */

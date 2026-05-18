@@ -167,6 +167,14 @@ export default function StatusRoute() {
                   lastSyncedAt={healthSync.lastSyncedAt}
                   lastError={healthSync.lastError}
                   onPress={async () => {
+                    // プロバイダ未インストール / 要更新は Play Store へ明示遷移
+                    if (
+                      healthSync.status === 'provider_missing' ||
+                      healthSync.status === 'provider_update_required'
+                    ) {
+                      await healthSync.openInstallPage();
+                      return;
+                    }
                     if (healthSync.status !== 'authorized') {
                       const granted = await healthSync.requestPermissions();
                       if (!granted) return;
@@ -278,20 +286,46 @@ function HealthSyncRow({
   lastError,
   onPress,
 }: {
-  status: 'unsupported' | 'unauthorized' | 'authorized' | 'unknown';
+  status:
+    | 'unsupported'
+    | 'provider_missing'
+    | 'provider_update_required'
+    | 'unauthorized'
+    | 'authorized'
+    | 'unknown';
   syncing: boolean;
   lastSyncedAt: string | null;
   lastError: string | null;
   onPress: () => void;
 }) {
   const theme = useTheme();
-  const label = useMemo(() => {
-    if (syncing) return '同期中...';
-    if (lastError) return '同期できませんでした。設定で権限を確認してください';
-    if (status === 'authorized' && lastSyncedAt) {
-      return `最終同期: ${formatRelativeTime(lastSyncedAt)}`;
+  const { label, sub } = useMemo(() => {
+    if (syncing) return { label: '同期中...', sub: null as string | null };
+    if (status === 'provider_missing') {
+      return {
+        label: 'Health Connect を入手',
+        sub: 'Android 連携には Health Connect アプリが必要です',
+      };
     }
-    return 'ヘルスデータを同期';
+    if (status === 'provider_update_required') {
+      return {
+        label: 'Health Connect を更新',
+        sub: 'Play Store で最新版に更新してください',
+      };
+    }
+    if (lastError) {
+      return {
+        label: '同期できませんでした',
+        sub: '設定で権限を確認してください',
+      };
+    }
+    if (status === 'authorized' && lastSyncedAt) {
+      return {
+        label: `最終同期: ${formatRelativeTime(lastSyncedAt)}`,
+        sub: null,
+      };
+    }
+    return { label: 'ヘルスデータを同期', sub: null };
   }, [syncing, lastError, status, lastSyncedAt]);
 
   return (
@@ -300,7 +334,7 @@ function HealthSyncRow({
       disabled={syncing}
       testID="status-health-sync"
       accessibilityRole="button"
-      accessibilityLabel="ヘルスデータを同期"
+      accessibilityLabel={label}
       accessibilityState={{ disabled: syncing, busy: syncing }}
       style={({ pressed }) => [
         styles.healthSyncRow,
@@ -310,9 +344,16 @@ function HealthSyncRow({
         },
       ]}
     >
-      <Body weight="bold" tone="primary" style={{ flex: 1 }}>
-        {label}
-      </Body>
+      <View style={{ flex: 1, gap: 2 }}>
+        <Body weight="bold" tone="primary">
+          {label}
+        </Body>
+        {sub ? (
+          <Body size="sm" tone="secondary">
+            {sub}
+          </Body>
+        ) : null}
+      </View>
       {syncing ? <ActivityIndicator size="small" color={theme.colors.content.tertiary} /> : null}
     </Pressable>
   );

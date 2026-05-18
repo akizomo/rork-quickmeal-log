@@ -13,6 +13,10 @@ import { useAppState } from '@/providers/app-state-provider';
  *
  * `decideInitialRoute()` が `healthConnectSeenAtISO` を見て遷移する。
  * 連携 / スキップどちらでも `markHealthConnectSeen()` を呼び、`/` へ戻す。
+ *
+ * v1.7+: Android の Health Connect プロバイダ未インストール / 要更新時は、
+ * 自動 Play Store 遷移を回避してユーザーに明示的に伝える。「インストールへ」
+ * ボタンで Play Store を能動的に開き、戻ってきたタイミングで再度連携できる。
  */
 export default function HealthConnectRoute() {
   const router = useRouter();
@@ -38,6 +42,21 @@ export default function HealthConnectRoute() {
       goHome();
     }
   }, [busy, goHome, healthSync]);
+
+  const handleInstallProvider = useCallback(async () => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await healthSync.openInstallPage();
+    } finally {
+      setBusy(false);
+    }
+  }, [busy, healthSync]);
+
+  const providerMissing =
+    healthSync.status === 'provider_missing' ||
+    healthSync.status === 'provider_update_required';
+  const needsInstall = providerMissing && healthSync.supported;
 
   return (
     <>
@@ -69,6 +88,16 @@ export default function HealthConnectRoute() {
                 <Caption tone="secondary">・歩数 / 消費カロリー (今後)</Caption>
                 <Caption tone="secondary">・運動セッション (今後)</Caption>
               </Card>
+              {needsInstall ? (
+                <Card variant="raised" style={{ gap: t.spacing['1'] }}>
+                  <Body weight="semibold">Health Connect が必要です</Body>
+                  <Caption tone="secondary">
+                    {healthSync.status === 'provider_update_required'
+                      ? 'インストール済みの Health Connect アプリのアップデートが必要です。Play Store で更新してから戻ってきてください。'
+                      : 'Android では Google の Health Connect アプリ経由でデータを取り込みます。Play Store からインストールして戻ってきてください。'}
+                  </Caption>
+                </Card>
+              ) : null}
               {!healthSync.supported ? (
                 <Caption tone="tertiary" align="center" testID="health-connect-unsupported">
                   このプラットフォームではヘルスデータ連携は利用できません。
@@ -96,15 +125,27 @@ export default function HealthConnectRoute() {
                 <Caption tone="link">あとで</Caption>
               </Pressable>
             ) : null}
-            <Button
-              label={healthSync.supported ? '連携する' : 'はじめる'}
-              variant="primary"
-              size="lg"
-              fullWidth
-              onPress={healthSync.supported ? handleConnect : goHome}
-              disabled={busy}
-              testID="health-connect-cta"
-            />
+            {needsInstall ? (
+              <Button
+                label={healthSync.status === 'provider_update_required' ? 'Play Store で更新' : 'Health Connect を入手'}
+                variant="primary"
+                size="lg"
+                fullWidth
+                onPress={handleInstallProvider}
+                disabled={busy}
+                testID="health-connect-install-cta"
+              />
+            ) : (
+              <Button
+                label={healthSync.supported ? '連携する' : 'はじめる'}
+                variant="primary"
+                size="lg"
+                fullWidth
+                onPress={healthSync.supported ? handleConnect : goHome}
+                disabled={busy}
+                testID="health-connect-cta"
+              />
+            )}
           </View>
         </SafeAreaView>
       </View>
