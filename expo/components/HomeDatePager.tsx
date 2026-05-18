@@ -42,6 +42,8 @@ function computeQuickLogHeight(screenWidth: number): number {
 
 interface HomeDatePagerProps {
   onViewedDateChange?: (date: Date) => void;
+  /** StatusCard 左「食事」エリアタップ時の callback (DayLogBottomSheet を開く用途) */
+  onFoodPress?: () => void;
 }
 
 interface DayPageProps {
@@ -49,15 +51,16 @@ interface DayPageProps {
   width: number;
   height: number;
   bottomReserve: number;
+  onFoodPress?: () => void;
 }
 
-const DayPage = memo(function DayPage({ date, width, height, bottomReserve }: DayPageProps) {
+const DayPage = memo(function DayPage({ date, width, height, bottomReserve, onFoodPress }: DayPageProps) {
   // height === 0 (初回 layout 前) は flex:1 にフォールバック。
   // 確定したら明示 height + 中央寄せ + 下端リザーブで StatusCard を画面中央に配置。
   if (height <= 0) {
     return (
       <View style={[styles.page, { width }]}>
-        <StatusCard viewedDate={date} />
+        <StatusCard viewedDate={date} onFoodPress={onFoodPress} />
       </View>
     );
   }
@@ -72,12 +75,12 @@ const DayPage = memo(function DayPage({ date, width, height, bottomReserve }: Da
         justifyContent: 'center',
       }}
     >
-      <StatusCard viewedDate={date} />
+      <StatusCard viewedDate={date} onFoodPress={onFoodPress} />
     </View>
   );
 });
 
-export const HomeDatePager = memo(function HomeDatePager({ onViewedDateChange }: HomeDatePagerProps) {
+export const HomeDatePager = memo(function HomeDatePager({ onViewedDateChange, onFoodPress }: HomeDatePagerProps) {
   // Defensive default — useAppState() can momentarily return undefined during
   // ErrorBoundary recovery / fast HMR re-mounts before the provider context is
   // wired up. Read each field through optional chaining + per-field fallbacks
@@ -184,9 +187,15 @@ export const HomeDatePager = memo(function HomeDatePager({ onViewedDateChange }:
 
   const renderItem = useCallback(
     ({ item }: ListRenderItemInfo<Date>) => (
-      <DayPage date={item} width={width} height={pagerHeight} bottomReserve={bottomReserve} />
+      <DayPage
+        date={item}
+        width={width}
+        height={pagerHeight}
+        bottomReserve={bottomReserve}
+        onFoodPress={onFoodPress}
+      />
     ),
-    [width, pagerHeight, bottomReserve]
+    [width, pagerHeight, bottomReserve, onFoodPress]
   );
 
   const getItemLayout = useCallback(

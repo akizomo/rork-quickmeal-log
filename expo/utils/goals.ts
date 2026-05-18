@@ -359,11 +359,16 @@ export function macroFromGrams(kcal: number, proteinG: number, fatG: number, car
  *   Lv3 moderate   → regular workouts already in TDEE → ~150 kcal baseline
  *   Lv4 active     → heavy training already in TDEE → ~300 kcal baseline
  */
+/**
+ * @deprecated v1.7+ で使用停止。業界標準 (YAZIO/MFP/あすけん) に合わせて
+ * 運動 gross を全額加算する方式に変更したため、per-session baseline は不要。
+ * 後方互換のため定数定義は残すが、`calcExerciseNetKcal` 内では参照しない。
+ */
 export const EXERCISE_BASELINE_KCAL: Record<ActivityLevel, number> = {
   1: 0,
-  2: 50,
-  3: 150,
-  4: 300,
+  2: 0,
+  3: 0,
+  4: 0,
 };
 
 export const EXERCISE_TYPES = [
@@ -385,12 +390,18 @@ export function calcExerciseGrossKcal(met: number, weightKg: number, minutes: nu
 }
 
 /**
- * Net (additive) kcal after subtracting the activity-level baseline.
- * This prevents double-counting calories already built into the user's TDEE.
+ * 運動が今日の目標に加算される kcal。
+ *
+ * v1.7+ で **per-session baseline 差引を廃止** し、業界標準 (YAZIO / MyFitnessPal /
+ * あすけん) に合わせて gross 全額加算とする:
+ *   - 活動係数 (RMR×factor) はあくまで "日常生活" の代謝想定
+ *   - 意図的に記録された運動はそのまま目標に加算
+ *   - 二重計上の責任は活動係数の選択に委ねる (オンボでヒント表示)
+ *
+ * 第2引数 `activityLevel` は後方互換のため残してあるが、使用していない。
  */
-export function calcExerciseNetKcal(grossKcal: number, activityLevel: ActivityLevel): number {
-  const baseline = EXERCISE_BASELINE_KCAL[activityLevel] ?? 0;
-  return Math.max(0, grossKcal - baseline);
+export function calcExerciseNetKcal(grossKcal: number, _activityLevel?: ActivityLevel): number {
+  return Math.max(0, Math.round(grossKcal));
 }
 
 /**

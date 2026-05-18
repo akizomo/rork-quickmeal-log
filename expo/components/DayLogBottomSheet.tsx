@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import {
   Animated,
   PanResponder,
@@ -127,7 +127,13 @@ interface Props {
   viewedDate: Date;
 }
 
-export const DayLogBottomSheet = memo(function DayLogBottomSheet({ viewedDate }: Props) {
+export interface DayLogBottomSheetRef {
+  /** half スナップを呼び出す (親からのタップで開く用途) */
+  snapToHalf: () => void;
+}
+
+export const DayLogBottomSheet = memo(
+  forwardRef<DayLogBottomSheetRef, Props>(function DayLogBottomSheet({ viewedDate }, ref) {
   const { logs, todayLogs, todayMacro } = useAppState();
   const { height: screenHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -182,6 +188,10 @@ export const DayLogBottomSheet = memo(function DayLogBottomSheet({ viewedDate }:
     },
     [snapTargets, translateY]
   );
+
+  useImperativeHandle(ref, () => ({
+    snapToHalf: () => animateTo('half'),
+  }), [animateTo]);
 
   useEffect(() => {
     animateTo(stage);
@@ -303,7 +313,8 @@ export const DayLogBottomSheet = memo(function DayLogBottomSheet({ viewedDate }:
       </Animated.View>
     </>
   );
-});
+}));
+DayLogBottomSheet.displayName = 'DayLogBottomSheet';
 
 const styles = StyleSheet.create({
   backdrop: {

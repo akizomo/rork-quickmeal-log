@@ -55,7 +55,16 @@
     "plugins": [
       "expo-router",
       "expo-font",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "react-native-health",
+        {
+          "isClinicalDataEnabled": false,
+          "healthSharePermission": "歩数・運動・体重・体脂肪率などのヘルスデータを取り込んで、毎日のカロリー目標調整に使います。",
+          "healthUpdatePermission": "Hachibu からヘルスデータを書き込むことはありません。"
+        }
+      ],
+      "react-native-health-connect"
     ],
     "experiments": {
       "typedRoutes": true

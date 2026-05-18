@@ -55,11 +55,18 @@ export interface UserProfile {
   updatedAt: string;
 }
 
+/** 体重・体脂肪・運動ログのデータ取得元。UI 表示には使わない (デバッグ・重複排除用) */
+export type EntrySource = 'manual' | 'health';
+
 export interface WeightEntry {
   id: string;
   date: string;
   weightKg: number;
   createdAt: string;
+  /** v1.7+: 取得元。未指定は 'manual' とみなす */
+  source?: EntrySource;
+  /** v1.7+: Health SDK 由来エントリの安定 ID。重複排除に使用 */
+  healthSyncId?: string;
 }
 
 export interface BodyFatEntry {
@@ -67,6 +74,8 @@ export interface BodyFatEntry {
   date: string;
   bodyFatPct: number;
   createdAt: string;
+  source?: EntrySource;
+  healthSyncId?: string;
 }
 
 export interface FoodLogTopping {
@@ -138,6 +147,26 @@ export interface ExerciseLog {
   minutes: number;
   grossKcal: number;
   netKcal: number;
+  /** v1.7+: 取得元。未指定は 'manual' とみなす */
+  source?: EntrySource;
+  /** v1.7+: Health SDK 由来エントリの安定 ID。重複排除に使用 */
+  healthSyncId?: string;
+}
+
+/**
+ * v1.7+: 1日合計の活動データ (歩数 + アクティブエネルギー)。
+ * 個別 ExerciseLog (ワークアウト) と別軸でストック。日次・上書き保存。
+ * UI 上は ExerciseSheet 上部の「今日の活動」サマリで使用する (履歴一覧には出さない)。
+ */
+export interface DailyActivitySummary {
+  /** YYYY-MM-DD */
+  date: string;
+  steps: number;
+  /** アクティブエネルギー (kcal, 1日合計) */
+  activeKcal: number;
+  source: 'health';
+  /** 最終同期 ISO */
+  syncedAt: string;
 }
 
 export interface AppSettings {
@@ -158,6 +187,12 @@ export interface AppSettings {
   subscriptionStatus?: SubscriptionStatus;
   onboardingCompletedAtISO?: string | null;
   paywallSeenAtISO?: string | null;
+  /**
+   * v1.7+: ペイウォール突破後に表示するヘルス連携ステップを既に出したかどうか。
+   * `null` のとき次回ホーム遷移前に `/health-connect` を表示する。
+   * 連携・スキップどちらでも ISO 時刻が入る (二度と表示しない)。
+   */
+  healthConnectSeenAtISO?: string | null;
   /**
    * Per-category history of long-press quick-log selections (most recent first,
    * capped per category). Used to seed default values on the next sheet open

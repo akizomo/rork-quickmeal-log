@@ -2,6 +2,7 @@ import { Stack, useRouter } from 'expo-router';
 import { ChevronRight } from 'lucide-react-native';
 import React, { useMemo, useState } from 'react';
 import {
+  ActivityIndicator,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -17,6 +18,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { SettingsDivider, SettingsLinkRow, SettingsListCard, SettingsSectionLabel } from '@/components/SettingsList';
 import { TRIAL_DURATION_DAYS } from '@/constants/onboarding';
 import { Body, Caption, Card, Heading, useTheme } from '@/design-system';
+import { useHealthSync } from '@/hooks/use-health-sync';
 import { useAppState } from '@/providers/app-state-provider';
 import { trialDaysRemaining } from '@/utils/goals';
 
@@ -24,6 +26,7 @@ export default function StatusRoute() {
   const router = useRouter();
   const theme = useTheme();
   const { profile, settings, weights, addWeightEntry, addBodyFatEntry } = useAppState();
+  const healthSync = useHealthSync();
   const [weightSheetVisible, setWeightSheetVisible] = useState<boolean>(false);
   const [weightInput, setWeightInput] = useState<string>('');
   const [bfSheetVisible, setBfSheetVisible] = useState<boolean>(false);
@@ -157,6 +160,21 @@ export default function StatusRoute() {
                   <Text style={[styles.recordButtonText, { color: theme.colors.content.onAction }]}>体脂肪を記録</Text>
                 </Pressable>
               </View>
+              {healthSync.supported ? (
+                <HealthSyncRow
+                  status={healthSync.status}
+                  syncing={healthSync.syncing}
+                  lastSyncedAt={healthSync.lastSyncedAt}
+                  lastError={healthSync.lastError}
+                  onPress={async () => {
+                    if (healthSync.status !== 'authorized') {
+                      const granted = await healthSync.requestPermissions();
+                      if (!granted) return;
+                    }
+                    await healthSync.syncNow();
+                  }}
+                />
+              ) : null}
             </Card>
 
             {/* GOAL CARD */}
@@ -251,6 +269,63 @@ export default function StatusRoute() {
       />
     </>
   );
+}
+
+function HealthSyncRow({
+  status,
+  syncing,
+  lastSyncedAt,
+  lastError,
+  onPress,
+}: {
+  status: 'unsupported' | 'unauthorized' | 'authorized' | 'unknown';
+  syncing: boolean;
+  lastSyncedAt: string | null;
+  lastError: string | null;
+  onPress: () => void;
+}) {
+  const theme = useTheme();
+  const label = useMemo(() => {
+    if (syncing) return '同期中...';
+    if (lastError) return '同期できませんでした。設定で権限を確認してください';
+    if (status === 'authorized' && lastSyncedAt) {
+      return `最終同期: ${formatRelativeTime(lastSyncedAt)}`;
+    }
+    return 'ヘルスデータを同期';
+  }, [syncing, lastError, status, lastSyncedAt]);
+
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={syncing}
+      testID="status-health-sync"
+      accessibilityRole="button"
+      accessibilityLabel="ヘルスデータを同期"
+      accessibilityState={{ disabled: syncing, busy: syncing }}
+      style={({ pressed }) => [
+        styles.healthSyncRow,
+        {
+          backgroundColor: theme.colors.surface.sunken,
+          opacity: pressed && !syncing ? 0.7 : 1,
+        },
+      ]}
+    >
+      <Body weight="bold" tone="primary" style={{ flex: 1 }}>
+        {label}
+      </Body>
+      {syncing ? <ActivityIndicator size="small" color={theme.colors.content.tertiary} /> : null}
+    </Pressable>
+  );
+}
+
+function formatRelativeTime(iso: string): string {
+  const then = new Date(iso).getTime();
+  if (!Number.isFinite(then)) return '—';
+  const diffSec = Math.max(0, Math.floor((Date.now() - then) / 1000));
+  if (diffSec < 60) return 'たった今';
+  if (diffSec < 3600) return `${Math.floor(diffSec / 60)}分前`;
+  if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}時間前`;
+  return `${Math.floor(diffSec / 86400)}日前`;
 }
 
 function HeroMetric({ label, value, target }: { label: string; value: string; target: string }) {
@@ -429,6 +504,14 @@ const styles = StyleSheet.create({
   recordButtonRow: { flexDirection: 'row', gap: 10 },
   recordButton: { flex: 1, borderRadius: 999, paddingVertical: 12, alignItems: 'center' },
   recordButtonText: { fontSize: 14, fontWeight: '700' },
+  healthSyncRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
   goalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   trialRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   changeRow: { flexDirection: 'row', alignItems: 'center', gap: 2 },

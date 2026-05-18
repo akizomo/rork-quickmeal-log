@@ -37,32 +37,39 @@ export interface ActivityLevelInfo {
   proteinPerKg: number; // g/kg body weight (maintenance baseline)
 }
 
+/**
+ * 普段の生活活動量。
+ * v1.7+: モデルを「運動は別途記録、gross 全額加算」(YAZIO / MFP / あすけん 方式) に
+ * 変更したため、ここでは **運動を除いた日常生活の動き** だけを聞く。
+ *
+ * 倍率 (factor) は標準的な PAL 係数を維持。
+ */
 export const ACTIVITY_LEVEL_OPTIONS: ActivityLevelInfo[] = [
   {
     level: 1,
-    label: 'ほとんど運動しない',
-    hint: 'デスクワーク中心・座りがち',
+    label: 'デスクワーク中心',
+    hint: '1日の大半が座り (在宅勤務・PC作業)',
     factor: 1.2,
     proteinPerKg: 1.2,
   },
   {
     level: 2,
-    label: '軽めに動く',
-    hint: '週1〜2回の散歩・軽い運動、立ち仕事',
+    label: '立ち仕事・歩きがある',
+    hint: '接客・教員・通勤で歩くなど',
     factor: 1.375,
     proteinPerKg: 1.4,
   },
   {
     level: 3,
-    label: 'よく運動する',
-    hint: '週3〜4回の運動、筋トレあり',
+    label: '動き回る仕事',
+    hint: '看護・営業・配達など歩き回る',
     factor: 1.55,
     proteinPerKg: 1.6,
   },
   {
     level: 4,
-    label: 'しっかり鍛えている',
-    hint: '週5回以上・筋トレ中心・スポーツ',
+    label: '体力仕事',
+    hint: '建築・農業・運送など重労働',
     factor: 1.725,
     proteinPerKg: 1.8,
   },

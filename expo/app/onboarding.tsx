@@ -500,8 +500,11 @@ function StepActivity({
 }) {
   return (
     <View style={stepWrap}>
-      <Heading size="2xl">普段の運動習慣は？</Heading>
-      <Body tone="secondary">→ 必要カロリーとタンパク質量の精度が上がります</Body>
+      <Heading size="2xl">普段の生活はどんな感じ？</Heading>
+      <Body tone="secondary">→ 仕事や日常の動きから 1日の代謝を見積もります</Body>
+      <Caption tone="tertiary">
+        運動は別途記録すれば自動で目標に加算されます。ここでは普段の生活パターンだけ選んでください。
+      </Caption>
       <View style={cardColBottom}>
         {ACTIVITY_LEVEL_OPTIONS.map((opt) => (
           <SelectCard
