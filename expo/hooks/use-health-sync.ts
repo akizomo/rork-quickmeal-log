@@ -5,6 +5,7 @@ import {
   HEALTH_SYNC_RANGE_DAYS,
   getHealthSyncStatus,
   isHealthSyncSupported,
+  openHealthConnectInstallPage,
   requestHealthPermissions,
   syncFromHealth,
   type HealthSyncResult,
@@ -26,6 +27,8 @@ export interface UseHealthSyncReturn {
   syncNow: () => Promise<void>;
   /** 権限リクエスト */
   requestPermissions: () => Promise<boolean>;
+  /** Android: Health Connect プロバイダの Play Store ページを開く */
+  openInstallPage: () => Promise<void>;
 }
 
 /**
@@ -106,10 +109,21 @@ export function useHealthSync(): UseHealthSyncReturn {
 
   const requestPermissions = useCallback(async () => {
     if (!supported) return false;
+    // 🛡️ プロバイダ未インストール/要更新の状態で requestPermission を呼ぶと
+    // Play Store へ強制遷移してしまうので、事前ステータスを確認して中断する。
+    const current = await getHealthSyncStatus();
+    setStatus(current);
+    if (current === 'provider_missing' || current === 'provider_update_required' || current === 'unsupported') {
+      return false;
+    }
     const granted = await requestHealthPermissions();
     setStatus(granted ? 'authorized' : 'unauthorized');
     return granted;
   }, [supported]);
+
+  const openInstallPage = useCallback(async () => {
+    await openHealthConnectInstallPage();
+  }, []);
 
   useEffect(() => {
     if (!supported) return;
@@ -128,5 +142,6 @@ export function useHealthSync(): UseHealthSyncReturn {
     lastError,
     syncNow,
     requestPermissions,
+    openInstallPage,
   };
 }

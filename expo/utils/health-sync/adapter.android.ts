@@ -1,8 +1,10 @@
 import {
   getGrantedPermissions,
+  getSdkStatus,
   initialize,
   readRecords,
   requestPermission,
+  SdkAvailabilityStatus,
   type Permission,
 } from 'react-native-health-connect';
 
@@ -34,8 +36,38 @@ const REQUIRED_PERMISSIONS: Permission[] = [
 
 let initialized = false;
 
+/**
+ * Health Connect プロバイダの状態を細かく返す。
+ * - 'available': 利用可能 (initialize / requestPermission を呼んでよい)
+ * - 'provider_missing': プロバイダ未インストール (Play Store 経由でインストール必要)
+ * - 'provider_update_required': プロバイダのアップデート要
+ * - 'unsupported': プラットフォーム自体が非対応 (Android < 8.0 等)
+ *
+ * v1.7+: `initialize()` / `requestPermission()` は SDK が利用不可のとき
+ * Play Store へ自動遷移してしまうので、必ず先にこのチェックを通す。
+ */
+async function getProviderState(): Promise<
+  'available' | 'provider_missing' | 'provider_update_required' | 'unsupported'
+> {
+  try {
+    const status = await getSdkStatus();
+    if (status === SdkAvailabilityStatus.SDK_AVAILABLE) return 'available';
+    if (status === SdkAvailabilityStatus.SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED) {
+      return 'provider_update_required';
+    }
+    // SDK_UNAVAILABLE (=1) は OS が古いか、プロバイダが未インストールの可能性
+    return 'provider_missing';
+  } catch (err) {
+    console.log('[health-sync/android] getSdkStatus failed', err);
+    return 'unsupported';
+  }
+}
+
 async function ensureInitialized(): Promise<boolean> {
   if (initialized) return true;
+  // SDK が利用可能でなければ initialize 自体を呼ばない (Play Store 遷移を防ぐ)
+  const provider = await getProviderState();
+  if (provider !== 'available') return false;
   try {
     const ok = await initialize();
     initialized = ok;
@@ -190,6 +222,8 @@ export const healthAdapter: HealthSyncAdapter = {
     return true;
   },
   async requestPermissions() {
+    // 利用不可状態 (プロバイダ未インストール等) のときに requestPermission を呼ぶと
+    // Play Store へ自動遷移して戻れなくなるため、初期化に成功した時だけ実行する。
     const ready = await ensureInitialized();
     if (!ready) return false;
     try {
@@ -220,6 +254,10 @@ export const healthAdapter: HealthSyncAdapter = {
     };
   },
   async getStatus(): Promise<HealthSyncStatus> {
+    const provider = await getProviderState();
+    if (provider === 'unsupported') return 'unsupported';
+    if (provider === 'provider_missing') return 'provider_missing';
+    if (provider === 'provider_update_required') return 'provider_update_required';
     const ready = await ensureInitialized();
     if (!ready) return 'unsupported';
     const granted = await hasAllPermissions();
