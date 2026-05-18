@@ -128,6 +128,58 @@ describe('resolveLog — Style migration', () => {
   });
 });
 
+describe('resolveLog — Pattern A (piece-unit identities with default > 1)', () => {
+  // Regression: defaultMacro must be the macro AT amount.default (not per-1-unit).
+  // Bug history: yakitori/sashimi/pizza_* were authored as per-unit values, so
+  // selecting the default amount yielded 1/N of the correct kcal.
+
+  it('yakitori default (5本) returns 350 kcal', () => {
+    const result = resolveLog({ originIdentityId: 'yakitori' });
+    expect(result.amountValue).toBe(5);
+    expect(result.baseMacro.kcal).toBeCloseTo(350, 1);
+    expect(result.baseMacro.protein).toBeCloseTo(32, 1);
+    expect(result.baseMacro.fat).toBeCloseTo(16, 1);
+    expect(result.baseMacro.carbs).toBeCloseTo(8, 1);
+  });
+
+  it('yakitori 1本 scales to 70 kcal (1/5)', () => {
+    const result = resolveLog({ originIdentityId: 'yakitori', amountValue: 1 });
+    expect(result.baseMacro.kcal).toBeCloseTo(70, 1);
+  });
+
+  it('yakitori 10本 scales to 700 kcal (×2)', () => {
+    const result = resolveLog({ originIdentityId: 'yakitori', amountValue: 10 });
+    expect(result.baseMacro.kcal).toBeCloseTo(700, 1);
+  });
+
+  it('sashimi default (5切) returns 250 kcal', () => {
+    const result = resolveLog({ originIdentityId: 'sashimi' });
+    expect(result.amountValue).toBe(5);
+    expect(result.baseMacro.kcal).toBeCloseTo(250, 1);
+  });
+
+  it('pizza_simple default (2切) returns 210 kcal', () => {
+    const result = resolveLog({ originIdentityId: 'pizza_simple' });
+    expect(result.amountValue).toBe(2);
+    expect(result.baseMacro.kcal).toBeCloseTo(210, 1);
+  });
+
+  it('pizza_meat default (2切) returns 350 kcal', () => {
+    const result = resolveLog({ originIdentityId: 'pizza_meat' });
+    expect(result.baseMacro.kcal).toBeCloseTo(350, 1);
+  });
+
+  it('pizza_cheese default (2切) returns 440 kcal', () => {
+    const result = resolveLog({ originIdentityId: 'pizza_cheese' });
+    expect(result.baseMacro.kcal).toBeCloseTo(440, 1);
+  });
+
+  it('pizza_seafood default (2切) returns 300 kcal', () => {
+    const result = resolveLog({ originIdentityId: 'pizza_seafood' });
+    expect(result.baseMacro.kcal).toBeCloseTo(300, 1);
+  });
+});
+
 describe('resolveLog — Add-ons', () => {
   it('adds Identity-flavored add-ons (egg + natto) to a rice base', () => {
     const result = resolveLog({

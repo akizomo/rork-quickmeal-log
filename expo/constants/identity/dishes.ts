@@ -486,7 +486,7 @@ const BUCKET_PIZZA: Identity[] = [
     id: 'pizza_simple',
     label: 'マルゲリータ系',
     primaryHome: { tab: 'dish', bucket: 'pizza' },
-    defaultMacro: { kcal: 105, protein: 4.5, fat: 3.5, carbs: 13 }, // per slice
+    defaultMacro: { kcal: 210, protein: 9, fat: 7, carbs: 26 }, // 2切=210kcal
     referenceDescription: '1切=生地30g+トマトソース+モッツァレラ',
     amount: { unit: 'slice', default: 2 },
     attributes: [
@@ -499,7 +499,7 @@ const BUCKET_PIZZA: Identity[] = [
     id: 'pizza_meat',
     label: '肉系ピザ',
     primaryHome: { tab: 'dish', bucket: 'pizza' },
-    defaultMacro: { kcal: 175, protein: 8, fat: 8, carbs: 18 }, // per slice
+    defaultMacro: { kcal: 350, protein: 16, fat: 16, carbs: 36 }, // 2切=350kcal
     referenceDescription: '1切=生地30g+ソース+チーズ+肉具',
     amount: { unit: 'slice', default: 2 },
     attributes: [
@@ -514,7 +514,7 @@ const BUCKET_PIZZA: Identity[] = [
     id: 'pizza_cheese',
     label: 'チーズ系ピザ',
     primaryHome: { tab: 'dish', bucket: 'pizza' },
-    defaultMacro: { kcal: 220, protein: 11, fat: 12, carbs: 17 }, // per slice
+    defaultMacro: { kcal: 440, protein: 22, fat: 24, carbs: 34 }, // 2切=440kcal
     referenceDescription: '1切=生地30g+チーズ多め',
     amount: { unit: 'slice', default: 2 },
     attributes: [
@@ -528,7 +528,7 @@ const BUCKET_PIZZA: Identity[] = [
     id: 'pizza_seafood',
     label: 'シーフード系ピザ',
     primaryHome: { tab: 'dish', bucket: 'pizza' },
-    defaultMacro: { kcal: 150, protein: 8, fat: 6, carbs: 17 }, // per slice
+    defaultMacro: { kcal: 300, protein: 16, fat: 12, carbs: 34 }, // 2切=300kcal
     referenceDescription: '1切=生地30g+ソース+海鮮',
     amount: { unit: 'slice', default: 2 },
     attributes: [
@@ -660,7 +660,7 @@ const BUCKET_MISC_DISH: Identity[] = [
     id: 'yakitori',
     label: '焼鳥・串もの',
     primaryHome: { tab: 'dish', bucket: 'misc_dish' },
-    defaultMacro: { kcal: 70, protein: 6.4, fat: 3.2, carbs: 1.6 }, // 1本あたり (5本=350kcal)
+    defaultMacro: { kcal: 350, protein: 32, fat: 16, carbs: 8 }, // 5本=350kcal
     referenceDescription: '1本=鶏もも30g+タレ',
     amount: { unit: 'piece', default: 5, unitLabel: '本' },
   },
@@ -707,7 +707,7 @@ const BUCKET_MISC_DISH: Identity[] = [
     label: '刺身盛り',
     primaryHome: { tab: 'dish', bucket: 'misc_dish' },
     quickTapDisabled: true, // Attribute 魚種で kcal/F が大きく振れる
-    defaultMacro: { kcal: 50, protein: 6, fat: 1.6, carbs: 0.8 }, // 1切あたり (5切=250)
+    defaultMacro: { kcal: 250, protein: 30, fat: 8, carbs: 4 }, // 5切=250kcal
     referenceDescription: '1切=魚10g',
     amount: { unit: 'piece', default: 5, unitLabel: '切' },
     attributes: [
