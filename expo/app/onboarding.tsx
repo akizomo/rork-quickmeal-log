@@ -143,22 +143,6 @@ export default function OnboardingRoute() {
     }
   }, [activityLevel, ageOk, basis, currentBodyType9, direction, heightOk, paceLevel, recommendation, step, weightOk]);
 
-  const disabledHint = useMemo(() => {
-    switch (step) {
-      case 0: return basis ? null : '身体基準を選んでください';
-      case 1: return heightOk ? null : '120〜220cm の範囲で入力してください';
-      case 2: return weightOk ? null : '30〜200kg の範囲で入力してください';
-      case 3: return ageOk ? null : '13〜100歳 の範囲で入力してください';
-      case 4: return activityLevel ? null : '普段の運動習慣を選んでください';
-      case 5: return currentBodyType9 !== null ? null : '今の体格を選んでください';
-      case 6: return direction ? null : '目的を選んでください';
-      case 7:
-        if (direction === 'maintain') return null;
-        return paceLevel ? null : 'プランを選んでください';
-      default: return null;
-    }
-  }, [activityLevel, ageOk, basis, currentBodyType9, direction, heightOk, paceLevel, step, weightOk]);
-
   const saveAllCurrent = useCallback(() => {
     updateProfileValues({
       heightCm: Number(heightCm) || null,
@@ -182,23 +166,32 @@ export default function OnboardingRoute() {
     });
   }, [activityLevel, ageYears, basis, bodyFatPct, currentBodyType9, currentPfc.carbsG, currentPfc.fatG, currentPfc.proteinG, currentStage, direction, heightCm, paceLevel, recommendation, targetBodyType9, targetStage, updateProfileValues, weightKg]);
 
+  // 維持目標はペース選択が不要なため、step 7 (StepPlan) を飛ばす。
+  const skipPlanStep = direction === 'maintain';
+
   const goNext = useCallback(() => {
     saveAllCurrent();
     if (step < TOTAL_STEPS - 1) {
-      setStep((s) => s + 1);
+      const nextStep = step === 6 && skipPlanStep ? 8 : step + 1;
+      setStep(nextStep);
     } else {
       completeOnboarding();
       router.replace('/');
     }
-  }, [completeOnboarding, router, saveAllCurrent, step]);
+  }, [completeOnboarding, router, saveAllCurrent, skipPlanStep, step]);
 
   const goBack = useCallback(() => {
     if (step === 0) {
       router.back();
       return;
     }
-    setStep((s) => s - 1);
-  }, [router, step]);
+    const prevStep = step === 8 && skipPlanStep ? 6 : step - 1;
+    setStep(prevStep);
+  }, [router, skipPlanStep, step]);
+
+  // 進捗表示も維持時は 8 ステップ扱いにする (step 7 をスキップした分を縮める)。
+  const totalDisplaySteps = skipPlanStep ? TOTAL_STEPS - 1 : TOTAL_STEPS;
+  const displayStep = skipPlanStep && step > 7 ? step : step + 1;
 
   return (
     <>
@@ -247,14 +240,14 @@ export default function OnboardingRoute() {
               <View
                 style={{
                   height: '100%',
-                  width: `${((step + 1) / TOTAL_STEPS) * 100}%`,
+                  width: `${(displayStep / totalDisplaySteps) * 100}%`,
                   backgroundColor: t.colors.action.primary.default,
                   borderRadius: t.radius.xs,
                 }}
               />
             </View>
             <Caption weight="semibold">
-              {step + 1}/{TOTAL_STEPS}
+              {displayStep}/{totalDisplaySteps}
             </Caption>
           </View>
 
@@ -350,6 +343,7 @@ export default function OnboardingRoute() {
                   currentBodyFatPct={bodyFatPct ? Number(bodyFatPct) : null}
                   paceLevel={paceLevel}
                   onPace={setPaceLevel}
+                  recommendation={recommendation}
                 />
               ) : null}
 
@@ -367,11 +361,6 @@ export default function OnboardingRoute() {
                 gap: t.spacing['2'],
               }}
             >
-              {!canNext && disabledHint ? (
-                <Caption tone="secondary" align="center" testID="onboarding-hint">
-                  {disabledHint}
-                </Caption>
-              ) : null}
               <Button
                 label={step === TOTAL_STEPS - 1 ? 'はじめる' : '次へ'}
                 variant="primary"
@@ -398,11 +387,6 @@ export default function OnboardingRoute() {
               borderTopColor: t.colors.border.default,
             }}
           >
-            {!canNext && disabledHint ? (
-              <Caption tone="secondary" align="center">
-                {disabledHint}
-              </Caption>
-            ) : null}
             <Button
               label={step === TOTAL_STEPS - 1 ? 'はじめる' : '次へ'}
               variant="primary"
@@ -694,6 +678,7 @@ function StepPlan({
   currentBodyFatPct,
   paceLevel,
   onPace,
+  recommendation,
 }: {
   basis: BiologicalBasis;
   direction: GoalDirection | null;
@@ -702,16 +687,58 @@ function StepPlan({
   currentBodyFatPct: number | null;
   paceLevel: PaceLevel | null;
   onPace: (p: PaceLevel) => void;
+  recommendation: GoalRecommendation | null;
 }) {
   const t = useTheme();
 
-  if (direction === 'maintain' || !direction) {
+  if (!direction) {
     return (
       <View style={stepWrap}>
-        <Heading size="2xl">プランは不要です</Heading>
+        <Heading size="2xl">プラン</Heading>
+        <Body tone="secondary">前のステップで目的を選んでください。</Body>
+      </View>
+    );
+  }
+
+  if (direction === 'maintain') {
+    if (!recommendation) {
+      return (
+        <View style={stepWrap}>
+          <Heading size="2xl">今の体格をキープするプラン</Heading>
+          <Body tone="secondary">前のステップの入力が必要です。</Body>
+        </View>
+      );
+    }
+    return (
+      <View style={stepWrap}>
+        <Heading size="2xl">今の体格をキープするプラン</Heading>
         <Body tone="secondary">
-          → 今の体格をキープする目標なので、ペース指定は不要です。このまま次へ進んでください。
+          → ペース指定は不要です。現在の体格を維持する目安はこちらです。
         </Body>
+        <Card variant="raised" style={{ gap: t.spacing['3'] }}>
+          <SummaryRow label="目標体重" value={`${recommendation.targetWeightKg.toFixed(1)} kg`} />
+          <SummaryRow label="目標体脂肪率" value={`${recommendation.targetBodyFatPct} %`} />
+          <View style={{ height: 1, backgroundColor: t.colors.border.subtle }} />
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Body tone="secondary" weight="semibold">
+              1日の目標
+            </Body>
+            <Heading size="xl" tone="link">
+              {recommendation.targetKcal} kcal
+            </Heading>
+          </View>
+          <PfcRow
+            t={t}
+            protein={recommendation.proteinG}
+            fat={recommendation.fatG}
+            carbs={recommendation.carbsG}
+          />
+          {recommendation.note ? (
+            <Body size="sm" weight="semibold" style={{ color: t.colors.status.warning }}>
+              {recommendation.note}
+            </Body>
+          ) : null}
+        </Card>
       </View>
     );
   }
