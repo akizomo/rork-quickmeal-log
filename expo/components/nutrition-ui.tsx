@@ -567,7 +567,7 @@ export const UndoToast = memo(function UndoToast() {
         <Text style={styles.undoText}>必要なら元に戻せます</Text>
       </View>
       <Pressable onPress={undoLastLog} testID="undo-button">
-        <Text style={styles.undoAction}>Undo</Text>
+        <Text style={styles.undoAction}>取り消す</Text>
       </Pressable>
     </View>
   );
