@@ -1,7 +1,9 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import * as ExpoInAppUpdates from 'expo-in-app-updates';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import React, { useEffect } from 'react';
+import { Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { DishQuickEntrySheet } from '@/components/DishQuickEntrySheet';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
@@ -52,6 +54,17 @@ export default function RootLayout() {
     initIap().catch((error) => {
       console.log('[root-layout] Failed to init IAP', error);
     });
+    if (!__DEV__ && Platform.OS === 'android') {
+      ExpoInAppUpdates.checkForUpdate()
+        .then(({ updateAvailable, flexibleAllowed }) => {
+          if (updateAvailable && flexibleAllowed) {
+            return ExpoInAppUpdates.startUpdate();
+          }
+        })
+        .catch((error) => {
+          console.log('[root-layout] In-app update check failed', error);
+        });
+    }
   }, []);
 
   return (
