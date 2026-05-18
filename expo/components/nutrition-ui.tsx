@@ -1,9 +1,10 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { Link, useRouter } from 'expo-router';
-import { BarChart3, ChevronDown, HelpCircle, Plus, Settings2, User } from 'lucide-react-native';
+import { BarChart3, ChevronDown, ChevronRight, HelpCircle, User, X } from 'lucide-react-native';
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
+  Modal,
   PanResponder,
   Pressable,
   StyleSheet,
@@ -16,9 +17,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { CalorieOverflowRing } from '@/components/CalorieOverflowRing';
 import { ExerciseSheet } from '@/components/ExerciseSheet';
 import { HomeDatePager } from '@/components/HomeDatePager';
-import { DayLogBottomSheet } from '@/components/DayLogBottomSheet';
+import { DayLogBottomSheet, type DayLogBottomSheetRef } from '@/components/DayLogBottomSheet';
 import { additionPresets, portionSnapPoints, sizeOptions } from '@/constants/nutrition-data';
-import { TRIAL_DURATION_DAYS } from '@/constants/onboarding';
+import { ACTIVITY_LEVEL_OPTIONS, TRIAL_DURATION_DAYS } from '@/constants/onboarding';
 import { palette } from '@/constants/theme';
 import { Badge, BottomSheet, Caption, useTheme } from '@/design-system';
 import { duration, spring } from '@/design-system/tokens/primitives/motion';
@@ -125,11 +126,181 @@ export const Header = memo(function Header({ viewedDate }: { viewedDate?: Date }
   );
 });
 
-export const StatusCard = memo(function StatusCard({ viewedDate }: { viewedDate?: Date }) {
+/**
+ * リング中央タップで開く「収支」モーダル。
+ *
+ * 業界標準 (YAZIO / MFP / あすけん) に合わせた計算モデル:
+ *   ベース目標 (BMR × 活動係数) + 運動 (gross 全額) − 食事 = 残り
+ *
+ * 3 階層のテキストヒエラルキー:
+ *   Tier 1 (primary):   主役の数字・最終結果      → text 色, bold, large
+ *   Tier 2 (secondary): 計算式の値・中間結果      → text 色, medium
+ *   Tier 3 (tertiary):  ラベル・補足・設定情報    → muted 色, regular, small
+ *
+ * 計算式は **常に表示** (前バージョンの "運動がある時のみ表示" を廃止)。
+ */
+const BalanceModal = memo(function BalanceModal({
+  visible,
+  onClose,
+  baseTargetKcal,
+  adjustedTargetKcal,
+  consumedKcal,
+  exerciseAdded,
+  activityLevelLabel,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  baseTargetKcal: number;
+  adjustedTargetKcal: number;
+  consumedKcal: number;
+  /** 今日の運動で目標に加算される kcal (現モデルでは gross 全額) */
+  exerciseAdded: number;
+  /** オンボで選んだ運動習慣のラベル (例: "軽めに動く"). 未設定なら null */
+  activityLevelLabel: string | null;
+}) {
+  const remaining = adjustedTargetKcal - consumedKcal;
+  const progress = adjustedTargetKcal > 0 ? Math.min(1, Math.max(0, consumedKcal / adjustedTargetKcal)) : 0;
+  const overshoot = remaining < 0;
+  const hasExercise = exerciseAdded > 0;
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <Pressable style={styles.balanceOverlay} onPress={onClose} accessibilityRole="button" accessibilityLabel="閉じる">
+        <Pressable
+          style={styles.balanceCard}
+          onPress={() => undefined}
+          accessibilityRole="summary"
+          accessibilityLabel="今日の収支"
+        >
+          {/* close ボタン (右上) */}
+          <Pressable
+            onPress={onClose}
+            hitSlop={12}
+            style={styles.balanceCloseButton}
+            accessibilityRole="button"
+            accessibilityLabel="閉じる"
+          >
+            <X size={18} color={palette.textMuted} strokeWidth={2} />
+          </Pressable>
+
+          {/* HERO (Tier 1): 残り or オーバー */}
+          <View style={styles.balanceHero}>
+            <Text style={styles.balanceHeroCaption}>{overshoot ? 'オーバー' : '残り'}</Text>
+            <Text style={[styles.balanceHeroValue, overshoot && { color: palette.danger }]}>
+              {Math.abs(remaining).toLocaleString()}
+            </Text>
+            <Text style={styles.balanceHeroUnit}>kcal</Text>
+          </View>
+
+          {/* 進捗バー (視覚補助) */}
+          <View style={styles.balanceProgressTrack}>
+            <View
+              style={[
+                styles.balanceProgressFill,
+                {
+                  width: `${Math.min(Math.round(progress * 100), 100)}%`,
+                  backgroundColor: overshoot ? palette.danger : palette.sageDeep,
+                },
+              ]}
+            />
+          </View>
+
+          {/* 計算式 (常に表示) */}
+          <View style={styles.balanceMath}>
+            <View>
+              <BalanceMathRow label="ベース目標" value={baseTargetKcal} />
+              {activityLevelLabel ? (
+                <Text style={styles.balanceMathSubtitle}>運動習慣「{activityLevelLabel}」を反映</Text>
+              ) : null}
+            </View>
+            {hasExercise ? (
+              <BalanceMathRow label="運動" value={exerciseAdded} sign="+" tone="positive" />
+            ) : null}
+            {hasExercise ? (
+              <BalanceMathRow label="今日の目標" value={adjustedTargetKcal} emphasis="mid" />
+            ) : null}
+            <BalanceMathRow label="食事" value={consumedKcal} sign="-" />
+            <View style={styles.balanceMathDivider} />
+            <BalanceMathRow
+              label="残り"
+              value={remaining}
+              emphasis="strong"
+              tone={overshoot ? 'alert' : undefined}
+            />
+          </View>
+        </Pressable>
+      </Pressable>
+    </Modal>
+  );
+});
+
+/**
+ * 計算式の 1 行。
+ * - emphasis="strong": 最終結果 (Tier 1 — 大きく太く、text 色)
+ * - emphasis="mid":    中間結果 (Tier 2 — やや太く、text 色)
+ * - emphasis=undefined: 通常行 (ラベル Tier 3 muted / 値 Tier 2 medium)
+ */
+function BalanceMathRow({
+  label,
+  value,
+  sign,
+  tone,
+  emphasis,
+}: {
+  label: string;
+  value: number;
+  sign?: '+' | '-';
+  tone?: 'positive' | 'alert';
+  emphasis?: 'mid' | 'strong';
+}) {
+  const isStrong = emphasis === 'strong';
+  const isMid = emphasis === 'mid';
+  const valueColor =
+    tone === 'alert'
+      ? palette.danger
+      : tone === 'positive'
+        ? palette.sageStrong
+        : isStrong || isMid
+          ? palette.text
+          : palette.text;
+  return (
+    <View style={[styles.balanceMathRow, isStrong && styles.balanceMathRowStrong]}>
+      <Text
+        style={[
+          styles.balanceMathLabel,
+          isMid && styles.balanceMathLabelMid,
+          isStrong && styles.balanceMathLabelStrong,
+        ]}
+      >
+        {label}
+      </Text>
+      <Text
+        style={[
+          styles.balanceMathValue,
+          { color: valueColor },
+          isMid && styles.balanceMathValueMid,
+          isStrong && styles.balanceMathValueStrong,
+        ]}
+      >
+        {sign ?? ''}{Math.abs(value).toLocaleString()}
+        <Text style={styles.balanceMathUnit}> kcal</Text>
+      </Text>
+    </View>
+  );
+}
+
+export const StatusCard = memo(function StatusCard({
+  viewedDate,
+  onFoodPress,
+}: {
+  viewedDate?: Date;
+  /** 左「食事」エリアタップ時のコールバック (例: DayLogBottomSheet を half に展開) */
+  onFoodPress?: () => void;
+}) {
   const { profile, todayMacro, logs, todayGrossExerciseKcal, todayAdjustedTargetKcal } = useAppState();
   const t = useTheme();
   const { width: screenWidth } = useWindowDimensions();
   const [exerciseSheetVisible, setExerciseSheetVisible] = useState(false);
+  const [balanceVisible, setBalanceVisible] = useState(false);
 
   const today = useMemo(() => new Date(), []);
   const targetDate = viewedDate ?? today;
@@ -155,42 +326,63 @@ export const StatusCard = memo(function StatusCard({ viewedDate }: { viewedDate?
     <View style={styles.statusCard}>
       {/* 3-column: 食事 | Ring(残り) | 消費 */}
       <View style={styles.ringRow}>
-        {/* Left: 食事 */}
-        <View style={styles.sideColumn}>
-          <Text style={styles.sideLabel}>食事</Text>
+        {/* Left: 食事 (タップで食事ログシート half) */}
+        <Pressable
+          style={({ pressed }) => [styles.sideColumn, pressed && styles.sideColumnPressed]}
+          onPress={onFoodPress}
+          testID="status-food-area"
+          accessibilityRole="button"
+          accessibilityLabel="食事ログを開く"
+          accessibilityHint="今日の食事ログを開きます"
+          disabled={!onFoodPress}
+        >
+          <View style={styles.sideLabelRow}>
+            {/* 左に同サイズの透明スペーサーを置いてラベルを視覚的に中央寄せ */}
+            <View style={styles.sideLabelChevronSpacer} />
+            <Text style={styles.sideLabel}>食事</Text>
+            <ChevronRight size={12} color={palette.textMuted} strokeWidth={2} />
+          </View>
           <Text style={styles.sideValue}>{Math.round(dayMacro.kcal).toLocaleString()}</Text>
           <Text style={styles.sideUnit}>kcal</Text>
-        </View>
+        </Pressable>
 
-        {/* Center: Ring */}
-        <CalorieOverflowRing
-          consumedKcal={dayMacro.kcal}
-          targetKcal={effectiveTarget}
-          size={ringSize}
-          strokeWidth={ringStroke}
-          statusMode="auto"
-          centerMode="remaining"
-          showStatusText={false}
-        />
+        {/* Center: Ring (タップで収支表示) */}
+        <Pressable
+          onPress={() => setBalanceVisible(true)}
+          testID="status-ring-area"
+          accessibilityRole="button"
+          accessibilityLabel="今日の収支を表示"
+          accessibilityHint="食事と消費の内訳を表示します"
+          style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
+        >
+          <CalorieOverflowRing
+            consumedKcal={dayMacro.kcal}
+            targetKcal={effectiveTarget}
+            size={ringSize}
+            strokeWidth={ringStroke}
+            statusMode="auto"
+            centerMode="remaining"
+            showStatusText={false}
+          />
+        </Pressable>
 
-        {/* Right: 消費 + [+] */}
-        <View style={styles.sideColumn}>
+        {/* Right: 消費 (タップで運動シート) */}
+        <Pressable
+          style={({ pressed }) => [styles.sideColumn, pressed && styles.sideColumnPressed]}
+          onPress={openExerciseSheet}
+          testID="exercise-add-button"
+          accessibilityRole="button"
+          accessibilityLabel="消費の詳細を見る"
+          accessibilityHint="今日の運動履歴と追加のシートを開きます"
+        >
           <View style={styles.sideLabelRow}>
-            {/* Spacer mirrors the button width to keep label centered */}
-            <View style={styles.exerciseButtonSpacer} />
+            <View style={styles.sideLabelChevronSpacer} />
             <Text style={styles.sideLabel}>消費</Text>
-            <Pressable
-              style={styles.exerciseAddButton}
-              onPress={openExerciseSheet}
-              testID="exercise-add-button"
-              accessibilityLabel="運動を記録"
-            >
-              <Plus size={11} color={palette.textMuted} strokeWidth={2.5} />
-            </Pressable>
+            <ChevronRight size={12} color={palette.textMuted} strokeWidth={2} />
           </View>
           <Text style={styles.sideValue}>{effectiveExerciseKcal > 0 ? effectiveExerciseKcal.toLocaleString() : '—'}</Text>
           <Text style={styles.sideUnit}>kcal</Text>
-        </View>
+        </Pressable>
       </View>
 
       {/* PFC mini bars */}
@@ -219,6 +411,19 @@ export const StatusCard = memo(function StatusCard({ viewedDate }: { viewedDate?
       </View>
 
       <ExerciseSheet visible={exerciseSheetVisible} onClose={closeExerciseSheet} />
+      <BalanceModal
+        visible={balanceVisible}
+        onClose={() => setBalanceVisible(false)}
+        baseTargetKcal={profile.targetCalories}
+        adjustedTargetKcal={effectiveTarget}
+        consumedKcal={Math.round(dayMacro.kcal)}
+        /* v1.7+: 業界標準モデル (YAZIO/MFP/あすけん) で gross 全額加算。
+         * adjustedTarget - baseTarget は今や運動 gross と一致する。 */
+        exerciseAdded={Math.max(0, effectiveTarget - profile.targetCalories)}
+        activityLevelLabel={
+          ACTIVITY_LEVEL_OPTIONS.find((a) => a.level === profile.activityLevel)?.label ?? null
+        }
+      />
     </View>
   );
 });
@@ -766,6 +971,10 @@ void getSubtypes;
 
 export function HomeScreen() {
   const [viewedDate, setViewedDate] = useState<Date>(() => new Date());
+  const dayLogSheetRef = useRef<DayLogBottomSheetRef>(null);
+  const openDayLogSheet = useCallback(() => {
+    dayLogSheetRef.current?.snapToHalf();
+  }, []);
   return (
     <View style={styles.page} testID="home-screen">
       <LinearGradient colors={[palette.background, '#F7F4EE']} style={StyleSheet.absoluteFillObject} />
@@ -773,9 +982,9 @@ export function HomeScreen() {
         <View style={styles.headerWrap}>
           <Header viewedDate={viewedDate} />
         </View>
-        <HomeDatePager onViewedDateChange={setViewedDate} />
+        <HomeDatePager onViewedDateChange={setViewedDate} onFoodPress={openDayLogSheet} />
       </SafeAreaView>
-      <DayLogBottomSheet viewedDate={viewedDate} />
+      <DayLogBottomSheet ref={dayLogSheetRef} viewedDate={viewedDate} />
       <FloatingFeedback />
       <UndoToast />
       <LogEditorSheet />
@@ -823,21 +1032,113 @@ const styles = StyleSheet.create({
   iconButton: { width: 42, height: 42, borderRadius: 21, backgroundColor: palette.surface, alignItems: 'center', justifyContent: 'center' },
   statusCard: { paddingVertical: 4, gap: 16 },
   ringRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  sideColumn: { flex: 1, alignItems: 'center', gap: 2 },
+  sideColumn: { flex: 1, alignItems: 'center', gap: 2, paddingVertical: 8, borderRadius: 12 },
+  sideColumnPressed: { opacity: 0.6 },
   sideLabel: { fontSize: 11, fontWeight: '600', color: palette.textMuted, letterSpacing: 0.4 },
-  sideLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 4, justifyContent: 'center' },
-  exerciseButtonSpacer: { width: 20, height: 20 },
+  sideLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 2, justifyContent: 'center' },
+  /** chevron と同幅の透明スペーサーで Label を視覚的に中央寄せ */
+  sideLabelChevronSpacer: { width: 12 + 2 /* chevron size + gap */ },
   sideValue: { fontSize: 18, fontWeight: '700', color: palette.text, letterSpacing: -0.3 },
   sideUnit: { fontSize: 11, fontWeight: '500', color: palette.textMuted },
-  exerciseAddButton: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    borderWidth: 1.5,
-    borderColor: palette.border,
-    backgroundColor: 'transparent',
+  balanceOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(20, 28, 24, 0.5)',
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  balanceCard: {
+    width: '100%',
+    maxWidth: 320,
+    backgroundColor: palette.surface,
+    borderRadius: 24,
+    paddingHorizontal: 24,
+    paddingTop: 12,
+    paddingBottom: 24,
+  },
+  balanceCloseButton: {
+    alignSelf: 'flex-end',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  /** HERO: 残り N kcal (主役、最大の数字) */
+  balanceHero: {
+    alignItems: 'center',
+    paddingTop: 4,
+    paddingBottom: 20,
+  },
+  balanceHeroCaption: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: palette.textMuted,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+  },
+  balanceHeroValue: {
+    fontSize: 52,
+    fontWeight: '700',
+    color: palette.text,
+    letterSpacing: -1.5,
+    lineHeight: 56,
+    marginTop: 4,
+  },
+  balanceHeroUnit: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: palette.textMuted,
+    marginTop: -2,
+    letterSpacing: 0.6,
+  },
+  /** 進捗バー */
+  balanceProgressTrack: {
+    height: 6,
+    borderRadius: 999,
+    backgroundColor: '#E2DDD4',
+    overflow: 'hidden',
+  },
+  balanceProgressFill: { height: '100%', borderRadius: 999 },
+  /** 計算式ブロック (常に表示) */
+  balanceMath: {
+    marginTop: 22,
+    paddingTop: 16,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: palette.border,
+    gap: 10,
+  },
+  balanceMathRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+  },
+  balanceMathRowStrong: { paddingTop: 2 },
+  /** Tier 3: 通常ラベル (muted, regular) */
+  balanceMathLabel: { fontSize: 13, color: palette.textMuted, fontWeight: '500' },
+  /** Tier 2 emphasis: 中間結果ラベル (text色, medium) */
+  balanceMathLabelMid: { color: palette.text, fontWeight: '600', fontSize: 13 },
+  /** Tier 1 emphasis: 最終結果ラベル (text色, bold) */
+  balanceMathLabelStrong: { color: palette.text, fontWeight: '700', fontSize: 14 },
+  /** Tier 2: 通常値 (text色, medium) */
+  balanceMathValue: { fontSize: 14, fontWeight: '500', letterSpacing: -0.2 },
+  /** Tier 2 emphasis: 中間結果値 (semibold, slightly larger) */
+  balanceMathValueMid: { fontSize: 15, fontWeight: '700' },
+  /** Tier 1 emphasis: 最終結果値 (bold, largest) */
+  balanceMathValueStrong: { fontSize: 19, fontWeight: '700', letterSpacing: -0.5 },
+  balanceMathUnit: { fontSize: 10, color: palette.textMuted, fontWeight: '500' },
+  /** Tier 3: ベース目標の補足 (運動習慣ラベル) */
+  balanceMathSubtitle: {
+    fontSize: 11,
+    color: palette.textMuted,
+    marginTop: -4,
+    marginBottom: 2,
+    opacity: 0.85,
+  },
+  balanceMathDivider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: palette.border,
+    marginVertical: 2,
   },
   pfcMiniRow: { flexDirection: 'row', gap: 12 },
   miniBarItem: { flex: 1, gap: 4 },
