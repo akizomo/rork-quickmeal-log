@@ -10,7 +10,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Trash2, X } from 'lucide-react-native';
+import { Pencil, Trash2, X } from 'lucide-react-native';
 
 import {
   BottomSheet,
@@ -160,6 +160,7 @@ export function IdentityLogSheet() {
       setAttributeKey(undefined);
       setStyleKey(undefined);
       setAmountValue(0);
+      setAmountEditorOpen(false);
       setAddons([]);
       return;
     }
@@ -301,6 +302,7 @@ export function IdentityLogSheet() {
   const visibleAddonIds = origin?.defaultAddonIds ?? [];
 
   return (
+    <>
     <BottomSheet
       visible={visible}
       onClose={closeIdentityLogSheet}
@@ -434,20 +436,8 @@ export function IdentityLogSheet() {
                   {' '}{origin.amount.unitLabel ?? UNIT_LABEL[origin.amount.unit]}
                 </Text>
               </Text>
-              <Text style={[ilsStyles.amountRowIcon, { color: t.colors.content.tertiary }]}>✎</Text>
+              <Pencil size={16} color={t.colors.content.tertiary} />
             </Pressable>
-            {amountConfig ? (
-              <AmountEditDialog
-                visible={amountEditorOpen}
-                config={amountConfig}
-                initialValue={amountValue}
-                onClose={(next) => {
-                  setAmountEditorOpen(false);
-                  if (next !== null) setAmountValue(next);
-                }}
-                testID="ils-amount-dialog"
-              />
-            ) : null}
             {origin.referenceDescription ? (
               <Caption tone="tertiary" style={{ marginTop: t.spacing['2'] }} testID="ils-amount-ref">
                 目安: {origin.referenceDescription}
@@ -495,8 +485,22 @@ export function IdentityLogSheet() {
         </>
       ) : null}
     </BottomSheet>
+    {amountConfig ? (
+      <AmountEditDialog
+        visible={amountEditorOpen}
+        config={amountConfig}
+        initialValue={amountValue}
+        onClose={(next) => {
+          setAmountEditorOpen(false);
+          if (next !== null) setAmountValue(next);
+        }}
+        testID="ils-amount-dialog"
+      />
+    ) : null}
+    </>
   );
 }
+
 
 // ---------------------------------------------------------------------------
 // Styles
@@ -513,9 +517,6 @@ const ilsStyles = StyleSheet.create({
   },
   amountRowValue: {
     fontWeight: '700',
-  },
-  amountRowIcon: {
-    fontSize: 16,
   },
 });
 

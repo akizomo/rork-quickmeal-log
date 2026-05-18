@@ -7,6 +7,7 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Pencil } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { getQuickLogCategory } from '@/constants/quick-log-master';
@@ -81,6 +82,7 @@ export function QuickIngredientSheet() {
   useEffect(() => {
     if (!visible || !category) {
       setDraft(null);
+      setAmountEditorOpen(false);
       return;
     }
     const seeded = (settings.quickLogHistory ?? {}) as QuickLogHistoryMap;
@@ -168,6 +170,7 @@ export function QuickIngredientSheet() {
   const canSave = !!draft && draft.amountValue > 0;
 
   return (
+    <>
     <BottomSheet
       visible={visible}
       onClose={closeQuickIngredientSheet}
@@ -276,17 +279,8 @@ export function QuickIngredientSheet() {
                     {' '}{UNIT_LABEL[draft.amountUnit]}
                   </Text>
                 </Text>
-                <Text style={[qisStyles.amountRowIcon, { color: t.colors.content.tertiary }]}>✎</Text>
+                <Pencil size={16} color={t.colors.content.tertiary} />
               </Pressable>
-              {amountConfig ? (
-                <AmountEditDialog
-                  visible={amountEditorOpen}
-                  config={amountConfig}
-                  initialValue={draft.amountValue}
-                  onClose={handleAmountDialogClose}
-                  testID="qis-amount-dialog"
-                />
-              ) : null}
             </Section>
           ) : null}
 
@@ -320,6 +314,16 @@ export function QuickIngredientSheet() {
         </>
       ) : null}
     </BottomSheet>
+    {amountConfig ? (
+      <AmountEditDialog
+        visible={amountEditorOpen}
+        config={amountConfig}
+        initialValue={draft?.amountValue ?? 0}
+        onClose={handleAmountDialogClose}
+        testID="qis-amount-dialog"
+      />
+    ) : null}
+    </>
   );
 }
 
@@ -334,8 +338,5 @@ const qisStyles = StyleSheet.create({
   },
   amountRowValue: {
     fontWeight: '700',
-  },
-  amountRowIcon: {
-    fontSize: 16,
   },
 });

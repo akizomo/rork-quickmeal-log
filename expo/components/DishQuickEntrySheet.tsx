@@ -1,4 +1,5 @@
 import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { Pencil } from 'lucide-react-native';
 import {
   Pressable,
   StyleSheet,
@@ -7,7 +8,7 @@ import {
 } from 'react-native';
 
 import { AmountEditDialog } from '@/components/AmountEditDialog';
-import { buildPizzaAmountEditConfig, buildSushiAmountEditConfig } from '@/utils/amount-edit';
+import { type AmountEditConfig, buildPizzaAmountEditConfig, buildSushiAmountEditConfig } from '@/utils/amount-edit';
 
 import {
   ChineseNoodlePrimaryDef,
@@ -218,16 +219,17 @@ function ChineseNoodlesBody({
 function SushiBody({
   category,
   onSubmit,
+  onOpenAmountEditor,
 }: {
   category: DishTopCategoryDef;
   onSubmit: (p: DishQuickEntryPayload) => void;
+  onOpenAmountEditor: (config: AmountEditConfig, initialValue: number, onClose: (n: number | null) => void) => void;
 }) {
   if (category.quickEntry.kind !== 'sushi_count') return null;
   const config = category.quickEntry;
   const [modeKey, setModeKey] = useState<SushiCountMode>(config.defaultMode);
   const mode: SushiModeDef = config.modes.find((m) => m.key === modeKey) ?? config.modes[0];
   const [count, setCount] = useState<number>(mode.presetCounts[1] ?? mode.presetCounts[0]);
-  const [editorOpen, setEditorOpen] = useState(false);
 
   useEffect(() => {
     setCount(mode.presetCounts[1] ?? mode.presetCounts[0]);
@@ -236,10 +238,11 @@ function SushiBody({
   const amountConfig = useMemo(() => buildSushiAmountEditConfig(mode), [mode]);
   const macro = useMemo(() => multiplyMacroSimple(mode.macroPerUnit, count), [mode, count]);
 
-  const handleAmountClose = useCallback((next: number | null) => {
-    setEditorOpen(false);
-    if (next !== null) setCount(next);
-  }, []);
+  const handleOpenEditor = useCallback(() => {
+    onOpenAmountEditor(amountConfig, count, (next) => {
+      if (next !== null) setCount(next);
+    });
+  }, [onOpenAmountEditor, amountConfig, count]);
 
   return (
     <>
@@ -258,14 +261,14 @@ function SushiBody({
 
       <Text style={styles.sectionLabel}>{mode.unitLabel}数</Text>
       <Pressable
-        onPress={() => setEditorOpen(true)}
+        onPress={handleOpenEditor}
         accessibilityRole="button"
         accessibilityLabel={`量を変更。現在 ${count}${mode.unitLabel}`}
         style={styles.amountRow}
         testID="dqe-sushi-amount-row"
       >
         <Text style={styles.amountRowValue}>{count}{mode.unitLabel}</Text>
-        <Text style={styles.amountRowIcon}>✎</Text>
+        <Pencil size={14} color={palette.textMuted} />
       </Pressable>
 
       <InstantPreview
@@ -288,14 +291,6 @@ function SushiBody({
           })
         }
       />
-
-      <AmountEditDialog
-        visible={editorOpen}
-        config={amountConfig}
-        initialValue={count}
-        onClose={handleAmountClose}
-        testID="dqe-sushi-amount-dialog"
-      />
     </>
   );
 }
@@ -303,24 +298,26 @@ function SushiBody({
 function PizzaBody({
   category,
   onSubmit,
+  onOpenAmountEditor,
 }: {
   category: DishTopCategoryDef;
   onSubmit: (p: DishQuickEntryPayload) => void;
+  onOpenAmountEditor: (config: AmountEditConfig, initialValue: number, onClose: (n: number | null) => void) => void;
 }) {
   if (category.quickEntry.kind !== 'pizza_slices') return null;
   const config = category.quickEntry;
   const [typeKey, setTypeKey] = useState<PizzaType>('regular');
   const type: PizzaTypeDef = config.pizzaTypes.find((t) => t.key === typeKey) ?? config.pizzaTypes[1] ?? config.pizzaTypes[0];
   const [slices, setSlices] = useState<number>(2);
-  const [editorOpen, setEditorOpen] = useState(false);
 
   const amountConfig = useMemo(() => buildPizzaAmountEditConfig(config), [config]);
   const macro = useMemo(() => multiplyMacroSimple(type.macroPerSlice, slices), [type, slices]);
 
-  const handleAmountClose = useCallback((next: number | null) => {
-    setEditorOpen(false);
-    if (next !== null) setSlices(next);
-  }, []);
+  const handleOpenEditor = useCallback(() => {
+    onOpenAmountEditor(amountConfig, slices, (next) => {
+      if (next !== null) setSlices(next);
+    });
+  }, [onOpenAmountEditor, amountConfig, slices]);
 
   return (
     <>
@@ -339,14 +336,14 @@ function PizzaBody({
 
       <Text style={styles.sectionLabel}>切れ数</Text>
       <Pressable
-        onPress={() => setEditorOpen(true)}
+        onPress={handleOpenEditor}
         accessibilityRole="button"
         accessibilityLabel={`量を変更。現在 ${slices}切`}
         style={styles.amountRow}
         testID="dqe-pizza-amount-row"
       >
         <Text style={styles.amountRowValue}>{slices}切</Text>
-        <Text style={styles.amountRowIcon}>✎</Text>
+        <Pencil size={14} color={palette.textMuted} />
       </Pressable>
 
       <InstantPreview
@@ -368,14 +365,6 @@ function PizzaBody({
             macro,
           })
         }
-      />
-
-      <AmountEditDialog
-        visible={editorOpen}
-        config={amountConfig}
-        initialValue={slices}
-        onClose={handleAmountClose}
-        testID="dqe-pizza-amount-dialog"
       />
     </>
   );
@@ -495,46 +484,81 @@ function PrimaryActionButton({ label, onPress }: { label: string; onPress: () =>
   );
 }
 
+type AmountEditorState = {
+  config: AmountEditConfig;
+  initialValue: number;
+  onClose: (n: number | null) => void;
+};
+
 export const DishQuickEntrySheet = memo(function DishQuickEntrySheet() {
   const { dishQuickEntryKey, setDishQuickEntryKey, submitDishQuickEntry } = useAppState();
   const visible = Boolean(dishQuickEntryKey);
   const category = dishQuickEntryKey ? getDishTopCategory(dishQuickEntryKey) ?? null : null;
+
+  const [amountEditor, setAmountEditor] = useState<AmountEditorState | null>(null);
 
   const handleSubmit = async (payload: DishQuickEntryPayload) => {
     await submitDishQuickEntry(payload);
   };
 
   const handleClose = () => {
+    setAmountEditor(null);
     setDishQuickEntryKey(null);
   };
 
+  const openAmountEditor = useCallback(
+    (config: AmountEditConfig, initialValue: number, onClose: (n: number | null) => void) => {
+      setAmountEditor({ config, initialValue, onClose });
+    },
+    [],
+  );
+
+  const handleAmountEditorClose = useCallback(
+    (next: number | null) => {
+      amountEditor?.onClose(next);
+      setAmountEditor(null);
+    },
+    [amountEditor],
+  );
+
   return (
-    <BottomSheet
-      visible={visible}
-      onClose={handleClose}
-      title={category?.label ?? ''}
-      testID="dqe"
-    >
-      {category ? (
-        <>
-          {category.quickEntry.kind === 'instant_save' ? (
-            <InstantSaveBody category={category} onSubmit={handleSubmit} />
-          ) : null}
-          {category.quickEntry.kind === 'chinese_noodles' ? (
-            <ChineseNoodlesBody category={category} onSubmit={handleSubmit} />
-          ) : null}
-          {category.quickEntry.kind === 'sushi_count' ? (
-            <SushiBody category={category} onSubmit={handleSubmit} />
-          ) : null}
-          {category.quickEntry.kind === 'pizza_slices' ? (
-            <PizzaBody category={category} onSubmit={handleSubmit} />
-          ) : null}
-          {category.quickEntry.kind === 'set_meal_select' ? (
-            <SetMealBody category={category} onSubmit={handleSubmit} />
-          ) : null}
-        </>
+    <>
+      <BottomSheet
+        visible={visible}
+        onClose={handleClose}
+        title={category?.label ?? ''}
+        testID="dqe"
+      >
+        {category ? (
+          <>
+            {category.quickEntry.kind === 'instant_save' ? (
+              <InstantSaveBody category={category} onSubmit={handleSubmit} />
+            ) : null}
+            {category.quickEntry.kind === 'chinese_noodles' ? (
+              <ChineseNoodlesBody category={category} onSubmit={handleSubmit} />
+            ) : null}
+            {category.quickEntry.kind === 'sushi_count' ? (
+              <SushiBody category={category} onSubmit={handleSubmit} onOpenAmountEditor={openAmountEditor} />
+            ) : null}
+            {category.quickEntry.kind === 'pizza_slices' ? (
+              <PizzaBody category={category} onSubmit={handleSubmit} onOpenAmountEditor={openAmountEditor} />
+            ) : null}
+            {category.quickEntry.kind === 'set_meal_select' ? (
+              <SetMealBody category={category} onSubmit={handleSubmit} />
+            ) : null}
+          </>
+        ) : null}
+      </BottomSheet>
+      {amountEditor ? (
+        <AmountEditDialog
+          visible
+          config={amountEditor.config}
+          initialValue={amountEditor.initialValue}
+          onClose={handleAmountEditorClose}
+          testID="dqe-amount-dialog"
+        />
       ) : null}
-    </BottomSheet>
+    </>
   );
 });
 
@@ -588,10 +612,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: palette.text,
     flex: 1,
-  },
-  amountRowIcon: {
-    fontSize: 14,
-    color: palette.textMuted,
   },
   previewCard: {
     marginTop: 18,

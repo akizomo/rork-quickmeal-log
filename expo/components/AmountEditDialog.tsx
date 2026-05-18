@@ -1,8 +1,8 @@
 /**
  * AmountEditDialog — 量編集専用ダイアログ。
  *
- * 長押しシートの量入力部分を独立させ、システムキーボードが起動しても
- * 確定ボタンが隠れない構造にする (内部テストFB #7 の構造的な解消)。
+ * センター配置の Dialog を使うことで、キーボードが開いてもダイアログ全体が
+ * KeyboardAvoidingView により押し上げられ、確定ボタンが隠れない。
  *
  * 利用側:
  *   const amountEditConfig = useMemo(() => buildSushiAmountEditConfig(mode), [mode]);
@@ -14,22 +14,15 @@
  *     onClose={(next) => { setEditorOpen(false); if (next != null) setCount(next); }}
  *   />
  *
- * # キーボード対応
- *  - iOS   : InputAccessoryView にて「完了」ボタンをキーボード上部に固定
- *  - Android / Web : KeyboardAvoidingView + BottomSheet の sticky footer で担保
- *
  * # 設計方針
- *  - BottomSheet を Modal として再利用することで scrim・ドラッグ退場・アニメを流用
+ *  - Dialog (design-system) を使いセンター配置。キーボード表示時は Dialog ごと上に移動。
  *  - 値バリデーション・正規化はすべて amount-edit.ts の純粋関数に委譲
  *  - ダイアログは「draft」のみを管理し、確定(onClose(next))まで親には通知しない
  */
 
-import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   AccessibilityInfo,
-  InputAccessoryView,
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -37,7 +30,7 @@ import {
   View,
 } from 'react-native';
 
-import { BottomSheet, Chip, useTheme } from '@/design-system';
+import { Chip, Dialog, useTheme } from '@/design-system';
 import {
   type AmountEditConfig,
   clampToRange,
@@ -63,7 +56,7 @@ export type AmountEditDialogProps = {
   onClose: (next: number | null) => void;
   config: AmountEditConfig;
   initialValue: number;
-  /** Sheet title. Default: "量を変更" */
+  /** Dialog title. Default: "量を変更" */
   title?: string;
   testID?: string;
 };
@@ -90,7 +83,6 @@ export function AmountEditDialog({
   testID,
 }: AmountEditDialogProps) {
   const t = useTheme();
-  const accessoryViewID = useId();
   const inputRef = useRef<TextInput>(null);
 
   // draft: 常に valid (clamp済み・step揃い)
@@ -112,8 +104,8 @@ export function AmountEditDialog({
       const seeded = clampToRange(snapToStep(initialValue, config), config);
       setDraft(seeded);
       setRawInput(formatValue(seeded, config.decimals));
-      // シートのスライドアニメ完了後にフォーカスを当てる
-      const timer = setTimeout(() => inputRef.current?.focus(), 350);
+      // ダイアログのアニメ完了後にフォーカスを当てる
+      const timer = setTimeout(() => inputRef.current?.focus(), 300);
       return () => clearTimeout(timer);
     }
   }, [visible, initialValue, config]);
@@ -123,7 +115,6 @@ export function AmountEditDialog({
     if (visible) {
       AccessibilityInfo.announceForAccessibility(`${draft}${config.unitLabel}`);
     }
-    // draft と visible が変わったときだけ発火
   }, [draft, visible, config.unitLabel]);
 
   // ---------------------------------------------------------------------------
@@ -170,12 +161,10 @@ export function AmountEditDialog({
 
   const handleChangeText = useCallback(
     (text: string) => {
-      // キーストロークを弾く (max 超え・decimals=0 で小数点)
       if (wouldKeystrokeProduceOutOfRange(rawInput, text, config)) return;
       setRawInput(text);
       const parsed = parseAmountInput(text, config);
       if (parsed !== null) {
-        // タイプ途中は min 未満でも draft を更新しない (commit 時に clamp)
         if (parsed <= config.max) {
           setDraft(clampToRange(parsed, config));
         }
@@ -185,7 +174,6 @@ export function AmountEditDialog({
   );
 
   const handleInputBlur = useCallback(() => {
-    // フォーカスが外れた時点で draft を rawInput に同期
     const snapped = snapToStep(draft, config);
     const clamped = clampToRange(snapped, config);
     setDraft(clamped);
@@ -203,10 +191,21 @@ export function AmountEditDialog({
   // Render
   // ---------------------------------------------------------------------------
 
-  const body = (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={styles.body}
+  return (
+    <Dialog
+      visible={visible}
+      onClose={handleCancel}
+      title={title}
+      primaryAction={{
+        label: '完了',
+        onPress: () => commitAndClose(draft),
+        disabled: !isValidAmount(draft, config),
+      }}
+      secondaryAction={{
+        label: 'キャンセル',
+        onPress: handleCancel,
+      }}
+      testID={testID}
     >
       {/* 一体型ステッパー: [ − ] [ TextInput  単位 ] [ + ] */}
       <View style={styles.stepperRow}>
@@ -248,7 +247,6 @@ export function AmountEditDialog({
             keyboardType={config.decimals === 1 ? 'decimal-pad' : 'number-pad'}
             returnKeyType="done"
             onSubmitEditing={() => commitAndClose(draft)}
-            inputAccessoryViewID={Platform.OS === 'ios' ? accessoryViewID : undefined}
             accessibilityLabel={`量を入力。${config.min}から${config.max}${config.unitLabel}の範囲`}
             accessibilityValue={{ now: draft, min: config.min, max: config.max }}
             testID={testID ? `${testID}-input` : undefined}
@@ -279,7 +277,7 @@ export function AmountEditDialog({
         </Pressable>
       </View>
 
-      {/* プリセット — キーボード表示時はスクロールアウトしても可 */}
+      {/* プリセット */}
       {config.presets.length > 0 ? (
         <View style={styles.presetRow}>
           {config.presets.map((p) => (
@@ -298,54 +296,7 @@ export function AmountEditDialog({
       <Text style={[styles.rangeHint, { color: t.colors.content.tertiary }]}>
         {config.min}〜{config.max} {config.unitLabel}
       </Text>
-    </KeyboardAvoidingView>
-  );
-
-  return (
-    <>
-      <BottomSheet
-        visible={visible}
-        onClose={handleCancel}
-        title={title}
-        expandToFull={false}
-        primaryAction={{
-          label: '完了',
-          onPress: () => commitAndClose(draft),
-          disabled: !isValidAmount(draft, config),
-        }}
-        secondaryAction={{
-          label: 'キャンセル',
-          onPress: handleCancel,
-        }}
-        testID={testID}
-      >
-        {body}
-      </BottomSheet>
-
-      {/* iOS: キーボード上部の固定「完了」ボタン */}
-      {Platform.OS === 'ios' ? (
-        <InputAccessoryView nativeID={accessoryViewID}>
-          <View
-            style={[
-              styles.accessoryBar,
-              { backgroundColor: t.colors.surface.raised, borderTopColor: t.colors.border.subtle },
-            ]}
-          >
-            <Pressable
-              onPress={() => commitAndClose(draft)}
-              hitSlop={8}
-              accessibilityRole="button"
-              accessibilityLabel="完了"
-              style={styles.accessoryDoneBtn}
-            >
-              <Text style={[styles.accessoryDoneLabel, { color: t.colors.action.primary.default }]}>
-                完了
-              </Text>
-            </Pressable>
-          </View>
-        </InputAccessoryView>
-      ) : null}
-    </>
+    </Dialog>
   );
 }
 
@@ -353,19 +304,15 @@ export function AmountEditDialog({
 // Styles
 // ---------------------------------------------------------------------------
 
-const STEPPER_SIZE = 52; // 44pt + 余裕 (アクセシビリティ最低44pt担保)
+const STEPPER_SIZE = 52;
 
 const styles = StyleSheet.create({
-  body: {
-    gap: 16,
-    paddingTop: 8,
-  },
-  // [ − ] [valueBox] [ + ] の横一列
   stepperRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 12,
+    paddingTop: 8,
   },
   stepperBtn: {
     width: STEPPER_SIZE,
@@ -381,7 +328,6 @@ const styles = StyleSheet.create({
     lineHeight: 30,
     textAlign: 'center',
   },
-  // 中央の値ボックス (TextInput + 単位を横並び)
   valueBox: {
     flex: 1,
     flexDirection: 'row',
@@ -409,27 +355,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
+    marginTop: 8,
   },
   rangeHint: {
     fontSize: 11,
     textAlign: 'center',
-  },
-  accessoryBar: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderTopWidth: StyleSheet.hairlineWidth,
-  },
-  accessoryDoneBtn: {
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    minHeight: 44,
-    justifyContent: 'center',
-  },
-  accessoryDoneLabel: {
-    fontSize: 17,
-    fontWeight: '600',
+    marginTop: 4,
+    marginBottom: 4,
   },
 });
