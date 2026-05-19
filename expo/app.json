@@ -64,7 +64,8 @@
           "healthUpdatePermission": "Hachibu からヘルスデータを書き込むことはありません。"
         }
       ],
-      "react-native-health-connect"
+      "react-native-health-connect",
+      "./plugins/health-connect-manifest.plugin.js"
     ],
     "experiments": {
       "typedRoutes": true
