@@ -8,6 +8,38 @@
 
 ---
 
+## 🔴 Critical — Play Console 申告 (Android Health Connect が動くための必須条件)
+
+実機で「健康の申告を完了する必要があります」と表示される根本原因。Health Connect は
+READ 権限要求アプリに対し Google Play での **Health Apps Declaration** 完了 + 承認
+を要求する。EAS Build APK 直配布でも同様にブロックされる (Play の承認済み package
+リストと照合される)。
+
+### 手順
+1. **プライバシーポリシー URL を準備** (既存の `web/public/legal/privacy.html` を利用)
+2. **Play Console > アプリのコンテンツ > Health Connect declaration** を提出
+   - 要求権限: `READ_STEPS / READ_ACTIVE_CALORIES_BURNED / READ_WEIGHT / READ_BODY_FAT / READ_EXERCISE`
+   - 各データの用途を明文化 (UI スクリーンショット添付)
+   - データ取扱い: 端末内のみ保存、外部送信なし
+3. **Data Safety フォーム完成** (Play Console > データセーフティ)
+   - データ種別: Health and fitness → Steps / Calories burned / Weight / Body measurements / Exercise sessions
+   - 用途: App functionality
+   - 共有先: Not shared with third parties
+4. **Internal Testing トラックに AAB アップロード** (`eas submit`)
+5. テスター登録 + 配信リンク経由インストール → Play 承認済み認識で権限ダイアログ表示
+
+### 待ち時間
+- Health Apps Declaration 審査: 通常 7 営業日以内
+- 承認まで Android Health Connect 連携は完全停止
+
+### 開発中の代替
+- iOS HealthKit は事前審査なし → TestFlight ですぐ動作確認可
+- iOS 側で機能完成 → Android は Play 申告完了後に検証
+
+参考: [Health Connect Publishing Permissions](https://developer.android.com/health-and-fitness/guides/health-connect/publish/publishing-permissions)
+
+---
+
 ## 🟡 Major — ストア審査リスクあり
 
 ### 1. AsyncStorage のヘルスデータ平文保存 (App Store 5.1.3 / Play Health Connect)
