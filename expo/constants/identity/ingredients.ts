@@ -932,7 +932,7 @@ const BUCKET_FRUIT: Identity[] = [
 ];
 
 // ---------------------------------------------------------------------------
-// Bucket 8: 油・調味 (added_fat) — 5 Identity
+// Bucket 8: 油・調味 (added_fat) — 6 Identity
 // ---------------------------------------------------------------------------
 
 const BUCKET_ADDED_FAT: Identity[] = [
@@ -1018,10 +1018,32 @@ const BUCKET_ADDED_FAT: Identity[] = [
     searchableFrom: ['fruit'],
     searchTags: ['アボカド'],
   },
+  {
+    // PFC: kcal 180 / fat 15g (75% from fat) — 油脂優位なので added_fat に分類。
+    // おやつタブからの検索導線は searchableFrom で確保。
+    id: 'nuts',
+    label: 'ナッツ',
+    primaryHome: { tab: 'ingredient', bucket: 'added_fat' },
+    defaultMacro: { kcal: 180, protein: 6, fat: 15, carbs: 5 },
+    amount: { unit: 'g', default: 30, chips: [{ label: '一掴み', value: 15 }, { label: '30', value: 30 }, { label: '50', value: 50 }] },
+    attributes: [
+      { key: 'plain', label: '素焼', isDefault: true },
+      { key: 'salted', label: '塩入' },
+      { key: 'roasted', label: 'ロースト' },
+    ],
+    asAddon: {
+      unit: 'g',
+      unitAmount: 15,
+      addedMacro: { kcal: 90, protein: 3, fat: 8, carbs: 2 },
+      defaultLabel: 'ナッツ追加',
+    },
+    searchableFrom: ['snack_drink'],
+    searchTags: ['ナッツ', 'アーモンド', 'カシュー', 'ピーナッツ', 'くるみ', 'ミックスナッツ'],
+  },
 ];
 
 // ---------------------------------------------------------------------------
-// Bucket 9: おやつ甘飲 (snack_drink) — 11 Identity
+// Bucket 9: おやつ甘飲 (snack_drink) — 10 Identity
 // ---------------------------------------------------------------------------
 
 const BUCKET_SNACK_DRINK: Identity[] = [
@@ -1079,24 +1101,6 @@ const BUCKET_SNACK_DRINK: Identity[] = [
     primaryHome: { tab: 'ingredient', bucket: 'snack_drink' },
     defaultMacro: { kcal: 305, protein: 6, fat: 8, carbs: 51 },
     amount: { unit: 'piece', default: 1, chips: [{ label: '半分', value: 0.5 }, { label: '1個', value: 1 }] },
-  },
-  {
-    id: 'nuts',
-    label: 'ナッツ',
-    primaryHome: { tab: 'ingredient', bucket: 'snack_drink' },
-    defaultMacro: { kcal: 180, protein: 6, fat: 15, carbs: 5 },
-    amount: { unit: 'g', default: 30, chips: [{ label: '一掴み', value: 15 }, { label: '30', value: 30 }, { label: '50', value: 50 }] },
-    attributes: [
-      { key: 'plain', label: '素焼', isDefault: true },
-      { key: 'salted', label: '塩入' },
-      { key: 'roasted', label: 'ロースト' },
-    ],
-    asAddon: {
-      unit: 'g',
-      unitAmount: 15,
-      addedMacro: { kcal: 90, protein: 3, fat: 8, carbs: 2 },
-      defaultLabel: 'ナッツ追加',
-    },
   },
   {
     id: 'dried_fruit',
