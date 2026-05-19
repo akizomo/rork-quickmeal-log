@@ -60,8 +60,7 @@
         "react-native-health",
         {
           "isClinicalDataEnabled": false,
-          "healthSharePermission": "歩数・運動・体重・体脂肪率などのヘルスデータを取り込んで、毎日のカロリー目標調整に使います。",
-          "healthUpdatePermission": "Hachibu からヘルスデータを書き込むことはありません。"
+          "healthSharePermission": "歩数・運動・体重・体脂肪率などのヘルスデータを取り込んで、毎日のカロリー目標調整に使います。"
         }
       ],
       "react-native-health-connect",

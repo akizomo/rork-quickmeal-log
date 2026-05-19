@@ -19,6 +19,7 @@ import { SettingsDivider, SettingsLinkRow, SettingsListCard, SettingsSectionLabe
 import { TRIAL_DURATION_DAYS } from '@/constants/onboarding';
 import { Body, Caption, Card, Heading, useTheme } from '@/design-system';
 import { useHealthSync } from '@/hooks/use-health-sync';
+import type { HealthSyncStatus } from '@/utils/health-sync';
 import { useAppState } from '@/providers/app-state-provider';
 import { trialDaysRemaining } from '@/utils/goals';
 
@@ -286,13 +287,7 @@ function HealthSyncRow({
   lastError,
   onPress,
 }: {
-  status:
-    | 'unsupported'
-    | 'provider_missing'
-    | 'provider_update_required'
-    | 'unauthorized'
-    | 'authorized'
-    | 'unknown';
+  status: HealthSyncStatus;
   syncing: boolean;
   lastSyncedAt: string | null;
   lastError: string | null;

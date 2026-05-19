@@ -35,6 +35,8 @@ const REQUIRED_PERMISSIONS: Permission[] = [
 ];
 
 let initialized = false;
+/** 進行中の初期化 Promise を保持して並列呼び出しでの二重実行を防ぐ */
+let initInFlight: Promise<boolean> | null = null;
 
 /**
  * Health Connect プロバイダの状態を細かく返す。
@@ -58,24 +60,30 @@ async function getProviderState(): Promise<
     // SDK_UNAVAILABLE (=1) は OS が古いか、プロバイダが未インストールの可能性
     return 'provider_missing';
   } catch (err) {
-    console.log('[health-sync/android] getSdkStatus failed', err);
+    if (__DEV__) console.log('[health-sync/android] getSdkStatus failed', err);
     return 'unsupported';
   }
 }
 
 async function ensureInitialized(): Promise<boolean> {
   if (initialized) return true;
-  // SDK が利用可能でなければ initialize 自体を呼ばない (Play Store 遷移を防ぐ)
-  const provider = await getProviderState();
-  if (provider !== 'available') return false;
-  try {
-    const ok = await initialize();
-    initialized = ok;
-    return ok;
-  } catch (err) {
-    console.log('[health-sync/android] initialize failed', err);
-    return false;
-  }
+  if (initInFlight) return initInFlight;
+  initInFlight = (async () => {
+    // SDK が利用可能でなければ initialize 自体を呼ばない (Play Store 遷移を防ぐ)
+    const provider = await getProviderState();
+    if (provider !== 'available') return false;
+    try {
+      const ok = await initialize();
+      initialized = ok;
+      return ok;
+    } catch (err) {
+      if (__DEV__) console.log('[health-sync/android] initialize failed', err);
+      return false;
+    }
+  })().finally(() => {
+    initInFlight = null;
+  });
+  return initInFlight;
 }
 
 async function hasAllPermissions(): Promise<boolean> {
@@ -85,7 +93,7 @@ async function hasAllPermissions(): Promise<boolean> {
       granted.some((g) => 'recordType' in g && g.recordType === req.recordType && g.accessType === req.accessType)
     );
   } catch (err) {
-    console.log('[health-sync/android] getGrantedPermissions failed', err);
+    if (__DEV__) console.log('[health-sync/android] getGrantedPermissions failed', err);
     return false;
   }
 }
@@ -116,7 +124,7 @@ async function fetchWeights(rangeDays: number): Promise<HealthWeightSample[]> {
       };
     });
   } catch (err) {
-    console.log('[health-sync/android] fetchWeights failed', err);
+    if (__DEV__) console.log('[health-sync/android] fetchWeights failed', err);
     return [];
   }
 }
@@ -139,7 +147,7 @@ async function fetchBodyFat(rangeDays: number): Promise<HealthBodyFatSample[]> {
       };
     });
   } catch (err) {
-    console.log('[health-sync/android] fetchBodyFat failed', err);
+    if (__DEV__) console.log('[health-sync/android] fetchBodyFat failed', err);
     return [];
   }
 }
@@ -159,7 +167,7 @@ async function fetchDailyActivity(rangeDays: number): Promise<HealthDailyActivit
       map.set(date, cur);
     }
   } catch (err) {
-    console.log('[health-sync/android] fetchSteps failed', err);
+    if (__DEV__) console.log('[health-sync/android] fetchSteps failed', err);
   }
   try {
     const energyResult = await readRecords('ActiveCaloriesBurned', {
@@ -173,7 +181,7 @@ async function fetchDailyActivity(rangeDays: number): Promise<HealthDailyActivit
       map.set(date, cur);
     }
   } catch (err) {
-    console.log('[health-sync/android] fetchActiveCalories failed', err);
+    if (__DEV__) console.log('[health-sync/android] fetchActiveCalories failed', err);
   }
   return Array.from(map.entries()).map(([date, v]) => ({
     date,
@@ -212,7 +220,7 @@ async function fetchWorkouts(rangeDays: number): Promise<HealthWorkoutSample[]> 
       };
     });
   } catch (err) {
-    console.log('[health-sync/android] fetchWorkouts failed', err);
+    if (__DEV__) console.log('[health-sync/android] fetchWorkouts failed', err);
     return [];
   }
 }
@@ -230,7 +238,7 @@ export const healthAdapter: HealthSyncAdapter = {
       await requestPermission(REQUIRED_PERMISSIONS);
       return await hasAllPermissions();
     } catch (err) {
-      console.log('[health-sync/android] requestPermission failed', err);
+      if (__DEV__) console.log('[health-sync/android] requestPermission failed', err);
       return false;
     }
   },
