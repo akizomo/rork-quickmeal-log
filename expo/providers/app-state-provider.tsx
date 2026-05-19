@@ -1268,6 +1268,33 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     () => adjustedTargetKcal(profile.targetCalories, exerciseLogs, todayKey),
     [exerciseLogs, profile.targetCalories, todayKey]
   );
+  /**
+   * v1.7+: 運動で kcal 目標が伸びたとき、PFC ターゲットも **現在比率を維持** して
+   * 比例スケールさせる (MyFitnessPal 等のデフォルトと同方式)。
+   * baseTarget が 0 のときは比率計算できないので base PFC をそのまま返す。
+   */
+  const todayAdjustedPfc = useMemo(() => {
+    const base = profile.targetCalories;
+    if (base <= 0) {
+      return {
+        protein: profile.targetProtein,
+        fat: profile.targetFat,
+        carbs: profile.targetCarbs,
+      };
+    }
+    const ratio = todayAdjustedTargetKcal / base;
+    return {
+      protein: Math.round(profile.targetProtein * ratio),
+      fat: Math.round(profile.targetFat * ratio),
+      carbs: Math.round(profile.targetCarbs * ratio),
+    };
+  }, [
+    profile.targetCalories,
+    profile.targetProtein,
+    profile.targetFat,
+    profile.targetCarbs,
+    todayAdjustedTargetKcal,
+  ]);
   const todayDailyActivity = useMemo<DailyActivitySummary | null>(
     () => dailyActivities.find((d) => d.date === todayKey) ?? null,
     [dailyActivities, todayKey]
@@ -1285,6 +1312,7 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     todayGrossExerciseKcal,
     todayNetExerciseKcal,
     todayAdjustedTargetKcal,
+    todayAdjustedPfc,
     dailyActivities,
     todayDailyActivity,
     logExercise,
