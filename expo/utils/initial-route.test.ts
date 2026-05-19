@@ -9,6 +9,9 @@ const make = (overrides: Partial<AppSettings> = {}): AppSettings => ({
   onboardingCompleted: false,
   subscriptionStatus: 'none',
   paywallSeenAtISO: null,
+  // v1.7+: ヘルス連携誘導は既存テストの "home へ" 期待を維持するため
+  // デフォルトで "表示済み" 扱いにする。新規テストで明示的に null にする。
+  healthConnectSeenAtISO: '2026-01-01T00:00:00.000Z',
   ...overrides,
 });
 
@@ -107,5 +110,46 @@ describe('decideInitialRoute', () => {
     expect(
       decideInitialRoute(make({ introSeenVersion: 1, onboardingCompleted: false }))
     ).toBe('intro');
+  });
+
+  describe('ヘルス連携誘導 (v1.7+)', () => {
+    it('ペイウォール突破直後 (healthConnectSeenAtISO=null) は health-connect へ', () => {
+      expect(
+        decideInitialRoute(
+          make({
+            introSeenVersion: INTRO_VERSION,
+            onboardingCompleted: true,
+            subscriptionStatus: 'trialing',
+            healthConnectSeenAtISO: null,
+          })
+        )
+      ).toBe('health-connect');
+    });
+
+    it('ヘルス連携誘導を見たユーザーは home へ直行', () => {
+      expect(
+        decideInitialRoute(
+          make({
+            introSeenVersion: INTRO_VERSION,
+            onboardingCompleted: true,
+            subscriptionStatus: 'trialing',
+            healthConnectSeenAtISO: new Date().toISOString(),
+          })
+        )
+      ).toBe('home');
+    });
+
+    it('未課金なら health-connect 扱いより paywall が優先される', () => {
+      expect(
+        decideInitialRoute(
+          make({
+            introSeenVersion: INTRO_VERSION,
+            onboardingCompleted: true,
+            subscriptionStatus: 'none',
+            healthConnectSeenAtISO: null,
+          })
+        )
+      ).toBe('paywall');
+    });
   });
 });
