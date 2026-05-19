@@ -44,9 +44,13 @@ const withHealthConnectManifest = (config) =>
     }
 
     // ===== (2) Android 14+ intent-filter を MainActivity に追加 =====
+    // android:name="*MainActivity" 名で activity を検索 (リスト中の位置に依存しない)
     const app = manifest.application?.[0];
-    if (app && app.activity && app.activity.length > 0) {
-      const mainActivity = app.activity[0];
+    const mainActivity = app?.activity?.find((a) => {
+      const name = a?.$?.['android:name'];
+      return typeof name === 'string' && /MainActivity$/.test(name);
+    });
+    if (mainActivity) {
       mainActivity['intent-filter'] = mainActivity['intent-filter'] ?? [];
 
       // 既に同じ action があるかチェック (react-native-health-connect の plugin が

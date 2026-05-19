@@ -1072,9 +1072,11 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       };
       const next = [nextEntry, ...dailyActivities.filter((d) => d.date !== input.date)];
       setDailyActivities(next);
-      persist(profile, logs, settings, weights, bodyFatEntries, undefined, next);
+      // exerciseLogs を明示渡し: closure 経由の暗黙 fallback による
+      // stale-state リスクを回避する。
+      persist(profile, logs, settings, weights, bodyFatEntries, exerciseLogs, next);
     },
-    [bodyFatEntries, dailyActivities, logs, persist, profile, settings, weights]
+    [bodyFatEntries, dailyActivities, exerciseLogs, logs, persist, profile, settings, weights]
   );
 
   /**

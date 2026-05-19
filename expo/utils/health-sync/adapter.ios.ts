@@ -36,12 +36,16 @@ const permissions: HealthKitPermissions = {
 };
 
 let initialized = false;
+/** 進行中の初期化 Promise を保持して並列呼び出しでの二重実行を防ぐ */
+let initInFlight: Promise<boolean> | null = null;
 
 function initHealthKit(): Promise<boolean> {
-  return new Promise((resolve) => {
+  if (initialized) return Promise.resolve(true);
+  if (initInFlight) return initInFlight;
+  initInFlight = new Promise<boolean>((resolve) => {
     AppleHealthKit.initHealthKit(permissions, (error: string) => {
       if (error) {
-        console.log('[health-sync/ios] init error', error);
+        if (__DEV__) console.log('[health-sync/ios] init error', error);
         initialized = false;
         resolve(false);
         return;
@@ -49,7 +53,10 @@ function initHealthKit(): Promise<boolean> {
       initialized = true;
       resolve(true);
     });
+  }).finally(() => {
+    initInFlight = null;
   });
+  return initInFlight;
 }
 
 function getWeightSamples(rangeDays: number): Promise<HealthValue[]> {
@@ -63,7 +70,7 @@ function getWeightSamples(rangeDays: number): Promise<HealthValue[]> {
     };
     AppleHealthKit.getWeightSamples(options, (err, results) => {
       if (err) {
-        console.log('[health-sync/ios] getWeightSamples error', err);
+        if (__DEV__) console.log('[health-sync/ios] getWeightSamples error', err);
         resolve([]);
         return;
       }
@@ -83,7 +90,7 @@ function getBodyFatSamples(rangeDays: number): Promise<HealthValue[]> {
     };
     AppleHealthKit.getBodyFatPercentageSamples(options, (err, results) => {
       if (err) {
-        console.log('[health-sync/ios] getBodyFatPercentageSamples error', err);
+        if (__DEV__) console.log('[health-sync/ios] getBodyFatPercentageSamples error', err);
         resolve([]);
         return;
       }
@@ -102,7 +109,7 @@ function getDailyStepSamples(rangeDays: number): Promise<HealthValue[]> {
     };
     AppleHealthKit.getDailyStepCountSamples(options, (err, results) => {
       if (err) {
-        console.log('[health-sync/ios] getDailyStepCountSamples error', err);
+        if (__DEV__) console.log('[health-sync/ios] getDailyStepCountSamples error', err);
         resolve([]);
         return;
       }
@@ -121,7 +128,7 @@ function getActiveEnergySamples(rangeDays: number): Promise<HealthValue[]> {
     };
     AppleHealthKit.getActiveEnergyBurned(options, (err, results) => {
       if (err) {
-        console.log('[health-sync/ios] getActiveEnergyBurned error', err);
+        if (__DEV__) console.log('[health-sync/ios] getActiveEnergyBurned error', err);
         resolve([]);
         return;
       }
@@ -148,7 +155,7 @@ function getWorkoutSamples(rangeDays: number): Promise<IosWorkoutSample[]> {
     };
     AppleHealthKit.getAnchoredWorkouts(options, (err, results) => {
       if (err) {
-        console.log('[health-sync/ios] getAnchoredWorkouts error', err);
+        if (__DEV__) console.log('[health-sync/ios] getAnchoredWorkouts error', err);
         resolve([]);
         return;
       }

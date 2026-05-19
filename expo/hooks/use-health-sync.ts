@@ -69,7 +69,7 @@ export function useHealthSync(): UseHealthSyncReturn {
     if (!supported) return null;
     // 🛡️ ハイドレート完了まで同期しない (起動時レースで既存ログを上書きしない)
     if (isHydrating) {
-      console.log('[health-sync] skipped: provider still hydrating');
+      if (__DEV__) console.log('[health-sync] skipped: provider still hydrating');
       return null;
     }
     setSyncing(true);
@@ -96,7 +96,7 @@ export function useHealthSync(): UseHealthSyncReturn {
     } catch (err) {
       const message = err instanceof Error ? err.message : '同期に失敗しました';
       setLastError(message);
-      console.log('[health-sync] sync error', err);
+      if (__DEV__) console.log('[health-sync] sync error', err instanceof Error ? err.message : err);
       return null;
     } finally {
       setSyncing(false);
