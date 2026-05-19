@@ -80,7 +80,8 @@
             "minSdkVersion": 26
           }
         }
-      ]
+      ],
+      "./plugins/health-connect-manifest.plugin.js"
     ],
     "experiments": {
       "typedRoutes": true
