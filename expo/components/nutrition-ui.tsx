@@ -296,7 +296,7 @@ export const StatusCard = memo(function StatusCard({
   /** 左「食事」エリアタップ時のコールバック (例: DayLogBottomSheet を half に展開) */
   onFoodPress?: () => void;
 }) {
-  const { profile, todayMacro, logs, todayGrossExerciseKcal, todayAdjustedTargetKcal } = useAppState();
+  const { profile, todayMacro, logs, todayGrossExerciseKcal, todayAdjustedTargetKcal, todayAdjustedPfc } = useAppState();
   const t = useTheme();
   const { width: screenWidth } = useWindowDimensions();
   const [exerciseSheetVisible, setExerciseSheetVisible] = useState(false);
@@ -314,6 +314,10 @@ export const StatusCard = memo(function StatusCard({
   // 今日のみ運動連動。過去日表示時は base ターゲットを使う。
   const effectiveTarget = isToday ? todayAdjustedTargetKcal : profile.targetCalories;
   const effectiveExerciseKcal = isToday ? todayGrossExerciseKcal : 0;
+  // PFC も同様。今日は運動による拡大後の比例 PFC、過去日は base PFC。
+  const effectivePfc = isToday
+    ? todayAdjustedPfc
+    : { protein: profile.targetProtein, fat: profile.targetFat, carbs: profile.targetCarbs };
 
   const openExerciseSheet = useCallback(() => setExerciseSheetVisible(true), []);
   const closeExerciseSheet = useCallback(() => setExerciseSheetVisible(false), []);
@@ -391,21 +395,21 @@ export const StatusCard = memo(function StatusCard({
           letter="P"
           label="タンパク質"
           current={dayMacro.protein}
-          target={profile.targetProtein}
+          target={effectivePfc.protein}
           color={t.colors.nutrition.protein.default}
         />
         <MiniProgressBar
           letter="F"
           label="脂肪"
           current={dayMacro.fat}
-          target={profile.targetFat}
+          target={effectivePfc.fat}
           color={t.colors.nutrition.fat.default}
         />
         <MiniProgressBar
           letter="C"
           label="炭水化物"
           current={dayMacro.carbs}
-          target={profile.targetCarbs}
+          target={effectivePfc.carbs}
           color={t.colors.nutrition.carbs.default}
         />
       </View>
