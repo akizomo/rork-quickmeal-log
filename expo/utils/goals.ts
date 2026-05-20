@@ -418,6 +418,53 @@ export function adjustedTargetKcal(
   return baseTargetKcal + dayNet;
 }
 
+/**
+ * Total gross exercise kcal recorded for the given date.
+ * StatusCard 右側の「消費」表示など、UI 上の "今日 (またはその日) の消費" として使う値。
+ */
+export function getGrossExerciseKcalForDate(
+  exerciseLogs: { date: string; grossKcal: number }[],
+  dateKey: string
+): number {
+  return exerciseLogs
+    .filter((e) => e.date === dateKey)
+    .reduce((sum, e) => sum + e.grossKcal, 0);
+}
+
+/**
+ * その日の運動 kcal を考慮した PFC ターゲットを **比例スケール** で返す。
+ *
+ * 計算: ratio = adjustedTargetKcal(date) / baseTargetCalories
+ *       protein/fat/carbs を ratio で乗算
+ *
+ * baseTargetKcal が 0 のときは base PFC をそのまま返す (ゼロ除算回避)。
+ */
+export function getAdjustedPfcForDate(
+  profile: {
+    targetCalories: number;
+    targetProtein: number;
+    targetFat: number;
+    targetCarbs: number;
+  },
+  exerciseLogs: { date: string; netKcal: number }[],
+  dateKey: string
+): { protein: number; fat: number; carbs: number } {
+  const base = profile.targetCalories;
+  if (base <= 0) {
+    return {
+      protein: profile.targetProtein,
+      fat: profile.targetFat,
+      carbs: profile.targetCarbs,
+    };
+  }
+  const ratio = adjustedTargetKcal(base, exerciseLogs, dateKey) / base;
+  return {
+    protein: Math.round(profile.targetProtein * ratio),
+    fat: Math.round(profile.targetFat * ratio),
+    carbs: Math.round(profile.targetCarbs * ratio),
+  };
+}
+
 export function trialDaysRemaining(startedAtISO: string | null | undefined, trialDays: number): number {
   if (!startedAtISO) return 0;
   const started = new Date(startedAtISO).getTime();
