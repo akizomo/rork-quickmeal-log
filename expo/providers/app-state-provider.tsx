@@ -234,6 +234,8 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
         settings: nextSettings,
         weights: persistedQuery.data.weights,
         bodyFatEntries: persistedQuery.data.bodyFatEntries,
+        exerciseLogs: persistedQuery.data.exerciseLogs ?? [],
+        dailyActivities: persistedQuery.data.dailyActivities ?? [],
       });
     } else {
       setLogs(persistedQuery.data.logs);

@@ -27,7 +27,7 @@ import { useAppState } from '@/providers/app-state-provider';
 import { DishDraft, DishSize, IngredientDraft, Macro, PortionValue } from '@/types/nutrition';
 import { getIdentity } from '@/constants/identity';
 import { getLogDisplayInfo } from '@/utils/log-display';
-import { trialDaysRemaining } from '@/utils/goals';
+import { adjustedTargetKcal, getAdjustedPfcForDate, getGrossExerciseKcalForDate, trialDaysRemaining } from '@/utils/goals';
 import { buildDishMacro, clampPortion, computeIngredient, draftFromLog, formatDateKey, formatMacroText, getIngredientSubtypeDef, getIngredientSubtypeDefs, getQuickCategories, getSubtypes, getToppingsForSubtype, summarizeToppings } from '@/utils/nutrition';
 import { formatDayLabel, isSameDay, sumForDate } from '@/utils/history';
 
@@ -296,7 +296,7 @@ export const StatusCard = memo(function StatusCard({
   /** 左「食事」エリアタップ時のコールバック (例: DayLogBottomSheet を half に展開) */
   onFoodPress?: () => void;
 }) {
-  const { profile, todayMacro, logs, todayGrossExerciseKcal, todayAdjustedTargetKcal, todayAdjustedPfc } = useAppState();
+  const { profile, todayMacro, logs, exerciseLogs } = useAppState();
   const t = useTheme();
   const { width: screenWidth } = useWindowDimensions();
   const [exerciseSheetVisible, setExerciseSheetVisible] = useState(false);
@@ -311,13 +311,20 @@ export const StatusCard = memo(function StatusCard({
     [isToday, todayMacro, logs, dateKey]
   );
 
-  // 今日のみ運動連動。過去日表示時は base ターゲットを使う。
-  const effectiveTarget = isToday ? todayAdjustedTargetKcal : profile.targetCalories;
-  const effectiveExerciseKcal = isToday ? todayGrossExerciseKcal : 0;
-  // PFC も同様。今日は運動による拡大後の比例 PFC、過去日は base PFC。
-  const effectivePfc = isToday
-    ? todayAdjustedPfc
-    : { protein: profile.targetProtein, fat: profile.targetFat, carbs: profile.targetCarbs };
+  // 表示中の日付に対する目標・消費・PFC をその日の運動ログから算出する。
+  // 今日 / 過去日とも同じロジック (運動を記録した過去日も目標が拡大する)。
+  const effectiveTarget = useMemo(
+    () => adjustedTargetKcal(profile.targetCalories, exerciseLogs, dateKey),
+    [profile.targetCalories, exerciseLogs, dateKey]
+  );
+  const effectiveExerciseKcal = useMemo(
+    () => getGrossExerciseKcalForDate(exerciseLogs, dateKey),
+    [exerciseLogs, dateKey]
+  );
+  const effectivePfc = useMemo(
+    () => getAdjustedPfcForDate(profile, exerciseLogs, dateKey),
+    [profile, exerciseLogs, dateKey]
+  );
 
   const openExerciseSheet = useCallback(() => setExerciseSheetVisible(true), []);
   const closeExerciseSheet = useCallback(() => setExerciseSheetVisible(false), []);

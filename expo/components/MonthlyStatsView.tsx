@@ -6,6 +6,7 @@ import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } fr
 import { palette } from '@/constants/theme';
 import { useTheme } from '@/design-system';
 import { useAppState } from '@/providers/app-state-provider';
+import { adjustedTargetKcal, getGrossExerciseKcalForDate } from '@/utils/goals';
 import {
   addDays,
   averageLoggedDays,
@@ -23,7 +24,7 @@ import {
 const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'] as const;
 
 export function MonthlyStatsView() {
-  const { logs, profile, settings } = useAppState();
+  const { logs, profile, settings, exerciseLogs } = useAppState();
   const t = useTheme();
   const router = useRouter();
   const { width: screenWidth } = useWindowDimensions();
@@ -47,6 +48,32 @@ export function MonthlyStatsView() {
         .reverse(),
     [monthDailyMap, today]
   );
+
+  const monthExerciseMap = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const key of monthDailyMap.keys()) {
+      map.set(key, getGrossExerciseKcalForDate(exerciseLogs, key));
+    }
+    return map;
+  }, [monthDailyMap, exerciseLogs]);
+
+  const monthAdjustedTargetMap = useMemo(() => {
+    const map = new Map<string, number>();
+    const base = profile.targetCalories > 0 ? profile.targetCalories : 0;
+    for (const key of monthDailyMap.keys()) {
+      map.set(key, base > 0 ? adjustedTargetKcal(base, exerciseLogs, key) : 0);
+    }
+    return map;
+  }, [monthDailyMap, exerciseLogs, profile.targetCalories]);
+
+  const avgExerciseKcal = useMemo(() => {
+    const loggedKeys = Array.from(monthDailyMap.entries())
+      .filter(([, m]) => m.kcal > 0)
+      .map(([k]) => k);
+    if (loggedKeys.length === 0) return 0;
+    const sum = loggedKeys.reduce((acc, k) => acc + (monthExerciseMap.get(k) ?? 0), 0);
+    return Math.round(sum / loggedKeys.length);
+  }, [monthDailyMap, monthExerciseMap]);
 
   const canGoPrev = useMemo(() => {
     const prevMonth = new Date(anchor.getFullYear(), anchor.getMonth() - 1, 1);
@@ -117,10 +144,11 @@ export function MonthlyStatsView() {
             const maxR = cellSize * 0.42;
             const ratio = maxKcal > 0 ? Math.min(kcal / maxKcal, 1.4) : 0;
             const r = kcal > 0 ? Math.max(minR + 2, ratio * maxR) : minR;
+            const dayTarget = monthAdjustedTargetMap.get(cell.dateKey) ?? targetKcal;
             const color = (() => {
               if (kcal === 0) return 'transparent';
-              if (targetKcal === 0) return t.colors.nutrition.calorie.within;
-              const overall = kcal / targetKcal;
+              if (dayTarget === 0) return t.colors.nutrition.calorie.within;
+              const overall = kcal / dayTarget;
               // 〜110%: 予算内 (moss)、110〜130%: 軽度超過 (amber)、130%超: 大幅超過 (clay)
               // 不足はサイズで表現し、色はカロリー予算カラーに統一する。
               if (overall <= 1.1) return t.colors.nutrition.calorie.within;
@@ -172,6 +200,9 @@ export function MonthlyStatsView() {
         <Text style={styles.summarySub}>
           P {Math.round(avgMacro.protein)}g · F {Math.round(avgMacro.fat)}g · C {Math.round(avgMacro.carbs)}g
         </Text>
+        {avgExerciseKcal > 0 ? (
+          <Text style={styles.summaryConsume}>平均消費 {avgExerciseKcal} kcal / 日</Text>
+        ) : null}
         <Text style={styles.summaryMeta}>記録した日: {loggedDays} 日</Text>
         <Text style={styles.summaryHint}>円の大きさ = その日の摂取カロリー量</Text>
       </View>
@@ -181,6 +212,7 @@ export function MonthlyStatsView() {
         {monthDailyEntries.map(([key, macro]) => {
           const date = new Date(key);
           const hasLog = macro.kcal > 0;
+          const exerciseKcal = monthExerciseMap.get(key) ?? 0;
           return (
             <Pressable
               key={key}
@@ -198,6 +230,7 @@ export function MonthlyStatsView() {
                   <Text style={styles.dayKcal}>{Math.round(macro.kcal)} kcal</Text>
                   <Text style={styles.dayMacroLine}>
                     P{Math.round(macro.protein)} F{Math.round(macro.fat)} C{Math.round(macro.carbs)}
+                    {exerciseKcal > 0 ? ` · 消費 ${Math.round(exerciseKcal)}` : ''}
                   </Text>
                 </View>
               ) : (
@@ -298,6 +331,12 @@ const styles = StyleSheet.create({
   summarySub: {
     fontSize: 13,
     color: palette.text,
+  },
+  summaryConsume: {
+    marginTop: 2,
+    fontSize: 12,
+    color: palette.textMuted,
+    fontWeight: '600',
   },
   summaryMeta: {
     marginTop: 4,
