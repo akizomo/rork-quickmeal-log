@@ -4,7 +4,15 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { BottomSheet, Chip, useTheme } from '@/design-system';
 import { palette } from '@/constants/theme';
-import { EXERCISE_TYPES, calcExerciseGrossKcal, ExerciseTypeKey } from '@/utils/goals';
+import {
+  ACTIVITY_BONUS_DAILY_CAP_KCAL,
+  calcActivityBonusKcal,
+  calcBaselineActiveKcal,
+  calcExerciseGrossKcal,
+  EXERCISE_TYPES,
+  ExerciseTypeKey,
+  stepsToActiveKcal,
+} from '@/utils/goals';
 import { useAppState } from '@/providers/app-state-provider';
 import type { ExerciseLog } from '@/types/nutrition';
 
@@ -49,6 +57,19 @@ export const ExerciseSheet = memo(function ExerciseSheet({ visible, onClose }: E
     !!todayDailyActivity && (todayDailyActivity.steps > 0 || todayDailyActivity.activeKcal > 0);
   const hasWorkouts = todayExerciseLogs.length > 0;
 
+  // 差分方式 (PRD §6.4.3): 当日活動のうち「基準超過分」が目標に反映される。
+  // ここではその反映分の根拠を可視化する (なぜ食べられる量が増えたか)。
+  const activityBonusKcal = useMemo(() => {
+    const baseline = calcBaselineActiveKcal(profile);
+    if (baseline == null || !todayDailyActivity) return 0;
+    const measured =
+      todayDailyActivity.activeKcal > 0
+        ? todayDailyActivity.activeKcal
+        : stepsToActiveKcal(todayDailyActivity.steps, profile.currentWeightKg);
+    return calcActivityBonusKcal(baseline, measured);
+  }, [profile, todayDailyActivity]);
+  const activityBonusCapped = activityBonusKcal >= ACTIVITY_BONUS_DAILY_CAP_KCAL;
+
   return (
     <BottomSheet
       visible={visible}
@@ -77,6 +98,14 @@ export const ExerciseSheet = memo(function ExerciseSheet({ visible, onClose }: E
                 <Text style={styles.activityKcal}>
                   +{Math.round(todayDailyActivity!.activeKcal).toLocaleString()} kcal
                 </Text>
+              </View>
+            ) : null}
+            {activityBonusKcal > 0 ? (
+              <View style={styles.bonusRow} testID="exercise-activity-bonus">
+                <Text style={styles.bonusLabel}>
+                  目標に反映 (基準超過分){activityBonusCapped ? '・上限' : ''}
+                </Text>
+                <Text style={styles.bonusKcal}>+{activityBonusKcal.toLocaleString()} kcal</Text>
               </View>
             ) : null}
           </View>
@@ -215,6 +244,13 @@ const styles = StyleSheet.create({
   },
   activityLabel: { fontSize: 12, fontWeight: '500', color: palette.textMuted },
   activityKcal: { fontSize: 13, fontWeight: '600', color: palette.text },
+  bonusRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+  },
+  bonusLabel: { fontSize: 11, fontWeight: '500', color: palette.sageDeep },
+  bonusKcal: { fontSize: 13, fontWeight: '700', color: palette.sageDeep },
   historyBlock: { gap: 8 },
   historyRow: {
     flexDirection: 'row',
