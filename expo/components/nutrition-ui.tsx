@@ -146,6 +146,7 @@ const BalanceModal = memo(function BalanceModal({
   adjustedTargetKcal,
   consumedKcal,
   exerciseAdded,
+  addedLabel,
   activityLevelLabel,
 }: {
   visible: boolean;
@@ -153,8 +154,10 @@ const BalanceModal = memo(function BalanceModal({
   baseTargetKcal: number;
   adjustedTargetKcal: number;
   consumedKcal: number;
-  /** 今日の運動で目標に加算される kcal (現モデルでは gross 全額) */
+  /** 今日の目標に加算される kcal (運動ログ or 活動量の大きい方。PRD §6.4.3) */
   exerciseAdded: number;
+  /** 加算行のラベル (加算ソースに応じて "運動" / "活動" 等を出し分け) */
+  addedLabel: string;
   /** オンボで選んだ運動習慣のラベル (例: "軽めに動く"). 未設定なら null */
   activityLevelLabel: string | null;
 }) {
@@ -213,7 +216,7 @@ const BalanceModal = memo(function BalanceModal({
               ) : null}
             </View>
             {hasExercise ? (
-              <BalanceMathRow label="運動" value={exerciseAdded} sign="+" tone="positive" />
+              <BalanceMathRow label={addedLabel} value={exerciseAdded} sign="+" tone="positive" />
             ) : null}
             {hasExercise ? (
               <BalanceMathRow label="今日の目標" value={adjustedTargetKcal} emphasis="mid" />
@@ -440,9 +443,15 @@ export const StatusCard = memo(function StatusCard({
         baseTargetKcal={profile.targetCalories}
         adjustedTargetKcal={effectiveTarget}
         consumedKcal={Math.round(dayMacro.kcal)}
-        /* v1.7+: 業界標準モデル (YAZIO/MFP/あすけん) で gross 全額加算。
-         * adjustedTarget - baseTarget は今や運動 gross と一致する。 */
+        /* 加算は運動ログと活動量の大きい方 (PRD §6.4.3)。
+         * adjustedTarget - baseTarget がその最終加算分。 */
         exerciseAdded={Math.max(0, effectiveTarget - profile.targetCalories)}
+        /* 加算ソースの出し分け: 活動由来が運動ログを上回る日は「活動」と表示。 */
+        addedLabel={
+          activityBonusKcal > getGrossExerciseKcalForDate(exerciseLogs, dateKey)
+            ? '活動 (歩数など)'
+            : '運動'
+        }
         activityLevelLabel={
           ACTIVITY_LEVEL_OPTIONS.find((a) => a.level === profile.activityLevel)?.label ?? null
         }
