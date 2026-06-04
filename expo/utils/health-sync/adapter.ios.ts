@@ -8,6 +8,7 @@ import { normalizeIosWorkoutType, getExerciseLabel } from './mapping';
 import type {
   HealthBodyFatSample,
   HealthDailyActivitySample,
+  HealthDiagnostics,
   HealthSyncAdapter,
   HealthSyncResult,
   HealthSyncStatus,
@@ -284,6 +285,17 @@ export const healthAdapter: HealthSyncAdapter = {
     // Permission の正確な状態は initHealthKit 後でないと判定できない。
     // Phase 1 では「初期化済みなら authorized、未初期化なら unknown」とする。
     return initialized ? 'authorized' : 'unknown';
+  },
+  async getDiagnostics(): Promise<HealthDiagnostics> {
+    const initOk = await initHealthKit();
+    return {
+      platform: 'ios',
+      rawSdkStatus: null,
+      sdkStatusLabel: 'n/a (iOS HealthKit)',
+      initialized: initOk,
+      grantedPermissions: [],
+      status: initialized ? 'authorized' : 'unknown',
+    };
   },
 };
 

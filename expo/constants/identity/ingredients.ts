@@ -136,7 +136,7 @@ const BUCKET_STAPLE: Identity[] = [
     amount: { unit: 'piece', default: 1, chips: [{ label: '1個', value: 1 }, { label: '2個', value: 2 }] },
     attributes: [
       { key: 'croissant', label: 'クロワッサン', isDefault: true },
-      { key: 'danish', label: 'デニッシュ' },
+      { key: 'danish', label: 'デニッシュ', factor: { kcal: 1.10, fat: 1.18, carbs: 1.14 } },
     ],
     defaultAddonIds: ['jam', 'honey', 'butter_cream'],
     allowedAddonIds: ['jam', 'honey', 'butter_cream', 'maple_syrup', 'peanut_butter', 'cheese'],
@@ -184,7 +184,7 @@ const BUCKET_STAPLE: Identity[] = [
     amount: { unit: 'g', default: 100, chips: [{ label: '小', value: 70 }, { label: '1個', value: 100 }, { label: '大', value: 180 }] },
     styles: [
       { key: 'plain', label: '蒸し・茹で', isDefault: true },
-      { key: 'baked', label: '焼き' },
+      { key: 'baked', label: '焼き', factor: { kcal: 1.11, carbs: 1.17 } },
       {
         key: 'fried',
         label: '揚げ',
@@ -207,7 +207,7 @@ const BUCKET_STAPLE: Identity[] = [
     amount: { unit: 'g', default: 100, chips: [{ label: '小', value: 70 }, { label: '100', value: 100 }, { label: '大', value: 200 }] },
     styles: [
       { key: 'plain', label: '蒸し・茹で', isDefault: true },
-      { key: 'baked', label: '焼き' },
+      { key: 'baked', label: '焼き', factor: { kcal: 1.25, carbs: 1.27 } },
       {
         key: 'syrup_baked',
         label: '焼き蜜・揚げ蜜',
@@ -694,7 +694,7 @@ const BUCKET_DAIRY_SOY: Identity[] = [
     amount: { unit: 'g', default: 20, chips: [{ label: 'スライス1枚', value: 18 }, { label: '30', value: 30 }, { label: '50', value: 50 }] },
     attributes: [
       { key: 'slice', label: 'スライス・6P', isDefault: true },
-      { key: 'mozza', label: 'モッツァレラ' },
+      { key: 'mozza', label: 'モッツァレラ', factor: { kcal: 0.85, protein: 1.20, fat: 0.83, carbs: 0.50 } },
       { key: 'cream', label: 'クリーム', factor: { kcal: 1.39, protein: 0.5, fat: 1.67 } },
       { key: 'parmesan', label: 'パルメザン', factor: { kcal: 1.34, protein: 1.96, fat: 1.13 } },
     ],
@@ -963,7 +963,7 @@ const BUCKET_ADDED_FAT: Identity[] = [
     amount: { unit: 'g', default: 10, chips: [{ label: '5', value: 5 }, { label: '10', value: 10 }, { label: '大さじ', value: 15 }] },
     attributes: [
       { key: 'butter', label: 'バター', isDefault: true },
-      { key: 'margarine', label: 'マーガリン' },
+      { key: 'margarine', label: 'マーガリン', factor: { kcal: 0.95 } },
       { key: 'cream', label: '生クリーム', factor: { kcal: 0.8, fat: 0.79 } },
     ],
     asAddon: {

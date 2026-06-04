@@ -251,11 +251,12 @@ export function buildIngredientAmountEditConfig(
 
   const presets = filtered.map((c) => c.amount);
 
-  // Detect fractional values to set step=0.5; otherwise step=1
+  // piece unit keeps step=1; g/ml use step=5 so the stepper moves in meaningful increments
+  const isPiece = currentUnit === 'piece';
   const hasFraction = filtered.some((c) => c.amount % 1 !== 0);
-  const step = hasFraction ? 0.5 : 1;
+  const step = isPiece ? (hasFraction ? 0.5 : 1) : 5;
 
-  const minAmount = presets[0] ?? 1;
+  const minAmount = presets[0] ?? (isPiece ? 1 : 5);
   const maxAmount = presets.at(-1) ?? 100;
 
   const INGREDIENT_UNIT_LABEL: Record<string, string> = {
@@ -268,7 +269,7 @@ export function buildIngredientAmountEditConfig(
   const defaultValue = minAmount;
 
   return {
-    min: 1,
+    min: isPiece ? 1 : 5,
     max: Math.max(maxAmount * 4, 100),
     step,
     decimals: decimalsFromStep(step),

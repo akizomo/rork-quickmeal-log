@@ -10,7 +10,7 @@
 import { Linking, Platform } from 'react-native';
 
 import { healthAdapter } from './adapter';
-import type { HealthSyncResult, HealthSyncStatus } from './types';
+import type { HealthDiagnostics, HealthSyncResult, HealthSyncStatus } from './types';
 
 /** Android Health Connect provider のパッケージ名 */
 const HEALTH_CONNECT_PACKAGE = 'com.google.android.apps.healthdata';
@@ -18,6 +18,7 @@ const HEALTH_CONNECT_PACKAGE = 'com.google.android.apps.healthdata';
 export type {
   HealthBodyFatSample,
   HealthDailyActivitySample,
+  HealthDiagnostics,
   HealthMetricSource,
   HealthSyncResult,
   HealthSyncStatus,
@@ -48,6 +49,11 @@ export function syncFromHealth(
 /** 現在の同期権限状態 */
 export function getHealthSyncStatus(): Promise<HealthSyncStatus> {
   return healthAdapter.getStatus();
+}
+
+/** 実機トラブルシュート用の生の状態情報 */
+export function getHealthDiagnostics(): Promise<HealthDiagnostics> {
+  return healthAdapter.getDiagnostics();
 }
 
 /**

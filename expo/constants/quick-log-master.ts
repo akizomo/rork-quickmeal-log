@@ -157,6 +157,14 @@ const LEAN_PROTEIN: QuickLogSubcategory[] = [
     amountCandidates: [g('half', '半缶', 35), g('one', '1缶', 70, true)],
   },
   s({
+    key: 'protein_shake',
+    label: 'プロテイン',
+    // baseMacroPer100 stores per-1-scoop values for piece unit.
+    // 1杯(~30g粉末+水): kcal 110, P 20, F 2, C 3 (国内市販品平均)
+    baseMacroPer100: { kcal: 110, protein: 20, fat: 2, carbs: 3 },
+    amountCandidates: [pc('one', '1杯', 1, true), pc('two', '2杯', 2)],
+  }),
+  s({
     key: 'salad_chicken',
     label: 'サラダチキン',
     baseMacroPer100: { kcal: 108, protein: 23, fat: 1.5, carbs: 0.5 },
@@ -267,6 +275,14 @@ const FATTY_PROTEIN: QuickLogSubcategory[] = [
     defaultMethodKey: 'light',
     amountCandidates: [g('100g', '100g', 100, true), g('150g', '150g', 150), g('one_filet', '1枚', 250)],
   },
+  s({
+    key: 'yakitori',
+    label: '焼き鳥',
+    // baseMacroPer100 stores per-1-piece values for piece unit.
+    // 1本(~40g, たれ): kcal 68, P 6, F 3.5, C 3.5 (MEXT 焼き鳥もも・たれ換算)
+    baseMacroPer100: { kcal: 68, protein: 6, fat: 3.5, carbs: 3.5 },
+    amountCandidates: [pc('two', '2本', 2, true), pc('three', '3本', 3), pc('five', '5本', 5)],
+  }),
   {
     key: 'fatty_fish',
     label: '鮭・青魚',

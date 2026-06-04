@@ -103,6 +103,11 @@ export default function HealthConnectRoute() {
                   このプラットフォームではヘルスデータ連携は利用できません。
                 </Caption>
               ) : null}
+              {__DEV__ ? (
+                <Caption tone="tertiary" align="center">
+                  [DEV] status: {healthSync.status} | supported: {String(healthSync.supported)}
+                </Caption>
+              ) : null}
             </View>
           </ScrollView>
 

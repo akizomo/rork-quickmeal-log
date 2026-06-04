@@ -1373,5 +1373,6 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     completeOnboarding,
     resetOnboarding,
     noop,
+    pushLog,
   };
 });

@@ -78,4 +78,21 @@ export interface HealthSyncAdapter {
   fetch(rangeDays: number): Promise<HealthSyncResult>;
   /** 現在の権限状態 */
   getStatus(): Promise<HealthSyncStatus>;
+  /** 診断情報 (実機トラブルシュート用に生の SDK 状態を返す) */
+  getDiagnostics(): Promise<HealthDiagnostics>;
+}
+
+/** 実機トラブルシュート用の生の状態情報 */
+export interface HealthDiagnostics {
+  platform: string;
+  /** getSdkStatus() の生の数値 (Android のみ。1=UNAVAILABLE,2=UPDATE_REQUIRED,3=AVAILABLE) */
+  rawSdkStatus: number | null;
+  /** rawSdkStatus を人間可読にした文字列 */
+  sdkStatusLabel: string;
+  /** initialize() が成功したか */
+  initialized: boolean;
+  /** 許可済み権限の recordType 一覧 */
+  grantedPermissions: string[];
+  /** 正規化された status */
+  status: HealthSyncStatus;
 }

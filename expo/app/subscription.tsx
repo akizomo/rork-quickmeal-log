@@ -79,9 +79,9 @@ export default function SubscriptionRoute() {
                 variant="raised"
                 style={{
                   gap: theme.spacing['1'],
-                  borderLeftWidth: status === 'trialing' && trialDays <= 2 ? 3 : 0,
+                  borderLeftWidth: status === 'trialing' && trialDays > 0 && trialDays <= 2 ? 3 : 0,
                   borderLeftColor:
-                    status === 'trialing' && trialDays <= 2
+                    status === 'trialing' && trialDays > 0 && trialDays <= 2
                       ? theme.colors.status.warning
                       : 'transparent',
                 }}
@@ -93,7 +93,7 @@ export default function SubscriptionRoute() {
                     本登録切替日: {trialEndLabel}
                   </Caption>
                 ) : null}
-                {status === 'trialing' ? (
+                {status === 'trialing' && trialDays > 0 ? (
                   <Caption tone="tertiary" style={{ marginTop: 4 }}>
                     本登録後は月額¥480 または 年額¥4,800 で自動更新されます。
                     解約は Google Play のサブスクリプション設定からいつでも可能です。

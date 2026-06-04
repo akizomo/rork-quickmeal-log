@@ -3,11 +3,13 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAppState } from '@/providers/app-state-provider';
 import {
   HEALTH_SYNC_RANGE_DAYS,
+  getHealthDiagnostics,
   getHealthSyncStatus,
   isHealthSyncSupported,
   openHealthConnectInstallPage,
   requestHealthPermissions,
   syncFromHealth,
+  type HealthDiagnostics,
   type HealthSyncResult,
   type HealthSyncStatus,
 } from '@/utils/health-sync';
@@ -29,6 +31,8 @@ export interface UseHealthSyncReturn {
   requestPermissions: () => Promise<boolean>;
   /** Android: Health Connect プロバイダの Play Store ページを開く */
   openInstallPage: () => Promise<void>;
+  /** 実機トラブルシュート用の生の状態情報を取得 */
+  fetchDiagnostics: () => Promise<HealthDiagnostics>;
 }
 
 /**
@@ -125,6 +129,8 @@ export function useHealthSync(): UseHealthSyncReturn {
     await openHealthConnectInstallPage();
   }, []);
 
+  const fetchDiagnostics = useCallback(() => getHealthDiagnostics(), []);
+
   useEffect(() => {
     if (!supported) return;
     if (isHydrating) return; // 🛡️ ハイドレート完了を待つ
@@ -143,5 +149,6 @@ export function useHealthSync(): UseHealthSyncReturn {
     syncNow,
     requestPermissions,
     openInstallPage,
+    fetchDiagnostics,
   };
 }

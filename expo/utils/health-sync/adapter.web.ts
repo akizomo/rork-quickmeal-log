@@ -1,4 +1,5 @@
 import type {
+  HealthDiagnostics,
   HealthSyncAdapter,
   HealthSyncResult,
   HealthSyncStatus,
@@ -27,5 +28,15 @@ export const healthAdapter: HealthSyncAdapter = {
   },
   async getStatus(): Promise<HealthSyncStatus> {
     return 'unsupported';
+  },
+  async getDiagnostics(): Promise<HealthDiagnostics> {
+    return {
+      platform: 'web',
+      rawSdkStatus: null,
+      sdkStatusLabel: 'n/a (web)',
+      initialized: false,
+      grantedPermissions: [],
+      status: 'unsupported',
+    };
   },
 };

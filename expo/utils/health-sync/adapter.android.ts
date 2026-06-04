@@ -12,6 +12,7 @@ import { getExerciseLabel, normalizeAndroidExerciseType } from './mapping';
 import type {
   HealthBodyFatSample,
   HealthDailyActivitySample,
+  HealthDiagnostics,
   HealthSyncAdapter,
   HealthSyncResult,
   HealthSyncStatus,
@@ -26,12 +27,18 @@ import type {
  * 歩数 / アクティブエネルギー / 運動セッションは Phase 2 で追加する。
  */
 
-const REQUIRED_PERMISSIONS: Permission[] = [
+/** 同期ダイアログで要求する権限 (多いほどユーザーが選択できる) */
+const REQUESTED_PERMISSIONS: Permission[] = [
   { accessType: 'read', recordType: 'Weight' },
   { accessType: 'read', recordType: 'BodyFat' },
   { accessType: 'read', recordType: 'Steps' },
   { accessType: 'read', recordType: 'ActiveCaloriesBurned' },
   { accessType: 'read', recordType: 'ExerciseSession' },
+];
+
+/** 同期を「有効」と見なすために最低限必要な権限 */
+const MINIMUM_PERMISSIONS: Permission[] = [
+  { accessType: 'read', recordType: 'Weight' },
 ];
 
 let initialized = false;
@@ -86,10 +93,11 @@ async function ensureInitialized(): Promise<boolean> {
   return initInFlight;
 }
 
-async function hasAllPermissions(): Promise<boolean> {
+/** 最低限の権限が揃っているか確認する (Weight のみ必須) */
+async function hasMinimumPermissions(): Promise<boolean> {
   try {
     const granted = await getGrantedPermissions();
-    return REQUIRED_PERMISSIONS.every((req) =>
+    return MINIMUM_PERMISSIONS.every((req) =>
       granted.some((g) => 'recordType' in g && g.recordType === req.recordType && g.accessType === req.accessType)
     );
   } catch (err) {
@@ -235,8 +243,9 @@ export const healthAdapter: HealthSyncAdapter = {
     const ready = await ensureInitialized();
     if (!ready) return false;
     try {
-      await requestPermission(REQUIRED_PERMISSIONS);
-      return await hasAllPermissions();
+      // 全権限をダイアログで提示するが、最低限 Weight が許可されれば成功扱い
+      await requestPermission(REQUESTED_PERMISSIONS);
+      return await hasMinimumPermissions();
     } catch (err) {
       if (__DEV__) console.log('[health-sync/android] requestPermission failed', err);
       return false;
@@ -245,7 +254,7 @@ export const healthAdapter: HealthSyncAdapter = {
   async fetch(rangeDays: number): Promise<HealthSyncResult> {
     const ready = await ensureInitialized();
     if (!ready) return emptyResult();
-    const granted = await hasAllPermissions();
+    const granted = await hasMinimumPermissions();
     if (!granted) return emptyResult();
     const [weights, bodyFats, dailyActivities, workouts] = await Promise.all([
       fetchWeights(rangeDays),
@@ -267,9 +276,47 @@ export const healthAdapter: HealthSyncAdapter = {
     if (provider === 'provider_missing') return 'provider_missing';
     if (provider === 'provider_update_required') return 'provider_update_required';
     const ready = await ensureInitialized();
-    if (!ready) return 'unsupported';
-    const granted = await hasAllPermissions();
+    if (!ready) return 'unauthorized'; // initialize 失敗でも provider は存在するので unauthorized 扱い
+    const granted = await hasMinimumPermissions();
     return granted ? 'authorized' : 'unauthorized';
+  },
+  async getDiagnostics(): Promise<HealthDiagnostics> {
+    let rawSdkStatus: number | null = null;
+    let sdkStatusLabel = 'unknown';
+    try {
+      rawSdkStatus = await getSdkStatus();
+      sdkStatusLabel =
+        rawSdkStatus === SdkAvailabilityStatus.SDK_AVAILABLE
+          ? 'SDK_AVAILABLE'
+          : rawSdkStatus === SdkAvailabilityStatus.SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED
+          ? 'SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED'
+          : rawSdkStatus === SdkAvailabilityStatus.SDK_UNAVAILABLE
+          ? 'SDK_UNAVAILABLE'
+          : `unknown(${rawSdkStatus})`;
+    } catch (err) {
+      sdkStatusLabel = `getSdkStatus threw: ${err instanceof Error ? err.message : String(err)}`;
+    }
+
+    const initOk = await ensureInitialized();
+
+    let grantedPermissions: string[] = [];
+    try {
+      const granted = await getGrantedPermissions();
+      grantedPermissions = granted
+        .map((g) => ('recordType' in g ? `${g.accessType}:${g.recordType}` : JSON.stringify(g)))
+        .sort();
+    } catch (err) {
+      grantedPermissions = [`getGrantedPermissions threw: ${err instanceof Error ? err.message : String(err)}`];
+    }
+
+    return {
+      platform: 'android',
+      rawSdkStatus,
+      sdkStatusLabel,
+      initialized: initOk,
+      grantedPermissions,
+      status: await this.getStatus(),
+    };
   },
 };
 

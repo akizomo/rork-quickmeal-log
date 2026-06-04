@@ -7,12 +7,9 @@
  *      — これがないと requestPermission() は空配列を返してダイアログを出さない
  *   2. <intent-filter> with android:name="androidx.health.intent.action.SHOW_PERMISSIONS_RATIONALE"
  *      — Android 14+ プラットフォーム統合された Health Connect で必要
- *
- * 本 plugin は (1) と (2) をまとめて注入する。
- *
- * 1. の `<uses-permission>` は読み取り対象データに合わせて追加する:
- *   - READ_STEPS / READ_ACTIVE_CALORIES_BURNED / READ_WEIGHT / READ_BODY_FAT /
- *     READ_EXERCISE
+ *   3. <queries> ブロック
+ *      — Android 11+ はパッケージ可視性制限があり、<queries> なしだと
+ *        getSdkStatus() が SDK_UNAVAILABLE を返してしまい連携が開始できない
  */
 
 const { withAndroidManifest } = require('@expo/config-plugins');
@@ -28,6 +25,12 @@ const HEALTH_PERMISSIONS = [
 
 /** 追加する Android 14+ intent-filter */
 const ANDROID_14_INTENT = 'androidx.health.intent.action.SHOW_PERMISSIONS_RATIONALE';
+
+/** Health Connect プロバイダのパッケージ名 */
+const HEALTH_CONNECT_PACKAGE = 'com.google.android.apps.healthdata';
+
+/** Android 13 用 intent action (queries ブロックでも参照) */
+const ANDROID_13_INTENT = 'androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE';
 
 const withHealthConnectManifest = (config) =>
   withAndroidManifest(config, async (mod) => {
@@ -53,8 +56,6 @@ const withHealthConnectManifest = (config) =>
     if (mainActivity) {
       mainActivity['intent-filter'] = mainActivity['intent-filter'] ?? [];
 
-      // 既に同じ action があるかチェック (react-native-health-connect の plugin が
-      // 旧 action を既存 intent-filter に push しているケースに対応)
       const has14Action = mainActivity['intent-filter'].some(
         (f) =>
           Array.isArray(f.action) &&
@@ -65,6 +66,40 @@ const withHealthConnectManifest = (config) =>
           action: [{ $: { 'android:name': ANDROID_14_INTENT } }],
         });
       }
+    }
+
+    // ===== (3) <queries> ブロックを追加 =====
+    // Android 11+ (API 30+) のパッケージ可視性制限対策。
+    // Health Connect プロバイダ (com.google.android.apps.healthdata) と
+    // 権限ダイアログ intent を宣言しないと getSdkStatus() が
+    // SDK_UNAVAILABLE を返して連携が開始できない。
+    manifest.queries = manifest.queries ?? [];
+    const existingPackages = new Set(
+      manifest.queries.flatMap((q) =>
+        (q.package ?? []).map((p) => p?.$?.['android:name']).filter(Boolean)
+      )
+    );
+    const existingIntentActions = new Set(
+      manifest.queries.flatMap((q) =>
+        (q.intent ?? []).flatMap((i) =>
+          (i.action ?? []).map((a) => a?.$?.['android:name']).filter(Boolean)
+        )
+      )
+    );
+
+    if (!existingPackages.has(HEALTH_CONNECT_PACKAGE)) {
+      manifest.queries.push({
+        package: [{ $: { 'android:name': HEALTH_CONNECT_PACKAGE } }],
+      });
+    }
+    if (!existingIntentActions.has(ANDROID_13_INTENT)) {
+      manifest.queries.push({
+        intent: [
+          {
+            action: [{ $: { 'android:name': ANDROID_13_INTENT } }],
+          },
+        ],
+      });
     }
 
     return mod;

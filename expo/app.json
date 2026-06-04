@@ -65,6 +65,12 @@
       "expo-font",
       "expo-web-browser",
       [
+        "expo-camera",
+        {
+          "cameraPermission": "バーコードをスキャンして食品の栄養情報を取得するためにカメラを使用します。"
+        }
+      ],
+      [
         "react-native-health",
         {
           "isClinicalDataEnabled": false,

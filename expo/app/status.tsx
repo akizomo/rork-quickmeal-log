@@ -3,6 +3,7 @@ import { ChevronRight } from 'lucide-react-native';
 import React, { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -95,7 +96,7 @@ export default function StatusRoute() {
           <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} testID="status-screen">
 
             {/* TRIAL STATUS — トライアル中のみ表示 (PRD §6.1) */}
-            {effectiveStatus === 'trialing' ? (
+            {effectiveStatus === 'trialing' && trialDays > 0 ? (
               <Pressable
                 onPress={() => router.push('/subscription')}
                 testID="status-trial-card"
@@ -182,6 +183,20 @@ export default function StatusRoute() {
                       if (!granted) return;
                     }
                     await healthSync.syncNow();
+                  }}
+                  onLongPress={async () => {
+                    // 実機トラブルシュート: getSdkStatus() の生の値などを表示
+                    const d = await healthSync.fetchDiagnostics();
+                    Alert.alert(
+                      'ヘルス連携 診断情報',
+                      [
+                        `platform: ${d.platform}`,
+                        `getSdkStatus: ${d.sdkStatusLabel} (raw=${d.rawSdkStatus})`,
+                        `initialized: ${d.initialized}`,
+                        `status: ${d.status}`,
+                        `granted: ${d.grantedPermissions.length ? d.grantedPermissions.join(', ') : '(none)'}`,
+                      ].join('\n')
+                    );
                   }}
                 />
               ) : null}
@@ -287,12 +302,14 @@ function HealthSyncRow({
   lastSyncedAt,
   lastError,
   onPress,
+  onLongPress,
 }: {
   status: HealthSyncStatus;
   syncing: boolean;
   lastSyncedAt: string | null;
   lastError: string | null;
   onPress: () => void;
+  onLongPress?: () => void;
 }) {
   const theme = useTheme();
   const { label, sub } = useMemo(() => {
@@ -327,6 +344,8 @@ function HealthSyncRow({
   return (
     <Pressable
       onPress={onPress}
+      onLongPress={onLongPress}
+      delayLongPress={600}
       disabled={syncing}
       testID="status-health-sync"
       accessibilityRole="button"
