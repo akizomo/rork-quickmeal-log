@@ -418,18 +418,85 @@ export function calcExerciseNetKcal(grossKcal: number, _activityLevel?: Activity
   return Math.max(0, Math.round(grossKcal));
 }
 
+// ---------------------------------------------------------------------------
+// Dynamic TDEE — activity-based daily target adjustment (差分方式, PRD §6.4.3)
+// ---------------------------------------------------------------------------
+
+/** 動的TDEE: 1日のアクティブエネルギー加算の上限 (異常値/GPSノイズ吸収)。PRD §6.4.3 */
+export const ACTIVITY_BONUS_DAILY_CAP_KCAL = 800;
+
+/** 歩数しか取れない場合の近似係数: kcal ≈ 歩数 × 体重kg × この値。PRD §6.4.3 */
+export const KCAL_PER_STEP_PER_KG = 0.0005;
+
 /**
- * Adjusted daily kcal target = base target + sum of net exercise kcal for the given date.
+ * 活動係数が既に織り込んでいる「1日の基準アクティブエネルギー」。
+ * baselineActiveKcal = RMR × (活動係数 − 1)。PRD §6.4.3。
+ * 必要なプロフィール値が欠ける場合は null。
+ */
+export function calcBaselineActiveKcal(profile: {
+  currentWeightKg: number | null;
+  heightCm: number | null;
+  ageYears?: number | null;
+  biologicalBasis?: BiologicalBasis | null;
+  currentBodyFatPct?: number | null;
+  activityLevel?: ActivityLevel | null;
+}): number | null {
+  const { currentWeightKg, heightCm, ageYears, biologicalBasis, currentBodyFatPct, activityLevel } =
+    profile;
+  if (!currentWeightKg || !heightCm || !ageYears || !biologicalBasis || !activityLevel) {
+    return null;
+  }
+  let rmr: number;
+  if (currentBodyFatPct != null && currentBodyFatPct > 0) {
+    const lbm = currentWeightKg * (1 - currentBodyFatPct / 100);
+    rmr = Math.max(800, Math.round(370 + 21.6 * lbm));
+  } else {
+    rmr = calcRMR(currentWeightKg, heightCm, ageYears, biologicalBasis);
+  }
+  const factor = ACTIVITY_LEVEL_OPTIONS.find((a) => a.level === activityLevel)?.factor ?? 1.375;
+  return Math.max(0, Math.round(rmr * (factor - 1)));
+}
+
+/**
+ * 当日の活動由来の目標加算 (基準超過分のみ・キャップ付き)。PRD §6.4.3。
+ * @param measuredActiveKcal Health の Active Energy。歩数しか取れない場合は
+ *   `stepsToActiveKcal` で近似した値を渡す。
+ * @returns min(max(0, measured − baseline), CAP)。算出不能時は 0。
+ */
+export function calcActivityBonusKcal(
+  baselineActiveKcal: number | null,
+  measuredActiveKcal: number | null | undefined
+): number {
+  if (baselineActiveKcal == null || measuredActiveKcal == null || measuredActiveKcal <= 0) {
+    return 0;
+  }
+  const excess = Math.max(0, measuredActiveKcal - baselineActiveKcal);
+  return Math.min(excess, ACTIVITY_BONUS_DAILY_CAP_KCAL);
+}
+
+/** 歩数 → アクティブエネルギー近似 (Health が activeKcal を返さない場合のフォールバック)。 */
+export function stepsToActiveKcal(steps: number, weightKg: number | null): number {
+  if (!weightKg || steps <= 0) return 0;
+  return Math.round(steps * weightKg * KCAL_PER_STEP_PER_KG);
+}
+
+/**
+ * Adjusted daily kcal target = base target + finalAddition。
+ *
+ * finalAddition は二重計上を避けるため **運動ログ由来と活動由来の大きい方** を採る
+ * (PRD §6.4.3 の調停ルール)。`activityBonusKcal` 省略時 (=0) は従来どおり運動ログのみ。
  */
 export function adjustedTargetKcal(
   baseTargetKcal: number,
   exerciseLogs: { date: string; netKcal: number }[],
-  dateKey: string
+  dateKey: string,
+  activityBonusKcal: number = 0
 ): number {
-  const dayNet = exerciseLogs
+  const exerciseAddition = exerciseLogs
     .filter((e) => e.date === dateKey)
     .reduce((sum, e) => sum + e.netKcal, 0);
-  return baseTargetKcal + dayNet;
+  const finalAddition = Math.max(exerciseAddition, Math.max(0, activityBonusKcal));
+  return baseTargetKcal + finalAddition;
 }
 
 /**
@@ -461,7 +528,8 @@ export function getAdjustedPfcForDate(
     targetCarbs: number;
   },
   exerciseLogs: { date: string; netKcal: number }[],
-  dateKey: string
+  dateKey: string,
+  activityBonusKcal: number = 0
 ): { protein: number; fat: number; carbs: number } {
   const base = profile.targetCalories;
   if (base <= 0) {
@@ -471,7 +539,7 @@ export function getAdjustedPfcForDate(
       carbs: profile.targetCarbs,
     };
   }
-  const ratio = adjustedTargetKcal(base, exerciseLogs, dateKey) / base;
+  const ratio = adjustedTargetKcal(base, exerciseLogs, dateKey, activityBonusKcal) / base;
   return {
     protein: Math.round(profile.targetProtein * ratio),
     fat: Math.round(profile.targetFat * ratio),

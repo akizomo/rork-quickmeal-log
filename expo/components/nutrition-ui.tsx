@@ -27,7 +27,7 @@ import { useAppState } from '@/providers/app-state-provider';
 import { DishDraft, DishSize, IngredientDraft, Macro, PortionValue } from '@/types/nutrition';
 import { getIdentity } from '@/constants/identity';
 import { getLogDisplayInfo } from '@/utils/log-display';
-import { adjustedTargetKcal, getAdjustedPfcForDate, getEffectiveSubscriptionStatus, getGrossExerciseKcalForDate, trialDaysRemaining } from '@/utils/goals';
+import { adjustedTargetKcal, calcActivityBonusKcal, calcBaselineActiveKcal, getAdjustedPfcForDate, getEffectiveSubscriptionStatus, getGrossExerciseKcalForDate, stepsToActiveKcal, trialDaysRemaining } from '@/utils/goals';
 import { buildDishMacro, clampPortion, computeIngredient, draftFromLog, formatDateKey, formatMacroText, getIngredientSubtypeDef, getIngredientSubtypeDefs, getQuickCategories, getSubtypes, getToppingsForSubtype, summarizeToppings } from '@/utils/nutrition';
 import { formatDayLabel, isSameDay, sumForDate } from '@/utils/history';
 
@@ -296,7 +296,7 @@ export const StatusCard = memo(function StatusCard({
   /** 左「食事」エリアタップ時のコールバック (例: DayLogBottomSheet を half に展開) */
   onFoodPress?: () => void;
 }) {
-  const { profile, todayMacro, logs, exerciseLogs } = useAppState();
+  const { profile, todayMacro, logs, exerciseLogs, dailyActivities } = useAppState();
   const t = useTheme();
   const { width: screenWidth } = useWindowDimensions();
   const [exerciseSheetVisible, setExerciseSheetVisible] = useState(false);
@@ -311,19 +311,31 @@ export const StatusCard = memo(function StatusCard({
     [isToday, todayMacro, logs, dateKey]
   );
 
-  // 表示中の日付に対する目標・消費・PFC をその日の運動ログから算出する。
+  // 動的TDEE (PRD §6.4.3): その日の活動量から「基準超過分」を kcal に換算。
+  // 運動ログとの二重計上は adjustedTargetKcal 内の max() 調停で防ぐ。
+  const activityBonusKcal = useMemo(() => {
+    const baseline = calcBaselineActiveKcal(profile);
+    if (baseline == null) return 0;
+    const da = (dailyActivities ?? []).find((d) => d.date === dateKey);
+    if (!da) return 0;
+    const measured =
+      da.activeKcal > 0 ? da.activeKcal : stepsToActiveKcal(da.steps, profile.currentWeightKg);
+    return calcActivityBonusKcal(baseline, measured);
+  }, [profile, dailyActivities, dateKey]);
+
+  // 表示中の日付に対する目標・消費・PFC をその日の運動ログ + 活動量から算出する。
   // 今日 / 過去日とも同じロジック (運動を記録した過去日も目標が拡大する)。
   const effectiveTarget = useMemo(
-    () => adjustedTargetKcal(profile.targetCalories, exerciseLogs, dateKey),
-    [profile.targetCalories, exerciseLogs, dateKey]
+    () => adjustedTargetKcal(profile.targetCalories, exerciseLogs, dateKey, activityBonusKcal),
+    [profile.targetCalories, exerciseLogs, dateKey, activityBonusKcal]
   );
   const effectiveExerciseKcal = useMemo(
     () => getGrossExerciseKcalForDate(exerciseLogs, dateKey),
     [exerciseLogs, dateKey]
   );
   const effectivePfc = useMemo(
-    () => getAdjustedPfcForDate(profile, exerciseLogs, dateKey),
-    [profile, exerciseLogs, dateKey]
+    () => getAdjustedPfcForDate(profile, exerciseLogs, dateKey, activityBonusKcal),
+    [profile, exerciseLogs, dateKey, activityBonusKcal]
   );
 
   const openExerciseSheet = useCallback(() => setExerciseSheetVisible(true), []);
