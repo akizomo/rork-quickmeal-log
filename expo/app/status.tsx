@@ -34,18 +34,6 @@ export default function StatusRoute() {
   const [bfSheetVisible, setBfSheetVisible] = useState<boolean>(false);
   const [bfInput, setBfInput] = useState<string>('');
 
-  const latestDelta = useMemo(() => {
-    if (weights.length < 2) return null;
-    return Number((weights[0].weightKg - weights[1].weightKg).toFixed(1));
-  }, [weights]);
-
-  const avg7 = useMemo(() => {
-    if (weights.length === 0) return null;
-    const recent = weights.slice(0, 7);
-    const sum = recent.reduce((acc, w) => acc + w.weightKg, 0);
-    return Math.round((sum / recent.length) * 10) / 10;
-  }, [weights]);
-
   const trialDays = trialDaysRemaining(settings.trialStartedAtISO, TRIAL_DURATION_DAYS);
   const effectiveStatus = getEffectiveSubscriptionStatus(settings, TRIAL_DURATION_DAYS);
   const subscriptionLabel =
@@ -136,11 +124,6 @@ export default function StatusRoute() {
                 <View style={[styles.heroDivider, { backgroundColor: theme.colors.border.subtle }]} />
                 <HeroMetric label="体脂肪" value={bfDisplay} target={targetBfDisplay} />
               </View>
-              {latestDelta !== null ? (
-                <Caption tone="tertiary" style={{ textAlign: 'center' }}>
-                  最近の変化 {latestDelta > 0 ? '+' : ''}{latestDelta} kg{avg7 ? ` · 7日平均 ${avg7} kg` : ''}
-                </Caption>
-              ) : null}
               <View style={styles.recordButtonRow}>
                 <Pressable
                   style={styles.textButton}
@@ -282,7 +265,6 @@ export default function StatusRoute() {
         value={weightInput}
         onChange={setWeightInput}
         onSubmit={submitWeight}
-        avg7={avg7}
       />
 
       <BodyFatSheet
@@ -485,18 +467,15 @@ function WeightSheet({
   value,
   onChange,
   onSubmit,
-  avg7,
 }: {
   visible: boolean;
   onClose: () => void;
   value: string;
   onChange: (v: string) => void;
   onSubmit: () => void;
-  avg7: number | null;
 }) {
   const insets = useSafeAreaInsets();
   const theme = useTheme();
-  const diff = avg7 !== null && value !== '' ? Number((Number(value) - avg7).toFixed(1)) : null;
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <Pressable
@@ -531,11 +510,6 @@ function WeightSheet({
               />
               <Text style={[styles.weightInputSuffix, { color: theme.colors.content.tertiary }]}>kg</Text>
             </View>
-            {diff !== null && Number.isFinite(diff) ? (
-              <Caption tone="secondary">
-                7日平均との差 {diff > 0 ? '+' : ''}{diff} kg
-              </Caption>
-            ) : null}
             <Pressable
               style={[styles.weightSubmit, { backgroundColor: theme.colors.action.primary.default }]}
               onPress={onSubmit}
