@@ -445,7 +445,7 @@ const BUCKET_SUSHI: Identity[] = [
 const BUCKET_SANDWICH: Identity[] = [
   {
     id: 'cold_sand',
-    label: '冷サンド',
+    label: 'サンドイッチ',
     primaryHome: { tab: 'dish', bucket: 'sandwich' },
     defaultMacro: { kcal: 345, protein: 13, fat: 18, carbs: 30 },
     referenceDescription: 'パン2枚 + 具',
@@ -472,7 +472,7 @@ const BUCKET_SANDWICH: Identity[] = [
     primaryHome: { tab: 'dish', bucket: 'sandwich' },
     quickTapDisabled: true, // Attribute 普通/チーズ/こってり: kcal 460-600, F 24-32
     defaultMacro: { kcal: 460, protein: 22, fat: 24, carbs: 39 },
-    referenceDescription: 'バンズ + パテ100g + 野菜',
+    referenceDescription: '普通=バンズ+パテ100g+野菜(約460kcal)。こってり=ダブルパテ/てりやきマヨ・ベーコン増し系で約600kcal・脂質32g',
     amount: { unit: 'piece', default: 1 },
     // Combined burger + burger_heavy via Attribute
     attributes: [

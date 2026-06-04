@@ -169,12 +169,21 @@ const BUCKET_STAPLE: Identity[] = [
   },
   {
     id: 'mochi',
-    label: '餅',
+    label: '餅・団子',
     primaryHome: { tab: 'ingredient', bucket: 'staple' },
+    // 基準: 切り餅プレーン 1個≒50g (117kcal/P2/F0.3/C25)。
+    // 種類で餅/団子を選び、団子のトッピング(みたらし・あんこ等)は addon で足す。
     defaultMacro: { kcal: 117, protein: 2, fat: 0.3, carbs: 25 },
+    referenceDescription: '切り餅1個≒50g / 団子は串1本(3個)が目安。たれ・あんこはトッピングで追加',
     amount: { unit: 'piece', default: 1 },
+    attributes: [
+      { key: 'mochi', label: '餅', isDefault: true },
+      // 白玉・上新粉団子(プレーン)は餅よりやや水分が多く軽め
+      { key: 'dango', label: '団子', factor: { kcal: 0.85, carbs: 0.86 } },
+    ],
     defaultAddonIds: ['kinako', 'honey', 'nori_furikake'],
-    allowedAddonIds: ['kinako', 'honey', 'nori_furikake', 'butter_cream'],
+    allowedAddonIds: ['kinako', 'honey', 'nori_furikake', 'butter_cream', 'mitarashi_tare', 'anko'],
+    searchTags: ['餅', '団子', 'みたらし', 'あんこ', '串団子', 'だんご'],
   },
   {
     id: 'potato',
@@ -1070,23 +1079,6 @@ const BUCKET_SNACK_DRINK: Identity[] = [
     defaultMacro: { kcal: 145, protein: 2.4, fat: 0.2, carbs: 33 },
     amount: { unit: 'piece', default: 1, chips: [{ label: '小', value: 0.5 }, { label: '1個', value: 1 }, { label: '大', value: 1.5 }] },
     searchTags: ['大福', 'どら焼き', '羊羹', 'せんべい', '大学いも', '焼き芋'],
-  },
-  {
-    id: 'dango',
-    label: '団子',
-    primaryHome: { tab: 'ingredient', bucket: 'snack_drink' },
-    // 基準: みたらし団子 1本(3個串/団子~60g + たれ) ≒ 120kcal/P2/F0.4/C27
-    defaultMacro: { kcal: 120, protein: 2, fat: 0.4, carbs: 27 },
-    referenceDescription: '串団子1本(団子3個)が目安。トッピングで選択',
-    amount: { unit: 'piece', default: 1, chips: [{ label: '1本', value: 1 }, { label: '2本', value: 2 }, { label: '3本', value: 3 }] },
-    attributes: [
-      { key: 'mitarashi', label: 'みたらし', isDefault: true },
-      { key: 'anko', label: 'あんこ', factor: { kcal: 1.25, protein: 1.5, fat: 1.2, carbs: 1.18 } },
-      { key: 'kinako', label: 'きなこ', factor: { kcal: 1.08, protein: 1.8, fat: 2.5, carbs: 0.95 } },
-      { key: 'zunda', label: 'ずんだ', factor: { kcal: 1.1, protein: 1.8, fat: 1.5, carbs: 1.05 } },
-      { key: 'shoyu', label: '醤油・焼き', factor: { kcal: 0.83, protein: 1, fat: 0.5, carbs: 0.85 } },
-    ],
-    searchTags: ['団子', 'みたらし', 'あんこ', '串団子', '三色団子', 'だんご'],
   },
   {
     id: 'cake',

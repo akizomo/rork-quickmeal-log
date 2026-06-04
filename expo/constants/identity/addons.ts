@@ -66,6 +66,26 @@ export const PURE_ADDONS: Addon[] = [
     allowedIdentityIds: ['mochi', 'soy_milk', 'oatmeal', 'yogurt'],
   },
   {
+    id: 'mitarashi_tare',
+    label: 'みたらしのたれ',
+    unit: 'g',
+    unitAmount: 25,
+    unitLabel: '串1本分',
+    // 砂糖・醤油・片栗粉のたれ ~25g
+    addedMacro: { kcal: 35, protein: 0.3, fat: 0, carbs: 8.5 },
+    allowedIdentityIds: ['mochi'],
+  },
+  {
+    id: 'anko',
+    label: 'あんこ',
+    unit: 'g',
+    unitAmount: 40,
+    unitLabel: '串1本分',
+    // つぶあん ~40g (100gあたり 244kcal 換算)
+    addedMacro: { kcal: 98, protein: 2.4, fat: 0.2, carbs: 21 },
+    allowedIdentityIds: ['mochi'],
+  },
+  {
     id: 'nori_furikake',
     label: '海苔・ふりかけ',
     unit: 'g',
