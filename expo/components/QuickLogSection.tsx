@@ -77,6 +77,7 @@ const DISH_SHORT_LABEL: Record<string, string> = {
   sandwich: 'サンドバーガー',
   pizza: 'ピザ',
   misc_dish: '定食・単品・汁',
+  set_meal: '定食・単品・汁',
 };
 
 export function getQuickLogButtonHeight(screenWidth: number): number {
@@ -248,13 +249,15 @@ export const QuickLogSection = memo(function QuickLogSection() {
       {/* <View style={{ marginBottom: QUICK_LOG_TOKENS.segmentBottomSpacing }}>
         <IdentitySearchBar />
       </View> */}
-      <SegmentedControl
-        options={QUICK_LOG_SEGMENT_OPTIONS}
-        value={selectedMode}
-        onChange={setSelectedMode}
-        style={{ marginBottom: QUICK_LOG_TOKENS.segmentBottomSpacing }}
-        testID="mode-tab"
-      />
+      <View style={styles.segmentRow}>
+        <SegmentedControl
+          options={QUICK_LOG_SEGMENT_OPTIONS}
+          value={selectedMode}
+          onChange={setSelectedMode}
+          style={{ flex: 1 }}
+          testID="mode-tab"
+        />
+      </View>
       <View style={styles.grid}>
         {rows.map((row, rowIndex) => (
           <View
@@ -292,6 +295,12 @@ const styles = StyleSheet.create({
     paddingBottom: QUICK_LOG_TOKENS.sectionPaddingBottom,
     backgroundColor: 'transparent',
     width: '100%',
+  },
+  segmentRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: QUICK_LOG_TOKENS.segmentBottomSpacing,
+    gap: 8,
   },
   grid: {
     width: '100%',
