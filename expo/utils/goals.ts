@@ -429,8 +429,16 @@ export const ACTIVITY_BONUS_DAILY_CAP_KCAL = 800;
 export const KCAL_PER_STEP_PER_KG = 0.0005;
 
 /**
+ * 食事誘発性体熱産生 (TEF) の推定割合。
+ * TDEE の活動係数には TEF (~RMR の 10%) が含まれるが、
+ * Health の Active Energy は TEF を計測しないため差し引く。PRD §6.4.3。
+ */
+export const TEF_FRACTION = 0.10;
+
+/**
  * 活動係数が既に織り込んでいる「1日の基準アクティブエネルギー」。
- * baselineActiveKcal = RMR × (活動係数 − 1)。PRD §6.4.3。
+ * baselineActiveKcal = RMR × (活動係数 − 1 − TEF_FRACTION)。PRD §6.4.3。
+ * TEF を除外することで Health の Active Energy と比較可能な値にする。
  * 必要なプロフィール値が欠ける場合は null。
  */
 export function calcBaselineActiveKcal(profile: {
@@ -454,7 +462,7 @@ export function calcBaselineActiveKcal(profile: {
     rmr = calcRMR(currentWeightKg, heightCm, ageYears, biologicalBasis);
   }
   const factor = ACTIVITY_LEVEL_OPTIONS.find((a) => a.level === activityLevel)?.factor ?? 1.375;
-  return Math.max(0, Math.round(rmr * (factor - 1)));
+  return Math.max(0, Math.round(rmr * Math.max(0, factor - 1 - TEF_FRACTION)));
 }
 
 /**
