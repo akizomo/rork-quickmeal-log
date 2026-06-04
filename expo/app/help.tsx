@@ -94,36 +94,36 @@ export default function HelpRoute() {
     const direction = next > stepRef.current ? 1 : -1;
     stepRef.current = next;
 
-    // Exit: MD3 Standard accelerate (150ms)
+    // Exit: MD3 Accelerate (150ms)
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 0,
         duration: 150,
-        easing: MD3_STANDARD,
+        easing: MD3_ACCELERATE,
         useNativeDriver: true,
       }),
       Animated.timing(slideAnim, {
         toValue: -16 * direction,
         duration: 150,
-        easing: MD3_STANDARD,
+        easing: MD3_ACCELERATE,
         useNativeDriver: true,
       }),
     ]).start(() => {
       setStep(next);
       slideAnim.setValue(16 * direction);
 
-      // Enter: MD3 Standard decelerate (200ms)
+      // Enter: MD3 Decelerate (200ms)
       Animated.parallel([
         Animated.timing(fadeAnim, {
           toValue: 1,
           duration: 200,
-          easing: MD3_STANDARD,
+          easing: MD3_DECELERATE,
           useNativeDriver: true,
         }),
         Animated.timing(slideAnim, {
           toValue: 0,
           duration: 200,
-          easing: MD3_STANDARD,
+          easing: MD3_DECELERATE,
           useNativeDriver: true,
         }),
       ]).start(() => {

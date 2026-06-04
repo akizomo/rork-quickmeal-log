@@ -53,7 +53,8 @@ export function Tabs<T extends string = string>({
   const tabWidth = containerWidth > 0 ? containerWidth / items.length : 0;
   const activeIndex = items.findIndex((i) => i.key === value);
 
-  // インジケーターの translateX と width をそれぞれ Animated.Value で管理
+  // indicatorX: transform.translateX → useNativeDriver: true
+  // indicatorW: width (layout prop) → useNativeDriver: false
   const indicatorX = useRef(new Animated.Value(0)).current;
   const indicatorW = useRef(new Animated.Value(0)).current;
 
@@ -62,24 +63,24 @@ export function Tabs<T extends string = string>({
     index * tabWidth + tabWidth / 2 - lw / 2;
 
   // activeIndex or labelWidths or tabWidth が変わったらアニメーション
+  // translateX と width は useNativeDriver が異なるため parallel 不可 → 独立起動
   useEffect(() => {
     const lw = labelWidths[activeIndex] ?? 0;
     if (tabWidth <= 0 || lw <= 0) return;
 
-    Animated.parallel([
-      Animated.timing(indicatorX, {
-        toValue: getTargetX(activeIndex, lw),
-        duration: INDICATOR_DURATION,
-        easing: M3_EMPHASIZED,
-        useNativeDriver: false, // width アニメと合わせるため false
-      }),
-      Animated.timing(indicatorW, {
-        toValue: lw,
-        duration: INDICATOR_DURATION,
-        easing: M3_EMPHASIZED,
-        useNativeDriver: false,
-      }),
-    ]).start();
+    Animated.timing(indicatorX, {
+      toValue: getTargetX(activeIndex, lw),
+      duration: INDICATOR_DURATION,
+      easing: M3_EMPHASIZED,
+      useNativeDriver: true,
+    }).start();
+
+    Animated.timing(indicatorW, {
+      toValue: lw,
+      duration: INDICATOR_DURATION,
+      easing: M3_EMPHASIZED,
+      useNativeDriver: false,
+    }).start();
   }, [activeIndex, labelWidths, tabWidth]);
 
   // コンテナ幅が初めて確定したらスナップ（アニメなし）
@@ -138,7 +139,7 @@ export function Tabs<T extends string = string>({
         <Animated.View
           style={[
             styles.indicator,
-            { left: indicatorX, width: indicatorW },
+            { width: indicatorW, transform: [{ translateX: indicatorX }] },
           ]}
         />
       </View>
@@ -178,6 +179,7 @@ const styles = StyleSheet.create({
   indicator: {
     position: 'absolute',
     bottom: 0,
+    left: 0,
     height: INDICATOR_HEIGHT,
     borderTopLeftRadius: INDICATOR_HEIGHT,
     borderTopRightRadius: INDICATOR_HEIGHT,

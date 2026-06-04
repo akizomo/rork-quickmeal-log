@@ -27,7 +27,7 @@ const MEALS_SEGMENT_OPTIONS = [
 // M3 fade through: 100ms out → swap → 200ms in
 const FADE_OUT_DURATION = 100;
 const FADE_IN_DURATION = 200;
-const M3_EMPHASIZED = Easing.bezier(0.2, 0, 0, 1.0);
+const M3_EMPHASIZED = Easing.bezier(0.2, 0, 0.01, 1.0);
 
 export default function StatsScreen() {
   const theme = useTheme();
