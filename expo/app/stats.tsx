@@ -3,22 +3,30 @@ import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { BodyStatsView } from '@/components/BodyStatsView';
 import { MonthlyStatsView } from '@/components/MonthlyStatsView';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { WeeklyStatsView } from '@/components/WeeklyStatsView';
 import { palette } from '@/constants/theme';
 import { useTheme } from '@/design-system';
 
-type StatsTab = 'week' | 'month';
+type TopTab = 'meals' | 'body';
+type MealsTab = 'week' | 'month';
 
-const STATS_SEGMENT_OPTIONS = [
+const TOP_SEGMENT_OPTIONS = [
+  { key: 'meals' as const, label: '食事' },
+  { key: 'body' as const, label: 'からだ' },
+];
+
+const MEALS_SEGMENT_OPTIONS = [
   { key: 'week' as const, label: '週' },
   { key: 'month' as const, label: '月' },
 ];
 
 export default function StatsScreen() {
   const theme = useTheme();
-  const [tab, setTab] = useState<StatsTab>('week');
+  const [topTab, setTopTab] = useState<TopTab>('meals');
+  const [mealsTab, setMealsTab] = useState<MealsTab>('week');
 
   return (
     <View style={styles.root}>
@@ -32,9 +40,9 @@ export default function StatsScreen() {
       />
       <SafeAreaView edges={['bottom']} style={styles.safe}>
         <SegmentedControl
-          options={STATS_SEGMENT_OPTIONS}
-          value={tab}
-          onChange={setTab}
+          options={TOP_SEGMENT_OPTIONS}
+          value={topTab}
+          onChange={setTopTab}
           trackColor={palette.card}
           pillColor={palette.surface}
           textColor={palette.textMuted}
@@ -43,9 +51,30 @@ export default function StatsScreen() {
           height={44}
           fontSize={14}
           style={styles.segment}
-          testID="stats-segment"
+          testID="stats-top-segment"
         />
-        {tab === 'week' ? <WeeklyStatsView /> : <MonthlyStatsView />}
+
+        {topTab === 'meals' ? (
+          <>
+            <SegmentedControl
+              options={MEALS_SEGMENT_OPTIONS}
+              value={mealsTab}
+              onChange={setMealsTab}
+              trackColor={palette.card}
+              pillColor={palette.surface}
+              textColor={palette.textMuted}
+              activeTextColor={palette.sageDeep}
+              padding={5}
+              height={40}
+              fontSize={13}
+              style={styles.subSegment}
+              testID="stats-meals-segment"
+            />
+            {mealsTab === 'week' ? <WeeklyStatsView /> : <MonthlyStatsView />}
+          </>
+        ) : (
+          <BodyStatsView />
+        )}
       </SafeAreaView>
     </View>
   );
@@ -57,6 +86,11 @@ const styles = StyleSheet.create({
   segment: {
     marginHorizontal: 16,
     marginTop: 12,
+    marginBottom: 8,
+  },
+  subSegment: {
+    marginHorizontal: 16,
+    marginTop: 4,
     marginBottom: 8,
   },
 });
