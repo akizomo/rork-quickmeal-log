@@ -134,12 +134,19 @@ export function bodyType9Equal(a: BodyType9 | null | undefined, b: BodyType9 | n
  * - lose: reduce fat by 1 step (clamp at 0)
  * - maintain: same cell
  * - gain: add 1 step of muscle; if already maxed, add fat (bulk)
+ * - recomp: reduce fat by 1 step + add 1 step of muscle (body recomposition)
  */
 export function deriveTargetCellFromDirection(
   current: BodyType9,
-  direction: 'lose' | 'maintain' | 'gain'
+  direction: 'lose' | 'maintain' | 'gain' | 'recomp'
 ): BodyType9 {
   if (direction === 'maintain') return current;
+  if (direction === 'recomp') {
+    return {
+      fat: Math.max(0, current.fat - 1) as BodyAxisLevel,
+      muscle: Math.min(2, current.muscle + 1) as BodyAxisLevel,
+    };
+  }
   if (direction === 'lose') {
     return {
       fat: Math.max(0, current.fat - 1) as BodyAxisLevel,

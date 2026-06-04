@@ -72,7 +72,7 @@ export default function StatusRoute() {
   };
 
   const paceLabel = useMemo(() => {
-    if (!profile.goalDirection || profile.goalDirection === 'maintain') return null;
+    if (!profile.goalDirection || profile.goalDirection === 'maintain' || profile.goalDirection === 'recomp') return null;
     return profile.paceLevel === 'gentle' ? 'ゆるやか' : profile.paceLevel === 'strong' ? 'しっかり' : '標準';
   }, [profile.goalDirection, profile.paceLevel]);
 
@@ -143,24 +143,24 @@ export default function StatusRoute() {
               ) : null}
               <View style={styles.recordButtonRow}>
                 <Pressable
-                  style={[styles.recordButton, { backgroundColor: theme.colors.action.primary.default }]}
+                  style={styles.textButton}
                   onPress={() => setWeightSheetVisible(true)}
                   testID="status-update-weight"
                   accessibilityRole="button"
                   accessibilityLabel="体重を記録"
                   accessibilityHint="今日の体重を入力するシートを開きます"
                 >
-                  <Text style={[styles.recordButtonText, { color: theme.colors.content.onAction }]}>体重を記録</Text>
+                  <Text style={[styles.textButtonLabel, { color: theme.colors.action.primary.default }]}>体重を記録</Text>
                 </Pressable>
                 <Pressable
-                  style={[styles.recordButton, { backgroundColor: theme.colors.action.primary.default }]}
+                  style={styles.textButton}
                   onPress={() => setBfSheetVisible(true)}
                   testID="status-update-bf"
                   accessibilityRole="button"
                   accessibilityLabel="体脂肪率を記録"
                   accessibilityHint="今日の体脂肪率を入力するシートを開きます"
                 >
-                  <Text style={[styles.recordButtonText, { color: theme.colors.content.onAction }]}>体脂肪を記録</Text>
+                  <Text style={[styles.textButtonLabel, { color: theme.colors.action.primary.default }]}>体脂肪を記録</Text>
                 </Pressable>
               </View>
               {healthSync.supported ? (
@@ -558,9 +558,9 @@ const styles = StyleSheet.create({
   heroMetricRow: { flexDirection: 'row', alignItems: 'center' },
   heroMetric: { flex: 1, alignItems: 'center', gap: 4 },
   heroDivider: { width: StyleSheet.hairlineWidth, height: 48, marginHorizontal: 8 },
-  recordButtonRow: { flexDirection: 'row', gap: 10 },
-  recordButton: { flex: 1, borderRadius: 999, paddingVertical: 12, alignItems: 'center' },
-  recordButtonText: { fontSize: 14, fontWeight: '700' },
+  recordButtonRow: { flexDirection: 'row' },
+  textButton: { flex: 1, alignItems: 'center', paddingVertical: 6 },
+  textButtonLabel: { fontSize: 13, fontWeight: '500' },
   healthSyncRow: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -13,6 +13,7 @@ import { recommendGoal } from '@/utils/goals';
 const DIRECTION_OPTIONS: { key: GoalDirection; label: string }[] = [
   { key: 'lose', label: '減らす' },
   { key: 'maintain', label: '維持' },
+  { key: 'recomp', label: '引き締め' },
   { key: 'gain', label: '増やす' },
 ];
 
@@ -34,7 +35,7 @@ export default function GoalEditRoute() {
 
   const preview = useMemo(() => {
     if (!direction) return null;
-    if (direction !== 'maintain' && !paceLevel) return null;
+    if (direction !== 'maintain' && direction !== 'recomp' && !paceLevel) return null;
     return recommendGoal({
       heightCm: profile.heightCm,
       weightKg: profile.currentWeightKg,
@@ -56,7 +57,7 @@ export default function GoalEditRoute() {
 
     updateProfileValues({
       goalDirection: direction,
-      paceLevel: direction === 'maintain' ? null : paceLevel,
+      paceLevel: direction === 'maintain' || direction === 'recomp' ? null : paceLevel,
       targetBodyType9: derivedTarget,
       ...(preview && {
         targetCalories: preview.targetKcal,
@@ -70,7 +71,8 @@ export default function GoalEditRoute() {
     router.back();
   }, [direction, paceLevel, derivedTarget, preview, updateProfileValues, router]);
 
-  const canSave = direction != null && (direction === 'maintain' || paceLevel != null);
+  const noNeedPace = direction === 'maintain' || direction === 'recomp';
+  const canSave = direction != null && (noNeedPace || paceLevel != null);
 
   return (
     <>
@@ -121,7 +123,7 @@ export default function GoalEditRoute() {
             </View>
 
             {/* PACE — segmented (maintain時は非表示) */}
-            {direction !== 'maintain' ? (
+            {direction !== 'maintain' && direction !== 'recomp' ? (
               <View style={{ gap: theme.spacing['2'] }}>
                 <Caption tone="secondary">ペース</Caption>
                 <SegmentedRow

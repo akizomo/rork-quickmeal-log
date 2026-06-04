@@ -137,7 +137,7 @@ export default function OnboardingRoute() {
       case 4: return !!activityLevel;
       case 5: return currentBodyType9 !== null;
       case 6: return !!direction;
-      case 7: return direction === 'maintain' || !!paceLevel;
+      case 7: return direction === 'maintain' || direction === 'recomp' || !!paceLevel;
       case 8: return recommendation !== null;
       default: return true;
     }
@@ -167,7 +167,7 @@ export default function OnboardingRoute() {
   }, [activityLevel, ageYears, basis, bodyFatPct, currentBodyType9, currentPfc.carbsG, currentPfc.fatG, currentPfc.proteinG, currentStage, direction, heightCm, paceLevel, recommendation, targetBodyType9, targetStage, updateProfileValues, weightKg]);
 
   // 維持目標はペース選択が不要なため、step 7 (StepPlan) を飛ばす。
-  const skipPlanStep = direction === 'maintain';
+  const skipPlanStep = direction === 'maintain' || direction === 'recomp';
 
   const goNext = useCallback(() => {
     saveAllCurrent();
@@ -648,6 +648,7 @@ function StepDirection({
   const opts: { key: GoalDirection; label: string; hint: string }[] = [
     { key: 'lose', label: '減らしたい', hint: '体重・体脂肪率を落とす' },
     { key: 'maintain', label: '維持したい', hint: '今の体格をキープ' },
+    { key: 'recomp', label: '引き締めたい', hint: '体重はそのまま、脂肪を筋量に置き換える' },
     { key: 'gain', label: '増やしたい', hint: '体重・筋量を増やす' },
   ];
   return (
@@ -837,6 +838,11 @@ const MEAL_TIPS_BY_DIRECTION: Record<GoalDirection, string[]> = {
     'カロリー不足に注意、しっかり食べる',
     'タンパク質も炭水化物もしっかり',
     '食事回数を増やすのも有効',
+  ],
+  recomp: [
+    'タンパク質を最優先に — 毎食しっかり摂る',
+    'カロリーは維持カロリーを目安に',
+    '変化はゆっくり。体重より体型の変化を見る',
   ],
 };
 

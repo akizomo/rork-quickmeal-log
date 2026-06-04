@@ -12,7 +12,7 @@ export interface Macro {
 }
 
 export type BiologicalBasis = 'male_basis' | 'female_basis';
-export type GoalDirection = 'lose' | 'maintain' | 'gain';
+export type GoalDirection = 'lose' | 'maintain' | 'gain' | 'recomp';
 export type BodyStage = 1 | 2 | 3 | 4 | 5;
 export type ActivityLevel = 1 | 2 | 3 | 4;
 export type PaceLevel = 'gentle' | 'standard' | 'strong';

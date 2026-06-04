@@ -17,6 +17,8 @@ export function deriveDirection(current: BodyType9, target: BodyType9): GoalDire
   const fatDelta = target.fat - current.fat;
   const muscleDelta = target.muscle - current.muscle;
   if (fatDelta === 0 && muscleDelta === 0) return 'maintain';
+  // fat↓ + muscle↑ = recomp (body recomposition)
+  if (fatDelta < 0 && muscleDelta > 0) return 'recomp';
   if (fatDelta < 0) return 'lose';
   if (fatDelta > 0) return 'gain';
   // fatDelta === 0
@@ -76,25 +78,28 @@ export function computePlanOutcome(
 
   // Rough BF% projection:
   // lose — assume 75% of weight loss is fat mass (rest is lean)
-  // gain — if fat-direction bulk, assume 50% of gain is fat; muscle-direction, 20%
+  // gain — muscle-led: 30% of gain is fat
+  // recomp — weight stays ~same, BF% drops ~0.5%/month (pace-scaled)
   let finalBF = bf0;
-  if (direction === 'lose' && bf0 > 0 && finalWeight > 0) {
+  if (direction === 'recomp' && bf0 > 0) {
+    const bfDropPerMonth = 0.5 * multi;
+    finalBF = Math.max(5, bf0 - bfDropPerMonth * durationMonths);
+  } else if (direction === 'lose' && bf0 > 0 && finalWeight > 0) {
     const fatMassCurrent = currentWeightKg * (bf0 / 100);
     const fatMassAfter = Math.max(0, fatMassCurrent + totalKgDelta * 0.75);
     finalBF = (fatMassAfter / finalWeight) * 100;
   } else if (direction === 'gain' && bf0 > 0 && finalWeight > 0) {
     const fatMassCurrent = currentWeightKg * (bf0 / 100);
-    // Assume muscle-led gain: 30% of gain is fat
     const fatMassAfter = fatMassCurrent + totalKgDelta * 0.3;
     finalBF = (fatMassAfter / finalWeight) * 100;
   }
 
   return {
-    totalKgDelta: Math.round(totalKgDelta * 10) / 10,
-    monthlyKgDelta: Math.round((totalKgDelta / durationMonths) * 10) / 10,
-    finalWeightKg: Math.round(finalWeight * 10) / 10,
+    totalKgDelta: direction === 'recomp' ? 0 : Math.round(totalKgDelta * 10) / 10,
+    monthlyKgDelta: direction === 'recomp' ? 0 : Math.round((totalKgDelta / durationMonths) * 10) / 10,
+    finalWeightKg: direction === 'recomp' ? Math.round(currentWeightKg * 10) / 10 : Math.round(finalWeight * 10) / 10,
     finalBodyFatPct: Math.round(finalBF),
-    reachesTargetCell: Math.abs(totalKgDelta) >= currentWeightKg * 0.04,
+    reachesTargetCell: direction === 'recomp' ? bf0 - finalBF >= 2 : Math.abs(totalKgDelta) >= currentWeightKg * 0.04,
   };
 }
 
@@ -107,6 +112,7 @@ const KCAL_ADJUST_BY_DIRECTION: Record<GoalDirection, number> = {
   lose: -400,
   maintain: 0,
   gain: 250,
+  recomp: 0,
 };
 
 export interface GoalInputs {
@@ -186,7 +192,7 @@ function computeKcalDelta(
   direction: GoalDirection,
   paceLevel: PaceLevel | null
 ): number {
-  if (direction === 'maintain') return 0;
+  if (direction === 'maintain' || direction === 'recomp') return 0;
   if (!paceLevel) return 0;
   const multi = PACE_OPTIONS.find((p) => p.key === paceLevel)?.multiplier ?? 1;
   const baseWeekly = direction === 'lose' ? 0.005 : 0.0025;
@@ -213,7 +219,8 @@ export function computePfc(
 ): { proteinG: number; fatG: number; carbsG: number } {
   const activityInfo = ACTIVITY_LEVEL_OPTIONS.find((a) => a.level === activityLevel);
   const proteinBase = activityInfo?.proteinPerKg ?? 1.4;
-  const proteinBonus = direction === 'lose' ? 0.3 : direction === 'gain' ? 0.2 : 0;
+  // recomp requires highest protein to support simultaneous fat loss + muscle synthesis
+  const proteinBonus = direction === 'recomp' ? 0.5 : direction === 'lose' ? 0.3 : direction === 'gain' ? 0.2 : 0;
   const proteinG = Math.round((proteinBase + proteinBonus) * weightKg);
 
   const fatMinByWeight = 0.6 * weightKg;
@@ -243,7 +250,7 @@ export function recommendGoal(input: GoalInputs): GoalRecommendation | null {
   if (!heightCm || !weightKg || !ageYears || !basis || !direction || !activityLevel || !targetBodyType9) {
     return null;
   }
-  if (direction !== 'maintain' && !paceLevel) return null;
+  if (direction !== 'maintain' && direction !== 'recomp' && !paceLevel) return null;
 
   // 1. RMR: Katch-McArdle when BF% known, Mifflin-St Jeor otherwise
   let rmr: number;
@@ -280,6 +287,13 @@ export function recommendGoal(input: GoalInputs): GoalRecommendation | null {
     targetBodyFatPct =
       currentBodyFatPct != null
         ? Math.round(currentBodyFatPct)
+        : getCellBodyFatTypical(getCellRef(basis, targetBodyType9));
+  } else if (direction === 'recomp') {
+    targetWeightKg = Math.round(weightKg * 10) / 10;
+    const outcome = computePlanOutcome(weightKg, currentBodyFatPct ?? null, paceLevel ?? 'standard', 'recomp');
+    targetBodyFatPct =
+      currentBodyFatPct != null
+        ? outcome.finalBodyFatPct
         : getCellBodyFatTypical(getCellRef(basis, targetBodyType9));
   } else if (paceLevel) {
     const outcome = computePlanOutcome(weightKg, currentBodyFatPct ?? null, paceLevel, direction);
@@ -330,7 +344,7 @@ export function recomputePfcFromKcal(
   }
   // Fallback: old ratio-based calc (for when weight/activity are not available)
   const d = direction ?? 'maintain';
-  const proteinKcalRatio = d === 'lose' ? 0.22 : d === 'gain' ? 0.2 : 0.18;
+  const proteinKcalRatio = d === 'recomp' ? 0.30 : d === 'lose' ? 0.22 : d === 'gain' ? 0.2 : 0.18;
   const fatKcalRatio = d === 'lose' ? 0.25 : 0.28;
   const carbKcalRatio = 1 - proteinKcalRatio - fatKcalRatio;
   return {
