@@ -317,8 +317,8 @@ function HealthSyncRow({
     }
     if (status === 'authorized' && lastSyncedAt) {
       return {
-        label: `最終同期: ${formatRelativeTime(lastSyncedAt)}`,
-        sub: null,
+        label: 'ヘルスデータを同期',
+        sub: `最終同期: ${formatRelativeTime(lastSyncedAt)}`,
       };
     }
     return { label: 'ヘルスデータを同期', sub: null };
