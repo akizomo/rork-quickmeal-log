@@ -1,5 +1,14 @@
-import React from 'react';
-import { Pressable, StyleSheet, Text, View, type ViewStyle } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  Animated,
+  Easing,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+  type LayoutChangeEvent,
+  type ViewStyle,
+} from 'react-native';
 
 import { palette } from '@/constants/theme';
 
@@ -7,14 +16,16 @@ import { palette } from '@/constants/theme';
  * Material 3 "Primary tabs" 風のタブ。
  * @see https://m3.material.io/components/tabs/overview
  *
- * 画面レベルの切替 (例: 食事 / からだ) に使う。
- * サブ階層の選択 (週 / 月 など) には SegmentedControl を使い、役割を分ける。
- *
- * 特徴:
- *  - ラベルはコンテナ幅を等分 (fixed tabs)
- *  - アクティブタブ下にアクティブインジケータ (上端角丸の下線)
- *  - 行全体の下に divider
+ * アニメーション仕様 (M3):
+ *  - インジケーター幅 = ラベル幅
+ *  - インジケーターはラベル中央下に配置
+ *  - Easing: emphasized — cubic-bezier(0.2, 0, 0, 1.0)、300ms
  */
+
+const M3_EMPHASIZED = Easing.bezier(0.2, 0, 0, 1.0);
+const INDICATOR_DURATION = 300;
+const INDICATOR_HEIGHT = 3;
+
 interface TabItem<T extends string = string> {
   key: T;
   label: string;
@@ -35,10 +46,73 @@ export function Tabs<T extends string = string>({
   style,
   testID,
 }: Props<T>) {
+  const [containerWidth, setContainerWidth] = useState(0);
+  // 各ラベルの幅を記録
+  const [labelWidths, setLabelWidths] = useState<number[]>(() => items.map(() => 0));
+
+  const tabWidth = containerWidth > 0 ? containerWidth / items.length : 0;
+  const activeIndex = items.findIndex((i) => i.key === value);
+
+  // インジケーターの translateX と width をそれぞれ Animated.Value で管理
+  const indicatorX = useRef(new Animated.Value(0)).current;
+  const indicatorW = useRef(new Animated.Value(0)).current;
+
+  // インジケーターの目標 X = タブ中央 - ラベル幅/2
+  const getTargetX = (index: number, lw: number) =>
+    index * tabWidth + tabWidth / 2 - lw / 2;
+
+  // activeIndex or labelWidths or tabWidth が変わったらアニメーション
+  useEffect(() => {
+    const lw = labelWidths[activeIndex] ?? 0;
+    if (tabWidth <= 0 || lw <= 0) return;
+
+    Animated.parallel([
+      Animated.timing(indicatorX, {
+        toValue: getTargetX(activeIndex, lw),
+        duration: INDICATOR_DURATION,
+        easing: M3_EMPHASIZED,
+        useNativeDriver: false, // width アニメと合わせるため false
+      }),
+      Animated.timing(indicatorW, {
+        toValue: lw,
+        duration: INDICATOR_DURATION,
+        easing: M3_EMPHASIZED,
+        useNativeDriver: false,
+      }),
+    ]).start();
+  }, [activeIndex, labelWidths, tabWidth]);
+
+  // コンテナ幅が初めて確定したらスナップ（アニメなし）
+  const initialized = useRef(false);
+  useEffect(() => {
+    if (tabWidth <= 0) return;
+    const lw = labelWidths[activeIndex] ?? 0;
+    if (lw <= 0) return;
+    if (!initialized.current) {
+      indicatorX.setValue(getTargetX(activeIndex, lw));
+      indicatorW.setValue(lw);
+      initialized.current = true;
+    }
+  }, [tabWidth, labelWidths]);
+
+  const handleContainerLayout = (e: LayoutChangeEvent) => {
+    setContainerWidth(e.nativeEvent.layout.width);
+  };
+
+  const handleLabelLayout = (index: number) => (e: LayoutChangeEvent) => {
+    const w = e.nativeEvent.layout.width;
+    setLabelWidths((prev) => {
+      if (prev[index] === w) return prev;
+      const next = [...prev];
+      next[index] = w;
+      return next;
+    });
+  };
+
   return (
     <View style={[styles.container, style]} testID={testID}>
-      <View style={styles.row}>
-        {items.map((item) => {
+      <View style={styles.row} onLayout={handleContainerLayout}>
+        {items.map((item, index) => {
           const active = item.key === value;
           return (
             <Pressable
@@ -49,21 +123,28 @@ export function Tabs<T extends string = string>({
               accessibilityState={{ selected: active }}
               testID={`${testID ?? 'tabs'}-${item.key}`}
             >
-              <View style={styles.labelWrap}>
-                <Text style={[styles.label, active ? styles.labelActive : styles.labelInactive]}>
-                  {item.label}
-                </Text>
-                <View style={[styles.indicator, active ? styles.indicatorActive : null]} />
-              </View>
+              <Text
+                style={[styles.label, active ? styles.labelActive : styles.labelInactive]}
+                onLayout={handleLabelLayout(index)}
+              >
+                {item.label}
+              </Text>
+              <View style={styles.indicatorSlot} />
             </Pressable>
           );
         })}
+
+        {/* スライドするインジケーター */}
+        <Animated.View
+          style={[
+            styles.indicator,
+            { left: indicatorX, width: indicatorW },
+          ]}
+        />
       </View>
     </View>
   );
 }
-
-const INDICATOR_HEIGHT = 3;
 
 const styles = StyleSheet.create({
   container: {
@@ -72,20 +153,18 @@ const styles = StyleSheet.create({
   },
   row: {
     flexDirection: 'row',
+    position: 'relative',
   },
   tab: {
     flex: 1,
     alignItems: 'center',
     paddingTop: 12,
   },
-  labelWrap: {
-    alignItems: 'center',
-    gap: 8,
-  },
   label: {
     fontSize: 14,
     fontWeight: '700',
     paddingHorizontal: 4,
+    marginBottom: 8,
   },
   labelActive: {
     color: palette.sageDeep,
@@ -93,14 +172,15 @@ const styles = StyleSheet.create({
   labelInactive: {
     color: palette.textMuted,
   },
+  indicatorSlot: {
+    height: INDICATOR_HEIGHT,
+  },
   indicator: {
-    alignSelf: 'stretch',
+    position: 'absolute',
+    bottom: 0,
     height: INDICATOR_HEIGHT,
     borderTopLeftRadius: INDICATOR_HEIGHT,
     borderTopRightRadius: INDICATOR_HEIGHT,
-    backgroundColor: 'transparent',
-  },
-  indicatorActive: {
     backgroundColor: palette.sageDeep,
   },
 });
