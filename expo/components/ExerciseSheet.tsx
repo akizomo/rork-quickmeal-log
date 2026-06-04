@@ -4,6 +4,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { BottomSheet, Chip, useTheme } from '@/design-system';
 import { palette } from '@/constants/theme';
+import { ACTIVITY_LEVEL_OPTIONS } from '@/constants/onboarding';
 import {
   ACTIVITY_BONUS_DAILY_CAP_KCAL,
   calcActivityBonusKcal,
@@ -59,16 +60,22 @@ export const ExerciseSheet = memo(function ExerciseSheet({ visible, onClose }: E
 
   // 差分方式 (PRD §6.4.3): 当日活動のうち「基準超過分」が目標に反映される。
   // ここではその反映分の根拠を可視化する (なぜ食べられる量が増えたか)。
+  const baselineKcal = useMemo(() => calcBaselineActiveKcal(profile), [profile]);
+
   const activityBonusKcal = useMemo(() => {
-    const baseline = calcBaselineActiveKcal(profile);
-    if (baseline == null || !todayDailyActivity) return 0;
+    if (baselineKcal == null || !todayDailyActivity) return 0;
     const measured =
       todayDailyActivity.activeKcal > 0
         ? todayDailyActivity.activeKcal
         : stepsToActiveKcal(todayDailyActivity.steps, profile.currentWeightKg);
-    return calcActivityBonusKcal(baseline, measured);
-  }, [profile, todayDailyActivity]);
+    return calcActivityBonusKcal(baselineKcal, measured);
+  }, [baselineKcal, profile.currentWeightKg, todayDailyActivity]);
   const activityBonusCapped = activityBonusKcal >= ACTIVITY_BONUS_DAILY_CAP_KCAL;
+
+  const activityLevelLabel = useMemo(
+    () => ACTIVITY_LEVEL_OPTIONS.find((a) => a.level === profile.activityLevel)?.label ?? null,
+    [profile.activityLevel]
+  );
 
   return (
     <BottomSheet
@@ -106,6 +113,14 @@ export const ExerciseSheet = memo(function ExerciseSheet({ visible, onClose }: E
                   目標に反映 (基準超過分){activityBonusCapped ? '・上限' : ''}
                 </Text>
                 <Text style={styles.bonusKcal}>+{activityBonusKcal.toLocaleString()} kcal</Text>
+              </View>
+            ) : null}
+            {hasHealthActivity && activityLevelLabel && baselineKcal != null ? (
+              <View style={styles.baselineInfoRow} testID="exercise-activity-level-info">
+                <Text style={styles.baselineInfoText}>
+                  活動レベル「{activityLevelLabel}」·{' '}
+                  基準 {baselineKcal.toLocaleString()} kcal/日はベース目標に含まれます
+                </Text>
               </View>
             ) : null}
           </View>
@@ -251,6 +266,12 @@ const styles = StyleSheet.create({
   },
   bonusLabel: { fontSize: 11, fontWeight: '500', color: palette.sageDeep },
   bonusKcal: { fontSize: 13, fontWeight: '700', color: palette.sageDeep },
+  baselineInfoRow: {
+    paddingTop: 8,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: palette.border,
+  },
+  baselineInfoText: { fontSize: 11, color: palette.textMuted, lineHeight: 16 },
   historyBlock: { gap: 8 },
   historyRow: {
     flexDirection: 'row',
