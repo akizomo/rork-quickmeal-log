@@ -53,8 +53,8 @@ export function Tabs<T extends string = string>({
   const tabWidth = containerWidth > 0 ? containerWidth / items.length : 0;
   const activeIndex = items.findIndex((i) => i.key === value);
 
-  // indicatorX: transform.translateX → useNativeDriver: true
-  // indicatorW: width (layout prop) → useNativeDriver: false
+  // indicatorX (translateX) / indicatorW (width) はどちらも JS ドライバ。
+  // width は native 非対応なので、同一ノード上で混在させずドライバを揃える。
   const indicatorX = useRef(new Animated.Value(0)).current;
   const indicatorW = useRef(new Animated.Value(0)).current;
 
@@ -63,16 +63,17 @@ export function Tabs<T extends string = string>({
     index * tabWidth + tabWidth / 2 - lw / 2;
 
   // activeIndex or labelWidths or tabWidth が変わったらアニメーション
-  // translateX と width は useNativeDriver が異なるため parallel 不可 → 独立起動
   useEffect(() => {
     const lw = labelWidths[activeIndex] ?? 0;
     if (tabWidth <= 0 || lw <= 0) return;
 
+    // translateX と width を同一 Animated.View 上で別ドライバにすると
+    // "moved to native" クラッシュを起こすため、両方 JS ドライバに統一する。
     Animated.timing(indicatorX, {
       toValue: getTargetX(activeIndex, lw),
       duration: INDICATOR_DURATION,
       easing: M3_EMPHASIZED,
-      useNativeDriver: true,
+      useNativeDriver: false,
     }).start();
 
     Animated.timing(indicatorW, {
