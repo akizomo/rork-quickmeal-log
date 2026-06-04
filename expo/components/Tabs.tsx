@@ -49,10 +49,12 @@ export function Tabs<T extends string = string>({
               accessibilityState={{ selected: active }}
               testID={`${testID ?? 'tabs'}-${item.key}`}
             >
-              <Text style={[styles.label, active ? styles.labelActive : styles.labelInactive]}>
-                {item.label}
-              </Text>
-              <View style={[styles.indicator, active ? styles.indicatorActive : null]} />
+              <View style={styles.labelWrap}>
+                <Text style={[styles.label, active ? styles.labelActive : styles.labelInactive]}>
+                  {item.label}
+                </Text>
+                <View style={[styles.indicator, active ? styles.indicatorActive : null]} />
+              </View>
             </Pressable>
           );
         })}
@@ -75,11 +77,15 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     paddingTop: 12,
+  },
+  labelWrap: {
+    alignItems: 'center',
     gap: 8,
   },
   label: {
     fontSize: 14,
     fontWeight: '700',
+    paddingHorizontal: 4,
   },
   labelActive: {
     color: palette.sageDeep,
@@ -90,7 +96,6 @@ const styles = StyleSheet.create({
   indicator: {
     alignSelf: 'stretch',
     height: INDICATOR_HEIGHT,
-    marginHorizontal: 16,
     borderTopLeftRadius: INDICATOR_HEIGHT,
     borderTopRightRadius: INDICATOR_HEIGHT,
     backgroundColor: 'transparent',
