@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { BodyStatsView } from '@/components/BodyStatsView';
 import { MonthlyStatsView } from '@/components/MonthlyStatsView';
 import { SegmentedControl } from '@/components/SegmentedControl';
+import { Tabs } from '@/components/Tabs';
 import { WeeklyStatsView } from '@/components/WeeklyStatsView';
 import { palette } from '@/constants/theme';
 import { useTheme } from '@/design-system';
@@ -13,7 +14,7 @@ import { useTheme } from '@/design-system';
 type TopTab = 'meals' | 'body';
 type MealsTab = 'week' | 'month';
 
-const TOP_SEGMENT_OPTIONS = [
+const TOP_TAB_ITEMS = [
   { key: 'meals' as const, label: '食事' },
   { key: 'body' as const, label: 'からだ' },
 ];
@@ -39,19 +40,12 @@ export default function StatsScreen() {
         }}
       />
       <SafeAreaView edges={['bottom']} style={styles.safe}>
-        <SegmentedControl
-          options={TOP_SEGMENT_OPTIONS}
+        <Tabs
+          items={TOP_TAB_ITEMS}
           value={topTab}
           onChange={setTopTab}
-          trackColor={palette.card}
-          pillColor={palette.surface}
-          textColor={palette.textMuted}
-          activeTextColor={palette.sageDeep}
-          padding={5}
-          height={44}
-          fontSize={14}
-          style={styles.segment}
-          testID="stats-top-segment"
+          style={styles.tabs}
+          testID="stats-top-tabs"
         />
 
         {topTab === 'meals' ? (
@@ -83,14 +77,12 @@ export default function StatsScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: palette.background },
   safe: { flex: 1 },
-  segment: {
-    marginHorizontal: 16,
-    marginTop: 12,
-    marginBottom: 8,
+  tabs: {
+    marginTop: 4,
   },
   subSegment: {
     marginHorizontal: 16,
-    marginTop: 4,
+    marginTop: 12,
     marginBottom: 8,
   },
 });
