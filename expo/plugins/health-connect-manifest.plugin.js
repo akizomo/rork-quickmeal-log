@@ -12,7 +12,7 @@
  *        getSdkStatus() が SDK_UNAVAILABLE を返してしまい連携が開始できない
  */
 
-const { withAndroidManifest } = require('@expo/config-plugins');
+const { withAndroidManifest, withMainActivity } = require('@expo/config-plugins');
 
 /** 追加する Health Connect 読み取り権限 */
 const HEALTH_PERMISSIONS = [
@@ -105,4 +105,58 @@ const withHealthConnectManifest = (config) =>
     return mod;
   });
 
-module.exports = withHealthConnectManifest;
+/**
+ * MainActivity.kt に Health Connect 権限デリゲートの登録を注入する。
+ *
+ * `react-native-health-connect` v2+ は requestPermission() の結果を
+ * ActivityResultLauncher 経由で受け取る。そのランチャーは MainActivity.onCreate で
+ *   HealthConnectPermissionDelegate.setPermissionDelegate(this)
+ * を呼んで登録しないと `lateinit` のままになり、launch() が
+ * UninitializedPropertyAccessException を投げる。
+ * 結果として権限ダイアログの結果が届かず getGrantedPermissions() が空になる
+ * (= status: unauthorized / granted:(none) の症状)。
+ *
+ * 素の Expo managed では MainActivity が自動生成されこの呼び出しが無いため、
+ * config plugin で注入する。
+ */
+const DELEGATE_IMPORT =
+  'import dev.matinzd.healthconnect.permissions.HealthConnectPermissionDelegate';
+const DELEGATE_CALL =
+  '    HealthConnectPermissionDelegate.setPermissionDelegate(this)';
+
+const withHealthConnectPermissionDelegate = (config) =>
+  withMainActivity(config, (mod) => {
+    let src = mod.modResults.contents;
+    if (mod.modResults.language !== 'kt') {
+      throw new Error(
+        '[health-connect] MainActivity is not Kotlin; cannot inject setPermissionDelegate'
+      );
+    }
+
+    // (1) import を追加 (重複防止)
+    if (!src.includes(DELEGATE_IMPORT)) {
+      // package 行の直後に挿入
+      src = src.replace(
+        /^(package .+\n)/,
+        `$1\n${DELEGATE_IMPORT}\n`
+      );
+    }
+
+    // (2) onCreate 内、super.onCreate(...) の直後に呼び出しを挿入 (重複防止)
+    if (!src.includes('HealthConnectPermissionDelegate.setPermissionDelegate')) {
+      const superCallRegex = /(\n\s*super\.onCreate\([^)]*\)\n)/;
+      if (superCallRegex.test(src)) {
+        src = src.replace(superCallRegex, `$1${DELEGATE_CALL}\n`);
+      } else {
+        throw new Error(
+          '[health-connect] could not find super.onCreate in MainActivity to inject delegate'
+        );
+      }
+    }
+
+    mod.modResults.contents = src;
+    return mod;
+  });
+
+module.exports = (config) =>
+  withHealthConnectPermissionDelegate(withHealthConnectManifest(config));

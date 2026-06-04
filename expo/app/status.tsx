@@ -195,6 +195,7 @@ export default function StatusRoute() {
                         `initialized: ${d.initialized}`,
                         `status: ${d.status}`,
                         `granted: ${d.grantedPermissions.length ? d.grantedPermissions.join(', ') : '(none)'}`,
+                        `lastRequest: ${d.lastRequestSummary ?? 'n/a'}`,
                       ].join('\n')
                     );
                   }}

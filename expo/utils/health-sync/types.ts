@@ -95,4 +95,10 @@ export interface HealthDiagnostics {
   grantedPermissions: string[];
   /** 正規化された status */
   status: HealthSyncStatus;
+  /**
+   * 直近の requestPermission() 呼び出しの結果サマリ (Android)。
+   * 「ダイアログが何を返したか」を実機で確認するためのトラブルシュート用。
+   * 未実行なら 'not requested yet'。
+   */
+  lastRequestSummary?: string;
 }

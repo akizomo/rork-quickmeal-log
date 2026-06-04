@@ -44,6 +44,8 @@ const MINIMUM_PERMISSIONS: Permission[] = [
 let initialized = false;
 /** 進行中の初期化 Promise を保持して並列呼び出しでの二重実行を防ぐ */
 let initInFlight: Promise<boolean> | null = null;
+/** 直近の requestPermission() 結果サマリ (診断用) */
+let lastRequestSummary = 'not requested yet';
 
 /**
  * Health Connect プロバイダの状態を細かく返す。
@@ -241,12 +243,25 @@ export const healthAdapter: HealthSyncAdapter = {
     // 利用不可状態 (プロバイダ未インストール等) のときに requestPermission を呼ぶと
     // Play Store へ自動遷移して戻れなくなるため、初期化に成功した時だけ実行する。
     const ready = await ensureInitialized();
-    if (!ready) return false;
+    if (!ready) {
+      lastRequestSummary = 'init failed before requestPermission';
+      return false;
+    }
     try {
-      // 全権限をダイアログで提示するが、最低限 Weight が許可されれば成功扱い
-      await requestPermission(REQUESTED_PERMISSIONS);
+      // 全権限をダイアログで提示するが、最低限 Weight が許可されれば成功扱い。
+      // requestPermission は「許可された権限の配列」を返す。空配列 = ダイアログで
+      // 何も許可されなかった / ダイアログが出なかった可能性を意味する。
+      const granted = await requestPermission(REQUESTED_PERMISSIONS);
+      const summary = Array.isArray(granted)
+        ? granted
+            .map((g) => ('recordType' in g ? `${g.accessType}:${g.recordType}` : JSON.stringify(g)))
+            .join(', ')
+        : JSON.stringify(granted);
+      lastRequestSummary = `returned [${Array.isArray(granted) ? granted.length : '?'}]: ${summary || '(empty)'}`;
+      if (__DEV__) console.log('[health-sync/android] requestPermission result', lastRequestSummary);
       return await hasMinimumPermissions();
     } catch (err) {
+      lastRequestSummary = `threw: ${err instanceof Error ? err.message : String(err)}`;
       if (__DEV__) console.log('[health-sync/android] requestPermission failed', err);
       return false;
     }
@@ -316,6 +331,7 @@ export const healthAdapter: HealthSyncAdapter = {
       initialized: initOk,
       grantedPermissions,
       status: await this.getStatus(),
+      lastRequestSummary,
     };
   },
 };
