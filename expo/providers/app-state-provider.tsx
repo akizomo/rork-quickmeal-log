@@ -1151,6 +1151,13 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       let nextBodyFatEntries = bodyFatEntries;
       for (const bf of [...newestBodyFatsPerDate].reverse()) {
         if (nextBodyFatEntries.some((item) => item.healthSyncId === bf.healthSyncId)) continue;
+        // 手動優先: 同日に手動エントリ (InBody 等) があれば Health 値で上書きしない。
+        // 家庭用体重計の BIA より手動測定の方が正確なケースを尊重する。
+        if (
+          nextBodyFatEntries.some((item) => item.date === bf.date && item.source === 'manual')
+        ) {
+          continue;
+        }
         const recordedAt = bf.recordedAt;
         const entry: BodyFatEntry = {
           id: `bf-${new Date(recordedAt).getTime()}`,
@@ -1218,11 +1225,16 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       if (nextWeights.length > 0 && nextWeights[0].weightKg !== profile.currentWeightKg) {
         nextProfile = { ...nextProfile, currentWeightKg: nextWeights[0].weightKg };
       }
-      if (
-        nextBodyFatEntries.length > 0 &&
-        nextBodyFatEntries[0].bodyFatPct !== profile.currentBodyFatPct
-      ) {
-        nextProfile = { ...nextProfile, currentBodyFatPct: nextBodyFatEntries[0].bodyFatPct };
+      // 現在体脂肪率は「最新日付・同日なら手動優先」のエントリを採用。
+      // (Health バッチ取込で過去日付が先頭に並ぶ場合があるため index 0 依存にしない)
+      const latestBodyFat = nextBodyFatEntries.reduce<BodyFatEntry | undefined>((best, e) => {
+        if (!best) return e;
+        if (e.date > best.date) return e;
+        if (e.date === best.date && e.source === 'manual' && best.source !== 'manual') return e;
+        return best;
+      }, undefined);
+      if (latestBodyFat && latestBodyFat.bodyFatPct !== profile.currentBodyFatPct) {
+        nextProfile = { ...nextProfile, currentBodyFatPct: latestBodyFat.bodyFatPct };
       }
 
       // 6) 4 state まとめて更新 + persist は 1 回 (全て明示的に渡す)
