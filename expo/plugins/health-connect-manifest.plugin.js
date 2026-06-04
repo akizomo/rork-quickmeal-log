@@ -68,6 +68,35 @@ const withHealthConnectManifest = (config) =>
       }
     }
 
+    // ===== (2.5) Android 14+ 用 ViewPermissionUsageActivity activity-alias =====
+    // Android 14 では Health Connect が OS フレームワークに統合されており、
+    // 権限ダイアログを表示するには VIEW_PERMISSION_USAGE / HEALTH_PERMISSIONS を
+    // 処理する activity-alias が必須。これが無いと requestPermission() が
+    // ダイアログを出さず空配列を返す (= no dialog / returned [0])。
+    if (app && mainActivity) {
+      app['activity-alias'] = app['activity-alias'] ?? [];
+      const hasAlias = app['activity-alias'].some(
+        (a) => a?.$?.['android:name'] === 'ViewPermissionUsageActivity'
+      );
+      if (!hasAlias) {
+        const mainActivityName = mainActivity.$?.['android:name'] ?? '.MainActivity';
+        app['activity-alias'].push({
+          $: {
+            'android:name': 'ViewPermissionUsageActivity',
+            'android:exported': 'true',
+            'android:targetActivity': mainActivityName,
+            'android:permission': 'android.permission.START_VIEW_PERMISSION_USAGE',
+          },
+          'intent-filter': [
+            {
+              action: [{ $: { 'android:name': 'android.intent.action.VIEW_PERMISSION_USAGE' } }],
+              category: [{ $: { 'android:name': 'android.intent.category.HEALTH_PERMISSIONS' } }],
+            },
+          ],
+        });
+      }
+    }
+
     // ===== (3) <queries> ブロックを追加 =====
     // Android 11+ (API 30+) のパッケージ可視性制限対策。
     // Health Connect プロバイダ (com.google.android.apps.healthdata) と
