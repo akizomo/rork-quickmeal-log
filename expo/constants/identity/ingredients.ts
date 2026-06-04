@@ -407,18 +407,21 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
   },
   {
     id: 'protein_drink',
-    label: 'プロテイン (ドリンク・プリン)',
+    label: 'プロテイン (ドリンク)',
     primaryHome: { tab: 'ingredient', bucket: 'lean_protein' },
-    defaultMacro: { kcal: 130, protein: 22, fat: 1.5, carbs: 8 },
-    amount: { unit: 'percent', default: 100, chips: [{ label: '1/2食', value: 50 }, { label: '1食', value: 100 }, { label: '2食', value: 200 }] },
+    // 基準: ザバス ミルクプロテイン脂肪0 (200ml) ≒ 100kcal/P15/F0/C10
+    // 自販機・コンビニで最量販の主力製品を 1食=100% の基準にする。
+    defaultMacro: { kcal: 100, protein: 15, fat: 0, carbs: 10 },
+    // 量はザバスのたんぱく質量バリエーションを基準に選ぶ (基準=P15 200ml)。
+    // P20≒135%, P30≒200% で全マクロを比例スケール。
+    amount: { unit: 'percent', default: 100, chips: [{ label: 'P15', value: 100 }, { label: 'P20', value: 135 }, { label: 'P30', value: 200 }] },
     attributes: [
       { key: 'commercial_drink', label: 'ドリンク市販', isDefault: true },
-      { key: 'powder_water', label: 'パウダー水溶', factor: { kcal: 0.85, fat: 0.5 } },
-      { key: 'home_shake', label: 'シェイク自家製', factor: { kcal: 1.2, fat: 1.5, carbs: 0.6 } },
-      { key: 'pudding', label: 'プリン', factor: { kcal: 0.77, protein: 0.5, fat: 0.3, carbs: 1.5 } },
+      { key: 'powder_water', label: 'パウダー水割り', factor: { kcal: 1.15, protein: 1.33, carbs: 0.3 } },
+      { key: 'powder_milk', label: 'パウダー牛乳割り', factor: { kcal: 2.4, protein: 1.7, carbs: 1.3 } },
     ],
     searchableFrom: ['snack_drink', 'dairy_soy'],
-    searchTags: ['プロテイン', 'シェイク', 'ドリンク', 'ホエイ', 'ソイ'],
+    searchTags: ['プロテイン', 'シェイク', 'ドリンク', 'ホエイ', 'ソイ', 'ザバス'],
   },
   {
     id: 'jerky',
@@ -1051,8 +1054,10 @@ const BUCKET_SNACK_DRINK: Identity[] = [
     id: 'chocolate',
     label: 'チョコ',
     primaryHome: { tab: 'ingredient', bucket: 'snack_drink' },
-    defaultMacro: { kcal: 165, protein: 2, fat: 10, carbs: 17 },
-    amount: { unit: 'g', default: 30, chips: [{ label: '小', value: 15 }, { label: '30', value: 30 }, { label: '1枚', value: 50 }] },
+    // 基準は板チョコ (明治ミルクチョコ等) 1枚=50g。
+    defaultMacro: { kcal: 138, protein: 1.7, fat: 8.3, carbs: 14 },
+    referenceDescription: '板チョコ1枚(明治ミルクチョコ等)で約50g。1かけ≈5g',
+    amount: { unit: 'g', default: 25, chips: [{ label: '2〜3かけ', value: 15 }, { label: '板半分', value: 25 }, { label: '板1枚', value: 50 }] },
     attributes: [
       { key: 'plain', label: '普通', isDefault: true },
       { key: 'high_cacao', label: 'ハイカカオ', factor: { kcal: 1.09, protein: 1.75, fat: 1.5, carbs: 0.47 } },
@@ -1064,7 +1069,24 @@ const BUCKET_SNACK_DRINK: Identity[] = [
     primaryHome: { tab: 'ingredient', bucket: 'snack_drink' },
     defaultMacro: { kcal: 145, protein: 2.4, fat: 0.2, carbs: 33 },
     amount: { unit: 'piece', default: 1, chips: [{ label: '小', value: 0.5 }, { label: '1個', value: 1 }, { label: '大', value: 1.5 }] },
-    searchTags: ['大福', 'どら焼き', '羊羹', '団子', 'せんべい', '大学いも', '焼き芋'],
+    searchTags: ['大福', 'どら焼き', '羊羹', 'せんべい', '大学いも', '焼き芋'],
+  },
+  {
+    id: 'dango',
+    label: '団子',
+    primaryHome: { tab: 'ingredient', bucket: 'snack_drink' },
+    // 基準: みたらし団子 1本(3個串/団子~60g + たれ) ≒ 120kcal/P2/F0.4/C27
+    defaultMacro: { kcal: 120, protein: 2, fat: 0.4, carbs: 27 },
+    referenceDescription: '串団子1本(団子3個)が目安。トッピングで選択',
+    amount: { unit: 'piece', default: 1, chips: [{ label: '1本', value: 1 }, { label: '2本', value: 2 }, { label: '3本', value: 3 }] },
+    attributes: [
+      { key: 'mitarashi', label: 'みたらし', isDefault: true },
+      { key: 'anko', label: 'あんこ', factor: { kcal: 1.25, protein: 1.5, fat: 1.2, carbs: 1.18 } },
+      { key: 'kinako', label: 'きなこ', factor: { kcal: 1.08, protein: 1.8, fat: 2.5, carbs: 0.95 } },
+      { key: 'zunda', label: 'ずんだ', factor: { kcal: 1.1, protein: 1.8, fat: 1.5, carbs: 1.05 } },
+      { key: 'shoyu', label: '醤油・焼き', factor: { kcal: 0.83, protein: 1, fat: 0.5, carbs: 0.85 } },
+    ],
+    searchTags: ['団子', 'みたらし', 'あんこ', '串団子', '三色団子', 'だんご'],
   },
   {
     id: 'cake',
@@ -1086,6 +1108,7 @@ const BUCKET_SNACK_DRINK: Identity[] = [
     label: 'クッキー・焼菓子',
     primaryHome: { tab: 'ingredient', bucket: 'snack_drink' },
     defaultMacro: { kcal: 130, protein: 1.8, fat: 5.5, carbs: 17 },
+    referenceDescription: 'クッキー・ビスケット・マフィン等。1枚≈10g',
     amount: { unit: 'g', default: 30, chips: [{ label: '3枚', value: 30 }, { label: '大袋', value: 60 }] },
   },
   {
@@ -1093,6 +1116,7 @@ const BUCKET_SNACK_DRINK: Identity[] = [
     label: 'スナック菓子',
     primaryHome: { tab: 'ingredient', bucket: 'snack_drink' },
     defaultMacro: { kcal: 320, protein: 4, fat: 18, carbs: 36 },
+    referenceDescription: 'ポテチ・コーンスナック等。1袋(ポテチ普通サイズ)≈60g',
     amount: { unit: 'g', default: 60, chips: [{ label: '半袋', value: 30 }, { label: '1袋', value: 60 }] },
   },
   {
@@ -1107,25 +1131,28 @@ const BUCKET_SNACK_DRINK: Identity[] = [
     label: 'ドライフルーツ',
     primaryHome: { tab: 'ingredient', bucket: 'snack_drink' },
     defaultMacro: { kcal: 90, protein: 1, fat: 0.2, carbs: 22 },
-    amount: { unit: 'g', default: 30, chips: [{ label: '30', value: 30 }, { label: '50', value: 50 }] },
+    referenceDescription: 'レーズン・ドライマンゴー等。ひとつかみ≈30g',
+    amount: { unit: 'g', default: 30, chips: [{ label: 'ひとつかみ', value: 30 }, { label: '小袋', value: 50 }] },
     searchableFrom: ['fruit'],
     searchTags: ['ドライフルーツ', 'ドライ'],
   },
   {
     id: 'sweet_drink',
-    label: '甘飲料',
+    label: 'ジュース',
     primaryHome: { tab: 'ingredient', bucket: 'snack_drink' },
     defaultMacro: { kcal: 140, protein: 0, fat: 0, carbs: 35 },
+    referenceDescription: 'コーラ・サイダー・果汁ジュース・スポーツドリンクなど、サラッと甘い飲み物',
     amount: { unit: 'ml', default: 350, chips: [{ label: 'コップ1杯', value: 200 }, { label: '缶1本', value: 350 }, { label: '1本(500)', value: 500 }] },
-    searchTags: ['ジュース', 'コーラ', 'スポドリ', '炭酸'],
+    searchTags: ['ジュース', 'コーラ', 'サイダー', 'スポドリ', '炭酸', '果汁'],
   },
   {
     id: 'sweet_drink_rich',
-    label: '甘飲料 (こってり)',
+    label: 'フラペ・タピオカ系',
     primaryHome: { tab: 'ingredient', bucket: 'snack_drink' },
     defaultMacro: { kcal: 280, protein: 5, fat: 10, carbs: 50 },
-    amount: { unit: 'ml', default: 350, chips: [{ label: 'M/Tall', value: 350 }, { label: 'L/Grande', value: 470 }, { label: '完飲', value: 500 }] },
-    searchTags: ['フラペチーノ', 'タピオカ', 'ミルクティー'],
+    referenceDescription: 'フラペチーノ・タピオカミルクティーなど、生クリームやトッピングでこってり甘い飲み物',
+    amount: { unit: 'ml', default: 350, chips: [{ label: 'S/Short', value: 240 }, { label: 'M/Tall', value: 350 }, { label: 'L/Grande', value: 470 }] },
+    searchTags: ['フラペチーノ', 'タピオカ', 'ミルクティー', 'シェイク', 'スタバ'],
   },
 ];
 
