@@ -180,6 +180,110 @@ export function estimateTargetWeight(
   };
 }
 
+// ---------------------------------------------------------------------------
+// Goal anchor & manual target-weight helpers (v1.7, PRD §6.4.4)
+// ---------------------------------------------------------------------------
+
+/**
+ * BMI thresholds for manual target-weight guardrails (PRD §6.4.4).
+ *   普通体重 18.5–25 (日本肥満学会), ハード下限 17.5 (摂食障害 臨床紹介基準 MARSIPAN/RCPsych)。
+ *   「現在の状態」ではなく「目指す目標」を弾く設計。
+ */
+export const BMI_UNDERWEIGHT = 18.5;
+export const BMI_OVERWEIGHT = 25;
+export const BMI_HARD_FLOOR = 17.5;
+
+export function bmiFromWeight(weightKg: number, heightCm: number): number {
+  const h = heightCm / 100;
+  return weightKg / (h * h);
+}
+
+export function weightForBmi(bmi: number, heightCm: number): number {
+  const h = heightCm / 100;
+  return Math.round(bmi * h * h * 10) / 10;
+}
+
+/** 普通体重レンジ [min,max] kg。heightCm 不正時は null。 */
+export function healthyWeightRange(
+  heightCm: number | null
+): { minKg: number; maxKg: number } | null {
+  if (!heightCm || heightCm <= 0) return null;
+  return {
+    minKg: weightForBmi(BMI_UNDERWEIGHT, heightCm),
+    maxKg: weightForBmi(BMI_OVERWEIGHT, heightCm),
+  };
+}
+
+export type TargetWeightVerdict = 'ok' | 'soft' | 'hard';
+
+/**
+ * 目標体重の健康判定 (PRD §6.4.4)。
+ *   <17.5 → 'hard' (保存不可) / <18.5 or >25 → 'soft' (警告・保存可) / それ以外 'ok'。
+ *   heightCm 不明時は 'ok' (判定スキップ)。
+ */
+export function classifyTargetWeight(
+  weightKg: number | null,
+  heightCm: number | null
+): TargetWeightVerdict {
+  if (!weightKg || weightKg <= 0 || !heightCm || heightCm <= 0) return 'ok';
+  // round to 2 decimals so float noise at exact thresholds (e.g. 72.25kg/170cm = BMI 25) is deterministic
+  const bmi = Math.round(bmiFromWeight(weightKg, heightCm) * 100) / 100;
+  if (bmi < BMI_HARD_FLOOR) return 'hard';
+  if (bmi < BMI_UNDERWEIGHT || bmi > BMI_OVERWEIGHT) return 'soft';
+  return 'ok';
+}
+
+/**
+ * 現在体重と目標体重から方向を導出 (手動指定時, PRD §6.4.4)。
+ * 差が thresholdKg 以内なら maintain。
+ */
+export function deriveDirectionFromWeights(
+  currentWeightKg: number,
+  targetWeightKg: number,
+  thresholdKg = 0.5
+): GoalDirection {
+  const diff = targetWeightKg - currentWeightKg;
+  if (Math.abs(diff) <= thresholdKg) return 'maintain';
+  return diff < 0 ? 'lose' : 'gain';
+}
+
+/**
+ * 目標到達までの推定月数 (`computePlanOutcome` の逆算)。
+ * maintain/recomp・差0・算出不能時は null。ETA 表示用 (期限主導モードではない)。
+ */
+export function estimateMonthsToTarget(
+  currentWeightKg: number,
+  targetWeightKg: number,
+  pace: PaceLevel,
+  direction: GoalDirection
+): number | null {
+  if (direction === 'maintain' || direction === 'recomp') return null;
+  const baseWeekly = direction === 'lose' ? 0.005 : direction === 'gain' ? 0.0025 : 0;
+  if (baseWeekly === 0) return null;
+  const multi = PACE_OPTIONS.find((p) => p.key === pace)?.multiplier ?? 1;
+  const weeklyKg = currentWeightKg * baseWeekly * multi;
+  if (weeklyKg <= 0) return null;
+  const deltaKg = Math.abs(targetWeightKg - currentWeightKg);
+  if (deltaKg <= 0) return null;
+  const months = deltaKg / weeklyKg / 4.345;
+  if (!Number.isFinite(months) || months <= 0) return null;
+  return months;
+}
+
+/**
+ * ETA の表記コア (ペース名・「の見込み」は UI 側で付与, PRD §6.4.4 文言表)。
+ *   1ヶ月未満 → 「約 N 週間」 / 12ヶ月超 → 「1 年以上」 / それ以外 → 「約 X ヶ月」(0.5刻み)。
+ */
+export function formatGoalDuration(months: number): string {
+  if (months >= 12) return '1 年以上';
+  if (months < 1) {
+    const weeks = Math.max(1, Math.round(months * 4.345));
+    return `約 ${weeks} 週間`;
+  }
+  const rounded = Math.round(months * 2) / 2;
+  return `約 ${rounded} ヶ月`;
+}
+
 /**
  * Calculates the daily kcal adjustment based on direction + pace.
  * Uses the 7700 kcal/kg body-weight thermodynamic conversion.

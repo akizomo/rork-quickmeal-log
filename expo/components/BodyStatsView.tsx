@@ -36,27 +36,20 @@ function movingAverage(points: Point[], window: number): Point[] {
   });
 }
 
-/** start→current→target の進捗率 (0..1)。増量/減量どちらでも機能 */
-function computeProgress(start: number, current: number, target: number): number | null {
-  if (target === start) return null;
-  const raw = (current - start) / (target - start);
-  return Math.max(0, Math.min(1, raw));
-}
-
 interface ProgressCardProps {
   title: string;
   unit: string;
-  start: number | null;
   current: number | null;
   target: number | null;
   fractionDigits: number;
 }
 
-function ProgressCard({ title, unit, start, current, target, fractionDigits }: ProgressCardProps) {
+// v1.7 (PRD §6.4.4): 「出発点→現在→目標」の3点進捗バーは撤去。現在値＋目標(=固定アンカー)
+// への残量テキストのみ。推移は下の TrendChart + 目標ラインで表現する。
+function ProgressCard({ title, unit, current, target, fractionDigits }: ProgressCardProps) {
   const fmt = (v: number) => v.toFixed(fractionDigits);
-  const hasGoal = start != null && current != null && target != null;
-  const progress = hasGoal ? computeProgress(start!, current!, target!) : null;
-  const remaining = current != null && target != null ? current - target : null;
+  const hasGoal = current != null && target != null;
+  const remaining = hasGoal ? current! - target! : null;
 
   return (
     <View style={styles.card} testID={`body-progress-${title}`}>
@@ -72,28 +65,11 @@ function ProgressCard({ title, unit, start, current, target, fractionDigits }: P
       )}
 
       {hasGoal ? (
-        <>
-          <View style={styles.milestoneRow}>
-            <Text style={styles.milestoneText}>開始 {fmt(start!)}</Text>
-            <Text style={styles.milestoneText}>目標 {fmt(target!)}</Text>
-          </View>
-          <View style={styles.progressTrack}>
-            <View
-              style={[
-                styles.progressFill,
-                { width: `${Math.round((progress ?? 0) * 100)}%` },
-              ]}
-            />
-          </View>
-          {remaining != null ? (
-            <Text style={styles.cardMeta}>
-              {Math.abs(remaining) < Math.pow(10, -fractionDigits) / 2
-                ? '目標に到達'
-                : `目標まであと ${Math.abs(remaining).toFixed(fractionDigits)} ${unit}`}
-              {progress != null ? ` ・ 到達 ${Math.round(progress * 100)}%` : ''}
-            </Text>
-          ) : null}
-        </>
+        <Text style={styles.cardMeta}>
+          {Math.abs(remaining!) < Math.pow(10, -fractionDigits) / 2
+            ? `目標 ${fmt(target!)} ${unit} に到達`
+            : `目標 ${fmt(target!)} ${unit}（あと ${Math.abs(remaining!).toFixed(fractionDigits)} ${unit}）`}
+        </Text>
       ) : current != null ? (
         <Text style={styles.cardMeta}>目標が未設定です</Text>
       ) : null}
@@ -228,12 +204,10 @@ export function BodyStatsView() {
     [bodyFatEntries]
   );
 
-  const weightStart = weightSeries.length > 0 ? weightSeries[0].value : null;
   const weightCurrent =
     profile.currentWeightKg ??
     (weightSeries.length > 0 ? weightSeries[weightSeries.length - 1].value : null);
 
-  const bfStart = bodyFatSeries.length > 0 ? bodyFatSeries[0].value : null;
   const bfCurrent =
     profile.currentBodyFatPct ??
     (bodyFatSeries.length > 0 ? bodyFatSeries[bodyFatSeries.length - 1].value : null);
@@ -244,7 +218,6 @@ export function BodyStatsView() {
         <ProgressCard
           title="体重"
           unit="kg"
-          start={weightStart}
           current={weightCurrent}
           target={profile.targetWeightKg}
           fractionDigits={1}
@@ -266,7 +239,6 @@ export function BodyStatsView() {
         <ProgressCard
           title="体脂肪率"
           unit="%"
-          start={bfStart}
           current={bfCurrent}
           target={profile.targetBodyFatPct ?? null}
           fractionDigits={1}
@@ -315,26 +287,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: palette.textMuted,
     fontWeight: '600',
-  },
-  milestoneRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 2,
-  },
-  milestoneText: {
-    fontSize: 11,
-    color: palette.textMuted,
-  },
-  progressTrack: {
-    height: 8,
-    borderRadius: 999,
-    backgroundColor: palette.card,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: 8,
-    borderRadius: 999,
-    backgroundColor: palette.sageStrong,
   },
   cardMeta: {
     fontSize: 12,
