@@ -596,7 +596,6 @@ const BUCKET_MISC_DISH: Identity[] = [
     amount: {
       unit: 'percent',
       default: 100,
-      unitLabel: '食',
       chips: [
         { label: '軽め', value: 70 },
         { label: '1食', value: 100 },
@@ -621,7 +620,6 @@ const BUCKET_MISC_DISH: Identity[] = [
     amount: {
       unit: 'percent',
       default: 100,
-      unitLabel: '食',
       chips: [
         { label: '軽め', value: 70 },
         { label: '1食', value: 100 },
@@ -647,7 +645,7 @@ const BUCKET_MISC_DISH: Identity[] = [
     quickTapDisabled: true, // Attribute お好み焼き/広島/もんじゃ/たこ焼き: kcal 420-852
     defaultMacro: { kcal: 580, protein: 20, fat: 24, carbs: 70 },
     referenceDescription: '1枚=生地+具+卵 (お好み焼き相当)',
-    amount: { unit: 'piece', default: 1, unitLabel: '枚', step: 0.5, chips: [{ label: '半分', value: 50 }, { label: '1枚', value: 1 }, { label: '2枚', value: 2 }] },
+    amount: { unit: 'piece', default: 1, unitLabel: '枚', step: 0.5, chips: [{ label: '半分', value: 0.5 }, { label: '1枚', value: 1 }, { label: '2枚', value: 2 }] },
     attributes: [
       { key: 'okonomiyaki', label: 'お好み焼き', isDefault: true },
       { key: 'hiroshima', label: '広島お好み焼き', factor: { kcal: 1.47, protein: 1.6, fat: 1.33, carbs: 1.54 } },
@@ -773,7 +771,7 @@ const BUCKET_MISC_DISH: Identity[] = [
     primaryHome: { tab: 'dish', bucket: 'misc_dish' },
     defaultMacro: { kcal: 40, protein: 2.5, fat: 1, carbs: 4 },
     referenceDescription: '1杯=200ml相当',
-    amount: { unit: 'piece', default: 1, unitLabel: '杯', chips: [{ label: '1杯', value: 1 }, { label: '大', value: 150 }] },
+    amount: { unit: 'piece', default: 1, unitLabel: '杯', chips: [{ label: '1杯', value: 1 }, { label: '大', value: 2 }] },
     attributes: [
       { key: 'light', label: '具薄', isDefault: true },
       { key: 'rich', label: '具沢山', factor: { kcal: 2.0, protein: 2.0, fat: 3.0, carbs: 2.0 } },
@@ -785,7 +783,7 @@ const BUCKET_MISC_DISH: Identity[] = [
     primaryHome: { tab: 'dish', bucket: 'misc_dish' },
     defaultMacro: { kcal: 165, protein: 8, fat: 8, carbs: 15 },
     referenceDescription: '1杯=200ml相当 (豚肉・根菜入り)',
-    amount: { unit: 'piece', default: 1, unitLabel: '杯', chips: [{ label: '1杯', value: 1 }, { label: '大', value: 150 }] },
+    amount: { unit: 'piece', default: 1, unitLabel: '杯', chips: [{ label: '1杯', value: 1 }, { label: '大', value: 2 }] },
   },
   {
     id: 'soup_western',

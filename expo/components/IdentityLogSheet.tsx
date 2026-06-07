@@ -455,7 +455,7 @@ export function IdentityLogSheet() {
 
           {/* Add-ons */}
           {visibleAddonIds.length > 0 ? (
-            <Section title="ちょい足し">
+            <Section title="トッピング">
               <ChipRow>
                 {visibleAddonIds.map((aid) => {
                   const selected = addons.some((a) => a.refId === aid);
