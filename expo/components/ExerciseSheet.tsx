@@ -207,14 +207,32 @@ export const ExerciseSheet = memo(function ExerciseSheet({ visible, onClose }: E
   );
 });
 
+function formatLogTime(timestamp: string): string | null {
+  const d = new Date(timestamp);
+  if (Number.isNaN(d.getTime())) return null;
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  return `${hh}:${mm}`;
+}
+
 function ExerciseHistoryRow({ log, onDelete }: { log: ExerciseLog; onDelete: () => void }) {
   const type = EXERCISE_TYPES.find((t) => t.key === log.exerciseType);
+  const isHealth = log.source === 'health';
+  const time = formatLogTime(log.timestamp);
+  const subParts = [`${log.minutes}分`, time].filter(Boolean) as string[];
   return (
     <View style={styles.historyRow} testID={`exercise-history-${log.id}`}>
       <Text style={styles.historyEmoji}>{type?.emoji ?? '🏅'}</Text>
       <View style={styles.historyMeta}>
-        <Text style={styles.historyLabel}>{log.exerciseLabel}</Text>
-        <Text style={styles.historySub}>{log.minutes}分</Text>
+        <View style={styles.historyLabelRow}>
+          <Text style={styles.historyLabel}>{log.exerciseLabel}</Text>
+          <View style={[styles.sourceBadge, isHealth ? styles.sourceBadgeHealth : styles.sourceBadgeManual]}>
+            <Text style={[styles.sourceBadgeText, isHealth ? styles.sourceBadgeTextHealth : styles.sourceBadgeTextManual]}>
+              {isHealth ? 'ヘルス' : '手動'}
+            </Text>
+          </View>
+        </View>
+        <Text style={styles.historySub}>{subParts.join(' · ')}</Text>
       </View>
       <Text style={styles.historyKcal}>+{Math.round(log.grossKcal).toLocaleString()} kcal</Text>
       <Pressable
@@ -286,8 +304,20 @@ const styles = StyleSheet.create({
   },
   historyEmoji: { fontSize: 20 },
   historyMeta: { flex: 1, gap: 2 },
+  historyLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   historyLabel: { fontSize: 14, fontWeight: '600', color: palette.text },
   historySub: { fontSize: 11, color: palette.textMuted },
+  sourceBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 6,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  sourceBadgeHealth: { backgroundColor: palette.accentSoft, borderColor: palette.accentSoft },
+  sourceBadgeManual: { backgroundColor: 'transparent', borderColor: palette.border },
+  sourceBadgeText: { fontSize: 10, fontWeight: '600', letterSpacing: 0.2 },
+  sourceBadgeTextHealth: { color: palette.accent },
+  sourceBadgeTextManual: { color: palette.textMuted },
   historyKcal: { fontSize: 13, fontWeight: '700', color: palette.sageDeep },
   historyDelete: {
     width: 26,
