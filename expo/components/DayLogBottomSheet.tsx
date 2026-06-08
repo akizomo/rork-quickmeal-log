@@ -199,6 +199,14 @@ export const DayLogBottomSheet = memo(
     [animateTo, peekHeight, sheetMaxHeight, snapTargets, stage, translateY]
   );
 
+  // half スナップでは sheet 自体は fullHeight 固定で translateY で隠しているため、
+  // ScrollView のビューポート下端が画面外 (fullHeight - 可視高さ ぶん下) に伸びる。
+  // そのままだと最大スクロール時に最後の項目が画面外領域に留まり可達できないので、
+  // はみ出し量ぶんだけ paddingBottom を足し、末尾を可視窓まで引き上げられるようにする。
+  const visibleHeight =
+    stage === 'peek' ? peekHeight : stage === 'half' ? halfHeight : fullHeight;
+  const listBottomPad = insets.bottom + 24 + (fullHeight - visibleHeight);
+
   const overlayOpacity = translateY.interpolate({
     inputRange: [snapTargets.full, snapTargets.half],
     outputRange: [0.35, 0],
@@ -255,7 +263,7 @@ export const DayLogBottomSheet = memo(
           style={styles.scroll}
           contentContainerStyle={[
             styles.scrollContent,
-            { paddingBottom: insets.bottom + 120 },
+            { paddingBottom: listBottomPad },
           ]}
           showsVerticalScrollIndicator={false}
           scrollEnabled={stage !== 'peek'}

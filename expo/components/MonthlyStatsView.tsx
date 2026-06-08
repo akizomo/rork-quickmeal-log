@@ -9,7 +9,6 @@ import { adjustedTargetKcal, getGrossExerciseKcalForDate } from '@/utils/goals';
 import {
   addDays,
   averageLoggedDays,
-  countLoggedDays,
   formatMonthLabel,
   formatShortDay,
   getDailyMacros,
@@ -38,7 +37,6 @@ export function MonthlyStatsView() {
   const monthRange = useMemo(() => getMonthRange(anchor), [anchor]);
   const monthDailyMap = useMemo(() => getDailyMacros(logs, monthRange), [logs, monthRange]);
   const avgMacro = useMemo(() => averageLoggedDays(monthDailyMap), [monthDailyMap]);
-  const loggedDays = useMemo(() => countLoggedDays(monthDailyMap), [monthDailyMap]);
   // 今日以前の日付のみ、新しい順で表示
   const monthDailyEntries = useMemo(
     () =>
@@ -202,8 +200,6 @@ export function MonthlyStatsView() {
         {avgExerciseKcal > 0 ? (
           <Text style={styles.summaryConsume}>平均消費 {avgExerciseKcal} kcal / 日</Text>
         ) : null}
-        <Text style={styles.summaryMeta}>記録した日: {loggedDays} 日</Text>
-        <Text style={styles.summaryHint}>円の大きさ = その日の摂取カロリー量</Text>
       </View>
 
       <View style={styles.listSection}>
@@ -336,16 +332,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: palette.textMuted,
     fontWeight: '600',
-  },
-  summaryMeta: {
-    marginTop: 4,
-    fontSize: 12,
-    color: palette.textMuted,
-  },
-  summaryHint: {
-    marginTop: 6,
-    fontSize: 11,
-    color: palette.textMuted,
   },
   listSection: {
     gap: 6,

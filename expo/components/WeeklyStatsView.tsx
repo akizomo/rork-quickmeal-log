@@ -10,7 +10,6 @@ import { adjustedTargetKcal, getGrossExerciseKcalForDate } from '@/utils/goals';
 import {
   addDays,
   averageLoggedDays,
-  countLoggedDays,
   formatShortDay,
   formatWeekRangeLabel,
   getDailyMacros,
@@ -38,7 +37,6 @@ export function WeeklyStatsView() {
   const dailyMap = useMemo(() => getDailyMacros(logs, range), [logs, range]);
   const dailyEntries = useMemo(() => Array.from(dailyMap.entries()), [dailyMap]);
   const avgMacro = useMemo(() => averageLoggedDays(dailyMap), [dailyMap]);
-  const loggedDays = useMemo(() => countLoggedDays(dailyMap), [dailyMap]);
 
   const dailyExerciseMap = useMemo(() => {
     const map = new Map<string, number>();
@@ -186,7 +184,6 @@ export function WeeklyStatsView() {
         {avgExerciseKcal > 0 ? (
           <Text style={styles.summaryConsume}>平均消費 {avgExerciseKcal} kcal / 日</Text>
         ) : null}
-        <Text style={styles.summaryMeta}>記録した日: {loggedDays} / 7 日</Text>
       </View>
 
       <View style={styles.listSection}>
@@ -280,11 +277,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: palette.textMuted,
     fontWeight: '600',
-  },
-  summaryMeta: {
-    marginTop: 4,
-    fontSize: 12,
-    color: palette.textMuted,
   },
   listSection: {
     gap: 6,

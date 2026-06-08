@@ -1,6 +1,13 @@
-import React, { useMemo } from 'react';
-import { ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
-import Svg, { Circle, Line, Polyline, Text as SvgText } from 'react-native-svg';
+import React, { useMemo, useState } from 'react';
+import {
+  type GestureResponderEvent,
+  ScrollView,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from 'react-native';
+import Svg, { Circle, Line, Polyline, Rect, Text as SvgText } from 'react-native-svg';
 
 import { palette } from '@/constants/theme';
 import { useAppState } from '@/providers/app-state-provider';
@@ -26,14 +33,10 @@ function toSeries(entries: { date: string; createdAt: string; value: number }[])
   return Array.from(byDate.values()).sort((a, b) => a.t - b.t);
 }
 
-/** 直近 window 点の移動平均ライン (疎データでも破綻しない単純なトレーリング平均) */
-function movingAverage(points: Point[], window: number): Point[] {
-  return points.map((p, i) => {
-    const from = Math.max(0, i - window + 1);
-    const slice = points.slice(from, i + 1);
-    const avg = slice.reduce((acc, s) => acc + s.value, 0) / slice.length;
-    return { t: p.t, value: avg };
-  });
+/** タイムスタンプ → "M/D" 表記 */
+function fmtMonthDay(t: number): string {
+  const d = new Date(t);
+  return `${d.getMonth() + 1}/${d.getDate()}`;
 }
 
 interface ProgressCardProps {
@@ -80,15 +83,17 @@ function ProgressCard({ title, unit, current, target, fractionDigits }: Progress
 interface TrendChartProps {
   width: number;
   points: Point[];
-  /** メインライン (体重は移動平均)。null なら生値のみ */
-  line?: Point[];
   target: number | null;
   color: string;
-  /** 生値ドットの表示 */
-  showRawDots: boolean;
+  /** 吹き出し・目盛りラベルの単位と小数桁 */
+  unit: string;
+  fractionDigits: number;
 }
 
-function TrendChart({ width, points, line, target, color, showRawDots }: TrendChartProps) {
+function TrendChart({ width, points, target, color, unit, fractionDigits }: TrendChartProps) {
+  // タップ/ドラッグで選択中の記録値インデックス (null=未選択)
+  const [selected, setSelected] = useState<number | null>(null);
+
   if (points.length === 0) {
     return (
       <View style={[styles.chartWrap, { width, height: CHART_HEIGHT }]}>
@@ -100,11 +105,10 @@ function TrendChart({ width, points, line, target, color, showRawDots }: TrendCh
   const innerH = CHART_HEIGHT - CHART_PAD_TOP - CHART_PAD_BOTTOM;
   const innerW = width - CHART_PAD_X * 2;
 
-  const values = [
-    ...points.map((p) => p.value),
-    ...(line?.map((p) => p.value) ?? []),
-    ...(target != null ? [target] : []),
-  ];
+  const dataMin = Math.min(...points.map((p) => p.value));
+  const dataMax = Math.max(...points.map((p) => p.value));
+
+  const values = [...points.map((p) => p.value), ...(target != null ? [target] : [])];
   let min = Math.min(...values);
   let max = Math.max(...values);
   if (min === max) {
@@ -122,11 +126,44 @@ function TrendChart({ width, points, line, target, color, showRawDots }: TrendCh
     CHART_PAD_X + (tMax === tMin ? innerW / 2 : ((t - tMin) / (tMax - tMin)) * innerW);
   const yOf = (v: number) => CHART_PAD_TOP + (1 - (v - min) / (max - min)) * innerH;
 
-  const linePts = (line ?? points).map((p) => `${xOf(p.t)},${yOf(p.value)}`).join(' ');
+  const linePts = points.map((p) => `${xOf(p.t)},${yOf(p.value)}`).join(' ');
   const targetY = target != null ? yOf(target) : null;
+  const fmt = (v: number) => v.toFixed(fractionDigits);
+
+  // タッチ位置 (locationX) に最も近い記録値を選択
+  const handleTouch = (e: GestureResponderEvent) => {
+    const lx = e.nativeEvent.locationX;
+    let best = 0;
+    let bestDist = Infinity;
+    for (let i = 0; i < points.length; i++) {
+      const d = Math.abs(xOf(points[i].t) - lx);
+      if (d < bestDist) {
+        bestDist = d;
+        best = i;
+      }
+    }
+    setSelected(best);
+  };
+
+  const sel = selected != null ? points[selected] : null;
+  const lastPoint = points[points.length - 1];
+
+  // 吹き出しのレイアウト (選択点の上に表示・左右端ははみ出さないようにクランプ)
+  const BOX_W = 76;
+  const BOX_H = 34;
+  const boxX = sel ? Math.min(Math.max(xOf(sel.t) - BOX_W / 2, 2), width - BOX_W - 2) : 0;
+  const selY = sel ? yOf(sel.value) : 0;
+  const boxAbove = selY - BOX_H - 10 >= 0;
+  const boxY = sel ? (boxAbove ? selY - BOX_H - 10 : selY + 10) : 0;
 
   return (
-    <View style={[styles.chartWrap, { width, height: CHART_HEIGHT }]}>
+    <View
+      style={[styles.chartWrap, { width, height: CHART_HEIGHT }]}
+      onStartShouldSetResponder={() => true}
+      onMoveShouldSetResponder={() => true}
+      onResponderGrant={handleTouch}
+      onResponderMove={handleTouch}
+    >
       <Svg width={width} height={CHART_HEIGHT}>
         {targetY != null ? (
           <>
@@ -151,6 +188,28 @@ function TrendChart({ width, points, line, target, color, showRawDots }: TrendCh
           </>
         ) : null}
 
+        {/* Y軸: データ範囲の最大/最小目盛り */}
+        <SvgText
+          x={CHART_PAD_X}
+          y={yOf(dataMax) - 3}
+          fontSize={9}
+          fill={palette.textMuted}
+          textAnchor="start"
+        >
+          {fmt(dataMax)}
+        </SvgText>
+        {dataMax !== dataMin ? (
+          <SvgText
+            x={CHART_PAD_X}
+            y={yOf(dataMin) + 10}
+            fontSize={9}
+            fill={palette.textMuted}
+            textAnchor="start"
+          >
+            {fmt(dataMin)}
+          </SvgText>
+        ) : null}
+
         {points.length >= 2 ? (
           <Polyline
             points={linePts}
@@ -162,13 +221,101 @@ function TrendChart({ width, points, line, target, color, showRawDots }: TrendCh
           />
         ) : null}
 
-        {showRawDots
-          ? points.map((p) => (
-              <Circle key={p.t} cx={xOf(p.t)} cy={yOf(p.value)} r={2} fill={color} opacity={0.35} />
-            ))
-          : points.map((p) => (
-              <Circle key={p.t} cx={xOf(p.t)} cy={yOf(p.value)} r={2.5} fill={color} />
-            ))}
+        {points.map((p) => (
+          <Circle key={p.t} cx={xOf(p.t)} cy={yOf(p.value)} r={2.5} fill={color} />
+        ))}
+
+        {/* X軸: 開始/終了日付 */}
+        <SvgText
+          x={CHART_PAD_X}
+          y={CHART_HEIGHT - 8}
+          fontSize={9}
+          fill={palette.textMuted}
+          textAnchor="start"
+        >
+          {fmtMonthDay(tMin)}
+        </SvgText>
+        {tMax !== tMin ? (
+          <SvgText
+            x={width - CHART_PAD_X}
+            y={CHART_HEIGHT - 8}
+            fontSize={9}
+            fill={palette.textMuted}
+            textAnchor="end"
+          >
+            {fmtMonthDay(tMax)}
+          </SvgText>
+        ) : null}
+
+        {/* 未選択時: 最新値を最終点に注記。目標ラインと近接する場合は「目標」ラベルと重なるため抑制 */}
+        {!sel &&
+        points.length >= 1 &&
+        (targetY == null || Math.abs(yOf(lastPoint.value) - targetY) >= 14) ? (
+          <SvgText
+            x={Math.min(xOf(lastPoint.t) + 4, width - CHART_PAD_X)}
+            y={Math.max(yOf(lastPoint.value) - 6, CHART_PAD_TOP)}
+            fontSize={10}
+            fontWeight="700"
+            fill={color}
+            textAnchor={xOf(lastPoint.t) > width - 48 ? 'end' : 'start'}
+          >
+            {fmt(lastPoint.value)}
+          </SvgText>
+        ) : null}
+
+        {/* 選択時: 縦ガイド線 + 強調ドット + 吹き出し */}
+        {sel ? (
+          <>
+            <Line
+              x1={xOf(sel.t)}
+              x2={xOf(sel.t)}
+              y1={CHART_PAD_TOP}
+              y2={CHART_HEIGHT - CHART_PAD_BOTTOM}
+              stroke={color}
+              strokeWidth={1}
+              strokeDasharray="3 3"
+              opacity={0.6}
+            />
+            <Circle
+              cx={xOf(sel.t)}
+              cy={yOf(sel.value)}
+              r={4}
+              fill={color}
+              stroke={palette.surface}
+              strokeWidth={1.5}
+            />
+            <Rect
+              x={boxX}
+              y={boxY}
+              width={BOX_W}
+              height={BOX_H}
+              rx={8}
+              fill={palette.surface}
+              stroke={palette.textMuted}
+              strokeWidth={0.5}
+              opacity={0.96}
+            />
+            <SvgText
+              x={boxX + BOX_W / 2}
+              y={boxY + 14}
+              fontSize={10}
+              fill={palette.textMuted}
+              textAnchor="middle"
+            >
+              {fmtMonthDay(sel.t)}
+            </SvgText>
+            <SvgText
+              x={boxX + BOX_W / 2}
+              y={boxY + 28}
+              fontSize={12}
+              fontWeight="700"
+              fill={color}
+              textAnchor="middle"
+            >
+              {`${fmt(sel.value)} ${unit}`}
+            </SvgText>
+          </>
+        ) : null}
       </Svg>
     </View>
   );
@@ -190,7 +337,6 @@ export function BodyStatsView() {
       ),
     [weights]
   );
-  const weightMA = useMemo(() => movingAverage(weightSeries, 7), [weightSeries]);
 
   const bodyFatSeries = useMemo(
     () =>
@@ -225,14 +371,11 @@ export function BodyStatsView() {
         <TrendChart
           width={chartWidth}
           points={weightSeries}
-          line={weightMA}
           target={profile.targetWeightKg}
           color={palette.sageStrong}
-          showRawDots
+          unit="kg"
+          fractionDigits={1}
         />
-        {weightSeries.length > 0 ? (
-          <Text style={styles.caption}>実線は7日移動平均・点は記録値</Text>
-        ) : null}
       </View>
 
       <View style={styles.group}>
@@ -248,11 +391,9 @@ export function BodyStatsView() {
           points={bodyFatSeries}
           target={profile.targetBodyFatPct ?? null}
           color={palette.accent}
-          showRawDots={false}
+          unit="%"
+          fractionDigits={1}
         />
-        {bodyFatSeries.length > 0 ? (
-          <Text style={styles.caption}>点は測定値・線は記録のある日をつないだもの</Text>
-        ) : null}
       </View>
     </ScrollView>
   );
@@ -304,10 +445,5 @@ const styles = StyleSheet.create({
   chartEmpty: {
     fontSize: 12,
     color: palette.textMuted,
-  },
-  caption: {
-    fontSize: 11,
-    color: palette.textMuted,
-    paddingHorizontal: 4,
   },
 });
