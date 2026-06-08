@@ -8,11 +8,10 @@
  * Spec: docs/IA-identity-spec.md §4
  */
 
-import { Search, X } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
-import { Body, Caption, useTheme } from '@/design-system';
+import { Body, Caption, Icon, useTheme } from '@/design-system';
 import {
   getBucketDef,
   searchIdentities,
@@ -66,7 +65,7 @@ export function IdentitySearchBar() {
           },
         ]}
       >
-        <Search size={18} color={t.colors.content.secondary} />
+        <Icon name="search" size={18} color={t.colors.content.secondary} />
         <TextInput
           value={query}
           onChangeText={setQuery}
@@ -80,7 +79,7 @@ export function IdentitySearchBar() {
         />
         {query.length > 0 ? (
           <Pressable onPress={handleClear} hitSlop={10} accessibilityLabel="検索をクリア">
-            <X size={16} color={t.colors.content.secondary} />
+            <Icon name="close" size={16} color={t.colors.content.secondary} />
           </Pressable>
         ) : null}
       </View>

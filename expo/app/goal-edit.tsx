@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { deriveTargetCellFromDirection } from '@/constants/body-matrix';
 import { PACE_OPTIONS } from '@/constants/onboarding';
-import { Body, Button, Caption, Card, Heading, useTheme } from '@/design-system';
+import { Body, Button, Caption, Card, Heading, Icon, useTheme } from '@/design-system';
 import { useAppState } from '@/providers/app-state-provider';
 import { BodyType9, GoalDirection, PaceLevel } from '@/types/nutrition';
 import {
@@ -262,8 +262,14 @@ export default function GoalEditRoute() {
                         <Caption tone="secondary">おまかせに戻す</Caption>
                       </Pressable>
                     ) : (
-                      <Pressable onPress={enterManual} hitSlop={8} testID="goal-target-edit">
-                        <Caption tone="secondary">数値で指定 ✎</Caption>
+                      <Pressable
+                        onPress={enterManual}
+                        hitSlop={8}
+                        testID="goal-target-edit"
+                        style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
+                      >
+                        <Caption tone="secondary">数値で指定</Caption>
+                        <Icon name="edit" size={13} color={theme.colors.content.secondary} />
                       </Pressable>
                     )}
                   </View>

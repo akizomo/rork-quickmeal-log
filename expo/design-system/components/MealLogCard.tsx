@@ -22,7 +22,7 @@ import {
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
-import { Trash2 } from 'lucide-react-native';
+import { Icon } from './Icon';
 import { useTheme } from '../theme';
 import { Badge } from './Badge';
 import { Card } from './Card';
@@ -150,7 +150,8 @@ function MealLogCardHeader({
             style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1 })}
           >
             {({ pressed }) => (
-              <Trash2
+              <Icon
+                name="delete"
                 size={18}
                 color={
                   pressed

@@ -1,8 +1,7 @@
-import { X } from 'lucide-react-native';
 import React, { memo, useCallback, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { BottomSheet, Chip, useTheme } from '@/design-system';
+import { BottomSheet, Chip, Icon, useTheme } from '@/design-system';
 import { palette } from '@/constants/theme';
 import { ACTIVITY_LEVEL_OPTIONS } from '@/constants/onboarding';
 import {
@@ -243,7 +242,7 @@ function ExerciseHistoryRow({ log, onDelete }: { log: ExerciseLog; onDelete: () 
         accessibilityRole="button"
         accessibilityLabel={`${log.exerciseLabel} を削除`}
       >
-        <X size={14} color={palette.textMuted} strokeWidth={2} />
+        <Icon name="close" size={14} color={palette.textMuted} />
       </Pressable>
     </View>
   );

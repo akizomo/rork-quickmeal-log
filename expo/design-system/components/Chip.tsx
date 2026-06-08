@@ -11,11 +11,13 @@ import React from 'react';
 import {
   Pressable,
   Text,
+  View,
   type StyleProp,
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
 import { useTheme } from '../theme';
+import { Icon, type IconName } from './Icon';
 
 export type ChipSize = 'sm' | 'md';
 
@@ -26,6 +28,10 @@ export type ChipProps = {
   onPress?: () => void;
   /** Visual density. Default 'md'. Use 'sm' for dense lists / inside sheets. */
   size?: ChipSize;
+  /** ラベル前に表示する Material アイコン (例: 選択中 'check' / 追加 'add') */
+  leadingIcon?: IconName;
+  /** ラベル後に表示する Material アイコン (例: 'chevronRight') */
+  trailingIcon?: IconName;
   testID?: string;
   style?: StyleProp<ViewStyle>;
 };
@@ -36,11 +42,17 @@ export function Chip({
   disabled = false,
   onPress,
   size = 'md',
+  leadingIcon,
+  trailingIcon,
   testID,
   style,
 }: ChipProps) {
   const t = useTheme();
   const isSm = size === 'sm';
+  const textColor = selected
+    ? t.colors.action.primary.onContainer
+    : t.colors.content.primary;
+  const iconSize = isSm ? 12 : 14;
 
   return (
     <Pressable
@@ -68,18 +80,20 @@ export function Chip({
         style,
       ]}
     >
-      <Text
-        style={{
-          fontSize: isSm ? t.typography.fontSize.xs : t.typography.fontSize.sm,
-          lineHeight: isSm ? t.typography.lineHeight.xs : t.typography.lineHeight.sm,
-          fontWeight: t.typography.fontWeight.semibold as TextStyle['fontWeight'],
-          color: selected
-            ? t.colors.action.primary.onContainer
-            : t.colors.content.primary,
-        }}
-      >
-        {label}
-      </Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+        {leadingIcon ? <Icon name={leadingIcon} size={iconSize} color={textColor} /> : null}
+        <Text
+          style={{
+            fontSize: isSm ? t.typography.fontSize.xs : t.typography.fontSize.sm,
+            lineHeight: isSm ? t.typography.lineHeight.xs : t.typography.lineHeight.sm,
+            fontWeight: t.typography.fontWeight.semibold as TextStyle['fontWeight'],
+            color: textColor,
+          }}
+        >
+          {label}
+        </Text>
+        {trailingIcon ? <Icon name={trailingIcon} size={iconSize} color={textColor} /> : null}
+      </View>
     </Pressable>
   );
 }

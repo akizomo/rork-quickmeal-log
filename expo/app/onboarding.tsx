@@ -1,6 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
-import { ChevronLeft } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   InputAccessoryView,
@@ -36,6 +35,7 @@ import {
   Card,
   Caption,
   Heading,
+  Icon,
   NumberField,
   SelectCard,
   useTheme,
@@ -226,7 +226,7 @@ export default function OnboardingRoute() {
                 backgroundColor: pressed ? t.colors.surface.sunken : t.colors.surface.raised,
               })}
             >
-              <ChevronLeft size={20} color={t.colors.content.primary} />
+              <Icon name="chevronLeft" size={20} color={t.colors.content.primary} />
             </Pressable>
             <View
               style={{
@@ -627,9 +627,12 @@ function StepCurrentBody({
                   </Text>
                 )}
               </Text>
-              <Body size="sm" tone="link" weight="semibold">
-                正確な値を入力 ▸
-              </Body>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+                <Body size="sm" tone="link" weight="semibold">
+                  正確な値を入力
+                </Body>
+                <Icon name="chevronRight" size={14} color={t.colors.action.text.default} />
+              </View>
             </Pressable>
           )}
         </View>

@@ -1,6 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
-import { Check } from 'lucide-react-native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -9,7 +8,7 @@ import type { PurchasesOffering, PurchasesPackage } from 'react-native-purchases
 import { TRIAL_DAYS } from '@/constants/iap';
 import { LEGAL_LINKS } from '@/constants/onboarding';
 import { palette } from '@/constants/theme';
-import { Badge } from '@/design-system';
+import { Badge, Icon } from '@/design-system';
 import { useAppState } from '@/providers/app-state-provider';
 import { fetchOffering, purchase } from '@/utils/iap';
 import {
@@ -125,7 +124,7 @@ export default function PaywallRoute() {
               {BENEFITS.map((b) => (
                 <View key={b} style={styles.benefitRow}>
                   <View style={styles.checkDot}>
-                    <Check size={14} color={palette.white} />
+                    <Icon name="check" size={14} color={palette.white} />
                   </View>
                   <Text style={styles.benefitText}>{b}</Text>
                 </View>

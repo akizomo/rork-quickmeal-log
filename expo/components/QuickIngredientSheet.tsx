@@ -7,11 +7,10 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Pencil } from 'lucide-react-native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { getQuickLogCategory } from '@/constants/quick-log-master';
-import { Body, BottomSheet, Caption, Chip, Heading, useTheme } from '@/design-system';
+import { Body, BottomSheet, Caption, Chip, Heading, Icon, useTheme } from '@/design-system';
 import { AmountEditDialog } from '@/components/AmountEditDialog';
 import { buildIngredientAmountEditConfig } from '@/utils/amount-edit';
 import { useAppState } from '@/providers/app-state-provider';
@@ -279,7 +278,7 @@ export function QuickIngredientSheet() {
                     {' '}{UNIT_LABEL[draft.amountUnit]}
                   </Text>
                 </Text>
-                <Pencil size={16} color={t.colors.content.tertiary} />
+                <Icon name="edit" size={16} color={t.colors.content.tertiary} />
               </Pressable>
             </Section>
           ) : null}

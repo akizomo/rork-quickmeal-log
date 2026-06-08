@@ -10,12 +10,12 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Pencil, Trash2, X } from 'lucide-react-native';
 
 import {
   BottomSheet,
   Caption,
   Chip,
+  Icon,
   useTheme,
 } from '@/design-system';
 import { AmountEditDialog } from '@/components/AmountEditDialog';
@@ -331,7 +331,7 @@ export function IdentityLogSheet() {
               hitSlop={8}
               testID="ils-delete"
             >
-              <Trash2 size={22} color={palette.danger} />
+              <Icon name="delete" size={22} color={palette.danger} />
             </Pressable>
           ) : null}
           <Pressable
@@ -341,7 +341,7 @@ export function IdentityLogSheet() {
             hitSlop={8}
             testID="ils-close"
           >
-            <X size={22} color={t.colors.content.secondary} />
+            <Icon name="close" size={22} color={t.colors.content.secondary} />
           </Pressable>
         </View>
       }
@@ -397,7 +397,8 @@ export function IdentityLogSheet() {
                 {origin.styles.map((opt) => (
                   <Chip
                     key={opt.key}
-                    label={opt.label + (opt.migration ? ' →' : '')}
+                    label={opt.label}
+                    trailingIcon={opt.migration ? 'redirect' : undefined}
                     selected={styleKey === opt.key}
                     onPress={() => handleSelectStyle(opt.key)}
                     size="sm"
@@ -444,7 +445,7 @@ export function IdentityLogSheet() {
                   {' '}{origin.amount.unitLabel ?? UNIT_LABEL[origin.amount.unit]}
                 </Text>
               </Text>
-              <Pencil size={16} color={t.colors.content.tertiary} />
+              <Icon name="edit" size={16} color={t.colors.content.tertiary} />
             </Pressable>
             {origin.referenceDescription ? (
               <Caption tone="tertiary" style={{ marginTop: t.spacing['2'] }} testID="ils-amount-ref">
@@ -462,7 +463,8 @@ export function IdentityLogSheet() {
                   return (
                     <Chip
                       key={aid}
-                      label={selected ? `✓ ${getAddonLabel(aid, 'identity')}` : `+ ${getAddonLabel(aid, 'identity')}`}
+                      label={getAddonLabel(aid, 'identity')}
+                      leadingIcon={selected ? 'check' : 'add'}
                       selected={selected}
                       onPress={() => toggleAddon(aid)}
                       size="sm"

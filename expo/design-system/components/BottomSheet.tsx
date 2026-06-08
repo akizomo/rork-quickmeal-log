@@ -36,7 +36,7 @@
  */
 
 import { BlurView } from 'expo-blur';
-import { X } from 'lucide-react-native';
+import { Icon } from './Icon';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
@@ -343,7 +343,7 @@ export function BottomSheet({
         accessibilityRole="button"
         testID={testID ? `${testID}-close` : undefined}
       >
-        <X size={22} color={t.colors.content.secondary} />
+        <Icon name="close" size={22} color={t.colors.content.secondary} />
       </Pressable>
     );
   };

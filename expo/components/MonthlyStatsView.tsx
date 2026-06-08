@@ -1,10 +1,9 @@
 import { useRouter } from 'expo-router';
-import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 import React, { useCallback, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 import { palette } from '@/constants/theme';
-import { useTheme } from '@/design-system';
+import { Icon, useTheme } from '@/design-system';
 import { useAppState } from '@/providers/app-state-provider';
 import { adjustedTargetKcal, getGrossExerciseKcalForDate } from '@/utils/goals';
 import {
@@ -115,11 +114,11 @@ export function MonthlyStatsView() {
     <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
       <View style={styles.headerRow} testID="month-header">
         <Pressable onPress={goPrev} disabled={!canGoPrev} style={styles.navBtn} testID="month-prev">
-          <ChevronLeft color={canGoPrev ? palette.sageStrong : palette.textMuted} size={20} />
+          <Icon name="chevronLeft" color={canGoPrev ? palette.sageStrong : palette.textMuted} size={20} />
         </Pressable>
         <Text style={styles.headerLabel}>{formatMonthLabel(anchor)}</Text>
         <Pressable onPress={goNext} disabled={!canGoNext} style={styles.navBtn} testID="month-next">
-          <ChevronRight color={canGoNext ? palette.sageStrong : palette.textMuted} size={20} />
+          <Icon name="chevronRight" color={canGoNext ? palette.sageStrong : palette.textMuted} size={20} />
         </Pressable>
       </View>
 

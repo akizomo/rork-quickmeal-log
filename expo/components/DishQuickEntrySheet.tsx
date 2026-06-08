@@ -1,5 +1,4 @@
 import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
-import { Pencil } from 'lucide-react-native';
 import {
   Pressable,
   StyleSheet,
@@ -23,7 +22,7 @@ import {
   multiplyMacroSimple,
 } from '@/constants/dish-master';
 import { palette } from '@/constants/theme';
-import { BottomSheet } from '@/design-system';
+import { BottomSheet, Icon } from '@/design-system';
 import { useAppState } from '@/providers/app-state-provider';
 import {
   ChineseNoodlesPrimaryType,
@@ -268,7 +267,7 @@ function SushiBody({
         testID="dqe-sushi-amount-row"
       >
         <Text style={styles.amountRowValue}>{count}{mode.unitLabel}</Text>
-        <Pencil size={14} color={palette.textMuted} />
+        <Icon name="edit" size={14} color={palette.textMuted} />
       </Pressable>
 
       <InstantPreview
@@ -343,7 +342,7 @@ function PizzaBody({
         testID="dqe-pizza-amount-row"
       >
         <Text style={styles.amountRowValue}>{slices}切</Text>
-        <Pencil size={14} color={palette.textMuted} />
+        <Icon name="edit" size={14} color={palette.textMuted} />
       </Pressable>
 
       <InstantPreview

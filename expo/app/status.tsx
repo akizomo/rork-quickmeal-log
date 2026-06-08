@@ -1,5 +1,4 @@
 import { Stack, useRouter } from 'expo-router';
-import { ChevronRight } from 'lucide-react-native';
 import React, { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -18,7 +17,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { SettingsDivider, SettingsLinkRow, SettingsListCard, SettingsSectionLabel } from '@/components/SettingsList';
 import { TRIAL_DURATION_DAYS } from '@/constants/onboarding';
-import { Body, Caption, Card, Heading, useTheme } from '@/design-system';
+import { Body, Caption, Card, Heading, Icon, useTheme } from '@/design-system';
 import { useHealthSync } from '@/hooks/use-health-sync';
 import type { HealthSyncStatus } from '@/utils/health-sync';
 import { useAppState } from '@/providers/app-state-provider';
@@ -106,7 +105,7 @@ export default function StatusRoute() {
                     <Body weight="bold">
                       無料トライアル中{trialDays > 0 ? ` · 残り${trialDays}日` : ''}
                     </Body>
-                    <ChevronRight size={14} color={theme.colors.content.tertiary} />
+                    <Icon name="chevronRight" size={14} color={theme.colors.content.tertiary} />
                   </View>
                   <Caption tone="tertiary">
                     {trialDays <= 2
@@ -199,7 +198,7 @@ export default function StatusRoute() {
                   <Body weight="bold">目標</Body>
                   <View style={styles.changeRow}>
                     <Caption tone="secondary">変更</Caption>
-                    <ChevronRight size={14} color={theme.colors.content.tertiary} />
+                    <Icon name="chevronRight" size={14} color={theme.colors.content.tertiary} />
                   </View>
                 </View>
                 <View style={styles.kcalRow}>

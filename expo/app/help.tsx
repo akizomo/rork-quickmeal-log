@@ -18,14 +18,13 @@
  */
 
 import { Stack, useRouter } from 'expo-router';
-import { ChevronDown } from 'lucide-react-native';
 import React, { useRef, useState } from 'react';
 import { Animated, Easing, LayoutAnimation, PanResponder, Platform, Pressable, ScrollView, StyleSheet, UIManager, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { HelpInfographic } from '@/components/help/HelpInfographic';
 import { GestureDemoIllustration } from '@/components/onboarding-illustrations';
-import { Body, Caption, Heading, useTheme } from '@/design-system';
+import { Body, Caption, Heading, Icon, useTheme } from '@/design-system';
 import type { BucketKey } from '@/types/identity';
 
 if (Platform.OS === 'android') {
@@ -171,7 +170,7 @@ export default function HelpRoute() {
                   { borderColor: t.colors.border.default, opacity: step === 0 ? 0.3 : 1 },
                 ]}
               >
-                <Body style={{ color: t.colors.content.secondary }}>← 前へ</Body>
+                <Body style={{ color: t.colors.content.secondary }}>前へ</Body>
               </Pressable>
               <Pressable
                 onPress={isLast ? () => router.back() : () => goTo(step + 1)}
@@ -182,7 +181,7 @@ export default function HelpRoute() {
                 ]}
               >
                 <Body style={{ color: t.colors.content.onAction }}>
-                  {isLast ? '閉じる' : '次へ →'}
+                  {isLast ? '閉じる' : '次へ'}
                 </Body>
               </Pressable>
             </View>
@@ -406,7 +405,7 @@ function FaqItem({ q, a }: { q: string; a: string }) {
           {q}
         </Body>
         <Animated.View style={{ transform: [{ rotate: rotation }] }}>
-          <ChevronDown size={16} color={t.colors.content.tertiary} strokeWidth={2} />
+          <Icon name="chevronDown" size={16} color={t.colors.content.tertiary} />
         </Animated.View>
       </View>
       {open && (

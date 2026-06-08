@@ -12,6 +12,7 @@ export type { Theme } from './theme';
 // Components
 export {
   Button,
+  Icon,
   Card,
   Heading,
   Body,
@@ -27,6 +28,8 @@ export {
 } from './components';
 export type {
   ButtonProps,
+  IconProps,
+  IconName,
   CardProps,
   HeadingProps,
   BodyProps,

@@ -1,6 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { Link, useRouter } from 'expo-router';
-import { BarChart3, ChevronDown, ChevronRight, HelpCircle, User, X } from 'lucide-react-native';
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
@@ -21,7 +20,7 @@ import { DayLogBottomSheet, type DayLogBottomSheetRef } from '@/components/DayLo
 import { additionPresets, portionSnapPoints, sizeOptions } from '@/constants/nutrition-data';
 import { ACTIVITY_LEVEL_OPTIONS, TRIAL_DURATION_DAYS } from '@/constants/onboarding';
 import { palette } from '@/constants/theme';
-import { Badge, BottomSheet, Caption, useTheme } from '@/design-system';
+import { Badge, BottomSheet, Caption, Icon, useTheme } from '@/design-system';
 import { duration, spring } from '@/design-system/tokens/primitives/motion';
 import { useAppState } from '@/providers/app-state-provider';
 import { DishDraft, DishSize, IngredientDraft, Macro, PortionValue } from '@/types/nutrition';
@@ -97,7 +96,7 @@ export const Header = memo(function Header({ viewedDate }: { viewedDate?: Date }
           style={styles.avatarButton}
           testID="avatar-button"
         >
-          <User size={20} color={palette.sageDeep} strokeWidth={1.8} />
+          <Icon name="user" size={20} color={palette.sageDeep} />
           {showTrialBadge ? <View style={styles.avatarBadge} testID="avatar-trial-badge" /> : null}
         </Pressable>
       </Animated.View>
@@ -111,7 +110,7 @@ export const Header = memo(function Header({ viewedDate }: { viewedDate?: Date }
           testID="help-link"
           accessibilityLabel="使い方を見る"
         >
-          <HelpCircle color={palette.sageStrong} size={20} />
+          <Icon name="help" color={palette.sageStrong} size={20} />
         </Pressable>
         <Pressable
           style={styles.iconButton}
@@ -119,7 +118,7 @@ export const Header = memo(function Header({ viewedDate }: { viewedDate?: Date }
           testID="stats-link"
           accessibilityLabel="実績を見る"
         >
-          <BarChart3 color={palette.sageStrong} size={20} />
+          <Icon name="barChart" color={palette.sageStrong} size={20} />
         </Pressable>
       </View>
     </View>
@@ -182,7 +181,7 @@ const BalanceModal = memo(function BalanceModal({
             accessibilityRole="button"
             accessibilityLabel="閉じる"
           >
-            <X size={18} color={palette.textMuted} strokeWidth={2} />
+            <Icon name="close" size={18} color={palette.textMuted} />
           </Pressable>
 
           {/* HERO (Tier 1): 残り or オーバー */}
@@ -366,7 +365,7 @@ export const StatusCard = memo(function StatusCard({
             {/* 左に同サイズの透明スペーサーを置いてラベルを視覚的に中央寄せ */}
             <View style={styles.sideLabelChevronSpacer} />
             <Text style={styles.sideLabel}>食事</Text>
-            <ChevronRight size={12} color={palette.textMuted} strokeWidth={2} />
+            <Icon name="chevronRight" size={12} color={palette.textMuted} />
           </View>
           <Text style={styles.sideValue}>{Math.round(dayMacro.kcal).toLocaleString()}</Text>
           <Text style={styles.sideUnit}>kcal</Text>
@@ -404,7 +403,7 @@ export const StatusCard = memo(function StatusCard({
           <View style={styles.sideLabelRow}>
             <View style={styles.sideLabelChevronSpacer} />
             <Text style={styles.sideLabel}>消費</Text>
-            <ChevronRight size={12} color={palette.textMuted} strokeWidth={2} />
+            <Icon name="chevronRight" size={12} color={palette.textMuted} />
           </View>
           <Text style={styles.sideValue}>{effectiveExerciseKcal > 0 ? effectiveExerciseKcal.toLocaleString() : '—'}</Text>
           <Text style={styles.sideUnit}>kcal</Text>
@@ -736,7 +735,7 @@ function IngredientEditorContent({ draft, onChange }: { draft: IngredientDraft; 
           <Text style={styles.categoryRowValueText}>
             {currentCategory ? `${currentCategory.emoji} ${currentCategory.label}` : '—'}
           </Text>
-          <ChevronDown size={14} color={palette.textMuted} />
+          <Icon name="chevronDown" size={14} color={palette.textMuted} />
         </View>
       </Pressable>
       {categoryOpen ? (

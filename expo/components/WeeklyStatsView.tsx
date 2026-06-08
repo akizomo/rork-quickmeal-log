@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { Icon } from '@/design-system';
 import React, { useCallback, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Svg, { Line, Rect, Text as SvgText } from 'react-native-svg';
@@ -112,11 +112,11 @@ export function WeeklyStatsView() {
     <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
       <View style={styles.headerRow} testID="week-header">
         <Pressable onPress={goPrev} disabled={!canGoPrev} style={styles.navBtn} testID="week-prev">
-          <ChevronLeft color={canGoPrev ? palette.sageStrong : palette.textMuted} size={20} />
+          <Icon name="chevronLeft" color={canGoPrev ? palette.sageStrong : palette.textMuted} size={20} />
         </Pressable>
         <Text style={styles.headerLabel}>{formatWeekRangeLabel(range)}</Text>
         <Pressable onPress={goNext} disabled={!canGoNext} style={styles.navBtn} testID="week-next">
-          <ChevronRight color={canGoNext ? palette.sageStrong : palette.textMuted} size={20} />
+          <Icon name="chevronRight" color={canGoNext ? palette.sageStrong : palette.textMuted} size={20} />
         </Pressable>
       </View>
 

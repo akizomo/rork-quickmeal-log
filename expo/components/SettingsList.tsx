@@ -8,11 +8,10 @@
  * - SettingsDivider:      行間の hairline divider
  */
 
-import { ChevronRight } from 'lucide-react-native';
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { Body, Caption, Card, useTheme } from '@/design-system';
+import { Body, Caption, Card, Icon, useTheme } from '@/design-system';
 
 export function SettingsSectionLabel({ children }: { children: string }) {
   return (
@@ -71,7 +70,7 @@ export function SettingsLinkRow({
         {sub ? <Caption tone="tertiary">{sub}</Caption> : null}
       </View>
       {trailing ?? null}
-      {showRightChevron ? <ChevronRight size={16} color={theme.colors.content.tertiary} /> : null}
+      {showRightChevron ? <Icon name="chevronRight" size={16} color={theme.colors.content.tertiary} /> : null}
     </Pressable>
   );
 }

@@ -18,7 +18,7 @@
  */
 
 import { BlurView } from 'expo-blur';
-import { X } from 'lucide-react-native';
+import { Icon } from './Icon';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Animated,
@@ -213,7 +213,7 @@ export function Dialog({
                 accessibilityRole="button"
                 testID={testID ? `${testID}-close` : undefined}
               >
-                <X size={22} color={t.colors.content.secondary} />
+                <Icon name="close" size={22} color={t.colors.content.secondary} />
               </Pressable>
             </View>
           ) : null}
