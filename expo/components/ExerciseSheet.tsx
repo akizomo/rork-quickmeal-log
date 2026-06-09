@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useMemo, useState } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { BottomSheet, Chip, Icon, useTheme } from '@/design-system';
@@ -6,9 +6,9 @@ import { palette } from '@/constants/theme';
 import { ACTIVITY_LEVEL_OPTIONS } from '@/constants/onboarding';
 import {
   ACTIVITY_BONUS_DAILY_CAP_KCAL,
-  calcActivityBonusKcal,
   calcBaselineActiveKcal,
   calcExerciseGrossKcal,
+  calcGoalAdditionKcal,
   EXERCISE_TYPES,
   ExerciseTypeKey,
   stepsToActiveKcal,
@@ -57,24 +57,55 @@ export const ExerciseSheet = memo(function ExerciseSheet({ visible, onClose }: E
     !!todayDailyActivity && (todayDailyActivity.steps > 0 || todayDailyActivity.activeKcal > 0);
   const hasWorkouts = todayExerciseLogs.length > 0;
 
-  // 差分方式 (PRD §6.4.3): 当日活動のうち「基準超過分」が目標に反映される。
-  // ここではその反映分の根拠を可視化する (なぜ食べられる量が増えたか)。
+  // 動的TDEE (PRD §6.4.3, v1.9): 「今日の消費 − 活動係数の想定 = 目標に追加」を
+  // そのまま画面に出す。数字が引き算で一致するので計算が追える。
   const baselineKcal = useMemo(() => calcBaselineActiveKcal(profile), [profile]);
 
-  const activityBonusKcal = useMemo(() => {
-    if (baselineKcal == null || !todayDailyActivity) return 0;
-    const measured =
-      todayDailyActivity.activeKcal > 0
-        ? todayDailyActivity.activeKcal
-        : stepsToActiveKcal(todayDailyActivity.steps, profile.currentWeightKg);
-    return calcActivityBonusKcal(baselineKcal, measured);
-  }, [baselineKcal, profile.currentWeightKg, todayDailyActivity]);
-  const activityBonusCapped = activityBonusKcal >= ACTIVITY_BONUS_DAILY_CAP_KCAL;
+  const measuredActiveKcal = useMemo(() => {
+    if (!todayDailyActivity) return null;
+    return todayDailyActivity.activeKcal > 0
+      ? todayDailyActivity.activeKcal
+      : stepsToActiveKcal(todayDailyActivity.steps, profile.currentWeightKg);
+  }, [todayDailyActivity, profile.currentWeightKg]);
+
+  const consumedKcal = Math.round((measuredActiveKcal ?? 0) + todayGrossExerciseKcal);
+
+  const goalAddition = useMemo(
+    () =>
+      calcGoalAdditionKcal(todayGrossExerciseKcal, {
+        measuredActiveKcal,
+        baselineActiveKcal: baselineKcal,
+      }),
+    [todayGrossExerciseKcal, measuredActiveKcal, baselineKcal]
+  );
+
+  // ヘルス連携あり = 「消費 − 想定 = 加算」の3行台帳を出す。
+  const showLedger = hasHealthActivity && baselineKcal != null;
+  // 活動由来の超過分がノイズ上限に当たったか (台帳の引き算と加算がずれる稀ケース)。
+  const activityCapped =
+    showLedger &&
+    measuredActiveKcal != null &&
+    measuredActiveKcal - (baselineKcal as number) > ACTIVITY_BONUS_DAILY_CAP_KCAL;
 
   const activityLevelLabel = useMemo(
     () => ACTIVITY_LEVEL_OPTIONS.find((a) => a.level === profile.activityLevel)?.label ?? null,
     [profile.activityLevel]
   );
+
+  // ヘルスの歩数が取れている日はウォーキングを「歩数(ヘルス)」に集約し、
+  // 手動追加の重複を避ける (二重計上の不安を構造的に排除)。
+  const walkingType = useMemo(() => EXERCISE_TYPES.find((et) => et.key === 'walking') ?? null, []);
+  const availableTypes = useMemo(
+    () => (hasHealthActivity ? EXERCISE_TYPES.filter((et) => et.key !== 'walking') : EXERCISE_TYPES),
+    [hasHealthActivity]
+  );
+
+  // ウォーキングがグリッドから消えた時に選択をフォールバックさせる。
+  useEffect(() => {
+    if (hasHealthActivity && selectedType === 'walking' && availableTypes[0]) {
+      setSelectedType(availableTypes[0].key as ExerciseTypeKey);
+    }
+  }, [hasHealthActivity, selectedType, availableTypes]);
 
   return (
     <BottomSheet
@@ -87,47 +118,60 @@ export const ExerciseSheet = memo(function ExerciseSheet({ visible, onClose }: E
     >
       <ScrollView showsVerticalScrollIndicator={false} style={styles.scroll}>
         <View style={styles.content}>
-          {/* === 今日の合計 (消費 kcal 合算 + 内訳) === */}
+          {/* === 台帳: 今日の消費 − 活動係数の想定 = 目標に追加 (PRD §6.4.3, v1.9) === */}
           <View style={styles.summaryCard} testID="exercise-summary-card">
             <View style={styles.summaryHeader}>
               <Text style={styles.summaryLabel}>今日の消費</Text>
               <Text style={styles.summaryKcal}>
-                {Math.round(todayGrossExerciseKcal + (todayDailyActivity?.activeKcal ?? 0)).toLocaleString()}
+                {consumedKcal.toLocaleString()}
                 <Text style={styles.summaryKcalUnit}> kcal</Text>
               </Text>
             </View>
-            {hasHealthActivity ? (
-              <View style={styles.activityRow} testID="exercise-activity-summary">
-                <Text style={styles.activityLabel}>
-                  ヘルスデータ ({Math.round(todayDailyActivity!.steps).toLocaleString()}歩)
-                </Text>
-                <Text style={styles.activityKcal}>
-                  +{Math.round(todayDailyActivity!.activeKcal).toLocaleString()} kcal
-                </Text>
-              </View>
-            ) : null}
-            {activityBonusKcal > 0 ? (
-              <View style={styles.bonusRow} testID="exercise-activity-bonus">
-                <Text style={styles.bonusLabel}>
-                  目標に反映 (基準超過分){activityBonusCapped ? '・上限' : ''}
-                </Text>
-                <Text style={styles.bonusKcal}>+{activityBonusKcal.toLocaleString()} kcal</Text>
-              </View>
-            ) : null}
-            {hasHealthActivity && activityLevelLabel && baselineKcal != null ? (
-              <View style={styles.baselineInfoRow} testID="exercise-activity-level-info">
-                <Text style={styles.baselineInfoText}>
-                  活動レベル「{activityLevelLabel}」·{' '}
-                  基準 {baselineKcal.toLocaleString()} kcal/日はベース目標に含まれます
-                </Text>
-              </View>
+            {showLedger ? (
+              <>
+                <View style={styles.ledgerRow}>
+                  <Text style={styles.ledgerLabel}>
+                    活動レベル「{activityLevelLabel ?? '-'}」の想定
+                  </Text>
+                  <Text style={styles.ledgerValue}>
+                    −{(baselineKcal as number).toLocaleString()} kcal
+                  </Text>
+                </View>
+                <View style={[styles.ledgerRow, styles.ledgerResultRow]}>
+                  <Text style={styles.ledgerResultLabel}>
+                    目標に追加{activityCapped ? '（上限あり）' : ''}
+                  </Text>
+                  <Text style={[styles.ledgerResultValue, goalAddition === 0 && styles.ledgerResultZero]}>
+                    +{goalAddition.toLocaleString()} kcal
+                  </Text>
+                </View>
+              </>
             ) : null}
           </View>
 
-          {/* === 今日の運動履歴 === */}
-          {hasWorkouts ? (
+          {/* === 今日の運動 (歩数=ヘルスのウォーキングに集約 + 手動ログ) === */}
+          {hasHealthActivity || hasWorkouts ? (
             <View style={styles.historyBlock} testID="exercise-history-list">
               <Text style={styles.sectionLabel}>今日の運動</Text>
+              {hasHealthActivity ? (
+                <View style={styles.historyRow} testID="exercise-health-walking">
+                  <Text style={styles.historyEmoji}>{walkingType?.emoji ?? '🚶'}</Text>
+                  <View style={styles.historyMeta}>
+                    <View style={styles.historyLabelRow}>
+                      <Text style={styles.historyLabel}>ウォーキング</Text>
+                      <View style={[styles.sourceBadge, styles.sourceBadgeHealth]}>
+                        <Text style={[styles.sourceBadgeText, styles.sourceBadgeTextHealth]}>ヘルス</Text>
+                      </View>
+                    </View>
+                    <Text style={styles.historySub}>
+                      {Math.round(todayDailyActivity!.steps).toLocaleString()}歩
+                    </Text>
+                  </View>
+                  <Text style={styles.healthWalkKcal}>
+                    {Math.round(todayDailyActivity!.activeKcal).toLocaleString()} kcal
+                  </Text>
+                </View>
+              ) : null}
               {todayExerciseLogs.map((log) => (
                 <ExerciseHistoryRow key={log.id} log={log} onDelete={() => deleteExerciseLog(log.id)} />
               ))}
@@ -138,7 +182,7 @@ export const ExerciseSheet = memo(function ExerciseSheet({ visible, onClose }: E
           <View style={styles.addBlock}>
             <Text style={styles.sectionLabel}>運動を追加</Text>
             <View style={styles.typeGrid}>
-              {[EXERCISE_TYPES.slice(0, 4), EXERCISE_TYPES.slice(4)].map((row, rowIdx) => (
+              {[availableTypes.slice(0, 4), availableTypes.slice(4)].map((row, rowIdx) => (
                 <View key={rowIdx} style={styles.typeRow}>
                   {row.map((type) => {
                     const active = selectedType === type.key;
@@ -266,29 +310,20 @@ const styles = StyleSheet.create({
   summaryLabel: { fontSize: 13, fontWeight: '600', color: palette.textMuted, letterSpacing: 0.4 },
   summaryKcal: { fontSize: 26, fontWeight: '700', color: palette.text, letterSpacing: -0.4 },
   summaryKcalUnit: { fontSize: 12, fontWeight: '500', color: palette.textMuted },
-  activityRow: {
+  ledgerRow: {
     flexDirection: 'row',
-    alignItems: 'baseline',
     justifyContent: 'space-between',
+    alignItems: 'baseline',
     paddingTop: 6,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: palette.border,
   },
-  activityLabel: { fontSize: 12, fontWeight: '500', color: palette.textMuted },
-  activityKcal: { fontSize: 13, fontWeight: '600', color: palette.text },
-  bonusRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    justifyContent: 'space-between',
-  },
-  bonusLabel: { fontSize: 11, fontWeight: '500', color: palette.sageDeep },
-  bonusKcal: { fontSize: 13, fontWeight: '700', color: palette.sageDeep },
-  baselineInfoRow: {
-    paddingTop: 8,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: palette.border,
-  },
-  baselineInfoText: { fontSize: 11, color: palette.textMuted, lineHeight: 16 },
+  ledgerLabel: { fontSize: 12, fontWeight: '500', color: palette.textMuted, flex: 1 },
+  ledgerValue: { fontSize: 12, fontWeight: '600', color: palette.textMuted },
+  ledgerResultRow: { borderTopWidth: 0, paddingTop: 4 },
+  ledgerResultLabel: { fontSize: 13, fontWeight: '700', color: palette.text, flex: 1 },
+  ledgerResultValue: { fontSize: 15, fontWeight: '700', color: palette.sageDeep },
+  ledgerResultZero: { color: palette.textMuted },
   historyBlock: { gap: 8 },
   historyRow: {
     flexDirection: 'row',
@@ -318,6 +353,7 @@ const styles = StyleSheet.create({
   sourceBadgeTextHealth: { color: palette.accent },
   sourceBadgeTextManual: { color: palette.textMuted },
   historyKcal: { fontSize: 13, fontWeight: '700', color: palette.sageDeep },
+  healthWalkKcal: { fontSize: 13, fontWeight: '700', color: palette.textMuted },
   historyDelete: {
     width: 26,
     height: 26,

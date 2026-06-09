@@ -26,7 +26,7 @@ import { useAppState } from '@/providers/app-state-provider';
 import { DishDraft, DishSize, IngredientDraft, Macro, PortionValue } from '@/types/nutrition';
 import { getIdentity } from '@/constants/identity';
 import { getLogDisplayInfo } from '@/utils/log-display';
-import { adjustedTargetKcal, calcActivityBonusKcal, calcBaselineActiveKcal, getAdjustedPfcForDate, getEffectiveSubscriptionStatus, getGrossExerciseKcalForDate, stepsToActiveKcal, trialDaysRemaining } from '@/utils/goals';
+import { adjustedTargetKcal, calcBaselineActiveKcal, getAdjustedPfcForDate, getEffectiveSubscriptionStatus, getGrossExerciseKcalForDate, stepsToActiveKcal, trialDaysRemaining } from '@/utils/goals';
 import { buildDishMacro, clampPortion, computeIngredient, draftFromLog, formatDateKey, formatMacroText, getIngredientSubtypeDef, getIngredientSubtypeDefs, getQuickCategories, getSubtypes, getToppingsForSubtype, summarizeToppings } from '@/utils/nutrition';
 import { formatDayLabel, isSameDay, sumForDate } from '@/utils/history';
 
@@ -211,7 +211,7 @@ const BalanceModal = memo(function BalanceModal({
             <View>
               <BalanceMathRow label="ベース目標" value={baseTargetKcal} />
               {activityLevelLabel ? (
-                <Text style={styles.balanceMathSubtitle}>運動習慣「{activityLevelLabel}」を反映</Text>
+                <Text style={styles.balanceMathSubtitle}>普段の活動「{activityLevelLabel}」を含む</Text>
               ) : null}
             </View>
             {hasExercise ? (
@@ -313,31 +313,32 @@ export const StatusCard = memo(function StatusCard({
     [isToday, todayMacro, logs, dateKey]
   );
 
-  // 動的TDEE (PRD §6.4.3): その日の活動量から「基準超過分」を kcal に換算。
-  // 運動ログとの二重計上は adjustedTargetKcal 内の max() 調停で防ぐ。
-  const activityBonusKcal = useMemo(() => {
+  // 動的TDEE (PRD §6.4.3, v1.9): 当日の活動コンテキスト (ヘルス由来)。
+  // 目標加算 = max(0, (歩数activeKcal − 活動係数想定) + 運動gross) を単一式で算出。
+  const activityCtx = useMemo(() => {
     const baseline = calcBaselineActiveKcal(profile);
-    if (baseline == null) return 0;
     const da = (dailyActivities ?? []).find((d) => d.date === dateKey);
-    if (!da) return 0;
-    const measured =
-      da.activeKcal > 0 ? da.activeKcal : stepsToActiveKcal(da.steps, profile.currentWeightKg);
-    return calcActivityBonusKcal(baseline, measured);
+    const measured = da
+      ? da.activeKcal > 0
+        ? da.activeKcal
+        : stepsToActiveKcal(da.steps, profile.currentWeightKg)
+      : null;
+    return { measuredActiveKcal: measured, baselineActiveKcal: baseline };
   }, [profile, dailyActivities, dateKey]);
 
   // 表示中の日付に対する目標・消費・PFC をその日の運動ログ + 活動量から算出する。
   // 今日 / 過去日とも同じロジック (運動を記録した過去日も目標が拡大する)。
   const effectiveTarget = useMemo(
-    () => adjustedTargetKcal(profile.targetCalories, exerciseLogs, dateKey, activityBonusKcal),
-    [profile.targetCalories, exerciseLogs, dateKey, activityBonusKcal]
+    () => adjustedTargetKcal(profile.targetCalories, exerciseLogs, dateKey, activityCtx),
+    [profile.targetCalories, exerciseLogs, dateKey, activityCtx]
   );
   const effectiveExerciseKcal = useMemo(
     () => getGrossExerciseKcalForDate(exerciseLogs, dateKey),
     [exerciseLogs, dateKey]
   );
   const effectivePfc = useMemo(
-    () => getAdjustedPfcForDate(profile, exerciseLogs, dateKey, activityBonusKcal),
-    [profile, exerciseLogs, dateKey, activityBonusKcal]
+    () => getAdjustedPfcForDate(profile, exerciseLogs, dateKey, activityCtx),
+    [profile, exerciseLogs, dateKey, activityCtx]
   );
 
   const openExerciseSheet = useCallback(() => setExerciseSheetVisible(true), []);
@@ -442,15 +443,10 @@ export const StatusCard = memo(function StatusCard({
         baseTargetKcal={profile.targetCalories}
         adjustedTargetKcal={effectiveTarget}
         consumedKcal={Math.round(dayMacro.kcal)}
-        /* 加算は運動ログと活動量の大きい方 (PRD §6.4.3)。
-         * adjustedTarget - baseTarget がその最終加算分。 */
+        /* 目標加算 = max(0, (歩数activeKcal − 活動係数想定) + 運動gross)。
+         * adjustedTarget - baseTarget がその最終加算分 (PRD §6.4.3, v1.9)。 */
         exerciseAdded={Math.max(0, effectiveTarget - profile.targetCalories)}
-        /* 加算ソースの出し分け: 活動由来が運動ログを上回る日は「活動」と表示。 */
-        addedLabel={
-          activityBonusKcal > getGrossExerciseKcalForDate(exerciseLogs, dateKey)
-            ? '活動 (歩数など)'
-            : '運動'
-        }
+        addedLabel="活動・運動"
         activityLevelLabel={
           ACTIVITY_LEVEL_OPTIONS.find((a) => a.level === profile.activityLevel)?.label ?? null
         }

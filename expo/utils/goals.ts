@@ -593,22 +593,53 @@ export function stepsToActiveKcal(steps: number, weightKg: number | null): numbe
 }
 
 /**
- * Adjusted daily kcal target = base target + finalAddition。
+ * 当日の活動コンテキスト (ヘルス由来)。両方揃わない場合は「ヘルス未連携」扱い。
+ */
+export interface ActivityContext {
+  /** Health の Active Energy (歩数しか無い場合は stepsToActiveKcal 近似)。 */
+  measuredActiveKcal?: number | null;
+  /** 活動係数が織り込む基準アクティブエネルギー = calcBaselineActiveKcal(profile)。 */
+  baselineActiveKcal?: number | null;
+}
+
+/**
+ * 当日の「目標に上乗せできる分」を **単一式** で算出する (PRD §6.4.3, v1.9)。
  *
- * finalAddition は二重計上を避けるため **運動ログ由来と活動由来の大きい方** を採る
- * (PRD §6.4.3 の調停ルール)。`activityBonusKcal` 省略時 (=0) は従来どおり運動ログのみ。
+ *   目標加算 = max(0, 活動係数想定を超えた消費)
+ *           = max(0, (歩数activeKcal − 基準) + 運動gross)
+ *
+ * - 「今日の消費 − 活動係数が想定する分」をそのまま加算する直感的モデル。
+ *   画面の数字 (消費・基準・加算) が引き算で一致する。
+ * - 歩数が基準を下回った日は不足分が運動クレジットから差し引かれる (会計的に正確)。
+ * - ノイズ/GPS 異常吸収の上限 (CAP) は **活動由来の超過分のみ** に適用し、
+ *   ユーザーが明示記録した運動はそのまま通す。
+ * - ヘルス未連携 (measured/baseline 欠如) は運動ログを全額加算する従来挙動。
+ */
+export function calcGoalAdditionKcal(exerciseGrossKcal: number, ctx?: ActivityContext): number {
+  const measured = ctx?.measuredActiveKcal ?? null;
+  const baseline = ctx?.baselineActiveKcal ?? null;
+  const hasHealth = measured != null && measured > 0 && baseline != null;
+  if (!hasHealth) {
+    return Math.max(0, Math.round(exerciseGrossKcal));
+  }
+  const activityDelta = Math.min(measured - baseline, ACTIVITY_BONUS_DAILY_CAP_KCAL);
+  return Math.max(0, Math.round(activityDelta + exerciseGrossKcal));
+}
+
+/**
+ * Adjusted daily kcal target = base target + 目標加算 (calcGoalAdditionKcal)。
+ * `ctx` 省略時はヘルス未連携扱い = 運動ログ (gross) を全額加算。
  */
 export function adjustedTargetKcal(
   baseTargetKcal: number,
-  exerciseLogs: { date: string; netKcal: number }[],
+  exerciseLogs: { date: string; grossKcal: number }[],
   dateKey: string,
-  activityBonusKcal: number = 0
+  ctx?: ActivityContext
 ): number {
-  const exerciseAddition = exerciseLogs
+  const exerciseGross = exerciseLogs
     .filter((e) => e.date === dateKey)
-    .reduce((sum, e) => sum + e.netKcal, 0);
-  const finalAddition = Math.max(exerciseAddition, Math.max(0, activityBonusKcal));
-  return baseTargetKcal + finalAddition;
+    .reduce((sum, e) => sum + e.grossKcal, 0);
+  return baseTargetKcal + calcGoalAdditionKcal(exerciseGross, ctx);
 }
 
 /**
@@ -639,9 +670,9 @@ export function getAdjustedPfcForDate(
     targetFat: number;
     targetCarbs: number;
   },
-  exerciseLogs: { date: string; netKcal: number }[],
+  exerciseLogs: { date: string; grossKcal: number }[],
   dateKey: string,
-  activityBonusKcal: number = 0
+  ctx?: ActivityContext
 ): { protein: number; fat: number; carbs: number } {
   const base = profile.targetCalories;
   if (base <= 0) {
@@ -651,7 +682,7 @@ export function getAdjustedPfcForDate(
       carbs: profile.targetCarbs,
     };
   }
-  const ratio = adjustedTargetKcal(base, exerciseLogs, dateKey, activityBonusKcal) / base;
+  const ratio = adjustedTargetKcal(base, exerciseLogs, dateKey, ctx) / base;
   return {
     protein: Math.round(profile.targetProtein * ratio),
     fat: Math.round(profile.targetFat * ratio),

@@ -14,7 +14,7 @@ import { ENTITLEMENT_ID } from '@/constants/iap';
 import { addCustomerInfoListener, getCustomerInfo, restorePurchases as iapRestore } from '@/utils/iap';
 import { IngredientQuickDraft, QuickLogHistoryMap } from '@/types/quick-log';
 import { buildDishMacro, clampPortion, computeIngredient, createFoodLogFromDish, createFoodLogFromDishQuickEntry, createFoodLogFromIngredient, formatDateKey, generateId, getDefaultModeByTime, getMealSlot, getQuickCategories, getSubType, sumToday } from '@/utils/nutrition';
-import { adjustedTargetKcal, calcExerciseGrossKcal, calcExerciseNetKcal, EXERCISE_TYPES } from '@/utils/goals';
+import { adjustedTargetKcal, calcBaselineActiveKcal, calcExerciseGrossKcal, calcExerciseNetKcal, EXERCISE_TYPES, stepsToActiveKcal } from '@/utils/goals';
 import { isSameDay } from '@/utils/history';
 import { castHistoryMap, recordSelection, selectionFromDraft } from '@/utils/quick-log-history';
 import { computeQuickLogMacro } from '@/utils/quick-log-macro';
@@ -1277,10 +1277,19 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
   const todayExerciseLogs = useMemo(() => exerciseLogs.filter((e) => e.date === todayKey), [exerciseLogs, todayKey]);
   const todayGrossExerciseKcal = useMemo(() => todayExerciseLogs.reduce((s, e) => s + e.grossKcal, 0), [todayExerciseLogs]);
   const todayNetExerciseKcal = useMemo(() => todayExerciseLogs.reduce((s, e) => s + e.netKcal, 0), [todayExerciseLogs]);
-  const todayAdjustedTargetKcal = useMemo(
-    () => adjustedTargetKcal(profile.targetCalories, exerciseLogs, todayKey),
-    [exerciseLogs, profile.targetCalories, todayKey]
-  );
+  const todayAdjustedTargetKcal = useMemo(() => {
+    const baseline = calcBaselineActiveKcal(profile);
+    const da = dailyActivities.find((d) => d.date === todayKey);
+    const measured = da
+      ? da.activeKcal > 0
+        ? da.activeKcal
+        : stepsToActiveKcal(da.steps, profile.currentWeightKg)
+      : null;
+    return adjustedTargetKcal(profile.targetCalories, exerciseLogs, todayKey, {
+      measuredActiveKcal: measured,
+      baselineActiveKcal: baseline,
+    });
+  }, [exerciseLogs, profile, dailyActivities, todayKey]);
   /**
    * v1.7+: 運動で kcal 目標が伸びたとき、PFC ターゲットも **現在比率を維持** して
    * 比例スケールさせる (MyFitnessPal 等のデフォルトと同方式)。
