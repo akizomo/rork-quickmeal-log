@@ -67,7 +67,7 @@ export const PURE_ADDONS: Addon[] = [
   },
   {
     id: 'mitarashi_tare',
-    label: 'みたらしのたれ',
+    label: 'みたらし',
     unit: 'g',
     unitAmount: 25,
     unitLabel: '串1本分',
@@ -145,7 +145,7 @@ export const PURE_ADDONS: Addon[] = [
   // ---- Sauces / fried-food companions ----
   {
     id: 'sauce',
-    label: 'ソース (中濃/とんかつ)',
+    label: 'ソース',
     unit: 'ml',
     unitAmount: 18,
     unitLabel: '大さじ1',
@@ -154,7 +154,7 @@ export const PURE_ADDONS: Addon[] = [
   },
   {
     id: 'lemon_squeeze',
-    label: 'レモン (絞り)',
+    label: 'レモン',
     unit: 'ml',
     unitAmount: 5,
     unitLabel: '1切',
@@ -257,7 +257,7 @@ export const PURE_ADDONS: Addon[] = [
   },
   {
     id: 'kitsune_top',
-    label: 'きつね (油揚げ)',
+    label: 'きつね',
     unit: 'piece',
     unitAmount: 1,
     unitLabel: '1枚',

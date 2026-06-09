@@ -96,6 +96,32 @@ export interface AttributeOption {
    * (PFC崩壊遮断). Example: chicken_thigh + 皮なし → lean_protein/chicken_lean.
    */
   migration?: MigrationTarget;
+
+  // ----- Per-attribute Add-on / Amount overrides -----
+  // 「種類」によってトッピング・量チップを可変にするためのオプション群。
+  // いずれも未指定なら Identity 直下の値にフォールバックする。
+
+  /**
+   * この種類を選んだときに「トッピング」欄へ既定表示する Add-on。
+   * 例: 餅・団子 → 団子は みたらし/あんこ、餅は きなこ。
+   * 省略時は Identity.defaultAddonIds を使う。
+   */
+  defaultAddonIds?: string[];
+  /**
+   * この種類で選択可能な Add-on のホワイトリスト上書き。
+   * 省略時は Identity.allowedAddonIds を使う。
+   */
+  allowedAddonIds?: string[];
+  /**
+   * この種類の factor に既に織り込まれており、二重計上を避けるため非表示にする
+   * Add-on。例: うどん「月見」は factor に卵が含まれるので egg を隠す。
+   */
+  hiddenAddonIds?: string[];
+  /**
+   * この種類だけ量の単位・既定値・チップが異なる場合の上書き。
+   * 省略時は Identity.amount を使う。
+   */
+  amount?: AmountSpec;
 }
 
 export interface StyleOption {

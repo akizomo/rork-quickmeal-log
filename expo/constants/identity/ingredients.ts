@@ -104,14 +104,25 @@ const BUCKET_STAPLE: Identity[] = [
       chips: [
         { label: '1枚', value: 60 },
         { label: '2枚', value: 120 },
-        { label: 'ナン', value: 120 },
-      ],
+      ], // ナンは attribute amount override で piece 単位に切り替えるため chip 不要
     },
     attributes: [
       { key: 'plain', label: '食パン', isDefault: true },
       { key: 'whole', label: '全粒・ライ麦', factor: { fat: 1.2 } },
-      { key: 'bagel', label: 'ベーグル', factor: { kcal: 1.5, protein: 1.7, carbs: 1.6 } },
-      { key: 'naan', label: 'ナン', factor: { kcal: 1.7, protein: 1.5, fat: 1.4, carbs: 1.5 } },
+      // ベーグルは1個単位で扱うのが自然。factor は 60g 食パン基準のスケール済み値。
+      {
+        key: 'bagel',
+        label: 'ベーグル',
+        factor: { kcal: 1.5, protein: 1.7, carbs: 1.6 },
+        amount: { unit: 'piece', default: 1, unitLabel: '個', chips: [{ label: '1個', value: 1 }, { label: '2個', value: 2 }] },
+      },
+      // ナンも1枚単位。factor は食パン 60g 基準のスケール済み値。
+      {
+        key: 'naan',
+        label: 'ナン',
+        factor: { kcal: 1.7, protein: 1.5, fat: 1.4, carbs: 1.5 },
+        amount: { unit: 'piece', default: 1, unitLabel: '枚', step: 0.5, chips: [{ label: '1/2枚', value: 0.5 }, { label: '1枚', value: 1 }] },
+      },
     ],
     styles: [
       { key: 'plain', label: 'そのまま', isDefault: true },
@@ -177,9 +188,16 @@ const BUCKET_STAPLE: Identity[] = [
     referenceDescription: '切り餅1個≒50g / 団子は串1本(3個)が目安。たれ・あんこはトッピングで追加',
     amount: { unit: 'piece', default: 1 },
     attributes: [
+      // 餅は Identity 既定 (きなこ/はちみつ/海苔) をそのまま使う
       { key: 'mochi', label: '餅', isDefault: true },
-      // 白玉・上新粉団子(プレーン)は餅よりやや水分が多く軽め
-      { key: 'dango', label: '団子', factor: { kcal: 0.85, carbs: 0.86 } },
+      // 白玉・上新粉団子(プレーン)は餅よりやや水分が多く軽め。
+      // 団子はみたらし・あんこが定番なのでトッピングを差し替える。
+      {
+        key: 'dango',
+        label: '団子',
+        factor: { kcal: 0.85, carbs: 0.86 },
+        defaultAddonIds: ['mitarashi_tare', 'anko', 'kinako'],
+      },
     ],
     defaultAddonIds: ['kinako', 'honey', 'nori_furikake'],
     allowedAddonIds: ['kinako', 'honey', 'nori_furikake', 'butter_cream', 'mitarashi_tare', 'anko'],
@@ -201,7 +219,7 @@ const BUCKET_STAPLE: Identity[] = [
       },
       {
         key: 'salad_mayo',
-        label: 'サラダ化(マヨ)',
+        label: 'ポテトサラダ',
         migration: { bucketKey: 'veggies', identityKey: 'side_creamy', confirmMessage: 'ポテトサラダとして記録します' },
       },
     ],
@@ -338,7 +356,7 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
       { key: 'oil', label: '油あり', factor: { kcal: 1.3, fat: 4 } },
       {
         key: 'breaded_fried',
-        label: '衣付揚げ',
+        label: 'フライに',
         migration: {
           bucketKey: 'misc_dish',
           identityKey: 'fried_main',
@@ -361,7 +379,7 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
       { key: 'oil', label: '油あり', factor: { kcal: 1.3, fat: 4 } },
       {
         key: 'breaded_fried',
-        label: '衣付揚げ',
+        label: 'フライに',
         migration: {
           bucketKey: 'misc_dish',
           identityKey: 'fried_main',
@@ -423,7 +441,8 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
     defaultMacro: { kcal: 100, protein: 15, fat: 0, carbs: 10 },
     // 量はザバスのたんぱく質量バリエーションを基準に選ぶ (基準=P15 200ml)。
     // P20≒135%, P30≒200% で全マクロを比例スケール。
-    amount: { unit: 'percent', default: 100, chips: [{ label: 'P15', value: 100 }, { label: 'P20', value: 135 }, { label: 'P30', value: 200 }] },
+    // chip ラベルは「P○○(容量目安)」形式で直感的に分かるよう表示。
+    amount: { unit: 'percent', default: 100, chips: [{ label: 'P15 (200ml)', value: 100 }, { label: 'P20 (270ml)', value: 135 }, { label: 'P30 (400ml)', value: 200 }] },
     attributes: [
       { key: 'commercial_drink', label: 'ドリンク市販', isDefault: true },
       { key: 'powder_water', label: 'パウダー水割り', factor: { kcal: 1.15, protein: 1.33, carbs: 0.3 } },
@@ -520,15 +539,15 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
     defaultMacro: { kcal: 230, protein: 17.5, fat: 16.5, carbs: 0 },
     amount: { unit: 'g', default: 100, chips: [{ label: '100', value: 100 }, { label: '150', value: 150 }, { label: '200', value: 200 }] },
     attributes: [
-      { key: 'beef', label: '牛', isDefault: true },
-      { key: 'pork', label: '豚', factor: { kcal: 0.96, protein: 1.03, fat: 0.91 } },
+      { key: 'beef', label: '牛（ロース・もも等）', isDefault: true },
+      { key: 'pork', label: '豚（ロース・肩ロース等）', factor: { kcal: 0.96, protein: 1.03, fat: 0.91 } },
     ],
     styles: [
       { key: 'light', label: 'あっさり', isDefault: true },
       { key: 'oil', label: '油あり', factor: { kcal: 1.18, fat: 1.5 } },
       {
         key: 'breaded_fried_pork',
-        label: '衣付揚げ (とんかつ)',
+        label: 'とんかつに',
         migration: {
           bucketKey: 'misc_dish',
           identityKey: 'fried_main',
@@ -538,7 +557,7 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
       },
       {
         key: 'breaded_fried_beef',
-        label: '衣付揚げ (メンチ)',
+        label: 'メンチカツに',
         migration: {
           bucketKey: 'misc_dish',
           identityKey: 'fried_main',
@@ -556,10 +575,11 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
     defaultMacro: { kcal: 380, protein: 16, fat: 35, carbs: 0 },
     amount: { unit: 'g', default: 100, chips: [{ label: '100', value: 100 }, { label: '150', value: 150 }, { label: '200', value: 200 }] },
     attributes: [
-      { key: 'bara', label: 'バラ', isDefault: true },
+      { key: 'bara', label: 'バラ（豚）', isDefault: true },
+      { key: 'bara_beef', label: 'バラ（牛）', factor: { kcal: 1.24, protein: 0.69, fat: 1.31 } },
       { key: 'sirloin', label: 'サーロイン', factor: { kcal: 0.84, fat: 0.8 } },
       { key: 'horumon', label: 'ホルモン', factor: { kcal: 0.58, protein: 0.94, fat: 0.49 } },
-      { key: 'tan', label: 'タン', factor: { kcal: 0.71, protein: 1.31, fat: 0.57 } },
+      { key: 'tan', label: 'タン', factor: { kcal: 0.71, protein: 0.95, fat: 0.57 } },
     ],
   },
   {
@@ -806,7 +826,7 @@ const BUCKET_VEGGIES: Identity[] = [
       { key: 'stir_fry', label: '炒め', factor: { kcal: 1.7, fat: 10 } },
       {
         key: 'breaded_fried',
-        label: '衣付揚げ',
+        label: '天ぷらに',
         migration: {
           bucketKey: 'misc_dish',
           identityKey: 'fried_main',
@@ -820,14 +840,14 @@ const BUCKET_VEGGIES: Identity[] = [
   },
   {
     id: 'side_seasoned',
-    label: '副菜 (煮物・和え)',
+    label: '煮物・和え物',
     primaryHome: { tab: 'ingredient', bucket: 'veggies' },
     defaultMacro: { kcal: 55, protein: 1.7, fat: 2.5, carbs: 6.5 },
     amount: { unit: 'g', default: 50, chips: [{ label: '小鉢', value: 50 }, { label: '1皿', value: 100 }] },
   },
   {
     id: 'side_creamy',
-    label: '副菜 (クリーミー)',
+    label: 'クリーミー系',
     primaryHome: { tab: 'ingredient', bucket: 'veggies' },
     defaultMacro: { kcal: 130, protein: 1.5, fat: 8, carbs: 12 },
     amount: { unit: 'g', default: 100, chips: [{ label: '小', value: 50 }, { label: '100', value: 100 }] },

@@ -21,6 +21,7 @@ import {
   StyleOption,
 } from '@/types/identity';
 import { getIdentity, resolveAddonRef } from '@/constants/identity';
+import { getEffectiveAmountSpec } from '@/utils/identity-attribute';
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -96,10 +97,14 @@ export function resolveLog(input: ResolveInput): ResolveResult {
   //     an Identity in a different unit (e.g. fried_main is "piece"). Always
   //     use the recordIdentity's default in that case.
   //   - Without migration: honor the caller's amountValue if provided.
+  // 量は「種類(Attribute)別の実効 amount spec」の default を基準にスケールする。
+  // 種類に amount 上書きが無ければ Identity.amount にフォールバックするので、
+  // 既存データの計算結果は不変。種類別 default を入れたとき UI と一致する。
+  const effectiveAmountSpec = getEffectiveAmountSpec(recordIdentity, effectiveAttributeKey);
   const amountValue = migration
-    ? recordIdentity.amount.default
-    : input.amountValue ?? recordIdentity.amount.default;
-  const amountFactor = amountValue / recordIdentity.amount.default;
+    ? effectiveAmountSpec.default
+    : input.amountValue ?? effectiveAmountSpec.default;
+  const amountFactor = amountValue / effectiveAmountSpec.default;
   if (amountFactor !== 1) {
     macro = multiplyMacro(macro, amountFactor);
   }

@@ -37,6 +37,11 @@ import {
   ResolveResult,
 } from '@/utils/identity-resolver';
 import { migrateAmountValueForUnit } from '@/utils/amount-migration';
+import {
+  getEffectiveAmountSpec,
+  getEffectiveDefaultAddonIds,
+  getHiddenAddonIds,
+} from '@/utils/identity-attribute';
 import { palette } from '@/constants/theme';
 import { Macro } from '@/types/nutrition';
 
@@ -171,12 +176,14 @@ export function IdentityLogSheet() {
       const id = editingLog.originIdentityId ?? editingLog.identityId ?? identitiesInBucket[0]?.id;
       if (!id) return;
       const identity = getIdentity(id);
+      const restoreAttrKey = editingLog.attrKey ?? defaultAttributeKey(identity);
+      const restoreSpec = identity ? getEffectiveAmountSpec(identity, restoreAttrKey) : undefined;
       setOriginIdentityId(id);
-      setAttributeKey(editingLog.attrKey ?? defaultAttributeKey(identity));
+      setAttributeKey(restoreAttrKey);
       setStyleKey(editingLog.styleKey ?? defaultStyleKey(identity));
       // Translate legacy 'serving' values when the Identity has since moved to 'percent'
-      const rawAmount = editingLog.amountValue ?? identity?.amount.default ?? 1;
-      const targetUnit = identity?.amount.unit;
+      const rawAmount = editingLog.amountValue ?? restoreSpec?.default ?? 1;
+      const targetUnit = restoreSpec?.unit;
       const migrated = targetUnit
         ? migrateAmountValueForUnit(rawAmount, editingLog.amountUnit, targetUnit)
         : rawAmount;
@@ -194,26 +201,43 @@ export function IdentityLogSheet() {
     const initialId = identityLogSheet.identityId ?? identitiesInBucket[0]?.id;
     if (!initialId) return;
     const identity = getIdentity(initialId);
+    const initAttrKey = defaultAttributeKey(identity);
     setOriginIdentityId(initialId);
-    setAttributeKey(defaultAttributeKey(identity));
+    setAttributeKey(initAttrKey);
     setStyleKey(defaultStyleKey(identity));
-    setAmountValue(identity?.amount.default ?? 1);
+    setAmountValue(
+      identity ? getEffectiveAmountSpec(identity, initAttrKey).default : 1,
+    );
     setAddons([]);
   }, [visible, bucketKey, identityLogSheet.identityId, identitiesInBucket, editingLog]);
 
   const origin = originIdentityId ? getIdentity(originIdentityId) : undefined;
 
   const handleSelectIdentity = useCallback((identity: Identity) => {
+    const attrKey = defaultAttributeKey(identity);
     setOriginIdentityId(identity.id);
-    setAttributeKey(defaultAttributeKey(identity));
+    setAttributeKey(attrKey);
     setStyleKey(defaultStyleKey(identity));
-    setAmountValue(identity.amount.default);
+    setAmountValue(getEffectiveAmountSpec(identity, attrKey).default);
     setAddons([]);
   }, []);
 
   const handleSelectAttribute = useCallback((key: string) => {
-    setAttributeKey((prev) => (prev === key ? prev : key));
-  }, []);
+    setAttributeKey((prev) => {
+      if (prev === key || !origin) return prev;
+      // 種類で factor に織り込み済みの具 (月見=卵 等) は選択から外して二重計上を防ぐ
+      const hidden = getHiddenAddonIds(origin, key);
+      if (hidden.size > 0) {
+        setAddons((cur) => cur.filter((a) => !hidden.has(a.refId)));
+      }
+      // 種類が変わったら常に新しい種類の既定量にリセットする。
+      // unit が同じでも default が違う (春巻=2本 vs 餃子=5個, 太巻き=1切 vs 細巻=1本 など)
+      // ため、種類切替 = 「1人前の基準が変わった」として常にリセットするのが正しい。
+      const nextSpec = getEffectiveAmountSpec(origin, key);
+      setAmountValue(nextSpec.default);
+      return key;
+    });
+  }, [origin]);
 
   const handleSelectStyle = useCallback((key: string) => {
     setStyleKey((prev) => (prev === key ? prev : key));
@@ -223,9 +247,15 @@ export function IdentityLogSheet() {
     setAmountValue(value);
   }, []);
 
+  // 種類連動の実効 amount spec (種類に量上書きが無ければ Identity.amount)
+  const effectiveAmount = useMemo(
+    () => (origin ? getEffectiveAmountSpec(origin, attributeKey) : undefined),
+    [origin, attributeKey],
+  );
+
   const amountConfig = useMemo(
-    () => (origin ? buildIdentityAmountEditConfig(origin.amount) : null),
-    [origin],
+    () => (effectiveAmount ? buildIdentityAmountEditConfig(effectiveAmount) : null),
+    [effectiveAmount],
   );
 
   const toggleAddon = useCallback(
@@ -306,8 +336,17 @@ export function IdentityLogSheet() {
 
   const canSave = !!resolved && resolved.totalMacro.kcal > 0;
 
-  // Default add-on chips visible (origin Identity's defaultAddonIds)
-  const visibleAddonIds = origin?.defaultAddonIds ?? [];
+  // 種類連動のトッピング既定リスト。選択中の Add-on は (既定外でも) 常に表示し続け、
+  // 編集再開時や種類切替時に選択済みチップが消えないようにする。
+  const visibleAddonIds = useMemo(() => {
+    if (!origin) return [];
+    const base = getEffectiveDefaultAddonIds(origin, attributeKey);
+    const hidden = getHiddenAddonIds(origin, attributeKey);
+    const selectedExtra = addons
+      .map((a) => a.refId)
+      .filter((id) => !base.includes(id) && !hidden.has(id));
+    return [...base, ...selectedExtra];
+  }, [origin, attributeKey, addons]);
 
   return (
     <>
@@ -409,14 +448,18 @@ export function IdentityLogSheet() {
             </Section>
           ) : null}
 
-          {/* Amount */}
+          {/* Amount (種類連動の実効 spec を使う) */}
+          {(() => {
+            const amt = effectiveAmount ?? origin.amount;
+            const amtUnitLabel = amt.unitLabel ?? UNIT_LABEL[amt.unit];
+            return (
           <Section title="量">
-            {origin.amount.chips && origin.amount.chips.length > 0 ? (
+            {amt.chips && amt.chips.length > 0 ? (
               <ChipRow>
-                {origin.amount.chips.map((c) => (
+                {amt.chips.map((c) => (
                   <Chip
                     key={`${c.label}-${c.value}`}
-                    label={chipDisplayLabel(c.label, origin.amount.unitLabel ?? UNIT_LABEL[origin.amount.unit])}
+                    label={chipDisplayLabel(c.label, amtUnitLabel)}
                     selected={amountValue === c.value}
                     onPress={() => handleSelectAmountChip(c.value)}
                     size="sm"
@@ -430,19 +473,19 @@ export function IdentityLogSheet() {
               style={[
                 ilsStyles.amountRow,
                 {
-                  marginTop: origin.amount.chips ? t.spacing['2'] : 0,
+                  marginTop: amt.chips ? t.spacing['2'] : 0,
                   backgroundColor: t.colors.surface.raised,
                   borderRadius: t.radius.lg,
                 },
               ]}
               accessibilityRole="button"
-              accessibilityLabel={`量を変更。現在 ${amountValue}${origin.amount.unitLabel ?? UNIT_LABEL[origin.amount.unit]}`}
+              accessibilityLabel={`量を変更。現在 ${amountValue}${amtUnitLabel}`}
               testID="ils-amount-row"
             >
               <Text style={[ilsStyles.amountRowValue, { color: t.colors.content.primary, fontSize: t.typography.fontSize['2xl'] }]}>
                 {amountValue}
                 <Text style={{ color: t.colors.content.secondary, fontSize: t.typography.fontSize.sm }}>
-                  {' '}{origin.amount.unitLabel ?? UNIT_LABEL[origin.amount.unit]}
+                  {' '}{amtUnitLabel}
                 </Text>
               </Text>
               <Icon name="edit" size={16} color={t.colors.content.tertiary} />
@@ -453,6 +496,8 @@ export function IdentityLogSheet() {
               </Caption>
             ) : null}
           </Section>
+            );
+          })()}
 
           {/* Add-ons */}
           {visibleAddonIds.length > 0 ? (
