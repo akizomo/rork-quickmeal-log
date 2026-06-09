@@ -109,6 +109,7 @@ const BUCKET_STAPLE: Identity[] = [
     attributes: [
       { key: 'plain', label: '食パン', isDefault: true },
       { key: 'whole', label: '全粒・ライ麦', factor: { fat: 1.2 } },
+      { key: 'baguette', label: 'フランスパン', factor: { kcal: 1.06, protein: 1.06, fat: 0.32, carbs: 1.23 } },
       // ベーグルは1個単位で扱うのが自然。factor は 60g 食パン基準のスケール済み値。
       {
         key: 'bagel',
@@ -348,8 +349,13 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
     label: '白身魚・赤身魚',
     primaryHome: { tab: 'ingredient', bucket: 'lean_protein' },
     // v1.2: default 80g→100g 化 (modal-set 1食量を chicken_lean/red_meat と揃える)
+    // base = タラ・カレイ・ヒラメ等の白身魚。マグロ赤身は attribute で分岐。
     defaultMacro: { kcal: 75, protein: 16, fat: 0.7, carbs: 0 },
     amount: { unit: 'g', default: 100, chips: [{ label: '1切', value: 80 }, { label: '1食', value: 100 }, { label: '2切', value: 160 }] },
+    attributes: [
+      { key: 'white', label: '白身魚（タラ・カレイ等）', isDefault: true },
+      { key: 'tuna_red', label: 'マグロ赤身', factor: { kcal: 1.67, protein: 1.65, fat: 2.0 } },
+    ],
     styles: [
       { key: 'raw', label: '生・刺身', isDefault: true },
       { key: 'light', label: 'あっさり', factor: { kcal: 1.1 } },
@@ -593,7 +599,7 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
       { key: 'salmon', label: '鮭', isDefault: true },
       { key: 'saba', label: 'サバ', factor: { kcal: 1.0, fat: 1.17 } },
       { key: 'buri', label: 'ぶり', factor: { kcal: 1.1, fat: 1.25 } },
-      { key: 'sanma', label: 'さんま', factor: { kcal: 1.45, fat: 2.0 } },
+      { key: 'sanma', label: 'さんま', factor: { kcal: 1.45, protein: 0.73, fat: 2.0 } },
       { key: 'iwashi', label: 'いわし', factor: { kcal: 0.81, fat: 0.83 } },
       { key: 'unagi', label: 'うなぎ蒲焼', factor: { kcal: 1.45, fat: 1.75, carbs: 999 } /* C handled separately */ },
     ],
@@ -607,6 +613,7 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
     label: '缶詰魚 (脂魚)',
     primaryHome: { tab: 'ingredient', bucket: 'fatty_protein' },
     defaultMacro: { kcal: 280, protein: 28, fat: 16, carbs: 0.5 },
+    referenceDescription: 'さば缶・いわし缶など。コンビニ個食サイズ(100〜150g)が目安。190g大缶は量を調整',
     amount: { unit: 'piece', default: 1, chips: [{ label: '半缶', value: 0.5 }, { label: '1缶', value: 1 }] },
     attributes: [
       { key: 'water', label: '水煮', isDefault: true },

@@ -176,7 +176,6 @@ export interface AppSettings {
     evening: LogMode;
   };
   hapticsEnabled: boolean;
-  soundEnabled: boolean;
   introSeenVersion?: number;
   onboardingCompleted?: boolean;
   onboardingStep?: number;

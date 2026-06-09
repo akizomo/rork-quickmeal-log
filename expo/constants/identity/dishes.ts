@@ -291,8 +291,8 @@ const BUCKET_JAPANESE_NOODLES: Identity[] = [
     id: 'udon',
     label: 'うどん',
     primaryHome: { tab: 'dish', bucket: 'japanese_noodles' },
-    defaultMacro: { kcal: 510, protein: 16, fat: 9, carbs: 92 },
-    referenceDescription: '麺250g (生1玉) + 出汁',
+    defaultMacro: { kcal: 430, protein: 12, fat: 2, carbs: 85 },
+    referenceDescription: '麺250g (生1玉) + 出汁 (トッピングはアドオンで追加)',
     amount: { unit: 'percent', default: 100, chips: [{ label: '小', value: 50 }, { label: '1人前', value: 100 }, { label: '大盛', value: 150 }, { label: '特盛', value: 200 }] },
     attributes: [
       { key: 'kake', label: 'かけ', isDefault: true },
@@ -310,8 +310,8 @@ const BUCKET_JAPANESE_NOODLES: Identity[] = [
     id: 'soba',
     label: 'そば',
     primaryHome: { tab: 'dish', bucket: 'japanese_noodles' },
-    defaultMacro: { kcal: 460, protein: 17, fat: 5, carbs: 87 },
-    referenceDescription: '麺250g (生1玉) + つゆ',
+    defaultMacro: { kcal: 410, protein: 15, fat: 2.5, carbs: 79 },
+    referenceDescription: '麺250g (生1玉) + つゆ (トッピングはアドオンで追加)',
     amount: { unit: 'percent', default: 100, chips: [{ label: '小', value: 50 }, { label: '1人前', value: 100 }, { label: '大盛', value: 150 }, { label: '特盛', value: 200 }] },
     attributes: [
       { key: 'kake', label: 'かけ', isDefault: true },
@@ -349,8 +349,8 @@ const BUCKET_JAPANESE_NOODLES: Identity[] = [
     id: 'somen',
     label: 'そうめん',
     primaryHome: { tab: 'dish', bucket: 'japanese_noodles' },
-    defaultMacro: { kcal: 430, protein: 12, fat: 4, carbs: 86 },
-    referenceDescription: '麺100g (乾麺) + つゆ',
+    defaultMacro: { kcal: 400, protein: 10, fat: 1.5, carbs: 78 },
+    referenceDescription: '麺100g (乾麺) + つゆ (トッピングはアドオンで追加)',
     amount: { unit: 'percent', default: 100, chips: [{ label: '1人前', value: 100 }, { label: '大盛', value: 150 }] },
   },
 ];
@@ -794,7 +794,7 @@ const BUCKET_MISC_DISH: Identity[] = [
     primaryHome: { tab: 'dish', bucket: 'misc_dish' },
     quickTapDisabled: true, // Attribute 魚種で kcal/F が大きく振れる
     defaultMacro: { kcal: 250, protein: 30, fat: 8, carbs: 4 }, // 5切=250kcal
-    referenceDescription: '1切=魚10g',
+    referenceDescription: '1切=魚30g',
     amount: { unit: 'piece', default: 5, unitLabel: '切' },
     attributes: [
       { key: 'mixed', label: '盛り合わせ', isDefault: true }, // 平均値

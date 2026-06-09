@@ -729,7 +729,6 @@ export const defaultSettings: AppSettings = {
     evening: 'dish',
   },
   hapticsEnabled: true,
-  soundEnabled: false,
   introSeenVersion: 0,
   onboardingCompleted: false,
   onboardingStep: 0,

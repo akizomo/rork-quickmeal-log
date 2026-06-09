@@ -3,7 +3,7 @@ import React from 'react';
 import { Alert, ScrollView, StyleSheet, Switch, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { SettingsDivider, SettingsLinkRow, SettingsListCard, SettingsSectionLabel } from '@/components/SettingsList';
+import { SettingsLinkRow, SettingsListCard, SettingsSectionLabel } from '@/components/SettingsList';
 import { Body, Caption, Card, useTheme } from '@/design-system';
 import { useAppState } from '@/providers/app-state-provider';
 
@@ -44,9 +44,9 @@ export default function SettingsRoute() {
         <SafeAreaView edges={['bottom']} style={{ flex: 1 }}>
           <ScrollView contentContainerStyle={styles.scroll} testID="settings-screen">
 
-            {/* §音とハプティクス */}
+            {/* §ハプティクス */}
             <View style={styles.section}>
-              <SettingsSectionLabel>音とハプティクス</SettingsSectionLabel>
+              <SettingsSectionLabel>ハプティクス</SettingsSectionLabel>
               <SettingsListCard>
                 <SettingsLinkRow
                   label="ハプティクス"
@@ -56,18 +56,6 @@ export default function SettingsRoute() {
                       value={settings.hapticsEnabled}
                       onValueChange={(value) => updateSettingsValues({ hapticsEnabled: value })}
                       testID="settings-haptics-switch"
-                    />
-                  }
-                />
-                <SettingsDivider />
-                <SettingsLinkRow
-                  label="効果音"
-                  showChevron={false}
-                  trailing={
-                    <Switch
-                      value={settings.soundEnabled}
-                      onValueChange={(value) => updateSettingsValues({ soundEnabled: value })}
-                      testID="settings-sound-switch"
                     />
                   }
                 />
