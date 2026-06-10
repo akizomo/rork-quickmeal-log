@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { AppState, type AppStateStatus } from 'react-native';
 
 import { useAppState } from '@/providers/app-state-provider';
+import { measureAsync } from '@/utils/perf';
 import {
   HEALTH_SYNC_RANGE_DAYS,
   getHealthDiagnostics,
@@ -47,8 +49,15 @@ export interface UseHealthSyncReturn {
  *     起動直後に Health からデータが返ってきても、まだ読み出されていない
  *     既存ログを上書きしないことを保証。
  */
+/**
+ * foreground 復帰時の自動再同期スロットル。
+ * 最終同期からこの時間が経過していれば再同期する。日跨ぎは間隔に関係なく強制。
+ */
+const FOREGROUND_RESYNC_THROTTLE_MS = 5 * 60 * 1000;
+
 export function useHealthSync(): UseHealthSyncReturn {
-  const { ingestHealthSyncResult, isHydrating } = useAppState();
+  const { ingestHealthSyncResult, isHydrating, settings } = useAppState();
+  const lastHealthSyncAtISO = settings?.lastHealthSyncAtISO ?? null;
   const [supported] = useState<boolean>(() => isHealthSyncSupported());
   const [status, setStatus] = useState<HealthSyncStatus>('unknown');
   const [syncing, setSyncing] = useState<boolean>(false);
@@ -79,7 +88,20 @@ export function useHealthSync(): UseHealthSyncReturn {
     setSyncing(true);
     setLastError(null);
     try {
-      const result = await syncFromHealth(HEALTH_SYNC_RANGE_DAYS);
+      // SLO 計測: health.sync の所要時間・成否・件数を span として送信 (docs/SLO.md)
+      const result = await measureAsync(
+        'health.sync',
+        async (span) => {
+          span.setTag('range.days', HEALTH_SYNC_RANGE_DAYS);
+          const r = await syncFromHealth(HEALTH_SYNC_RANGE_DAYS);
+          span.setTag('result.weights', r.weights.length);
+          span.setTag('result.bodyFats', r.bodyFats.length);
+          span.setTag('result.workouts', r.workouts.length);
+          span.setTag('result.dailyActivities', r.dailyActivities.length);
+          return r;
+        },
+        'health.sync'
+      );
       // 単一トランザクションで全てを取り込む (stale closure を回避)
       ingestHealthSyncResult({
         weights: result.weights,
@@ -138,6 +160,41 @@ export function useHealthSync(): UseHealthSyncReturn {
     if (status !== 'authorized') return;
     didAutoSyncRef.current = true;
     performSync().catch(() => undefined);
+  }, [supported, isHydrating, status, performSync]);
+
+  // foreground 復帰時の自動再同期。
+  //   - 最終同期から FOREGROUND_RESYNC_THROTTLE_MS 未満ならスキップ (無駄打ち防止)
+  //   - 日付が変わっていれば間隔に関係なく強制 (today のずれを解消)
+  // 最新の lastSyncedAt はクロージャ固定を避けるため ref 経由で読む。
+  const lastSyncedAtRef = useRef<string | null>(lastHealthSyncAtISO);
+  useEffect(() => {
+    lastSyncedAtRef.current = lastSyncedAt ?? lastHealthSyncAtISO;
+  }, [lastSyncedAt, lastHealthSyncAtISO]);
+
+  useEffect(() => {
+    if (!supported) return;
+    const sub = AppState.addEventListener('change', (next: AppStateStatus) => {
+      if (next !== 'active') return;
+      if (isHydrating) return;
+      if (status !== 'authorized') return;
+      const last = lastSyncedAtRef.current;
+      const now = new Date();
+      const due = (() => {
+        if (!last) return true;
+        const lastDate = new Date(last);
+        if (Number.isNaN(lastDate.getTime())) return true;
+        // 日跨ぎ判定 (ローカル日付が違えば強制)
+        if (lastDate.toDateString() !== now.toDateString()) return true;
+        return now.getTime() - lastDate.getTime() >= FOREGROUND_RESYNC_THROTTLE_MS;
+      })();
+      if (!due) {
+        if (__DEV__) console.log('[health-sync] foreground resync skipped (throttled)');
+        return;
+      }
+      if (__DEV__) console.log('[health-sync] foreground resync');
+      performSync().catch(() => undefined);
+    });
+    return () => sub.remove();
   }, [supported, isHydrating, status, performSync]);
 
   return {

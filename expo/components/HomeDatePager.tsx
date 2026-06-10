@@ -3,12 +3,16 @@ import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from '
 import {
   FlatList,
   ListRenderItemInfo,
+  RefreshControl,
+  ScrollView,
   StyleSheet,
   useWindowDimensions,
   View,
 } from 'react-native';
 
+import { palette } from '@/constants/theme';
 import { MAX_PAST_LOGGING_DAYS, useAppState } from '@/providers/app-state-provider';
+import { useHealthSyncContext } from '@/providers/health-sync-provider';
 import {
   addDays,
   diffInDays,
@@ -52,11 +56,23 @@ interface DayPageProps {
   height: number;
   bottomReserve: number;
   onFoodPress?: () => void;
+  refreshing?: boolean;
+  onRefresh?: () => void;
+  /** Health 連携が有効で pull-to-refresh を出せるか */
+  refreshEnabled?: boolean;
 }
 
-const DayPage = memo(function DayPage({ date, width, height, bottomReserve, onFoodPress }: DayPageProps) {
+const DayPage = memo(function DayPage({
+  date,
+  width,
+  height,
+  bottomReserve,
+  onFoodPress,
+  refreshing,
+  onRefresh,
+  refreshEnabled,
+}: DayPageProps) {
   // height === 0 (初回 layout 前) は flex:1 にフォールバック。
-  // 確定したら明示 height + 中央寄せ + 下端リザーブで StatusCard を画面中央に配置。
   if (height <= 0) {
     return (
       <View style={[styles.page, { width }]}>
@@ -64,19 +80,35 @@ const DayPage = memo(function DayPage({ date, width, height, bottomReserve, onFo
       </View>
     );
   }
+  // Health 連携が有効なら pull-to-refresh で手動同期できる縦 ScrollView でラップ。
+  // contentContainer を中央寄せ (flexGrow:1 + justifyContent center) して、
+  // 従来の「StatusCard を画面中央に配置」見た目を維持する。横ページャとは
+  // 直交ジェスチャなので、上端からの下方向プルでのみ RefreshControl が発火する。
+  const refreshControl =
+    refreshEnabled && onRefresh ? (
+      <RefreshControl
+        refreshing={!!refreshing}
+        onRefresh={onRefresh}
+        tintColor={palette.sageDeep}
+        colors={[palette.sageDeep]}
+        progressViewOffset={8}
+      />
+    ) : undefined;
   return (
-    <View
-      style={{
-        width,
-        height,
+    <ScrollView
+      style={{ width, height }}
+      contentContainerStyle={{
+        flexGrow: 1,
         paddingHorizontal: 16,
         paddingTop: 6,
         paddingBottom: bottomReserve,
         justifyContent: 'center',
       }}
+      showsVerticalScrollIndicator={false}
+      refreshControl={refreshControl}
     >
       <StatusCard viewedDate={date} onFoodPress={onFoodPress} />
-    </View>
+    </ScrollView>
   );
 });
 
@@ -92,6 +124,13 @@ export const HomeDatePager = memo(function HomeDatePager({ onViewedDateChange, o
   const setLoggingDate = appState?.setLoggingDate ?? ((_: Date | null) => undefined);
   const { width } = useWindowDimensions();
   const params = useLocalSearchParams<{ date?: string }>();
+
+  // Health 連携が有効なときだけ pull-to-refresh を出し、手動同期に繋ぐ。
+  const healthSync = useHealthSyncContext();
+  const refreshEnabled = healthSync.supported && healthSync.status === 'authorized';
+  const onRefresh = useCallback(() => {
+    healthSync.syncNow().catch(() => undefined);
+  }, [healthSync]);
 
   const today = useMemo(() => startOfDay(new Date()), []);
 
@@ -193,9 +232,12 @@ export const HomeDatePager = memo(function HomeDatePager({ onViewedDateChange, o
         height={pagerHeight}
         bottomReserve={bottomReserve}
         onFoodPress={onFoodPress}
+        refreshing={healthSync.syncing}
+        onRefresh={onRefresh}
+        refreshEnabled={refreshEnabled}
       />
     ),
-    [width, pagerHeight, bottomReserve, onFoodPress]
+    [width, pagerHeight, bottomReserve, onFoodPress, healthSync.syncing, onRefresh, refreshEnabled]
   );
 
   const getItemLayout = useCallback(

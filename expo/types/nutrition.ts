@@ -193,6 +193,12 @@ export interface AppSettings {
    */
   healthConnectSeenAtISO?: string | null;
   /**
+   * v1.7+: 最後に Health 同期が成功した時刻 (ISO)。
+   * foreground 復帰時の自動再同期スロットル (5分) 判定に使う。
+   * アンマウントで消えないよう、フック state ではなくここに永続化する。
+   */
+  lastHealthSyncAtISO?: string | null;
+  /**
    * Per-category history of long-press quick-log selections (most recent first,
    * capped per category). Used to seed default values on the next sheet open
    * via "recent → most-frequent → system default" priority.

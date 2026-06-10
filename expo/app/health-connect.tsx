@@ -5,8 +5,8 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Body, Button, Card, Caption, Heading, useTheme } from '@/design-system';
-import { useHealthSync } from '@/hooks/use-health-sync';
 import { useAppState } from '@/providers/app-state-provider';
+import { useHealthSyncContext } from '@/providers/health-sync-provider';
 
 /**
  * ペイウォール突破後に表示するヘルス連携誘導画面。
@@ -22,7 +22,7 @@ export default function HealthConnectRoute() {
   const router = useRouter();
   const t = useTheme();
   const { markHealthConnectSeen } = useAppState();
-  const healthSync = useHealthSync();
+  const healthSync = useHealthSyncContext();
   const [busy, setBusy] = useState<boolean>(false);
 
   const goHome = useCallback(() => {

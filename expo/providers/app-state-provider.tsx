@@ -18,6 +18,7 @@ import { adjustedTargetKcal, calcBaselineActiveKcal, calcExerciseGrossKcal, calc
 import { isSameDay } from '@/utils/history';
 import { castHistoryMap, recordSelection, selectionFromDraft } from '@/utils/quick-log-history';
 import { computeQuickLogMacro } from '@/utils/quick-log-macro';
+import { beginSpan } from '@/utils/perf';
 import { resolveLog, ResolveInput, ResolveResult } from '@/utils/identity-resolver';
 import { logDraftToFoodLog } from '@/utils/identity-log-bridge';
 import { getIdentity } from '@/constants/identity';
@@ -111,6 +112,7 @@ function migrateSettings(raw: Partial<AppSettings> | undefined): AppSettings {
     onboardingCompletedAtISO: raw?.onboardingCompletedAtISO ?? null,
     paywallSeenAtISO: raw?.paywallSeenAtISO ?? null,
     healthConnectSeenAtISO: raw?.healthConnectSeenAtISO ?? null,
+    lastHealthSyncAtISO: raw?.lastHealthSyncAtISO ?? null,
     quickLogHistory: castHistoryMap(raw?.quickLogHistory),
   };
 }
@@ -163,6 +165,12 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
   const [undoState, setUndoState] = useState<UndoState | null>(null);
   const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // SLO 計測: 起動 → ハイドレート完了までの TTI を 1 本の span として測る (docs/SLO.md)。
+  const ttiSpanRef = useRef<ReturnType<typeof beginSpan> | null>(null);
+  if (ttiSpanRef.current === null) {
+    ttiSpanRef.current = beginSpan('app.tti.hydrate', 'app.start');
+  }
 
   const persistedQuery = useQuery<PersistedState>({
     queryKey: ['quiet-nutrition-state'],
@@ -241,6 +249,11 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       setLogs(persistedQuery.data.logs);
     }
     setIsHydrated(true);
+    // TTI span を 1 度だけ閉じる (以降の persistedQuery.data 変化では再計測しない)。
+    if (ttiSpanRef.current) {
+      ttiSpanRef.current.end('ok');
+      ttiSpanRef.current = null;
+    }
     // persistMutation intentionally omitted from deps — it's stable across renders.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [persistedQuery.data]);
@@ -1237,16 +1250,20 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
         nextProfile = { ...nextProfile, currentBodyFatPct: latestBodyFat.bodyFatPct };
       }
 
-      // 6) 4 state まとめて更新 + persist は 1 回 (全て明示的に渡す)
+      // 6) 最終同期時刻を settings に記録 (foreground 自動再同期のスロットル判定用)
+      const nextSettings: AppSettings = { ...settings, lastHealthSyncAtISO: result.syncedAt };
+
+      // 7) state まとめて更新 + persist は 1 回 (全て明示的に渡す)
       setProfile(nextProfile);
       setWeights(nextWeights);
       setBodyFatEntries(nextBodyFatEntries);
       setExerciseLogs(nextExerciseLogs);
       setDailyActivities(nextDailyActivities);
+      setSettings(nextSettings);
       persist(
         nextProfile,
         logs,
-        settings,
+        nextSettings,
         nextWeights,
         nextBodyFatEntries,
         nextExerciseLogs,

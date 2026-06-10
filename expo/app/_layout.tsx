@@ -11,6 +11,7 @@ import { IdentityLogSheet } from '@/components/IdentityLogSheet';
 import { QuickIngredientSheet } from '@/components/QuickIngredientSheet';
 import { ThemeProvider } from '@/design-system';
 import { AppStateProvider } from '@/providers/app-state-provider';
+import { HealthSyncProvider } from '@/providers/health-sync-provider';
 import { initIap } from '@/utils/iap';
 import { initSentry } from '@/utils/sentry';
 
@@ -73,10 +74,12 @@ export default function RootLayout() {
         <ErrorBoundary>
           <ThemeProvider>
             <AppStateProvider>
-              <RootLayoutNav />
-              <DishQuickEntrySheet />
-              <QuickIngredientSheet />
-              <IdentityLogSheet />
+              <HealthSyncProvider>
+                <RootLayoutNav />
+                <DishQuickEntrySheet />
+                <QuickIngredientSheet />
+                <IdentityLogSheet />
+              </HealthSyncProvider>
             </AppStateProvider>
           </ThemeProvider>
         </ErrorBoundary>

@@ -18,7 +18,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { SettingsDivider, SettingsLinkRow, SettingsListCard, SettingsSectionLabel } from '@/components/SettingsList';
 import { TRIAL_DURATION_DAYS } from '@/constants/onboarding';
 import { Body, Caption, Card, Heading, Icon, useTheme } from '@/design-system';
-import { useHealthSync } from '@/hooks/use-health-sync';
+import { useHealthSyncContext } from '@/providers/health-sync-provider';
 import type { HealthSyncStatus } from '@/utils/health-sync';
 import { useAppState } from '@/providers/app-state-provider';
 import { getEffectiveSubscriptionStatus, trialDaysRemaining } from '@/utils/goals';
@@ -27,7 +27,7 @@ export default function StatusRoute() {
   const router = useRouter();
   const theme = useTheme();
   const { profile, settings, weights, addWeightEntry, addBodyFatEntry } = useAppState();
-  const healthSync = useHealthSync();
+  const healthSync = useHealthSyncContext();
   const [weightSheetVisible, setWeightSheetVisible] = useState<boolean>(false);
   const [weightInput, setWeightInput] = useState<string>('');
   const [bfSheetVisible, setBfSheetVisible] = useState<boolean>(false);
