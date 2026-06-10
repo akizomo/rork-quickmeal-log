@@ -754,6 +754,33 @@ body.lp-body {
   padding-bottom: 128px;
 }
 
+/* 2-column grid: text/CTA on left, phone mockup on right
+   Hero と同等の構造で視覚的 bookending を狙う */
+.lp-start-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 64px;
+}
+
+.lp-start-copy {
+  max-width: 640px;
+}
+
+.lp-start-figure {
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.lp-start-figure img {
+  width: 100%;
+  max-width: 320px;
+  height: auto;
+  filter: drop-shadow(0 24px 56px rgba(28, 28, 26, 0.18));
+}
+
 .lp-start-h {
   margin-bottom: 24px;
 }
@@ -927,6 +954,58 @@ body.lp-body {
   font-weight: 700;
 }
 
+/* Android 参加手順ステップリスト */
+.lp-modal-steps {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 28px;
+  display: grid;
+  gap: 16px;
+}
+
+.lp-modal-steps li {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.lp-modal-step-num {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--sage);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.lp-modal-step-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.lp-modal-step-text strong {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.4;
+}
+
+.lp-modal-step-text span {
+  font-size: 13px;
+  color: var(--ink-soft);
+  line-height: 1.5;
+}
+
 .lp-modal-submit {
   width: 100%;
   margin-top: 4px;
@@ -981,8 +1060,12 @@ body.lp-body {
   }
   .lp-modal-sub,
   .lp-modal-label,
-  .lp-modal-bullets li {
+  .lp-modal-bullets li,
+  .lp-modal-step-text span {
     color: #BFBFB9;
+  }
+  .lp-modal-step-text strong {
+    color: #F7F7F6;
   }
   .lp-modal-input {
     background: #1D1913;
@@ -1178,6 +1261,32 @@ body.lp-body {
 
   .lp-start {
     padding-bottom: 80px;
+  }
+
+  /* Mobile: §05 を 1 列スタック、phone は CTA の下 */
+  .lp-start-grid {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+
+  .lp-start-figure {
+    order: 2;
+  }
+
+  .lp-start-figure img {
+    max-width: 240px;
+  }
+
+  /* Mobile: Modal ステップを少し圧縮 */
+  .lp-modal-steps {
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+
+  .lp-modal-step-num {
+    width: 26px;
+    height: 26px;
+    font-size: 12px;
   }
 
   .lp-footer-inner {

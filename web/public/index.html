@@ -296,45 +296,59 @@
 
       <!-- §05 START -->
       <section id="start" class="lp-section lp-start" aria-labelledby="start-title">
-        <p class="lp-section-num">§ 05 — Start</p>
-        <h2 id="start-title" class="lp-section-h lp-start-h">
-          ざっくり記録、<br />はじめてみる。
-        </h2>
-        <p class="lp-start-sub">
-          いま試せるのは Android のクローズドテスト。<br />
-          iPhone の方は、準備が整い次第お知らせします。
-        </p>
+        <div class="lp-start-grid">
+          <div class="lp-start-copy">
+            <p class="lp-section-num">§ 05 — Start</p>
+            <h2 id="start-title" class="lp-section-h lp-start-h">
+              ざっくり記録、<br />はじめてみる。
+            </h2>
+            <p class="lp-start-sub">
+              いま試せるのは Android のクローズドテスト。<br />
+              iPhone の方は、準備が整い次第お知らせします。
+            </p>
 
-        <ul class="lp-start-bullets" aria-label="テスト参加条件">
-          <li>全機能、無料</li>
-          <li>クレカ不要</li>
-          <li>合わなければアンインストールするだけ</li>
-        </ul>
+            <ul class="lp-start-bullets" aria-label="テスト参加条件">
+              <li>全機能、無料</li>
+              <li>クレカ不要</li>
+              <li>合わなければアンインストールするだけ</li>
+            </ul>
 
-        <div class="lp-cta-row">
-          <!-- Primary: Android (Googleグループ経由でクローズドテスト参加) -->
-          <a
-            class="cta cta-primary"
-            href="https://groups.google.com/g/hachibu-testers"
-            target="_blank"
-            rel="noopener noreferrer"
-            data-cta="android-group"
-            aria-label="Googleグループに参加して Android クローズドテストに参加する"
-          >
-            Androidで試す
-          </a>
-          <div class="lp-cta-secondary-wrap">
-            <a
-              class="cta cta-secondary"
-              href="mailto:contact@akizony.com?subject=Hachibu%20iOS%E7%89%88%20%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B%E5%B8%8C%E6%9C%9B&body=iOS%E7%89%88%E3%81%8C%E3%83%AA%E3%83%AA%E3%83%BC%E3%82%B9%E3%81%95%E3%82%8C%E3%81%9F%E3%82%89%E3%81%93%E3%81%AE%E3%83%A1%E3%83%BC%E3%83%AB%E3%82%A2%E3%83%89%E3%83%AC%E3%82%B9%E3%81%B8%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B%E3%82%92%E3%81%8A%E9%A1%98%E3%81%84%E3%81%97%E3%81%BE%E3%81%99%E3%80%82"
-              data-cta="ios-notify"
-              aria-label="iOS リリース通知メーリングリストに登録する"
-            >
-              <span class="cta-mute">iPhone をお使いなら</span>
-              <span class="cta-strong">知らせを受け取る</span>
-            </a>
-            <p class="lp-cta-note">iOSローンチ時の1通のみ</p>
+            <div class="lp-cta-row">
+              <!-- Primary: Android (Googleグループ経由でクローズドテスト参加) -->
+              <a
+                class="cta cta-primary"
+                href="https://groups.google.com/g/hachibu-testers"
+                target="_blank"
+                rel="noopener noreferrer"
+                data-cta="android-group"
+                aria-label="Googleグループに参加して Android クローズドテストに参加する"
+              >
+                Androidで試す
+              </a>
+              <div class="lp-cta-secondary-wrap">
+                <a
+                  class="cta cta-secondary"
+                  href="mailto:contact@akizony.com?subject=Hachibu%20iOS%E7%89%88%20%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B%E5%B8%8C%E6%9C%9B&body=iOS%E7%89%88%E3%81%8C%E3%83%AA%E3%83%AA%E3%83%BC%E3%82%B9%E3%81%95%E3%82%8C%E3%81%9F%E3%82%89%E3%81%93%E3%81%AE%E3%83%A1%E3%83%BC%E3%83%AB%E3%82%A2%E3%83%89%E3%83%AC%E3%82%B9%E3%81%B8%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B%E3%82%92%E3%81%8A%E9%A1%98%E3%81%84%E3%81%97%E3%81%BE%E3%81%99%E3%80%82"
+                  data-cta="ios-notify"
+                  aria-label="iOS リリース通知メーリングリストに登録する"
+                >
+                  <span class="cta-mute">iPhone をお使いなら</span>
+                  <span class="cta-strong">知らせを受け取る</span>
+                </a>
+                <p class="lp-cta-note">iOSローンチ時の1通のみ</p>
+              </div>
+            </div>
           </div>
+          <figure class="lp-start-figure" aria-hidden="true">
+            <img
+              src="/lp/hero-phone.png"
+              alt="Hachibu アプリのホーム画面。今日のカロリーと PFC のサマリー、9 つのボタン。"
+              width="300"
+              height="615"
+              loading="lazy"
+              decoding="async"
+            />
+          </figure>
         </div>
       </section>
     </main>
@@ -425,6 +439,67 @@
       </div>
     </dialog>
 
+    <!-- Android クローズドテスト参加手順モーダル -->
+    <dialog id="android-modal" class="lp-modal" aria-labelledby="android-title">
+      <button
+        type="button"
+        class="lp-modal-close"
+        aria-label="閉じる"
+        onclick="document.getElementById('android-modal').close()"
+      >
+        ×
+      </button>
+
+      <div class="lp-modal-body">
+        <h2 id="android-title" class="lp-modal-title">
+          Android クローズドテスト<br />
+          参加の 3 ステップ
+        </h2>
+        <p class="lp-modal-sub">
+          Play Store で直接インストールはできません。<br />
+          Google グループに参加して、テスターになる必要があります。
+        </p>
+
+        <ol class="lp-modal-steps" aria-label="参加手順">
+          <li>
+            <span class="lp-modal-step-num">1</span>
+            <div class="lp-modal-step-text">
+              <strong>Google グループに参加申請</strong>
+              <span>下のボタンから「参加」を押してください</span>
+            </div>
+          </li>
+          <li>
+            <span class="lp-modal-step-num">2</span>
+            <div class="lp-modal-step-text">
+              <strong>承認連絡を待つ</strong>
+              <span>通常 1 日以内にメールで連絡が届きます</span>
+            </div>
+          </li>
+          <li>
+            <span class="lp-modal-step-num">3</span>
+            <div class="lp-modal-step-text">
+              <strong>Play Store からインストール</strong>
+              <span>グループ内のリンクから Play Store を開いてインストール</span>
+            </div>
+          </li>
+        </ol>
+
+        <a
+          href="https://groups.google.com/g/hachibu-testers"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="cta cta-primary lp-modal-submit"
+          onclick="setTimeout(function(){document.getElementById('android-modal').close();},150)"
+        >
+          Google グループを開く
+        </a>
+
+        <p class="lp-modal-finep">
+          Google アカウントでのログインが必要です。
+        </p>
+      </div>
+    </dialog>
+
     <script>
       (function () {
         var modal = document.getElementById('subscribe-modal');
@@ -444,6 +519,25 @@
         modal.addEventListener('click', function (e) {
           if (e.target === modal) modal.close();
         });
+
+        // Android クローズドテスト参加 CTA: クリックで手順モーダルを開く
+        // (JS 無効時は Google グループへ直接遷移)
+        var androidModal = document.getElementById('android-modal');
+        if (androidModal) {
+          document
+            .querySelectorAll('a[data-cta="android-group"], a[data-cta="android-group-header"]')
+            .forEach(function (a) {
+              a.addEventListener('click', function (e) {
+                if (typeof androidModal.showModal === 'function') {
+                  e.preventDefault();
+                  androidModal.showModal();
+                }
+              });
+            });
+          androidModal.addEventListener('click', function (e) {
+            if (e.target === androidModal) androidModal.close();
+          });
+        }
 
         // フォーム送信 → fetch で送り、成功状態に切替
         var form = document.getElementById('subscribe-form');
