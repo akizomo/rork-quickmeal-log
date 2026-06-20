@@ -1169,13 +1169,14 @@ const BUCKET_SNACK_DRINK: Identity[] = [
     // 市販袋ポップコーン塩・バターしょうゆ基準 (マイクポップコーン等):
     // kcal 510 / P 8.5 / F 27 / C 56 per 100g (1袋50g = 255 / 4.3 / 13.5 / 28)
     defaultMacro: { kcal: 255, protein: 4.3, fat: 13.5, carbs: 28 },
-    referenceDescription: '市販袋ポップコーン1袋≈50g。映画館 M≈120g / L≈180g',
+    referenceDescription: '市販袋ポップコーン1袋≈50g。映画館 S≈70g / M≈120g / L≈180g',
     amount: {
       unit: 'g',
       default: 50,
       chips: [
         { label: '半袋', value: 25 },
         { label: '1袋', value: 50 },
+        { label: '映画館S', value: 70 },
         { label: '映画館M', value: 120 },
         { label: '映画館L', value: 180 },
       ],
