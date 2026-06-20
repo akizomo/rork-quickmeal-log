@@ -333,8 +333,11 @@ export const StatusCard = memo(function StatusCard({
     [profile.targetCalories, exerciseLogs, dateKey, activityCtx]
   );
   const effectiveExerciseKcal = useMemo(
-    () => getGrossExerciseKcalForDate(exerciseLogs, dateKey),
-    [exerciseLogs, dateKey]
+    () => Math.round(
+      getGrossExerciseKcalForDate(exerciseLogs, dateKey) +
+      (activityCtx.measuredActiveKcal ?? 0)
+    ),
+    [exerciseLogs, dateKey, activityCtx]
   );
   const effectivePfc = useMemo(
     () => getAdjustedPfcForDate(profile, exerciseLogs, dateKey, activityCtx),
@@ -436,7 +439,7 @@ export const StatusCard = memo(function StatusCard({
         />
       </View>
 
-      <ExerciseSheet visible={exerciseSheetVisible} onClose={closeExerciseSheet} />
+      <ExerciseSheet visible={exerciseSheetVisible} onClose={closeExerciseSheet} dateKey={dateKey} />
       <BalanceModal
         visible={balanceVisible}
         onClose={() => setBalanceVisible(false)}
