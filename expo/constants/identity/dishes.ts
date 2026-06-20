@@ -731,7 +731,8 @@ const BUCKET_MISC_DISH: Identity[] = [
     // エビフライ/魚介=タルタル 等)。allowedAddonIds 既定の4種から出し分ける。
     attributes: [
       { key: 'karaage', label: '唐揚げ', isDefault: true, factor: { kcal: 1.29, protein: 1.56, fat: 1.25 }, defaultAddonIds: ['lemon_squeeze', 'mayo'] },
-      { key: 'tonkatsu', label: 'とんかつ', factor: { kcal: 1.43, protein: 1.22, fat: 1.5 }, defaultAddonIds: ['sauce', 'mayo'] },
+      { key: 'tonkatsu', label: 'ロースかつ', factor: { kcal: 1.43, protein: 1.22, fat: 1.5 }, defaultAddonIds: ['sauce', 'mayo'] },
+      { key: 'tonkatsu_hire', label: 'ヒレかつ', factor: { kcal: 1.1, protein: 1.45, fat: 0.7, carbs: 1.0 }, defaultAddonIds: ['sauce', 'mayo'] },
       { key: 'menchi', label: 'メンチカツ', factor: { kcal: 0.8, protein: 0.5, fat: 0.85 }, defaultAddonIds: ['sauce', 'mayo'] },
       { key: 'ebi_fry', label: 'エビフライ', factor: { kcal: 0.8, protein: 0.83, fat: 0.75 }, defaultAddonIds: ['tartar', 'lemon_squeeze'] },
       { key: 'fish_fry', label: '魚介揚げ', factor: { kcal: 0.8, protein: 0.83, fat: 0.75 }, defaultAddonIds: ['tartar', 'lemon_squeeze'] },

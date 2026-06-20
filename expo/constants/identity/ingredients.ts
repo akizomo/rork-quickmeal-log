@@ -846,6 +846,27 @@ const BUCKET_VEGGIES: Identity[] = [
     allowedAddonIds: ['mayo', 'dressing'],
   },
   {
+    id: 'veg_dense',
+    label: '高タンパク野菜',
+    primaryHome: { tab: 'ingredient', bucket: 'veggies' },
+    // ブロッコリー基準 (生 100g): kcal 35, P 4.3, F 0.4, C 5
+    defaultMacro: { kcal: 35, protein: 4.3, fat: 0.4, carbs: 5 },
+    amount: { unit: 'g', default: 100, chips: [{ label: '小', value: 50 }, { label: '普通', value: 100 }, { label: '大', value: 150 }] },
+    attributes: [
+      { key: 'broccoli', label: 'ブロッコリー', isDefault: true },
+      { key: 'cauliflower', label: 'カリフラワー', factor: { kcal: 0.71, protein: 0.70, fat: 0.25, carbs: 1.0 } },
+      { key: 'asparagus', label: 'アスパラガス', factor: { kcal: 0.63, protein: 0.60, fat: 0.50, carbs: 0.74 } },
+      { key: 'brussels_sprouts', label: '芽キャベツ', factor: { kcal: 1.43, protein: 1.14, fat: 0.50, carbs: 1.80 } },
+      { key: 'spinach', label: 'ほうれん草', factor: { kcal: 0.57, protein: 0.67, fat: 0.75, carbs: 0.62 } },
+    ],
+    styles: [
+      { key: 'steamed', label: '蒸し・茹で', isDefault: true },
+      { key: 'stir_fry', label: '炒め', factor: { kcal: 1.7, fat: 10 } },
+    ],
+    defaultAddonIds: ['mayo'],
+    allowedAddonIds: ['mayo', 'dressing', 'cheese', 'oil'],
+  },
+  {
     id: 'side_seasoned',
     label: '煮物・和え物',
     primaryHome: { tab: 'ingredient', bucket: 'veggies' },
@@ -1137,6 +1158,12 @@ const BUCKET_SNACK_DRINK: Identity[] = [
     defaultMacro: { kcal: 320, protein: 4, fat: 18, carbs: 36 },
     referenceDescription: 'ポテチ・コーンスナック等。1袋(ポテチ普通サイズ)≈60g',
     amount: { unit: 'g', default: 60, chips: [{ label: '半袋', value: 30 }, { label: '1袋', value: 60 }] },
+    attributes: [
+      { key: 'chips', label: 'ポテチ・コーンスナック', isDefault: true },
+      // ポップコーン (USDA air-popped: 387 kcal / P 12.6 / F 4.5 / C 77.8 per 100g)
+      // factor は snack defaultMacro (320/4/18/36 per 60g) に対する 60g 換算比
+      { key: 'popcorn', label: 'ポップコーン', factor: { kcal: 0.72, protein: 1.80, fat: 0.15, carbs: 1.33 } },
+    ],
   },
   {
     id: 'sweet_bread',
