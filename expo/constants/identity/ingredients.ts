@@ -1161,12 +1161,34 @@ const BUCKET_SNACK_DRINK: Identity[] = [
     defaultMacro: { kcal: 320, protein: 4, fat: 18, carbs: 36 },
     referenceDescription: 'ポテチ・コーンスナック等。1袋(ポテチ普通サイズ)≈60g',
     amount: { unit: 'g', default: 60, chips: [{ label: '半袋', value: 30 }, { label: '1袋', value: 60 }] },
+  },
+  {
+    id: 'popcorn',
+    label: 'ポップコーン',
+    primaryHome: { tab: 'ingredient', bucket: 'snack_drink' },
+    // 市販袋ポップコーン塩味基準 (マイクポップコーン等): kcal 470 / P 8.5 / F 22 / C 60 per 100g
+    // 1袋50g想定で kcal 235 / P 4.3 / F 11 / C 30
+    defaultMacro: { kcal: 235, protein: 4.3, fat: 11, carbs: 30 },
+    referenceDescription: '市販袋ポップコーン1袋≈50g。映画館Mサイズは120g目安',
+    amount: {
+      unit: 'g',
+      default: 50,
+      chips: [
+        { label: '半袋', value: 25 },
+        { label: '1袋', value: 50 },
+        { label: '映画館M', value: 120 },
+      ],
+    },
     attributes: [
-      { key: 'chips', label: 'ポテチ・コーンスナック', isDefault: true },
-      // ポップコーン (USDA air-popped: 387 kcal / P 12.6 / F 4.5 / C 77.8 per 100g)
-      // factor は snack defaultMacro (320/4/18/36 per 60g) に対する 60g 換算比
-      { key: 'popcorn', label: 'ポップコーン', factor: { kcal: 0.72, protein: 1.80, fat: 0.15, carbs: 1.33 } },
+      { key: 'salt', label: '塩', isDefault: true },
+      // バターしょうゆ: ~500 kcal / P 8 / F 26 / C 58 per 100g
+      { key: 'butter_soy', label: 'バターしょうゆ', factor: { kcal: 1.06, protein: 0.93, fat: 1.18, carbs: 0.97 } },
+      // キャラメル: ~440 kcal / P 4 / F 13 / C 75 per 100g (糖衣で炭水化物↑、P/F↓)
+      { key: 'caramel', label: 'キャラメル', factor: { kcal: 0.94, protein: 0.47, fat: 0.59, carbs: 1.25 } },
+      // チーズ: ~500 kcal / P 9 / F 26 / C 55 per 100g
+      { key: 'cheese', label: 'チーズ', factor: { kcal: 1.06, protein: 1.05, fat: 1.18, carbs: 0.92 } },
     ],
+    searchTags: ['ポップコーン', 'popcorn', 'マイクポップコーン'],
   },
   {
     id: 'sweet_bread',
