@@ -710,9 +710,8 @@ export function trialDaysRemaining(startedAtISO: string | null | undefined, tria
  * RC が明示的に 'expired' を返すまではアクセスを維持する。
  *
  * - `subscriptionStatus !== 'trialing'` → そのまま返す
- * - `trialing` & `trialStartedAtISO` 未記録 → そのまま `trialing`
  * - `trialing` & 残日数 > 0 → `trialing`
- * - `trialing` & 残日数 <= 0 → `active` (登録は残しつつ表記だけ切替)
+ * - `trialing` & 残日数 <= 0 (trialStartedAtISO 未記録を含む) → `active`
  */
 export function getEffectiveSubscriptionStatus(
   settings: Pick<AppSettings, 'subscriptionStatus' | 'trialStartedAtISO'>,
@@ -720,7 +719,6 @@ export function getEffectiveSubscriptionStatus(
 ): SubscriptionStatus {
   const current = settings.subscriptionStatus ?? 'none';
   if (current !== 'trialing') return current;
-  if (!settings.trialStartedAtISO) return current;
   const remaining = trialDaysRemaining(settings.trialStartedAtISO, trialDays);
   return remaining <= 0 ? 'active' : 'trialing';
 }

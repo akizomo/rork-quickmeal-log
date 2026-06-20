@@ -8,9 +8,10 @@ export default function DevHub() {
   const t = useTheme();
   const { settings, updateSettingsValues } = useAppState();
 
-  const items: { label: string; href: '/dev/tokens' | '/dev/components'; desc: string }[] = [
+  const items: { label: string; href: '/dev/tokens' | '/dev/components' | '/dev/widget-prototype'; desc: string }[] = [
     { label: 'Tokens', href: '/dev/tokens', desc: 'Color / Spacing / Typography / Radius / Elevation' },
     { label: 'Components', href: '/dev/components', desc: 'Button / Card variants & sizes' },
+    { label: 'Widget Prototype', href: '/dev/widget-prototype', desc: '1×1 / 2×2 / 4×2 / 3×3 — ホーム画面ウィジェット UI 確認' },
   ];
 
   return (
@@ -53,7 +54,7 @@ export default function DevHub() {
         <View style={{ flexDirection: 'row', gap: t.spacing['2'] }}>
           <Pressable
             onPress={() => {
-              updateSettingsValues({ subscriptionStatus: 'trialing' });
+              updateSettingsValues({ subscriptionStatus: 'trialing', trialStartedAtISO: new Date().toISOString() });
               Alert.alert('Paywall スキップ', 'subscriptionStatus を trialing にセットしました。');
             }}
             style={({ pressed }) => ({
