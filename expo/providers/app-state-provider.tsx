@@ -1219,9 +1219,10 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       }
 
       // 3) workouts — ExerciseLog として加算。同 healthSyncId スキップ + 同日同種±15分の手動置換
-      // ウォーキング: dailyActivities (歩数) で既にカバーされる日は取込まない (二重計上防止)
+      // ウォーキング: 保存済み + 今回同期分の両方を含む dailyActivities でカバー済み日をスキップ
+      // (result.dailyActivities のみだと過去同期で保存済みの日が漏れるため合算する)
       const datesWithActivity = new Set(
-        result.dailyActivities
+        [...dailyActivities, ...result.dailyActivities]
           .filter((da) => da.steps > 0 || da.activeKcal > 0)
           .map((da) => da.date)
       );
