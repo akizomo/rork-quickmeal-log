@@ -826,6 +826,9 @@ const BUCKET_VEGGIES: Identity[] = [
     id: 'veg_cooked',
     label: '温野菜',
     primaryHome: { tab: 'ingredient', bucket: 'veggies' },
+    // 一般野菜の代表値 (葉物・根菜・きのこ等)。
+    // ブロッコリー類など高タンパク野菜は veg_dense へ。
+    referenceDescription: '葉物・根菜・きのこ等の一般野菜。ブロッコリー類は「高タンパク野菜」へ',
     defaultMacro: { kcal: 35, protein: 1.5, fat: 0.3, carbs: 7 },
     amount: { unit: 'g', default: 100, chips: [{ label: '小', value: 50 }, { label: '普通', value: 100 }, { label: '大', value: 150 }] },
     styles: [
