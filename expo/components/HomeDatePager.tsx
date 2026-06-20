@@ -58,8 +58,6 @@ interface DayPageProps {
   onFoodPress?: () => void;
   refreshing?: boolean;
   onRefresh?: () => void;
-  /** Health 連携が有効で pull-to-refresh を出せるか */
-  refreshEnabled?: boolean;
 }
 
 const DayPage = memo(function DayPage({
@@ -70,7 +68,6 @@ const DayPage = memo(function DayPage({
   onFoodPress,
   refreshing,
   onRefresh,
-  refreshEnabled,
 }: DayPageProps) {
   // height === 0 (初回 layout 前) は flex:1 にフォールバック。
   if (height <= 0) {
@@ -80,12 +77,12 @@ const DayPage = memo(function DayPage({
       </View>
     );
   }
-  // Health 連携が有効なら pull-to-refresh で手動同期できる縦 ScrollView でラップ。
+  // pull-to-refresh で手動更新できる縦 ScrollView でラップ。
   // contentContainer を中央寄せ (flexGrow:1 + justifyContent center) して、
   // 従来の「StatusCard を画面中央に配置」見た目を維持する。横ページャとは
   // 直交ジェスチャなので、上端からの下方向プルでのみ RefreshControl が発火する。
   const refreshControl =
-    refreshEnabled && onRefresh ? (
+    onRefresh ? (
       <RefreshControl
         refreshing={!!refreshing}
         onRefresh={onRefresh}
@@ -122,17 +119,31 @@ export const HomeDatePager = memo(function HomeDatePager({ onViewedDateChange, o
   const settings = appState?.settings ?? ({ onboardingCompletedAtISO: null } as ReturnType<typeof useAppState>['settings']);
   const logs = appState?.logs ?? [];
   const setLoggingDate = appState?.setLoggingDate ?? ((_: Date | null) => undefined);
+  const todayKey = appState?.todayKey ?? '';
+  const refreshToday = appState?.refreshToday ?? (() => undefined);
   const { width } = useWindowDimensions();
   const params = useLocalSearchParams<{ date?: string }>();
 
-  // Health 連携が有効なときだけ pull-to-refresh を出し、手動同期に繋ぐ。
+  // pull-to-refresh: 日付ロールオーバー再計算 + (連携時) Health 手動同期。
+  // Health 未連携でもジェスチャは常に有効にし、最低限「今日」を更新する。
   const healthSync = useHealthSyncContext();
-  const refreshEnabled = healthSync.supported && healthSync.status === 'authorized';
-  const onRefresh = useCallback(() => {
-    healthSync.syncNow().catch(() => undefined);
-  }, [healthSync]);
+  const [manualRefreshing, setManualRefreshing] = useState<boolean>(false);
+  const onRefresh = useCallback(async () => {
+    setManualRefreshing(true);
+    try {
+      refreshToday();
+      if (healthSync.supported && healthSync.status === 'authorized') {
+        await healthSync.syncNow();
+      }
+    } finally {
+      setManualRefreshing(false);
+    }
+  }, [healthSync, refreshToday]);
+  const refreshing = manualRefreshing || healthSync.syncing;
 
-  const today = useMemo(() => startOfDay(new Date()), []);
+  // todayKey が変わる (foreground 復帰 / 深夜0時跨ぎ) と today を再計算し、
+  // pager の対象日・最新ページ位置を当日にロールオーバーさせる。
+  const today = useMemo(() => startOfDay(new Date()), [todayKey]);
 
   // HOME pager は編集可能ウィンドウ (今日 〜 MAX_PAST_LOGGING_DAYS 日前) のみを対象とする。
   // それより古いログは Stats ページから振り返る。新規ユーザー (onboarding 直後) で
@@ -232,12 +243,11 @@ export const HomeDatePager = memo(function HomeDatePager({ onViewedDateChange, o
         height={pagerHeight}
         bottomReserve={bottomReserve}
         onFoodPress={onFoodPress}
-        refreshing={healthSync.syncing}
+        refreshing={refreshing}
         onRefresh={onRefresh}
-        refreshEnabled={refreshEnabled}
       />
     ),
-    [width, pagerHeight, bottomReserve, onFoodPress, healthSync.syncing, onRefresh, refreshEnabled]
+    [width, pagerHeight, bottomReserve, onFoodPress, refreshing, onRefresh]
   );
 
   const getItemLayout = useCallback(

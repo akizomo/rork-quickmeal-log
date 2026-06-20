@@ -3,6 +3,7 @@ import createContextHook from '@nkzw/create-context-hook';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import * as Haptics from 'expo-haptics';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { AppState } from 'react-native';
 
 import { defaultBodyFatEntries, defaultProfile, defaultSettings, defaultWeightEntries } from '@/constants/nutrition-data';
 import { getDishTopCategory } from '@/constants/dish-master';
@@ -616,11 +617,16 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       setDishQuickEntryKey(null);
 
       // ①-a dish 履歴記録（長押し確定時）
+      // subcategoryKey: 実際のサブカテゴリキー (例: 'gyudon', 'ramen_light')
+      // amountLabel: サブカテゴリラベル + 量 (例: '牛丼 · 並') → ⭐️ グリッドの副テキスト
       if (payload.topCategoryKey) {
         const subcategoryKey = payload.subcategoryKey ?? 'default';
-        const amountLabel = payload.portionPrimaryLabel ?? '1食';
+        const parts = [payload.subcategoryLabel, payload.portionPrimaryLabel].filter(Boolean);
+        const amountLabel = parts.length > 0 ? parts.join(' · ') : '1食';
         const currentHistory = (settings.quickLogHistory ?? {}) as QuickLogHistoryMap;
-        const nextHistory = recordDishSelection(currentHistory, payload.topCategoryKey, subcategoryKey, amountLabel);
+        const nextHistory = recordDishSelection(
+          currentHistory, payload.topCategoryKey, subcategoryKey, amountLabel,
+        );
         setSettings(prev => ({ ...prev, quickLogHistory: nextHistory }));
       }
 
@@ -649,9 +655,16 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       setEditorLogId(log.id);
 
       // ①-a dish 履歴記録（短押し instant_save 時）
-      if (selectedMode === 'dish') {
+      // baseLog.subTypeKey: 実際のサブカテゴリキー (例: 'gyudon')
+      // baseLog.subTypeLabel: 表示ラベル (例: '牛丼') → buildRankedItem で dish master から再解決
+      // baseLog.portionLabel: 量ラベル (例: '1人前')
+      if (selectedMode === 'dish' && baseLog) {
+        const subcategoryKey = baseLog.subTypeKey ?? 'default';
+        const amountLabel = baseLog.portionLabel ?? '1食';
         const currentHistory = (settings.quickLogHistory ?? {}) as QuickLogHistoryMap;
-        const nextHistory = recordDishSelection(currentHistory, categoryKey, 'default', '1食');
+        const nextHistory = recordDishSelection(
+          currentHistory, categoryKey, subcategoryKey, amountLabel,
+        );
         setSettings(prev => ({ ...prev, quickLogHistory: nextHistory }));
       }
 
@@ -1325,7 +1338,38 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     ]
   );
 
-  const todayKey = formatDateKey(new Date());
+  // 「今日」をリアクティブ state にして、foreground 復帰時と深夜0時跨ぎで更新する。
+  // 元は毎レンダー `formatDateKey(new Date())` だったが、再レンダーが起きなければ
+  // 日付が変わっても古い today のまま (アプリ開きっぱなしで日跨ぎ→前日表示) だった。
+  const [todayKey, setTodayKey] = useState<string>(() => formatDateKey(new Date()));
+  const refreshToday = useCallback(() => {
+    setTodayKey((prev) => {
+      const next = formatDateKey(new Date());
+      return prev === next ? prev : next;
+    });
+  }, []);
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (s) => {
+      if (s === 'active') refreshToday();
+    });
+    let timer: ReturnType<typeof setTimeout>;
+    const scheduleMidnight = () => {
+      const now = new Date();
+      const nextMidnight = new Date(now);
+      nextMidnight.setHours(24, 0, 0, 0); // 翌日のローカル0時
+      const ms = nextMidnight.getTime() - now.getTime() + 1000; // +1s 余裕
+      timer = setTimeout(() => {
+        refreshToday();
+        scheduleMidnight();
+      }, ms);
+    };
+    scheduleMidnight();
+    return () => {
+      sub.remove();
+      clearTimeout(timer);
+    };
+  }, [refreshToday]);
+
   const todayLogs = useMemo(() => logs.filter((item) => item.date === todayKey), [logs, todayKey]);
   const todayMacro = useMemo(() => sumToday(logs, todayKey), [logs, todayKey]);
   const todayExerciseLogs = useMemo(() => exerciseLogs.filter((e) => e.date === todayKey), [exerciseLogs, todayKey]);
@@ -1381,6 +1425,8 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
   return {
     profile,
     logs,
+    todayKey,
+    refreshToday,
     todayLogs,
     todayMacro,
     exerciseLogs,

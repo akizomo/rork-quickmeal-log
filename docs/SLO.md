@@ -37,4 +37,13 @@ UI 観点の鮮度設計。詳細は [use-health-sync.ts](../expo/hooks/use-heal
 - **foreground 復帰時**: 最終同期から **5分** 経過、または**日付が変わった**ら自動再同期。
   それ以外はスロットルでスキップ（Health クエリ負荷とバッテリーを抑制）。
 - **手動**: ホームの **pull-to-refresh** と設定画面の「今すぐ同期」で即時実行（スロットル無視）。
+  pull-to-refresh は Health 未連携でも常に有効で、最低限「今日」の再計算を行う。
 - 最終同期時刻は `settings.lastHealthSyncAtISO` に永続化し、アンマウントを跨いでスロットル判定する。
+
+## 「今日」の日付ロールオーバー
+
+Health の foreground 再同期と対になる挙動。詳細は [app-state-provider.tsx](../expo/providers/app-state-provider.tsx) の `todayKey`。
+
+- `todayKey` をリアクティブ state 化し、**foreground 復帰時**と**深夜0時タイマー**で再計算する。
+- これがないと、アプリを開いたまま日跨ぎした際に「歩数は当日分に更新されたのに、画面の日付・今日の合計・トライアル残日数は前日のまま」というズレが起きる。
+- pull-to-refresh / 設定の `refreshToday()` でも明示的に再計算できる（タイマー漏れの保険）。
