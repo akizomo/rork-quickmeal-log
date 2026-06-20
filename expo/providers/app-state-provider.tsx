@@ -16,7 +16,7 @@ import { IngredientQuickDraft, QuickLogHistoryMap } from '@/types/quick-log';
 import { buildDishMacro, clampPortion, computeIngredient, createFoodLogFromDish, createFoodLogFromDishQuickEntry, createFoodLogFromIngredient, formatDateKey, generateId, getDefaultModeByTime, getMealSlot, getQuickCategories, getSubType, sumToday } from '@/utils/nutrition';
 import { adjustedTargetKcal, calcBaselineActiveKcal, calcExerciseGrossKcal, calcExerciseNetKcal, EXERCISE_TYPES, stepsToActiveKcal } from '@/utils/goals';
 import { isSameDay } from '@/utils/history';
-import { castHistoryMap, recordSelection, selectionFromDraft } from '@/utils/quick-log-history';
+import { castHistoryMap, deriveDefaultTab, recordDishSelection, recordSelection, selectionFromDraft } from '@/utils/quick-log-history';
 import { computeQuickLogMacro } from '@/utils/quick-log-macro';
 import { beginSpan } from '@/utils/perf';
 import { resolveLog, ResolveInput, ResolveResult } from '@/utils/identity-resolver';
@@ -424,8 +424,12 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
   );
 
   const quickLog = useCallback(
-    async (categoryKey: string) => {
-      if (selectedMode === 'dish') {
+    async (categoryKey: string, modeOverride?: 'ingredient' | 'dish') => {
+      // modeOverride: ⭐️タブから item.mode を明示的に渡す。
+      // 省略時は selectedMode を使用（通常の食材/料理タブからの呼び出し）。
+      const effectiveMode = modeOverride ?? selectedMode;
+
+      if (effectiveMode === 'dish') {
         const topCat = getDishTopCategory(categoryKey);
         if (topCat && topCat.quickEntry.kind !== 'instant_save') {
           console.log('[app-state] Opening dish quick entry sheet', categoryKey);
@@ -434,12 +438,12 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
         }
       }
 
-      const baseLog = selectedMode === 'ingredient'
+      const baseLog = effectiveMode === 'ingredient'
         ? createFoodLogFromIngredient(categoryKey)
         : createFoodLogFromDish(categoryKey);
 
       if (!baseLog) {
-        console.log('[app-state] Failed to create quick log', { categoryKey, selectedMode });
+        console.log('[app-state] Failed to create quick log', { categoryKey, effectiveMode });
         return null;
       }
 
@@ -610,9 +614,19 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       const log = applyLoggingDate(baseLog);
       await pushLog(log);
       setDishQuickEntryKey(null);
+
+      // ①-a dish 履歴記録（長押し確定時）
+      if (payload.topCategoryKey) {
+        const subcategoryKey = payload.subcategoryKey ?? 'default';
+        const amountLabel = payload.portionPrimaryLabel ?? '1食';
+        const currentHistory = (settings.quickLogHistory ?? {}) as QuickLogHistoryMap;
+        const nextHistory = recordDishSelection(currentHistory, payload.topCategoryKey, subcategoryKey, amountLabel);
+        setSettings(prev => ({ ...prev, quickLogHistory: nextHistory }));
+      }
+
       return log;
     },
-    [applyLoggingDate, pushLog]
+    [applyLoggingDate, pushLog, settings, setSettings]
   );
 
   const openDraftEditor = useCallback(
@@ -633,9 +647,17 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       const log = applyLoggingDate(baseLog);
       await pushPendingLog(log);
       setEditorLogId(log.id);
+
+      // ①-a dish 履歴記録（短押し instant_save 時）
+      if (selectedMode === 'dish') {
+        const currentHistory = (settings.quickLogHistory ?? {}) as QuickLogHistoryMap;
+        const nextHistory = recordDishSelection(currentHistory, categoryKey, 'default', '1食');
+        setSettings(prev => ({ ...prev, quickLogHistory: nextHistory }));
+      }
+
       return log;
     },
-    [applyLoggingDate, pushPendingLog, selectedMode]
+    [applyLoggingDate, pushPendingLog, selectedMode, settings, setSettings]
   );
 
   const commitPendingLog = useCallback(
@@ -1184,6 +1206,12 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       }
 
       // 3) workouts — ExerciseLog として加算。同 healthSyncId スキップ + 同日同種±15分の手動置換
+      // ウォーキング: dailyActivities (歩数) で既にカバーされる日は取込まない (二重計上防止)
+      const datesWithActivity = new Set(
+        result.dailyActivities
+          .filter((da) => da.steps > 0 || da.activeKcal > 0)
+          .map((da) => da.date)
+      );
       let nextExerciseLogs = exerciseLogs;
       const activityLevel = profile.activityLevel ?? 1;
       const weightKg = profile.currentWeightKg ?? 60;
@@ -1193,6 +1221,7 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
         const startMs = new Date(w.startedAt).getTime();
         if (!Number.isFinite(startMs)) continue;
         const dateKey = formatDateKey(new Date(w.startedAt));
+        if (w.exerciseTypeKey === 'walking' && datesWithActivity.has(dateKey)) continue;
         const met = EXERCISE_TYPES.find((t) => t.key === w.exerciseTypeKey)?.met ?? 5.0;
         const grossKcal =
           w.grossKcal > 0 ? w.grossKcal : calcExerciseGrossKcal(met, weightKg, w.minutes);
@@ -1232,6 +1261,14 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
         };
         nextDailyActivities = [entry, ...nextDailyActivities.filter((d) => d.date !== entry.date)];
       }
+
+      // 4b) 既存ストレージの health 由来ウォーキングログを削除 (dailyActivity が取れた日は歩数で代替)
+      const allDatesWithActivity = new Set(
+        nextDailyActivities.filter((da) => da.steps > 0 || da.activeKcal > 0).map((da) => da.date)
+      );
+      nextExerciseLogs = nextExerciseLogs.filter(
+        (e) => !(e.exerciseType === 'walking' && e.source === 'health' && allDatesWithActivity.has(e.date))
+      );
 
       // 5) profile の current weight/BF% は最新の体重/体脂肪エントリと同期
       let nextProfile = profile;

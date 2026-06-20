@@ -1,4 +1,4 @@
-import React, { memo, useMemo, useRef } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
   Pressable,
@@ -15,6 +15,8 @@ import { QuickCategory } from '@/types/nutrition';
 import { getQuickCategories } from '@/utils/nutrition';
 import type { BucketKey } from '@/types/identity';
 import { getIdentitiesInBucket, getBucketDef } from '@/constants/identity';
+import { deriveDefaultTab, FREQUENT_TAB_MIN_LOGS, rankFrequentSelections } from '@/utils/quick-log-history';
+import type { QuickLogTabKey, RankedLogItem } from '@/types/quick-log';
 // MVP では非表示 (PRD v1.5 §4.2 / §13 P0)。P1-C 再有効化時に import コメントを外す。
 // import { IdentitySearchBar } from '@/components/IdentitySearchBar';
 
@@ -216,16 +218,149 @@ function QuickLogButton({
   );
 }
 
-const QUICK_LOG_SEGMENT_OPTIONS = [
+const QUICK_LOG_SEGMENT_BASE = [
   { key: 'ingredient' as const, label: '食材' },
   { key: 'dish' as const, label: '一皿料理' },
 ];
+const FREQUENT_TAB_OPTION = { key: 'frequent' as const, label: '⭐️' };
+
+const FREQUENT_GRID_SLOTS = 9;
+
+/** ⭐️ グリッド: ランキング上位9件を通常グリッドと同じ操作モデルで表示 */
+const FrequentGrid = memo(function FrequentGrid({
+  items,
+  buttonHeight,
+  labelFontSize,
+  gridGap,
+  gridColumns,
+}: {
+  items: RankedLogItem[];
+  buttonHeight: number;
+  labelFontSize: number;
+  gridGap: number;
+  gridColumns: number;
+}) {
+  const { quickLog } = useAppState();
+
+  const rows: (RankedLogItem | null)[][] = [];
+  const padded = [...items, ...Array(Math.max(0, FREQUENT_GRID_SLOTS - items.length)).fill(null)];
+  for (let i = 0; i < padded.length; i += gridColumns) {
+    rows.push(padded.slice(i, i + gridColumns));
+  }
+
+  return (
+    <View style={styles.grid}>
+      {rows.map((row, rowIndex) => (
+        <View
+          key={`freq-row-${rowIndex}`}
+          style={[styles.row, rowIndex < rows.length - 1 ? { marginBottom: gridGap } : null]}
+        >
+          {row.map((item, colIndex) => (
+            <View
+              key={item ? `${item.categoryKey}-${colIndex}` : `empty-${colIndex}`}
+              style={[
+                styles.cellWrap,
+                colIndex < row.length - 1 ? { marginRight: gridGap } : null,
+              ]}
+            >
+              {item ? (
+                <FrequentButton
+                  item={item}
+                  height={buttonHeight}
+                  labelFontSize={labelFontSize}
+                  onLog={() => quickLog(item.categoryKey, item.mode)}
+                />
+              ) : (
+                <View style={[styles.frequentEmptySlot, { height: buttonHeight }]} />
+              )}
+            </View>
+          ))}
+        </View>
+      ))}
+    </View>
+  );
+});
+
+/** ⭐️ グリッドの個別ボタン */
+function FrequentButton({
+  item,
+  height,
+  labelFontSize,
+  onLog,
+}: {
+  item: RankedLogItem;
+  height: number;
+  labelFontSize: number;
+  onLog: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onLog}
+      style={({ pressed }) => [
+        styles.frequentButton,
+        { height },
+        pressed && styles.frequentButtonPressed,
+      ]}
+    >
+      <Text style={[styles.frequentLabel, { fontSize: labelFontSize }]} numberOfLines={1}>
+        {item.label}
+      </Text>
+      <Text style={[styles.frequentAmount, { fontSize: labelFontSize - 1 }]} numberOfLines={1}>
+        {item.amountLabel}
+      </Text>
+    </Pressable>
+  );
+}
 
 export const QuickLogSection = memo(function QuickLogSection() {
-  const { selectedMode, setSelectedMode } = useAppState();
+  const { selectedMode, setSelectedMode, settings, quickLog } = useAppState();
   const { width: screenWidth } = useWindowDimensions();
 
-  const categories = useMemo(() => getQuickCategories(selectedMode), [selectedMode]);
+  // history のエントリ数でコールドスタート判定
+  const history = settings.quickLogHistory as import('@/types/quick-log').QuickLogHistoryMap | undefined;
+  const totalHistoryEntries = useMemo(() => {
+    if (!history) return 0;
+    return Object.values(history).reduce((sum, arr) => sum + arr.length, 0);
+  }, [history]);
+  const showFrequentTab = totalHistoryEntries >= FREQUENT_TAB_MIN_LOGS;
+
+  // デフォルトタブを history から導出（初回マウント時のみ）
+  const [selectedTab, setSelectedTab] = useState<QuickLogTabKey>(() =>
+    deriveDefaultTab(history)
+  );
+
+  // hydration 後に history が変わった場合に⭐️タブが初出現したら自動遷移
+  useEffect(() => {
+    if (showFrequentTab && (selectedTab === 'ingredient' || selectedTab === 'dish')) {
+      // すでに 'frequent' でなければ再導出
+      const derived = deriveDefaultTab(history);
+      if (derived === 'frequent') setSelectedTab('frequent');
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showFrequentTab]);
+
+  // タブ変更: ingredient/dish は selectedMode も連動させる
+  const handleTabChange = useCallback((tab: QuickLogTabKey) => {
+    setSelectedTab(tab);
+    if (tab === 'ingredient' || tab === 'dish') setSelectedMode(tab);
+  }, [setSelectedMode]);
+
+  const segmentOptions = useMemo(() =>
+    showFrequentTab ? [...QUICK_LOG_SEGMENT_BASE, FREQUENT_TAB_OPTION] : QUICK_LOG_SEGMENT_BASE,
+  [showFrequentTab]);
+
+  // ⭐️ ランキング（タブが 'frequent' の時のみ計算）
+  const rankedItems = useMemo(() => {
+    if (selectedTab !== 'frequent' || !history) return [];
+    return rankFrequentSelections(history, {
+      nowISO: new Date().toISOString(),
+      limit: FREQUENT_GRID_SLOTS,
+    });
+  }, [selectedTab, history]);
+
+  // 通常グリッド用
+  const effectiveMode = selectedTab === 'frequent' ? selectedMode : selectedTab;
+  const categories = useMemo(() => getQuickCategories(effectiveMode), [effectiveMode]);
 
   const { gridGap, gridColumns } = QUICK_LOG_TOKENS;
   const buttonHeight = getQuickLogButtonHeight(screenWidth);
@@ -251,40 +386,51 @@ export const QuickLogSection = memo(function QuickLogSection() {
       </View> */}
       <View style={styles.segmentRow}>
         <SegmentedControl
-          options={QUICK_LOG_SEGMENT_OPTIONS}
-          value={selectedMode}
-          onChange={setSelectedMode}
+          options={segmentOptions}
+          value={selectedTab}
+          onChange={handleTabChange}
           style={{ flex: 1 }}
           testID="mode-tab"
         />
       </View>
-      <View style={styles.grid}>
-        {rows.map((row, rowIndex) => (
-          <View
-            key={`row-${rowIndex}`}
-            style={[styles.row, rowIndex < rows.length - 1 ? { marginBottom: gridGap } : null]}
-          >
-            {row.map((item, colIndex) => (
-              <View
-                key={item.key}
-                style={[
-                  styles.cellWrap,
-                  colIndex < row.length - 1 ? { marginRight: gridGap } : null,
-                ]}
-              >
-                <QuickLogButton
-                  item={item}
-                  mode={selectedMode}
-                  height={buttonHeight}
-                  iconSize={iconSize}
-                  iconContainerSize={iconContainerSize}
-                  labelFontSize={labelFontSize}
-                />
-              </View>
-            ))}
-          </View>
-        ))}
-      </View>
+
+      {selectedTab === 'frequent' ? (
+        <FrequentGrid
+          items={rankedItems}
+          buttonHeight={buttonHeight}
+          labelFontSize={labelFontSize}
+          gridGap={gridGap}
+          gridColumns={gridColumns}
+        />
+      ) : (
+        <View style={styles.grid}>
+          {rows.map((row, rowIndex) => (
+            <View
+              key={`row-${rowIndex}`}
+              style={[styles.row, rowIndex < rows.length - 1 ? { marginBottom: gridGap } : null]}
+            >
+              {row.map((item, colIndex) => (
+                <View
+                  key={item.key}
+                  style={[
+                    styles.cellWrap,
+                    colIndex < row.length - 1 ? { marginRight: gridGap } : null,
+                  ]}
+                >
+                  <QuickLogButton
+                    item={item}
+                    mode={effectiveMode}
+                    height={buttonHeight}
+                    iconSize={iconSize}
+                    iconContainerSize={iconContainerSize}
+                    labelFontSize={labelFontSize}
+                  />
+                </View>
+              ))}
+            </View>
+          ))}
+        </View>
+      )}
     </View>
   );
 });
@@ -313,6 +459,38 @@ const styles = StyleSheet.create({
   cellWrap: {
     flex: 1,
     minWidth: 0,
+  },
+  // ⭐️ グリッド用スタイル
+  frequentButton: {
+    width: '100%',
+    backgroundColor: QUICK_LOG_COLORS.buttonBg,
+    borderRadius: QUICK_LOG_TOKENS.buttonRadius,
+    borderWidth: 1,
+    borderColor: QUICK_LOG_COLORS.buttonBorder,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+    gap: 2,
+  },
+  frequentButtonPressed: {
+    opacity: 0.7,
+  },
+  frequentLabel: {
+    color: QUICK_LOG_COLORS.labelText,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  frequentAmount: {
+    color: '#7B857E',
+    textAlign: 'center',
+  },
+  frequentEmptySlot: {
+    width: '100%',
+    borderRadius: QUICK_LOG_TOKENS.buttonRadius,
+    backgroundColor: 'rgba(49,83,71,0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(49,83,71,0.06)',
+    borderStyle: 'dashed',
   },
   cell: {
     width: '100%',

@@ -111,6 +111,42 @@ export interface QuickLogSelection {
   amountCandidateKey?: string;
   amountLabel?: string;
   loggedAtISO: string;
+  /**
+   * v1.8+: 'ingredient' | 'dish'. 旧エントリは未設定 → ingredient とみなす。
+   * dish の場合 subcategoryKey は Identity id (例: 'ramen_light')、
+   * categoryKey は bucket key (例: 'chinese_noodles')。
+   */
+  mode?: 'ingredient' | 'dish';
 }
 
 export type QuickLogHistoryMap = Record<string, QuickLogSelection[]>;
+
+// ---------------------------------------------------------------------------
+// ⭐️ タブ用: ランキング結果 (UI 専用・FoodLog には保存しない)
+// ---------------------------------------------------------------------------
+
+/**
+ * QuickLog タブ選択肢。LogMode ('ingredient'|'dish') は FoodLog.mode と共有だが
+ * 'frequent' は UI 専用なので LogMode には追加しない。
+ */
+export type QuickLogTabKey = 'ingredient' | 'dish' | 'frequent';
+
+/**
+ * rankFrequentSelections() が返すランキング済みアイテム。
+ * ⭐️ グリッドの各ボタンに対応する。
+ */
+export interface RankedLogItem {
+  /** ランキングスコア (頻度 × recency 減衰の合計) */
+  score: number;
+  mode: 'ingredient' | 'dish';
+  categoryKey: string;
+  /** 表示ラベル (例: "鶏むね", "ラーメン (あっさり)") */
+  label: string;
+  /** 量ラベル (例: "100g", "普通") */
+  amountLabel: string;
+  /**
+   * 食材タブ由来の場合のみ。ボタンタップ時に即ログを再現するために使う。
+   * dish の場合は null — categoryKey から createFoodLogFromDish() で再現。
+   */
+  draft: IngredientQuickDraft | null;
+}
