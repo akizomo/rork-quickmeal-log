@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View, ViewStyle } from 'react-native';
 
 import { spring } from '@/design-system/tokens/primitives/motion';
@@ -43,13 +43,19 @@ export function SegmentedControl<T extends string = string>({
   const pillAnim = useRef(new Animated.Value(selectedIndex)).current;
   const [containerWidth, setContainerWidth] = useState(0);
 
-  const handleSelect = (key: T, index: number) => {
-    onChange(key);
+  // ピル位置は selectedIndex を単一ソースに同期。レイアウト確定(マウント)時もここで合わせる。
+  // (非ゼロ既定で初期位置がずれる問題を防ぐ。.start() が DOM transform を確実に流し込む)
+  useEffect(() => {
+    if (containerWidth <= 0) return;
     Animated.spring(pillAnim, {
-      toValue: index,
+      toValue: selectedIndex,
       ...spring.snap,
       useNativeDriver: true,
     }).start();
+  }, [selectedIndex, containerWidth, pillAnim]);
+
+  const handleSelect = (key: T) => {
+    onChange(key); // 位置は value 変化 → 上の effect が追従
   };
 
   const pillWidth = containerWidth > 0 ? (containerWidth - padding * 2) / options.length : 0;
@@ -92,12 +98,12 @@ export function SegmentedControl<T extends string = string>({
           pointerEvents="none"
         />
       )}
-      {options.map((option, index) => {
+      {options.map((option) => {
         const active = option.key === value;
         return (
           <Pressable
             key={option.key}
-            onPress={() => handleSelect(option.key, index)}
+            onPress={() => handleSelect(option.key)}
             accessibilityRole="button"
             accessibilityState={{ selected: active }}
             accessibilityLabel={`${option.label}${active ? '、選択中' : ''}`}

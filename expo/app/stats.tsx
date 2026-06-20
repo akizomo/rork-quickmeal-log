@@ -3,7 +3,7 @@ import React, { useCallback, useRef, useState } from 'react';
 import { Animated, Easing, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { BodyStatsView } from '@/components/BodyStatsView';
+import { BodyStatsView, type BodyPeriod } from '@/components/BodyStatsView';
 import { MonthlyStatsView } from '@/components/MonthlyStatsView';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { Tabs } from '@/components/Tabs';
@@ -24,6 +24,13 @@ const MEALS_SEGMENT_OPTIONS = [
   { key: 'month' as const, label: '月' },
 ];
 
+// 食事と同じ規則: タブ名=表示期間。点の粒度(日/週/月)は期間から自動決定し帯にしない。
+const BODY_SEGMENT_OPTIONS = [
+  { key: 'week' as const, label: '週' },
+  { key: 'month' as const, label: '月' },
+  { key: 'year' as const, label: '年' },
+];
+
 // M3 fade through: 100ms out → swap → 200ms in
 const FADE_OUT_DURATION = 100;
 const FADE_IN_DURATION = 200;
@@ -33,6 +40,7 @@ export default function StatsScreen() {
   const theme = useTheme();
   const [topTab, setTopTab] = useState<TopTab>('meals');
   const [mealsTab, setMealsTab] = useState<MealsTab>('week');
+  const [bodyPeriod, setBodyPeriod] = useState<BodyPeriod>('month');
   const contentOpacity = useRef(new Animated.Value(1)).current;
 
   const handleTopTabChange = useCallback((tab: TopTab) => {
@@ -91,7 +99,23 @@ export default function StatsScreen() {
               {mealsTab === 'week' ? <WeeklyStatsView /> : <MonthlyStatsView />}
             </>
           ) : (
-            <BodyStatsView />
+            <>
+              <SegmentedControl
+                options={BODY_SEGMENT_OPTIONS}
+                value={bodyPeriod}
+                onChange={setBodyPeriod}
+                trackColor={palette.card}
+                pillColor={palette.surface}
+                textColor={palette.textMuted}
+                activeTextColor={palette.sageDeep}
+                padding={5}
+                height={40}
+                fontSize={13}
+                style={styles.subSegment}
+                testID="stats-body-segment"
+              />
+              <BodyStatsView period={bodyPeriod} />
+            </>
           )}
         </Animated.View>
       </SafeAreaView>
