@@ -1166,9 +1166,9 @@ const BUCKET_SNACK_DRINK: Identity[] = [
     id: 'popcorn',
     label: 'ポップコーン',
     primaryHome: { tab: 'ingredient', bucket: 'snack_drink' },
-    // 市販袋ポップコーン塩味基準 (マイクポップコーン等): kcal 470 / P 8.5 / F 22 / C 60 per 100g
-    // 1袋50g想定で kcal 235 / P 4.3 / F 11 / C 30
-    defaultMacro: { kcal: 235, protein: 4.3, fat: 11, carbs: 30 },
+    // 市販袋ポップコーン塩・バターしょうゆ基準 (マイクポップコーン等):
+    // kcal 510 / P 8.5 / F 27 / C 56 per 100g (1袋50g = 255 / 4.3 / 13.5 / 28)
+    defaultMacro: { kcal: 255, protein: 4.3, fat: 13.5, carbs: 28 },
     referenceDescription: '市販袋ポップコーン1袋≈50g。映画館Mサイズは120g目安',
     amount: {
       unit: 'g',
@@ -1180,13 +1180,10 @@ const BUCKET_SNACK_DRINK: Identity[] = [
       ],
     },
     attributes: [
-      { key: 'salt', label: '塩', isDefault: true },
-      // バターしょうゆ: ~500 kcal / P 8 / F 26 / C 58 per 100g
-      { key: 'butter_soy', label: 'バターしょうゆ', factor: { kcal: 1.06, protein: 0.93, fat: 1.18, carbs: 0.97 } },
-      // キャラメル: ~440 kcal / P 4 / F 13 / C 75 per 100g (糖衣で炭水化物↑、P/F↓)
-      { key: 'caramel', label: 'キャラメル', factor: { kcal: 0.94, protein: 0.47, fat: 0.59, carbs: 1.25 } },
-      // チーズ: ~500 kcal / P 9 / F 26 / C 55 per 100g
-      { key: 'cheese', label: 'チーズ', factor: { kcal: 1.06, protein: 1.05, fat: 1.18, carbs: 0.92 } },
+      // 塩・バターしょうゆは macro 差が小さい (両方 ~510-520 kcal/100g) ため統合
+      { key: 'salt_butter', label: '塩・バターしょうゆ', isDefault: true },
+      // キャラメル: ~490 kcal / P 3.5 / F 17 / C 75 per 100g (糖衣で炭水化物↑、油は塩より少なめ)
+      { key: 'caramel', label: 'キャラメル', factor: { kcal: 0.96, protein: 0.41, fat: 0.63, carbs: 1.34 } },
     ],
     searchTags: ['ポップコーン', 'popcorn', 'マイクポップコーン'],
   },
