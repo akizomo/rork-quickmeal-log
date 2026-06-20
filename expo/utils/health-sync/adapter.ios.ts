@@ -198,17 +198,32 @@ function normalizeBodyFat(samples: HealthValue[]): HealthBodyFatSample[] {
 
 /**
  * 歩数 / アクティブエネのサンプルを日付別に集約して DailyActivitySummary 配列にする。
- * getDailyStepCountSamples は通常日次に集約されているが、念のため再集約する。
+ *
+ * getDailyStepCountSamples は HKStatisticsOptionCumulativeSum (ソース間重複排除済み) を
+ * 使うため通常は1日1サンプル。ただし DST 境界等で複数サンプルが同日に返る場合があるため
+ * 安全のため集約する。歩数は「同日の複数サンプルの合計」を使用する (正当な細分化)。
+ * ただし Apple Watch + iPhone の両方が "day total" として返ってきた場合の二重計上を
+ * 防ぐため、同一 value の重複サンプルは排除する。
  */
 function aggregateDailyActivity(
   stepSamples: HealthValue[],
   energySamples: HealthValue[]
 ): HealthDailyActivitySample[] {
-  const map = new Map<string, { steps: number; activeKcal: number }>();
+  // 歩数: (date, startDate) をキーにしてウィンドウを識別する。
+  //   - 同じ startDate = 同じ統計期間 → 複数ソース (iPhone/Watch) の重複とみなし MAX を取る
+  //   - 異なる startDate = 異なる時間帯 (午前/午後など) → 正当な細分化なので合算する
+  const stepWindowMap = new Map<string, number>();
   for (const s of stepSamples) {
     const date = toDateKey(s.endDate ?? s.startDate);
+    const windowKey = `${date}|${s.startDate}`;
+    const prev = stepWindowMap.get(windowKey) ?? 0;
+    stepWindowMap.set(windowKey, Math.max(prev, s.value));
+  }
+  const map = new Map<string, { steps: number; activeKcal: number }>();
+  for (const [windowKey, value] of stepWindowMap) {
+    const date = windowKey.split('|')[0];
     const cur = map.get(date) ?? { steps: 0, activeKcal: 0 };
-    cur.steps += s.value;
+    cur.steps += value;
     map.set(date, cur);
   }
   for (const s of energySamples) {

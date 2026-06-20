@@ -1,4 +1,5 @@
 import {
+  aggregateGroupByPeriod,
   getGrantedPermissions,
   getSdkStatus,
   initialize,
@@ -163,40 +164,47 @@ async function fetchBodyFat(rangeDays: number): Promise<HealthBodyFatSample[]> {
 }
 
 async function fetchDailyActivity(rangeDays: number): Promise<HealthDailyActivitySample[]> {
+  // aggregateGroupByPeriod を使用: Health Connect が複数ソース(ウォッチ・スマホ等)の
+  // 重複を排除した正しい日次合計を返す。readRecords の raw レコードを手動合計すると
+  // ソースをまたいだ二重計上が発生するため使用しない。
+  const endTime = new Date().toISOString();
   const startTime = new Date(Date.now() - rangeDays * 24 * 60 * 60 * 1000).toISOString();
   const map = new Map<string, { steps: number; activeKcal: number }>();
   try {
-    const stepsResult = await readRecords('Steps', {
-      timeRangeFilter: { operator: 'after', startTime },
-      ascendingOrder: false,
+    const stepsResult = await aggregateGroupByPeriod({
+      recordType: 'Steps',
+      timeRangeFilter: { operator: 'between', startTime, endTime },
+      timeRangeSlicer: { period: 'DAYS', length: 1 },
     });
-    for (const r of stepsResult.records) {
-      const date = toDateKey(r.startTime);
+    for (const bucket of stepsResult) {
+      const date = toDateKey(bucket.startTime);
       const cur = map.get(date) ?? { steps: 0, activeKcal: 0 };
-      cur.steps += r.count;
+      cur.steps = Math.round((bucket.result as { COUNT_TOTAL?: number }).COUNT_TOTAL ?? 0);
       map.set(date, cur);
     }
   } catch (err) {
-    if (__DEV__) console.log('[health-sync/android] fetchSteps failed', err);
+    if (__DEV__) console.log('[health-sync/android] fetchSteps aggregation failed', err);
   }
   try {
-    const energyResult = await readRecords('ActiveCaloriesBurned', {
-      timeRangeFilter: { operator: 'after', startTime },
-      ascendingOrder: false,
+    const energyResult = await aggregateGroupByPeriod({
+      recordType: 'ActiveCaloriesBurned',
+      timeRangeFilter: { operator: 'between', startTime, endTime },
+      timeRangeSlicer: { period: 'DAYS', length: 1 },
     });
-    for (const r of energyResult.records) {
-      const date = toDateKey(r.startTime);
+    for (const bucket of energyResult) {
+      const date = toDateKey(bucket.startTime);
       const cur = map.get(date) ?? { steps: 0, activeKcal: 0 };
-      cur.activeKcal += r.energy.inKilocalories;
+      const energyTotal = (bucket.result as { ACTIVE_CALORIES_TOTAL?: { inKilocalories: number } }).ACTIVE_CALORIES_TOTAL;
+      cur.activeKcal = Math.round(energyTotal?.inKilocalories ?? 0);
       map.set(date, cur);
     }
   } catch (err) {
-    if (__DEV__) console.log('[health-sync/android] fetchActiveCalories failed', err);
+    if (__DEV__) console.log('[health-sync/android] fetchActiveCalories aggregation failed', err);
   }
   return Array.from(map.entries()).map(([date, v]) => ({
     date,
-    steps: Math.round(v.steps),
-    activeKcal: Math.round(v.activeKcal),
+    steps: v.steps,
+    activeKcal: v.activeKcal,
   }));
 }
 
