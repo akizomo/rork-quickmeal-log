@@ -24,9 +24,9 @@
       "runtimeExecutable": "/Users/akihiro.uezono/.bun/bin/bun",
       "runtimeArgs": [
         "-e",
-        "import { file } from 'bun'; import { join, normalize } from 'node:path'; const root = './web/public'; Bun.serve({ port: Number(process.env.PORT ?? 5173), async fetch(req) { const url = new URL(req.url); let p = decodeURIComponent(url.pathname); if (p.endsWith('/')) p += 'index.html'; const candidates = [p, p + '.html']; for (const c of candidates) { const fp = normalize(join(root, c)); if (!fp.startsWith(normalize(root))) continue; const f = file(fp); if (await f.exists()) return new Response(f); } return new Response('not found', { status: 404 }); } });"
+        "import { file } from 'bun'; import { join, normalize } from 'node:path'; const root = './web/public'; Bun.serve({ port: Number(process.env.PORT ?? 5180), async fetch(req) { const url = new URL(req.url); let p = decodeURIComponent(url.pathname); if (p.endsWith('/')) p += 'index.html'; const candidates = [p, p + '.html']; for (const c of candidates) { const fp = normalize(join(root, c)); if (!fp.startsWith(normalize(root))) continue; const f = file(fp); if (await f.exists()) return new Response(f); } return new Response('not found', { status: 404 }); } });"
       ],
-      "port": 5173,
+      "port": 5180,
       "autoPort": true
     }
   ]
