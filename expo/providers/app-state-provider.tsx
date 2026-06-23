@@ -1235,7 +1235,9 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
         const startMs = new Date(w.startedAt).getTime();
         if (!Number.isFinite(startMs)) continue;
         const dateKey = formatDateKey(new Date(w.startedAt));
-        if (w.exerciseTypeKey === 'walking' && datesWithActivity.has(dateKey)) continue;
+        // dailyActivity がある日の Health ワークアウトはすべてスキップ
+        // activeKcal が全種目分を既に包含しているため二重計上になる
+        if (datesWithActivity.has(dateKey)) continue;
         const met = EXERCISE_TYPES.find((t) => t.key === w.exerciseTypeKey)?.met ?? 5.0;
         const grossKcal =
           w.grossKcal > 0 ? w.grossKcal : calcExerciseGrossKcal(met, weightKg, w.minutes);
@@ -1276,12 +1278,14 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
         nextDailyActivities = [entry, ...nextDailyActivities.filter((d) => d.date !== entry.date)];
       }
 
-      // 4b) 既存ストレージの health 由来ウォーキングログを削除 (dailyActivity が取れた日は歩数で代替)
+      // 4b) 既存ストレージの health 由来ワークアウトを全種削除
+      //     dailyActivity がある日は activeKcal が全活動を包含しているため
+      //     個別ワークアウトログは二重計上になる (walking のみでなく全種対象)
       const allDatesWithActivity = new Set(
         nextDailyActivities.filter((da) => da.steps > 0 || da.activeKcal > 0).map((da) => da.date)
       );
       nextExerciseLogs = nextExerciseLogs.filter(
-        (e) => !(e.exerciseType === 'walking' && e.source === 'health' && allDatesWithActivity.has(e.date))
+        (e) => !(e.source === 'health' && allDatesWithActivity.has(e.date))
       );
 
       // 5) profile の current weight/BF% は最新の体重/体脂肪エントリと同期
