@@ -64,6 +64,8 @@ export function useHealthSync(): UseHealthSyncReturn {
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
   const [lastError, setLastError] = useState<string | null>(null);
   const didAutoSyncRef = useRef<boolean>(false);
+  /** 並列同期防止ミューテックス。useState は closure で古い値を読むため ref で管理する */
+  const syncingRef = useRef<boolean>(false);
 
   useEffect(() => {
     if (!supported) return;
@@ -85,6 +87,12 @@ export function useHealthSync(): UseHealthSyncReturn {
       if (__DEV__) console.log('[health-sync] skipped: provider still hydrating');
       return null;
     }
+    // 🛡️ 並列同期防止: ref で管理し closure の古い値問題を回避
+    if (syncingRef.current) {
+      if (__DEV__) console.log('[health-sync] skipped: sync already in progress');
+      return null;
+    }
+    syncingRef.current = true;
     setSyncing(true);
     setLastError(null);
     try {
@@ -125,6 +133,7 @@ export function useHealthSync(): UseHealthSyncReturn {
       if (__DEV__) console.log('[health-sync] sync error', err instanceof Error ? err.message : err);
       return null;
     } finally {
+      syncingRef.current = false;
       setSyncing(false);
     }
   }, [supported, isHydrating, ingestHealthSyncResult]);
