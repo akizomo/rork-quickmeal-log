@@ -240,7 +240,12 @@ const FrequentGrid = memo(function FrequentGrid({
   gridGap: number;
   gridColumns: number;
 }) {
-  const { quickLog } = useAppState();
+  const {
+    quickLog,
+    submitQuickIngredient,
+    openIdentityLogSheet,
+    setDishQuickEntryKey,
+  } = useAppState();
 
   const rows: (RankedLogItem | null)[][] = [];
   const padded = [...items, ...Array(Math.max(0, FREQUENT_GRID_SLOTS - items.length)).fill(null)];
@@ -255,26 +260,57 @@ const FrequentGrid = memo(function FrequentGrid({
           key={`freq-row-${rowIndex}`}
           style={[styles.row, rowIndex < rows.length - 1 ? { marginBottom: gridGap } : null]}
         >
-          {row.map((item, colIndex) => (
-            <View
-              key={item ? `${item.categoryKey}-${colIndex}` : `empty-${colIndex}`}
-              style={[
-                styles.cellWrap,
-                colIndex < row.length - 1 ? { marginRight: gridGap } : null,
-              ]}
-            >
-              {item ? (
+          {row.map((item, colIndex) => {
+            if (!item) {
+              return (
+                <View
+                  key={`empty-${colIndex}`}
+                  style={[
+                    styles.cellWrap,
+                    colIndex < row.length - 1 ? { marginRight: gridGap } : null,
+                  ]}
+                >
+                  <View style={[styles.frequentEmptySlot, { height: buttonHeight }]} />
+                </View>
+              );
+            }
+
+            // A: 短押し — draft があれば正確な subcategory/amount でログ、なければ category default
+            const handleLog = () => {
+              if (item.mode === 'ingredient' && item.draft) {
+                void submitQuickIngredient(item.draft);
+              } else {
+                void quickLog(item.categoryKey, item.mode);
+              }
+            };
+
+            // B: 長押し — ingredient は IdentityLogSheet、dish は DishQuickEntrySheet
+            const handleLongPress = () => {
+              if (item.mode === 'ingredient') {
+                openIdentityLogSheet(item.categoryKey as import('@/types/identity').BucketKey);
+              } else {
+                setDishQuickEntryKey(item.categoryKey);
+              }
+            };
+
+            return (
+              <View
+                key={`${item.categoryKey}-${colIndex}`}
+                style={[
+                  styles.cellWrap,
+                  colIndex < row.length - 1 ? { marginRight: gridGap } : null,
+                ]}
+              >
                 <FrequentButton
                   item={item}
                   height={buttonHeight}
                   labelFontSize={labelFontSize}
-                  onLog={() => quickLog(item.categoryKey, item.mode)}
+                  onLog={handleLog}
+                  onLongPress={handleLongPress}
                 />
-              ) : (
-                <View style={[styles.frequentEmptySlot, { height: buttonHeight }]} />
-              )}
-            </View>
-          ))}
+              </View>
+            );
+          })}
         </View>
       ))}
     </View>
@@ -287,15 +323,21 @@ function FrequentButton({
   height,
   labelFontSize,
   onLog,
+  onLongPress,
 }: {
   item: RankedLogItem;
   height: number;
   labelFontSize: number;
   onLog: () => void;
+  onLongPress: () => void;
 }) {
   return (
     <Pressable
       onPress={onLog}
+      onLongPress={onLongPress}
+      delayLongPress={320}
+      accessibilityRole="button"
+      accessibilityLabel={`${item.label}を追加。長押しで詳細入力`}
       style={({ pressed }) => [
         styles.frequentButton,
         { height },

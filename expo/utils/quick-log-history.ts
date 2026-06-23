@@ -3,6 +3,7 @@ import {
   getQuickLogCategory,
   getQuickLogSubcategory,
 } from '@/constants/quick-log-master';
+import { getDishTopCategory } from '@/constants/dish-master';
 import {
   IngredientQuickDraft,
   QuickLogCategoryDef,
@@ -298,13 +299,12 @@ function buildRankedItem(
   const amountLabel = sel.amountLabel ?? `${sel.amountValue}${sel.amountUnit}`;
 
   if (mode === 'dish') {
-    return {
-      mode,
-      categoryKey,
-      label: sel.subcategoryKey,  // 呼び出し側で Identity label に解決
-      amountLabel,
-      draft: null,
-    };
+    // dish master からサブカテゴリのラベルを解決する。
+    // 見つからなければ subcategoryKey をそのまま表示（stale データへの耐性）。
+    const topCat = getDishTopCategory(categoryKey);
+    const sub = topCat?.subcategories.find(s => s.key === sel.subcategoryKey);
+    const label = sub?.label ?? topCat?.label ?? sel.subcategoryKey;
+    return { mode, categoryKey, label, amountLabel, draft: null };
   }
 
   // ingredient: master が見つかれば draft を構築、なければフォールバック
