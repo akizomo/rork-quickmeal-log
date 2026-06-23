@@ -44,7 +44,7 @@ const BUCKET_RICE_DISH: Identity[] = [
     ],
     // cheese は親子丼/中華丼/麻婆丼に合わないので default から外し allowed のみに
     defaultAddonIds: ['egg', 'kimchi_top', 'rayu'],
-    allowedAddonIds: ['egg', 'cheese', 'kimchi_top', 'rayu', 'mayo', 'katsu_add'],
+    allowedAddonIds: ['egg', 'cheese', 'kimchi_top', 'rayu', 'mayo', 'katsu_add', 'gohan_omori'],
   },
   {
     id: 'kaisendon',
@@ -53,6 +53,7 @@ const BUCKET_RICE_DISH: Identity[] = [
     defaultMacro: { kcal: 580, protein: 28, fat: 10, carbs: 88 },
     referenceDescription: 'ご飯200g + 海鮮ネタ80g',
     amount: { unit: 'percent', default: 100, chips: [{ label: '小盛', value: 70 }, { label: '並', value: 100 }, { label: '大盛', value: 150 }] },
+    allowedAddonIds: ['gohan_omori'],
   },
   {
     id: 'fried_rice_omurice',
@@ -79,6 +80,7 @@ const BUCKET_RICE_DISH: Identity[] = [
       { key: 'katsudon', label: 'カツ丼', isDefault: true },
       { key: 'tendon', label: '天丼', factor: { kcal: 0.94, protein: 0.69, fat: 0.97, carbs: 1.09 } },
     ],
+    allowedAddonIds: ['gohan_omori'],
   },
   {
     id: 'gapao_rice',
@@ -644,6 +646,7 @@ const BUCKET_MISC_DISH: Identity[] = [
       { key: 'shogayaki', label: '生姜焼き定食', factor: { kcal: 0.96, protein: 1.06, fat: 0.90, carbs: 0.96 } },
       { key: 'hamburg', label: 'ハンバーグ定食', factor: { kcal: 1.0, protein: 1.0, fat: 1.07, carbs: 0.91 } },
     ],
+    allowedAddonIds: ['gohan_omori'],
   },
   {
     id: 'bento',

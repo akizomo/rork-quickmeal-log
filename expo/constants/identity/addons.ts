@@ -267,6 +267,15 @@ export const PURE_ADDONS: Addon[] = [
 
   // ---- Curry / donburi extras ----
   {
+    id: 'gohan_omori',
+    label: 'ご飯大盛り',
+    unit: 'g',
+    unitAmount: 100,
+    unitLabel: '+1杯(100g)',
+    addedMacro: { kcal: 168, protein: 2.5, fat: 0.3, carbs: 37 },
+    allowedIdentityIds: ['kaisendon', 'gyudon_class', 'katsudon_tendon', 'teishoku'],
+  },
+  {
     id: 'katsu_add',
     label: 'カツ追加',
     unit: 'piece',
