@@ -1,0 +1,10 @@
+<resources>
+  <string name="app_name">Hachibu</string>
+  <string name="expo_splash_screen_resize_mode" translatable="false">contain</string>
+  <string name="expo_splash_screen_status_bar_translucent" translatable="false">false</string>
+  <string name="expo_system_ui_user_interface_style" translatable="false">automatic</string>
+  <!-- Widget descriptions -->
+  <string name="widget_2x2_description">よく食べるものを4つタップで即記録</string>
+  <string name="widget_4x2_description">カロリーリング＋4カテゴリで記録と把握を同時に</string>
+  <string name="widget_3x3_description">9カテゴリすべてをホーム画面から即記録</string>
+</resources>

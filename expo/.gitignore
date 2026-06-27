@@ -11,7 +11,7 @@ expo-env.d.ts
 
 # Native
 ios/
-android/
+# android/ は widget Kotlin ファイルを含むため git 管理下に置く
 *.orig.*
 *.jks
 *.p8
