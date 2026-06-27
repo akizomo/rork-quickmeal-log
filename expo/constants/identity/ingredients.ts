@@ -906,6 +906,14 @@ const BUCKET_VEGGIES: Identity[] = [
       defaultLabel: 'キムチを追加',
     },
   },
+  {
+    id: 'veggie_soup',
+    label: '野菜スープ',
+    primaryHome: { tab: 'ingredient', bucket: 'veggies' },
+    // コンソメ系薄口スープ基準 (野菜 100g + スープ 200ml 程度)。ミネストローネは misc_dish の soup_western へ。
+    defaultMacro: { kcal: 35, protein: 1.5, fat: 0.5, carbs: 6 },
+    amount: { unit: 'ml', default: 200, chips: [{ label: '小', value: 150 }, { label: '普通', value: 200 }, { label: '大', value: 300 }] },
+  },
   // v1.2: 汁物 4 Identity (miso_soup / tonjiru / soup_western / soup_creamy) は
   // 「スープ=料理」の整理に基づき misc_dish (dishes.ts) へ移送。
 ];
@@ -1137,7 +1145,20 @@ const BUCKET_SNACK_DRINK: Identity[] = [
     primaryHome: { tab: 'ingredient', bucket: 'snack_drink' },
     defaultMacro: { kcal: 230, protein: 4, fat: 12, carbs: 28 },
     amount: { unit: 'piece', default: 1, chips: [{ label: '小', value: 0.5 }, { label: '1切', value: 1 }] },
-    searchTags: ['ショート', 'チーズケーキ', 'シュー', 'プリン', 'ゼリー', 'ティラミス'],
+    searchTags: ['ショート', 'チーズケーキ', 'シュー', 'ティラミス'],
+  },
+  {
+    id: 'pudding',
+    label: 'プリン・ゼリー',
+    primaryHome: { tab: 'ingredient', bucket: 'snack_drink' },
+    // 市販カッププリン(森永等)基準 100g: kcal 117, P 4.0, F 5.4, C 13。ゼリーは低カロリー寄り。
+    defaultMacro: { kcal: 117, protein: 4, fat: 5.4, carbs: 13 },
+    amount: { unit: 'piece', default: 1, chips: [{ label: '1個', value: 1 }, { label: '大', value: 1.5 }] },
+    searchTags: ['プリン', 'ゼリー', 'カスタード'],
+    attributes: [
+      { key: 'custard', label: 'プリン', isDefault: true },
+      { key: 'jelly', label: 'ゼリー・杏仁', factor: { kcal: 0.41, protein: 0.35, fat: 0.06, carbs: 0.62 } },
+    ],
   },
   {
     id: 'ice',

@@ -22,7 +22,7 @@ import {
   multiplyMacroSimple,
 } from '@/constants/dish-master';
 import { palette } from '@/constants/theme';
-import { BottomSheet, Icon } from '@/design-system';
+import { BottomSheet, Chip as DSChip, Icon } from '@/design-system';
 import { useAppState } from '@/providers/app-state-provider';
 import {
   ChineseNoodlesPrimaryType,
@@ -62,13 +62,12 @@ function Chip({
   testID?: string;
 }) {
   return (
-    <Pressable
-      style={[styles.chip, active ? styles.chipActive : null]}
+    <DSChip
+      label={label}
+      selected={active}
       onPress={onPress}
       testID={testID}
-    >
-      <Text style={[styles.chipLabel, active ? styles.chipLabelActive : null]}>{label}</Text>
-    </Pressable>
+    />
   );
 }
 
@@ -574,26 +573,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-  },
-  chip: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 999,
-    backgroundColor: palette.card,
-    borderWidth: 1,
-    borderColor: 'transparent',
-  },
-  chipActive: {
-    backgroundColor: palette.sageDeep,
-    borderColor: palette.sageDeep,
-  },
-  chipLabel: {
-    fontSize: 13,
-    color: palette.text,
-    fontWeight: '600',
-  },
-  chipLabelActive: {
-    color: palette.white,
   },
   amountRow: {
     flexDirection: 'row',
