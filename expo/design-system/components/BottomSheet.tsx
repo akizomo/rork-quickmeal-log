@@ -40,6 +40,7 @@ import { Icon } from './Icon';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
+  Easing,
   Modal,
   PanResponder,
   Platform,
@@ -68,7 +69,9 @@ const BLUR_INTENSITY = 24;            // expo-blur (native)
 const WEB_BLUR_PX = 24;               // CSS backdrop-filter blur (web)
 const WEB_BLUR_SAT = 140;             // 彩度を少し上げてガラス感
 const OPEN_SPRING = { tension: 65, friction: 11 };
-const CLOSE_SPRING = { tension: 100, friction: 14, restSpeedThreshold: 1, restDisplacementThreshold: 1 };
+// M3 Emphasized Accelerate: cubic-bezier(0.3, 0, 1, 1) 200ms
+const CLOSE_DURATION = 200;
+const CLOSE_EASING = Easing.bezier(0.3, 0, 1, 1);
 const TRANSLATE_OFFSCREEN = 800;      // off-screen distance for drag-released close
 const FALLBACK_SHEET_HEIGHT = 600;    // sheetHeight が onLayout 前のときの暫定値
 
@@ -213,10 +216,10 @@ export function BottomSheet({
    * Idempotent — multiple invocations during animation are coalesced.
    */
   const requestClose = useCallback(() => {
-    // Animate scrim + base translate out together.
-    Animated.spring(openProgress, {
+    Animated.timing(openProgress, {
       toValue: 0,
-      ...CLOSE_SPRING,
+      duration: CLOSE_DURATION,
+      easing: CLOSE_EASING,
       useNativeDriver: true,
     }).start(({ finished }) => {
       if (finished) {
@@ -239,9 +242,10 @@ export function BottomSheet({
       }).start();
     } else if (mounted) {
       // External request to close — animate out, then unmount.
-      Animated.spring(openProgress, {
+      Animated.timing(openProgress, {
         toValue: 0,
-        ...CLOSE_SPRING,
+        duration: CLOSE_DURATION,
+        easing: CLOSE_EASING,
         useNativeDriver: true,
       }).start(({ finished }) => {
         if (finished) {
@@ -277,9 +281,10 @@ export function BottomSheet({
                 friction: 14,
                 useNativeDriver: true,
               }),
-              Animated.spring(openProgress, {
+              Animated.timing(openProgress, {
                 toValue: 0,
-                ...CLOSE_SPRING,
+                duration: CLOSE_DURATION,
+                easing: CLOSE_EASING,
                 useNativeDriver: true,
               }),
             ]).start(({ finished }) => {
