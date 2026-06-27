@@ -147,36 +147,38 @@ const BalanceModal = memo(function BalanceModal({
   exerciseAdded,
   addedLabel,
   activityLevelLabel,
-  yesterdayOvershootKcal,
-  carryoverApplied,
+  carryoverPlanActive,
   carryoverDeductionKcal,
+  carryoverDaysTotal,
+  carryoverDayIndex,
+  yesterdayOvershootKcal,
   onApplyCarryover,
-  onRemoveCarryover,
+  onCancelCarryoverPlan,
 }: {
   visible: boolean;
   onClose: () => void;
   baseTargetKcal: number;
   adjustedTargetKcal: number;
   consumedKcal: number;
-  /** 今日の目標に加算される kcal (運動ログ or 活動量の大きい方。PRD §6.4.3) */
   exerciseAdded: number;
-  /** 加算行のラベル (加算ソースに応じて "運動" / "活動" 等を出し分け) */
   addedLabel: string;
-  /** オンボで選んだ運動習慣のラベル (例: "軽めに動く"). 未設定なら null */
   activityLevelLabel: string | null;
-  yesterdayOvershootKcal: number;
-  carryoverApplied: boolean;
+  carryoverPlanActive: boolean;
   carryoverDeductionKcal: number;
+  carryoverDaysTotal: number;
+  carryoverDayIndex: number;
+  /** 前日オーバー量。0 のとき帳尻行を非表示 */
+  yesterdayOvershootKcal: number;
   onApplyCarryover: () => void;
-  onRemoveCarryover: () => void;
+  onCancelCarryoverPlan: () => void;
 }) {
   const t = useTheme();
   const remaining = adjustedTargetKcal - consumedKcal;
   const progress = adjustedTargetKcal > 0 ? Math.min(1, Math.max(0, consumedKcal / adjustedTargetKcal)) : 0;
   const overshoot = remaining < 0;
   const hasExercise = exerciseAdded > 0;
-  // 前日オーバーが十分大きいとき（リング赤化閾値と同じ）のみ帳尻行を表示
-  const showCarryoverRow = yesterdayOvershootKcal > Math.round(baseTargetKcal * 0.15);
+  const showCarryoverSection = carryoverPlanActive ||
+    yesterdayOvershootKcal > Math.round(baseTargetKcal * 0.15);
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.balanceOverlay} onPress={onClose} accessibilityRole="button" accessibilityLabel="閉じる">
@@ -230,11 +232,15 @@ const BalanceModal = memo(function BalanceModal({
             {hasExercise ? (
               <BalanceMathRow label={addedLabel} value={exerciseAdded} sign="+" tone="positive" />
             ) : null}
-            {(hasExercise || (showCarryoverRow && carryoverApplied)) ? (
+            {(hasExercise || carryoverPlanActive) ? (
               <BalanceMathRow label="今日の目標" value={adjustedTargetKcal + carryoverDeductionKcal} emphasis="mid" />
             ) : null}
-            {showCarryoverRow && carryoverApplied ? (
-              <BalanceMathRow label="昨日の持ち越し" value={carryoverDeductionKcal} sign="-" />
+            {carryoverPlanActive ? (
+              <BalanceMathRow
+                label={`少しずつ調整中（${carryoverDayIndex}/${carryoverDaysTotal}日目）`}
+                value={carryoverDeductionKcal}
+                sign="-"
+              />
             ) : null}
             <BalanceMathRow label="食事" value={consumedKcal} sign="-" />
             <View style={styles.balanceMathDivider} />
@@ -246,36 +252,38 @@ const BalanceModal = memo(function BalanceModal({
             />
           </View>
 
-          {/* 帳尻調整トグル */}
-          {showCarryoverRow ? (
+          {/* 帳尻調整トグル: 前日閾値超 or プラン実行中のとき表示 */}
+          {showCarryoverSection && carryoverPlanActive ? (
             <Pressable
-              onPress={carryoverApplied ? onRemoveCarryover : onApplyCarryover}
-              style={[
-                styles.carryoverToggle,
-                {
-                  backgroundColor: carryoverApplied
-                    ? t.colors.action.primary.container
-                    : t.colors.surface.sunken,
-                  borderColor: carryoverApplied
-                    ? t.colors.border.focus
-                    : t.colors.border.subtle,
-                },
-              ]}
-              accessibilityRole="switch"
-              accessibilityState={{ checked: carryoverApplied }}
-              accessibilityLabel="昨日の持ち越しを今日の目標に反映する"
+              onPress={onCancelCarryoverPlan}
+              style={[styles.carryoverToggle, {
+                backgroundColor: t.colors.action.primary.container,
+                borderColor: t.colors.border.focus,
+              }]}
+              accessibilityRole="button"
+              accessibilityLabel="調整をやめる"
             >
               <View style={styles.carryoverToggleLeft}>
-                <Icon
-                  name={carryoverApplied ? 'check' : 'add'}
-                  size={14}
-                  color={carryoverApplied ? t.colors.action.primary.onContainer : t.colors.content.secondary}
-                />
-                <Text style={[
-                  styles.carryoverToggleLabel,
-                  { color: carryoverApplied ? t.colors.action.primary.onContainer : t.colors.content.secondary },
-                ]}>
-                  昨日 +{yesterdayOvershootKcal.toLocaleString()}kcal を今日から差し引く
+                <Text style={{ fontSize: 12 }}>🍽️</Text>
+                <Text style={[styles.carryoverToggleLabel, { color: t.colors.action.primary.onContainer }]}>
+                  少しずつ調整中（{carryoverDaysTotal}日間）— やめる
+                </Text>
+              </View>
+            </Pressable>
+          ) : showCarryoverSection ? (
+            <Pressable
+              onPress={onApplyCarryover}
+              style={[styles.carryoverToggle, {
+                backgroundColor: t.colors.surface.sunken,
+                borderColor: t.colors.border.subtle,
+              }]}
+              accessibilityRole="button"
+              accessibilityLabel="食事の調整をはじめる"
+            >
+              <View style={styles.carryoverToggleLeft}>
+                <Text style={{ fontSize: 12 }}>🍽️</Text>
+                <Text style={[styles.carryoverToggleLabel, { color: t.colors.content.secondary }]}>
+                  昨日の食事、少し多めでした — 調整する
                 </Text>
               </View>
             </Pressable>
@@ -342,11 +350,15 @@ function BalanceMathRow({
 }
 
 function CarryoverBanner({
-  overshootKcal,
+  isNewPlan,
+  daysRemaining,
   onApply,
   onDismiss,
 }: {
-  overshootKcal: number;
+  /** true = 提案バナー（初回）、false = 進捗バナー（2日目以降） */
+  isNewPlan: boolean;
+  /** 進捗バナー用: あと何日残っているか */
+  daysRemaining: number;
   onApply: () => void;
   onDismiss: () => void;
 }) {
@@ -367,7 +379,7 @@ function CarryoverBanner({
       }}
       accessibilityRole="alert"
     >
-      <Icon name="help" size={16} color={t.colors.content.secondary} />
+      <Text style={{ fontSize: 15 }}>🍽️</Text>
       <Text
         style={{
           flex: 1,
@@ -376,30 +388,34 @@ function CarryoverBanner({
           lineHeight: t.typography.lineHeight.xs,
         }}
       >
-        昨日 +{overshootKcal.toLocaleString()}kcal オーバー
+        {isNewPlan
+          ? '昨日の食事、少し多めでした'
+          : `少しずつ調整中です（あと ${daysRemaining}日）`}
       </Text>
-      <Pressable
-        onPress={onApply}
-        hitSlop={8}
-        style={{
-          backgroundColor: t.colors.action.primary.container,
-          borderRadius: t.radius.full,
-          paddingHorizontal: t.spacing['3'],
-          paddingVertical: t.spacing['1'],
-        }}
-        accessibilityRole="button"
-        accessibilityLabel="今日の目標から差し引く"
-      >
-        <Text
+      {isNewPlan ? (
+        <Pressable
+          onPress={onApply}
+          hitSlop={8}
           style={{
-            fontSize: t.typography.fontSize.xs,
-            fontWeight: t.typography.fontWeight.semibold as import('react-native').TextStyle['fontWeight'],
-            color: t.colors.action.primary.onContainer,
+            backgroundColor: t.colors.action.primary.container,
+            borderRadius: t.radius.full,
+            paddingHorizontal: t.spacing['3'],
+            paddingVertical: t.spacing['1'],
           }}
+          accessibilityRole="button"
+          accessibilityLabel="今日から調整する"
         >
-          差し引く
-        </Text>
-      </Pressable>
+          <Text
+            style={{
+              fontSize: t.typography.fontSize.xs,
+              fontWeight: t.typography.fontWeight.semibold as import('react-native').TextStyle['fontWeight'],
+              color: t.colors.action.primary.onContainer,
+            }}
+          >
+            調整する
+          </Text>
+        </Pressable>
+      ) : null}
       <Pressable
         onPress={onDismiss}
         hitSlop={12}
@@ -421,9 +437,11 @@ export const StatusCard = memo(function StatusCard({
   onFoodPress?: () => void;
 }) {
   const {
-    profile, todayMacro, logs, exerciseLogs, dailyActivities,
-    yesterdayOvershootKcal, showCarryoverBanner, carryoverApplied,
-    carryoverDeductionKcal, applyCarryover, removeCarryover, dismissCarryoverBanner,
+    profile, todayMacro, logs, exerciseLogs, dailyActivities, settings,
+    yesterdayOvershootKcal,
+    showCarryoverBanner, showNewPlanBanner, showProgressBanner,
+    carryoverPlanActive, carryoverDayIndex, carryoverDeductionKcal,
+    applyCarryover, cancelCarryoverPlan, dismissCarryoverBanner,
   } = useAppState();
   const t = useTheme();
   const { width: screenWidth } = useWindowDimensions();
@@ -481,10 +499,11 @@ export const StatusCard = memo(function StatusCard({
 
   return (
     <View style={styles.statusCard}>
-      {/* 帳尻調整バナー: 今日の朝 & 前日大きくオーバー & まだdismissしていない */}
+      {/* 帳尻調整バナー */}
       {isToday && showCarryoverBanner ? (
         <CarryoverBanner
-          overshootKcal={yesterdayOvershootKcal}
+          isNewPlan={showNewPlanBanner}
+          daysRemaining={(settings.kcalCarryoverDaysTotal ?? 0) - carryoverDayIndex}
           onApply={applyCarryover}
           onDismiss={dismissCarryoverBanner}
         />
@@ -591,11 +610,13 @@ export const StatusCard = memo(function StatusCard({
         activityLevelLabel={
           ACTIVITY_LEVEL_OPTIONS.find((a) => a.level === profile.activityLevel)?.label ?? null
         }
-        yesterdayOvershootKcal={isToday ? yesterdayOvershootKcal : 0}
-        carryoverApplied={isToday && carryoverApplied}
+        carryoverPlanActive={isToday && carryoverPlanActive}
         carryoverDeductionKcal={isToday ? carryoverDeductionKcal : 0}
+        carryoverDaysTotal={isToday ? (settings.kcalCarryoverDaysTotal ?? 0) : 0}
+        carryoverDayIndex={isToday ? carryoverDayIndex : 0}
+        yesterdayOvershootKcal={isToday ? yesterdayOvershootKcal : 0}
         onApplyCarryover={applyCarryover}
-        onRemoveCarryover={removeCarryover}
+        onCancelCarryoverPlan={cancelCarryoverPlan}
       />
     </View>
   );

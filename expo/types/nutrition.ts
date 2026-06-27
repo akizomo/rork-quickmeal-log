@@ -220,10 +220,14 @@ export interface AppSettings {
    */
   kcalCarryoverDismissedDate?: string;
   /**
-   * 帳尻調整（前日オーバー分の差し引き）を適用中の日付 (dateKey)。
-   * 当日に一致するとき、今日の目標を前日オーバー分だけ減算する。
+   * 帳尻調整プランの開始日 (dateKey)。
+   * 設定されているとき、今日がプラン期間内なら目標を減算する。
    */
-  kcalCarryoverAppliedDate?: string;
+  kcalCarryoverStartDate?: string;
+  /** 1日あたりの差し引き額 (kcal)。均等割り。 */
+  kcalCarryoverDailyAmount?: number;
+  /** プランの総日数。 */
+  kcalCarryoverDaysTotal?: number;
 }
 
 export interface QuickCategory {

@@ -20,6 +20,7 @@ import { isSameDay } from '@/utils/history';
 import { castHistoryMap, deriveDefaultTab, recordDishSelection, recordSelection, selectionFromDraft } from '@/utils/quick-log-history';
 import { computeQuickLogMacro } from '@/utils/quick-log-macro';
 import { beginSpan } from '@/utils/perf';
+import { widgetUpdateKcal, widgetDrainPendingQueue } from '@/utils/widget-bridge';
 import { resolveLog, ResolveInput, ResolveResult } from '@/utils/identity-resolver';
 import { logDraftToFoodLog } from '@/utils/identity-log-bridge';
 import { getIdentity } from '@/constants/identity';
@@ -1353,9 +1354,20 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       return prev === next ? prev : next;
     });
   }, []);
+  // quickLog の最新参照を ref で保持して AppState ハンドラに渡す（stale closure 防止）
+  const quickLogRef = useRef(quickLog);
+  useEffect(() => { quickLogRef.current = quickLog; }, [quickLog]);
+
   useEffect(() => {
     const sub = AppState.addEventListener('change', (s) => {
-      if (s === 'active') refreshToday();
+      if (s !== 'active') return;
+      refreshToday();
+      // ウィジェットから積まれたログを drain して既存フローに流す
+      widgetDrainPendingQueue().then((entries) => {
+        entries.forEach((entry) => {
+          quickLogRef.current(entry.categoryId, 'ingredient');
+        });
+      });
     });
     let timer: ReturnType<typeof setTimeout>;
     const scheduleMidnight = () => {
@@ -1402,25 +1414,44 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     return Math.max(0, Math.round(yesterdayConsumed - yesterdayTarget));
   }, [logs, yesterdayKey, profile, dailyActivities, exerciseLogs]);
 
-  // 帳尻バナーをこの朝に表示すべきか
-  // 条件: 前日がリング赤化閾値(+15%)超 & 現在が午前中 & 今日まだdismissしていない
-  const showCarryoverBanner = useMemo(() => {
+  // ── 帳尻調整プラン ──────────────────────────────────────────────────────────
+  // MAX_PER_DAY = 250 kcal (健康的な上限: 既存赤字との合計が安全範囲内に収まる量)
+  const CARRYOVER_MAX_PER_DAY = 250;
+
+  // 現在のプランが有効か、今日は何日目かを算出
+  const carryoverDayIndex = useMemo(() => {
+    if (!settings.kcalCarryoverStartDate) return 0;
+    const start = new Date(settings.kcalCarryoverStartDate + 'T00:00:00');
+    const today = new Date(todayKey + 'T00:00:00');
+    return Math.round((today.getTime() - start.getTime()) / 86400000) + 1; // 1-indexed
+  }, [settings.kcalCarryoverStartDate, todayKey]);
+
+  const carryoverPlanActive = useMemo(() =>
+    settings.kcalCarryoverStartDate !== undefined &&
+    carryoverDayIndex >= 1 &&
+    carryoverDayIndex <= (settings.kcalCarryoverDaysTotal ?? 0),
+  [settings.kcalCarryoverStartDate, settings.kcalCarryoverDaysTotal, carryoverDayIndex]);
+
+  // 今日の差し引き額
+  const carryoverDeductionKcal = carryoverPlanActive
+    ? (settings.kcalCarryoverDailyAmount ?? 0)
+    : 0;
+
+  // 提案バナー: プランがなく、朝で、前日が閾値超で、未dismissのとき
+  const showNewPlanBanner = useMemo(() => {
+    if (carryoverPlanActive) return false;
     const hour = new Date().getHours();
     const isMorning = hour < 12;
     const isPastTolerance = yesterdayOvershootKcal > Math.round(profile.targetCalories * 0.15);
     const dismissed = settings.kcalCarryoverDismissedDate === todayKey;
     return isMorning && isPastTolerance && !dismissed;
-  }, [yesterdayOvershootKcal, profile.targetCalories, settings.kcalCarryoverDismissedDate, todayKey]);
+  }, [carryoverPlanActive, yesterdayOvershootKcal, profile.targetCalories, settings.kcalCarryoverDismissedDate, todayKey]);
 
-  // 帳尻調整が今日有効か
-  const carryoverApplied = settings.kcalCarryoverAppliedDate === todayKey;
+  // 進捗バナー: プラン実行中で、今日まだdismissしていない
+  const showProgressBanner = carryoverPlanActive &&
+    settings.kcalCarryoverDismissedDate !== todayKey;
 
-  // 帳尻調整の差し引き額（下限: ベース目標の60%を保証）
-  const carryoverDeductionKcal = useMemo(() => {
-    if (!carryoverApplied) return 0;
-    const minTarget = Math.round(profile.targetCalories * 0.6);
-    return Math.min(yesterdayOvershootKcal, profile.targetCalories - minTarget);
-  }, [carryoverApplied, yesterdayOvershootKcal, profile.targetCalories]);
+  const showCarryoverBanner = showNewPlanBanner || showProgressBanner;
   const todayExerciseLogs = useMemo(() => exerciseLogs.filter((e) => e.date === todayKey), [exerciseLogs, todayKey]);
   const todayGrossExerciseKcal = useMemo(() => todayExerciseLogs.reduce((s, e) => s + e.grossKcal, 0), [todayExerciseLogs]);
   const todayNetExerciseKcal = useMemo(() => todayExerciseLogs.reduce((s, e) => s + e.netKcal, 0), [todayExerciseLogs]);
@@ -1438,6 +1469,13 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     });
     return base - carryoverDeductionKcal;
   }, [exerciseLogs, profile, dailyActivities, todayKey, carryoverDeductionKcal]);
+
+  // ── ウィジェット: kcal 同期 ───────────────────────────────────────────────
+  // todayMacro.kcal または todayAdjustedTargetKcal が変わるたびにウィジェットリングを更新。
+  useEffect(() => {
+    widgetUpdateKcal(todayMacro.kcal, todayAdjustedTargetKcal);
+  }, [todayMacro.kcal, todayAdjustedTargetKcal]);
+
   /**
    * v1.7+: 運動で kcal 目標が伸びたとき、PFC ターゲットも **現在比率を維持** して
    * 比例スケールさせる (MyFitnessPal 等のデフォルトと同方式)。
@@ -1472,20 +1510,28 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
   const editorLog = useMemo(() => logs.find((item) => item.id === editorLogId) ?? null, [editorLogId, logs]);
   const editorIsPending = useMemo(() => (editorLogId ? pendingLogIds.includes(editorLogId) : false), [editorLogId, pendingLogIds]);
 
+  // プランを開始する（提案バナーの「調整する」タップ時）
   const applyCarryover = useCallback(() => {
+    const daysTotal = Math.ceil(yesterdayOvershootKcal / CARRYOVER_MAX_PER_DAY);
+    const dailyAmount = Math.ceil(yesterdayOvershootKcal / daysTotal);
     const next: AppSettings = {
       ...settings,
-      kcalCarryoverAppliedDate: todayKey,
+      kcalCarryoverStartDate: todayKey,
+      kcalCarryoverDailyAmount: dailyAmount,
+      kcalCarryoverDaysTotal: daysTotal,
       kcalCarryoverDismissedDate: todayKey,
     };
     setSettings(next);
     persist(profile, logs, next, weights, bodyFatEntries);
-  }, [settings, todayKey, profile, logs, weights, bodyFatEntries, persist]);
+  }, [settings, todayKey, yesterdayOvershootKcal, CARRYOVER_MAX_PER_DAY, profile, logs, weights, bodyFatEntries, persist]);
 
-  const removeCarryover = useCallback(() => {
+  // プランをキャンセルする（BalanceModal のトグルOFF）
+  const cancelCarryoverPlan = useCallback(() => {
     const next: AppSettings = {
       ...settings,
-      kcalCarryoverAppliedDate: undefined,
+      kcalCarryoverStartDate: undefined,
+      kcalCarryoverDailyAmount: undefined,
+      kcalCarryoverDaysTotal: undefined,
     };
     setSettings(next);
     persist(profile, logs, next, weights, bodyFatEntries);
@@ -1558,10 +1604,13 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     updateSettingsValues,
     yesterdayOvershootKcal,
     showCarryoverBanner,
-    carryoverApplied,
+    showNewPlanBanner,
+    showProgressBanner,
+    carryoverPlanActive,
+    carryoverDayIndex,
     carryoverDeductionKcal,
     applyCarryover,
-    removeCarryover,
+    cancelCarryoverPlan,
     dismissCarryoverBanner,
     addWeightEntry,
     addBodyFatEntry,
