@@ -1377,6 +1377,50 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
 
   const todayLogs = useMemo(() => logs.filter((item) => item.date === todayKey), [logs, todayKey]);
   const todayMacro = useMemo(() => sumToday(logs, todayKey), [logs, todayKey]);
+
+  // 前日キー
+  const yesterdayKey = useMemo(() => {
+    const d = new Date(todayKey);
+    d.setDate(d.getDate() - 1);
+    return formatDateKey(d);
+  }, [todayKey]);
+
+  // 前日のkcal実績と目標を計算し、オーバー分（帳尻調整候補）を算出。
+  const yesterdayOvershootKcal = useMemo(() => {
+    const yesterdayConsumed = sumToday(logs, yesterdayKey).kcal;
+    const baseline = calcBaselineActiveKcal(profile);
+    const da = dailyActivities.find((d) => d.date === yesterdayKey);
+    const measured = da
+      ? da.activeKcal > 0
+        ? da.activeKcal
+        : stepsToActiveKcal(da.steps, profile.currentWeightKg)
+      : null;
+    const yesterdayTarget = adjustedTargetKcal(profile.targetCalories, exerciseLogs, yesterdayKey, {
+      measuredActiveKcal: measured,
+      baselineActiveKcal: baseline,
+    });
+    return Math.max(0, Math.round(yesterdayConsumed - yesterdayTarget));
+  }, [logs, yesterdayKey, profile, dailyActivities, exerciseLogs]);
+
+  // 帳尻バナーをこの朝に表示すべきか
+  // 条件: 前日がリング赤化閾値(+15%)超 & 現在が午前中 & 今日まだdismissしていない
+  const showCarryoverBanner = useMemo(() => {
+    const hour = new Date().getHours();
+    const isMorning = hour < 12;
+    const isPastTolerance = yesterdayOvershootKcal > Math.round(profile.targetCalories * 0.15);
+    const dismissed = settings.kcalCarryoverDismissedDate === todayKey;
+    return isMorning && isPastTolerance && !dismissed;
+  }, [yesterdayOvershootKcal, profile.targetCalories, settings.kcalCarryoverDismissedDate, todayKey]);
+
+  // 帳尻調整が今日有効か
+  const carryoverApplied = settings.kcalCarryoverAppliedDate === todayKey;
+
+  // 帳尻調整の差し引き額（下限: ベース目標の60%を保証）
+  const carryoverDeductionKcal = useMemo(() => {
+    if (!carryoverApplied) return 0;
+    const minTarget = Math.round(profile.targetCalories * 0.6);
+    return Math.min(yesterdayOvershootKcal, profile.targetCalories - minTarget);
+  }, [carryoverApplied, yesterdayOvershootKcal, profile.targetCalories]);
   const todayExerciseLogs = useMemo(() => exerciseLogs.filter((e) => e.date === todayKey), [exerciseLogs, todayKey]);
   const todayGrossExerciseKcal = useMemo(() => todayExerciseLogs.reduce((s, e) => s + e.grossKcal, 0), [todayExerciseLogs]);
   const todayNetExerciseKcal = useMemo(() => todayExerciseLogs.reduce((s, e) => s + e.netKcal, 0), [todayExerciseLogs]);
@@ -1388,11 +1432,12 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
         ? da.activeKcal
         : stepsToActiveKcal(da.steps, profile.currentWeightKg)
       : null;
-    return adjustedTargetKcal(profile.targetCalories, exerciseLogs, todayKey, {
+    const base = adjustedTargetKcal(profile.targetCalories, exerciseLogs, todayKey, {
       measuredActiveKcal: measured,
       baselineActiveKcal: baseline,
     });
-  }, [exerciseLogs, profile, dailyActivities, todayKey]);
+    return base - carryoverDeductionKcal;
+  }, [exerciseLogs, profile, dailyActivities, todayKey, carryoverDeductionKcal]);
   /**
    * v1.7+: 運動で kcal 目標が伸びたとき、PFC ターゲットも **現在比率を維持** して
    * 比例スケールさせる (MyFitnessPal 等のデフォルトと同方式)。
@@ -1426,6 +1471,31 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
   );
   const editorLog = useMemo(() => logs.find((item) => item.id === editorLogId) ?? null, [editorLogId, logs]);
   const editorIsPending = useMemo(() => (editorLogId ? pendingLogIds.includes(editorLogId) : false), [editorLogId, pendingLogIds]);
+
+  const applyCarryover = useCallback(() => {
+    const next: AppSettings = {
+      ...settings,
+      kcalCarryoverAppliedDate: todayKey,
+      kcalCarryoverDismissedDate: todayKey,
+    };
+    setSettings(next);
+    persist(profile, logs, next, weights, bodyFatEntries);
+  }, [settings, todayKey, profile, logs, weights, bodyFatEntries, persist]);
+
+  const removeCarryover = useCallback(() => {
+    const next: AppSettings = {
+      ...settings,
+      kcalCarryoverAppliedDate: undefined,
+    };
+    setSettings(next);
+    persist(profile, logs, next, weights, bodyFatEntries);
+  }, [settings, profile, logs, weights, bodyFatEntries, persist]);
+
+  const dismissCarryoverBanner = useCallback(() => {
+    const next: AppSettings = { ...settings, kcalCarryoverDismissedDate: todayKey };
+    setSettings(next);
+    persist(profile, logs, next, weights, bodyFatEntries);
+  }, [settings, todayKey, profile, logs, weights, bodyFatEntries, persist]);
 
   return {
     profile,
@@ -1486,6 +1556,13 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     updateDishLog,
     updateProfileValues,
     updateSettingsValues,
+    yesterdayOvershootKcal,
+    showCarryoverBanner,
+    carryoverApplied,
+    carryoverDeductionKcal,
+    applyCarryover,
+    removeCarryover,
+    dismissCarryoverBanner,
     addWeightEntry,
     addBodyFatEntry,
     getMealSlot,

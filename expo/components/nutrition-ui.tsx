@@ -147,6 +147,11 @@ const BalanceModal = memo(function BalanceModal({
   exerciseAdded,
   addedLabel,
   activityLevelLabel,
+  yesterdayOvershootKcal,
+  carryoverApplied,
+  carryoverDeductionKcal,
+  onApplyCarryover,
+  onRemoveCarryover,
 }: {
   visible: boolean;
   onClose: () => void;
@@ -159,11 +164,19 @@ const BalanceModal = memo(function BalanceModal({
   addedLabel: string;
   /** オンボで選んだ運動習慣のラベル (例: "軽めに動く"). 未設定なら null */
   activityLevelLabel: string | null;
+  yesterdayOvershootKcal: number;
+  carryoverApplied: boolean;
+  carryoverDeductionKcal: number;
+  onApplyCarryover: () => void;
+  onRemoveCarryover: () => void;
 }) {
+  const t = useTheme();
   const remaining = adjustedTargetKcal - consumedKcal;
   const progress = adjustedTargetKcal > 0 ? Math.min(1, Math.max(0, consumedKcal / adjustedTargetKcal)) : 0;
   const overshoot = remaining < 0;
   const hasExercise = exerciseAdded > 0;
+  // 前日オーバーが十分大きいとき（リング赤化閾値と同じ）のみ帳尻行を表示
+  const showCarryoverRow = yesterdayOvershootKcal > Math.round(baseTargetKcal * 0.15);
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.balanceOverlay} onPress={onClose} accessibilityRole="button" accessibilityLabel="閉じる">
@@ -217,8 +230,11 @@ const BalanceModal = memo(function BalanceModal({
             {hasExercise ? (
               <BalanceMathRow label={addedLabel} value={exerciseAdded} sign="+" tone="positive" />
             ) : null}
-            {hasExercise ? (
-              <BalanceMathRow label="今日の目標" value={adjustedTargetKcal} emphasis="mid" />
+            {(hasExercise || (showCarryoverRow && carryoverApplied)) ? (
+              <BalanceMathRow label="今日の目標" value={adjustedTargetKcal + carryoverDeductionKcal} emphasis="mid" />
+            ) : null}
+            {showCarryoverRow && carryoverApplied ? (
+              <BalanceMathRow label="昨日の持ち越し" value={carryoverDeductionKcal} sign="-" />
             ) : null}
             <BalanceMathRow label="食事" value={consumedKcal} sign="-" />
             <View style={styles.balanceMathDivider} />
@@ -229,6 +245,41 @@ const BalanceModal = memo(function BalanceModal({
               tone={overshoot ? 'alert' : undefined}
             />
           </View>
+
+          {/* 帳尻調整トグル */}
+          {showCarryoverRow ? (
+            <Pressable
+              onPress={carryoverApplied ? onRemoveCarryover : onApplyCarryover}
+              style={[
+                styles.carryoverToggle,
+                {
+                  backgroundColor: carryoverApplied
+                    ? t.colors.action.primary.container
+                    : t.colors.surface.sunken,
+                  borderColor: carryoverApplied
+                    ? t.colors.border.focus
+                    : t.colors.border.subtle,
+                },
+              ]}
+              accessibilityRole="switch"
+              accessibilityState={{ checked: carryoverApplied }}
+              accessibilityLabel="昨日の持ち越しを今日の目標に反映する"
+            >
+              <View style={styles.carryoverToggleLeft}>
+                <Icon
+                  name={carryoverApplied ? 'check' : 'add'}
+                  size={14}
+                  color={carryoverApplied ? t.colors.action.primary.onContainer : t.colors.content.secondary}
+                />
+                <Text style={[
+                  styles.carryoverToggleLabel,
+                  { color: carryoverApplied ? t.colors.action.primary.onContainer : t.colors.content.secondary },
+                ]}>
+                  昨日 +{yesterdayOvershootKcal.toLocaleString()}kcal を今日から差し引く
+                </Text>
+              </View>
+            </Pressable>
+          ) : null}
         </Pressable>
       </Pressable>
     </Modal>
@@ -290,6 +341,77 @@ function BalanceMathRow({
   );
 }
 
+function CarryoverBanner({
+  overshootKcal,
+  onApply,
+  onDismiss,
+}: {
+  overshootKcal: number;
+  onApply: () => void;
+  onDismiss: () => void;
+}) {
+  const t = useTheme();
+  return (
+    <View
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: t.spacing['3'],
+        backgroundColor: t.colors.surface.raised,
+        borderRadius: t.radius.md,
+        borderWidth: 1,
+        borderColor: t.colors.border.subtle,
+        paddingHorizontal: t.spacing['4'],
+        paddingVertical: t.spacing['3'],
+        marginBottom: t.spacing['2'],
+      }}
+      accessibilityRole="alert"
+    >
+      <Icon name="help" size={16} color={t.colors.content.secondary} />
+      <Text
+        style={{
+          flex: 1,
+          fontSize: t.typography.fontSize.xs,
+          color: t.colors.content.secondary,
+          lineHeight: t.typography.lineHeight.xs,
+        }}
+      >
+        昨日 +{overshootKcal.toLocaleString()}kcal オーバー
+      </Text>
+      <Pressable
+        onPress={onApply}
+        hitSlop={8}
+        style={{
+          backgroundColor: t.colors.action.primary.container,
+          borderRadius: t.radius.full,
+          paddingHorizontal: t.spacing['3'],
+          paddingVertical: t.spacing['1'],
+        }}
+        accessibilityRole="button"
+        accessibilityLabel="今日の目標から差し引く"
+      >
+        <Text
+          style={{
+            fontSize: t.typography.fontSize.xs,
+            fontWeight: t.typography.fontWeight.semibold as import('react-native').TextStyle['fontWeight'],
+            color: t.colors.action.primary.onContainer,
+          }}
+        >
+          差し引く
+        </Text>
+      </Pressable>
+      <Pressable
+        onPress={onDismiss}
+        hitSlop={12}
+        accessibilityRole="button"
+        accessibilityLabel="閉じる"
+      >
+        <Icon name="close" size={14} color={t.colors.content.tertiary} />
+      </Pressable>
+    </View>
+  );
+}
+
 export const StatusCard = memo(function StatusCard({
   viewedDate,
   onFoodPress,
@@ -298,7 +420,11 @@ export const StatusCard = memo(function StatusCard({
   /** 左「食事」エリアタップ時のコールバック (例: DayLogBottomSheet を half に展開) */
   onFoodPress?: () => void;
 }) {
-  const { profile, todayMacro, logs, exerciseLogs, dailyActivities } = useAppState();
+  const {
+    profile, todayMacro, logs, exerciseLogs, dailyActivities,
+    yesterdayOvershootKcal, showCarryoverBanner, carryoverApplied,
+    carryoverDeductionKcal, applyCarryover, removeCarryover, dismissCarryoverBanner,
+  } = useAppState();
   const t = useTheme();
   const { width: screenWidth } = useWindowDimensions();
   const [exerciseSheetVisible, setExerciseSheetVisible] = useState(false);
@@ -328,9 +454,11 @@ export const StatusCard = memo(function StatusCard({
 
   // 表示中の日付に対する目標・消費・PFC をその日の運動ログ + 活動量から算出する。
   // 今日 / 過去日とも同じロジック (運動を記録した過去日も目標が拡大する)。
+  // 今日かつ帳尻調整が有効な場合は carryoverDeductionKcal を差し引く。
   const effectiveTarget = useMemo(
-    () => adjustedTargetKcal(profile.targetCalories, exerciseLogs, dateKey, activityCtx),
-    [profile.targetCalories, exerciseLogs, dateKey, activityCtx]
+    () => adjustedTargetKcal(profile.targetCalories, exerciseLogs, dateKey, activityCtx)
+      - (isToday ? carryoverDeductionKcal : 0),
+    [profile.targetCalories, exerciseLogs, dateKey, activityCtx, isToday, carryoverDeductionKcal]
   );
   const effectiveExerciseKcal = useMemo(
     () => Math.round(
@@ -353,6 +481,15 @@ export const StatusCard = memo(function StatusCard({
 
   return (
     <View style={styles.statusCard}>
+      {/* 帳尻調整バナー: 今日の朝 & 前日大きくオーバー & まだdismissしていない */}
+      {isToday && showCarryoverBanner ? (
+        <CarryoverBanner
+          overshootKcal={yesterdayOvershootKcal}
+          onApply={applyCarryover}
+          onDismiss={dismissCarryoverBanner}
+        />
+      ) : null}
+
       {/* 3-column: 食事 | Ring(残り) | 消費 */}
       <View style={styles.ringRow}>
         {/* Left: 食事 (タップで食事ログシート half) */}
@@ -447,12 +584,18 @@ export const StatusCard = memo(function StatusCard({
         adjustedTargetKcal={effectiveTarget}
         consumedKcal={Math.round(dayMacro.kcal)}
         /* 目標加算 = max(0, (歩数activeKcal − 活動係数想定) + 運動gross)。
-         * adjustedTarget - baseTarget がその最終加算分 (PRD §6.4.3, v1.9)。 */
-        exerciseAdded={Math.max(0, effectiveTarget - profile.targetCalories)}
+         * adjustedTarget - baseTarget がその最終加算分 (PRD §6.4.3, v1.9)。
+         * carryoverDeduction を除いて運動加算分のみを渡す。 */
+        exerciseAdded={Math.max(0, effectiveTarget + carryoverDeductionKcal - profile.targetCalories)}
         addedLabel="活動・運動"
         activityLevelLabel={
           ACTIVITY_LEVEL_OPTIONS.find((a) => a.level === profile.activityLevel)?.label ?? null
         }
+        yesterdayOvershootKcal={isToday ? yesterdayOvershootKcal : 0}
+        carryoverApplied={isToday && carryoverApplied}
+        carryoverDeductionKcal={isToday ? carryoverDeductionKcal : 0}
+        onApplyCarryover={applyCarryover}
+        onRemoveCarryover={removeCarryover}
       />
     </View>
   );
@@ -1170,6 +1313,18 @@ const styles = StyleSheet.create({
     backgroundColor: palette.border,
     marginVertical: 2,
   },
+  carryoverToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginTop: 12,
+  },
+  carryoverToggleLeft: { flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 },
+  carryoverToggleLabel: { fontSize: 12, fontWeight: '600', flex: 1 },
   pfcMiniRow: { flexDirection: 'row', gap: 12, marginHorizontal: 12 },
   miniBarItem: { flex: 1, gap: 4 },
   miniBarLabel: { fontSize: 13, color: palette.textMuted, fontWeight: '600' },

@@ -214,6 +214,16 @@ export interface AppSettings {
    *   1 — LEGACY_TO_IDENTITY_MAP has been applied (Phase 5)
    */
   iaSchemaVersion?: number;
+  /**
+   * 帳尻調整バナーを dismiss した日付 (dateKey "YYYY-MM-DD")。
+   * 当日に一致するとき、その日のバナーを表示しない。
+   */
+  kcalCarryoverDismissedDate?: string;
+  /**
+   * 帳尻調整（前日オーバー分の差し引き）を適用中の日付 (dateKey)。
+   * 当日に一致するとき、今日の目標を前日オーバー分だけ減算する。
+   */
+  kcalCarryoverAppliedDate?: string;
 }
 
 export interface QuickCategory {
