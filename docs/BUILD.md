@@ -157,7 +157,25 @@ git log <前回のコミット>..HEAD --oneline
 
 ---
 
-## 5. トラブルシューティング
+## 5. ビルド進捗の監視ルール
+
+**EAS CLI の出力ファイルが `Waiting for build to complete.` のまま止まっていても、クラウド側では既に失敗している場合がある。**
+出力ファイルを見るだけでなく、以下で EAS 本体のステータスを必ず確認すること。
+
+```bash
+# ビルドIDは起動時のログ「See logs:」URLの末尾
+npx --yes eas-cli@latest build:view <BUILD_ID> --json 2>/dev/null \
+  | node -e "const c=[];process.stdin.on('data',d=>c.push(d));process.stdin.on('end',()=>{const t=Buffer.concat(c).toString();const o=JSON.parse(t.slice(t.indexOf('{')));console.log('status:',o.status,'error:',JSON.stringify(o.error));})"
+```
+
+**判断基準**:
+- ユーザーに2回以上「まだ？」と聞かれたら上記コマンドでクラウドステータスを直接確認する
+- 起動から30分以上経過していても完了通知が来ない場合も確認する
+- `ERRORED` になっていたら即座に報告し、ログを取得して原因を調査する
+
+---
+
+## 6. トラブルシューティング
 
 ### `npm install` が peer dependency エラーで失敗
 
@@ -204,7 +222,7 @@ npx --yes eas-cli@latest update:configure
 
 ---
 
-## 6. ビルド後のアクション
+## 7. ビルド後のアクション
 
 ### 6-1. AAB / IPA のダウンロード
 
@@ -237,7 +255,7 @@ npx --yes eas-cli@latest submit --platform android --latest
 
 ---
 
-## 7. ビルド設定ファイル参照
+## 8. ビルド設定ファイル参照
 
 | ファイル | 役割 |
 |---|---|
@@ -248,7 +266,7 @@ npx --yes eas-cli@latest submit --platform android --latest
 
 ---
 
-## 8. 過去ビルド実績
+## 9. 過去ビルド実績
 
 | Build # | Profile | Commit | 結果 | 備考 |
 |---:|---|---|---|---|
