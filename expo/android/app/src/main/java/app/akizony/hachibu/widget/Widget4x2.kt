@@ -1,12 +1,16 @@
 package app.akizony.hachibu.widget
 
+import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.*
+import androidx.glance.GlanceId
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
+import androidx.glance.appwidget.cornerRadius
+import androidx.glance.appwidget.provideContent
 import androidx.glance.layout.*
 import androidx.glance.text.*
 import androidx.glance.unit.ColorProvider
@@ -15,8 +19,12 @@ import androidx.glance.unit.ColorProvider
 
 class Widget4x2Glance : GlanceAppWidget() {
 
+    override suspend fun provideGlance(context: Context, id: GlanceId) {
+        provideContent { Content() }
+    }
+
     @Composable
-    override fun Content() {
+    private fun Content() {
         val context    = LocalContext.current
         val categories = WidgetStateManager.getCategories(context).take(4)
         val logged     = WidgetStateManager.getLoggedCategories(context)
