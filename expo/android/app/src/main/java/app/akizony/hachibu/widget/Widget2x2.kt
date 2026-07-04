@@ -23,12 +23,11 @@ import androidx.glance.unit.ColorProvider
 class Widget2x2Glance : GlanceAppWidget() {
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        provideContent { Content() }
+        provideContent { Content(context) }
     }
 
     @Composable
-    private fun Content() {
-        val context    = LocalContext.current
+    private fun Content(context: Context) {
         val categories = WidgetStateManager.getCategories(context).take(4)
         val logged     = WidgetStateManager.getLoggedCategories(context)
 
