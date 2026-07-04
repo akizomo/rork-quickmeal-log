@@ -64,7 +64,7 @@ class Widget4x2Glance : GlanceAppWidget() {
                         .fillMaxHeight()
                         .padding(vertical = 8.dp)
                         .background(ColorProvider(Color(0x1AFFFFFF)))
-                )
+                ) {}
 
                 // 右: 2×2 ボタン
                 Column(
