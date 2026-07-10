@@ -390,8 +390,8 @@ function WeeklyRingsRow({
         const consumed = sumForDate(logs, dk).kcal;
         const target = adjustedTargetKcal(baseTargetKcal, exerciseLogs, dk, undefined);
 
-        const size = isToday ? 36 : 30;
-        const stroke = isToday ? 3.5 : 3;
+        const size = 30;
+        const stroke = 3;
         const cx = size / 2;
         const r = (size - stroke) / 2;
         const circ = 2 * Math.PI * r;
@@ -405,8 +405,8 @@ function WeeklyRingsRow({
         const toleranceColor = colors.moss[600];
         const overflowColor = t.colors.nutrition.calorie.severeExceed;
 
-        const labelColor = isToday ? palette.sageDeep : palette.textMuted;
-        const fontSize = isToday ? 11 : 10;
+        const labelColor = isToday ? t.colors.content.primary : t.colors.content.secondary;
+        const fontSize = 10;
 
         return (
           <View key={dk} style={styles.weeklyRingItem}>
