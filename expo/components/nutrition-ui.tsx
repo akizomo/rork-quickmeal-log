@@ -21,6 +21,7 @@ import { DayLogBottomSheet, type DayLogBottomSheetRef } from '@/components/DayLo
 import { additionPresets, portionSnapPoints, sizeOptions } from '@/constants/nutrition-data';
 import { ACTIVITY_LEVEL_OPTIONS, TRIAL_DURATION_DAYS } from '@/constants/onboarding';
 import { palette } from '@/constants/theme';
+import { colors } from '@/design-system/tokens/primitives/colors';
 import { Badge, BottomSheet, Caption, Icon, useTheme } from '@/design-system';
 import { duration, spring } from '@/design-system/tokens/primitives/motion';
 import { useAppState } from '@/providers/app-state-provider';
@@ -399,10 +400,9 @@ function WeeklyRingsRow({
         const ratio = !isFuture && consumed > 0 && target > 0 ? consumed / target : 0;
         const firstLap = Math.min(ratio, 1);
         const secondLap = ratio > 1 ? Math.min(ratio - 1, 1) : 0;
-        const isOver = ratio > 1 + TOLERANCE;
-        const progressColor = isToday
-          ? t.colors.nutrition.calorie.within
-          : t.colors.status.success;
+        const isPastTolerance = ratio > 1 + TOLERANCE;
+        const progressColor = t.colors.nutrition.calorie.within;
+        const toleranceColor = colors.moss[600];
         const overflowColor = t.colors.nutrition.calorie.severeExceed;
 
         const labelColor = isToday ? palette.sageDeep : palette.textMuted;
@@ -412,12 +412,12 @@ function WeeklyRingsRow({
           <View key={dk} style={styles.weeklyRingItem}>
             <Svg width={size} height={size}>
               {/* track */}
-              <Circle cx={cx} cy={cx} r={r} fill="none" stroke={t.colors.border.default} strokeWidth={stroke} />
+              <Circle cx={cx} cy={cx} r={r} fill="none" stroke={t.colors.nutrition.calorie.track} strokeWidth={stroke} />
               {/* first lap */}
               {firstLap > 0 && (
                 <Circle
                   cx={cx} cy={cx} r={r} fill="none"
-                  stroke={isOver ? overflowColor : progressColor}
+                  stroke={progressColor}
                   strokeWidth={stroke}
                   strokeLinecap="round"
                   strokeDasharray={`${circ} ${circ}`}
@@ -429,7 +429,7 @@ function WeeklyRingsRow({
               {secondLap > 0 && (
                 <Circle
                   cx={cx} cy={cx} r={r} fill="none"
-                  stroke={overflowColor}
+                  stroke={isPastTolerance ? overflowColor : toleranceColor}
                   strokeWidth={stroke * 0.6}
                   strokeLinecap="round"
                   strokeDasharray={`${circ} ${circ}`}
@@ -443,6 +443,7 @@ function WeeklyRingsRow({
                 textAnchor="middle"
                 fontSize={fontSize}
                 fontWeight={isToday ? '600' : '400'}
+                fontFamily='PlusJakartaSans_400Regular, "Plus Jakarta Sans", -apple-system, sans-serif'
                 fill={labelColor}
               >
                 {WEEK_DAYS_JA[i]}
