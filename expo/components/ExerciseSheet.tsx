@@ -11,10 +11,12 @@ import {
   calcGoalAdditionKcal,
   EXERCISE_TYPES,
   ExerciseTypeKey,
+  getTdeeExerciseKcalForDate,
   stepsToActiveKcal,
 } from '@/utils/goals';
 import { useAppState } from '@/providers/app-state-provider';
 import { formatDateKey } from '@/utils/nutrition';
+import { formatDayLabel } from '@/utils/history';
 import type { ExerciseLog } from '@/types/nutrition';
 
 const DURATION_PRESETS = [15, 20, 30, 45, 60] as const;
@@ -40,7 +42,6 @@ export const ExerciseSheet = memo(function ExerciseSheet({ visible, onClose, dat
 
   const todayKey = formatDateKey(new Date());
   const dateKey = dateKeyProp ?? todayKey;
-  const isToday = dateKey === todayKey;
 
   // 表示対象日のデータを導出
   const dailyActivity = useMemo(
@@ -51,9 +52,11 @@ export const ExerciseSheet = memo(function ExerciseSheet({ visible, onClose, dat
     () => exerciseLogs.filter((e) => e.date === dateKey),
     [exerciseLogs, dateKey]
   );
+  // TDEE 計算用: activeKcal > 0 の日は health ログが measuredActiveKcal に包含されるため除外。
+  // (表示は dateExerciseLogs をそのまま使い全ログを見せる)
   const grossExerciseKcal = useMemo(
-    () => dateExerciseLogs.reduce((s, e) => s + e.grossKcal, 0),
-    [dateExerciseLogs]
+    () => getTdeeExerciseKcalForDate(dateExerciseLogs, dateKey, dailyActivity?.activeKcal ?? 0),
+    [dateExerciseLogs, dateKey, dailyActivity]
   );
 
   const weightKg = profile.currentWeightKg ?? 60;
@@ -97,7 +100,7 @@ export const ExerciseSheet = memo(function ExerciseSheet({ visible, onClose, dat
     [grossExerciseKcal, measuredActiveKcal, baselineKcal]
   );
 
-  const showLedger = hasHealthActivity && baselineKcal != null;
+  const showLedger = baselineKcal != null;
   const activityCapped =
     showLedger &&
     measuredActiveKcal != null &&
@@ -123,7 +126,8 @@ export const ExerciseSheet = memo(function ExerciseSheet({ visible, onClose, dat
     }
   }, [hasHealthActivity, selectedType, availableTypes]);
 
-  const sheetTitle = isToday ? '今日の消費' : 'この日の消費';
+  const dayLabel = useMemo(() => formatDayLabel(new Date(dateKey)), [dateKey]);
+  const sheetTitle = `${dayLabel}の消費`;
 
   return (
     <BottomSheet
@@ -169,7 +173,7 @@ export const ExerciseSheet = memo(function ExerciseSheet({ visible, onClose, dat
           {/* === 運動記録 (歩数=ヘルスのウォーキングに集約 + 手動ログ) === */}
           {hasHealthActivity || hasWorkouts ? (
             <View style={styles.historyBlock} testID="exercise-history-list">
-              <Text style={styles.sectionLabel}>{isToday ? '今日の運動' : 'この日の運動'}</Text>
+              <Text style={styles.sectionLabel}>{dayLabel}の運動</Text>
               {hasHealthActivity ? (
                 <View style={styles.historyRow} testID="exercise-health-walking">
                   <Text style={styles.historyEmoji}>{walkingType?.emoji ?? '🚶'}</Text>

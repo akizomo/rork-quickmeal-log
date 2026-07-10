@@ -600,6 +600,12 @@ export interface ActivityContext {
   measuredActiveKcal?: number | null;
   /** 活動係数が織り込む基準アクティブエネルギー = calcBaselineActiveKcal(profile)。 */
   baselineActiveKcal?: number | null;
+  /**
+   * Health が返す生の activeKcal (集計値)。> 0 のとき健康アプリが消費カロリーを包含しているため
+   * source='health' の運動ログを TDEE 計算から除外するフラグとして使う。
+   * measuredActiveKcal がステップ推定値の場合でも rawActiveKcal = 0 なので除外しない。
+   */
+  rawActiveKcal?: number;
 }
 
 /**
@@ -627,18 +633,50 @@ export function calcGoalAdditionKcal(exerciseGrossKcal: number, ctx?: ActivityCo
 }
 
 /**
+ * 期間集計のカロリー目標比 (実績合計 ÷ 調整後目標合計) を3段階に分類する。
+ * MonthlyStatsView のカレンダードット色と同じ閾値 (〜110% / 110-130% / 130%超) を共有する。
+ */
+export function calorieRatioTone(ratio: number): 'success' | 'warning' | 'danger' {
+  if (ratio <= 1.1) return 'success';
+  if (ratio <= 1.3) return 'warning';
+  return 'danger';
+}
+
+export function calorieRatioLabel(ratio: number): string {
+  if (ratio <= 1.1) return '目標どおり';
+  if (ratio <= 1.3) return 'やや多め';
+  return 'かなり多め';
+}
+
+/**
+ * TDEE に加算すべき運動 kcal を返す。
+ * ctx.rawActiveKcal > 0 の日は health 由来ログが measuredActiveKcal に包含されているため除外する。
+ * rawActiveKcal = 0 (ステップ推定 or ヘルス未連携) の日は全ログを対象とする。
+ */
+export function getTdeeExerciseKcalForDate(
+  exerciseLogs: { date: string; grossKcal: number; source?: string }[],
+  dateKey: string,
+  rawActiveKcal: number
+): number {
+  const healthCovered = rawActiveKcal > 0;
+  return exerciseLogs
+    .filter((e) => e.date === dateKey)
+    .filter((e) => !healthCovered || e.source !== 'health')
+    .reduce((sum, e) => sum + e.grossKcal, 0);
+}
+
+/**
  * Adjusted daily kcal target = base target + 目標加算 (calcGoalAdditionKcal)。
  * `ctx` 省略時はヘルス未連携扱い = 運動ログ (gross) を全額加算。
+ * ctx.rawActiveKcal > 0 のとき health 由来ログを TDEE 計算から除外する。
  */
 export function adjustedTargetKcal(
   baseTargetKcal: number,
-  exerciseLogs: { date: string; grossKcal: number }[],
+  exerciseLogs: { date: string; grossKcal: number; source?: string }[],
   dateKey: string,
   ctx?: ActivityContext
 ): number {
-  const exerciseGross = exerciseLogs
-    .filter((e) => e.date === dateKey)
-    .reduce((sum, e) => sum + e.grossKcal, 0);
+  const exerciseGross = getTdeeExerciseKcalForDate(exerciseLogs, dateKey, ctx?.rawActiveKcal ?? 0);
   return baseTargetKcal + calcGoalAdditionKcal(exerciseGross, ctx);
 }
 

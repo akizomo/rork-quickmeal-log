@@ -3,9 +3,10 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 import { palette } from '@/constants/theme';
-import { Icon, useTheme } from '@/design-system';
+import { Badge, Icon, useTheme } from '@/design-system';
 import { useAppState } from '@/providers/app-state-provider';
-import { adjustedTargetKcal, getGrossExerciseKcalForDate } from '@/utils/goals';
+import { adjustedTargetKcal, calorieRatioLabel, calorieRatioTone, getTdeeExerciseKcalForDate } from '@/utils/goals';
+import { formatDateKey } from '@/utils/nutrition';
 import {
   addDays,
   averageLoggedDays,
@@ -22,7 +23,7 @@ import {
 const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'] as const;
 
 export function MonthlyStatsView() {
-  const { logs, profile, settings, exerciseLogs } = useAppState();
+  const { logs, profile, settings, exerciseLogs, dailyActivities } = useAppState();
   const t = useTheme();
   const router = useRouter();
   const { width: screenWidth } = useWindowDimensions();
@@ -49,19 +50,21 @@ export function MonthlyStatsView() {
   const monthExerciseMap = useMemo(() => {
     const map = new Map<string, number>();
     for (const key of monthDailyMap.keys()) {
-      map.set(key, getGrossExerciseKcalForDate(exerciseLogs, key));
+      const rawActiveKcal = (dailyActivities ?? []).find((d) => d.date === key)?.activeKcal ?? 0;
+      map.set(key, getTdeeExerciseKcalForDate(exerciseLogs, key, rawActiveKcal));
     }
     return map;
-  }, [monthDailyMap, exerciseLogs]);
+  }, [monthDailyMap, exerciseLogs, dailyActivities]);
 
   const monthAdjustedTargetMap = useMemo(() => {
     const map = new Map<string, number>();
     const base = profile.targetCalories > 0 ? profile.targetCalories : 0;
     for (const key of monthDailyMap.keys()) {
-      map.set(key, base > 0 ? adjustedTargetKcal(base, exerciseLogs, key) : 0);
+      const rawActiveKcal = (dailyActivities ?? []).find((d) => d.date === key)?.activeKcal ?? 0;
+      map.set(key, base > 0 ? adjustedTargetKcal(base, exerciseLogs, key, { rawActiveKcal }) : 0);
     }
     return map;
-  }, [monthDailyMap, exerciseLogs, profile.targetCalories]);
+  }, [monthDailyMap, exerciseLogs, profile.targetCalories, dailyActivities]);
 
   const avgExerciseKcal = useMemo(() => {
     const loggedKeys = Array.from(monthDailyMap.entries())
@@ -71,6 +74,17 @@ export function MonthlyStatsView() {
     const sum = loggedKeys.reduce((acc, k) => acc + (monthExerciseMap.get(k) ?? 0), 0);
     return Math.round(sum / loggedKeys.length);
   }, [monthDailyMap, monthExerciseMap]);
+
+  // 進行中の当日は目標に対してまだ食べきっていないだけで不足に見えるため、
+  // 月の目標比には含めない（完了した日のみで集計）。
+  const todayKey = useMemo(() => formatDateKey(today), [today]);
+  const periodRatio = useMemo(() => {
+    const completed = Array.from(monthDailyMap.entries()).filter(([k, m]) => k !== todayKey && m.kcal > 0);
+    if (completed.length === 0) return null;
+    const sumKcal = completed.reduce((acc, [, m]) => acc + m.kcal, 0);
+    const sumTarget = completed.reduce((acc, [k]) => acc + (monthAdjustedTargetMap.get(k) ?? 0), 0);
+    return sumTarget > 0 ? sumKcal / sumTarget : null;
+  }, [monthDailyMap, todayKey, monthAdjustedTargetMap]);
 
   const canGoPrev = useMemo(() => {
     const prevMonth = new Date(anchor.getFullYear(), anchor.getMonth() - 1, 1);
@@ -192,7 +206,14 @@ export function MonthlyStatsView() {
       </View>
 
       <View style={styles.summaryCard} testID="month-summary">
-        <Text style={styles.summaryTitle}>{formatMonthLabel(anchor)} の平均</Text>
+        <View style={styles.summaryTitleRow}>
+          <Text style={styles.summaryTitle}>{formatMonthLabel(anchor)} の平均</Text>
+          {periodRatio != null ? (
+            <Badge tone={calorieRatioTone(periodRatio)} testID="month-ratio-badge">
+              目標比 {Math.round(periodRatio * 100)}% ・ {calorieRatioLabel(periodRatio)}
+            </Badge>
+          ) : null}
+        </View>
         <Text style={styles.summaryKcal}>{Math.round(avgMacro.kcal)} kcal / 日</Text>
         <Text style={styles.summarySub}>
           P {Math.round(avgMacro.protein)}g · F {Math.round(avgMacro.fat)}g · C {Math.round(avgMacro.carbs)}g
@@ -312,6 +333,11 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 16,
     gap: 4,
+  },
+  summaryTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   summaryTitle: {
     fontSize: 12,

@@ -1,12 +1,13 @@
 import { useRouter } from 'expo-router';
-import { Icon } from '@/design-system';
+import { Badge, Icon, useTheme } from '@/design-system';
 import React, { useCallback, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
-import Svg, { Line, Rect, Text as SvgText } from 'react-native-svg';
+import Svg, { Circle, Polyline, Rect, Text as SvgText } from 'react-native-svg';
 
 import { palette } from '@/constants/theme';
 import { useAppState } from '@/providers/app-state-provider';
-import { adjustedTargetKcal, getGrossExerciseKcalForDate } from '@/utils/goals';
+import { adjustedTargetKcal, calorieRatioLabel, calorieRatioTone, getTdeeExerciseKcalForDate } from '@/utils/goals';
+import { formatDateKey } from '@/utils/nutrition';
 import {
   addDays,
   averageLoggedDays,
@@ -23,7 +24,8 @@ const CHART_PADDING_TOP = 20;
 const CHART_PADDING_BOTTOM = 38;
 
 export function WeeklyStatsView() {
-  const { logs, profile, settings, exerciseLogs } = useAppState();
+  const { logs, profile, settings, exerciseLogs, dailyActivities } = useAppState();
+  const t = useTheme();
   const router = useRouter();
   const { width: screenWidth } = useWindowDimensions();
   const today = useMemo(() => startOfDay(new Date()), []);
@@ -41,19 +43,21 @@ export function WeeklyStatsView() {
   const dailyExerciseMap = useMemo(() => {
     const map = new Map<string, number>();
     for (const [key] of dailyEntries) {
-      map.set(key, getGrossExerciseKcalForDate(exerciseLogs, key));
+      const rawActiveKcal = (dailyActivities ?? []).find((d) => d.date === key)?.activeKcal ?? 0;
+      map.set(key, getTdeeExerciseKcalForDate(exerciseLogs, key, rawActiveKcal));
     }
     return map;
-  }, [dailyEntries, exerciseLogs]);
+  }, [dailyEntries, exerciseLogs, dailyActivities]);
 
   const dailyAdjustedTargetMap = useMemo(() => {
     const map = new Map<string, number>();
     const base = profile.targetCalories > 0 ? profile.targetCalories : 0;
     for (const [key] of dailyEntries) {
-      map.set(key, base > 0 ? adjustedTargetKcal(base, exerciseLogs, key) : 0);
+      const rawActiveKcal = (dailyActivities ?? []).find((d) => d.date === key)?.activeKcal ?? 0;
+      map.set(key, base > 0 ? adjustedTargetKcal(base, exerciseLogs, key, { rawActiveKcal }) : 0);
     }
     return map;
-  }, [dailyEntries, exerciseLogs, profile.targetCalories]);
+  }, [dailyEntries, exerciseLogs, profile.targetCalories, dailyActivities]);
 
   const avgAdjustedTarget = useMemo(() => {
     const loggedKeys = dailyEntries.filter(([k]) => (dailyMap.get(k)?.kcal ?? 0) > 0).map(([k]) => k);
@@ -61,6 +65,17 @@ export function WeeklyStatsView() {
     const sum = loggedKeys.reduce((acc, k) => acc + (dailyAdjustedTargetMap.get(k) ?? 0), 0);
     return Math.round(sum / loggedKeys.length);
   }, [dailyEntries, dailyMap, dailyAdjustedTargetMap, profile.targetCalories]);
+
+  // 進行中の当日は目標に対してまだ食べきっていないだけで不足に見えるため、
+  // 週の目標比には含めない（完了した日のみで集計）。
+  const todayKey = useMemo(() => formatDateKey(today), [today]);
+  const periodRatio = useMemo(() => {
+    const completed = dailyEntries.filter(([k, m]) => k !== todayKey && m.kcal > 0);
+    if (completed.length === 0) return null;
+    const sumKcal = completed.reduce((acc, [, m]) => acc + m.kcal, 0);
+    const sumTarget = completed.reduce((acc, [k]) => acc + (dailyAdjustedTargetMap.get(k) ?? 0), 0);
+    return sumTarget > 0 ? sumKcal / sumTarget : null;
+  }, [dailyEntries, todayKey, dailyAdjustedTargetMap]);
 
   const avgExerciseKcal = useMemo(() => {
     const loggedKeys = dailyEntries.filter(([k]) => (dailyMap.get(k)?.kcal ?? 0) > 0).map(([k]) => k);
@@ -85,10 +100,15 @@ export function WeeklyStatsView() {
   }, [canGoNext]);
 
   const targetKcal = avgAdjustedTarget > 0 ? avgAdjustedTarget : profile.targetCalories > 0 ? profile.targetCalories : 0;
+  const dayTargets = useMemo(
+    () => dailyEntries.map(([key]) => dailyAdjustedTargetMap.get(key) ?? 0),
+    [dailyEntries, dailyAdjustedTargetMap]
+  );
+  const hasTarget = useMemo(() => dayTargets.some((v) => v > 0), [dayTargets]);
   const maxKcal = useMemo(() => {
-    const max = Math.max(targetKcal, ...Array.from(dailyMap.values()).map((m) => m.kcal));
+    const max = Math.max(targetKcal, ...dayTargets, ...Array.from(dailyMap.values()).map((m) => m.kcal));
     return max > 0 ? max * 1.1 : 2000;
-  }, [dailyMap, targetKcal]);
+  }, [dailyMap, targetKcal, dayTargets]);
 
   const chartWidth = screenWidth - 32;
   const barCount = 7;
@@ -98,6 +118,29 @@ export function WeeklyStatsView() {
   const barWidth = slotWidth * 0.55;
   const chartInnerHeight = CHART_HEIGHT - CHART_PADDING_TOP - CHART_PADDING_BOTTOM;
   const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'] as const;
+
+  const targetPoints = useMemo(
+    () =>
+      dayTargets.map((target, i) => {
+        const centerX = chartHorizontalPadding + i * slotWidth + slotWidth / 2;
+        const y = CHART_PADDING_TOP + chartInnerHeight * (1 - target / maxKcal);
+        return { x: centerX, y };
+      }),
+    [dayTargets, chartHorizontalPadding, slotWidth, chartInnerHeight, maxKcal]
+  );
+
+  // MonthlyStatsView と同じ3段階ルール（不足は色でなくバー高さ vs 目標線の差で表現する）
+  const barColor = useCallback(
+    (kcal: number, dayTarget: number) => {
+      if (kcal <= 0) return t.colors.nutrition.calorie.track;
+      if (dayTarget <= 0) return t.colors.nutrition.calorie.within;
+      const ratio = kcal / dayTarget;
+      if (ratio <= 1.1) return t.colors.nutrition.calorie.within;
+      if (ratio <= 1.3) return t.colors.nutrition.calorie.mildExceed;
+      return t.colors.nutrition.calorie.severeExceed;
+    },
+    [t]
+  );
 
   const onTapDay = useCallback(
     (dateKey: string) => {
@@ -120,17 +163,6 @@ export function WeeklyStatsView() {
 
       <View style={[styles.chartWrap, { width: chartWidth, height: CHART_HEIGHT }]}>
         <Svg width={chartWidth} height={CHART_HEIGHT}>
-          {targetKcal > 0 ? (
-            <Line
-              x1={chartHorizontalPadding}
-              x2={chartWidth - chartHorizontalPadding}
-              y1={CHART_PADDING_TOP + chartInnerHeight * (1 - targetKcal / maxKcal)}
-              y2={CHART_PADDING_TOP + chartInnerHeight * (1 - targetKcal / maxKcal)}
-              stroke={palette.textMuted}
-              strokeDasharray="4 4"
-              strokeWidth={1}
-            />
-          ) : null}
           {dailyEntries.map(([key, macro], i) => {
             const ratio = macro.kcal / maxKcal;
             const h = Math.max(0, ratio * chartInnerHeight);
@@ -148,7 +180,8 @@ export function WeeklyStatsView() {
                   width={barWidth}
                   height={h}
                   rx={4}
-                  fill={macro.kcal > 0 ? palette.sage : '#E2DDD4'}
+                  fill={barColor(macro.kcal, dayTargets[i])}
+                  opacity={macro.kcal > 0 ? 0.55 : 1}
                 />
                 <SvgText
                   x={centerX}
@@ -172,11 +205,32 @@ export function WeeklyStatsView() {
               </React.Fragment>
             );
           })}
+          {hasTarget ? (
+            <React.Fragment>
+              <Polyline
+                points={targetPoints.map((p) => `${p.x},${p.y}`).join(' ')}
+                fill="none"
+                stroke={palette.textMuted}
+                strokeDasharray="4 4"
+                strokeWidth={1.5}
+              />
+              {targetPoints.map((p, i) => (
+                <Circle key={i} cx={p.x} cy={p.y} r={2.5} fill={palette.textMuted} />
+              ))}
+            </React.Fragment>
+          ) : null}
         </Svg>
       </View>
 
       <View style={styles.summaryCard} testID="week-summary">
-        <Text style={styles.summaryTitle}>週平均</Text>
+        <View style={styles.summaryTitleRow}>
+          <Text style={styles.summaryTitle}>週平均</Text>
+          {periodRatio != null ? (
+            <Badge tone={calorieRatioTone(periodRatio)} testID="week-ratio-badge">
+              目標比 {Math.round(periodRatio * 100)}% ・ {calorieRatioLabel(periodRatio)}
+            </Badge>
+          ) : null}
+        </View>
         <Text style={styles.summaryKcal}>{Math.round(avgMacro.kcal)} kcal / 日</Text>
         <Text style={styles.summarySub}>
           P {Math.round(avgMacro.protein)}g · F {Math.round(avgMacro.fat)}g · C {Math.round(avgMacro.carbs)}g
@@ -257,6 +311,11 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 16,
     gap: 4,
+  },
+  summaryTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   summaryTitle: {
     fontSize: 12,
