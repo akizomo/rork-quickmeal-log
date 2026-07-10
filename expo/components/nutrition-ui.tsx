@@ -606,10 +606,16 @@ export const StatusCard = memo(function StatusCard({
     ),
     [exerciseLogs, dateKey, activityCtx]
   );
-  const effectivePfc = useMemo(
-    () => getAdjustedPfcForDate(profile, exerciseLogs, dateKey, activityCtx),
-    [profile, exerciseLogs, dateKey, activityCtx]
-  );
+  const effectivePfc = useMemo(() => {
+    const base = profile.targetCalories;
+    if (base <= 0) return { protein: profile.targetProtein, fat: profile.targetFat, carbs: profile.targetCarbs };
+    const ratio = effectiveTarget / base;
+    return {
+      protein: Math.round(profile.targetProtein * ratio),
+      fat: Math.round(profile.targetFat * ratio),
+      carbs: Math.round(profile.targetCarbs * ratio),
+    };
+  }, [profile, effectiveTarget]);
 
   const openExerciseSheet = useCallback(() => setExerciseSheetVisible(true), []);
   const closeExerciseSheet = useCallback(() => setExerciseSheetVisible(false), []);
