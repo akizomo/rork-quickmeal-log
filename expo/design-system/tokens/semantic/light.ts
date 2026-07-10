@@ -26,9 +26,9 @@ export const lightColors: SemanticColors = {
 
   content: {
     primary: colors.stone[900], // body text: link (sage) と区別するため stone
-    secondary: colors.stone[700], // AAA (~7:1) vs ivory[200] surface
-    tertiary: colors.stone[600], // AA (~4.3:1) — caption 等の小さい text まで許容
-    disabled: colors.stone[400], // disabled は AA 対象外 (WCAG 1.4.3)
+    secondary: colors.stone[500], // MD3 medium emphasis (~60%) vs ivory surface
+    tertiary: colors.stone[400],  // MD3 disabled/hint level (~38%)
+    disabled: colors.stone[300],  // disabled は AA 対象外 (WCAG 1.4.3)
     inverse: colors.stone[50], // 反転面 (ivory[900]) 上の明色テキスト
     onAction: colors.ivory[50], // action.primary 面上はウォームな明色
   },
