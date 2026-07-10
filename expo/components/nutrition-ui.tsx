@@ -360,11 +360,13 @@ function WeeklyRingsRow({
   logs,
   exerciseLogs,
   baseTargetKcal,
+  onDayPress,
 }: {
   today: Date;
   logs: import('@/types/nutrition').FoodLog[];
   exerciseLogs: import('@/types/nutrition').ExerciseLog[];
   baseTargetKcal: number;
+  onDayPress?: (dateKey: string) => void;
 }) {
   const t = useTheme();
 
@@ -409,8 +411,15 @@ function WeeklyRingsRow({
         const labelColor = isToday ? t.colors.content.primary : t.colors.content.secondary;
         const fontSize = 10;
 
+        const tappable = !isFuture;
         return (
-          <View key={dk} style={styles.weeklyRingItem}>
+          <Pressable
+            key={dk}
+            style={({ pressed }) => [styles.weeklyRingItem, pressed && tappable && { opacity: 0.6 }]}
+            onPress={tappable ? () => onDayPress?.(dk) : undefined}
+            accessibilityRole={tappable ? 'button' : undefined}
+            accessibilityLabel={tappable ? `${WEEK_DAYS_JA[i]}曜日の記録を見る` : undefined}
+          >
             <Svg width={size} height={size}>
               {/* track */}
               <Circle cx={cx} cy={cx} r={r} fill="none" stroke={t.colors.nutrition.calorie.track} strokeWidth={stroke} />
@@ -450,7 +459,7 @@ function WeeklyRingsRow({
                 {WEEK_DAYS_JA[i]}
               </SvgText>
             </Svg>
-          </View>
+          </Pressable>
         );
       })}
     </View>
@@ -1276,6 +1285,7 @@ void PreviewCard;
 void getSubtypes;
 
 export function HomeScreen() {
+  const router = useRouter();
   const [viewedDate, setViewedDate] = useState<Date>(() => new Date());
   const dayLogSheetRef = useRef<DayLogBottomSheetRef>(null);
   const openDayLogSheet = useCallback(() => {
@@ -1283,6 +1293,9 @@ export function HomeScreen() {
   }, []);
   const { logs, exerciseLogs, profile } = useAppState();
   const today = useMemo(() => new Date(), []);
+  const handleDayPress = useCallback((dateKey: string) => {
+    router.push(`/?date=${dateKey}`);
+  }, [router]);
   return (
     <View style={styles.page} testID="home-screen">
       <LinearGradient colors={[palette.background, '#F7F4EE']} style={StyleSheet.absoluteFillObject} />
@@ -1294,6 +1307,7 @@ export function HomeScreen() {
             logs={logs}
             exerciseLogs={exerciseLogs}
             baseTargetKcal={profile.targetCalories}
+            onDayPress={handleDayPress}
           />
         </View>
         <HomeDatePager onViewedDateChange={setViewedDate} onFoodPress={openDayLogSheet} />
