@@ -1,6 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { Link, useRouter } from 'expo-router';
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import Svg, { Circle } from 'react-native-svg';
 import {
   Animated,
   Modal,
@@ -349,6 +350,103 @@ function BalanceMathRow({
   );
 }
 
+const WEEK_DAYS_JA = ['月', '火', '水', '木', '金', '土', '日'];
+const TOLERANCE = 0.15;
+
+function WeeklyRingsRow({
+  today,
+  logs,
+  exerciseLogs,
+  baseTargetKcal,
+}: {
+  today: Date;
+  logs: import('@/types/nutrition').FoodLog[];
+  exerciseLogs: import('@/types/nutrition').ExerciseLog[];
+  baseTargetKcal: number;
+}) {
+  const t = useTheme();
+
+  const weekDays = useMemo(() => {
+    const dow = today.getDay();
+    const monday = new Date(today);
+    monday.setDate(today.getDate() - ((dow + 6) % 7));
+    monday.setHours(0, 0, 0, 0);
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      return d;
+    });
+  }, [today]);
+
+  const todayKey = formatDateKey(today);
+
+  return (
+    <View style={styles.weeklyRingsRow}>
+      {weekDays.map((day, i) => {
+        const dk = formatDateKey(day);
+        const isToday = dk === todayKey;
+        const isFuture = dk > todayKey;
+        const consumed = sumForDate(logs, dk).kcal;
+        const target = adjustedTargetKcal(baseTargetKcal, exerciseLogs, dk, undefined);
+
+        const size = isToday ? 36 : 30;
+        const stroke = isToday ? 3.5 : 3;
+        const r = (size - stroke) / 2;
+        const circ = 2 * Math.PI * r;
+
+        let fillColor = t.colors.status.success;
+        let progress = 0;
+
+        if (!isFuture && consumed > 0) {
+          const ratio = consumed / target;
+          progress = Math.min(ratio, 1 + TOLERANCE) / (1 + TOLERANCE);
+          const isOver = ratio > 1 + TOLERANCE;
+          fillColor = isOver
+            ? t.colors.nutrition.calorie.severeExceed
+            : isToday
+              ? t.colors.nutrition.calorie.within
+              : t.colors.status.success;
+        }
+
+        const dashFill = progress * circ;
+        const dashGap = circ - dashFill;
+        const offset = circ * 0.25;
+
+        return (
+          <View key={dk} style={styles.weeklyRingItem}>
+            <Svg width={size} height={size}>
+              <Circle
+                cx={size / 2}
+                cy={size / 2}
+                r={r}
+                fill="none"
+                stroke={t.colors.border.default}
+                strokeWidth={stroke}
+              />
+              {progress > 0 && (
+                <Circle
+                  cx={size / 2}
+                  cy={size / 2}
+                  r={r}
+                  fill="none"
+                  stroke={fillColor}
+                  strokeWidth={stroke}
+                  strokeDasharray={`${dashFill} ${dashGap}`}
+                  strokeDashoffset={offset}
+                  strokeLinecap="round"
+                />
+              )}
+            </Svg>
+            <Text style={[styles.weeklyRingLabel, isToday && styles.weeklyRingLabelToday]}>
+              {isToday ? '今日' : WEEK_DAYS_JA[i]}
+            </Text>
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
 function CarryoverBanner({
   isNewPlan,
   daysRemaining,
@@ -499,6 +597,14 @@ export const StatusCard = memo(function StatusCard({
 
   return (
     <View style={styles.statusCard}>
+      {/* 週次リング行 */}
+      <WeeklyRingsRow
+        today={today}
+        logs={logs}
+        exerciseLogs={exerciseLogs}
+        baseTargetKcal={profile.targetCalories}
+      />
+
       {/* 帳尻調整バナー */}
       {isToday && showCarryoverBanner ? (
         <CarryoverBanner
@@ -1225,6 +1331,10 @@ const styles = StyleSheet.create({
   trialBadge: { fontSize: 11, color: palette.sageStrong, marginTop: 2, fontWeight: '600' },
   iconButton: { width: 42, height: 42, borderRadius: 21, backgroundColor: palette.surface, alignItems: 'center', justifyContent: 'center' },
   statusCard: { paddingVertical: 4, gap: 16 },
+  weeklyRingsRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', paddingHorizontal: 8 },
+  weeklyRingItem: { alignItems: 'center', gap: 5 },
+  weeklyRingLabel: { fontSize: 11, color: palette.textMuted },
+  weeklyRingLabelToday: { fontWeight: '600', color: palette.sageDeep },
   ringRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   sideColumn: { flex: 1, alignItems: 'center', gap: 2, paddingVertical: 8, borderRadius: 12 },
   sideColumnPressed: { opacity: 0.6 },
