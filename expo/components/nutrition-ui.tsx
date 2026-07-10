@@ -68,6 +68,7 @@ function MiniProgressBar({ letter, label, current, target, color }: {
 export const Header = memo(function Header({ viewedDate }: { viewedDate?: Date }) {
   const router = useRouter();
   const { settings } = useAppState();
+  const t = useTheme();
   const avatarScale = useRef(new Animated.Value(0.88)).current;
 
   useEffect(() => {
@@ -98,7 +99,7 @@ export const Header = memo(function Header({ viewedDate }: { viewedDate?: Date }
           style={styles.avatarButton}
           testID="avatar-button"
         >
-          <Icon name="user" size={20} color={palette.sageDeep} />
+          <Icon name="user" size={20} color={t.colors.content.secondary} />
           {showTrialBadge ? <View style={styles.avatarBadge} testID="avatar-trial-badge" /> : null}
         </Pressable>
       </Animated.View>
@@ -112,7 +113,7 @@ export const Header = memo(function Header({ viewedDate }: { viewedDate?: Date }
           testID="help-link"
           accessibilityLabel="使い方を見る"
         >
-          <Icon name="help" color={palette.sageStrong} size={20} />
+          <Icon name="help" color={t.colors.content.secondary} size={20} />
         </Pressable>
         <Pressable
           style={styles.iconButton}
@@ -120,7 +121,7 @@ export const Header = memo(function Header({ viewedDate }: { viewedDate?: Date }
           testID="stats-link"
           accessibilityLabel="実績を見る"
         >
-          <Icon name="barChart" color={palette.sageStrong} size={20} />
+          <Icon name="barChart" color={t.colors.content.secondary} size={20} />
         </Pressable>
       </View>
     </View>
@@ -1344,7 +1345,7 @@ const styles = StyleSheet.create({
   trialBadge: { fontSize: 11, color: palette.sageStrong, marginTop: 2, fontWeight: '600' },
   iconButton: { width: 42, height: 42, borderRadius: 21, backgroundColor: palette.surface, alignItems: 'center', justifyContent: 'center' },
   statusCard: { paddingVertical: 4, gap: 16 },
-  weeklyRingsRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 4, paddingTop: 8 },
+  weeklyRingsRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 4, paddingTop: 16 },
   weeklyRingItem: { alignItems: 'center' },
   ringRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   sideColumn: { flex: 1, alignItems: 'center', gap: 2, paddingVertical: 8, borderRadius: 12 },
