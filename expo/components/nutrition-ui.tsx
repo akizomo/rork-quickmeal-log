@@ -390,7 +390,7 @@ function WeeklyRingsRow({
         const consumed = sumForDate(logs, dk).kcal;
         const target = adjustedTargetKcal(baseTargetKcal, exerciseLogs, dk, undefined);
 
-        const size = isToday ? 44 : 38;
+        const size = isToday ? 36 : 30;
         const stroke = isToday ? 3.5 : 3;
         const cx = size / 2;
         const r = (size - stroke) / 2;
