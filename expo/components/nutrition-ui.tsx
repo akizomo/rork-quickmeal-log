@@ -1,7 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { Link, useRouter } from 'expo-router';
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import Svg, { Circle } from 'react-native-svg';
+import Svg, { Circle, Text as SvgText } from 'react-native-svg';
 import {
   Animated,
   Modal,
@@ -27,7 +27,7 @@ import { useAppState } from '@/providers/app-state-provider';
 import { DishDraft, DishSize, IngredientDraft, Macro, PortionValue } from '@/types/nutrition';
 import { getIdentity } from '@/constants/identity';
 import { getLogDisplayInfo } from '@/utils/log-display';
-import { adjustedTargetKcal, calcBaselineActiveKcal, getAdjustedPfcForDate, getEffectiveSubscriptionStatus, getGrossExerciseKcalForDate, stepsToActiveKcal, trialDaysRemaining } from '@/utils/goals';
+import { adjustedTargetKcal, calcBaselineActiveKcal, getAdjustedPfcForDate, getEffectiveSubscriptionStatus, getTdeeExerciseKcalForDate, stepsToActiveKcal, trialDaysRemaining } from '@/utils/goals';
 import { buildDishMacro, clampPortion, computeIngredient, draftFromLog, formatDateKey, formatMacroText, getIngredientSubtypeDef, getIngredientSubtypeDefs, getQuickCategories, getSubtypes, getToppingsForSubtype, summarizeToppings } from '@/utils/nutrition';
 import { formatDayLabel, isSameDay, sumForDate } from '@/utils/history';
 
@@ -389,7 +389,7 @@ function WeeklyRingsRow({
         const consumed = sumForDate(logs, dk).kcal;
         const target = adjustedTargetKcal(baseTargetKcal, exerciseLogs, dk, undefined);
 
-        const size = isToday ? 36 : 30;
+        const size = isToday ? 44 : 38;
         const stroke = isToday ? 3.5 : 3;
         const r = (size - stroke) / 2;
         const circ = 2 * Math.PI * r;
@@ -411,6 +411,8 @@ function WeeklyRingsRow({
         const dashFill = progress * circ;
         const dashGap = circ - dashFill;
         const offset = circ * 0.25;
+        const labelColor = isToday ? palette.sageDeep : palette.textMuted;
+        const fontSize = isToday ? 11 : 10;
 
         return (
           <View key={dk} style={styles.weeklyRingItem}>
@@ -436,10 +438,17 @@ function WeeklyRingsRow({
                   strokeLinecap="round"
                 />
               )}
+              <SvgText
+                x={size / 2}
+                y={size / 2 + fontSize * 0.38}
+                textAnchor="middle"
+                fontSize={fontSize}
+                fontWeight={isToday ? '600' : '400'}
+                fill={labelColor}
+              >
+                {isToday ? '今日' : WEEK_DAYS_JA[i]}
+              </SvgText>
             </Svg>
-            <Text style={[styles.weeklyRingLabel, isToday && styles.weeklyRingLabelToday]}>
-              {isToday ? '今日' : WEEK_DAYS_JA[i]}
-            </Text>
           </View>
         );
       })}
@@ -565,7 +574,11 @@ export const StatusCard = memo(function StatusCard({
         ? da.activeKcal
         : stepsToActiveKcal(da.steps, profile.currentWeightKg)
       : null;
-    return { measuredActiveKcal: measured, baselineActiveKcal: baseline };
+    return {
+      measuredActiveKcal: measured,
+      baselineActiveKcal: baseline,
+      rawActiveKcal: da?.activeKcal ?? 0,
+    };
   }, [profile, dailyActivities, dateKey]);
 
   // 表示中の日付に対する目標・消費・PFC をその日の運動ログ + 活動量から算出する。
@@ -578,7 +591,7 @@ export const StatusCard = memo(function StatusCard({
   );
   const effectiveExerciseKcal = useMemo(
     () => Math.round(
-      getGrossExerciseKcalForDate(exerciseLogs, dateKey) +
+      getTdeeExerciseKcalForDate(exerciseLogs, dateKey, activityCtx.rawActiveKcal ?? 0) +
       (activityCtx.measuredActiveKcal ?? 0)
     ),
     [exerciseLogs, dateKey, activityCtx]
@@ -597,14 +610,6 @@ export const StatusCard = memo(function StatusCard({
 
   return (
     <View style={styles.statusCard}>
-      {/* 週次リング行 */}
-      <WeeklyRingsRow
-        today={today}
-        logs={logs}
-        exerciseLogs={exerciseLogs}
-        baseTargetKcal={profile.targetCalories}
-      />
-
       {/* 帳尻調整バナー */}
       {isToday && showCarryoverBanner ? (
         <CarryoverBanner
@@ -1275,12 +1280,20 @@ export function HomeScreen() {
   const openDayLogSheet = useCallback(() => {
     dayLogSheetRef.current?.snapToHalf();
   }, []);
+  const { logs, exerciseLogs, profile } = useAppState();
+  const today = useMemo(() => new Date(), []);
   return (
     <View style={styles.page} testID="home-screen">
       <LinearGradient colors={[palette.background, '#F7F4EE']} style={StyleSheet.absoluteFillObject} />
       <SafeAreaView edges={['top']} style={styles.safeArea}>
         <View style={styles.headerWrap}>
           <Header viewedDate={viewedDate} />
+          <WeeklyRingsRow
+            today={today}
+            logs={logs}
+            exerciseLogs={exerciseLogs}
+            baseTargetKcal={profile.targetCalories}
+          />
         </View>
         <HomeDatePager onViewedDateChange={setViewedDate} onFoodPress={openDayLogSheet} />
       </SafeAreaView>
@@ -1331,10 +1344,8 @@ const styles = StyleSheet.create({
   trialBadge: { fontSize: 11, color: palette.sageStrong, marginTop: 2, fontWeight: '600' },
   iconButton: { width: 42, height: 42, borderRadius: 21, backgroundColor: palette.surface, alignItems: 'center', justifyContent: 'center' },
   statusCard: { paddingVertical: 4, gap: 16 },
-  weeklyRingsRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', paddingHorizontal: 8 },
-  weeklyRingItem: { alignItems: 'center', gap: 5 },
-  weeklyRingLabel: { fontSize: 11, color: palette.textMuted },
-  weeklyRingLabelToday: { fontWeight: '600', color: palette.sageDeep },
+  weeklyRingsRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 4, paddingTop: 8 },
+  weeklyRingItem: { alignItems: 'center' },
   ringRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   sideColumn: { flex: 1, alignItems: 'center', gap: 2, paddingVertical: 8, borderRadius: 12 },
   sideColumnPressed: { opacity: 0.6 },
