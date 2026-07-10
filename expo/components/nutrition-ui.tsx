@@ -391,62 +391,61 @@ function WeeklyRingsRow({
 
         const size = isToday ? 44 : 38;
         const stroke = isToday ? 3.5 : 3;
+        const cx = size / 2;
         const r = (size - stroke) / 2;
         const circ = 2 * Math.PI * r;
+        const rot = `rotate(-90 ${cx} ${cx})`;
 
-        let fillColor = t.colors.status.success;
-        let progress = 0;
+        const ratio = !isFuture && consumed > 0 && target > 0 ? consumed / target : 0;
+        const firstLap = Math.min(ratio, 1);
+        const secondLap = ratio > 1 ? Math.min(ratio - 1, 1) : 0;
+        const isOver = ratio > 1 + TOLERANCE;
+        const progressColor = isToday
+          ? t.colors.nutrition.calorie.within
+          : t.colors.status.success;
+        const overflowColor = t.colors.nutrition.calorie.severeExceed;
 
-        if (!isFuture && consumed > 0) {
-          const ratio = consumed / target;
-          progress = Math.min(ratio, 1 + TOLERANCE) / (1 + TOLERANCE);
-          const isOver = ratio > 1 + TOLERANCE;
-          fillColor = isOver
-            ? t.colors.nutrition.calorie.severeExceed
-            : isToday
-              ? t.colors.nutrition.calorie.within
-              : t.colors.status.success;
-        }
-
-        const dashFill = progress * circ;
-        const dashGap = circ - dashFill;
-        const offset = circ * 0.25;
         const labelColor = isToday ? palette.sageDeep : palette.textMuted;
         const fontSize = isToday ? 11 : 10;
 
         return (
           <View key={dk} style={styles.weeklyRingItem}>
             <Svg width={size} height={size}>
-              <Circle
-                cx={size / 2}
-                cy={size / 2}
-                r={r}
-                fill="none"
-                stroke={t.colors.border.default}
-                strokeWidth={stroke}
-              />
-              {progress > 0 && (
+              {/* track */}
+              <Circle cx={cx} cy={cx} r={r} fill="none" stroke={t.colors.border.default} strokeWidth={stroke} />
+              {/* first lap */}
+              {firstLap > 0 && (
                 <Circle
-                  cx={size / 2}
-                  cy={size / 2}
-                  r={r}
-                  fill="none"
-                  stroke={fillColor}
+                  cx={cx} cy={cx} r={r} fill="none"
+                  stroke={isOver ? overflowColor : progressColor}
                   strokeWidth={stroke}
-                  strokeDasharray={`${dashFill} ${dashGap}`}
-                  strokeDashoffset={offset}
                   strokeLinecap="round"
+                  strokeDasharray={`${circ} ${circ}`}
+                  strokeDashoffset={circ * (1 - firstLap)}
+                  transform={rot}
+                />
+              )}
+              {/* overflow second lap */}
+              {secondLap > 0 && (
+                <Circle
+                  cx={cx} cy={cx} r={r} fill="none"
+                  stroke={overflowColor}
+                  strokeWidth={stroke * 0.6}
+                  strokeLinecap="round"
+                  strokeDasharray={`${circ} ${circ}`}
+                  strokeDashoffset={circ * (1 - secondLap)}
+                  transform={rot}
                 />
               )}
               <SvgText
-                x={size / 2}
-                y={size / 2 + fontSize * 0.38}
+                x={cx}
+                y={cx + fontSize * 0.38}
                 textAnchor="middle"
                 fontSize={fontSize}
                 fontWeight={isToday ? '600' : '400'}
                 fill={labelColor}
               >
-                {isToday ? '今日' : WEEK_DAYS_JA[i]}
+                {WEEK_DAYS_JA[i]}
               </SvgText>
             </Svg>
           </View>
