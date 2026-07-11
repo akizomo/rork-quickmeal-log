@@ -24,6 +24,7 @@ const ICON_GLYPH = {
   chevronDown: 'keyboard-arrow-down',
   edit: 'edit',
   add: 'add',
+  remove: 'remove',
   redirect: 'subdirectory-arrow-right',
   delete: 'delete-outline',
   barChart: 'bar-chart',
@@ -31,6 +32,9 @@ const ICON_GLYPH = {
   help: 'help-outline',
   search: 'search',
   user: 'person-outline',
+  trendingDown: 'trending-down',
+  sync: 'sync',
+  balance: 'balance',
 } as const satisfies Record<string, React.ComponentProps<typeof MaterialIcons>['name']>;
 
 export type IconName = keyof typeof ICON_GLYPH;

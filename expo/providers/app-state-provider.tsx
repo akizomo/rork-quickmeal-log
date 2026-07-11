@@ -1505,9 +1505,9 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
   const editorLog = useMemo(() => logs.find((item) => item.id === editorLogId) ?? null, [editorLogId, logs]);
   const editorIsPending = useMemo(() => (editorLogId ? pendingLogIds.includes(editorLogId) : false), [editorLogId, pendingLogIds]);
 
-  // プランを開始する（提案バナーの「調整する」タップ時）
-  const applyCarryover = useCallback(() => {
-    const daysTotal = Math.ceil(yesterdayOvershootKcal / CARRYOVER_MAX_PER_DAY);
+  // プランを開始する（提案バナーの「調整する」タップ時）。daysOverride で日数を上書き可能。
+  const applyCarryover = useCallback((daysOverride?: number) => {
+    const daysTotal = daysOverride ?? Math.ceil(yesterdayOvershootKcal / CARRYOVER_MAX_PER_DAY);
     const dailyAmount = Math.ceil(yesterdayOvershootKcal / daysTotal);
     const next: AppSettings = {
       ...settings,

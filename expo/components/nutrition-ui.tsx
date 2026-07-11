@@ -22,7 +22,7 @@ import { additionPresets, portionSnapPoints, sizeOptions } from '@/constants/nut
 import { ACTIVITY_LEVEL_OPTIONS, TRIAL_DURATION_DAYS } from '@/constants/onboarding';
 import { palette } from '@/constants/theme';
 import { colors } from '@/design-system/tokens/primitives/colors';
-import { Badge, BottomSheet, Caption, Icon, useTheme } from '@/design-system';
+import { Badge, BottomSheet, Button, Caption, Icon, useTheme } from '@/design-system';
 import { duration, spring } from '@/design-system/tokens/primitives/motion';
 import { useAppState } from '@/providers/app-state-provider';
 import { DishDraft, DishSize, IngredientDraft, Macro, PortionValue } from '@/types/nutrition';
@@ -257,22 +257,26 @@ const BalanceModal = memo(function BalanceModal({
 
           {/* 帳尻調整トグル: 前日閾値超 or プラン実行中のとき表示 */}
           {showCarryoverSection && carryoverPlanActive ? (
-            <Pressable
-              onPress={onCancelCarryoverPlan}
-              style={[styles.carryoverToggle, {
-                backgroundColor: t.colors.action.primary.container,
-                borderColor: t.colors.border.focus,
-              }]}
-              accessibilityRole="button"
-              accessibilityLabel="調整をやめる"
-            >
+            <View style={[styles.carryoverToggle, {
+              backgroundColor: t.colors.action.primary.container,
+              borderColor: t.colors.border.focus,
+              flexDirection: 'row',
+              alignItems: 'center',
+            }]}>
               <View style={styles.carryoverToggleLeft}>
                 <Text style={{ fontSize: 12 }}>🍽️</Text>
                 <Text style={[styles.carryoverToggleLabel, { color: t.colors.action.primary.onContainer }]}>
-                  少しずつ調整中（{carryoverDaysTotal}日間）— やめる
+                  少しずつ調整中（{carryoverDaysTotal}日間）
                 </Text>
               </View>
-            </Pressable>
+              <Pressable onPress={onApplyCarryover} hitSlop={8} accessibilityRole="button" accessibilityLabel="プランを変更する">
+                <Caption weight="semibold" tone="link">変更</Caption>
+              </Pressable>
+              <Text style={{ color: t.colors.border.default, marginHorizontal: t.spacing['2'] }}>|</Text>
+              <Pressable onPress={onCancelCarryoverPlan} hitSlop={8} accessibilityRole="button" accessibilityLabel="調整をやめる">
+                <Caption weight="semibold" style={{ color: t.colors.status.danger }}>やめる</Caption>
+              </Pressable>
+            </View>
           ) : showCarryoverSection ? (
             <Pressable
               onPress={onApplyCarryover}
@@ -466,81 +470,168 @@ function WeeklyRingsRow({
   );
 }
 
+function CarryoverDaySheet({
+  visible,
+  onClose,
+  onConfirm,
+  onCancel,
+  surplusKcal,
+  mode = 'start',
+}: {
+  visible: boolean;
+  onClose: () => void;
+  onConfirm: (days: number) => void;
+  onCancel?: () => void;
+  surplusKcal: number;
+  mode?: 'start' | 'edit';
+}) {
+  const t = useTheme();
+  const MAX_PER_DAY = 250;
+  const minDays = Math.max(1, Math.ceil(surplusKcal / MAX_PER_DAY));
+  const maxDays = 14;
+  const [days, setDays] = useState(() => Math.min(Math.max(minDays, 7), maxDays));
+
+  useEffect(() => {
+    if (visible) setDays(Math.min(Math.max(minDays, 7), maxDays));
+  }, [visible, minDays, maxDays]);
+
+  const perDay = Math.ceil(surplusKcal / days);
+
+  return (
+    <BottomSheet
+      visible={visible}
+      onClose={onClose}
+      title={mode === 'edit' ? '調整プランを変更' : '帳尻調整プランを設定'}
+      primaryAction={{
+        label: mode === 'edit' ? `${days}日間に変更` : `${days}日間で調整を開始`,
+        onPress: () => { onClose(); onConfirm(days); },
+      }}
+      secondaryAction={mode === 'edit' && onCancel ? {
+        label: 'プランをやめる',
+        onPress: () => { onClose(); onCancel(); },
+        destructive: true,
+      } : undefined}
+      scrollable={false}
+    >
+      <View style={{ gap: t.spacing['1'] }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: t.spacing['2'] }}>
+          <Caption tone="secondary">余剰カロリー</Caption>
+          <Caption weight="semibold">+{surplusKcal} kcal</Caption>
+        </View>
+        <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: t.colors.border.subtle }} />
+        <View style={{ paddingVertical: t.spacing['4'], alignItems: 'center', gap: t.spacing['2'] }}>
+          <Caption tone="secondary">分割する日数</Caption>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.spacing['6'] }}>
+            <Pressable
+              onPress={() => setDays((d) => Math.max(minDays, d - 1))}
+              hitSlop={12}
+              disabled={days <= minDays}
+              style={({ pressed }) => ({
+                width: 40, height: 40,
+                borderRadius: t.radius.full,
+                backgroundColor: days <= minDays ? t.colors.surface.sunken : pressed ? t.colors.surface.sunken : t.colors.surface.raised,
+                alignItems: 'center', justifyContent: 'center',
+              })}
+              accessibilityLabel="日数を減らす"
+            >
+              <Icon name="remove" size={20} color={days <= minDays ? t.colors.content.disabled : t.colors.content.primary} />
+            </Pressable>
+            <View style={{ alignItems: 'center' }}>
+              <Text style={{
+                fontSize: t.typography.fontSize['4xl'],
+                fontWeight: t.typography.fontWeight.semibold as import('react-native').TextStyle['fontWeight'],
+                color: t.colors.content.primary,
+                lineHeight: t.typography.lineHeight['4xl'],
+              }}>
+                {days}
+              </Text>
+              <Caption tone="tertiary">日間</Caption>
+            </View>
+            <Pressable
+              onPress={() => setDays((d) => Math.min(maxDays, d + 1))}
+              hitSlop={12}
+              disabled={days >= maxDays}
+              style={({ pressed }) => ({
+                width: 40, height: 40,
+                borderRadius: t.radius.full,
+                backgroundColor: days >= maxDays ? t.colors.surface.sunken : pressed ? t.colors.surface.sunken : t.colors.surface.raised,
+                alignItems: 'center', justifyContent: 'center',
+              })}
+              accessibilityLabel="日数を増やす"
+            >
+              <Icon name="add" size={20} color={days >= maxDays ? t.colors.content.disabled : t.colors.content.primary} />
+            </Pressable>
+          </View>
+          <Caption tone="secondary">
+            1日あたり{' '}
+            <Caption weight="semibold" tone="primary">{perDay} kcal</Caption>
+            {' '}ずつ差し引き
+          </Caption>
+        </View>
+        <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: t.colors.border.subtle }} />
+        <Caption tone="tertiary" style={{ paddingTop: t.spacing['2'] }}>
+          明日から{days}日間、毎日の目標から{perDay} kcalを差し引きます。
+        </Caption>
+      </View>
+    </BottomSheet>
+  );
+}
+
 function CarryoverBanner({
   isNewPlan,
+  surplusKcal,
   daysRemaining,
-  onApply,
+  onOpenSheet,
   onDismiss,
 }: {
-  /** true = 提案バナー（初回）、false = 進捗バナー（2日目以降） */
   isNewPlan: boolean;
-  /** 進捗バナー用: あと何日残っているか */
+  surplusKcal: number;
   daysRemaining: number;
-  onApply: () => void;
+  onOpenSheet: () => void;
   onDismiss: () => void;
 }) {
   const t = useTheme();
   return (
     <View
       style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: t.spacing['3'],
         backgroundColor: t.colors.surface.raised,
         borderRadius: t.radius.md,
-        borderWidth: 1,
-        borderColor: t.colors.border.subtle,
         paddingHorizontal: t.spacing['4'],
-        paddingVertical: t.spacing['3'],
+        paddingTop: t.spacing['3'],
+        paddingBottom: t.spacing['2'],
         marginBottom: t.spacing['2'],
       }}
       accessibilityRole="alert"
     >
-      <Text style={{ fontSize: 15 }}>🍽️</Text>
-      <Text
-        style={{
-          flex: 1,
-          fontSize: t.typography.fontSize.xs,
-          color: t.colors.content.secondary,
-          lineHeight: t.typography.lineHeight.xs,
-        }}
-      >
-        {isNewPlan
-          ? '昨日の食事、少し多めでした'
-          : `少しずつ調整中です（あと ${daysRemaining}日）`}
-      </Text>
-      {isNewPlan ? (
-        <Pressable
-          onPress={onApply}
-          hitSlop={8}
-          style={{
-            backgroundColor: t.colors.action.primary.container,
-            borderRadius: t.radius.full,
-            paddingHorizontal: t.spacing['3'],
-            paddingVertical: t.spacing['1'],
-          }}
-          accessibilityRole="button"
-          accessibilityLabel="今日から調整する"
-        >
-          <Text
-            style={{
-              fontSize: t.typography.fontSize.xs,
-              fontWeight: t.typography.fontWeight.semibold as import('react-native').TextStyle['fontWeight'],
-              color: t.colors.action.primary.onContainer,
-            }}
+      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: t.spacing['2'] }}>
+        <Text style={{ fontSize: 14, lineHeight: 16 }}>🍽️</Text>
+        <View style={{ flex: 1, gap: t.spacing['0.5'] }}>
+          <Caption weight="semibold" tone="primary">
+            {isNewPlan
+              ? '余剰カロリーを調整する'
+              : `調整プラン 実行中 · 残り ${daysRemaining} 日`}
+          </Caption>
+          {isNewPlan ? (
+            <Caption tone="secondary">
+              {`昨日 +${surplusKcal} kcal 超過。数日に分けて調整できます`}
+            </Caption>
+          ) : null}
+          <Pressable
+            onPress={onOpenSheet}
+            hitSlop={8}
+            style={({ pressed }) => ({ alignSelf: 'flex-start', opacity: pressed ? 0.5 : 1, marginTop: t.spacing['0.5'] })}
+            accessibilityRole="button"
+            accessibilityLabel={isNewPlan ? '調整プランを設定する' : '調整プランを変更する'}
           >
-            調整する
-          </Text>
+            <Caption weight="semibold" tone="link">
+              {isNewPlan ? '設定する' : '変更'}
+            </Caption>
+          </Pressable>
+        </View>
+        <Pressable onPress={onDismiss} hitSlop={12} accessibilityRole="button" accessibilityLabel="閉じる">
+          <Icon name="close" size={16} color={t.colors.content.tertiary} />
         </Pressable>
-      ) : null}
-      <Pressable
-        onPress={onDismiss}
-        hitSlop={12}
-        accessibilityRole="button"
-        accessibilityLabel="閉じる"
-      >
-        <Icon name="close" size={14} color={t.colors.content.tertiary} />
-      </Pressable>
+      </View>
     </View>
   );
 }
@@ -556,7 +647,7 @@ export const StatusCard = memo(function StatusCard({
   const {
     profile, todayMacro, logs, exerciseLogs, dailyActivities, settings,
     yesterdayOvershootKcal,
-    showCarryoverBanner, showNewPlanBanner, showProgressBanner,
+    showCarryoverBanner, showNewPlanBanner,
     carryoverPlanActive, carryoverDayIndex, carryoverDeductionKcal,
     applyCarryover, cancelCarryoverPlan, dismissCarryoverBanner,
   } = useAppState();
@@ -564,6 +655,7 @@ export const StatusCard = memo(function StatusCard({
   const { width: screenWidth } = useWindowDimensions();
   const [exerciseSheetVisible, setExerciseSheetVisible] = useState(false);
   const [balanceVisible, setBalanceVisible] = useState(false);
+  const [daySheetVisible, setDaySheetVisible] = useState(false);
 
   const today = useMemo(() => new Date(), []);
   const targetDate = viewedDate ?? today;
@@ -626,16 +718,23 @@ export const StatusCard = memo(function StatusCard({
 
   return (
     <View style={styles.statusCard}>
-      {/* 帳尻調整バナー */}
       {isToday && showCarryoverBanner ? (
         <CarryoverBanner
           isNewPlan={showNewPlanBanner}
+          surplusKcal={yesterdayOvershootKcal}
           daysRemaining={(settings.kcalCarryoverDaysTotal ?? 0) - carryoverDayIndex}
-          onApply={applyCarryover}
+          onOpenSheet={() => setDaySheetVisible(true)}
           onDismiss={dismissCarryoverBanner}
         />
       ) : null}
-
+      <CarryoverDaySheet
+        visible={daySheetVisible}
+        onClose={() => setDaySheetVisible(false)}
+        onConfirm={(days) => applyCarryover(days)}
+        onCancel={cancelCarryoverPlan}
+        surplusKcal={yesterdayOvershootKcal}
+        mode={carryoverPlanActive ? 'edit' : 'start'}
+      />
       {/* 3-column: 食事 | Ring(残り) | 消費 */}
       <View style={styles.ringRow}>
         {/* Left: 食事 (タップで食事ログシート half) */}
@@ -742,7 +841,7 @@ export const StatusCard = memo(function StatusCard({
         carryoverDaysTotal={isToday ? (settings.kcalCarryoverDaysTotal ?? 0) : 0}
         carryoverDayIndex={isToday ? carryoverDayIndex : 0}
         yesterdayOvershootKcal={isToday ? yesterdayOvershootKcal : 0}
-        onApplyCarryover={applyCarryover}
+        onApplyCarryover={() => { setBalanceVisible(false); setDaySheetVisible(true); }}
         onCancelCarryoverPlan={cancelCarryoverPlan}
       />
     </View>
