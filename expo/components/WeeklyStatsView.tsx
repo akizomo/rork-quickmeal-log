@@ -103,7 +103,10 @@ export function WeeklyStatsView() {
 
   const targetKcal = avgAdjustedTarget > 0 ? avgAdjustedTarget : profile.targetCalories > 0 ? profile.targetCalories : 0;
   // リング表示用: 完了日の平均があればそれを優先、なければ当日込みの平均にフォールバック
-  const ringAvg = completedPeriodAvg ?? (targetKcal > 0 ? { avgKcal: avgMacro.kcal, avgTarget: targetKcal } : null);
+  const ringAvg = useMemo(
+    () => completedPeriodAvg ?? (targetKcal > 0 ? { avgKcal: avgMacro.kcal, avgTarget: targetKcal } : null),
+    [completedPeriodAvg, targetKcal, avgMacro]
+  );
   const dayTargets = useMemo(
     () => dailyEntries.map(([key]) => dailyAdjustedTargetMap.get(key) ?? 0),
     [dailyEntries, dailyAdjustedTargetMap]

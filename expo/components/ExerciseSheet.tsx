@@ -106,7 +106,7 @@ export const ExerciseSheet = memo(function ExerciseSheet({ visible, onClose, dat
   const showBaseline = measuredActiveKcal != null && baselineKcal != null;
   const activityCapped =
     showBaseline &&
-    measuredActiveKcal - (baselineKcal as number) > ACTIVITY_BONUS_DAILY_CAP_KCAL;
+    (measuredActiveKcal as number) - (baselineKcal as number) > ACTIVITY_BONUS_DAILY_CAP_KCAL;
 
   const activityLevelLabel = useMemo(
     () => ACTIVITY_LEVEL_OPTIONS.find((a) => a.level === profile.activityLevel)?.label ?? null,
