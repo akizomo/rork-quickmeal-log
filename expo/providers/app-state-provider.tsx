@@ -1282,11 +1282,11 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       }
 
       // 4b) walking の遡及クリーンアップ:
-      //     steps > 0 かつ activeKcal = 0 の日はウォーキングを「歩数(ヘルス)」行に集約する。
-      //     過去の同期時点で steps = 0 だったためウォーキング ExerciseLog が保存されている場合、
-      //     今回の同期で steps > 0 が確定したら該当ログを削除して歩数行との二重表示を防ぐ。
+      //     hasHealthActivity (steps > 0 || activeKcal > 0) の日はウォーキングを「歩数(ヘルス)」行に集約する。
+      //     過去の同期時点で steps = 0 かつ activeKcal = 0 だったため walking ExerciseLog が保存されていても、
+      //     今回の同期で steps / activeKcal が確定したら削除して歩数行との二重表示を防ぐ。
       for (const da of result.dailyActivities) {
-        if (da.steps > 0 && da.activeKcal === 0) {
+        if (da.steps > 0 || da.activeKcal > 0) {
           nextExerciseLogs = nextExerciseLogs.filter(
             (e) => !(e.date === da.date && e.source === 'health' && e.exerciseType === 'walking')
           );
