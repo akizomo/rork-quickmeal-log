@@ -42,17 +42,14 @@ function formatTime(timestamp: string): string {
   return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
 }
 
-function MiniProgressBar({ letter, label, current, target, color }: {
+export function MiniProgressBar({ letter, label, current, target, color }: {
   letter: string;
   label: string;
   current: number;
   target: number;
   color: string;
 }) {
-  const t = useTheme();
   const progress = target > 0 ? Math.min(current / target, 1) : 0;
-  const isPastTolerance = target > 0 && current > target * (1 + TOLERANCE);
-  const valueColor = isPastTolerance ? t.colors.nutrition.calorie.severeExceed : palette.text;
   return (
     <View style={styles.miniBarItem}>
       <Text style={styles.miniBarLabel}>
@@ -63,7 +60,10 @@ function MiniProgressBar({ letter, label, current, target, color }: {
       <View style={styles.miniBarTrack}>
         <View style={[styles.miniBarFill, { width: `${progress * 100}%`, backgroundColor: color }]} />
       </View>
-      <Text style={[styles.miniBarValue, { color: valueColor }]}>{Math.round(current)} / {Math.round(target)} g</Text>
+      <Text style={styles.miniBarValue}>
+        {Math.round(current)}
+        <Text style={styles.miniBarValueTarget}> / {Math.round(target)} g</Text>
+      </Text>
     </View>
   );
 }
@@ -1616,6 +1616,7 @@ const styles = StyleSheet.create({
   miniBarTrack: { height: 6, borderRadius: 999, backgroundColor: '#E2DDD4', overflow: 'hidden' },
   miniBarFill: { height: '100%', borderRadius: 999 },
   miniBarValue: { fontSize: 13, color: palette.text, fontWeight: '600' },
+  miniBarValueTarget: { color: palette.textMuted, fontWeight: '600' },
   sectionTitle: { fontSize: 18, fontWeight: '700', color: '#1F2C23', marginBottom: 14 },
   segmentedWrap: { flexDirection: 'row', backgroundColor: palette.card, borderRadius: 18, padding: 5, marginBottom: 14 },
   segmentButton: { flex: 1, borderRadius: 14, paddingVertical: 10, alignItems: 'center' },

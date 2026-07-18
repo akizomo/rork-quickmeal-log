@@ -6,6 +6,7 @@ import Svg, { Circle, Polyline, Rect, Text as SvgText } from 'react-native-svg';
 
 import { palette } from '@/constants/theme';
 import { CalorieOverflowRing } from '@/components/CalorieOverflowRing';
+import { MiniProgressBar } from '@/components/nutrition-ui';
 import { useAppState } from '@/providers/app-state-provider';
 import { adjustedTargetKcal, getTdeeExerciseKcalForDate } from '@/utils/goals';
 import { formatDateKey } from '@/utils/nutrition';
@@ -86,6 +87,40 @@ export function WeeklyStatsView() {
     return Math.round(sum / loggedKeys.length);
   }, [dailyEntries, dailyMap, dailyExerciseMap]);
 
+  // 日ごとのPFC目標: kcal目標と同じ比率（運動による拡大）でP/F/Cも拡大する（ホーム画面と同じロジック）
+  const dailyEffectivePfcMap = useMemo(() => {
+    const map = new Map<string, { protein: number; fat: number; carbs: number }>();
+    const base = profile.targetCalories > 0 ? profile.targetCalories : 0;
+    for (const [key] of dailyEntries) {
+      const ratio = base > 0 ? (dailyAdjustedTargetMap.get(key) ?? 0) / base : 1;
+      map.set(key, {
+        protein: profile.targetProtein * ratio,
+        fat: profile.targetFat * ratio,
+        carbs: profile.targetCarbs * ratio,
+      });
+    }
+    return map;
+  }, [dailyEntries, dailyAdjustedTargetMap, profile.targetCalories, profile.targetProtein, profile.targetFat, profile.targetCarbs]);
+
+  const avgPfcTarget = useMemo(() => {
+    const loggedKeys = dailyEntries.filter(([k]) => (dailyMap.get(k)?.kcal ?? 0) > 0).map(([k]) => k);
+    if (loggedKeys.length === 0) {
+      return { protein: profile.targetProtein, fat: profile.targetFat, carbs: profile.targetCarbs };
+    }
+    const sum = loggedKeys.reduce(
+      (acc, k) => {
+        const v = dailyEffectivePfcMap.get(k);
+        return v ? { protein: acc.protein + v.protein, fat: acc.fat + v.fat, carbs: acc.carbs + v.carbs } : acc;
+      },
+      { protein: 0, fat: 0, carbs: 0 }
+    );
+    return {
+      protein: sum.protein / loggedKeys.length,
+      fat: sum.fat / loggedKeys.length,
+      carbs: sum.carbs / loggedKeys.length,
+    };
+  }, [dailyEntries, dailyMap, dailyEffectivePfcMap, profile.targetProtein, profile.targetFat, profile.targetCarbs]);
+
   const canGoPrev = useMemo(() => {
     const prevWeekEnd = addDays(range.start, -1);
     return prevWeekEnd >= historyStart;
@@ -160,11 +195,11 @@ export function WeeklyStatsView() {
     <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
       <View style={styles.headerRow} testID="week-header">
         <Pressable onPress={goPrev} disabled={!canGoPrev} style={styles.navBtn} testID="week-prev">
-          <Icon name="chevronLeft" color={canGoPrev ? palette.sageStrong : palette.textMuted} size={20} />
+          <Icon name="chevronLeft" color={canGoPrev ? palette.sageStrong : t.colors.content.disabled} size={20} />
         </Pressable>
         <Text style={styles.headerLabel}>{formatWeekRangeLabel(range)}</Text>
         <Pressable onPress={goNext} disabled={!canGoNext} style={styles.navBtn} testID="week-next">
-          <Icon name="chevronRight" color={canGoNext ? palette.sageStrong : palette.textMuted} size={20} />
+          <Icon name="chevronRight" color={canGoNext ? palette.sageStrong : t.colors.content.disabled} size={20} />
         </Pressable>
       </View>
 
@@ -233,9 +268,9 @@ export function WeeklyStatsView() {
         <View style={styles.summaryRow}>
           <View style={styles.summaryLeft}>
             <Text style={styles.summaryTitle}>週平均</Text>
-            <Text style={styles.summaryKcal}>{Math.round(avgMacro.kcal)} kcal / 日</Text>
-            <Text style={styles.summarySub}>
-              P {Math.round(avgMacro.protein)}g · F {Math.round(avgMacro.fat)}g · C {Math.round(avgMacro.carbs)}g
+            <Text style={styles.summaryKcal}>
+              {Math.round(avgMacro.kcal).toLocaleString()}
+              <Text style={styles.summaryKcalTarget}> / {Math.round(targetKcal).toLocaleString()} kcal</Text>
             </Text>
             {avgExerciseKcal > 0 ? (
               <Text style={styles.summaryConsume}>平均消費 {avgExerciseKcal} kcal / 日</Text>
@@ -245,14 +280,42 @@ export function WeeklyStatsView() {
             <CalorieOverflowRing
               consumedKcal={ringAvg.avgKcal}
               targetKcal={ringAvg.avgTarget}
-              size={88}
-              strokeWidth={8}
+              size={56}
+              strokeWidth={7}
               centerMode="remaining"
+              showCenterLabel={false}
               showStatusText={false}
+              showAchievedCheck
               animate={false}
               testID="week-ratio-ring"
             />
           ) : null}
+        </View>
+
+        <View style={styles.summaryDivider} />
+
+        <View style={styles.pfcRow} testID="week-pfc-row">
+          <MiniProgressBar
+            letter="P"
+            label="タンパク質"
+            current={avgMacro.protein}
+            target={avgPfcTarget.protein}
+            color={t.colors.nutrition.protein.default}
+          />
+          <MiniProgressBar
+            letter="F"
+            label="脂肪"
+            current={avgMacro.fat}
+            target={avgPfcTarget.fat}
+            color={t.colors.nutrition.fat.default}
+          />
+          <MiniProgressBar
+            letter="C"
+            label="炭水化物"
+            current={avgMacro.carbs}
+            target={avgPfcTarget.carbs}
+            color={t.colors.nutrition.carbs.default}
+          />
         </View>
       </View>
 
@@ -347,9 +410,19 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: palette.sageDeep,
   },
-  summarySub: {
-    fontSize: 13,
-    color: palette.text,
+  summaryKcalTarget: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: palette.textMuted,
+  },
+  summaryDivider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: palette.border,
+    marginVertical: 14,
+  },
+  pfcRow: {
+    flexDirection: 'row',
+    gap: 12,
   },
   summaryConsume: {
     marginTop: 2,

@@ -3,9 +3,11 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 import { palette } from '@/constants/theme';
-import { Badge, Icon, useTheme } from '@/design-system';
+import { Icon, useTheme } from '@/design-system';
+import { CalorieOverflowRing } from '@/components/CalorieOverflowRing';
+import { MiniProgressBar } from '@/components/nutrition-ui';
 import { useAppState } from '@/providers/app-state-provider';
-import { adjustedTargetKcal, calorieRatioLabel, calorieRatioTone, getTdeeExerciseKcalForDate } from '@/utils/goals';
+import { adjustedTargetKcal, getTdeeExerciseKcalForDate } from '@/utils/goals';
 import { formatDateKey } from '@/utils/nutrition';
 import {
   addDays,
@@ -76,15 +78,63 @@ export function MonthlyStatsView() {
   }, [monthDailyMap, monthExerciseMap]);
 
   // 進行中の当日は目標に対してまだ食べきっていないだけで不足に見えるため、
-  // 月の目標比には含めない（完了した日のみで集計）。
+  // リングの目標比には含めない（完了した日のみで平均する）。
   const todayKey = useMemo(() => formatDateKey(today), [today]);
-  const periodRatio = useMemo(() => {
+  const completedPeriodAvg = useMemo(() => {
     const completed = Array.from(monthDailyMap.entries()).filter(([k, m]) => k !== todayKey && m.kcal > 0);
     if (completed.length === 0) return null;
     const sumKcal = completed.reduce((acc, [, m]) => acc + m.kcal, 0);
     const sumTarget = completed.reduce((acc, [k]) => acc + (monthAdjustedTargetMap.get(k) ?? 0), 0);
-    return sumTarget > 0 ? sumKcal / sumTarget : null;
+    if (sumTarget <= 0) return null;
+    return { avgKcal: sumKcal / completed.length, avgTarget: sumTarget / completed.length };
   }, [monthDailyMap, todayKey, monthAdjustedTargetMap]);
+
+  const avgAdjustedTarget = useMemo(() => {
+    const loggedKeys = Array.from(monthDailyMap.entries()).filter(([, m]) => m.kcal > 0).map(([k]) => k);
+    if (loggedKeys.length === 0) return profile.targetCalories;
+    const sum = loggedKeys.reduce((acc, k) => acc + (monthAdjustedTargetMap.get(k) ?? 0), 0);
+    return Math.round(sum / loggedKeys.length);
+  }, [monthDailyMap, monthAdjustedTargetMap, profile.targetCalories]);
+
+  // リング表示用: 完了日の平均があればそれを優先、なければ当日込みの平均にフォールバック
+  const monthRingAvg = useMemo(
+    () => completedPeriodAvg ?? (avgAdjustedTarget > 0 ? { avgKcal: avgMacro.kcal, avgTarget: avgAdjustedTarget } : null),
+    [completedPeriodAvg, avgAdjustedTarget, avgMacro]
+  );
+
+  // 日ごとのPFC目標: kcal目標と同じ比率（運動による拡大）でP/F/Cも拡大する（ホーム画面と同じロジック）
+  const dailyEffectivePfcMap = useMemo(() => {
+    const map = new Map<string, { protein: number; fat: number; carbs: number }>();
+    const base = profile.targetCalories > 0 ? profile.targetCalories : 0;
+    for (const key of monthDailyMap.keys()) {
+      const ratio = base > 0 ? (monthAdjustedTargetMap.get(key) ?? 0) / base : 1;
+      map.set(key, {
+        protein: profile.targetProtein * ratio,
+        fat: profile.targetFat * ratio,
+        carbs: profile.targetCarbs * ratio,
+      });
+    }
+    return map;
+  }, [monthDailyMap, monthAdjustedTargetMap, profile.targetCalories, profile.targetProtein, profile.targetFat, profile.targetCarbs]);
+
+  const avgPfcTarget = useMemo(() => {
+    const loggedKeys = Array.from(monthDailyMap.entries()).filter(([, m]) => m.kcal > 0).map(([k]) => k);
+    if (loggedKeys.length === 0) {
+      return { protein: profile.targetProtein, fat: profile.targetFat, carbs: profile.targetCarbs };
+    }
+    const sum = loggedKeys.reduce(
+      (acc, k) => {
+        const v = dailyEffectivePfcMap.get(k);
+        return v ? { protein: acc.protein + v.protein, fat: acc.fat + v.fat, carbs: acc.carbs + v.carbs } : acc;
+      },
+      { protein: 0, fat: 0, carbs: 0 }
+    );
+    return {
+      protein: sum.protein / loggedKeys.length,
+      fat: sum.fat / loggedKeys.length,
+      carbs: sum.carbs / loggedKeys.length,
+    };
+  }, [monthDailyMap, dailyEffectivePfcMap, profile.targetProtein, profile.targetFat, profile.targetCarbs]);
 
   const canGoPrev = useMemo(() => {
     const prevMonth = new Date(anchor.getFullYear(), anchor.getMonth() - 1, 1);
@@ -126,11 +176,11 @@ export function MonthlyStatsView() {
     <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
       <View style={styles.headerRow} testID="month-header">
         <Pressable onPress={goPrev} disabled={!canGoPrev} style={styles.navBtn} testID="month-prev">
-          <Icon name="chevronLeft" color={canGoPrev ? palette.sageStrong : palette.textMuted} size={20} />
+          <Icon name="chevronLeft" color={canGoPrev ? palette.sageStrong : t.colors.content.disabled} size={20} />
         </Pressable>
         <Text style={styles.headerLabel}>{formatMonthLabel(anchor)}</Text>
         <Pressable onPress={goNext} disabled={!canGoNext} style={styles.navBtn} testID="month-next">
-          <Icon name="chevronRight" color={canGoNext ? palette.sageStrong : palette.textMuted} size={20} />
+          <Icon name="chevronRight" color={canGoNext ? palette.sageStrong : t.colors.content.disabled} size={20} />
         </Pressable>
       </View>
 
@@ -206,21 +256,58 @@ export function MonthlyStatsView() {
       </View>
 
       <View style={styles.summaryCard} testID="month-summary">
-        <View style={styles.summaryTitleRow}>
-          <Text style={styles.summaryTitle}>{formatMonthLabel(anchor)} の平均</Text>
-          {periodRatio != null ? (
-            <Badge tone={calorieRatioTone(periodRatio)} testID="month-ratio-badge">
-              目標比 {Math.round(periodRatio * 100)}% ・ {calorieRatioLabel(periodRatio)}
-            </Badge>
+        <View style={styles.summaryRow}>
+          <View style={styles.summaryLeft}>
+            <Text style={styles.summaryTitle}>{formatMonthLabel(anchor)} の平均</Text>
+            <Text style={styles.summaryKcal}>
+              {Math.round(avgMacro.kcal).toLocaleString()}
+              <Text style={styles.summaryKcalTarget}> / {Math.round(avgAdjustedTarget).toLocaleString()} kcal</Text>
+            </Text>
+            {avgExerciseKcal > 0 ? (
+              <Text style={styles.summaryConsume}>平均消費 {avgExerciseKcal} kcal / 日</Text>
+            ) : null}
+          </View>
+          {monthRingAvg ? (
+            <CalorieOverflowRing
+              consumedKcal={monthRingAvg.avgKcal}
+              targetKcal={monthRingAvg.avgTarget}
+              size={56}
+              strokeWidth={7}
+              centerMode="remaining"
+              showCenterLabel={false}
+              showStatusText={false}
+              showAchievedCheck
+              animate={false}
+              testID="month-ratio-ring"
+            />
           ) : null}
         </View>
-        <Text style={styles.summaryKcal}>{Math.round(avgMacro.kcal)} kcal / 日</Text>
-        <Text style={styles.summarySub}>
-          P {Math.round(avgMacro.protein)}g · F {Math.round(avgMacro.fat)}g · C {Math.round(avgMacro.carbs)}g
-        </Text>
-        {avgExerciseKcal > 0 ? (
-          <Text style={styles.summaryConsume}>平均消費 {avgExerciseKcal} kcal / 日</Text>
-        ) : null}
+
+        <View style={styles.summaryDivider} />
+
+        <View style={styles.pfcRow} testID="month-pfc-row">
+          <MiniProgressBar
+            letter="P"
+            label="タンパク質"
+            current={avgMacro.protein}
+            target={avgPfcTarget.protein}
+            color={t.colors.nutrition.protein.default}
+          />
+          <MiniProgressBar
+            letter="F"
+            label="脂肪"
+            current={avgMacro.fat}
+            target={avgPfcTarget.fat}
+            color={t.colors.nutrition.fat.default}
+          />
+          <MiniProgressBar
+            letter="C"
+            label="炭水化物"
+            current={avgMacro.carbs}
+            target={avgPfcTarget.carbs}
+            color={t.colors.nutrition.carbs.default}
+          />
+        </View>
       </View>
 
       <View style={styles.listSection}>
@@ -332,12 +419,16 @@ const styles = StyleSheet.create({
     backgroundColor: palette.surface,
     borderRadius: 20,
     padding: 16,
-    gap: 4,
   },
-  summaryTitleRow: {
+  summaryRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 12,
+  },
+  summaryLeft: {
+    flex: 1,
+    gap: 4,
   },
   summaryTitle: {
     fontSize: 12,
@@ -349,9 +440,19 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: palette.sageDeep,
   },
-  summarySub: {
-    fontSize: 13,
-    color: palette.text,
+  summaryKcalTarget: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: palette.textMuted,
+  },
+  summaryDivider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: palette.border,
+    marginVertical: 14,
+  },
+  pfcRow: {
+    flexDirection: 'row',
+    gap: 12,
   },
   summaryConsume: {
     marginTop: 2,

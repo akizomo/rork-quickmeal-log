@@ -1,6 +1,6 @@
 import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
-import Svg, { Circle } from 'react-native-svg';
+import Svg, { Circle, Polyline } from 'react-native-svg';
 
 import { useTheme } from '@/design-system';
 import { colors } from '@/design-system/tokens/primitives/colors';
@@ -31,6 +31,11 @@ export interface CalorieOverflowRingProps {
   showStatusText?: boolean;
   statusMode?: RingStatusMode;
   centerMode?: RingCenterMode;
+  /** trueの場合、目標を超えていない(consumed <= target)ときに中央にチェックアイコンを表示する。
+   *  showCenterLabelがfalseでも独立して機能する（数字なしリング向け）。 */
+  showAchievedCheck?: boolean;
+  /** チェックアイコンの色。デフォルトは progressColor */
+  achievedCheckColor?: string;
 
   /** デフォルトは theme.colors.nutrition.calorie.track */
   trackColor?: string;
@@ -87,8 +92,10 @@ export const CalorieOverflowRing = memo(function CalorieOverflowRing(props: Calo
     showStatusText = SHAPE_DEFAULTS.showStatusText,
     statusMode = SHAPE_DEFAULTS.statusMode,
     centerMode = SHAPE_DEFAULTS.centerMode,
+    showAchievedCheck = false,
     trackColor = t.colors.nutrition.calorie.track,
     progressColor = t.colors.nutrition.calorie.within,
+    achievedCheckColor = progressColor,
     toleranceColor = colors.moss[600],
     overflowColor = t.colors.nutrition.calorie.severeExceed,
     centerTextColor = t.colors.content.primary,
@@ -277,6 +284,19 @@ export const CalorieOverflowRing = memo(function CalorieOverflowRing(props: Calo
               {statusText}
             </Animated.Text>
           ) : null}
+        </View>
+      ) : showAchievedCheck && !isAnyOver ? (
+        <View style={styles.centerWrap} pointerEvents="none">
+          <Svg width={Math.round(size * 0.38)} height={Math.round(size * 0.38)} viewBox="0 0 24 24">
+            <Polyline
+              points="4 13 9.5 18.5 20 6"
+              fill="none"
+              stroke={achievedCheckColor}
+              strokeWidth={4.5}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </Svg>
         </View>
       ) : null}
     </View>
