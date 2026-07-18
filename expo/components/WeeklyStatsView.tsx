@@ -1,12 +1,13 @@
 import { useRouter } from 'expo-router';
-import { Badge, Icon, useTheme } from '@/design-system';
+import { Icon, useTheme } from '@/design-system';
 import React, { useCallback, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Svg, { Circle, Polyline, Rect, Text as SvgText } from 'react-native-svg';
 
 import { palette } from '@/constants/theme';
+import { CalorieOverflowRing } from '@/components/CalorieOverflowRing';
 import { useAppState } from '@/providers/app-state-provider';
-import { adjustedTargetKcal, calorieRatioLabel, calorieRatioTone, getTdeeExerciseKcalForDate } from '@/utils/goals';
+import { adjustedTargetKcal, getTdeeExerciseKcalForDate } from '@/utils/goals';
 import { formatDateKey } from '@/utils/nutrition';
 import {
   addDays,
@@ -67,14 +68,15 @@ export function WeeklyStatsView() {
   }, [dailyEntries, dailyMap, dailyAdjustedTargetMap, profile.targetCalories]);
 
   // 進行中の当日は目標に対してまだ食べきっていないだけで不足に見えるため、
-  // 週の目標比には含めない（完了した日のみで集計）。
+  // リングの目標比には含めない（完了した日のみで平均する）。
   const todayKey = useMemo(() => formatDateKey(today), [today]);
-  const periodRatio = useMemo(() => {
+  const completedPeriodAvg = useMemo(() => {
     const completed = dailyEntries.filter(([k, m]) => k !== todayKey && m.kcal > 0);
     if (completed.length === 0) return null;
     const sumKcal = completed.reduce((acc, [, m]) => acc + m.kcal, 0);
     const sumTarget = completed.reduce((acc, [k]) => acc + (dailyAdjustedTargetMap.get(k) ?? 0), 0);
-    return sumTarget > 0 ? sumKcal / sumTarget : null;
+    if (sumTarget <= 0) return null;
+    return { avgKcal: sumKcal / completed.length, avgTarget: sumTarget / completed.length };
   }, [dailyEntries, todayKey, dailyAdjustedTargetMap]);
 
   const avgExerciseKcal = useMemo(() => {
@@ -100,6 +102,8 @@ export function WeeklyStatsView() {
   }, [canGoNext]);
 
   const targetKcal = avgAdjustedTarget > 0 ? avgAdjustedTarget : profile.targetCalories > 0 ? profile.targetCalories : 0;
+  // リング表示用: 完了日の平均があればそれを優先、なければ当日込みの平均にフォールバック
+  const ringAvg = completedPeriodAvg ?? (targetKcal > 0 ? { avgKcal: avgMacro.kcal, avgTarget: targetKcal } : null);
   const dayTargets = useMemo(
     () => dailyEntries.map(([key]) => dailyAdjustedTargetMap.get(key) ?? 0),
     [dailyEntries, dailyAdjustedTargetMap]
@@ -223,21 +227,30 @@ export function WeeklyStatsView() {
       </View>
 
       <View style={styles.summaryCard} testID="week-summary">
-        <View style={styles.summaryTitleRow}>
-          <Text style={styles.summaryTitle}>週平均</Text>
-          {periodRatio != null ? (
-            <Badge tone={calorieRatioTone(periodRatio)} testID="week-ratio-badge">
-              目標比 {Math.round(periodRatio * 100)}% ・ {calorieRatioLabel(periodRatio)}
-            </Badge>
+        <View style={styles.summaryRow}>
+          <View style={styles.summaryLeft}>
+            <Text style={styles.summaryTitle}>週平均</Text>
+            <Text style={styles.summaryKcal}>{Math.round(avgMacro.kcal)} kcal / 日</Text>
+            <Text style={styles.summarySub}>
+              P {Math.round(avgMacro.protein)}g · F {Math.round(avgMacro.fat)}g · C {Math.round(avgMacro.carbs)}g
+            </Text>
+            {avgExerciseKcal > 0 ? (
+              <Text style={styles.summaryConsume}>平均消費 {avgExerciseKcal} kcal / 日</Text>
+            ) : null}
+          </View>
+          {ringAvg ? (
+            <CalorieOverflowRing
+              consumedKcal={ringAvg.avgKcal}
+              targetKcal={ringAvg.avgTarget}
+              size={88}
+              strokeWidth={8}
+              centerMode="remaining"
+              showStatusText={false}
+              animate={false}
+              testID="week-ratio-ring"
+            />
           ) : null}
         </View>
-        <Text style={styles.summaryKcal}>{Math.round(avgMacro.kcal)} kcal / 日</Text>
-        <Text style={styles.summarySub}>
-          P {Math.round(avgMacro.protein)}g · F {Math.round(avgMacro.fat)}g · C {Math.round(avgMacro.carbs)}g
-        </Text>
-        {avgExerciseKcal > 0 ? (
-          <Text style={styles.summaryConsume}>平均消費 {avgExerciseKcal} kcal / 日</Text>
-        ) : null}
       </View>
 
       <View style={styles.listSection}>
@@ -310,12 +323,16 @@ const styles = StyleSheet.create({
     backgroundColor: palette.surface,
     borderRadius: 20,
     padding: 16,
-    gap: 4,
   },
-  summaryTitleRow: {
+  summaryRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 12,
+  },
+  summaryLeft: {
+    flex: 1,
+    gap: 4,
   },
   summaryTitle: {
     fontSize: 12,

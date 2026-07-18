@@ -101,9 +101,11 @@ export const ExerciseSheet = memo(function ExerciseSheet({ visible, onClose, dat
   );
 
   const showLedger = baselineKcal != null;
+  // ヘルスデータが存在するときだけ baseline 行を表示する。
+  // measured = null (未同期 or 未連携) のときは控除計算が走らないため行を隠す。
+  const showBaseline = measuredActiveKcal != null && baselineKcal != null;
   const activityCapped =
-    showLedger &&
-    measuredActiveKcal != null &&
+    showBaseline &&
     measuredActiveKcal - (baselineKcal as number) > ACTIVITY_BONUS_DAILY_CAP_KCAL;
 
   const activityLevelLabel = useMemo(
@@ -150,14 +152,16 @@ export const ExerciseSheet = memo(function ExerciseSheet({ visible, onClose, dat
             </View>
             {showLedger ? (
               <>
-                <View style={styles.ledgerRow}>
-                  <Text style={styles.ledgerLabel}>
-                    活動レベル「{activityLevelLabel ?? '-'}」の想定
-                  </Text>
-                  <Text style={styles.ledgerValue}>
-                    −{(baselineKcal as number).toLocaleString()} kcal
-                  </Text>
-                </View>
+                {showBaseline ? (
+                  <View style={styles.ledgerRow}>
+                    <Text style={styles.ledgerLabel}>
+                      活動レベル「{activityLevelLabel ?? '-'}」の想定
+                    </Text>
+                    <Text style={styles.ledgerValue}>
+                      −{(baselineKcal as number).toLocaleString()} kcal
+                    </Text>
+                  </View>
+                ) : null}
                 <View style={[styles.ledgerRow, styles.ledgerResultRow]}>
                   <Text style={styles.ledgerResultLabel}>
                     目標に追加{activityCapped ? '（上限あり）' : ''}

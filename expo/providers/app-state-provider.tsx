@@ -1247,7 +1247,8 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
         const filtered = nextExerciseLogs.filter((e) => {
           if (e.date !== dateKey) return true;
           if (e.exerciseType !== w.exerciseTypeKey) return true;
-          if (e.source === 'health') return true;
+          // health ログも ±15分 ウィンドウで重複排除する。
+          // healthSyncId が同期ごとにわずかに変動した場合でも同一ワークアウトを二重登録しない。
           const t = new Date(e.timestamp).getTime();
           if (!Number.isFinite(t)) return true;
           return Math.abs(t - startMs) > dedupWindowMs;
@@ -1280,9 +1281,17 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
         nextDailyActivities = [entry, ...nextDailyActivities.filter((d) => d.date !== entry.date)];
       }
 
-      // 4b) 削除なし: health 由来ログは一度保存したら再同期でも消さない。
-      //     activeKcal > 0 の日は getTdeeExerciseKcalForDate が TDEE 計算から除外するため
-      //     保持しても二重計上にならない。今日/昨日で表示が変わる問題を防ぐ。
+      // 4b) walking の遡及クリーンアップ:
+      //     steps > 0 かつ activeKcal = 0 の日はウォーキングを「歩数(ヘルス)」行に集約する。
+      //     過去の同期時点で steps = 0 だったためウォーキング ExerciseLog が保存されている場合、
+      //     今回の同期で steps > 0 が確定したら該当ログを削除して歩数行との二重表示を防ぐ。
+      for (const da of result.dailyActivities) {
+        if (da.steps > 0 && da.activeKcal === 0) {
+          nextExerciseLogs = nextExerciseLogs.filter(
+            (e) => !(e.date === da.date && e.source === 'health' && e.exerciseType === 'walking')
+          );
+        }
+      }
 
       // 5) profile の current weight/BF% は最新の体重/体脂肪エントリと同期
       let nextProfile = profile;

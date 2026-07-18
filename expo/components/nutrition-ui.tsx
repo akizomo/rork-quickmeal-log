@@ -49,7 +49,10 @@ function MiniProgressBar({ letter, label, current, target, color }: {
   target: number;
   color: string;
 }) {
+  const t = useTheme();
   const progress = target > 0 ? Math.min(current / target, 1) : 0;
+  const isPastTolerance = target > 0 && current > target * (1 + TOLERANCE);
+  const valueColor = isPastTolerance ? t.colors.nutrition.calorie.severeExceed : palette.text;
   return (
     <View style={styles.miniBarItem}>
       <Text style={styles.miniBarLabel}>
@@ -60,7 +63,7 @@ function MiniProgressBar({ letter, label, current, target, color }: {
       <View style={styles.miniBarTrack}>
         <View style={[styles.miniBarFill, { width: `${progress * 100}%`, backgroundColor: color }]} />
       </View>
-      <Text style={styles.miniBarValue}>{Math.round(current)} / {Math.round(target)} g</Text>
+      <Text style={[styles.miniBarValue, { color: valueColor }]}>{Math.round(current)} / {Math.round(target)} g</Text>
     </View>
   );
 }
@@ -361,12 +364,14 @@ const TOLERANCE = 0.15;
 
 function WeeklyRingsRow({
   today,
+  viewedDate,
   logs,
   exerciseLogs,
   baseTargetKcal,
   onDayPress,
 }: {
   today: Date;
+  viewedDate: Date;
   logs: import('@/types/nutrition').FoodLog[];
   exerciseLogs: import('@/types/nutrition').ExerciseLog[];
   baseTargetKcal: number;
@@ -387,18 +392,20 @@ function WeeklyRingsRow({
   }, [today]);
 
   const todayKey = formatDateKey(today);
+  const viewedDateKey = formatDateKey(viewedDate);
 
   return (
     <View style={styles.weeklyRingsRow}>
       {weekDays.map((day, i) => {
         const dk = formatDateKey(day);
         const isToday = dk === todayKey;
+        const isSelected = dk === viewedDateKey && !isToday;
         const isFuture = dk > todayKey;
         const consumed = sumForDate(logs, dk).kcal;
         const target = adjustedTargetKcal(baseTargetKcal, exerciseLogs, dk, undefined);
 
-        const size = 30;
-        const stroke = 3;
+        const size = 36;
+        const stroke = 5;
         const cx = size / 2;
         const r = (size - stroke) / 2;
         const circ = 2 * Math.PI * r;
@@ -412,7 +419,11 @@ function WeeklyRingsRow({
         const toleranceColor = colors.moss[600];
         const overflowColor = t.colors.nutrition.calorie.severeExceed;
 
-        const labelColor = isToday ? t.colors.content.primary : t.colors.content.secondary;
+        const labelColor = isToday
+          ? t.colors.content.primary
+          : isSelected
+            ? t.colors.content.primary
+            : t.colors.content.secondary;
         const fontSize = 10;
 
         const tappable = !isFuture;
@@ -456,13 +467,21 @@ function WeeklyRingsRow({
                 y={cx + fontSize * 0.38}
                 textAnchor="middle"
                 fontSize={fontSize}
-                fontWeight={isToday ? '600' : '400'}
+                fontWeight={isToday || isSelected ? '600' : '400'}
                 fontFamily='PlusJakartaSans_400Regular, "Plus Jakarta Sans", -apple-system, sans-serif'
                 fill={labelColor}
               >
                 {WEEK_DAYS_JA[i]}
               </SvgText>
             </Svg>
+            <View style={styles.weeklyRingDot}>
+              {(isToday || isSelected) && (
+                <View style={[
+                  styles.weeklyRingDotInner,
+                  { backgroundColor: isSelected ? t.colors.content.secondary : t.colors.action.primary.default },
+                ]} />
+              )}
+            </View>
           </Pressable>
         );
       })}
@@ -1409,6 +1428,7 @@ export function HomeScreen() {
           <Header viewedDate={viewedDate} />
           <WeeklyRingsRow
             today={today}
+            viewedDate={viewedDate}
             logs={logs}
             exerciseLogs={exerciseLogs}
             baseTargetKcal={profile.targetCalories}
@@ -1464,8 +1484,10 @@ const styles = StyleSheet.create({
   trialBadge: { fontSize: 11, color: palette.sageStrong, marginTop: 2, fontWeight: '600' },
   iconButton: { width: 42, height: 42, borderRadius: 21, backgroundColor: palette.surface, alignItems: 'center', justifyContent: 'center' },
   statusCard: { paddingVertical: 4, gap: 16 },
-  weeklyRingsRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 4, paddingTop: 16 },
+  weeklyRingsRow: { flexDirection: 'row', justifyContent: 'center', gap: 8, alignItems: 'center', paddingTop: 16 },
   weeklyRingItem: { alignItems: 'center' },
+  weeklyRingDot: { height: 5, alignItems: 'center', justifyContent: 'center', marginTop: 2 },
+  weeklyRingDotInner: { width: 4, height: 4, borderRadius: 2 },
   ringRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   sideColumn: { flex: 1, alignItems: 'center', gap: 2, paddingVertical: 8, borderRadius: 12 },
   sideColumnPressed: { opacity: 0.6 },

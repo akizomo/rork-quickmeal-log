@@ -624,7 +624,9 @@ export interface ActivityContext {
 export function calcGoalAdditionKcal(exerciseGrossKcal: number, ctx?: ActivityContext): number {
   const measured = ctx?.measuredActiveKcal ?? null;
   const baseline = ctx?.baselineActiveKcal ?? null;
-  const hasHealth = measured != null && measured > 0 && baseline != null;
+  // measured が null = ヘルス未連携または当日未同期 → 従来通り全額加算。
+  // measured = 0 = 同期済みだが活動なし → baseline は控除する (早朝0歩の日に対応)。
+  const hasHealth = measured != null && baseline != null;
   if (!hasHealth) {
     return Math.max(0, Math.round(exerciseGrossKcal));
   }
