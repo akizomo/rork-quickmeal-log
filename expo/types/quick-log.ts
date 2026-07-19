@@ -117,6 +117,11 @@ export interface QuickLogSelection {
    * categoryKey は bucket key (例: 'chinese_noodles')。
    */
   mode?: 'ingredient' | 'dish';
+  /**
+   * Identity-first IA 由来のエントリのみ。Identity.styles のキー (調理法、例: 'light'/'oil'/'raw')。
+   * ⭐️ タブの副テキストで種類/調理/量をまとめて表示するために使う。
+   */
+  styleKey?: string;
 }
 
 export type QuickLogHistoryMap = Record<string, QuickLogSelection[]>;
@@ -142,8 +147,18 @@ export interface RankedLogItem {
   categoryKey: string;
   /** 表示ラベル (例: "鶏むね", "ラーメン (あっさり)") */
   label: string;
-  /** 量ラベル (例: "100g", "普通") */
+  /**
+   * 副テキスト。種類(属性)・調理法・量を "・" 区切りでまとめたもの
+   * (例: "皮なし・あっさり・100g")。判別できない要素は省略する。
+   */
   amountLabel: string;
+  /**
+   * Identity-first IA 由来のエントリのみ。タップ時に quickLogIdentity(identityId) で
+   * 同じ Identity を default amount で再現し、長押し時に openIdentityLogSheet の
+   * 初期選択にも使う。レガシー経路 (submitQuickIngredient/openDraftEditor) 由来の
+   * 古いエントリは undefined — draft/categoryKey ベースの再現にフォールバックする。
+   */
+  identityId?: string;
   /**
    * 食材タブ由来の場合のみ。ボタンタップ時に即ログを再現するために使う。
    * dish の場合は null — categoryKey から createFoodLogFromDish() で再現。

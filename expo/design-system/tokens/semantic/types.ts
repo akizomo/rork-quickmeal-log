@@ -86,24 +86,27 @@ export type SemanticColors = {
    * - 3 macro の hue は固定 (protein=clay, fat=amber, carbs=moss)
    */
   nutrition: {
-    // PFC macros — default はフィル色、container はトラック/残量表示色
-    protein: { default: string; container: string };
-    fat:     { default: string; container: string };
-    carbs:   { default: string; container: string };
+    // PFC macros — text/graphic/background の3用途で分離する。
+    //   text       = ラベル文字色 (AA コントラスト確認済み・変更不可)
+    //   graphic    = バー・グラフの塗り色 (text より彩度高め。文字コントラスト制約を受けない)
+    //   background = トラック/残量表示・chip 背景などの淡色
+    protein: { text: string; graphic: string; background: string };
+    fat:     { text: string; graphic: string; background: string };
+    carbs:   { text: string; graphic: string; background: string };
 
-    // カロリー予算ゲージ (3段階)
+    // カロリー予算ゲージ (3段階) — 各状態も text/graphic/background の3用途で分離する。
     calorie: {
-      within:       string; // 予算内 (健康的)
-      mildExceed:   string; // 軽度超過 (注意)
-      severeExceed: string; // 大幅超過 (警告)
-      track:        string; // 空のリング/バー
+      within:       { text: string; graphic: string; background: string }; // 予算内 (健康的)
+      mildExceed:   { text: string; graphic: string; background: string }; // 軽度超過 (注意)
+      severeExceed: { text: string; graphic: string; background: string }; // 大幅超過 (警告)
+      track:        string; // 空のリング/バー (単一値。3用途の対象外)
     };
 
-    // 体重・進捗トレンド
+    // 体重・進捗トレンド — 各状態も text/graphic/background の3用途で分離する。
     trend: {
-      improve: string; // 目標に向かっている (success相当)
-      worsen:  string; // 目標から離れた (warning相当)
-      stable:  string; // ほぼ変化なし (neutral)
+      improve: { text: string; graphic: string; background: string }; // 目標に向かっている (success相当)
+      worsen:  { text: string; graphic: string; background: string }; // 目標から離れた (warning相当)
+      stable:  { text: string; graphic: string; background: string }; // ほぼ変化なし (neutral)
     };
   };
 };

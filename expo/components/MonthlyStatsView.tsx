@@ -209,13 +209,13 @@ export function MonthlyStatsView() {
             const dayTarget = monthAdjustedTargetMap.get(cell.dateKey) ?? targetKcal;
             const color = (() => {
               if (kcal === 0) return 'transparent';
-              if (dayTarget === 0) return t.colors.nutrition.calorie.within;
+              if (dayTarget === 0) return t.colors.nutrition.calorie.within.graphic;
               const overall = kcal / dayTarget;
               // 〜110%: 予算内 (moss)、110〜130%: 軽度超過 (amber)、130%超: 大幅超過 (clay)
               // 不足はサイズで表現し、色はカロリー予算カラーに統一する。
-              if (overall <= 1.1) return t.colors.nutrition.calorie.within;
-              if (overall <= 1.3) return t.colors.nutrition.calorie.mildExceed;
-              return t.colors.nutrition.calorie.severeExceed;
+              if (overall <= 1.1) return t.colors.nutrition.calorie.within.graphic;
+              if (overall <= 1.3) return t.colors.nutrition.calorie.mildExceed.graphic;
+              return t.colors.nutrition.calorie.severeExceed.graphic;
             })();
             const dim = !cell.inMonth || future;
             return (
@@ -292,21 +292,24 @@ export function MonthlyStatsView() {
             label="タンパク質"
             current={avgMacro.protein}
             target={avgPfcTarget.protein}
-            color={t.colors.nutrition.protein.default}
+            textColor={t.colors.nutrition.protein.text}
+            graphicColor={t.colors.nutrition.protein.graphic}
           />
           <MiniProgressBar
             letter="F"
             label="脂肪"
             current={avgMacro.fat}
             target={avgPfcTarget.fat}
-            color={t.colors.nutrition.fat.default}
+            textColor={t.colors.nutrition.fat.text}
+            graphicColor={t.colors.nutrition.fat.graphic}
           />
           <MiniProgressBar
             letter="C"
             label="炭水化物"
             current={avgMacro.carbs}
             target={avgPfcTarget.carbs}
-            color={t.colors.nutrition.carbs.default}
+            textColor={t.colors.nutrition.carbs.text}
+            graphicColor={t.colors.nutrition.carbs.graphic}
           />
         </View>
       </View>

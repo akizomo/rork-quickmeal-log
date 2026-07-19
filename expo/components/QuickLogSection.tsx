@@ -9,6 +9,9 @@ import {
 } from 'react-native';
 
 import { palette } from '@/constants/theme';
+import { fontSize } from '@/design-system/tokens/primitives/typography';
+import { elevation } from '@/design-system/tokens/primitives/elevation';
+import { colors } from '@/design-system/tokens/primitives/colors';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { useAppState } from '@/providers/app-state-provider';
 import { QuickCategory } from '@/types/nutrition';
@@ -42,8 +45,9 @@ export const QUICK_LOG_TOKENS = {
 };
 
 const QUICK_LOG_COLORS = {
-  buttonBg: '#FBF8F1',
-  buttonBorder: 'rgba(49, 83, 71, 0.13)',
+  // セグメントコントロールの選択中ピルと同じ ivory[50] にして、
+  // 「選択中タブ→ボタン」で一貫した“浮いた白いカード”の見た目にする。
+  buttonBg: colors.ivory[50],
   iconBg: '#FFFFFF',
   labelText: '#2E3B35',
 };
@@ -229,16 +233,12 @@ const FrequentGrid = memo(function FrequentGrid({
   labelFontSize,
   gridGap,
   gridColumns,
-  iconSize,
-  iconContainerSize,
 }: {
   items: RankedLogItem[];
   buttonHeight: number;
   labelFontSize: number;
   gridGap: number;
   gridColumns: number;
-  iconSize: number;
-  iconContainerSize: number;
 }) {
   const {
     quickLog,
@@ -314,8 +314,6 @@ const FrequentGrid = memo(function FrequentGrid({
                   item={item}
                   height={buttonHeight}
                   labelFontSize={labelFontSize}
-                  iconSize={iconSize}
-                  iconContainerSize={iconContainerSize}
                   onLog={handleLog}
                   onLongPress={handleLongPress}
                 />
@@ -333,16 +331,12 @@ function FrequentButton({
   item,
   height,
   labelFontSize,
-  iconSize,
-  iconContainerSize,
   onLog,
   onLongPress,
 }: {
   item: RankedLogItem;
   height: number;
   labelFontSize: number;
-  iconSize: number;
-  iconContainerSize: number;
   onLog: () => void;
   onLongPress: () => void;
 }) {
@@ -355,28 +349,16 @@ function FrequentButton({
       accessibilityLabel={`${item.label}を追加。長押しで詳細入力`}
       style={({ pressed }) => [
         styles.frequentButton,
-        { height },
+        { minHeight: height },
         pressed && styles.frequentButtonPressed,
       ]}
     >
-      <View
-        style={[
-          styles.iconContainer,
-          {
-            width: iconContainerSize,
-            height: iconContainerSize,
-            borderRadius: iconContainerSize / 2,
-          },
-        ]}
-      >
-        <Text style={[styles.iconEmoji, { fontSize: iconSize, lineHeight: iconSize + 2 }]}>
-          {item.emoji}
-        </Text>
-      </View>
       <Text style={[styles.frequentLabel, { fontSize: labelFontSize }]} numberOfLines={1}>
         {item.label}
       </Text>
-      <Text style={[styles.frequentAmount, { fontSize: labelFontSize - 1 }]} numberOfLines={1}>
+      {/* 種類・調理・量をまとめた副テキスト。fontSize.xs(11) を下回らせず、
+          収まらない場合は省略せず2行まで折り返す。 */}
+      <Text style={styles.frequentAmount} numberOfLines={2}>
         {item.amountLabel}
       </Text>
     </Pressable>
@@ -472,8 +454,6 @@ export const QuickLogSection = memo(function QuickLogSection() {
           labelFontSize={labelFontSize}
           gridGap={gridGap}
           gridColumns={gridColumns}
-          iconSize={iconSize}
-          iconContainerSize={iconContainerSize}
         />
       ) : (
         <View style={styles.grid}>
@@ -538,12 +518,11 @@ const styles = StyleSheet.create({
     width: '100%',
     backgroundColor: QUICK_LOG_COLORS.buttonBg,
     borderRadius: QUICK_LOG_TOKENS.buttonRadius,
-    borderWidth: 1,
-    borderColor: QUICK_LOG_COLORS.buttonBorder,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 4,
     gap: 2,
+    ...elevation.xs,
   },
   frequentButtonPressed: {
     opacity: 0.7,
@@ -556,6 +535,7 @@ const styles = StyleSheet.create({
   frequentAmount: {
     color: '#7B857E',
     textAlign: 'center',
+    fontSize: fontSize.xs,
   },
   frequentEmptySlot: {
     width: '100%',
@@ -572,15 +552,9 @@ const styles = StyleSheet.create({
     width: '100%',
     backgroundColor: QUICK_LOG_COLORS.buttonBg,
     borderRadius: QUICK_LOG_TOKENS.buttonRadius,
-    borderWidth: 1,
-    borderColor: QUICK_LOG_COLORS.buttonBorder,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.04,
-    shadowRadius: 2,
-    shadowOffset: { width: 0, height: 1 },
-    elevation: 1,
+    ...elevation.xs,
   },
   iconContainer: {
     backgroundColor: QUICK_LOG_COLORS.iconBg,

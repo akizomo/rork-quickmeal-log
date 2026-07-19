@@ -403,7 +403,7 @@ function TrendChart({
             top: tipTop,
             opacity: tipSize.w > 0 ? 1 : 0,
             alignItems: 'center',
-            paddingVertical: t.spacing['1.5'],
+            paddingVertical: t.spacing['2'],
             paddingHorizontal: t.spacing['3'],
             borderRadius: t.radius.md,
             backgroundColor: t.colors.surface.default,

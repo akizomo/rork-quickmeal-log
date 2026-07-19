@@ -84,24 +84,26 @@ export const lightColors: SemanticColors = {
     //   terracotta = 肉・筋肉 (煉瓦色, clay より orange 寄り)
     //   kogecha    = 油・バター (焦茶, amber より赤み強めの brown)
     //   seagrass   = 穀物・野菜 (海草色, moss より teal 寄り)
-    protein: { default: colors.terracotta[500], container: colors.terracotta[100] },
-    fat:     { default: colors.kogecha[500],    container: colors.kogecha[100]    },
-    carbs:   { default: colors.seagrass[500],   container: colors.seagrass[100]   },
+    // text は 600 番 (500 より濃くAAコントラスト余裕あり)、graphic はバー/グラフ専用の
+    // 400 番 (彩度・明度が高くP/Fの見分けがつきやすい。文字ではないのでAA制約なし)。
+    protein: { text: colors.terracotta[600], graphic: colors.terracotta[400], background: colors.terracotta[100] },
+    fat:     { text: colors.kogecha[600],    graphic: colors.kogecha[400],    background: colors.kogecha[100]    },
+    carbs:   { text: colors.seagrass[600],   graphic: colors.seagrass[400],   background: colors.seagrass[100]   },
 
     // カロリー予算 (3段階) — status の意味と重なる "アラート" 系なので
-    // moss/amber/clay を再利用してOK。
+    // moss/amber/clay を再利用してOK。PFC macros と同じく text=600/graphic=400/background=100。
     calorie: {
-      within:       colors.moss[500],   // 予算内
-      mildExceed:   colors.amber[500],  // 軽度超過
-      severeExceed: colors.clay[500],   // 大幅超過
+      within:       { text: colors.moss[600],  graphic: colors.moss[400],  background: colors.moss[100]  }, // 予算内
+      mildExceed:   { text: colors.amber[600], graphic: colors.amber[400], background: colors.amber[100] }, // 軽度超過
+      severeExceed: { text: colors.clay[600],  graphic: colors.clay[400],  background: colors.clay[100]  }, // 大幅超過
       track:        colors.ivory[500],  // 空のリング/バー
     },
 
-    // 体重・進捗トレンド — status と意味が重なるため hue 共有。
+    // 体重・進捗トレンド — status と意味が重なるため hue 共有。同じく text=600/graphic=400/background=100。
     trend: {
-      improve: colors.moss[500],   // 改善
-      worsen:  colors.amber[500],  // 悪化 (danger ではなく warning 感)
-      stable:  colors.stone[500],  // 維持 (ニュートラル)
+      improve: { text: colors.moss[600],  graphic: colors.moss[400],  background: colors.moss[100]  }, // 改善
+      worsen:  { text: colors.amber[600], graphic: colors.amber[400], background: colors.amber[100] }, // 悪化 (danger ではなく warning 感)
+      stable:  { text: colors.stone[600], graphic: colors.stone[400], background: colors.stone[100] }, // 維持 (ニュートラル)
     },
   },
 };

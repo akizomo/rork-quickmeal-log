@@ -89,7 +89,7 @@ export const makeButtonTokens = (sc: SemanticColors): ButtonTokens => ({
       fontSize: fontSize.sm,
       lineHeight: lineHeight.sm,
       radius: radius.md,
-      gap: spacing['1.5'],
+      gap: spacing['1'],
     },
     md: {
       height: 48, // Material/HIG の最小タッチ領域を両方満たす

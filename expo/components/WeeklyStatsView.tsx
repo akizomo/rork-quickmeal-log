@@ -176,11 +176,11 @@ export function WeeklyStatsView() {
   const barColor = useCallback(
     (kcal: number, dayTarget: number) => {
       if (kcal <= 0) return t.colors.nutrition.calorie.track;
-      if (dayTarget <= 0) return t.colors.nutrition.calorie.within;
+      if (dayTarget <= 0) return t.colors.nutrition.calorie.within.graphic;
       const ratio = kcal / dayTarget;
-      if (ratio <= 1.1) return t.colors.nutrition.calorie.within;
-      if (ratio <= 1.3) return t.colors.nutrition.calorie.mildExceed;
-      return t.colors.nutrition.calorie.severeExceed;
+      if (ratio <= 1.1) return t.colors.nutrition.calorie.within.graphic;
+      if (ratio <= 1.3) return t.colors.nutrition.calorie.mildExceed.graphic;
+      return t.colors.nutrition.calorie.severeExceed.graphic;
     },
     [t]
   );
@@ -301,21 +301,24 @@ export function WeeklyStatsView() {
             label="タンパク質"
             current={avgMacro.protein}
             target={avgPfcTarget.protein}
-            color={t.colors.nutrition.protein.default}
+            textColor={t.colors.nutrition.protein.text}
+            graphicColor={t.colors.nutrition.protein.graphic}
           />
           <MiniProgressBar
             letter="F"
             label="脂肪"
             current={avgMacro.fat}
             target={avgPfcTarget.fat}
-            color={t.colors.nutrition.fat.default}
+            textColor={t.colors.nutrition.fat.text}
+            graphicColor={t.colors.nutrition.fat.graphic}
           />
           <MiniProgressBar
             letter="C"
             label="炭水化物"
             current={avgMacro.carbs}
             target={avgPfcTarget.carbs}
-            color={t.colors.nutrition.carbs.default}
+            textColor={t.colors.nutrition.carbs.text}
+            graphicColor={t.colors.nutrition.carbs.graphic}
           />
         </View>
       </View>

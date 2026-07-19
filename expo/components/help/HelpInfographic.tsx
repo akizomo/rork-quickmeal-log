@@ -53,9 +53,9 @@ function PfcLegend() {
   const t = useTheme();
   return (
     <View style={styles.legend}>
-      <LegendItem color={t.colors.nutrition.protein.default} label="P" />
-      <LegendItem color={t.colors.nutrition.fat.default} label="F" />
-      <LegendItem color={t.colors.nutrition.carbs.default} label="C" />
+      <LegendItem color={t.colors.nutrition.protein.graphic} label="P" />
+      <LegendItem color={t.colors.nutrition.fat.graphic} label="F" />
+      <LegendItem color={t.colors.nutrition.carbs.graphic} label="C" />
     </View>
   );
 }
@@ -178,33 +178,33 @@ function PfcTag({ tagKey, text }: { tagKey: PfcTagKey; text: string }) {
   let fg = t.colors.content.secondary;
   switch (tagKey) {
     case 'tag-c':
-      bg = carbs.container;
-      fg = carbs.default;
+      bg = carbs.background;
+      fg = carbs.text;
       break;
     case 'tag-c-light':
-      bg = carbs.container;
-      fg = carbs.default;
+      bg = carbs.background;
+      fg = carbs.text;
       break;
     case 'tag-p':
-      bg = protein.container;
-      fg = protein.default;
+      bg = protein.background;
+      fg = protein.text;
       break;
     case 'tag-f':
-      bg = fat.container;
-      fg = fat.default;
+      bg = fat.background;
+      fg = fat.text;
       break;
     case 'tag-pf':
-      // P+F: protein container背景、文言で混合を示す
-      bg = protein.container;
-      fg = protein.default;
+      // P+F: protein background背景、文言で混合を示す
+      bg = protein.background;
+      fg = protein.text;
       break;
     case 'tag-fc':
-      bg = fat.container;
-      fg = fat.default;
+      bg = fat.background;
+      fg = fat.text;
       break;
     case 'tag-pc':
-      bg = protein.container;
-      fg = protein.default;
+      bg = protein.background;
+      fg = protein.text;
       break;
     case 'tag-balance':
       bg = t.colors.border.subtle;

@@ -4,6 +4,7 @@ import {
   getQuickLogSubcategory,
 } from '@/constants/quick-log-master';
 import { getDishTopCategory } from '@/constants/dish-master';
+import { getIdentity } from '@/constants/identity';
 import {
   IngredientQuickDraft,
   QuickLogCategoryDef,
@@ -297,6 +298,31 @@ function buildRankedItem(
   sel: QuickLogSelection,
 ): Omit<RankedLogItem, 'score'> {
   const amountLabel = sel.amountLabel ?? `${sel.amountValue}${sel.amountUnit}`;
+
+  // Identity-first IA 由来のエントリは subcategoryKey = recordIdentity.id。
+  // legacy master (quick-log-master/dish-master) はトップカテゴリ単位でしか
+  // ラベルを持たないため、そちらより先に Identity 自身の具体的なラベルを優先する
+  // (例: 'chicken_lean' → "鶏むね・ささみ"。legacy 側に一致キーがなく
+  // "低脂P" のような親カテゴリ名にフォールバックしてしまうのを防ぐ)。
+  // 副テキストは 種類(attribute)・調理法(style) ・量 を判別できる範囲でまとめる。
+  const identity = getIdentity(sel.subcategoryKey);
+  if (identity) {
+    const attrLabel = sel.attrKey
+      ? identity.attributes?.find((a) => a.key === sel.attrKey)?.label
+      : undefined;
+    const styleLabel = sel.styleKey
+      ? identity.styles?.find((s) => s.key === sel.styleKey)?.label
+      : undefined;
+    const detailLabel = [attrLabel, styleLabel, amountLabel].filter(Boolean).join('・');
+    return {
+      mode,
+      categoryKey,
+      label: identity.label,
+      amountLabel: detailLabel,
+      identityId: identity.id,
+      draft: null,
+    };
+  }
 
   if (mode === 'dish') {
     // dish master からサブカテゴリのラベルを解決する。

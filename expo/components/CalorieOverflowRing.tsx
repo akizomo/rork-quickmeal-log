@@ -94,15 +94,18 @@ export const CalorieOverflowRing = memo(function CalorieOverflowRing(props: Calo
     centerMode = SHAPE_DEFAULTS.centerMode,
     showAchievedCheck = false,
     trackColor = t.colors.nutrition.calorie.track,
-    progressColor = t.colors.nutrition.calorie.within,
+    progressColor = t.colors.nutrition.calorie.within.graphic,
     achievedCheckColor = progressColor,
     toleranceColor = colors.moss[600],
-    overflowColor = t.colors.nutrition.calorie.severeExceed,
+    overflowColor = t.colors.nutrition.calorie.severeExceed.graphic,
     centerTextColor = t.colors.content.primary,
     subTextColor = t.colors.content.secondary,
     accessibilityLabel,
     testID,
   } = props;
+  // 「オーバー」ラベルは常にリング (graphic) と別に text 用の濃い段を使う。
+  // overflowColor prop は誰も override していないため、ここで独立に解決してよい。
+  const overflowTextColor = t.colors.nutrition.calorie.severeExceed.text;
 
   const toleranceFraction = props.toleranceFraction ?? 0.15;
 
@@ -267,7 +270,7 @@ export const CalorieOverflowRing = memo(function CalorieOverflowRing(props: Calo
             !isAnyOver ? (
               <Text style={[styles.centerModeLabel, { color: subTextColor }]} numberOfLines={1}>のこり</Text>
             ) : isPastTolerance ? (
-              <Text style={[styles.centerModeLabel, { color: overflowColor }]} numberOfLines={1}>オーバー</Text>
+              <Text style={[styles.centerModeLabel, { color: overflowTextColor }]} numberOfLines={1}>オーバー</Text>
             ) : null
           ) : null}
           <Text style={[styles.kcalValue, { color: centerTextColor }]} numberOfLines={1}>

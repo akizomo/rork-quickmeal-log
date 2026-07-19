@@ -13,7 +13,7 @@ import type { CustomerInfo } from 'react-native-purchases';
 import { AppSettings, BodyFatEntry, DailyActivitySummary, DishDraft, DishQuickEntryPayload, ExerciseLog, FoodLog, IngredientDraft, LogMode, SubscriptionStatus, UserProfile, WeightEntry } from '@/types/nutrition';
 import { ENTITLEMENT_ID } from '@/constants/iap';
 import { addCustomerInfoListener, getCustomerInfo, restorePurchases as iapRestore } from '@/utils/iap';
-import { IngredientQuickDraft, QuickLogHistoryMap } from '@/types/quick-log';
+import { IngredientQuickDraft, QuickLogHistoryMap, QuickLogSelection } from '@/types/quick-log';
 import { buildDishMacro, clampPortion, computeIngredient, createFoodLogFromDish, createFoodLogFromDishQuickEntry, createFoodLogFromIngredient, formatDateKey, generateId, getDefaultModeByTime, getMealSlot, getQuickCategories, getSubType, sumToday } from '@/utils/nutrition';
 import { adjustedTargetKcal, calcBaselineActiveKcal, calcExerciseGrossKcal, calcExerciseNetKcal, EXERCISE_TYPES, stepsToActiveKcal } from '@/utils/goals';
 import { isSameDay } from '@/utils/history';
@@ -582,10 +582,33 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       });
       const log = applyLoggingDate(baseLog);
       await pushLog(log);
+
+      // Record selection in history (⭐️ frequent tab, recent + frequency).
+      // categoryKey/subTypeKey already mirror the legacy bucket/subcategory
+      // key namespace (see identity-log-bridge.ts), so this slots directly
+      // into the same QuickLogHistoryMap the legacy quick-log flows use.
+      const sel: QuickLogSelection = {
+        categoryKey: log.categoryKey,
+        subcategoryKey: log.subTypeKey ?? log.categoryKey,
+        attrKey: log.attrKey as QuickLogSelection['attrKey'],
+        styleKey: log.styleKey,
+        amountValue: log.amountValue ?? 1,
+        amountUnit: log.amountUnit ?? 'piece',
+        amountLabel: log.amountLabel,
+        loggedAtISO: log.timestamp,
+        mode: log.mode,
+      };
+      const mapKey = log.mode === 'dish' ? `dish:${log.categoryKey}` : log.categoryKey;
+      const currentHistory = (settings.quickLogHistory ?? {}) as QuickLogHistoryMap;
+      const nextHistory = recordSelection(currentHistory, sel, mapKey);
+      const nextSettings: AppSettings = { ...settings, quickLogHistory: nextHistory };
+      setSettings(nextSettings);
+      persist(profile, [log, ...logs], nextSettings, weights, bodyFatEntries);
+
       setIdentityLogSheet({ visible: false });
       return log;
     },
-    [identityLogSheet.editingLogId, logs, replaceLog, applyLoggingDate, pushLog]
+    [identityLogSheet.editingLogId, logs, replaceLog, applyLoggingDate, pushLog, settings, setSettings, persist, profile, weights, bodyFatEntries]
   );
 
   /**

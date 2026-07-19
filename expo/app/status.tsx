@@ -208,9 +208,9 @@ export default function StatusRoute() {
                   <Caption tone="tertiary" style={{ marginLeft: 4, marginBottom: 6 }}>kcal / 日</Caption>
                 </View>
                 <View style={styles.pfcRow}>
-                  <PfcCell label="P" value={profile.targetProtein} color={theme.colors.nutrition.protein.default} />
-                  <PfcCell label="F" value={profile.targetFat} color={theme.colors.nutrition.fat.default} />
-                  <PfcCell label="C" value={profile.targetCarbs} color={theme.colors.nutrition.carbs.default} />
+                  <PfcCell label="P" value={profile.targetProtein} color={theme.colors.nutrition.protein.text} />
+                  <PfcCell label="F" value={profile.targetFat} color={theme.colors.nutrition.fat.text} />
+                  <PfcCell label="C" value={profile.targetCarbs} color={theme.colors.nutrition.carbs.text} />
                 </View>
                 {paceLabel ? (
                   <Caption tone="secondary">

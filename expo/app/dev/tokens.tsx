@@ -34,62 +34,81 @@ function NutritionColors({ t }: { t: Theme }) {
   ];
   const calorie = t.colors.nutrition.calorie;
   const trend = t.colors.nutrition.trend;
+  const calorieStates = [
+    { name: 'within', ...calorie.within },
+    { name: 'mildExceed', ...calorie.mildExceed },
+    { name: 'severeExceed', ...calorie.severeExceed },
+  ];
+  const trendStates = [
+    { name: 'improve', ...trend.improve },
+    { name: 'worsen', ...trend.worsen },
+    { name: 'stable', ...trend.stable },
+  ];
 
   return (
     <Section title="Nutrition — domain colors (PFC / calorie / trend)" t={t}>
       {/* macros */}
       <View style={{ gap: t.spacing['2'] }}>
-        <Text style={labelStyle(t)}>macros (default + container)</Text>
-        {macros.map((m) => (
-          <View key={m.name} style={{ gap: t.spacing['1'] }}>
-            <Text style={{ fontSize: t.typography.fontSize.caption1, color: t.colors.content.secondary }}>{m.name}</Text>
-            <View style={{ flexDirection: 'row', gap: t.spacing['2'], alignItems: 'center' }}>
-              <View
-                style={{
-                  height: 20,
-                  backgroundColor: m.container,
-                  flex: 1,
-                  borderRadius: t.radius.sm,
-                  overflow: 'hidden',
-                }}
-              >
-                <View
-                  style={{
-                    height: '100%',
-                    width: '62%',
-                    backgroundColor: m.default,
-                  }}
-                />
-              </View>
-              <Text style={{ fontSize: t.typography.fontSize.xs, color: t.colors.content.tertiary, width: 64 }}>
-                62 / 100
-              </Text>
-            </View>
-          </View>
-        ))}
+        <Text style={labelStyle(t)}>macros (text / graphic / background)</Text>
+        <SwatchRows states={macros} t={t} />
       </View>
 
       {/* calorie 3-stage */}
-      <View style={{ gap: t.spacing['1.5'] }}>
-        <Text style={labelStyle(t)}>calorie (within / mildExceed / severeExceed / track)</Text>
+      <View style={{ gap: t.spacing['2'] }}>
+        <Text style={labelStyle(t)}>calorie (text / graphic / background)</Text>
+        <SwatchRows states={calorieStates} t={t} />
         <View style={{ flexDirection: 'row', gap: t.spacing['2'] }}>
-          <ColorChip name="within" value={calorie.within} t={t} />
-          <ColorChip name="mildExceed" value={calorie.mildExceed} t={t} />
-          <ColorChip name="severeExceed" value={calorie.severeExceed} t={t} />
           <ColorChip name="track" value={calorie.track} t={t} />
         </View>
       </View>
 
       {/* trend */}
-      <View style={{ gap: t.spacing['1.5'] }}>
-        <Text style={labelStyle(t)}>trend (improve / worsen / stable)</Text>
-        <View style={{ flexDirection: 'row', gap: t.spacing['2'] }}>
-          <ColorChip name="improve" value={trend.improve} t={t} />
-          <ColorChip name="worsen" value={trend.worsen} t={t} />
-          <ColorChip name="stable" value={trend.stable} t={t} />
-        </View>
+      <View style={{ gap: t.spacing['2'] }}>
+        <Text style={labelStyle(t)}>trend (text / graphic / background)</Text>
+        <SwatchRows states={trendStates} t={t} />
       </View>
     </Section>
+  );
+}
+
+/** text/graphic/background の3値セットを macros と同じミニバー表現で並べる。 */
+function SwatchRows({
+  states,
+  t,
+}: {
+  states: { name: string; text: string; graphic: string; background: string }[];
+  t: Theme;
+}) {
+  return (
+    <>
+      {states.map((s) => (
+        <View key={s.name} style={{ gap: t.spacing['1'] }}>
+          <Text style={{ fontSize: t.typography.fontSize.caption1, color: t.colors.content.secondary }}>{s.name}</Text>
+          <View style={{ flexDirection: 'row', gap: t.spacing['2'], alignItems: 'center' }}>
+            <View
+              style={{
+                height: 20,
+                backgroundColor: s.background,
+                flex: 1,
+                borderRadius: t.radius.sm,
+                overflow: 'hidden',
+              }}
+            >
+              <View
+                style={{
+                  height: '100%',
+                  width: '62%',
+                  backgroundColor: s.graphic,
+                }}
+              />
+            </View>
+            <Text style={{ fontSize: t.typography.fontSize.xs, color: s.text, width: 64 }}>
+              62 / 100
+            </Text>
+          </View>
+        </View>
+      ))}
+    </>
   );
 }
 
@@ -103,7 +122,7 @@ function PrimitiveColors({ t }: { t: Theme }) {
   return (
     <Section title="Primitive — Colors (hue-only)" t={t}>
       {hues.map(([hueName, scale]) => (
-        <View key={hueName} style={{ gap: t.spacing['1.5'] }}>
+        <View key={hueName} style={{ gap: t.spacing['2'] }}>
           <Text style={labelStyle(t)}>{hueName}</Text>
           <View style={{ flexDirection: 'row', borderRadius: t.radius.md, overflow: 'hidden' }}>
             {shades.map((s) => (
@@ -145,7 +164,7 @@ function SemanticColors({ t }: { t: Theme }) {
   return (
     <Section title="Semantic — Colors (role)" t={t}>
       {groups.map(([groupName, group]) => (
-        <View key={groupName} style={{ gap: t.spacing['1.5'] }}>
+        <View key={groupName} style={{ gap: t.spacing['2'] }}>
           <Text style={labelStyle(t)}>{groupName}</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: t.spacing['2'] }}>
             {Object.entries(group).map(([k, v]) => (
@@ -154,7 +173,7 @@ function SemanticColors({ t }: { t: Theme }) {
           </View>
         </View>
       ))}
-      <View style={{ gap: t.spacing['1.5'] }}>
+      <View style={{ gap: t.spacing['2'] }}>
         <Text style={labelStyle(t)}>action</Text>
         {(['primary', 'secondary', 'ghost'] as const).map((role) => (
           <View key={role} style={{ gap: t.spacing['1'] }}>

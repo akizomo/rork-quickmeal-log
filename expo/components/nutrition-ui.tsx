@@ -22,7 +22,7 @@ import { additionPresets, portionSnapPoints, sizeOptions } from '@/constants/nut
 import { ACTIVITY_LEVEL_OPTIONS, TRIAL_DURATION_DAYS } from '@/constants/onboarding';
 import { palette } from '@/constants/theme';
 import { colors } from '@/design-system/tokens/primitives/colors';
-import { Badge, BottomSheet, Button, Caption, Icon, useTheme } from '@/design-system';
+import { Badge, Body, BottomSheet, Button, Caption, Icon, useTheme } from '@/design-system';
 import { duration, spring } from '@/design-system/tokens/primitives/motion';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { useAppState } from '@/providers/app-state-provider';
@@ -43,23 +43,26 @@ function formatTime(timestamp: string): string {
   return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
 }
 
-export function MiniProgressBar({ letter, label, current, target, color }: {
+export function MiniProgressBar({ letter, label, current, target, textColor, graphicColor }: {
   letter: string;
   label: string;
   current: number;
   target: number;
-  color: string;
+  /** P/F/C の文字色。AA コントラスト確認済みの nutrition.*.text を渡す。 */
+  textColor: string;
+  /** バー塗り色。nutrition.*.graphic (text より彩度高め) を渡す。 */
+  graphicColor: string;
 }) {
   const progress = target > 0 ? Math.min(current / target, 1) : 0;
   return (
     <View style={styles.miniBarItem}>
       <Text style={styles.miniBarLabel}>
-        <Text style={[styles.miniBarLetter, { color }]}>{letter}</Text>
+        <Text style={[styles.miniBarLetter, { color: textColor }]}>{letter}</Text>
         {' '}
         {label}
       </Text>
       <View style={styles.miniBarTrack}>
-        <View style={[styles.miniBarFill, { width: `${progress * 100}%`, backgroundColor: color }]} />
+        <View style={[styles.miniBarFill, { width: `${progress * 100}%`, backgroundColor: graphicColor }]} />
       </View>
       <Text style={styles.miniBarValue}>
         {Math.round(current)}
@@ -244,7 +247,7 @@ const BalanceModal = memo(function BalanceModal({
             ) : null}
             {carryoverPlanActive ? (
               <BalanceMathRow
-                label={`少しずつ調整中（${carryoverDayIndex}/${carryoverDaysTotal}日目）`}
+                label={`調整中（${carryoverDayIndex}/${carryoverDaysTotal}日目）`}
                 value={carryoverDeductionKcal}
                 sign="-"
               />
@@ -270,15 +273,15 @@ const BalanceModal = memo(function BalanceModal({
               <View style={styles.carryoverToggleLeft}>
                 <Text style={{ fontSize: 12 }}>🍽️</Text>
                 <Text style={[styles.carryoverToggleLabel, { color: t.colors.action.primary.onContainer }]}>
-                  少しずつ調整中（{carryoverDaysTotal}日間）
+                  調整中（{carryoverDaysTotal}日間）
                 </Text>
               </View>
               <Pressable onPress={onApplyCarryover} hitSlop={8} accessibilityRole="button" accessibilityLabel="プランを変更する">
-                <Caption weight="semibold" tone="link">変更</Caption>
+                <Body size="sm" weight="semibold" tone="link">変更</Body>
               </Pressable>
               <Text style={{ color: t.colors.border.default, marginHorizontal: t.spacing['2'] }}>|</Text>
               <Pressable onPress={onCancelCarryoverPlan} hitSlop={8} accessibilityRole="button" accessibilityLabel="調整をやめる">
-                <Caption weight="semibold" style={{ color: t.colors.status.danger }}>やめる</Caption>
+                <Body size="sm" weight="semibold" style={{ color: t.colors.status.danger }}>やめる</Body>
               </Pressable>
             </View>
           ) : showCarryoverSection ? (
@@ -416,9 +419,9 @@ function WeeklyRingsRow({
         const firstLap = Math.min(ratio, 1);
         const secondLap = ratio > 1 ? Math.min(ratio - 1, 1) : 0;
         const isPastTolerance = ratio > 1 + TOLERANCE;
-        const progressColor = t.colors.nutrition.calorie.within;
+        const progressColor = t.colors.nutrition.calorie.within.graphic;
         const toleranceColor = colors.moss[600];
-        const overflowColor = t.colors.nutrition.calorie.severeExceed;
+        const overflowColor = t.colors.nutrition.calorie.severeExceed.graphic;
 
         const labelColor = isToday
           ? t.colors.content.primary
@@ -626,15 +629,15 @@ function CarryoverBanner({
       <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: t.spacing['2'] }}>
         <Text style={{ fontSize: 14, lineHeight: 16 }}>🍽️</Text>
         <View style={{ flex: 1, gap: t.spacing['0.5'] }}>
-          <Caption weight="semibold" tone="primary">
+          <Body size="md" weight="semibold" tone="primary">
             {isNewPlan
               ? '余剰カロリーを調整する'
               : `調整プラン 実行中 · 残り ${daysRemaining} 日`}
-          </Caption>
+          </Body>
           {isNewPlan ? (
-            <Caption tone="secondary">
+            <Body size="sm" tone="secondary">
               {`昨日 +${surplusKcal} kcal 超過。数日に分けて調整できます`}
-            </Caption>
+            </Body>
           ) : null}
           <Pressable
             onPress={onOpenSheet}
@@ -643,9 +646,9 @@ function CarryoverBanner({
             accessibilityRole="button"
             accessibilityLabel={isNewPlan ? '調整プランを設定する' : '調整プランを変更する'}
           >
-            <Caption weight="semibold" tone="link">
+            <Body size="sm" weight="semibold" tone="link">
               {isNewPlan ? '設定する' : '変更'}
-            </Caption>
+            </Body>
           </Pressable>
         </View>
         <Pressable onPress={onDismiss} hitSlop={12} accessibilityRole="button" accessibilityLabel="閉じる">
@@ -823,21 +826,24 @@ export const StatusCard = memo(function StatusCard({
           label="タンパク質"
           current={dayMacro.protein}
           target={effectivePfc.protein}
-          color={t.colors.nutrition.protein.default}
+          textColor={t.colors.nutrition.protein.text}
+          graphicColor={t.colors.nutrition.protein.graphic}
         />
         <MiniProgressBar
           letter="F"
           label="脂肪"
           current={dayMacro.fat}
           target={effectivePfc.fat}
-          color={t.colors.nutrition.fat.default}
+          textColor={t.colors.nutrition.fat.text}
+          graphicColor={t.colors.nutrition.fat.graphic}
         />
         <MiniProgressBar
           letter="C"
           label="炭水化物"
           current={dayMacro.carbs}
           target={effectivePfc.carbs}
-          color={t.colors.nutrition.carbs.default}
+          textColor={t.colors.nutrition.carbs.text}
+          graphicColor={t.colors.nutrition.carbs.graphic}
         />
       </View>
 
@@ -1609,7 +1615,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   carryoverToggleLeft: { flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 },
-  carryoverToggleLabel: { fontSize: fs.caption1, fontWeight: '600', flex: 1 },
+  carryoverToggleLabel: { fontSize: fs.sm, fontWeight: '600', flex: 1 },
   pfcMiniRow: { flexDirection: 'row', gap: 12, marginHorizontal: 12 },
   miniBarItem: { flex: 1, gap: 4 },
   miniBarLabel: { fontSize: fs.sm, color: palette.textMuted, fontWeight: '600' },

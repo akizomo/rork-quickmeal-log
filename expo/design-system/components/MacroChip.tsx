@@ -54,7 +54,7 @@ export function MacroChip({
   const paddingV = isSm ? 2 : t.spacing['1'];
   const fontSize = isSm ? t.typography.fontSize.xs : t.typography.fontSize.sm;
   const lineHeight = isSm ? t.typography.lineHeight.xs : t.typography.lineHeight.sm;
-  const gap = isSm ? t.spacing['1'] : t.spacing['1.5'];
+  const gap = isSm ? t.spacing['1'] : t.spacing['2'];
 
   return (
     <View
@@ -67,7 +67,7 @@ export function MacroChip({
           paddingHorizontal: paddingH,
           paddingVertical: paddingV,
           borderRadius: t.radius.full,
-          backgroundColor: palette.container,
+          backgroundColor: palette.background,
         },
         style,
       ]}
@@ -77,7 +77,7 @@ export function MacroChip({
           fontSize,
           lineHeight,
           fontWeight: t.typography.fontWeight.bold as TextStyle['fontWeight'],
-          color: palette.default,
+          color: palette.text,
         }}
       >
         {LABEL_BY_KIND[kind]}
@@ -87,7 +87,7 @@ export function MacroChip({
           fontSize,
           lineHeight,
           fontWeight: t.typography.fontWeight.bold as TextStyle['fontWeight'],
-          color: palette.default,
+          color: palette.text,
         }}
       >
         {Math.round(value)}

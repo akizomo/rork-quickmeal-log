@@ -906,7 +906,7 @@ function StepPreview({
       </Card>
 
       {tips.length ? (
-        <Card variant="flat" style={{ gap: t.spacing['1.5'] }}>
+        <Card variant="flat" style={{ gap: t.spacing['2'] }}>
           <Body weight="semibold">食事のコツ</Body>
           {tips.map((tip, i) => (
             <View
@@ -952,9 +952,9 @@ function PfcRow({
   // 静的に目標値を見せるだけなので背景はニュートラル (surface.sunken)。
   // macro の識別は P/F/C ラベルの色だけで担う。
   const cells: { label: 'P' | 'F' | 'C'; value: number; labelColor: string }[] = [
-    { label: 'P', value: protein, labelColor: t.colors.nutrition.protein.default },
-    { label: 'F', value: fat,     labelColor: t.colors.nutrition.fat.default },
-    { label: 'C', value: carbs,   labelColor: t.colors.nutrition.carbs.default },
+    { label: 'P', value: protein, labelColor: t.colors.nutrition.protein.text },
+    { label: 'F', value: fat,     labelColor: t.colors.nutrition.fat.text },
+    { label: 'C', value: carbs,   labelColor: t.colors.nutrition.carbs.text },
   ];
   return (
     <View style={{ flexDirection: 'row', gap: t.spacing['2'] }}>
