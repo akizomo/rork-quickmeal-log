@@ -5,6 +5,7 @@ import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } fr
 import Svg, { Circle, Polyline, Rect, Text as SvgText } from 'react-native-svg';
 
 import { palette } from '@/constants/theme';
+import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { CalorieOverflowRing } from '@/components/CalorieOverflowRing';
 import { MiniProgressBar } from '@/components/nutrition-ui';
 import { useAppState } from '@/providers/app-state-provider';
@@ -228,7 +229,7 @@ export function WeeklyStatsView() {
                 <SvgText
                   x={centerX}
                   y={CHART_HEIGHT - 14}
-                  fontSize={10}
+                  fontSize={fs.xs}
                   fill={palette.textMuted}
                   textAnchor="middle"
                 >
@@ -237,7 +238,7 @@ export function WeeklyStatsView() {
                 <SvgText
                   x={centerX}
                   y={CHART_HEIGHT - 3}
-                  fontSize={10}
+                  fontSize={fs.xs}
                   fontWeight="600"
                   fill={palette.text}
                   textAnchor="middle"
@@ -374,7 +375,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   headerLabel: {
-    fontSize: 16,
+    fontSize: fs.callout,
     fontWeight: '700',
     color: palette.text,
   },
@@ -401,17 +402,17 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   summaryTitle: {
-    fontSize: 12,
+    fontSize: fs.caption1,
     color: palette.textMuted,
     fontWeight: '600',
   },
   summaryKcal: {
-    fontSize: 22,
+    fontSize: fs['2xl'],
     fontWeight: '700',
     color: palette.sageDeep,
   },
   summaryKcalTarget: {
-    fontSize: 14,
+    fontSize: fs.md,
     fontWeight: '600',
     color: palette.textMuted,
   },
@@ -426,7 +427,7 @@ const styles = StyleSheet.create({
   },
   summaryConsume: {
     marginTop: 2,
-    fontSize: 12,
+    fontSize: fs.caption1,
     color: palette.textMuted,
     fontWeight: '600',
   },
@@ -434,7 +435,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   listTitle: {
-    fontSize: 14,
+    fontSize: fs.md,
     fontWeight: '700',
     color: palette.text,
     paddingHorizontal: 4,
@@ -454,29 +455,29 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   dayLabel: {
-    fontSize: 14,
+    fontSize: fs.md,
     fontWeight: '700',
     color: palette.text,
   },
   dayNoLog: {
-    fontSize: 11,
+    fontSize: fs.xs,
     color: palette.textMuted,
   },
   dayRowRight: {
     alignItems: 'flex-end',
   },
   dayKcal: {
-    fontSize: 14,
+    fontSize: fs.md,
     fontWeight: '700',
     color: palette.sageDeep,
   },
   dayMacroLine: {
-    fontSize: 11,
+    fontSize: fs.xs,
     color: palette.textMuted,
     marginTop: 2,
   },
   dayDash: {
-    fontSize: 14,
+    fontSize: fs.md,
     color: palette.textMuted,
   },
 });

@@ -2,6 +2,7 @@ import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { BottomSheet, Chip, Icon, useTheme } from '@/design-system';
+import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { palette } from '@/constants/theme';
 import { ACTIVITY_LEVEL_OPTIONS } from '@/constants/onboarding';
 import {
@@ -235,7 +236,7 @@ export const ExerciseSheet = memo(function ExerciseSheet({ visible, onClose, dat
                         <Text style={styles.typeEmoji}>{type.emoji}</Text>
                         <Text
                           style={{
-                            fontSize: 10,
+                            fontSize: fs.xs,
                             fontWeight: '600',
                             textAlign: 'center',
                             color: active ? t.colors.action.primary.onContainer : t.colors.content.primary,
@@ -332,9 +333,9 @@ const styles = StyleSheet.create({
     alignItems: 'baseline',
     justifyContent: 'space-between',
   },
-  summaryLabel: { fontSize: 13, fontWeight: '600', color: palette.textMuted, letterSpacing: 0.4 },
-  summaryKcal: { fontSize: 26, fontWeight: '700', color: palette.text, letterSpacing: -0.4 },
-  summaryKcalUnit: { fontSize: 12, fontWeight: '500', color: palette.textMuted },
+  summaryLabel: { fontSize: fs.sm, fontWeight: '600', color: palette.textMuted, letterSpacing: 0.4 },
+  summaryKcal: { fontSize: fs['3xl'], fontWeight: '700', color: palette.text, letterSpacing: -0.4 },
+  summaryKcalUnit: { fontSize: fs.caption1, fontWeight: '500', color: palette.textMuted },
   ledgerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -343,11 +344,11 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: palette.border,
   },
-  ledgerLabel: { fontSize: 12, fontWeight: '500', color: palette.textMuted, flex: 1 },
-  ledgerValue: { fontSize: 12, fontWeight: '600', color: palette.textMuted },
+  ledgerLabel: { fontSize: fs.caption1, fontWeight: '500', color: palette.textMuted, flex: 1 },
+  ledgerValue: { fontSize: fs.caption1, fontWeight: '600', color: palette.textMuted },
   ledgerResultRow: { borderTopWidth: 0, paddingTop: 4 },
-  ledgerResultLabel: { fontSize: 13, fontWeight: '700', color: palette.text, flex: 1 },
-  ledgerResultValue: { fontSize: 15, fontWeight: '700', color: palette.sageDeep },
+  ledgerResultLabel: { fontSize: fs.sm, fontWeight: '700', color: palette.text, flex: 1 },
+  ledgerResultValue: { fontSize: fs.md, fontWeight: '700', color: palette.sageDeep },
   ledgerResultZero: { color: palette.textMuted },
   historyBlock: { gap: 8 },
   historyRow: {
@@ -364,8 +365,8 @@ const styles = StyleSheet.create({
   historyEmoji: { fontSize: 20 },
   historyMeta: { flex: 1, gap: 2 },
   historyLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  historyLabel: { fontSize: 14, fontWeight: '600', color: palette.text },
-  historySub: { fontSize: 11, color: palette.textMuted },
+  historyLabel: { fontSize: fs.md, fontWeight: '600', color: palette.text },
+  historySub: { fontSize: fs.xs, color: palette.textMuted },
   sourceBadge: {
     paddingHorizontal: 6,
     paddingVertical: 1,
@@ -374,10 +375,10 @@ const styles = StyleSheet.create({
   },
   sourceBadgeHealth: { backgroundColor: palette.accentSoft, borderColor: palette.accentSoft },
   sourceBadgeManual: { backgroundColor: 'transparent', borderColor: palette.border },
-  sourceBadgeText: { fontSize: 10, fontWeight: '600', letterSpacing: 0.2 },
+  sourceBadgeText: { fontSize: fs.xs, fontWeight: '600', letterSpacing: 0.2 },
   sourceBadgeTextHealth: { color: palette.accent },
   sourceBadgeTextManual: { color: palette.textMuted },
-  historyKcal: { fontSize: 13, fontWeight: '700', color: palette.sageDeep },
+  historyKcal: { fontSize: fs.sm, fontWeight: '700', color: palette.sageDeep },
   historyDelete: {
     width: 26,
     height: 26,
@@ -387,7 +388,7 @@ const styles = StyleSheet.create({
   },
   addBlock: { gap: 12 },
   sectionLabel: {
-    fontSize: 13,
+    fontSize: fs.sm,
     fontWeight: '700',
     color: palette.textMuted,
     textTransform: 'uppercase',
@@ -404,6 +405,6 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   previewRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  previewLabel: { fontSize: 14, fontWeight: '600', color: palette.text },
-  previewKcal: { fontSize: 20, fontWeight: '700', color: palette.sageDeep },
+  previewLabel: { fontSize: fs.md, fontWeight: '600', color: palette.text },
+  previewKcal: { fontSize: fs.xl, fontWeight: '700', color: palette.sageDeep },
 });
