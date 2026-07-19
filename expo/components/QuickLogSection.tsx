@@ -42,10 +42,6 @@ export const QUICK_LOG_TOKENS = {
 };
 
 const QUICK_LOG_COLORS = {
-  segmentBg: '#EEE8DA',
-  segmentSelectedBg: '#FFFDF8',
-  segmentText: '#7B857E',
-  segmentSelectedText: '#315347',
   buttonBg: '#FBF8F1',
   buttonBorder: 'rgba(49, 83, 71, 0.13)',
   iconBg: '#FFFFFF',
@@ -233,18 +229,23 @@ const FrequentGrid = memo(function FrequentGrid({
   labelFontSize,
   gridGap,
   gridColumns,
+  iconSize,
+  iconContainerSize,
 }: {
   items: RankedLogItem[];
   buttonHeight: number;
   labelFontSize: number;
   gridGap: number;
   gridColumns: number;
+  iconSize: number;
+  iconContainerSize: number;
 }) {
   const {
     quickLog,
     submitQuickIngredient,
     openIdentityLogSheet,
     setDishQuickEntryKey,
+    quickLogIdentity,
   } = useAppState();
 
   const rows: (RankedLogItem | null)[][] = [];
@@ -275,18 +276,26 @@ const FrequentGrid = memo(function FrequentGrid({
               );
             }
 
-            // A: 短押し — draft があれば正確な subcategory/amount でログ、なければ category default
+            // A: 短押し — Identity 由来なら同じ Identity を default amount で再現。
+            // それ以外は legacy draft があれば正確な subcategory/amount、なければ category default。
             const handleLog = () => {
-              if (item.mode === 'ingredient' && item.draft) {
+              if (item.identityId) {
+                void quickLogIdentity(item.identityId);
+              } else if (item.mode === 'ingredient' && item.draft) {
                 void submitQuickIngredient(item.draft);
               } else {
                 void quickLog(item.categoryKey, item.mode);
               }
             };
 
-            // B: 長押し — ingredient は IdentityLogSheet、dish は DishQuickEntrySheet
+            // B: 長押し — Identity 由来は該当 Identity を初期選択した状態で詳細シートを開く。
+            // legacy dish は DishQuickEntrySheet にフォールバック。
             const handleLongPress = () => {
-              if (item.mode === 'ingredient') {
+              if (item.identityId) {
+                openIdentityLogSheet(item.categoryKey as import('@/types/identity').BucketKey, {
+                  identityId: item.identityId,
+                });
+              } else if (item.mode === 'ingredient') {
                 openIdentityLogSheet(item.categoryKey as import('@/types/identity').BucketKey);
               } else {
                 setDishQuickEntryKey(item.categoryKey);
@@ -305,6 +314,8 @@ const FrequentGrid = memo(function FrequentGrid({
                   item={item}
                   height={buttonHeight}
                   labelFontSize={labelFontSize}
+                  iconSize={iconSize}
+                  iconContainerSize={iconContainerSize}
                   onLog={handleLog}
                   onLongPress={handleLongPress}
                 />
@@ -322,12 +333,16 @@ function FrequentButton({
   item,
   height,
   labelFontSize,
+  iconSize,
+  iconContainerSize,
   onLog,
   onLongPress,
 }: {
   item: RankedLogItem;
   height: number;
   labelFontSize: number;
+  iconSize: number;
+  iconContainerSize: number;
   onLog: () => void;
   onLongPress: () => void;
 }) {
@@ -344,6 +359,20 @@ function FrequentButton({
         pressed && styles.frequentButtonPressed,
       ]}
     >
+      <View
+        style={[
+          styles.iconContainer,
+          {
+            width: iconContainerSize,
+            height: iconContainerSize,
+            borderRadius: iconContainerSize / 2,
+          },
+        ]}
+      >
+        <Text style={[styles.iconEmoji, { fontSize: iconSize, lineHeight: iconSize + 2 }]}>
+          {item.emoji}
+        </Text>
+      </View>
       <Text style={[styles.frequentLabel, { fontSize: labelFontSize }]} numberOfLines={1}>
         {item.label}
       </Text>
@@ -443,6 +472,8 @@ export const QuickLogSection = memo(function QuickLogSection() {
           labelFontSize={labelFontSize}
           gridGap={gridGap}
           gridColumns={gridColumns}
+          iconSize={iconSize}
+          iconContainerSize={iconContainerSize}
         />
       ) : (
         <View style={styles.grid}>

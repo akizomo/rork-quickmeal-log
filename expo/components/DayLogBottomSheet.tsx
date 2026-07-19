@@ -287,7 +287,7 @@ DayLogBottomSheet.displayName = 'DayLogBottomSheet';
 const styles = StyleSheet.create({
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#1F2C23',
+    backgroundColor: palette.sheetInk,
   },
   sheet: {
     position: 'absolute',
@@ -297,7 +297,7 @@ const styles = StyleSheet.create({
     backgroundColor: palette.sheet,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
-    shadowColor: '#1F2C23',
+    shadowColor: palette.sheetInk,
     shadowOpacity: 0.12,
     shadowRadius: 24,
     shadowOffset: { width: 0, height: -6 },
@@ -327,7 +327,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: fs.md,
     fontWeight: '700',
-    color: '#243228',
+    color: palette.sheetInk,
   },
   subtitle: {
     marginTop: 1,

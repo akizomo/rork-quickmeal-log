@@ -2,7 +2,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View, ViewStyle } from 'react-native';
 
 import { spring } from '@/design-system/tokens/primitives/motion';
+import { colors } from '@/design-system/tokens/primitives/colors';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
+import { palette } from '@/constants/theme';
 
 interface Option<T extends string = string> {
   key: T;
@@ -30,9 +32,9 @@ export function SegmentedControl<T extends string = string>({
   value,
   onChange,
   trackColor = '#EEE8DA',
-  pillColor = '#FFFDF8',
-  textColor = '#7B857E',
-  activeTextColor = '#315347',
+  pillColor = colors.ivory[50],
+  textColor = palette.textMuted,
+  activeTextColor = palette.sageDeep,
   padding = 3,
   borderRadius = 18,
   height = 36,

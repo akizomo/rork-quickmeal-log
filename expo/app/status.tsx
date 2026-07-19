@@ -19,6 +19,7 @@ import { SettingsDivider, SettingsLinkRow, SettingsListCard, SettingsSectionLabe
 import { TRIAL_DURATION_DAYS } from '@/constants/onboarding';
 import { Body, Caption, Card, Heading, Icon, useTheme } from '@/design-system';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
+import { palette } from '@/constants/theme';
 import { useHealthSyncContext } from '@/providers/health-sync-provider';
 import type { HealthSyncStatus } from '@/utils/health-sync';
 import { useAppState } from '@/providers/app-state-provider';
@@ -552,7 +553,7 @@ const styles = StyleSheet.create({
   pfcLabel: { fontSize: fs.xs, fontWeight: '700' },
   pfcValue: { fontSize: fs.md, fontWeight: '700', marginTop: 2 },
   section: { gap: 6 },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(20, 28, 24, 0.4)', justifyContent: 'flex-end' },
+  modalOverlay: { flex: 1, backgroundColor: palette.scrimMedium, justifyContent: 'flex-end' },
   weightSheet: { borderTopLeftRadius: 26, borderTopRightRadius: 26, paddingHorizontal: 22, paddingTop: 12, gap: 16 },
   sheetGrabber: { alignSelf: 'center', width: 44, height: 5, borderRadius: 3, marginBottom: 8 },
   weightInputWrap: { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 14 },
