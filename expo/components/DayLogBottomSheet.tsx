@@ -15,6 +15,7 @@ import { palette } from '@/constants/theme';
 import { getIdentity } from '@/constants/identity';
 import { MealLogCard } from '@/design-system';
 import { spring } from '@/design-system/tokens/primitives/motion';
+import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { useAppState } from '@/providers/app-state-provider';
 import { FoodLog } from '@/types/nutrition';
 import { formatShortDay, isSameDay, logsForDate, sumForDate } from '@/utils/history';
@@ -324,13 +325,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   title: {
-    fontSize: 15,
+    fontSize: fs.md,
     fontWeight: '700',
     color: '#243228',
   },
   subtitle: {
     marginTop: 1,
-    fontSize: 12,
+    fontSize: fs.caption1,
     color: palette.textMuted,
   },
   stagePill: {
@@ -340,7 +341,7 @@ const styles = StyleSheet.create({
     backgroundColor: palette.card,
   },
   stagePillText: {
-    fontSize: 12,
+    fontSize: fs.caption1,
     fontWeight: '700',
     color: palette.sageDeep,
   },
@@ -359,12 +360,12 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   emptyTitle: {
-    fontSize: 15,
+    fontSize: fs.md,
     fontWeight: '700',
     color: palette.text,
   },
   emptyText: {
-    fontSize: 13,
+    fontSize: fs.sm,
     lineHeight: 19,
     color: palette.textMuted,
   },

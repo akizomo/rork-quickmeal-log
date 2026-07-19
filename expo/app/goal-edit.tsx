@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { deriveTargetCellFromDirection } from '@/constants/body-matrix';
 import { PACE_OPTIONS } from '@/constants/onboarding';
 import { Body, Button, Caption, Card, Heading, Icon, useTheme } from '@/design-system';
+import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { useAppState } from '@/providers/app-state-provider';
 import { BodyType9, GoalDirection, PaceLevel } from '@/types/nutrition';
 import {
@@ -394,7 +395,7 @@ function StepperButton({
         },
       ]}
     >
-      <Text style={{ fontSize: 22, fontWeight: '600', color: theme.colors.content.primary }}>{label}</Text>
+      <Text style={{ fontSize: theme.typography.fontSize['2xl'], fontWeight: '600', color: theme.colors.content.primary }}>{label}</Text>
     </Pressable>
   );
 }
@@ -454,7 +455,7 @@ function SegmentedRow({
           >
             <Text
               style={{
-                fontSize: 14,
+                fontSize: theme.typography.fontSize.md,
                 fontWeight: active ? '700' : '600',
                 color: active ? theme.colors.content.onAction : theme.colors.content.primary,
               }}
@@ -484,7 +485,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   targetInputWrap: { flex: 1, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', gap: 4 },
-  targetInput: { fontSize: 30, fontWeight: '700', minWidth: 96, textAlign: 'center', padding: 0 },
+  targetInput: { fontSize: fs['3xl'], fontWeight: '700', minWidth: 96, textAlign: 'center', padding: 0 },
   divider: { width: StyleSheet.hairlineWidth, height: 40, marginHorizontal: 8 },
   hr: { height: StyleSheet.hairlineWidth, marginVertical: 2 },
   segmented: { flexDirection: 'row', borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, padding: 4 },

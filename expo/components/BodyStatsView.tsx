@@ -12,6 +12,7 @@ import Svg, { Circle, Line, Polyline, Text as SvgText } from 'react-native-svg';
 
 import { palette } from '@/constants/theme';
 import { useTheme } from '@/design-system';
+import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { useAppState } from '@/providers/app-state-provider';
 import type { BodyFatEntry, WeightEntry } from '@/types/nutrition';
 import { formatMonthLabel, formatShortDay, formatWeekRangeLabel } from '@/utils/history';
@@ -553,27 +554,27 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   cardTitle: {
-    fontSize: 12,
+    fontSize: fs.caption1,
     color: palette.textMuted,
     fontWeight: '600',
   },
   cardCurrent: {
-    fontSize: 28,
+    fontSize: fs['3xl'],
     fontWeight: '700',
     color: palette.sageDeep,
   },
   cardUnit: {
-    fontSize: 14,
+    fontSize: fs.md,
     fontWeight: '600',
     color: palette.textMuted,
   },
   cardEmpty: {
-    fontSize: 16,
+    fontSize: fs.callout,
     color: palette.textMuted,
     fontWeight: '600',
   },
   cardMeta: {
-    fontSize: 12,
+    fontSize: fs.caption1,
     color: palette.textMuted,
     marginTop: 2,
   },
@@ -588,7 +589,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   chartEmpty: {
-    fontSize: 12,
+    fontSize: fs.caption1,
     color: palette.textMuted,
   },
 });

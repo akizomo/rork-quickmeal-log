@@ -330,7 +330,7 @@ const styles = StyleSheet.create({
   },
   statusText: {
     marginTop: 4,
-    fontSize: 11,
+    fontSize: fontSize.xs,
     fontWeight: '600',
   },
 });

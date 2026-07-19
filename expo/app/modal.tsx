@@ -4,6 +4,7 @@ import React from 'react';
 import { Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { palette } from '@/constants/theme';
+import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 
 export default function AboutModalRoute() {
   return (
@@ -44,20 +45,20 @@ const styles = StyleSheet.create({
   },
   eyebrow: {
     color: palette.sageStrong,
-    fontSize: 13,
+    fontSize: fs.sm,
     fontWeight: '700',
     letterSpacing: 1,
     textTransform: 'uppercase',
   },
   title: {
     color: palette.text,
-    fontSize: 24,
+    fontSize: fs['2xl'],
     fontWeight: '700',
     lineHeight: 32,
   },
   description: {
     color: palette.textMuted,
-    fontSize: 15,
+    fontSize: fs.md,
     lineHeight: 24,
   },
   button: {
@@ -71,6 +72,6 @@ const styles = StyleSheet.create({
   buttonText: {
     color: palette.white,
     fontWeight: '700',
-    fontSize: 14,
+    fontSize: fs.md,
   },
 });

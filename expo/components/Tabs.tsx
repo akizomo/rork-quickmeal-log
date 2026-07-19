@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 
 import { palette } from '@/constants/theme';
+import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 
 /**
  * Material 3 "Primary tabs" 風のタブ。
@@ -163,7 +164,7 @@ const styles = StyleSheet.create({
     paddingTop: 12,
   },
   label: {
-    fontSize: 14,
+    fontSize: fs.md,
     fontWeight: '700',
     paddingHorizontal: 4,
     marginBottom: 8,

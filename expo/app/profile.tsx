@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { BodyTypeMatrix } from '@/components/BodyTypeMatrix';
 import { ACTIVITY_LEVEL_OPTIONS, BASIS_OPTIONS } from '@/constants/onboarding';
 import { Body, Button, Caption, Card, Heading, SelectCard, useTheme } from '@/design-system';
+import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { useAppState } from '@/providers/app-state-provider';
 import { ActivityLevel, BiologicalBasis, BodyType9 } from '@/types/nutrition';
 
@@ -186,10 +187,10 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 6,
-    fontSize: 15,
+    fontSize: fs.md,
     textAlign: 'right',
     minWidth: 72,
   },
-  suffix: { fontSize: 13, minWidth: 20 },
+  suffix: { fontSize: fs.sm, minWidth: 20 },
   divider: { height: StyleSheet.hairlineWidth, marginHorizontal: 16 },
 });

@@ -9,6 +9,7 @@ import { TRIAL_DAYS } from '@/constants/iap';
 import { LEGAL_LINKS } from '@/constants/onboarding';
 import { palette } from '@/constants/theme';
 import { Badge, Icon } from '@/design-system';
+import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { useAppState } from '@/providers/app-state-provider';
 import { fetchOffering, purchase } from '@/utils/iap';
 import {
@@ -180,7 +181,7 @@ export default function PaywallRoute() {
                 }}
                 style={{ alignItems: 'center', paddingVertical: 6 }}
               >
-                <Text style={{ fontSize: 11, color: '#9b2335', fontWeight: '700' }}>
+                <Text style={{ fontSize: fs.xs, color: '#9b2335', fontWeight: '700' }}>
                   [DEV] Paywall スキップ
                 </Text>
               </Pressable>
@@ -267,24 +268,24 @@ const styles = StyleSheet.create({
   closeRow: { flexDirection: 'row', justifyContent: 'flex-end', paddingHorizontal: 20, paddingTop: 4 },
   closeButton: { width: 36, height: 36, borderRadius: 18, backgroundColor: palette.card, alignItems: 'center', justifyContent: 'center' },
   scroll: { paddingHorizontal: 24, paddingTop: 8, paddingBottom: 20, gap: 20 },
-  title: { fontSize: 28, fontWeight: '700', color: palette.text, lineHeight: 36 },
-  subtitle: { fontSize: 14, lineHeight: 22, color: palette.textMuted },
+  title: { fontSize: fs['3xl'], fontWeight: '700', color: palette.text, lineHeight: 36 },
+  subtitle: { fontSize: fs.md, lineHeight: 22, color: palette.textMuted },
   benefitsCard: { backgroundColor: palette.surface, borderRadius: 24, padding: 18, gap: 14 },
   benefitRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   checkDot: { width: 22, height: 22, borderRadius: 11, backgroundColor: palette.sageDeep, alignItems: 'center', justifyContent: 'center' },
-  benefitText: { fontSize: 14, color: palette.text, flex: 1 },
+  benefitText: { fontSize: fs.md, color: palette.text, flex: 1 },
   loadingBox: { backgroundColor: palette.card, borderRadius: 24, padding: 18, alignItems: 'center', gap: 8 },
   priceCard: { backgroundColor: palette.card, borderRadius: 20, padding: 18, flexDirection: 'row', alignItems: 'center', gap: 12 },
   planHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  priceValue: { fontSize: 16, fontWeight: '700', color: palette.text },
-  priceSub: { fontSize: 14, color: palette.textMuted, marginTop: 2 },
-  priceHint: { fontSize: 12, lineHeight: 18, color: palette.textMuted },
+  priceValue: { fontSize: fs.callout, fontWeight: '700', color: palette.text },
+  priceSub: { fontSize: fs.md, color: palette.textMuted, marginTop: 2 },
+  priceHint: { fontSize: fs.caption1, lineHeight: 18, color: palette.textMuted },
   ctaPill: { backgroundColor: palette.sageDeep, borderRadius: 999, paddingVertical: 8, paddingHorizontal: 14 },
-  ctaPillText: { color: palette.white, fontSize: 13, fontWeight: '700' },
+  ctaPillText: { color: palette.white, fontSize: fs.sm, fontWeight: '700' },
   footer: { paddingHorizontal: 24, paddingTop: 8, paddingBottom: 14, gap: 12 },
   secondaryRow: { flexDirection: 'row', justifyContent: 'center', gap: 10 },
-  secondaryText: { fontSize: 13, color: palette.textMuted, fontWeight: '600' },
+  secondaryText: { fontSize: fs.sm, color: palette.textMuted, fontWeight: '600' },
   legalRow: { flexDirection: 'row', justifyContent: 'center', gap: 8 },
-  legalLink: { fontSize: 12, color: palette.textMuted, textDecorationLine: 'underline' },
-  legalSep: { fontSize: 12, color: palette.textMuted },
+  legalLink: { fontSize: fs.caption1, color: palette.textMuted, textDecorationLine: 'underline' },
+  legalSep: { fontSize: fs.caption1, color: palette.textMuted },
 });

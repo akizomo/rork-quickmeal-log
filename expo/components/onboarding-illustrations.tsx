@@ -16,6 +16,7 @@ import React from 'react';
 import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
 import { palette } from '@/constants/theme';
+import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 
 // ---------------------------------------------------------------------------
 // ButtonGridIllustration (Slide 1: コンセプト)
@@ -127,7 +128,7 @@ const gridStyles = StyleSheet.create({
     transform: [{ scale: 1.06 }],
   },
   btnEmoji: { fontSize: 28 },
-  btnLabel: { fontSize: 10, color: palette.textMuted },
+  btnLabel: { fontSize: fs.xs, color: palette.textMuted },
 });
 
 const gestureStyles = StyleSheet.create({
@@ -151,7 +152,7 @@ const gestureStyles = StyleSheet.create({
   },
   gesture: { fontSize: 36 },
   gestureLabel: {
-    fontSize: 10,
+    fontSize: fs.xs,
     fontWeight: '600',
     color: palette.textMuted,
     letterSpacing: 0.5,
@@ -171,12 +172,12 @@ const gestureStyles = StyleSheet.create({
     gap: 4,
   },
   resultTitle: {
-    fontSize: 13,
+    fontSize: fs.sm,
     fontWeight: '600',
     color: palette.text,
   },
   resultSub: {
-    fontSize: 11,
+    fontSize: fs.xs,
     color: palette.textMuted,
   },
 });

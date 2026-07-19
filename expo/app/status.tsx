@@ -18,6 +18,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { SettingsDivider, SettingsLinkRow, SettingsListCard, SettingsSectionLabel } from '@/components/SettingsList';
 import { TRIAL_DURATION_DAYS } from '@/constants/onboarding';
 import { Body, Caption, Card, Heading, Icon, useTheme } from '@/design-system';
+import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { useHealthSyncContext } from '@/providers/health-sync-provider';
 import type { HealthSyncStatus } from '@/utils/health-sync';
 import { useAppState } from '@/providers/app-state-provider';
@@ -533,7 +534,7 @@ const styles = StyleSheet.create({
   heroDivider: { width: StyleSheet.hairlineWidth, height: 48, marginHorizontal: 8 },
   recordButtonRow: { flexDirection: 'row' },
   textButton: { flex: 1, alignItems: 'center', paddingVertical: 6 },
-  textButtonLabel: { fontSize: 13, fontWeight: '500' },
+  textButtonLabel: { fontSize: fs.sm, fontWeight: '500' },
   healthSyncRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -548,15 +549,15 @@ const styles = StyleSheet.create({
   kcalRow: { flexDirection: 'row', alignItems: 'flex-end' },
   pfcRow: { flexDirection: 'row', gap: 8 },
   pfcCell: { flex: 1, borderRadius: 12, paddingVertical: 8, alignItems: 'center' },
-  pfcLabel: { fontSize: 11, fontWeight: '700' },
-  pfcValue: { fontSize: 14, fontWeight: '700', marginTop: 2 },
+  pfcLabel: { fontSize: fs.xs, fontWeight: '700' },
+  pfcValue: { fontSize: fs.md, fontWeight: '700', marginTop: 2 },
   section: { gap: 6 },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(20, 28, 24, 0.4)', justifyContent: 'flex-end' },
   weightSheet: { borderTopLeftRadius: 26, borderTopRightRadius: 26, paddingHorizontal: 22, paddingTop: 12, gap: 16 },
   sheetGrabber: { alignSelf: 'center', width: 44, height: 5, borderRadius: 3, marginBottom: 8 },
   weightInputWrap: { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 14 },
-  weightInput: { flex: 1, fontSize: 26, fontWeight: '700' },
-  weightInputSuffix: { fontSize: 14, fontWeight: '700' },
+  weightInput: { flex: 1, fontSize: fs['3xl'], fontWeight: '700' },
+  weightInputSuffix: { fontSize: fs.md, fontWeight: '700' },
   weightSubmit: { borderRadius: 999, paddingVertical: 14, alignItems: 'center' },
-  weightSubmitText: { fontSize: 15, fontWeight: '700' },
+  weightSubmitText: { fontSize: fs.md, fontWeight: '700' },
 });

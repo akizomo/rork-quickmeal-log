@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View, ViewStyle } from 'react-native';
 
 import { spring } from '@/design-system/tokens/primitives/motion';
+import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 
 interface Option<T extends string = string> {
   key: T;
@@ -35,7 +36,7 @@ export function SegmentedControl<T extends string = string>({
   padding = 3,
   borderRadius = 18,
   height = 36,
-  fontSize = 13,
+  fontSize = fs.sm,
   style,
   testID,
 }: Props<T>) {

@@ -17,6 +17,7 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { useTheme } from '@/design-system';
+import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import {
   type BucketHelpView,
   type PfcTagKey,
@@ -261,7 +262,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   legendText: {
-    fontSize: 10,
+    fontSize: fs.xs,
     fontWeight: '600',
   },
   row: {
@@ -279,7 +280,7 @@ const styles = StyleSheet.create({
   },
   label: {
     width: 80,
-    fontSize: 11,
+    fontSize: fs.xs,
     fontWeight: '600',
   },
   rangeTrack: {
@@ -339,7 +340,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   tagText: {
-    fontSize: 9,
+    fontSize: fs.xs,
     fontWeight: '700',
     letterSpacing: 0.2,
   },

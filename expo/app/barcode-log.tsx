@@ -23,6 +23,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Body, Caption, useTheme } from '@/design-system';
+import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { useAppState } from '@/providers/app-state-provider';
 import { fetchByBarcode, type FoodFactsResult } from '@/utils/open-food-facts';
 import { formatDateKey, generateId, getMealSlot } from '@/utils/nutrition';
@@ -303,7 +304,7 @@ const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
   form: { padding: 20, gap: 4, paddingBottom: 40 },
   fieldRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
-  input: { flex: 1, borderWidth: 1, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, fontSize: 15 },
+  input: { flex: 1, borderWidth: 1, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, fontSize: fs.md },
   btn: { borderRadius: 10, paddingVertical: 14, alignItems: 'center' },
   btnOutline: { borderRadius: 10, paddingVertical: 14, alignItems: 'center', borderWidth: 1 },
   loadingOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },

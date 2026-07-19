@@ -24,6 +24,7 @@ import { Logo } from '@/components/Logo';
 import { ButtonGridIllustration, GestureDemoIllustration } from '@/components/onboarding-illustrations';
 import { INTRO_VERSION, LEGAL_LINKS } from '@/constants/onboarding';
 import { palette } from '@/constants/theme';
+import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { useAppState } from '@/providers/app-state-provider';
 
 type SlideMedia =
@@ -333,8 +334,8 @@ const styles = StyleSheet.create({
     height: 48,
   },
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  brandText: { fontSize: 15, fontWeight: '700', color: palette.text, letterSpacing: 0.3 },
-  skipText: { color: palette.textMuted, fontSize: 12.5, fontWeight: '600' },
+  brandText: { fontSize: fs.md, fontWeight: '700', color: palette.text, letterSpacing: 0.3 },
+  skipText: { color: palette.textMuted, fontSize: fs.sm, fontWeight: '600' },
   slideList: { flex: 1 },
   slide: { flex: 1, paddingHorizontal: 20, paddingTop: 8 },
   heroWrap: {
@@ -348,8 +349,8 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   textBlock: { gap: 6, paddingBottom: 8 },
-  title: { fontSize: 24, fontWeight: '700', color: palette.text, lineHeight: 32, letterSpacing: 0.2 },
-  subtitle: { fontSize: 13.5, lineHeight: 23, color: palette.textMuted },
+  title: { fontSize: fs['2xl'], fontWeight: '700', color: palette.text, lineHeight: 32, letterSpacing: 0.2 },
+  subtitle: { fontSize: fs.sm, lineHeight: 23, color: palette.textMuted },
   footer: { paddingHorizontal: 20, paddingBottom: 12, gap: 14 },
   dots: { flexDirection: 'row', justifyContent: 'center', gap: 6 },
   dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: palette.border },
@@ -360,10 +361,10 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     alignItems: 'center',
   },
-  ctaText: { color: palette.white, fontSize: 14.5, fontWeight: '700', letterSpacing: 0.2 },
+  ctaText: { color: palette.white, fontSize: fs.md, fontWeight: '700', letterSpacing: 0.2 },
   legalRow: { flexDirection: 'row', justifyContent: 'center', gap: 8 },
-  legalLink: { fontSize: 11.5, color: palette.textMuted, textDecorationLine: 'underline' },
-  legalSep: { fontSize: 11.5, color: palette.textMuted },
+  legalLink: { fontSize: fs.caption1, color: palette.textMuted, textDecorationLine: 'underline' },
+  legalSep: { fontSize: fs.caption1, color: palette.textMuted },
 });
 
 const illustStyles = StyleSheet.create({
@@ -399,23 +400,23 @@ const illustStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  ringNumber: { fontSize: 26, fontWeight: '700', color: palette.text, lineHeight: 28 },
-  ringUnit: { fontSize: 10.5, color: palette.textMuted, marginTop: 4 },
+  ringNumber: { fontSize: fs['3xl'], fontWeight: '700', color: palette.text, lineHeight: 28 },
+  ringUnit: { fontSize: fs.xs, color: palette.textMuted, marginTop: 4 },
   // Card 2
   sparkHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'baseline',
   },
-  sparkLabel: { fontSize: 11.5, color: palette.textMuted, letterSpacing: 0.5 },
-  sparkDelta: { fontSize: 12, color: palette.sageStrong, fontWeight: '600' },
+  sparkLabel: { fontSize: fs.caption1, color: palette.textMuted, letterSpacing: 0.5 },
+  sparkDelta: { fontSize: fs.caption1, color: palette.sageStrong, fontWeight: '600' },
   sparkAxis: { flexDirection: 'row', justifyContent: 'space-between' },
-  sparkAxisText: { fontSize: 10, color: palette.textMuted, letterSpacing: 0.3 },
+  sparkAxisText: { fontSize: fs.xs, color: palette.textMuted, letterSpacing: 0.3 },
   // Card 3
   pfcRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   pfcLabel: {
     width: 12,
-    fontSize: 12,
+    fontSize: fs.caption1,
     fontWeight: '700',
     color: palette.text,
   },

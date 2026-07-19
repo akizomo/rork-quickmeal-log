@@ -31,6 +31,7 @@ import {
 } from 'react-native';
 
 import { Chip, Dialog, useTheme } from '@/design-system';
+import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import {
   type AmountEditConfig,
   clampToRange,
@@ -340,7 +341,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   valueInput: {
-    fontSize: 28,
+    fontSize: fs['3xl'],
     fontWeight: '700',
     letterSpacing: -0.5,
     textAlign: 'center',
@@ -348,7 +349,7 @@ const styles = StyleSheet.create({
     paddingVertical: 0,
   },
   unitText: {
-    fontSize: 16,
+    fontSize: fs.callout,
     fontWeight: '600',
   },
   presetRow: {
@@ -358,7 +359,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   rangeHint: {
-    fontSize: 11,
+    fontSize: fs.xs,
     textAlign: 'center',
     marginTop: 4,
     marginBottom: 4,

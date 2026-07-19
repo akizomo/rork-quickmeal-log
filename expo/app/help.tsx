@@ -25,6 +25,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { HelpInfographic } from '@/components/help/HelpInfographic';
 import { GestureDemoIllustration } from '@/components/onboarding-illustrations';
 import { Body, Caption, Heading, Icon, useTheme } from '@/design-system';
+import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import type { BucketKey } from '@/types/identity';
 
 if (Platform.OS === 'android') {
@@ -469,12 +470,12 @@ const styles = StyleSheet.create({
 
   // Shared typography
   h2: {
-    fontSize: 22,
+    fontSize: fs['2xl'],
     fontWeight: '700',
     marginBottom: 2,
   },
   h3: {
-    fontSize: 14,
+    fontSize: fs.md,
     fontWeight: '600',
     marginBottom: 4,
   },

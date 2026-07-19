@@ -3,6 +3,7 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { palette } from '@/constants/theme';
+import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 
 export default function NotFoundRoute() {
   return (
@@ -45,13 +46,13 @@ const styles = StyleSheet.create({
     fontSize: 40,
   },
   title: {
-    fontSize: 24,
+    fontSize: fs['2xl'],
     fontWeight: '700',
     color: palette.text,
     textAlign: 'center',
   },
   description: {
-    fontSize: 15,
+    fontSize: fs.md,
     lineHeight: 22,
     color: palette.textMuted,
     textAlign: 'center',
@@ -65,7 +66,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: palette.white,
-    fontSize: 14,
+    fontSize: fs.md,
     fontWeight: '700',
   },
 });

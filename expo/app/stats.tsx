@@ -10,6 +10,7 @@ import { Tabs } from '@/components/Tabs';
 import { WeeklyStatsView } from '@/components/WeeklyStatsView';
 import { palette } from '@/constants/theme';
 import { useTheme } from '@/design-system';
+import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 
 type TopTab = 'meals' | 'body';
 type MealsTab = 'week' | 'month';
@@ -92,7 +93,7 @@ export default function StatsScreen() {
                 activeTextColor={palette.sageDeep}
                 padding={5}
                 height={40}
-                fontSize={13}
+                fontSize={fs.sm}
                 style={styles.subSegment}
                 testID="stats-meals-segment"
               />
@@ -110,7 +111,7 @@ export default function StatsScreen() {
                 activeTextColor={palette.sageDeep}
                 padding={5}
                 height={40}
-                fontSize={13}
+                fontSize={fs.sm}
                 style={styles.subSegment}
                 testID="stats-body-segment"
               />

@@ -42,7 +42,7 @@ function NutritionColors({ t }: { t: Theme }) {
         <Text style={labelStyle(t)}>macros (default + container)</Text>
         {macros.map((m) => (
           <View key={m.name} style={{ gap: t.spacing['1'] }}>
-            <Text style={{ fontSize: 12, color: t.colors.content.secondary }}>{m.name}</Text>
+            <Text style={{ fontSize: t.typography.fontSize.caption1, color: t.colors.content.secondary }}>{m.name}</Text>
             <View style={{ flexDirection: 'row', gap: t.spacing['2'], alignItems: 'center' }}>
               <View
                 style={{
@@ -61,7 +61,7 @@ function NutritionColors({ t }: { t: Theme }) {
                   }}
                 />
               </View>
-              <Text style={{ fontSize: 11, color: t.colors.content.tertiary, width: 64 }}>
+              <Text style={{ fontSize: t.typography.fontSize.xs, color: t.colors.content.tertiary, width: 64 }}>
                 62 / 100
               </Text>
             </View>
@@ -116,7 +116,7 @@ function PrimitiveColors({ t }: { t: Theme }) {
                 />
                 <Text
                   style={{
-                    fontSize: 10,
+                    fontSize: t.typography.fontSize.xs,
                     color: t.colors.content.tertiary,
                     textAlign: 'center',
                     marginTop: 2,
@@ -192,8 +192,8 @@ function ColorChip({
           borderColor: t.colors.border.subtle,
         }}
       />
-      <Text style={{ fontSize: 11, color: t.colors.content.primary }}>{name}</Text>
-      <Text style={{ fontSize: 10, color: t.colors.content.tertiary }}>{value}</Text>
+      <Text style={{ fontSize: t.typography.fontSize.xs, color: t.colors.content.primary }}>{name}</Text>
+      <Text style={{ fontSize: t.typography.fontSize.xs, color: t.colors.content.tertiary }}>{value}</Text>
     </View>
   );
 }
@@ -205,7 +205,7 @@ function SpacingScale({ t }: { t: Theme }) {
     <Section title="Spacing (px)" t={t}>
       {steps.map(([k, v]) => (
         <View key={k} style={{ flexDirection: 'row', alignItems: 'center', gap: t.spacing['3'] }}>
-          <Text style={{ width: 40, color: t.colors.content.secondary, fontSize: 12 }}>{k}</Text>
+          <Text style={{ width: 40, color: t.colors.content.secondary, fontSize: t.typography.fontSize.caption1 }}>{k}</Text>
           <View
             style={{
               height: 12,
@@ -214,7 +214,7 @@ function SpacingScale({ t }: { t: Theme }) {
               borderRadius: 2,
             }}
           />
-          <Text style={{ color: t.colors.content.tertiary, fontSize: 11 }}>{v}px</Text>
+          <Text style={{ color: t.colors.content.tertiary, fontSize: t.typography.fontSize.xs }}>{v}px</Text>
         </View>
       ))}
     </Section>
@@ -239,8 +239,8 @@ function RadiusScale({ t }: { t: Theme }) {
                 borderColor: t.colors.border.default,
               }}
             />
-            <Text style={{ fontSize: 11, color: t.colors.content.primary }}>{k}</Text>
-            <Text style={{ fontSize: 10, color: t.colors.content.tertiary }}>
+            <Text style={{ fontSize: t.typography.fontSize.xs, color: t.colors.content.primary }}>{k}</Text>
+            <Text style={{ fontSize: t.typography.fontSize.xs, color: t.colors.content.tertiary }}>
               {v === 9999 ? 'full' : `${v}px`}
             </Text>
           </View>
@@ -260,7 +260,7 @@ function TypographyScale({ t }: { t: Theme }) {
           <Text style={{ fontSize: v, color: t.colors.content.primary }}>
             {k} — あいうAa 123
           </Text>
-          <Text style={{ fontSize: 10, color: t.colors.content.tertiary }}>
+          <Text style={{ fontSize: t.typography.fontSize.xs, color: t.colors.content.tertiary }}>
             {v}px / line {t.typography.lineHeight[k as keyof typeof t.typography.lineHeight]}px
           </Text>
         </View>
@@ -293,7 +293,7 @@ function ElevationScale({ t }: { t: Theme }) {
                 ...v,
               }}
             />
-            <Text style={{ fontSize: 11, color: t.colors.content.primary }}>{k}</Text>
+            <Text style={{ fontSize: t.typography.fontSize.xs, color: t.colors.content.primary }}>{k}</Text>
           </View>
         ))}
       </View>
@@ -344,6 +344,6 @@ const labelStyle = (t: Theme) => ({
 
 const subLabelStyle = (t: Theme) => ({
   color: t.colors.content.tertiary,
-  fontSize: 11,
+  fontSize: t.typography.fontSize.xs,
 });
 

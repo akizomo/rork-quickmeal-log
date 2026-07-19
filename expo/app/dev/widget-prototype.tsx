@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { useTheme } from '@/design-system';
+import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 
 // ─── サンプルデータ ──────────────────────────────────────────────
 const SAMPLE_CONSUMED = 1340;
@@ -88,11 +89,11 @@ function MiniRing({
       </Svg>
       {showLabel && (
         <View style={[StyleSheet.absoluteFill, { alignItems: 'center', justifyContent: 'center' }]} pointerEvents="none">
-          <Text style={{ color: WIDGET_TEXT_SECONDARY, fontSize: 9, fontWeight: '600', lineHeight: 12 }}>のこり</Text>
+          <Text style={{ color: WIDGET_TEXT_SECONDARY, fontSize: fs.xs, fontWeight: '600', lineHeight: 14 }}>のこり</Text>
           <Text style={{ color: WIDGET_TEXT_PRIMARY, fontSize: size < 80 ? 16 : 22, fontWeight: '700', lineHeight: size < 80 ? 20 : 27 }}>
             {remaining >= 1000 ? `${(remaining / 1000).toFixed(1)}k` : remaining}
           </Text>
-          <Text style={{ color: WIDGET_TEXT_SECONDARY, fontSize: 9, fontWeight: '500', lineHeight: 12 }}>kcal</Text>
+          <Text style={{ color: WIDGET_TEXT_SECONDARY, fontSize: fs.xs, fontWeight: '500', lineHeight: 14 }}>kcal</Text>
         </View>
       )}
     </View>
@@ -130,8 +131,8 @@ function CategoryButton({
           borderColor: 'rgba(130,162,128,0.4)',
         })}
       >
-        <Text style={{ fontSize: 11, color: WIDGET_ACCENT, fontWeight: '700' }}>✓ 記録済</Text>
-        <Text style={{ fontSize: 10, color: WIDGET_ACCENT, fontWeight: '500' }}>↩ 取消</Text>
+        <Text style={{ fontSize: fs.xs, color: WIDGET_ACCENT, fontWeight: '700' }}>✓ 記録済</Text>
+        <Text style={{ fontSize: fs.xs, color: WIDGET_ACCENT, fontWeight: '500' }}>↩ 取消</Text>
       </Pressable>
     );
   }
@@ -150,10 +151,10 @@ function CategoryButton({
       })}
     >
       <Text style={{ fontSize: iconSize }}>{cat.icon}</Text>
-      <Text numberOfLines={1} style={{ fontSize: 11, color: WIDGET_TEXT_PRIMARY, fontWeight: '700' }}>
+      <Text numberOfLines={1} style={{ fontSize: fs.xs, color: WIDGET_TEXT_PRIMARY, fontWeight: '700' }}>
         {cat.name}
       </Text>
-      <Text numberOfLines={1} style={{ fontSize: 9, color: WIDGET_TEXT_SECONDARY, fontWeight: '500' }}>
+      <Text numberOfLines={1} style={{ fontSize: fs.xs, color: WIDGET_TEXT_SECONDARY, fontWeight: '500' }}>
         {cat.recent} · {cat.kcal}
       </Text>
     </Pressable>
@@ -229,11 +230,11 @@ function Widget3x3() {
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 4 }}>
         <MiniRing consumed={SAMPLE_CONSUMED} target={SAMPLE_TARGET} size={ringSize} strokeWidth={5} showLabel={false} />
         <View style={{ flex: 1 }}>
-          <Text style={{ color: WIDGET_TEXT_PRIMARY, fontSize: 13, fontWeight: '700' }}>
+          <Text style={{ color: WIDGET_TEXT_PRIMARY, fontSize: fs.sm, fontWeight: '700' }}>
             {SAMPLE_CONSUMED.toLocaleString()}
-            <Text style={{ fontSize: 10, fontWeight: '500', color: WIDGET_TEXT_SECONDARY }}> / {SAMPLE_TARGET.toLocaleString()} kcal</Text>
+            <Text style={{ fontSize: fs.xs, fontWeight: '500', color: WIDGET_TEXT_SECONDARY }}> / {SAMPLE_TARGET.toLocaleString()} kcal</Text>
           </Text>
-          <Text style={{ color: WIDGET_ACCENT, fontSize: 11, fontWeight: '600', marginTop: 1 }}>
+          <Text style={{ color: WIDGET_ACCENT, fontSize: fs.xs, fontWeight: '600', marginTop: 1 }}>
             あと {(SAMPLE_TARGET - SAMPLE_CONSUMED).toLocaleString()} kcal
           </Text>
         </View>
@@ -274,7 +275,7 @@ export default function WidgetPrototype() {
       ].map(({ label, desc, el }) => (
         <View key={label} style={{ gap: t.spacing['3'] }}>
           <View style={{ gap: 2 }}>
-            <Text style={{ color: t.colors.content.primary, fontSize: t.typography.fontSize.base, fontWeight: t.typography.fontWeight.semibold }}>
+            <Text style={{ color: t.colors.content.primary, fontSize: t.typography.fontSize.md, fontWeight: t.typography.fontWeight.semibold }}>
               {label}
             </Text>
             <Text style={{ color: t.colors.content.tertiary, fontSize: t.typography.fontSize.xs }}>

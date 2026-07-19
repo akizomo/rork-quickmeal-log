@@ -12,6 +12,7 @@ import {
 } from '@/constants/body-matrix';
 import { palette } from '@/constants/theme';
 import { useTheme } from '@/design-system';
+import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { BiologicalBasis, BodyAxisLevel, BodyType9 } from '@/types/nutrition';
 
 interface Props {
@@ -108,11 +109,11 @@ export function BodyTypeMatrix({
 const styles = StyleSheet.create({
   colHeaderRow: { flexDirection: 'row', marginBottom: 6 },
   rowAxisSpacer: { width: 44 },
-  colHeader: { flex: 1, textAlign: 'center', fontSize: 10, color: palette.textMuted, fontWeight: '600', lineHeight: 13 },
+  colHeader: { flex: 1, textAlign: 'center', fontSize: fs.xs, color: palette.textMuted, fontWeight: '600', lineHeight: 14 },
   row: { flexDirection: 'row', marginBottom: 6 },
   rowAxis: { width: 44, justifyContent: 'center', alignItems: 'center' },
-  rowAxisText: { fontSize: 10, color: palette.textMuted, fontWeight: '600' },
-  rowAxisValue: { fontSize: 11, color: palette.text, fontWeight: '700' },
+  rowAxisText: { fontSize: fs.xs, color: palette.textMuted, fontWeight: '600' },
+  rowAxisValue: { fontSize: fs.xs, color: palette.text, fontWeight: '700' },
   cell: {
     flex: 1,
     marginHorizontal: 3,
@@ -131,11 +132,11 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 4,
     left: 4,
-    fontSize: 9,
+    fontSize: fs.xs,
     color: palette.sageStrong,
     fontWeight: '700',
     zIndex: 2,
   },
-  refText: { marginTop: 4, fontSize: 10, color: palette.text, fontWeight: '700' },
-  refSub: { fontSize: 10, color: palette.textMuted, fontWeight: '600' },
+  refText: { marginTop: 4, fontSize: fs.xs, color: palette.text, fontWeight: '700' },
+  refSub: { fontSize: fs.xs, color: palette.textMuted, fontWeight: '600' },
 });

@@ -23,6 +23,7 @@ import {
 } from '@/constants/dish-master';
 import { palette } from '@/constants/theme';
 import { BottomSheet, Chip as DSChip, Icon } from '@/design-system';
+import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { useAppState } from '@/providers/app-state-provider';
 import {
   ChineseNoodlesPrimaryType,
@@ -562,7 +563,7 @@ export const DishQuickEntrySheet = memo(function DishQuickEntrySheet() {
 
 const styles = StyleSheet.create({
   sectionLabel: {
-    fontSize: 12,
+    fontSize: fs.caption1,
     fontWeight: '700',
     color: palette.textMuted,
     marginTop: 14,
@@ -586,7 +587,7 @@ const styles = StyleSheet.create({
     minHeight: 44,
   },
   amountRowValue: {
-    fontSize: 15,
+    fontSize: fs.md,
     fontWeight: '700',
     color: palette.text,
     flex: 1,
@@ -599,17 +600,17 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   previewMeta: {
-    fontSize: 12,
+    fontSize: fs.caption1,
     color: palette.textMuted,
     fontWeight: '600',
   },
   previewKcal: {
-    fontSize: 22,
+    fontSize: fs['2xl'],
     fontWeight: '700',
     color: palette.sageDeep,
   },
   macroLine: {
-    fontSize: 12,
+    fontSize: fs.caption1,
     color: palette.textMuted,
   },
   primaryButton: {
@@ -621,7 +622,7 @@ const styles = StyleSheet.create({
   },
   primaryButtonText: {
     color: palette.white,
-    fontSize: 15,
+    fontSize: fs.md,
     fontWeight: '700',
   },
 });

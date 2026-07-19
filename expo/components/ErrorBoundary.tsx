@@ -2,6 +2,7 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { palette } from '@/constants/theme';
+import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 
 interface State {
   hasError: boolean;
@@ -59,12 +60,12 @@ const styles = StyleSheet.create({
   },
   title: {
     color: palette.text,
-    fontSize: 22,
+    fontSize: fs['2xl'],
     fontWeight: '700',
   },
   text: {
     color: palette.textMuted,
-    fontSize: 15,
+    fontSize: fs.md,
     lineHeight: 22,
   },
   button: {
@@ -77,7 +78,7 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: palette.white,
-    fontSize: 14,
+    fontSize: fs.md,
     fontWeight: '700',
   },
 });
