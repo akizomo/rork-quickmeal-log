@@ -101,13 +101,12 @@ export const ExerciseSheet = memo(function ExerciseSheet({ visible, onClose, dat
     [grossExerciseKcal, measuredActiveKcal, baselineKcal]
   );
 
+  // baseline はプロフィールの活動レベルから決まるため、ヘルス同期の有無に関わらず常に表示する。
+  // calcGoalAdditionKcal も measured=null を 0 として扱い常に控除するため、表示と計算が一致する。
   const showLedger = baselineKcal != null;
-  // ヘルスデータが存在するときだけ baseline 行を表示する。
-  // measured = null (未同期 or 未連携) のときは控除計算が走らないため行を隠す。
-  const showBaseline = measuredActiveKcal != null && baselineKcal != null;
   const activityCapped =
-    showBaseline &&
-    (measuredActiveKcal as number) - (baselineKcal as number) > ACTIVITY_BONUS_DAILY_CAP_KCAL;
+    showLedger &&
+    (measuredActiveKcal ?? 0) - (baselineKcal as number) > ACTIVITY_BONUS_DAILY_CAP_KCAL;
 
   const activityLevelLabel = useMemo(
     () => ACTIVITY_LEVEL_OPTIONS.find((a) => a.level === profile.activityLevel)?.label ?? null,
@@ -153,16 +152,14 @@ export const ExerciseSheet = memo(function ExerciseSheet({ visible, onClose, dat
             </View>
             {showLedger ? (
               <>
-                {showBaseline ? (
-                  <View style={styles.ledgerRow}>
-                    <Text style={styles.ledgerLabel}>
-                      活動レベル「{activityLevelLabel ?? '-'}」の想定
-                    </Text>
-                    <Text style={styles.ledgerValue}>
-                      −{(baselineKcal as number).toLocaleString()} kcal
-                    </Text>
-                  </View>
-                ) : null}
+                <View style={styles.ledgerRow}>
+                  <Text style={styles.ledgerLabel}>
+                    活動レベル「{activityLevelLabel ?? '-'}」の想定
+                  </Text>
+                  <Text style={styles.ledgerValue}>
+                    −{(baselineKcal as number).toLocaleString()} kcal
+                  </Text>
+                </View>
                 <View style={[styles.ledgerRow, styles.ledgerResultRow]}>
                   <Text style={styles.ledgerResultLabel}>
                     目標に追加{activityCapped ? '（上限あり）' : ''}

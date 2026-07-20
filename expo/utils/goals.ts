@@ -619,17 +619,18 @@ export interface ActivityContext {
  * - 歩数が基準を下回った日は不足分が運動クレジットから差し引かれる (会計的に正確)。
  * - ノイズ/GPS 異常吸収の上限 (CAP) は **活動由来の超過分のみ** に適用し、
  *   ユーザーが明示記録した運動はそのまま通す。
- * - ヘルス未連携 (measured/baseline 欠如) は運動ログを全額加算する従来挙動。
+ * - baseline はプロフィールの活動レベルから算出するため、ヘルスデータの有無に関わらず常に控除する。
+ *   measured = null (ヘルス未同期) は 0 として扱い、今日/過去日で同一ロジックを保証する。
+ * - baseline = null (プロフィール未設定) のみ運動ログを全額加算する従来挙動。
  */
 export function calcGoalAdditionKcal(exerciseGrossKcal: number, ctx?: ActivityContext): number {
-  const measured = ctx?.measuredActiveKcal ?? null;
   const baseline = ctx?.baselineActiveKcal ?? null;
-  // measured が null = ヘルス未連携または当日未同期 → 従来通り全額加算。
-  // measured = 0 = 同期済みだが活動なし → baseline は控除する (早朝0歩の日に対応)。
-  const hasHealth = measured != null && baseline != null;
-  if (!hasHealth) {
+  if (baseline == null) {
+    // プロフィール未設定: 活動係数が不明なため全額加算
     return Math.max(0, Math.round(exerciseGrossKcal));
   }
+  // measured = null (未同期) は 0 として扱う。today/昨日で計算式を統一する。
+  const measured = ctx?.measuredActiveKcal ?? 0;
   const activityDelta = Math.min(measured - baseline, ACTIVITY_BONUS_DAILY_CAP_KCAL);
   return Math.max(0, Math.round(activityDelta + exerciseGrossKcal));
 }
