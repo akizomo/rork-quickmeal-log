@@ -29,6 +29,8 @@ export interface UseHealthSyncReturn {
   lastError: string | null;
   /** 手動同期を実行 */
   syncNow: () => Promise<void>;
+  /** スロットル判定を経た同期。画面フォーカス時など「必要なら軽量に」呼ぶ用途。 */
+  syncIfDue: () => Promise<void>;
   /** 権限リクエスト */
   requestPermissions: () => Promise<boolean>;
   /** Android: Health Connect プロバイダの Play Store ページを開く */
@@ -171,7 +173,7 @@ export function useHealthSync(): UseHealthSyncReturn {
     performSync().catch(() => undefined);
   }, [supported, isHydrating, status, performSync]);
 
-  // foreground 復帰時の自動再同期。
+  // foreground 復帰 / 画面フォーカス時の自動再同期で共有するスロットル判定。
   //   - 最終同期から FOREGROUND_RESYNC_THROTTLE_MS 未満ならスキップ (無駄打ち防止)
   //   - 日付が変わっていれば間隔に関係なく強制 (today のずれを解消)
   // 最新の lastSyncedAt はクロージャ固定を避けるため ref 経由で読む。
@@ -180,23 +182,36 @@ export function useHealthSync(): UseHealthSyncReturn {
     lastSyncedAtRef.current = lastSyncedAt ?? lastHealthSyncAtISO;
   }, [lastSyncedAt, lastHealthSyncAtISO]);
 
+  const isResyncDue = useCallback((): boolean => {
+    const last = lastSyncedAtRef.current;
+    if (!last) return true;
+    const lastDate = new Date(last);
+    if (Number.isNaN(lastDate.getTime())) return true;
+    const now = new Date();
+    // 日跨ぎ判定 (ローカル日付が違えば強制)
+    if (lastDate.toDateString() !== now.toDateString()) return true;
+    return now.getTime() - lastDate.getTime() >= FOREGROUND_RESYNC_THROTTLE_MS;
+  }, []);
+
+  const syncIfDue = useCallback(async () => {
+    if (!supported) return;
+    if (isHydrating) return;
+    if (status !== 'authorized') return;
+    if (!isResyncDue()) {
+      if (__DEV__) console.log('[health-sync] syncIfDue skipped (throttled)');
+      return;
+    }
+    if (__DEV__) console.log('[health-sync] syncIfDue firing');
+    await performSync();
+  }, [supported, isHydrating, status, isResyncDue, performSync]);
+
   useEffect(() => {
     if (!supported) return;
     const sub = AppState.addEventListener('change', (next: AppStateStatus) => {
       if (next !== 'active') return;
       if (isHydrating) return;
       if (status !== 'authorized') return;
-      const last = lastSyncedAtRef.current;
-      const now = new Date();
-      const due = (() => {
-        if (!last) return true;
-        const lastDate = new Date(last);
-        if (Number.isNaN(lastDate.getTime())) return true;
-        // 日跨ぎ判定 (ローカル日付が違えば強制)
-        if (lastDate.toDateString() !== now.toDateString()) return true;
-        return now.getTime() - lastDate.getTime() >= FOREGROUND_RESYNC_THROTTLE_MS;
-      })();
-      if (!due) {
+      if (!isResyncDue()) {
         if (__DEV__) console.log('[health-sync] foreground resync skipped (throttled)');
         return;
       }
@@ -204,7 +219,7 @@ export function useHealthSync(): UseHealthSyncReturn {
       performSync().catch(() => undefined);
     });
     return () => sub.remove();
-  }, [supported, isHydrating, status, performSync]);
+  }, [supported, isHydrating, status, isResyncDue, performSync]);
 
   return {
     supported,
@@ -213,6 +228,7 @@ export function useHealthSync(): UseHealthSyncReturn {
     lastSyncedAt,
     lastError,
     syncNow,
+    syncIfDue,
     requestPermissions,
     openInstallPage,
     fetchDiagnostics,

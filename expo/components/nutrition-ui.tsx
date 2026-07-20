@@ -1,5 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { Link, useRouter } from 'expo-router';
+import { Link, useFocusEffect, useRouter } from 'expo-router';
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Svg, { Circle, Text as SvgText } from 'react-native-svg';
 import {
@@ -26,6 +26,7 @@ import { Badge, Body, BottomSheet, Button, Caption, Icon, useTheme } from '@/des
 import { duration, spring } from '@/design-system/tokens/primitives/motion';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { useAppState } from '@/providers/app-state-provider';
+import { useHealthSyncContext } from '@/providers/health-sync-provider';
 import { DishDraft, DishSize, IngredientDraft, Macro, PortionValue } from '@/types/nutrition';
 import { getIdentity } from '@/constants/identity';
 import { getLogDisplayInfo } from '@/utils/log-display';
@@ -434,7 +435,11 @@ function WeeklyRingsRow({
         return (
           <Pressable
             key={dk}
-            style={({ pressed }) => [styles.weeklyRingItem, pressed && tappable && { opacity: 0.6 }]}
+            style={({ pressed }) => [
+              styles.weeklyRingItem,
+              isSelected && { backgroundColor: t.colors.action.primary.container },
+              pressed && tappable && { opacity: 0.6 },
+            ]}
             onPress={tappable ? () => onDayPress?.(dk) : undefined}
             accessibilityRole={tappable ? 'button' : undefined}
             accessibilityLabel={tappable ? `${WEEK_DAYS_JA[i]}曜日の記録を見る` : undefined}
@@ -454,12 +459,12 @@ function WeeklyRingsRow({
                   transform={rot}
                 />
               )}
-              {/* overflow second lap */}
+              {/* overflow second lap（メインリングと同じ太さに統一） */}
               {secondLap > 0 && (
                 <Circle
                   cx={cx} cy={cx} r={r} fill="none"
                   stroke={isPastTolerance ? overflowColor : toleranceColor}
-                  strokeWidth={stroke * 0.6}
+                  strokeWidth={stroke}
                   strokeLinecap="round"
                   strokeDasharray={`${circ} ${circ}`}
                   strokeDashoffset={circ * (1 - secondLap)}
@@ -479,10 +484,12 @@ function WeeklyRingsRow({
               </SvgText>
             </Svg>
             <View style={styles.weeklyRingDot}>
-              {(isToday || isSelected) && (
+              {/* 「今日」専用マーカー。選択中かどうかに関わらず常に表示し、
+                  選択中の別日と見分けられるようにする（選択中は背景ピルで区別）。 */}
+              {isToday && (
                 <View style={[
                   styles.weeklyRingDotInner,
-                  { backgroundColor: isSelected ? t.colors.content.secondary : t.colors.action.primary.default },
+                  { backgroundColor: t.colors.action.primary.default },
                 ]} />
               )}
             </View>
@@ -1427,6 +1434,17 @@ export function HomeScreen() {
   const handleDayPress = useCallback((dateKey: string) => {
     router.push(`/?date=${dateKey}`);
   }, [router]);
+
+  // 画面フォーカス時 (タブ切替・他画面からの復帰・初回マウント含む) に、
+  // スロットルを満たしていれば軽量に再同期する。バックグラウンド往復なしで
+  // アプリ内に留まったまま Health 側のデータが更新されたケースを拾う。
+  const healthSync = useHealthSyncContext();
+  useFocusEffect(
+    useCallback(() => {
+      healthSync.syncIfDue().catch(() => undefined);
+    }, [healthSync])
+  );
+
   return (
     <View style={styles.page} testID="home-screen">
       <LinearGradient colors={[palette.background, '#F7F4EE']} style={StyleSheet.absoluteFillObject} />
@@ -1492,7 +1510,7 @@ const styles = StyleSheet.create({
   iconButton: { width: 42, height: 42, borderRadius: 21, backgroundColor: palette.surface, alignItems: 'center', justifyContent: 'center' },
   statusCard: { paddingVertical: 4, gap: 16 },
   weeklyRingsRow: { flexDirection: 'row', justifyContent: 'center', gap: 8, alignItems: 'center', paddingTop: 16 },
-  weeklyRingItem: { alignItems: 'center' },
+  weeklyRingItem: { alignItems: 'center', paddingHorizontal: 4, paddingVertical: 4, borderRadius: 12 },
   weeklyRingDot: { height: 5, alignItems: 'center', justifyContent: 'center', marginTop: 2 },
   weeklyRingDotInner: { width: 4, height: 4, borderRadius: 2 },
   ringRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
