@@ -38,7 +38,10 @@ class LogFoodAction : ActionCallback {
         )
         WidgetStateManager.setLoggedCategory(context, categoryId)
 
-        // 全サイズのウィジェットを再描画
+        // リングを即時更新: consumed に楽観的加算（アプリ起動時に正確な値で上書き）
+        val newConsumed = WidgetStateManager.getConsumedKcal(context) + kcal
+        WidgetStateManager.setKcal(context, newConsumed, WidgetStateManager.getTargetKcal(context))
+
         try { Widget2x2Glance().updateAll(context) } catch (_: Exception) {}
         try { Widget4x2Glance().updateAll(context) } catch (_: Exception) {}
         try { Widget3x3Glance().updateAll(context) } catch (_: Exception) {}
@@ -58,8 +61,16 @@ class UndoLogAction : ActionCallback {
         parameters: ActionParameters
     ) {
         val categoryId = parameters[PARAM_CATEGORY_ID] ?: return
+
+        // dequeue 前に kcal を取得して consumed から差し引く
+        val kcalToRemove = WidgetStateManager.getPendingQueue(context)
+            .find { it.categoryId == categoryId }?.kcal ?: 0
+
         WidgetStateManager.dequeuePendingLog(context, categoryId)
         WidgetStateManager.removeLoggedCategory(context, categoryId)
+
+        val newConsumed = (WidgetStateManager.getConsumedKcal(context) - kcalToRemove).coerceAtLeast(0)
+        WidgetStateManager.setKcal(context, newConsumed, WidgetStateManager.getTargetKcal(context))
 
         try { Widget2x2Glance().updateAll(context) } catch (_: Exception) {}
         try { Widget4x2Glance().updateAll(context) } catch (_: Exception) {}

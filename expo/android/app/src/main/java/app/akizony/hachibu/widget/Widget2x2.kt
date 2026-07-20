@@ -73,7 +73,6 @@ private val COLOR_ACCENT    = ColorProvider(Color(0xFF82A280.toInt()))
 private val COLOR_PRIMARY   = ColorProvider(Color(0xFFF0F4EF.toInt()))
 private val COLOR_SECONDARY = ColorProvider(Color(0x8CF0F4EF.toInt()))
 private val COLOR_BTN_BG    = Color(0x14FFFFFF)
-private val COLOR_LOGGED_BG = Color(0x26829280.toInt())
 
 @Composable
 internal fun CategoryButtonGlance(
@@ -84,10 +83,11 @@ internal fun CategoryButtonGlance(
     // 外側の透明 Box が padding でボタン間の gap を作る
     Box(modifier = modifier.padding(3.dp)) {
         if (logged) {
+            // 記録済: sage tint 背景 + emoji/✓ + カテゴリ名 + dim 取消
             Box(
                 modifier = GlanceModifier
                     .fillMaxSize()
-                    .background(ColorProvider(COLOR_LOGGED_BG))
+                    .background(ColorProvider(Color(0x4782A280)))  // sage 28%
                     .cornerRadius(12.dp)
                     .clickable(
                         actionRunCallback<UndoLogAction>(
@@ -101,10 +101,19 @@ internal fun CategoryButtonGlance(
                     verticalAlignment   = Alignment.CenterVertically,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text("✓ 記録済", style = TextStyle(
-                        color = COLOR_ACCENT, fontSize = 11.sp, fontWeight = FontWeight.Bold
-                    ))
-                    Text("↩ 取消", style = TextStyle(color = COLOR_ACCENT, fontSize = 10.sp))
+                    Text(
+                        "${cat.icon} ✓",
+                        style = TextStyle(color = COLOR_ACCENT, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    )
+                    Text(
+                        cat.name,
+                        style    = TextStyle(color = COLOR_PRIMARY, fontSize = 10.sp, fontWeight = FontWeight.Bold),
+                        maxLines = 1
+                    )
+                    Text(
+                        "↩ 取消",
+                        style = TextStyle(color = ColorProvider(Color(0x5CF0F4EF.toInt())), fontSize = 9.sp)
+                    )
                 }
             }
         } else {
