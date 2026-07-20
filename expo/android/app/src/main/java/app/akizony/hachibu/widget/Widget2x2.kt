@@ -75,7 +75,7 @@ class Widget2x2Receiver : GlanceAppWidgetReceiver() {
 private val COLOR_ACCENT    = ColorProvider(Color(0xFF82A280.toInt())) // sage[500]
 private val COLOR_PRIMARY   = ColorProvider(Color(0xFFF0F4EF.toInt())) // inverse primary
 private val COLOR_SECONDARY = ColorProvider(Color(0x8CF0F4EF.toInt())) // inverse secondary (55%)
-private val COLOR_DIM       = ColorProvider(Color(0x5CF0F4EF.toInt())) // inverse dim (36%)
+private val COLOR_UNDO      = ColorProvider(Color(0xFFE9C28F.toInt())) // amber — アプリ UndoToast と同色
 private val COLOR_BTN_BG    = ColorProvider(Color(0x14FFFFFF))         // white 8% — surface raised subtle
 
 @Composable
@@ -124,10 +124,10 @@ internal fun CategoryButtonGlance(
                         ),
                         maxLines = 1
                     )
-                    // 取消: xs(11sp) + dim color でセカンダリアクション
+                    // 取り消す: アプリ UndoToast と同ラベル・同色 (#E9C28F amber)
                     Text(
-                        "↩ 取消",
-                        style = TextStyle(color = COLOR_DIM, fontSize = 11.sp) // fontSize.xs
+                        "取り消す",
+                        style = TextStyle(color = COLOR_UNDO, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                     )
                 }
             }
