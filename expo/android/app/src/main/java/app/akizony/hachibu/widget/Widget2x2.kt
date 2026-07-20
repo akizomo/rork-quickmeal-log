@@ -35,8 +35,8 @@ class Widget2x2Glance : GlanceAppWidget() {
             modifier = GlanceModifier
                 .fillMaxSize()
                 .background(ColorProvider(Color(0xE2162018.toInt())))
-                .cornerRadius(16.dp)
-                .padding(5.dp),
+                .cornerRadius(16.dp)   // radius.lg
+                .padding(4.dp),        // spacing['1'] = 4
             contentAlignment = Alignment.Center
         ) {
             Column(modifier = GlanceModifier.fillMaxSize()) {
@@ -68,11 +68,15 @@ class Widget2x2Receiver : GlanceAppWidgetReceiver() {
 }
 
 // ── 共有: カテゴリボタン ──────────────────────────────────────────────────────
+// Colors: DS トークン直訳 (dark surface 上の inverse テキスト)
+//   sage[500]=#82A280  ivory[50]=#FFFDF7 に近い #F0F4EF (sage微tint版)
+//   secondary = 55% #F0F4EF,  dim = 36% #F0F4EF
 
-private val COLOR_ACCENT    = ColorProvider(Color(0xFF82A280.toInt()))
-private val COLOR_PRIMARY   = ColorProvider(Color(0xFFF0F4EF.toInt()))
-private val COLOR_SECONDARY = ColorProvider(Color(0x8CF0F4EF.toInt()))
-private val COLOR_BTN_BG    = Color(0x14FFFFFF)
+private val COLOR_ACCENT    = ColorProvider(Color(0xFF82A280.toInt())) // sage[500]
+private val COLOR_PRIMARY   = ColorProvider(Color(0xFFF0F4EF.toInt())) // inverse primary
+private val COLOR_SECONDARY = ColorProvider(Color(0x8CF0F4EF.toInt())) // inverse secondary (55%)
+private val COLOR_DIM       = ColorProvider(Color(0x5CF0F4EF.toInt())) // inverse dim (36%)
+private val COLOR_BTN_BG    = ColorProvider(Color(0x14FFFFFF))         // white 8% — surface raised subtle
 
 @Composable
 internal fun CategoryButtonGlance(
@@ -80,15 +84,15 @@ internal fun CategoryButtonGlance(
     logged: Boolean,
     modifier: GlanceModifier = GlanceModifier
 ) {
-    // 外側の透明 Box が padding でボタン間の gap を作る
-    Box(modifier = modifier.padding(3.dp)) {
+    // 外側透明 Box: padding(4dp) = spacing['1'] でボタン間 gap を作る
+    Box(modifier = modifier.padding(4.dp)) {
         if (logged) {
-            // 記録済: sage tint 背景 + emoji/✓ + カテゴリ名 + dim 取消
+            // ── 記録済状態: sage tint 背景 ──────────────────────────────────
             Box(
                 modifier = GlanceModifier
                     .fillMaxSize()
-                    .background(ColorProvider(Color(0x4782A280)))  // sage 28%
-                    .cornerRadius(12.dp)
+                    .background(ColorProvider(Color(0x3882A280))) // sage[500] 22%
+                    .cornerRadius(12.dp)                          // radius.md
                     .clickable(
                         actionRunCallback<UndoLogAction>(
                             actionParametersOf(UndoLogAction.PARAM_CATEGORY_ID to cat.id)
@@ -101,27 +105,39 @@ internal fun CategoryButtonGlance(
                     verticalAlignment   = Alignment.CenterVertically,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+                    // emoji + ✓ : callout(16sp)
                     Text(
                         "${cat.icon} ✓",
-                        style = TextStyle(color = COLOR_ACCENT, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                        style = TextStyle(
+                            color      = COLOR_ACCENT,
+                            fontSize   = 16.sp,         // fontSize.callout
+                            fontWeight = FontWeight.Bold
+                        )
                     )
+                    // カテゴリ名: xs(11sp) minimum
                     Text(
                         cat.name,
-                        style    = TextStyle(color = COLOR_PRIMARY, fontSize = 10.sp, fontWeight = FontWeight.Bold),
+                        style    = TextStyle(
+                            color      = COLOR_PRIMARY,
+                            fontSize   = 11.sp,         // fontSize.xs
+                            fontWeight = FontWeight.Bold
+                        ),
                         maxLines = 1
                     )
+                    // 取消: xs(11sp) + dim color でセカンダリアクション
                     Text(
                         "↩ 取消",
-                        style = TextStyle(color = ColorProvider(Color(0x5CF0F4EF.toInt())), fontSize = 9.sp)
+                        style = TextStyle(color = COLOR_DIM, fontSize = 11.sp) // fontSize.xs
                     )
                 }
             }
         } else {
+            // ── 通常状態 ────────────────────────────────────────────────────
             Box(
                 modifier = GlanceModifier
                     .fillMaxSize()
-                    .background(ColorProvider(COLOR_BTN_BG))
-                    .cornerRadius(12.dp)
+                    .background(COLOR_BTN_BG)
+                    .cornerRadius(12.dp)  // radius.md
                     .clickable(
                         actionRunCallback<LogFoodAction>(
                             actionParametersOf(
@@ -139,15 +155,22 @@ internal fun CategoryButtonGlance(
                     verticalAlignment   = Alignment.CenterVertically,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+                    // emoji: xl(20sp)
                     Text(cat.icon, style = TextStyle(fontSize = 20.sp))
+                    // カテゴリ名: xs(11sp) bold
                     Text(
                         cat.name,
-                        style    = TextStyle(color = COLOR_PRIMARY, fontSize = 11.sp, fontWeight = FontWeight.Bold),
+                        style    = TextStyle(
+                            color      = COLOR_PRIMARY,
+                            fontSize   = 11.sp,         // fontSize.xs
+                            fontWeight = FontWeight.Bold
+                        ),
                         maxLines = 1
                     )
+                    // サブラベル: xs(11sp) secondary
                     Text(
                         "${cat.recent}·${cat.sublabel}",
-                        style    = TextStyle(color = COLOR_SECONDARY, fontSize = 9.sp),
+                        style    = TextStyle(color = COLOR_SECONDARY, fontSize = 11.sp), // fontSize.xs
                         maxLines = 1
                     )
                 }

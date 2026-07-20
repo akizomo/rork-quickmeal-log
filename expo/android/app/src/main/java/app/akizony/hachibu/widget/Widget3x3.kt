@@ -72,7 +72,7 @@ class Widget3x3Glance : GlanceAppWidget() {
                                 " / $target kcal",
                                 style = TextStyle(
                                     color    = ColorProvider(Color(0x8CF0F4EF.toInt())),
-                                    fontSize = 10.sp
+                                    fontSize = 11.sp  // fontSize.xs (minimum)
                                 )
                             )
                         }
