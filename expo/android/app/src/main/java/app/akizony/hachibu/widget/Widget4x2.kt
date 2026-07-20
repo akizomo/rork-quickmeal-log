@@ -74,7 +74,7 @@ class Widget4x2Glance : GlanceAppWidget() {
                             CategoryButtonGlance(
                                 cat      = cat,
                                 logged   = cat.id in logged,
-                                modifier = GlanceModifier.defaultWeight().fillMaxHeight().padding(3.dp)
+                                modifier = GlanceModifier.defaultWeight().fillMaxHeight()
                             )
                         }
                     }
@@ -83,7 +83,7 @@ class Widget4x2Glance : GlanceAppWidget() {
                             CategoryButtonGlance(
                                 cat      = cat,
                                 logged   = cat.id in logged,
-                                modifier = GlanceModifier.defaultWeight().fillMaxHeight().padding(3.dp)
+                                modifier = GlanceModifier.defaultWeight().fillMaxHeight()
                             )
                         }
                     }

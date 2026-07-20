@@ -48,8 +48,7 @@ object KcalRingHelper {
 
         if (showLabel) {
             val remaining = (target - consumed).coerceAtLeast(0)
-            val valText   = if (remaining >= 1000) "${remaining / 1000}.${(remaining % 1000) / 100}k"
-                            else remaining.toString()
+            val valText   = remaining.toString()
 
             val secondary = Color.argb(140, 240, 244, 239)
             val primary   = Color.parseColor("#F0F4EF")

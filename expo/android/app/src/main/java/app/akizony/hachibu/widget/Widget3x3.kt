@@ -95,7 +95,7 @@ class Widget3x3Glance : GlanceAppWidget() {
                                 CategoryButtonGlance(
                                     cat      = cat,
                                     logged   = cat.id in logged,
-                                    modifier = GlanceModifier.defaultWeight().fillMaxHeight().padding(2.dp)
+                                    modifier = GlanceModifier.defaultWeight().fillMaxHeight()
                                 )
                             }
                     }

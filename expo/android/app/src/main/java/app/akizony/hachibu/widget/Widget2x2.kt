@@ -36,7 +36,7 @@ class Widget2x2Glance : GlanceAppWidget() {
                 .fillMaxSize()
                 .background(ColorProvider(Color(0xE2162018.toInt())))
                 .cornerRadius(16.dp)
-                .padding(8.dp),
+                .padding(5.dp),
             contentAlignment = Alignment.Center
         ) {
             Column(modifier = GlanceModifier.fillMaxSize()) {
@@ -45,7 +45,7 @@ class Widget2x2Glance : GlanceAppWidget() {
                         CategoryButtonGlance(
                             cat      = cat,
                             logged   = cat.id in logged,
-                            modifier = GlanceModifier.defaultWeight().fillMaxHeight().padding(3.dp)
+                            modifier = GlanceModifier.defaultWeight().fillMaxHeight()
                         )
                     }
                 }
@@ -54,7 +54,7 @@ class Widget2x2Glance : GlanceAppWidget() {
                         CategoryButtonGlance(
                             cat      = cat,
                             logged   = cat.id in logged,
-                            modifier = GlanceModifier.defaultWeight().fillMaxHeight().padding(3.dp)
+                            modifier = GlanceModifier.defaultWeight().fillMaxHeight()
                         )
                     }
                 }
@@ -81,62 +81,67 @@ internal fun CategoryButtonGlance(
     logged: Boolean,
     modifier: GlanceModifier = GlanceModifier
 ) {
-    if (logged) {
-        Box(
-            modifier = modifier
-                .background(ColorProvider(COLOR_LOGGED_BG))
-                .cornerRadius(12.dp)
-                .clickable(
-                    actionRunCallback<UndoLogAction>(
-                        actionParametersOf(UndoLogAction.PARAM_CATEGORY_ID to cat.id)
-                    )
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(
-                modifier = GlanceModifier.fillMaxSize(),
-                verticalAlignment   = Alignment.CenterVertically,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text("✓ 記録済", style = TextStyle(
-                    color = COLOR_ACCENT, fontSize = 11.sp, fontWeight = FontWeight.Bold
-                ))
-                Text("↩ 取消", style = TextStyle(color = COLOR_ACCENT, fontSize = 10.sp))
-            }
-        }
-    } else {
-        Box(
-            modifier = modifier
-                .background(ColorProvider(COLOR_BTN_BG))
-                .cornerRadius(12.dp)
-                .clickable(
-                    actionRunCallback<LogFoodAction>(
-                        actionParametersOf(
-                            LogFoodAction.PARAM_CATEGORY_ID to cat.id,
-                            LogFoodAction.PARAM_FOOD_NAME   to cat.recent,
-                            LogFoodAction.PARAM_SUBLABEL    to cat.sublabel,
-                            LogFoodAction.PARAM_KCAL        to cat.kcal
+    // 外側の透明 Box が padding でボタン間の gap を作る
+    Box(modifier = modifier.padding(3.dp)) {
+        if (logged) {
+            Box(
+                modifier = GlanceModifier
+                    .fillMaxSize()
+                    .background(ColorProvider(COLOR_LOGGED_BG))
+                    .cornerRadius(12.dp)
+                    .clickable(
+                        actionRunCallback<UndoLogAction>(
+                            actionParametersOf(UndoLogAction.PARAM_CATEGORY_ID to cat.id)
                         )
-                    )
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(
-                modifier = GlanceModifier.fillMaxSize(),
-                verticalAlignment   = Alignment.CenterVertically,
-                horizontalAlignment = Alignment.CenterHorizontally
+                    ),
+                contentAlignment = Alignment.Center
             ) {
-                Text(cat.icon, style = TextStyle(fontSize = 20.sp))
-                Text(
-                    cat.name,
-                    style    = TextStyle(color = COLOR_PRIMARY, fontSize = 11.sp, fontWeight = FontWeight.Bold),
-                    maxLines = 1
-                )
-                Text(
-                    "${cat.recent}·${cat.kcal}",
-                    style    = TextStyle(color = COLOR_SECONDARY, fontSize = 9.sp),
-                    maxLines = 1
-                )
+                Column(
+                    modifier = GlanceModifier.fillMaxSize(),
+                    verticalAlignment   = Alignment.CenterVertically,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text("✓ 記録済", style = TextStyle(
+                        color = COLOR_ACCENT, fontSize = 11.sp, fontWeight = FontWeight.Bold
+                    ))
+                    Text("↩ 取消", style = TextStyle(color = COLOR_ACCENT, fontSize = 10.sp))
+                }
+            }
+        } else {
+            Box(
+                modifier = GlanceModifier
+                    .fillMaxSize()
+                    .background(ColorProvider(COLOR_BTN_BG))
+                    .cornerRadius(12.dp)
+                    .clickable(
+                        actionRunCallback<LogFoodAction>(
+                            actionParametersOf(
+                                LogFoodAction.PARAM_CATEGORY_ID to cat.id,
+                                LogFoodAction.PARAM_FOOD_NAME   to cat.recent,
+                                LogFoodAction.PARAM_SUBLABEL    to cat.sublabel,
+                                LogFoodAction.PARAM_KCAL        to cat.kcal
+                            )
+                        )
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    modifier = GlanceModifier.fillMaxSize(),
+                    verticalAlignment   = Alignment.CenterVertically,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(cat.icon, style = TextStyle(fontSize = 20.sp))
+                    Text(
+                        cat.name,
+                        style    = TextStyle(color = COLOR_PRIMARY, fontSize = 11.sp, fontWeight = FontWeight.Bold),
+                        maxLines = 1
+                    )
+                    Text(
+                        "${cat.recent}·${cat.kcal}kcal",
+                        style    = TextStyle(color = COLOR_SECONDARY, fontSize = 9.sp),
+                        maxLines = 1
+                    )
+                }
             }
         }
     }
