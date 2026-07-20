@@ -105,26 +105,16 @@ internal fun CategoryButtonGlance(
                     verticalAlignment   = Alignment.CenterVertically,
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // emoji + ✓ : callout(16sp)
+                    // ✓ のみ: xl(20sp) で大きく
                     Text(
-                        "${cat.icon} ✓",
+                        "✓",
                         style = TextStyle(
                             color      = COLOR_ACCENT,
-                            fontSize   = 16.sp,         // fontSize.callout
+                            fontSize   = 20.sp,         // fontSize.xl
                             fontWeight = FontWeight.Bold
                         )
                     )
-                    // カテゴリ名: xs(11sp) minimum
-                    Text(
-                        cat.name,
-                        style    = TextStyle(
-                            color      = COLOR_PRIMARY,
-                            fontSize   = 11.sp,         // fontSize.xs
-                            fontWeight = FontWeight.Bold
-                        ),
-                        maxLines = 1
-                    )
-                    // 取り消す: アプリ UndoToast と同ラベル・同色 (#E9C28F amber)
+                    // 取り消す: UndoToast と同ラベル・同色
                     Text(
                         "取り消す",
                         style = TextStyle(color = COLOR_UNDO, fontSize = 11.sp, fontWeight = FontWeight.Bold)
