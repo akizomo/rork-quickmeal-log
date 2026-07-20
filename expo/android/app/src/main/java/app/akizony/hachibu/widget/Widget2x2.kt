@@ -137,7 +137,7 @@ internal fun CategoryButtonGlance(
                         maxLines = 1
                     )
                     Text(
-                        "${cat.recent}·${cat.kcal}kcal",
+                        "${cat.recent}·${cat.sublabel}",
                         style    = TextStyle(color = COLOR_SECONDARY, fontSize = 9.sp),
                         maxLines = 1
                     )
