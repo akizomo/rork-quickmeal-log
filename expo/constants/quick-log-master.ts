@@ -423,7 +423,7 @@ const FRUIT: QuickLogSubcategory[] = [
   }),
   s({
     key: 'cut_fruit',
-    label: 'カットフルーツ',
+    label: 'その他の果物',
     baseMacroPer100: { kcal: 60, protein: 0.6, fat: 0.2, carbs: 15 },
     amountCandidates: [g('half', '半パック', 50), g('one', '1パック', 100, true)],
   }),

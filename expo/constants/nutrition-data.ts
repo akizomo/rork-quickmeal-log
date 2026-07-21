@@ -511,7 +511,7 @@ export const ingredientSubtypeDefs: Record<string, IngredientSubtypeDef[]> = {
     },
     {
       key: 'cut_fruit',
-      label: 'カットフルーツ',
+      label: 'その他の果物',
       baselineLabel: '1パック 約100g',
       baseMacro: { kcal: 65, protein: 0.6, fat: 0.2, carbs: 16 },
       portionDisplays: steps(
