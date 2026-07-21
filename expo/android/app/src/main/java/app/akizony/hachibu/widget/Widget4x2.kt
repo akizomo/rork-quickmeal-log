@@ -64,7 +64,7 @@ class Widget4x2Glance : GlanceAppWidget() {
                     )
                 }
 
-                // 区切り線: 外側透明 Box(8+1+8=17dp) で両側に spacing['2'] の余白
+                // 区切り線: 外側透明 Box(8+1+8=17dp) で左右に spacing['2'] の余白
                 Box(
                     modifier          = GlanceModifier.width(17.dp).fillMaxHeight(),
                     contentAlignment  = Alignment.Center
@@ -73,7 +73,6 @@ class Widget4x2Glance : GlanceAppWidget() {
                         modifier = GlanceModifier
                             .width(1.dp)
                             .fillMaxHeight()
-                            .padding(vertical = 8.dp)
                             .background(ColorProvider(Color(0x1AFFFFFF)))
                     ) {}
                 }
