@@ -36,8 +36,8 @@ export const QUICK_LOG_TOKENS = {
   buttonHeightDefault: 56,
   buttonHeightLarge: 68,
   buttonRadius: 15,
-  iconContainerSize: 32,
-  iconContainerRadius: 16,
+  iconContainerSize: 24,
+  iconContainerRadius: 12,
   iconSize: 19,
   iconLabelSpacing: 5,
   labelFontSize: 11,
@@ -103,9 +103,11 @@ function getLabelFontSize(screenWidth: number): number {
 }
 
 function getIconContainerSize(screenWidth: number): number {
-  if (screenWidth <= 360) return 26;
-  if (screenWidth <= 414) return 30;
-  return 32;
+  // 背景円を廃止したため、絵文字サイズ (getIconSize) に近い 4px グリッドの
+  // 値までコンテナ自体を縮小して、無駄な空白を作らない。
+  if (screenWidth <= 360) return 20;
+  if (screenWidth <= 414) return 20;
+  return 24;
 }
 
 function QuickLogButton({
