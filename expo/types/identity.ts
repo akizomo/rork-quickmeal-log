@@ -74,6 +74,17 @@ export interface MigrationTarget {
   attributeKey?: string;
   /** Optional confirmation message shown to the user (e.g., "フライドポテトとして記録します"). */
   confirmMessage?: string;
+  /**
+   * If true, selecting this option opens the destination Identity's own sheet
+   * (full Attribute/Style/Add-on choice) instead of silently recording under
+   * its default Attribute. Use when the destination has multiple Attributes
+   * with materially different macro/add-on profiles (e.g. 丼化 → 牛丼系 has
+   * 5 Attributes spanning 0.67–1x macro and differing hiddenAddonIds/defaultAddonIds).
+   * Most migrations don't need this — their Attribute variance is small enough
+   * that recording under the default keeps PFC convergence intact (§3 in
+   * docs/IA-identity-spec.md).
+   */
+  openTargetSheet?: boolean;
 }
 
 // ---------------------------------------------------------------------------

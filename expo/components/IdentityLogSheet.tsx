@@ -130,6 +130,7 @@ export function IdentityLogSheet() {
   const t = useTheme();
   const {
     identityLogSheet,
+    openIdentityLogSheet,
     closeIdentityLogSheet,
     submitIdentityLog,
     updateLivePreview,
@@ -240,8 +241,18 @@ export function IdentityLogSheet() {
   }, [origin]);
 
   const handleSelectStyle = useCallback((key: string) => {
+    const targetMigration = origin?.styles?.find((s) => s.key === key)?.migration;
+    if (targetMigration?.openTargetSheet) {
+      // 選択肢が多く既定値固定では表現しきれない振替先 (例: 丼化 → 牛丼系) は、
+      // 軽い確認で済ませず移動先の通常フローをそのまま開かせる。
+      openIdentityLogSheet(targetMigration.bucketKey, {
+        identityId: targetMigration.identityKey,
+        editingLogId: identityLogSheet.editingLogId,
+      });
+      return;
+    }
     setStyleKey((prev) => (prev === key ? prev : key));
-  }, []);
+  }, [origin, openIdentityLogSheet, identityLogSheet.editingLogId]);
 
   const handleSelectAmountChip = useCallback((value: number) => {
     setAmountValue(value);
@@ -437,7 +448,13 @@ export function IdentityLogSheet() {
                   <Chip
                     key={opt.key}
                     label={opt.label}
-                    trailingIcon={opt.migration ? 'redirect' : undefined}
+                    trailingIcon={
+                      opt.migration?.openTargetSheet
+                        ? 'chevronRight'
+                        : opt.migration
+                          ? 'redirect'
+                          : undefined
+                    }
                     selected={styleKey === opt.key}
                     onPress={() => handleSelectStyle(opt.key)}
                     size="sm"
