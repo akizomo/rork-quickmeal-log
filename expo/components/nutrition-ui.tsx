@@ -25,6 +25,8 @@ import { colors } from '@/design-system/tokens/primitives/colors';
 import { Badge, Body, BottomSheet, Button, Caption, Icon, useTheme } from '@/design-system';
 import { duration, spring } from '@/design-system/tokens/primitives/motion';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
+import { radius } from '@/design-system/tokens/primitives/radius';
+import { elevation } from '@/design-system/tokens/primitives/elevation';
 import { useAppState } from '@/providers/app-state-provider';
 import { useHealthSyncContext } from '@/providers/health-sync-provider';
 import { DishDraft, DishSize, IngredientDraft, Macro, PortionValue } from '@/types/nutrition';
@@ -44,7 +46,7 @@ function formatTime(timestamp: string): string {
   return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
 }
 
-export function MiniProgressBar({ letter, label, current, target, textColor, graphicColor }: {
+export function MiniProgressBar({ letter, label, current, target, textColor, graphicColor, trackColor }: {
   letter: string;
   label: string;
   current: number;
@@ -53,6 +55,8 @@ export function MiniProgressBar({ letter, label, current, target, textColor, gra
   textColor: string;
   /** バー塗り色。nutrition.*.graphic (text より彩度高め) を渡す。 */
   graphicColor: string;
+  /** 空バーの下地色。nutrition.*.background (マクロごとの薄いトーン) を渡す。 */
+  trackColor: string;
 }) {
   const progress = target > 0 ? Math.min(current / target, 1) : 0;
   return (
@@ -62,7 +66,7 @@ export function MiniProgressBar({ letter, label, current, target, textColor, gra
         {' '}
         {label}
       </Text>
-      <View style={styles.miniBarTrack}>
+      <View style={[styles.miniBarTrack, { backgroundColor: trackColor }]}>
         <View style={[styles.miniBarFill, { width: `${progress * 100}%`, backgroundColor: graphicColor }]} />
       </View>
       <Text style={styles.miniBarValue}>
@@ -220,7 +224,7 @@ const BalanceModal = memo(function BalanceModal({
           </View>
 
           {/* 進捗バー (視覚補助) */}
-          <View style={styles.balanceProgressTrack}>
+          <View style={[styles.balanceProgressTrack, { backgroundColor: t.colors.surface.sunken }]}>
             <View
               style={[
                 styles.balanceProgressFill,
@@ -272,7 +276,7 @@ const BalanceModal = memo(function BalanceModal({
               alignItems: 'center',
             }]}>
               <View style={styles.carryoverToggleLeft}>
-                <Text style={{ fontSize: 12 }}>🍽️</Text>
+                <Text style={{ fontSize: fs.caption1 }}>🍽️</Text>
                 <Text style={[styles.carryoverToggleLabel, { color: t.colors.action.primary.onContainer }]}>
                   調整中（{carryoverDaysTotal}日間）
                 </Text>
@@ -296,7 +300,7 @@ const BalanceModal = memo(function BalanceModal({
               accessibilityLabel="食事の調整をはじめる"
             >
               <View style={styles.carryoverToggleLeft}>
-                <Text style={{ fontSize: 12 }}>🍽️</Text>
+                <Text style={{ fontSize: fs.caption1 }}>🍽️</Text>
                 <Text style={[styles.carryoverToggleLabel, { color: t.colors.content.secondary }]}>
                   昨日の食事、少し多めでした — 調整する
                 </Text>
@@ -404,7 +408,7 @@ function WeeklyRingsRow({
       {weekDays.map((day, i) => {
         const dk = formatDateKey(day);
         const isToday = dk === todayKey;
-        const isSelected = dk === viewedDateKey && !isToday;
+        const isViewed = dk === viewedDateKey;
         const isFuture = dk > todayKey;
         const consumed = sumForDate(logs, dk).kcal;
         const target = adjustedTargetKcal(baseTargetKcal, exerciseLogs, dk, undefined);
@@ -421,25 +425,21 @@ function WeeklyRingsRow({
         const secondLap = ratio > 1 ? Math.min(ratio - 1, 1) : 0;
         const isPastTolerance = ratio > 1 + TOLERANCE;
         const progressColor = t.colors.nutrition.calorie.within.graphic;
-        const toleranceColor = colors.moss[600];
+        const toleranceColor = t.colors.nutrition.calorie.within.text;
         const overflowColor = t.colors.nutrition.calorie.severeExceed.graphic;
 
-        const labelColor = isToday
-          ? t.colors.content.primary
-          : isSelected
-            ? t.colors.content.primary
-            : t.colors.content.secondary;
+        // 今日 = ラベルをprimary色に（閲覧中かどうかに関わらず常時）、それ以外はneutral。
+        // 閲覧中の日 = リング下にドット。ドット色は今日ならprimary、それ以外はsecondary。
+        // 太さは状態に関わらず一定（統一した方が見やすいためバリエーションを廃止）。
+        const labelColor = isToday ? t.colors.action.primary.default : t.colors.content.secondary;
+        const dotColor = isToday ? t.colors.action.primary.default : t.colors.content.secondary;
         const fontSize = 11;
 
         const tappable = !isFuture;
         return (
           <Pressable
             key={dk}
-            style={({ pressed }) => [
-              styles.weeklyRingItem,
-              isSelected && { backgroundColor: t.colors.action.primary.container },
-              pressed && tappable && { opacity: 0.6 },
-            ]}
+            style={({ pressed }) => [styles.weeklyRingItem, pressed && tappable && { opacity: 0.6 }]}
             onPress={tappable ? () => onDayPress?.(dk) : undefined}
             accessibilityRole={tappable ? 'button' : undefined}
             accessibilityLabel={tappable ? `${WEEK_DAYS_JA[i]}曜日の記録を見る` : undefined}
@@ -476,7 +476,7 @@ function WeeklyRingsRow({
                 y={cx + fontSize * 0.38}
                 textAnchor="middle"
                 fontSize={fontSize}
-                fontWeight={isToday || isSelected ? '600' : '400'}
+                fontWeight="600"
                 fontFamily='PlusJakartaSans_400Regular, "Plus Jakarta Sans", -apple-system, sans-serif'
                 fill={labelColor}
               >
@@ -484,14 +484,7 @@ function WeeklyRingsRow({
               </SvgText>
             </Svg>
             <View style={styles.weeklyRingDot}>
-              {/* 「今日」専用マーカー。選択中かどうかに関わらず常に表示し、
-                  選択中の別日と見分けられるようにする（選択中は背景ピルで区別）。 */}
-              {isToday && (
-                <View style={[
-                  styles.weeklyRingDotInner,
-                  { backgroundColor: t.colors.action.primary.default },
-                ]} />
-              )}
+              {isViewed && <View style={[styles.weeklyRingDotInner, { backgroundColor: dotColor }]} />}
             </View>
           </Pressable>
         );
@@ -835,6 +828,7 @@ export const StatusCard = memo(function StatusCard({
           target={effectivePfc.protein}
           textColor={t.colors.nutrition.protein.text}
           graphicColor={t.colors.nutrition.protein.graphic}
+          trackColor={t.colors.nutrition.protein.background}
         />
         <MiniProgressBar
           letter="F"
@@ -843,6 +837,7 @@ export const StatusCard = memo(function StatusCard({
           target={effectivePfc.fat}
           textColor={t.colors.nutrition.fat.text}
           graphicColor={t.colors.nutrition.fat.graphic}
+          trackColor={t.colors.nutrition.fat.background}
         />
         <MiniProgressBar
           letter="C"
@@ -851,6 +846,7 @@ export const StatusCard = memo(function StatusCard({
           target={effectivePfc.carbs}
           textColor={t.colors.nutrition.carbs.text}
           graphicColor={t.colors.nutrition.carbs.graphic}
+          trackColor={t.colors.nutrition.carbs.background}
         />
       </View>
 
@@ -908,8 +904,9 @@ const SegmentedTabLegacy = memo(function SegmentedTabLegacy() {
 void SegmentedTabLegacy;
 
 function MacroPill({ label, value }: { label: string; value: number }) {
+  const t = useTheme();
   return (
-    <View style={styles.macroPill}>
+    <View style={[styles.macroPill, { backgroundColor: t.colors.surface.raised }]}>
       <Text style={styles.macroPillLabel}>{label}</Text>
       <Text style={styles.macroPillValue}>{Math.round(value)}</Text>
     </View>
@@ -1012,9 +1009,10 @@ export const FloatingFeedback = memo(function FloatingFeedback() {
 
 export const UndoToast = memo(function UndoToast() {
   const { undoState, undoLastLog } = useAppState();
+  const t = useTheme();
   if (!undoState) return null;
   return (
-    <View style={styles.undoToast} testID="undo-toast">
+    <View style={[styles.undoToast, { backgroundColor: t.colors.surface.inverse }]} testID="undo-toast">
       <View>
         <Text style={styles.undoTitle}>{undoState.log.categoryLabel} を記録しました</Text>
         <Text style={styles.undoText}>必要なら元に戻せます</Text>
@@ -1447,7 +1445,7 @@ export function HomeScreen() {
 
   return (
     <View style={styles.page} testID="home-screen">
-      <LinearGradient colors={[palette.background, '#F7F4EE']} style={StyleSheet.absoluteFillObject} />
+      <LinearGradient colors={[palette.background, palette.surface]} style={StyleSheet.absoluteFillObject} />
       <SafeAreaView edges={['top']} style={styles.safeArea}>
         <View style={styles.headerWrap}>
           <Header viewedDate={viewedDate} />
@@ -1491,7 +1489,7 @@ const styles = StyleSheet.create({
   },
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   headerDate: { fontSize: fs.callout, fontWeight: '700', color: palette.sageDeep },
-  avatarButton: { width: 42, height: 42, borderRadius: 21, backgroundColor: palette.surface, alignItems: 'center', justifyContent: 'center', position: 'relative' },
+  avatarButton: { width: 42, height: 42, borderRadius: radius.full, backgroundColor: palette.surface, alignItems: 'center', justifyContent: 'center', position: 'relative' },
   // トライアル残り≤2日で表示するバッジ (右上の小さい丸)
   avatarBadge: {
     position: 'absolute',
@@ -1499,22 +1497,22 @@ const styles = StyleSheet.create({
     right: -2,
     width: 11,
     height: 11,
-    borderRadius: 6,
-    backgroundColor: '#D9534F',
+    borderRadius: radius.full,
+    backgroundColor: palette.danger,
     borderWidth: 2,
     borderColor: palette.background,
   },
   appTitle: { fontSize: fs.lg, fontWeight: '700', color: palette.sageDeep },
   appSubtitle: { fontSize: fs.sm, color: palette.textMuted, marginTop: 2 },
   trialBadge: { fontSize: fs.xs, color: palette.sageStrong, marginTop: 2, fontWeight: '600' },
-  iconButton: { width: 42, height: 42, borderRadius: 21, backgroundColor: palette.surface, alignItems: 'center', justifyContent: 'center' },
+  iconButton: { width: 42, height: 42, borderRadius: radius.full, backgroundColor: palette.surface, alignItems: 'center', justifyContent: 'center' },
   statusCard: { paddingVertical: 4, gap: 16 },
-  weeklyRingsRow: { flexDirection: 'row', justifyContent: 'center', gap: 8, alignItems: 'center', paddingTop: 16 },
-  weeklyRingItem: { alignItems: 'center', paddingHorizontal: 4, paddingVertical: 4, borderRadius: 12 },
+  weeklyRingsRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 16 },
+  weeklyRingItem: { alignItems: 'center', paddingHorizontal: 4, paddingVertical: 4, borderRadius: radius.md },
   weeklyRingDot: { height: 5, alignItems: 'center', justifyContent: 'center', marginTop: 2 },
   weeklyRingDotInner: { width: 4, height: 4, borderRadius: 2 },
   ringRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  sideColumn: { flex: 1, alignItems: 'center', gap: 2, paddingVertical: 8, borderRadius: 12 },
+  sideColumn: { flex: 1, alignItems: 'center', gap: 2, paddingVertical: 8, borderRadius: radius.md },
   sideColumnPressed: { opacity: 0.6 },
   sideLabel: { fontSize: fs.xs, fontWeight: '600', color: palette.textMuted, letterSpacing: 0.4 },
   sideLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 2, justifyContent: 'center' },
@@ -1533,7 +1531,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 320,
     backgroundColor: palette.surface,
-    borderRadius: 24,
+    borderRadius: radius['2xl'],
     paddingHorizontal: 24,
     paddingTop: 12,
     paddingBottom: 24,
@@ -1542,7 +1540,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-end',
     width: 32,
     height: 32,
-    borderRadius: 16,
+    borderRadius: radius.full,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1577,11 +1575,10 @@ const styles = StyleSheet.create({
   /** 進捗バー */
   balanceProgressTrack: {
     height: 6,
-    borderRadius: 999,
-    backgroundColor: '#E2DDD4',
+    borderRadius: radius.full,
     overflow: 'hidden',
   },
-  balanceProgressFill: { height: '100%', borderRadius: 999 },
+  balanceProgressFill: { height: '100%', borderRadius: radius.full },
   /** 計算式ブロック (常に表示) */
   balanceMath: {
     marginTop: 22,
@@ -1638,8 +1635,8 @@ const styles = StyleSheet.create({
   miniBarItem: { flex: 1, gap: 4 },
   miniBarLabel: { fontSize: fs.sm, color: palette.textMuted, fontWeight: '600' },
   miniBarLetter: { fontWeight: '700' },
-  miniBarTrack: { height: 6, borderRadius: 999, backgroundColor: '#E2DDD4', overflow: 'hidden' },
-  miniBarFill: { height: '100%', borderRadius: 999 },
+  miniBarTrack: { height: 6, borderRadius: radius.full, overflow: 'hidden' },
+  miniBarFill: { height: '100%', borderRadius: radius.full },
   miniBarValue: { fontSize: fs.sm, color: palette.text, fontWeight: '600' },
   miniBarValueTarget: { color: palette.textMuted, fontWeight: '600' },
   sectionTitle: { fontSize: fs.lg, fontWeight: '700', color: palette.sheetInk, marginBottom: 14 },
@@ -1651,49 +1648,49 @@ const styles = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 14 },
   quickButton: { width: '31.5%', aspectRatio: 1, backgroundColor: palette.surface, borderRadius: 28, alignItems: 'center', justifyContent: 'center', gap: 10 },
   quickEmoji: { fontSize: 31 },
-  quickLabel: { fontSize: fs.md, color: '#354137', textAlign: 'center', fontWeight: '500' },
-  sheetCard: { marginTop: 6, backgroundColor: palette.sheet, borderRadius: 32, padding: 18, paddingBottom: 22 },
-  sheetHandle: { width: 52, height: 6, borderRadius: 999, backgroundColor: '#C6C6BD', alignSelf: 'center', marginBottom: 18 },
+  quickLabel: { fontSize: fs.md, color: palette.text, textAlign: 'center', fontWeight: '500' },
+  sheetCard: { marginTop: 6, backgroundColor: palette.sheet, borderRadius: radius['3xl'], padding: 18, paddingBottom: 22 },
+  sheetHandle: { width: 52, height: 6, borderRadius: radius.full, backgroundColor: colors.stone[300], alignSelf: 'center', marginBottom: 18 },
   sheetHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
   sheetTitle: { fontSize: fs.lg, fontWeight: '700', color: palette.sheetInk },
   sheetCount: { fontSize: fs.sm, color: palette.textMuted },
-  emptyState: { backgroundColor: palette.surface, borderRadius: 24, padding: 22, gap: 8 },
+  emptyState: { backgroundColor: palette.surface, borderRadius: radius['2xl'], padding: 22, gap: 8 },
   emptyTitle: { fontSize: fs.callout, fontWeight: '700', color: palette.text },
   emptyText: { fontSize: fs.md, lineHeight: 21, color: palette.textMuted },
-  logItem: { backgroundColor: palette.surface, borderRadius: 24, padding: 16, marginBottom: 12, gap: 12 },
+  logItem: { backgroundColor: palette.surface, borderRadius: radius['2xl'], padding: 16, marginBottom: 12, gap: 12 },
   logItemTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 },
   logTitle: { fontSize: fs.callout, fontWeight: '700', color: palette.sheetInk },
   logSubtitle: { marginTop: 4, fontSize: fs.sm, color: palette.textMuted },
   logKcal: { fontSize: fs.md, fontWeight: '700', color: palette.sageDeep },
   logMacroRow: { flexDirection: 'row', gap: 8 },
-  macroPill: { flexDirection: 'row', gap: 4, paddingHorizontal: 11, paddingVertical: 7, borderRadius: 999, backgroundColor: '#ECE5D9' },
+  macroPill: { flexDirection: 'row', gap: 4, paddingHorizontal: 11, paddingVertical: 7, borderRadius: radius.full },
   macroPillLabel: { fontSize: fs.caption1, color: palette.textMuted, fontWeight: '700' },
   macroPillValue: { fontSize: fs.caption1, color: palette.text, fontWeight: '700' },
   logActionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   amountRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  amountButton: { width: 30, height: 30, borderRadius: 15, backgroundColor: palette.card, alignItems: 'center', justifyContent: 'center' },
+  amountButton: { width: 30, height: 30, borderRadius: radius.full, backgroundColor: palette.card, alignItems: 'center', justifyContent: 'center' },
   amountButtonText: { fontSize: fs.callout, color: palette.text, fontWeight: '700' },
   amountText: { fontSize: fs.md, color: palette.textMuted },
-  deleteButton: { backgroundColor: '#F0E2DD', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 8 },
+  deleteButton: { backgroundColor: colors.clay[100], borderRadius: radius.full, paddingHorizontal: 12, paddingVertical: 8 },
   deleteButtonText: { color: palette.danger, fontSize: fs.sm, fontWeight: '700' },
-  feedbackBubble: { position: 'absolute', top: 340, alignSelf: 'center', backgroundColor: palette.sageDeep, paddingHorizontal: 16, paddingVertical: 12, borderRadius: 20, alignItems: 'center', shadowColor: palette.sageDeep, shadowOpacity: 0.24, shadowRadius: 16, shadowOffset: { width: 0, height: 10 }, elevation: 4 },
+  feedbackBubble: { position: 'absolute', top: 340, alignSelf: 'center', backgroundColor: palette.sageDeep, paddingHorizontal: 16, paddingVertical: 12, borderRadius: radius.xl, alignItems: 'center', ...elevation.lg, shadowColor: palette.sageDeep },
   feedbackText: { color: palette.white, fontSize: fs.callout, fontWeight: '700' },
-  feedbackMacro: { color: 'rgba(255,255,255,0.82)', fontSize: fs.caption1, marginTop: 2 },
+  feedbackMacro: { color: 'rgba(255,255,255,0.82)', fontSize: fs.caption1, marginTop: 2 }, // 暗背景上の半透明白文字。専用トークンなし (許容例外)
   // Live preview state (sheet open, before save). Same position as feedbackBubble
   // but cream/sage-pale to read as "tentative". Pointer-events disabled so it
   // doesn't intercept taps on the open sheet.
-  feedbackBubbleLive: { position: 'absolute', top: 340, alignSelf: 'center', backgroundColor: palette.surface, borderWidth: 1.5, borderColor: palette.sageStrong, paddingHorizontal: 16, paddingVertical: 12, borderRadius: 20, alignItems: 'center', shadowColor: palette.sageStrong, shadowOpacity: 0.16, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 2 },
+  feedbackBubbleLive: { position: 'absolute', top: 340, alignSelf: 'center', backgroundColor: palette.surface, borderWidth: 1.5, borderColor: palette.sageStrong, paddingHorizontal: 16, paddingVertical: 12, borderRadius: radius.xl, alignItems: 'center', ...elevation.md, shadowColor: palette.sageStrong },
   feedbackTextLive: { color: palette.sageDeep, fontSize: fs.callout, fontWeight: '700' },
   feedbackMacroLive: { color: palette.textMuted, fontSize: fs.caption1, marginTop: 2 },
-  undoToast: { position: 'absolute', left: 18, right: 18, bottom: 24, borderRadius: 22, backgroundColor: '#29322C', paddingHorizontal: 18, paddingVertical: 15, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  undoToast: { position: 'absolute', left: 18, right: 18, bottom: 24, borderRadius: radius.xl, paddingHorizontal: 18, paddingVertical: 15, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   undoTitle: { color: palette.white, fontSize: fs.md, fontWeight: '700' },
-  undoText: { color: 'rgba(255,255,255,0.72)', fontSize: fs.caption1, marginTop: 4 },
-  undoAction: { color: '#E9C28F', fontSize: fs.md, fontWeight: '700' },
+  undoText: { color: 'rgba(255,255,255,0.72)', fontSize: fs.caption1, marginTop: 4 }, // 暗背景上の半透明白文字。専用トークンなし (許容例外)
+  undoAction: { color: colors.amber[200], fontSize: fs.md, fontWeight: '700' },
   modalOverlay: { flex: 1, backgroundColor: palette.scrimLight, justifyContent: 'flex-end' },
   modalSheet: { backgroundColor: palette.surface, borderTopLeftRadius: 30, borderTopRightRadius: 30, paddingHorizontal: 20, paddingTop: 12, paddingBottom: 30, gap: 18 },
-  sheetGrabber: { alignSelf: 'center', width: 44, height: 5, borderRadius: 3, backgroundColor: 'rgba(49, 83, 71, 0.18)', marginBottom: 8 },
+  sheetGrabber: { alignSelf: 'center', width: 44, height: 5, borderRadius: radius.xs, backgroundColor: palette.dim, marginBottom: 8 },
   sheetHero: { alignItems: 'center', gap: 8, paddingTop: 8 },
-  statusAvatarLarge: { width: 84, height: 84, borderRadius: 42, backgroundColor: palette.sageDeep, alignItems: 'center', justifyContent: 'center' },
+  statusAvatarLarge: { width: 84, height: 84, borderRadius: radius.full, backgroundColor: palette.sageDeep, alignItems: 'center', justifyContent: 'center' },
   statusAvatarEmoji: { fontSize: 42 },
   sheetHeroTitle: { fontSize: fs['2xl'], fontWeight: '700', color: palette.text },
   sheetHeroSubtitle: { fontSize: fs.md, color: palette.textMuted },
@@ -1712,17 +1709,17 @@ const styles = StyleSheet.create({
   editorSection: { gap: 12 },
   editorSectionTitle: { fontSize: fs.md, fontWeight: '700', color: palette.text },
   optionWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 999, backgroundColor: palette.card },
+  chip: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: radius.full, backgroundColor: palette.card },
   chipActive: { backgroundColor: palette.sageDeep },
   chipText: { fontSize: fs.sm, color: palette.text, fontWeight: '600' },
   chipTextActive: { color: palette.white },
-  previewCard: { backgroundColor: palette.card, borderRadius: 24, padding: 16, gap: 10 },
+  previewCard: { backgroundColor: palette.card, borderRadius: radius['2xl'], padding: 16, gap: 10 },
   previewTitle: { fontSize: fs.sm, color: palette.textMuted },
   previewSummaryText: { fontSize: fs.md, color: palette.text, fontWeight: '600', lineHeight: 20 },
   previewSummaryDivider: { color: palette.textMuted, fontWeight: '400' },
   previewSummarySecondary: { fontSize: fs.caption1, color: palette.textMuted, marginTop: -2 },
   previewCalories: { fontSize: fs['3xl'], fontWeight: '700', color: palette.sageDeep },
-  categoryRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: palette.card, borderRadius: 16, paddingHorizontal: 14, paddingVertical: 12 },
+  categoryRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: palette.card, borderRadius: radius.lg, paddingHorizontal: 14, paddingVertical: 12 },
   categoryRowLabel: { fontSize: fs.sm, color: palette.textMuted, fontWeight: '600' },
   categoryRowValue: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   categoryRowValueText: { fontSize: fs.md, color: palette.text, fontWeight: '700' },
@@ -1735,23 +1732,23 @@ const styles = StyleSheet.create({
   portionSection: { backgroundColor: palette.surface, borderRadius: 22, padding: 16, gap: 10, borderWidth: 1, borderColor: palette.border },
   portionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   portionTitle: { fontSize: fs.md, fontWeight: '700', color: palette.text },
-  portionBadge: { fontSize: fs.sm, fontWeight: '700', color: palette.sageDeep, backgroundColor: palette.accentSoft, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999 },
+  portionBadge: { fontSize: fs.sm, fontWeight: '700', color: palette.sageDeep, backgroundColor: palette.accentSoft, paddingHorizontal: 10, paddingVertical: 4, borderRadius: radius.full },
   portionBaseline: { fontSize: fs.caption1, color: palette.textMuted },
   portionNowLine: { fontSize: fs.md, color: palette.text, fontWeight: '700', marginTop: 2 },
   portionNowLineMuted: { color: palette.textMuted, fontWeight: '500', fontSize: fs.caption1 },
   sliderWrap: { paddingTop: 10, paddingBottom: 4 },
-  sliderTrack: { height: 36, justifyContent: 'center', borderRadius: 999 },
-  sliderFill: { position: 'absolute', left: 0, height: 6, backgroundColor: palette.sageStrong, borderRadius: 999, top: 15 },
-  sliderTick: { position: 'absolute', width: 6, height: 6, borderRadius: 3, backgroundColor: palette.cardStrong, top: 15 },
+  sliderTrack: { height: 36, justifyContent: 'center', borderRadius: radius.full },
+  sliderFill: { position: 'absolute', left: 0, height: 6, backgroundColor: palette.sageStrong, borderRadius: radius.full, top: 15 },
+  sliderTick: { position: 'absolute', width: 6, height: 6, borderRadius: radius.full, backgroundColor: palette.cardStrong, top: 15 },
   sliderTickActive: { backgroundColor: palette.sageDeep },
-  sliderThumb: { position: 'absolute', width: 28, height: 28, borderRadius: 14, backgroundColor: palette.white, borderWidth: 2, borderColor: palette.sageDeep, top: 4, shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 3 },
+  sliderThumb: { position: 'absolute', width: 28, height: 28, borderRadius: radius.full, backgroundColor: palette.white, borderWidth: 2, borderColor: palette.sageDeep, top: 4, ...elevation.sm },
   sliderLabelsRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 2 },
   sliderLabelTap: { alignItems: 'center', flex: 1, paddingVertical: 4 },
   sliderLabelText: { fontSize: fs.caption1, color: palette.textMuted, fontWeight: '600' },
   sliderLabelTextActive: { color: palette.sageDeep, fontWeight: '700' },
   editorFooter: { flexDirection: 'row', gap: 10, marginTop: 12 },
-  secondaryButton: { flex: 1, backgroundColor: '#F0E2DD', borderRadius: 999, paddingVertical: 14, alignItems: 'center' },
+  secondaryButton: { flex: 1, backgroundColor: colors.clay[100], borderRadius: radius.full, paddingVertical: 14, alignItems: 'center' },
   secondaryButtonText: { color: palette.danger, fontSize: fs.md, fontWeight: '700' },
-  primaryButton: { flex: 1, backgroundColor: palette.sageDeep, borderRadius: 999, paddingVertical: 14, alignItems: 'center' },
+  primaryButton: { flex: 1, backgroundColor: palette.sageDeep, borderRadius: radius.full, paddingVertical: 14, alignItems: 'center' },
   primaryButtonText: { color: palette.white, fontSize: fs.md, fontWeight: '700' },
 });

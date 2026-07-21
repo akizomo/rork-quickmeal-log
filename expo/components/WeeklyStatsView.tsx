@@ -13,7 +13,6 @@ import { adjustedTargetKcal, getTdeeExerciseKcalForDate } from '@/utils/goals';
 import { formatDateKey } from '@/utils/nutrition';
 import {
   addDays,
-  averageLoggedDays,
   formatShortDay,
   formatWeekRangeLabel,
   getDailyMacros,
@@ -41,7 +40,35 @@ export function WeeklyStatsView() {
   const range = useMemo(() => getWeekRange(anchor), [anchor]);
   const dailyMap = useMemo(() => getDailyMacros(logs, range), [logs, range]);
   const dailyEntries = useMemo(() => Array.from(dailyMap.entries()), [dailyMap]);
-  const avgMacro = useMemo(() => averageLoggedDays(dailyMap), [dailyMap]);
+
+  // 進行中の当日は目標に対してまだ食べきっていないだけで不足に見えるため、
+  // サマリー系の平均（kcal・PFCバー・リング）はすべて「完了した日」を優先して集計する。
+  // 完了した日が1日もなければ（例: 週の初日）当日込みの記録日にフォールバック。
+  const todayKey = useMemo(() => formatDateKey(today), [today]);
+  const summaryKeys = useMemo(() => {
+    const completed = dailyEntries.filter(([k, m]) => k !== todayKey && m.kcal > 0).map(([k]) => k);
+    if (completed.length > 0) return completed;
+    return dailyEntries.filter(([, m]) => m.kcal > 0).map(([k]) => k);
+  }, [dailyEntries, todayKey]);
+
+  const avgMacro = useMemo(() => {
+    if (summaryKeys.length === 0) return { kcal: 0, protein: 0, fat: 0, carbs: 0 };
+    const sum = summaryKeys.reduce(
+      (acc, k) => {
+        const m = dailyMap.get(k);
+        return m
+          ? { kcal: acc.kcal + m.kcal, protein: acc.protein + m.protein, fat: acc.fat + m.fat, carbs: acc.carbs + m.carbs }
+          : acc;
+      },
+      { kcal: 0, protein: 0, fat: 0, carbs: 0 }
+    );
+    return {
+      kcal: sum.kcal / summaryKeys.length,
+      protein: sum.protein / summaryKeys.length,
+      fat: sum.fat / summaryKeys.length,
+      carbs: sum.carbs / summaryKeys.length,
+    };
+  }, [summaryKeys, dailyMap]);
 
   const dailyExerciseMap = useMemo(() => {
     const map = new Map<string, number>();
@@ -63,30 +90,16 @@ export function WeeklyStatsView() {
   }, [dailyEntries, exerciseLogs, profile.targetCalories, dailyActivities]);
 
   const avgAdjustedTarget = useMemo(() => {
-    const loggedKeys = dailyEntries.filter(([k]) => (dailyMap.get(k)?.kcal ?? 0) > 0).map(([k]) => k);
-    if (loggedKeys.length === 0) return profile.targetCalories;
-    const sum = loggedKeys.reduce((acc, k) => acc + (dailyAdjustedTargetMap.get(k) ?? 0), 0);
-    return Math.round(sum / loggedKeys.length);
-  }, [dailyEntries, dailyMap, dailyAdjustedTargetMap, profile.targetCalories]);
-
-  // 進行中の当日は目標に対してまだ食べきっていないだけで不足に見えるため、
-  // リングの目標比には含めない（完了した日のみで平均する）。
-  const todayKey = useMemo(() => formatDateKey(today), [today]);
-  const completedPeriodAvg = useMemo(() => {
-    const completed = dailyEntries.filter(([k, m]) => k !== todayKey && m.kcal > 0);
-    if (completed.length === 0) return null;
-    const sumKcal = completed.reduce((acc, [, m]) => acc + m.kcal, 0);
-    const sumTarget = completed.reduce((acc, [k]) => acc + (dailyAdjustedTargetMap.get(k) ?? 0), 0);
-    if (sumTarget <= 0) return null;
-    return { avgKcal: sumKcal / completed.length, avgTarget: sumTarget / completed.length };
-  }, [dailyEntries, todayKey, dailyAdjustedTargetMap]);
+    if (summaryKeys.length === 0) return profile.targetCalories;
+    const sum = summaryKeys.reduce((acc, k) => acc + (dailyAdjustedTargetMap.get(k) ?? 0), 0);
+    return Math.round(sum / summaryKeys.length);
+  }, [summaryKeys, dailyAdjustedTargetMap, profile.targetCalories]);
 
   const avgExerciseKcal = useMemo(() => {
-    const loggedKeys = dailyEntries.filter(([k]) => (dailyMap.get(k)?.kcal ?? 0) > 0).map(([k]) => k);
-    if (loggedKeys.length === 0) return 0;
-    const sum = loggedKeys.reduce((acc, k) => acc + (dailyExerciseMap.get(k) ?? 0), 0);
-    return Math.round(sum / loggedKeys.length);
-  }, [dailyEntries, dailyMap, dailyExerciseMap]);
+    if (summaryKeys.length === 0) return 0;
+    const sum = summaryKeys.reduce((acc, k) => acc + (dailyExerciseMap.get(k) ?? 0), 0);
+    return Math.round(sum / summaryKeys.length);
+  }, [summaryKeys, dailyExerciseMap]);
 
   // 日ごとのPFC目標: kcal目標と同じ比率（運動による拡大）でP/F/Cも拡大する（ホーム画面と同じロジック）
   const dailyEffectivePfcMap = useMemo(() => {
@@ -104,11 +117,10 @@ export function WeeklyStatsView() {
   }, [dailyEntries, dailyAdjustedTargetMap, profile.targetCalories, profile.targetProtein, profile.targetFat, profile.targetCarbs]);
 
   const avgPfcTarget = useMemo(() => {
-    const loggedKeys = dailyEntries.filter(([k]) => (dailyMap.get(k)?.kcal ?? 0) > 0).map(([k]) => k);
-    if (loggedKeys.length === 0) {
+    if (summaryKeys.length === 0) {
       return { protein: profile.targetProtein, fat: profile.targetFat, carbs: profile.targetCarbs };
     }
-    const sum = loggedKeys.reduce(
+    const sum = summaryKeys.reduce(
       (acc, k) => {
         const v = dailyEffectivePfcMap.get(k);
         return v ? { protein: acc.protein + v.protein, fat: acc.fat + v.fat, carbs: acc.carbs + v.carbs } : acc;
@@ -116,11 +128,11 @@ export function WeeklyStatsView() {
       { protein: 0, fat: 0, carbs: 0 }
     );
     return {
-      protein: sum.protein / loggedKeys.length,
-      fat: sum.fat / loggedKeys.length,
-      carbs: sum.carbs / loggedKeys.length,
+      protein: sum.protein / summaryKeys.length,
+      fat: sum.fat / summaryKeys.length,
+      carbs: sum.carbs / summaryKeys.length,
     };
-  }, [dailyEntries, dailyMap, dailyEffectivePfcMap, profile.targetProtein, profile.targetFat, profile.targetCarbs]);
+  }, [summaryKeys, dailyEffectivePfcMap, profile.targetProtein, profile.targetFat, profile.targetCarbs]);
 
   const canGoPrev = useMemo(() => {
     const prevWeekEnd = addDays(range.start, -1);
@@ -138,10 +150,10 @@ export function WeeklyStatsView() {
   }, [canGoNext]);
 
   const targetKcal = avgAdjustedTarget > 0 ? avgAdjustedTarget : profile.targetCalories > 0 ? profile.targetCalories : 0;
-  // リング表示用: 完了日の平均があればそれを優先、なければ当日込みの平均にフォールバック
+  // avgMacro/avgAdjustedTarget が既に「完了した日優先」で集計されているため、そのまま使う。
   const ringAvg = useMemo(
-    () => completedPeriodAvg ?? (targetKcal > 0 ? { avgKcal: avgMacro.kcal, avgTarget: targetKcal } : null),
-    [completedPeriodAvg, targetKcal, avgMacro]
+    () => (targetKcal > 0 ? { avgKcal: avgMacro.kcal, avgTarget: targetKcal } : null),
+    [targetKcal, avgMacro]
   );
   const dayTargets = useMemo(
     () => dailyEntries.map(([key]) => dailyAdjustedTargetMap.get(key) ?? 0),
@@ -286,7 +298,6 @@ export function WeeklyStatsView() {
               centerMode="remaining"
               showCenterLabel={false}
               showStatusText={false}
-              showAchievedCheck
               animate={false}
               testID="week-ratio-ring"
             />
@@ -303,6 +314,7 @@ export function WeeklyStatsView() {
             target={avgPfcTarget.protein}
             textColor={t.colors.nutrition.protein.text}
             graphicColor={t.colors.nutrition.protein.graphic}
+            trackColor={t.colors.nutrition.protein.background}
           />
           <MiniProgressBar
             letter="F"
@@ -311,6 +323,7 @@ export function WeeklyStatsView() {
             target={avgPfcTarget.fat}
             textColor={t.colors.nutrition.fat.text}
             graphicColor={t.colors.nutrition.fat.graphic}
+            trackColor={t.colors.nutrition.fat.background}
           />
           <MiniProgressBar
             letter="C"
@@ -319,6 +332,7 @@ export function WeeklyStatsView() {
             target={avgPfcTarget.carbs}
             textColor={t.colors.nutrition.carbs.text}
             graphicColor={t.colors.nutrition.carbs.graphic}
+            trackColor={t.colors.nutrition.carbs.background}
           />
         </View>
       </View>

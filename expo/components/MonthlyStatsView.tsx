@@ -12,7 +12,6 @@ import { adjustedTargetKcal, getTdeeExerciseKcalForDate } from '@/utils/goals';
 import { formatDateKey } from '@/utils/nutrition';
 import {
   addDays,
-  averageLoggedDays,
   formatMonthLabel,
   formatShortDay,
   getDailyMacros,
@@ -40,7 +39,6 @@ export function MonthlyStatsView() {
   const cells = useMemo(() => getMonthCalendarCells(anchor), [anchor]);
   const monthRange = useMemo(() => getMonthRange(anchor), [anchor]);
   const monthDailyMap = useMemo(() => getDailyMacros(logs, monthRange), [logs, monthRange]);
-  const avgMacro = useMemo(() => averageLoggedDays(monthDailyMap), [monthDailyMap]);
   // 今日以前の日付のみ、新しい順で表示
   const monthDailyEntries = useMemo(
     () =>
@@ -49,6 +47,37 @@ export function MonthlyStatsView() {
         .reverse(),
     [monthDailyMap, today]
   );
+
+  // 進行中の当日は目標に対してまだ食べきっていないだけで不足に見えるため、
+  // サマリー系の平均（kcal・PFCバー・リング）はすべて「完了した日」を優先して集計する。
+  // 完了した日が1日もなければ（例: 月の初日）当日込みの記録日にフォールバック。
+  const todayKey = useMemo(() => formatDateKey(today), [today]);
+  const summaryKeys = useMemo(() => {
+    const completed = Array.from(monthDailyMap.entries())
+      .filter(([k, m]) => k !== todayKey && m.kcal > 0)
+      .map(([k]) => k);
+    if (completed.length > 0) return completed;
+    return Array.from(monthDailyMap.entries()).filter(([, m]) => m.kcal > 0).map(([k]) => k);
+  }, [monthDailyMap, todayKey]);
+
+  const avgMacro = useMemo(() => {
+    if (summaryKeys.length === 0) return { kcal: 0, protein: 0, fat: 0, carbs: 0 };
+    const sum = summaryKeys.reduce(
+      (acc, k) => {
+        const m = monthDailyMap.get(k);
+        return m
+          ? { kcal: acc.kcal + m.kcal, protein: acc.protein + m.protein, fat: acc.fat + m.fat, carbs: acc.carbs + m.carbs }
+          : acc;
+      },
+      { kcal: 0, protein: 0, fat: 0, carbs: 0 }
+    );
+    return {
+      kcal: sum.kcal / summaryKeys.length,
+      protein: sum.protein / summaryKeys.length,
+      fat: sum.fat / summaryKeys.length,
+      carbs: sum.carbs / summaryKeys.length,
+    };
+  }, [summaryKeys, monthDailyMap]);
 
   const monthExerciseMap = useMemo(() => {
     const map = new Map<string, number>();
@@ -70,37 +99,21 @@ export function MonthlyStatsView() {
   }, [monthDailyMap, exerciseLogs, profile.targetCalories, dailyActivities]);
 
   const avgExerciseKcal = useMemo(() => {
-    const loggedKeys = Array.from(monthDailyMap.entries())
-      .filter(([, m]) => m.kcal > 0)
-      .map(([k]) => k);
-    if (loggedKeys.length === 0) return 0;
-    const sum = loggedKeys.reduce((acc, k) => acc + (monthExerciseMap.get(k) ?? 0), 0);
-    return Math.round(sum / loggedKeys.length);
-  }, [monthDailyMap, monthExerciseMap]);
-
-  // 進行中の当日は目標に対してまだ食べきっていないだけで不足に見えるため、
-  // リングの目標比には含めない（完了した日のみで平均する）。
-  const todayKey = useMemo(() => formatDateKey(today), [today]);
-  const completedPeriodAvg = useMemo(() => {
-    const completed = Array.from(monthDailyMap.entries()).filter(([k, m]) => k !== todayKey && m.kcal > 0);
-    if (completed.length === 0) return null;
-    const sumKcal = completed.reduce((acc, [, m]) => acc + m.kcal, 0);
-    const sumTarget = completed.reduce((acc, [k]) => acc + (monthAdjustedTargetMap.get(k) ?? 0), 0);
-    if (sumTarget <= 0) return null;
-    return { avgKcal: sumKcal / completed.length, avgTarget: sumTarget / completed.length };
-  }, [monthDailyMap, todayKey, monthAdjustedTargetMap]);
+    if (summaryKeys.length === 0) return 0;
+    const sum = summaryKeys.reduce((acc, k) => acc + (monthExerciseMap.get(k) ?? 0), 0);
+    return Math.round(sum / summaryKeys.length);
+  }, [summaryKeys, monthExerciseMap]);
 
   const avgAdjustedTarget = useMemo(() => {
-    const loggedKeys = Array.from(monthDailyMap.entries()).filter(([, m]) => m.kcal > 0).map(([k]) => k);
-    if (loggedKeys.length === 0) return profile.targetCalories;
-    const sum = loggedKeys.reduce((acc, k) => acc + (monthAdjustedTargetMap.get(k) ?? 0), 0);
-    return Math.round(sum / loggedKeys.length);
-  }, [monthDailyMap, monthAdjustedTargetMap, profile.targetCalories]);
+    if (summaryKeys.length === 0) return profile.targetCalories;
+    const sum = summaryKeys.reduce((acc, k) => acc + (monthAdjustedTargetMap.get(k) ?? 0), 0);
+    return Math.round(sum / summaryKeys.length);
+  }, [summaryKeys, monthAdjustedTargetMap, profile.targetCalories]);
 
-  // リング表示用: 完了日の平均があればそれを優先、なければ当日込みの平均にフォールバック
+  // avgMacro/avgAdjustedTarget が既に「完了した日優先」で集計されているため、そのまま使う。
   const monthRingAvg = useMemo(
-    () => completedPeriodAvg ?? (avgAdjustedTarget > 0 ? { avgKcal: avgMacro.kcal, avgTarget: avgAdjustedTarget } : null),
-    [completedPeriodAvg, avgAdjustedTarget, avgMacro]
+    () => (avgAdjustedTarget > 0 ? { avgKcal: avgMacro.kcal, avgTarget: avgAdjustedTarget } : null),
+    [avgAdjustedTarget, avgMacro]
   );
 
   // 日ごとのPFC目標: kcal目標と同じ比率（運動による拡大）でP/F/Cも拡大する（ホーム画面と同じロジック）
@@ -119,11 +132,10 @@ export function MonthlyStatsView() {
   }, [monthDailyMap, monthAdjustedTargetMap, profile.targetCalories, profile.targetProtein, profile.targetFat, profile.targetCarbs]);
 
   const avgPfcTarget = useMemo(() => {
-    const loggedKeys = Array.from(monthDailyMap.entries()).filter(([, m]) => m.kcal > 0).map(([k]) => k);
-    if (loggedKeys.length === 0) {
+    if (summaryKeys.length === 0) {
       return { protein: profile.targetProtein, fat: profile.targetFat, carbs: profile.targetCarbs };
     }
-    const sum = loggedKeys.reduce(
+    const sum = summaryKeys.reduce(
       (acc, k) => {
         const v = dailyEffectivePfcMap.get(k);
         return v ? { protein: acc.protein + v.protein, fat: acc.fat + v.fat, carbs: acc.carbs + v.carbs } : acc;
@@ -131,11 +143,11 @@ export function MonthlyStatsView() {
       { protein: 0, fat: 0, carbs: 0 }
     );
     return {
-      protein: sum.protein / loggedKeys.length,
-      fat: sum.fat / loggedKeys.length,
-      carbs: sum.carbs / loggedKeys.length,
+      protein: sum.protein / summaryKeys.length,
+      fat: sum.fat / summaryKeys.length,
+      carbs: sum.carbs / summaryKeys.length,
     };
-  }, [monthDailyMap, dailyEffectivePfcMap, profile.targetProtein, profile.targetFat, profile.targetCarbs]);
+  }, [summaryKeys, dailyEffectivePfcMap, profile.targetProtein, profile.targetFat, profile.targetCarbs]);
 
   const canGoPrev = useMemo(() => {
     const prevMonth = new Date(anchor.getFullYear(), anchor.getMonth() - 1, 1);
@@ -277,7 +289,6 @@ export function MonthlyStatsView() {
               centerMode="remaining"
               showCenterLabel={false}
               showStatusText={false}
-              showAchievedCheck
               animate={false}
               testID="month-ratio-ring"
             />
@@ -294,6 +305,7 @@ export function MonthlyStatsView() {
             target={avgPfcTarget.protein}
             textColor={t.colors.nutrition.protein.text}
             graphicColor={t.colors.nutrition.protein.graphic}
+            trackColor={t.colors.nutrition.protein.background}
           />
           <MiniProgressBar
             letter="F"
@@ -302,6 +314,7 @@ export function MonthlyStatsView() {
             target={avgPfcTarget.fat}
             textColor={t.colors.nutrition.fat.text}
             graphicColor={t.colors.nutrition.fat.graphic}
+            trackColor={t.colors.nutrition.fat.background}
           />
           <MiniProgressBar
             letter="C"
@@ -310,6 +323,7 @@ export function MonthlyStatsView() {
             target={avgPfcTarget.carbs}
             textColor={t.colors.nutrition.carbs.text}
             graphicColor={t.colors.nutrition.carbs.graphic}
+            trackColor={t.colors.nutrition.carbs.background}
           />
         </View>
       </View>
