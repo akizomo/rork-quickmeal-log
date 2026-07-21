@@ -24,8 +24,10 @@ class WidgetBridgeModule(private val reactContext: ReactApplicationContext) :
         WidgetStateManager.setKcal(ctx, consumed, target)
         scope.launch {
             try { Widget2x2Glance().updateAll(ctx) } catch (_: Exception) {}
+            try { Widget2x2RingGlance().updateAll(ctx) } catch (_: Exception) {}
             try { Widget4x2Glance().updateAll(ctx) } catch (_: Exception) {}
             try { Widget3x3Glance().updateAll(ctx) } catch (_: Exception) {}
+            try { Widget4x3Glance().updateAll(ctx) } catch (_: Exception) {}
         }
     }
 
@@ -54,8 +56,10 @@ class WidgetBridgeModule(private val reactContext: ReactApplicationContext) :
             WidgetStateManager.setCategories(ctx, cats)
             scope.launch {
                 try { Widget2x2Glance().updateAll(ctx) } catch (_: Exception) {}
+                try { Widget2x2RingGlance().updateAll(ctx) } catch (_: Exception) {}
                 try { Widget4x2Glance().updateAll(ctx) } catch (_: Exception) {}
                 try { Widget3x3Glance().updateAll(ctx) } catch (_: Exception) {}
+                try { Widget4x3Glance().updateAll(ctx) } catch (_: Exception) {}
             }
         } catch (e: Exception) {
             // 無効な JSON は無視
@@ -89,8 +93,10 @@ class WidgetBridgeModule(private val reactContext: ReactApplicationContext) :
         if (queue.isNotEmpty()) {
             scope.launch {
                 try { Widget2x2Glance().updateAll(ctx) } catch (_: Exception) {}
+                try { Widget2x2RingGlance().updateAll(ctx) } catch (_: Exception) {}
                 try { Widget4x2Glance().updateAll(ctx) } catch (_: Exception) {}
                 try { Widget3x3Glance().updateAll(ctx) } catch (_: Exception) {}
+                try { Widget4x3Glance().updateAll(ctx) } catch (_: Exception) {}
             }
         }
         promise.resolve(arr.toString())

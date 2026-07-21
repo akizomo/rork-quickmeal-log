@@ -16,9 +16,9 @@ import androidx.glance.layout.*
 import androidx.glance.text.*
 import androidx.glance.unit.ColorProvider
 
-// ── 3×3: 9ボタン + サマリーヘッダー ──────────────────────────────────────────
+// ── 4×3: 9ボタン + サマリーヘッダー (3×3の4セル幅版) ──────────────────────────
 
-class Widget3x3Glance : GlanceAppWidget() {
+class Widget4x3Glance : GlanceAppWidget() {
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         provideContent { Content(context) }
@@ -26,7 +26,7 @@ class Widget3x3Glance : GlanceAppWidget() {
 
     @Composable
     private fun Content(context: Context) {
-        val categories = WidgetStateManager.getCategories(context)
+        val categories = WidgetStateManager.getCategories(context).take(9)
         val logged     = WidgetStateManager.getLoggedCategories(context)
         val consumed   = WidgetStateManager.getConsumedKcal(context)
         val target     = WidgetStateManager.getTargetKcal(context)
@@ -47,21 +47,18 @@ class Widget3x3Glance : GlanceAppWidget() {
 
                 // ── ヘッダー (タップでアプリへ) ──────────────────────────────
                 Row(
-                    modifier            = GlanceModifier
+                    modifier          = GlanceModifier
                         .fillMaxWidth()
                         .padding(horizontal = 4.dp, vertical = 2.dp)
                         .clickable(openAppAction(context)),
-                    verticalAlignment   = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // アークリング (ラベルなし)
                     Image(
                         provider           = BitmapImageProvider(ringBmp),
                         contentDescription = "カロリーリング",
                         contentScale       = ContentScale.Fit,
                         modifier           = GlanceModifier.size(44.dp)
                     )
-
-                    // テキストサマリー
                     Column(modifier = GlanceModifier.defaultWeight().padding(start = 8.dp)) {
                         Row(verticalAlignment = Alignment.Bottom) {
                             Text(
@@ -76,7 +73,7 @@ class Widget3x3Glance : GlanceAppWidget() {
                                 " / $target kcal",
                                 style = TextStyle(
                                     color    = ColorProvider(Color(0x8CF0F4EF.toInt())),
-                                    fontSize = 11.sp  // fontSize.xs (minimum)
+                                    fontSize = 11.sp
                                 )
                             )
                         }
@@ -109,6 +106,6 @@ class Widget3x3Glance : GlanceAppWidget() {
     }
 }
 
-class Widget3x3Receiver : GlanceAppWidgetReceiver() {
-    override val glanceAppWidget = Widget3x3Glance()
+class Widget4x3Receiver : GlanceAppWidgetReceiver() {
+    override val glanceAppWidget = Widget4x3Glance()
 }

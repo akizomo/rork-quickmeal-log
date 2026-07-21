@@ -7,6 +7,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.*
 import androidx.glance.GlanceId
+import androidx.glance.LocalSize
+import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.cornerRadius
@@ -30,44 +32,55 @@ class Widget4x2Glance : GlanceAppWidget() {
         val consumed   = WidgetStateManager.getConsumedKcal(context)
         val target     = WidgetStateManager.getTargetKcal(context)
         val density    = context.resources.displayMetrics.density
-        val ringPx     = (128 * density).toInt()
+        // ウィジェット内側の高さ = 実高さ - 上下 padding(8dp × 2)。リング列幅もこれに合わせる
+        val widgetH    = LocalSize.current.height
+        val ringColDp  = (widgetH.value - 16f).coerceAtLeast(64f)
+        val ringPx     = (ringColDp * density).toInt()
         val ringBmp    = KcalRingHelper.createRingBitmap(ringPx, consumed, target, showLabel = true)
 
         Box(
             modifier = GlanceModifier
                 .fillMaxSize()
-                .background(ColorProvider(Color(0xE2162018.toInt())))
+                .background(ColorProvider(Color(0xFF1D1913.toInt())))
                 .cornerRadius(16.dp)   // radius.lg
                 .padding(8.dp),        // spacing['2'] = 8
             contentAlignment = Alignment.Center
         ) {
             Row(modifier = GlanceModifier.fillMaxSize()) {
 
-                // 左: カロリーリング
+                // 左: カロリーリング — タップでアプリへ
                 Box(
-                    modifier = GlanceModifier.fillMaxHeight().defaultWeight(),
+                    modifier = GlanceModifier
+                        .fillMaxHeight()
+                        .width(ringColDp.dp)
+                        .clickable(openAppAction(context)),
                     contentAlignment = Alignment.Center
                 ) {
                     Image(
                         provider           = BitmapImageProvider(ringBmp),
-                        contentDescription = "カロリーリング",
+                        contentDescription = "カロリーリング — タップでアプリを開く",
                         contentScale       = ContentScale.Fit,
                         modifier           = GlanceModifier.fillMaxSize()
                     )
                 }
 
-                // 区切り線
+                // 区切り線: 外側透明 Box(8+1+8=17dp) で両側に spacing['2'] の余白
                 Box(
-                    modifier = GlanceModifier
-                        .width(1.dp)
-                        .fillMaxHeight()
-                        .padding(vertical = 8.dp)
-                        .background(ColorProvider(Color(0x1AFFFFFF)))
-                ) {}
+                    modifier          = GlanceModifier.width(17.dp).fillMaxHeight(),
+                    contentAlignment  = Alignment.Center
+                ) {
+                    Box(
+                        modifier = GlanceModifier
+                            .width(1.dp)
+                            .fillMaxHeight()
+                            .padding(vertical = 8.dp)
+                            .background(ColorProvider(Color(0x1AFFFFFF)))
+                    ) {}
+                }
 
-                // 右: 2×2 ボタン
+                // 右: 2×2 ボタン (divider 外側 Box が 8dp gap を担うため start padding 不要)
                 Column(
-                    modifier = GlanceModifier.fillMaxHeight().defaultWeight().padding(start = 8.dp)
+                    modifier = GlanceModifier.fillMaxHeight().defaultWeight()
                 ) {
                     Row(modifier = GlanceModifier.fillMaxWidth().defaultWeight()) {
                         categories.take(2).forEach { cat ->

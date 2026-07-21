@@ -67,7 +67,7 @@ object WidgetStateManager {
                 put("recent", c.recent); put("sublabel", c.sublabel); put("kcal", c.kcal)
             })
         }
-        prefs(context).edit().putString(KEY_CATEGORIES, arr.toString()).apply()
+        prefs(context).edit().putString(KEY_CATEGORIES, arr.toString()).commit()
     }
 
     // ── Kcal ─────────────────────────────────────────────────────────────────
@@ -79,7 +79,7 @@ object WidgetStateManager {
         prefs(context).edit()
             .putInt(KEY_CONSUMED_KCAL, consumed)
             .putInt(KEY_TARGET_KCAL, target)
-            .apply()
+            .commit()
     }
 
     // ── Pending Queue ─────────────────────────────────────────────────────────
@@ -112,7 +112,7 @@ object WidgetStateManager {
     }
 
     fun clearPendingQueue(context: Context) {
-        prefs(context).edit().remove(KEY_PENDING_QUEUE).apply()
+        prefs(context).edit().remove(KEY_PENDING_QUEUE).commit()
     }
 
     private fun savePendingQueue(context: Context, queue: List<PendingLogEntry>) {
@@ -123,7 +123,7 @@ object WidgetStateManager {
                 put("sublabel", e.sublabel); put("kcal", e.kcal); put("timestamp", e.timestamp)
             })
         }
-        prefs(context).edit().putString(KEY_PENDING_QUEUE, arr.toString()).apply()
+        prefs(context).edit().putString(KEY_PENDING_QUEUE, arr.toString()).commit()
     }
 
     // ── Logged categories (just-tapped → undo UI) ────────────────────────────
@@ -147,12 +147,12 @@ object WidgetStateManager {
     }
 
     fun clearLoggedCategories(context: Context) {
-        prefs(context).edit().remove(KEY_LOGGED_CATEGORIES).apply()
+        prefs(context).edit().remove(KEY_LOGGED_CATEGORIES).commit()
     }
 
     private fun saveLoggedCategories(context: Context, cats: Set<String>) {
         val arr = JSONArray(); cats.forEach { arr.put(it) }
-        prefs(context).edit().putString(KEY_LOGGED_CATEGORIES, arr.toString()).apply()
+        prefs(context).edit().putString(KEY_LOGGED_CATEGORIES, arr.toString()).commit()
     }
 
     // ── Defaults ─────────────────────────────────────────────────────────────
@@ -166,6 +166,6 @@ object WidgetStateManager {
         CategoryData("veggies",       "🥦", "野菜",       "サラダ",     "1皿",     30),
         CategoryData("fruit",         "🍎", "果物",       "バナナ",     "1本",     86),
         CategoryData("added_fat",     "🧈", "油・調味",   "オリーブ油", "大さじ1", 111),
-        CategoryData("snack_drink",   "🍩", "おやつ甘飲", "プロテイン", "1杯",     130)
+        CategoryData("snack_drink",   "🍩", "おやつ甘飲", "プロテイン", "1杯",     130),
     )
 }

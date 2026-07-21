@@ -34,7 +34,7 @@ class Widget2x2Glance : GlanceAppWidget() {
         Box(
             modifier = GlanceModifier
                 .fillMaxSize()
-                .background(ColorProvider(Color(0xE2162018.toInt())))
+                .background(ColorProvider(Color(0xFF1D1913.toInt())))
                 .cornerRadius(16.dp)   // radius.lg
                 .padding(4.dp),        // spacing['1'] = 4
             contentAlignment = Alignment.Center

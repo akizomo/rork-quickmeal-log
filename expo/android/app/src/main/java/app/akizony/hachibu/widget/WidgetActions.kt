@@ -2,9 +2,17 @@ package app.akizony.hachibu.widget
 
 import android.content.Context
 import androidx.glance.GlanceId
+import androidx.glance.action.Action
 import androidx.glance.action.ActionParameters
 import androidx.glance.appwidget.action.ActionCallback
+import androidx.glance.appwidget.action.actionStartActivity
 import androidx.glance.appwidget.updateAll
+
+// アプリのホーム画面を開くアクション（カロリーリング等のタップ用）
+internal fun openAppAction(context: Context): Action =
+    actionStartActivity(
+        context.packageManager.getLaunchIntentForPackage(context.packageName)!!
+    )
 
 // ── Log Food ─────────────────────────────────────────────────────────────────
 
@@ -43,8 +51,10 @@ class LogFoodAction : ActionCallback {
         WidgetStateManager.setKcal(context, newConsumed, WidgetStateManager.getTargetKcal(context))
 
         try { Widget2x2Glance().updateAll(context) } catch (_: Exception) {}
+        try { Widget2x2RingGlance().updateAll(context) } catch (_: Exception) {}
         try { Widget4x2Glance().updateAll(context) } catch (_: Exception) {}
         try { Widget3x3Glance().updateAll(context) } catch (_: Exception) {}
+        try { Widget4x3Glance().updateAll(context) } catch (_: Exception) {}
     }
 }
 
@@ -73,7 +83,9 @@ class UndoLogAction : ActionCallback {
         WidgetStateManager.setKcal(context, newConsumed, WidgetStateManager.getTargetKcal(context))
 
         try { Widget2x2Glance().updateAll(context) } catch (_: Exception) {}
+        try { Widget2x2RingGlance().updateAll(context) } catch (_: Exception) {}
         try { Widget4x2Glance().updateAll(context) } catch (_: Exception) {}
         try { Widget3x3Glance().updateAll(context) } catch (_: Exception) {}
+        try { Widget4x3Glance().updateAll(context) } catch (_: Exception) {}
     }
 }
