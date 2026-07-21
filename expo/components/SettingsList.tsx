@@ -55,7 +55,7 @@ export function SettingsLinkRow({
   trailing?: React.ReactNode;
 }) {
   const theme = useTheme();
-  const labelStyle = destructive ? { color: theme.colors.status.danger, fontWeight: '600' as const } : undefined;
+  const labelStyle = destructive ? { color: theme.colors.status.danger.default, fontWeight: '600' as const } : undefined;
   const showRightChevron = showChevron && !trailing;
   return (
     <Pressable

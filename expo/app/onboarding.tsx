@@ -738,7 +738,7 @@ function StepPlan({
             carbs={recommendation.carbsG}
           />
           {recommendation.note ? (
-            <Body size="sm" weight="semibold" style={{ color: t.colors.status.warning }}>
+            <Body size="sm" weight="semibold" style={{ color: t.colors.status.warning.default }}>
               {recommendation.note}
             </Body>
           ) : null}
@@ -899,7 +899,7 @@ function StepPreview({
           </Body>
         ) : null}
         {recommendation.note ? (
-          <Body size="sm" weight="semibold" style={{ color: t.colors.status.warning }}>
+          <Body size="sm" weight="semibold" style={{ color: t.colors.status.warning.default }}>
             {recommendation.note}
           </Body>
         ) : null}

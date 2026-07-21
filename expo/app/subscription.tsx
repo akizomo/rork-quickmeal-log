@@ -82,7 +82,7 @@ export default function SubscriptionRoute() {
                   borderLeftWidth: status === 'trialing' && trialDays > 0 && trialDays <= 2 ? 3 : 0,
                   borderLeftColor:
                     status === 'trialing' && trialDays > 0 && trialDays <= 2
-                      ? theme.colors.status.warning
+                      ? theme.colors.status.warning.default
                       : 'transparent',
                 }}
               >

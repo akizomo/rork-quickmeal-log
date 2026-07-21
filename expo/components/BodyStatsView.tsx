@@ -268,7 +268,7 @@ function TrendChart({
               x2={width - CHART_PAD_X}
               y1={targetY}
               y2={targetY}
-              stroke={palette.textMuted}
+              stroke={t.colors.content.secondary}
               strokeDasharray="4 4"
               strokeWidth={1}
             />

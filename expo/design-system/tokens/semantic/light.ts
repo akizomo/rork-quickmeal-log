@@ -68,10 +68,11 @@ export const lightColors: SemanticColors = {
   },
 
   status: {
-    success: colors.moss[500],
-    warning: colors.amber[500],
-    danger: colors.clay[400],
-    info: colors.fog[500], // 霧色 — slate から fog へ
+    // container/onContainer は action.primary と同じ digit 規則 (container=100, onContainer=900)。
+    success: { default: colors.moss[500], container: colors.moss[100], onContainer: colors.moss[900] },
+    warning: { default: colors.amber[500], container: colors.amber[100], onContainer: colors.amber[900] },
+    danger: { default: colors.clay[400], container: colors.clay[100], onContainer: colors.clay[900] },
+    info: { default: colors.fog[500], container: colors.fog[100], onContainer: colors.fog[900] }, // 霧色 — slate から fog へ
   },
 
   accent: {

@@ -5,6 +5,7 @@ import { Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native
 
 import { palette } from '@/constants/theme';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
+import { radius } from '@/design-system/tokens/primitives/radius';
 
 export default function AboutModalRoute() {
   return (
@@ -30,7 +31,7 @@ export default function AboutModalRoute() {
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(41, 46, 40, 0.34)',
+    backgroundColor: palette.scrimLight,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 24,
@@ -39,7 +40,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 420,
     backgroundColor: palette.surface,
-    borderRadius: 28,
+    borderRadius: radius['2xl'],
     padding: 24,
     gap: 14,
   },
@@ -65,7 +66,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     alignSelf: 'flex-start',
     backgroundColor: palette.sageDeep,
-    borderRadius: 999,
+    borderRadius: radius.full,
     paddingHorizontal: 18,
     paddingVertical: 11,
   },

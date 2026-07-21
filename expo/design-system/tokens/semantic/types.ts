@@ -62,10 +62,14 @@ export type SemanticColors = {
   };
 
   status: {
-    success: string;
-    warning: string;
-    danger: string;
-    info: string;
+    // action.primary と同じ container パターン。
+    //   default      = 単体で使う本体色 (アイコン・テキスト・アクセント線など)
+    //   container    = 淡い背景 (バッジ・ボタン背景等の面)
+    //   onContainer  = container 面上に乗せるテキスト/アイコン色
+    success: { default: string; container: string; onContainer: string };
+    warning: { default: string; container: string; onContainer: string };
+    danger: { default: string; container: string; onContainer: string };
+    info: { default: string; container: string; onContainer: string };
   };
 
   // Brand accent (目標達成・ハイライトなど)
@@ -83,7 +87,7 @@ export type SemanticColors = {
    * 原則:
    * - グラフ・バー・リングは必ずここから参照する (status.* を流用しない)
    * - action.primary (sage) はドメイン可視化に使わない (操作と情報を混同させない)
-   * - 3 macro の hue は固定 (protein=clay, fat=amber, carbs=moss)
+   * - 3 macro の hue は固定 (protein=terracotta, fat=kogecha, carbs=seagrass)
    */
   nutrition: {
     // PFC macros — text/graphic/background の3用途で分離する。

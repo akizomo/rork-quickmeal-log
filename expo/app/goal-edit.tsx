@@ -19,10 +19,6 @@ import {
   recommendGoal,
 } from '@/utils/goals';
 
-// 警告色 (design-system に feedback トークンが無いためリテラル)。soft=amber700 / hard=red700。
-const WARN_SOFT_COLOR = '#B45309';
-const WARN_HARD_COLOR = '#B91C1C';
-
 const DIRECTION_OPTIONS: { key: GoalDirection; label: string }[] = [
   { key: 'lose', label: '減らす' },
   { key: 'maintain', label: '維持' },
@@ -222,12 +218,12 @@ export default function GoalEditRoute() {
   const etaText =
     etaMonths != null && paceLabel ? `${paceLabel}ペースで${formatGoalDuration(etaMonths)}の見込み` : null;
   let warnText: string | null = null;
-  let warnColor = WARN_SOFT_COLOR;
+  let warnColor = theme.colors.status.warning.default;
   if (isManual && manualTargetKg != null && profile.heightCm) {
     const bmi = Math.round(bmiFromWeight(manualTargetKg, profile.heightCm) * 10) / 10;
     if (guardVerdict === 'hard') {
       warnText = '健康的な目安を大きく下回るため、この値では設定できません';
-      warnColor = WARN_HARD_COLOR;
+      warnColor = theme.colors.status.danger.default;
     } else if (guardVerdict === 'soft') {
       warnText =
         bmi < BMI_UNDERWEIGHT

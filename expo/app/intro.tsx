@@ -24,6 +24,8 @@ import { Logo } from '@/components/Logo';
 import { ButtonGridIllustration, GestureDemoIllustration } from '@/components/onboarding-illustrations';
 import { INTRO_VERSION, LEGAL_LINKS } from '@/constants/onboarding';
 import { palette } from '@/constants/theme';
+import { colors } from '@/design-system/tokens/primitives/colors';
+import { radius } from '@/design-system/tokens/primitives/radius';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { useAppState } from '@/providers/app-state-provider';
 
@@ -46,14 +48,14 @@ const SLIDES: Slide[] = [
     key: 's1',
     title: '9ボタンで、8割いける。',
     subtitle: 'ふだんの食事は、タップひとつで残せる。',
-    accent: '#E8E0D0', // kinari (warm paper)
+    accent: colors.ivory[500], // kinari (warm paper)
     media: { kind: 'buttonGrid' },
   },
   {
     key: 's2',
     title: '急ぎはタップ、余裕は長押し。',
     subtitle: 'ちゃんと記録したい日だけ、もう一歩ふみこめる。',
-    accent: '#DDE8D6', // sage soft
+    accent: colors.sage[100], // sage soft
     media: { kind: 'gestureDemo' },
   },
   {
@@ -69,8 +71,8 @@ const SLIDES: Slide[] = [
 // kcal リング + 体重スパークライン + PFC バー の 3 カード合成。
 // intro 以外で再利用する見込みが無いため、ローカル定義。
 const ILLUST_COLORS = {
-  protein: '#A55B5B', // clay 系
-  fat: '#E8E0D0', // kinari
+  protein: colors.clay[400], // clay 系
+  fat: colors.ivory[500], // kinari
   carb: palette.sageStrong,
 } as const;
 
@@ -220,7 +222,7 @@ export default function IntroRoute() {
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={styles.page} testID="intro-screen">
-        <LinearGradient colors={[palette.background, '#F7F4EE']} style={StyleSheet.absoluteFillObject} />
+        <LinearGradient colors={[palette.background, palette.surface]} style={StyleSheet.absoluteFillObject} />
         <SafeAreaView edges={['top', 'bottom']} style={styles.safe}>
           {/* TOP BAR: brand + skip */}
           <View style={styles.topBar}>
@@ -342,7 +344,7 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 0,
     width: '100%',
-    borderRadius: 28,
+    borderRadius: radius['2xl'],
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
@@ -353,11 +355,11 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: fs.sm, lineHeight: 23, color: palette.textMuted },
   footer: { paddingHorizontal: 20, paddingBottom: 12, gap: 14 },
   dots: { flexDirection: 'row', justifyContent: 'center', gap: 6 },
-  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: palette.border },
+  dot: { width: 6, height: 6, borderRadius: radius.full, backgroundColor: palette.border },
   dotActive: { backgroundColor: palette.sageDeep, width: 18 },
   cta: {
     backgroundColor: palette.sageDeep,
-    borderRadius: 999,
+    borderRadius: radius.full,
     paddingVertical: 15,
     alignItems: 'center',
   },
@@ -380,7 +382,7 @@ const illustStyles = StyleSheet.create({
   },
   card: {
     backgroundColor: palette.surface,
-    borderRadius: 22,
+    borderRadius: radius['2xl'],
     borderWidth: 1,
     borderColor: palette.border,
     paddingVertical: 20,
@@ -423,11 +425,11 @@ const illustStyles = StyleSheet.create({
   pfcTrack: {
     flex: 1,
     height: 6,
-    borderRadius: 99,
+    borderRadius: radius.full,
     backgroundColor: palette.border,
     overflow: 'hidden',
   },
-  pfcFill: { height: '100%', borderRadius: 99 },
+  pfcFill: { height: '100%', borderRadius: radius.full },
 });
 
 // (gridStyles / gestureStyles は components/onboarding-illustrations.tsx に移動)

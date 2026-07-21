@@ -38,7 +38,7 @@ export const palette = {
   accentSoft: colors.ai[100],
 
   // Status
-  danger: lightColors.status.danger,           // clay[400]
+  danger: lightColors.status.danger.default,           // clay[400]
 
   // Shadows / overlays
   shadow: 'rgba(80, 88, 74, 0.12)',

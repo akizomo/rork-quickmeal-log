@@ -31,7 +31,7 @@ export function SegmentedControl<T extends string = string>({
   options,
   value,
   onChange,
-  trackColor = '#EEE8DA',
+  trackColor = colors.ivory[400],
   pillColor = colors.ivory[50],
   textColor = palette.textMuted,
   activeTextColor = palette.sageDeep,

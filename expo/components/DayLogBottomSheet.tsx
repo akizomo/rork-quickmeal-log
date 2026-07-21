@@ -16,6 +16,9 @@ import { getIdentity } from '@/constants/identity';
 import { MealLogCard } from '@/design-system';
 import { spring } from '@/design-system/tokens/primitives/motion';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
+import { colors } from '@/design-system/tokens/primitives/colors';
+import { radius } from '@/design-system/tokens/primitives/radius';
+import { elevation } from '@/design-system/tokens/primitives/elevation';
 import { useAppState } from '@/providers/app-state-provider';
 import { FoodLog } from '@/types/nutrition';
 import { formatShortDay, isSameDay, logsForDate, sumForDate } from '@/utils/history';
@@ -297,11 +300,9 @@ const styles = StyleSheet.create({
     backgroundColor: palette.sheet,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
+    ...elevation.xl,
     shadowColor: palette.sheetInk,
-    shadowOpacity: 0.12,
-    shadowRadius: 24,
     shadowOffset: { width: 0, height: -6 },
-    elevation: 12,
   },
   handleArea: {
     paddingTop: 6,
@@ -315,8 +316,8 @@ const styles = StyleSheet.create({
   handle: {
     width: 40,
     height: 4,
-    borderRadius: 999,
-    backgroundColor: '#C6C6BD',
+    borderRadius: radius.full,
+    backgroundColor: colors.stone[300],
   },
   headerRow: {
     marginTop: 4,
@@ -337,7 +338,7 @@ const styles = StyleSheet.create({
   stagePill: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 999,
+    borderRadius: radius.full,
     backgroundColor: palette.card,
   },
   stagePillText: {
@@ -355,7 +356,7 @@ const styles = StyleSheet.create({
   },
   emptyState: {
     backgroundColor: palette.surface,
-    borderRadius: 20,
+    borderRadius: radius.xl,
     padding: 20,
     gap: 6,
   },

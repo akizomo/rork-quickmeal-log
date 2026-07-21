@@ -4,6 +4,8 @@ import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } fr
 
 import { palette } from '@/constants/theme';
 import { Icon, useTheme } from '@/design-system';
+import { colors } from '@/design-system/tokens/primitives/colors';
+import { radius } from '@/design-system/tokens/primitives/radius';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { CalorieOverflowRing } from '@/components/CalorieOverflowRing';
 import { MiniProgressBar } from '@/components/nutrition-ui';
@@ -189,11 +191,11 @@ export function MonthlyStatsView() {
     <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
       <View style={styles.headerRow} testID="month-header">
         <Pressable onPress={goPrev} disabled={!canGoPrev} style={styles.navBtn} testID="month-prev">
-          <Icon name="chevronLeft" color={canGoPrev ? palette.sageStrong : t.colors.content.disabled} size={20} />
+          <Icon name="chevronLeft" color={canGoPrev ? t.colors.action.text.default : t.colors.content.disabled} size={20} />
         </Pressable>
         <Text style={styles.headerLabel}>{formatMonthLabel(anchor)}</Text>
         <Pressable onPress={goNext} disabled={!canGoNext} style={styles.navBtn} testID="month-next">
-          <Icon name="chevronRight" color={canGoNext ? palette.sageStrong : t.colors.content.disabled} size={20} />
+          <Icon name="chevronRight" color={canGoNext ? t.colors.action.text.default : t.colors.content.disabled} size={20} />
         </Pressable>
       </View>
 
@@ -377,7 +379,7 @@ const styles = StyleSheet.create({
   navBtn: {
     width: 36,
     height: 36,
-    borderRadius: 18,
+    borderRadius: radius.full,
     backgroundColor: palette.surface,
     alignItems: 'center',
     justifyContent: 'center',
@@ -389,7 +391,7 @@ const styles = StyleSheet.create({
   },
   calendarCard: {
     backgroundColor: palette.surface,
-    borderRadius: 20,
+    borderRadius: radius.xl,
   },
   weekdayRow: {
     flexDirection: 'row',
@@ -405,8 +407,8 @@ const styles = StyleSheet.create({
     color: palette.textMuted,
     fontWeight: '600',
   },
-  sunday: { color: '#C77F6E' },
-  saturday: { color: '#5F84A0' },
+  sunday: { color: colors.clay[300] },
+  saturday: { color: colors.fog[400] },
   gridWrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -415,9 +417,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
-  },
-  cellCircle: {
-    position: 'absolute',
   },
   cellText: {
     fontSize: fs.caption1,
@@ -435,7 +434,7 @@ const styles = StyleSheet.create({
   },
   summaryCard: {
     backgroundColor: palette.surface,
-    borderRadius: 20,
+    borderRadius: radius.xl,
     padding: 16,
   },
   summaryRow: {
@@ -493,7 +492,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     backgroundColor: palette.surface,
-    borderRadius: 14,
+    borderRadius: radius.md,
     padding: 12,
   },
   dayRowLeft: {

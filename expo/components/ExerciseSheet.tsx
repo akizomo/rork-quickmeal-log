@@ -3,6 +3,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { BottomSheet, Chip, Icon, useTheme } from '@/design-system';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
+import { radius } from '@/design-system/tokens/primitives/radius';
 import { palette } from '@/constants/theme';
 import { ACTIVITY_LEVEL_OPTIONS } from '@/constants/onboarding';
 import {
@@ -215,7 +216,7 @@ export const ExerciseSheet = memo(function ExerciseSheet({ visible, onClose, dat
                         style={({ pressed }) => ({
                           flex: 1,
                           aspectRatio: 1,
-                          borderRadius: 18,
+                          borderRadius: radius.lg,
                           borderWidth: 1,
                           borderColor: active ? t.colors.border.focus : t.colors.border.subtle,
                           backgroundColor: active
@@ -320,7 +321,7 @@ const styles = StyleSheet.create({
   content: { gap: 18, paddingBottom: 16 },
   summaryCard: {
     backgroundColor: palette.card,
-    borderRadius: 16,
+    borderRadius: radius.lg,
     paddingHorizontal: 16,
     paddingVertical: 14,
     gap: 8,
@@ -355,7 +356,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 12,
     backgroundColor: palette.surface,
-    borderRadius: 12,
+    borderRadius: radius.md,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: palette.border,
   },
@@ -367,7 +368,7 @@ const styles = StyleSheet.create({
   sourceBadge: {
     paddingHorizontal: 6,
     paddingVertical: 1,
-    borderRadius: 6,
+    borderRadius: radius.full,
     borderWidth: StyleSheet.hairlineWidth,
   },
   sourceBadgeHealth: { backgroundColor: palette.accentSoft, borderColor: palette.accentSoft },
@@ -379,7 +380,7 @@ const styles = StyleSheet.create({
   historyDelete: {
     width: 26,
     height: 26,
-    borderRadius: 13,
+    borderRadius: radius.full,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -397,7 +398,7 @@ const styles = StyleSheet.create({
   durationRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
   previewCard: {
     backgroundColor: palette.card,
-    borderRadius: 20,
+    borderRadius: radius.xl,
     padding: 16,
     gap: 8,
   },

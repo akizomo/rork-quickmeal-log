@@ -199,13 +199,13 @@ const BalanceModal = memo(function BalanceModal({
             accessibilityRole="button"
             accessibilityLabel="閉じる"
           >
-            <Icon name="close" size={18} color={palette.textMuted} />
+            <Icon name="close" size={18} color={t.colors.content.secondary} />
           </Pressable>
 
           {/* HERO (Tier 1): 残り or オーバー */}
           <View style={styles.balanceHero}>
             <Text style={styles.balanceHeroCaption}>{overshoot ? 'オーバー' : '残り'}</Text>
-            <Text style={[styles.balanceHeroValue, overshoot && { color: palette.danger }]}>
+            <Text style={[styles.balanceHeroValue, overshoot && { color: t.colors.status.danger.default }]}>
               {Math.abs(remaining).toLocaleString()}
             </Text>
             <Text style={styles.balanceHeroUnit}>kcal</Text>
@@ -218,7 +218,7 @@ const BalanceModal = memo(function BalanceModal({
                 styles.balanceProgressFill,
                 {
                   width: `${Math.min(Math.round(progress * 100), 100)}%`,
-                  backgroundColor: overshoot ? palette.danger : palette.sageDeep,
+                  backgroundColor: overshoot ? t.colors.status.danger.default : t.colors.action.primary.default,
                 },
               ]}
             />
@@ -783,7 +783,7 @@ export const StatusCard = memo(function StatusCard({
             {/* 左に同サイズの透明スペーサーを置いてラベルを視覚的に中央寄せ */}
             <View style={styles.sideLabelChevronSpacer} />
             <Text style={styles.sideLabel}>食事</Text>
-            <Icon name="chevronRight" size={12} color={palette.textMuted} />
+            <Icon name="chevronRight" size={12} color={t.colors.content.secondary} />
           </View>
           <Text style={styles.sideValue}>{Math.round(dayMacro.kcal).toLocaleString()}</Text>
           <Text style={styles.sideUnit}>kcal</Text>
@@ -821,7 +821,7 @@ export const StatusCard = memo(function StatusCard({
           <View style={styles.sideLabelRow}>
             <View style={styles.sideLabelChevronSpacer} />
             <Text style={styles.sideLabel}>消費</Text>
-            <Icon name="chevronRight" size={12} color={palette.textMuted} />
+            <Icon name="chevronRight" size={12} color={t.colors.content.secondary} />
           </View>
           <Text style={styles.sideValue}>{effectiveExerciseKcal > 0 ? effectiveExerciseKcal.toLocaleString() : '—'}</Text>
           <Text style={styles.sideUnit}>kcal</Text>

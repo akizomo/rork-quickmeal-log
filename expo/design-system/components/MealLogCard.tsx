@@ -155,7 +155,7 @@ function MealLogCardHeader({
                 size={18}
                 color={
                   pressed
-                    ? t.colors.status.danger
+                    ? t.colors.status.danger.default
                     : t.colors.content.tertiary
                 }
               />

@@ -16,6 +16,8 @@ import React from 'react';
 import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
 import { palette } from '@/constants/theme';
+import { colors } from '@/design-system/tokens/primitives/colors';
+import { radius } from '@/design-system/tokens/primitives/radius';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 
 // ---------------------------------------------------------------------------
@@ -117,14 +119,14 @@ const gridStyles = StyleSheet.create({
     backgroundColor: palette.surface,
     borderWidth: 1,
     borderColor: palette.border,
-    borderRadius: 18,
+    borderRadius: radius.lg,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 4,
   },
   btnHighlight: {
     borderColor: palette.sageDeep,
-    backgroundColor: '#F0F4EF',
+    backgroundColor: colors.sage[50],
     transform: [{ scale: 1.06 }],
   },
   btnEmoji: { fontSize: 28 },
@@ -166,7 +168,7 @@ const gestureStyles = StyleSheet.create({
     backgroundColor: palette.surface,
     borderWidth: 1,
     borderColor: palette.border,
-    borderRadius: 14,
+    borderRadius: radius.md,
     paddingHorizontal: 14,
     paddingVertical: 12,
     gap: 4,

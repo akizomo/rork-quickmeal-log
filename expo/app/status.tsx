@@ -99,7 +99,7 @@ export default function StatusRoute() {
                     gap: theme.spacing['1'],
                     borderLeftWidth: 3,
                     borderLeftColor: trialDays <= 2
-                      ? theme.colors.status.warning
+                      ? theme.colors.status.warning.default
                       : theme.colors.action.primary.default,
                   }}
                 >

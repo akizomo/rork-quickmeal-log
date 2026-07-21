@@ -6,6 +6,7 @@ import Svg, { Circle, Polyline, Rect, Text as SvgText } from 'react-native-svg';
 
 import { palette } from '@/constants/theme';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
+import { radius } from '@/design-system/tokens/primitives/radius';
 import { CalorieOverflowRing } from '@/components/CalorieOverflowRing';
 import { MiniProgressBar } from '@/components/nutrition-ui';
 import { useAppState } from '@/providers/app-state-provider';
@@ -208,11 +209,11 @@ export function WeeklyStatsView() {
     <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
       <View style={styles.headerRow} testID="week-header">
         <Pressable onPress={goPrev} disabled={!canGoPrev} style={styles.navBtn} testID="week-prev">
-          <Icon name="chevronLeft" color={canGoPrev ? palette.sageStrong : t.colors.content.disabled} size={20} />
+          <Icon name="chevronLeft" color={canGoPrev ? t.colors.action.text.default : t.colors.content.disabled} size={20} />
         </Pressable>
         <Text style={styles.headerLabel}>{formatWeekRangeLabel(range)}</Text>
         <Pressable onPress={goNext} disabled={!canGoNext} style={styles.navBtn} testID="week-next">
-          <Icon name="chevronRight" color={canGoNext ? palette.sageStrong : t.colors.content.disabled} size={20} />
+          <Icon name="chevronRight" color={canGoNext ? t.colors.action.text.default : t.colors.content.disabled} size={20} />
         </Pressable>
       </View>
 
@@ -234,7 +235,7 @@ export function WeeklyStatsView() {
                   y={y}
                   width={barWidth}
                   height={h}
-                  rx={4}
+                  rx={radius.xs}
                   fill={barColor(macro.kcal, dayTargets[i])}
                   opacity={macro.kcal > 0 ? 0.55 : 1}
                 />
@@ -242,7 +243,7 @@ export function WeeklyStatsView() {
                   x={centerX}
                   y={CHART_HEIGHT - 14}
                   fontSize={fs.xs}
-                  fill={palette.textMuted}
+                  fill={t.colors.content.secondary}
                   textAnchor="middle"
                 >
                   {dow}
@@ -252,7 +253,7 @@ export function WeeklyStatsView() {
                   y={CHART_HEIGHT - 3}
                   fontSize={fs.xs}
                   fontWeight="600"
-                  fill={palette.text}
+                  fill={t.colors.content.primary}
                   textAnchor="middle"
                 >
                   {date.getDate()}
@@ -265,12 +266,12 @@ export function WeeklyStatsView() {
               <Polyline
                 points={targetPoints.map((p) => `${p.x},${p.y}`).join(' ')}
                 fill="none"
-                stroke={palette.textMuted}
+                stroke={t.colors.content.secondary}
                 strokeDasharray="4 4"
                 strokeWidth={1.5}
               />
               {targetPoints.map((p, i) => (
-                <Circle key={i} cx={p.x} cy={p.y} r={2.5} fill={palette.textMuted} />
+                <Circle key={i} cx={p.x} cy={p.y} r={2.5} fill={t.colors.content.secondary} />
               ))}
             </React.Fragment>
           ) : null}
@@ -386,7 +387,7 @@ const styles = StyleSheet.create({
   navBtn: {
     width: 36,
     height: 36,
-    borderRadius: 18,
+    borderRadius: radius.full,
     backgroundColor: palette.surface,
     alignItems: 'center',
     justifyContent: 'center',
@@ -398,14 +399,14 @@ const styles = StyleSheet.create({
   },
   chartWrap: {
     backgroundColor: palette.surface,
-    borderRadius: 20,
+    borderRadius: radius.xl,
     overflow: 'hidden',
     padding: 0,
     alignSelf: 'center',
   },
   summaryCard: {
     backgroundColor: palette.surface,
-    borderRadius: 20,
+    borderRadius: radius.xl,
     padding: 16,
   },
   summaryRow: {
@@ -463,7 +464,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     backgroundColor: palette.surface,
-    borderRadius: 14,
+    borderRadius: radius.md,
     padding: 12,
   },
   dayRowLeft: {

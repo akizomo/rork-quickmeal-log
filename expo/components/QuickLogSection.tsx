@@ -12,6 +12,7 @@ import { palette } from '@/constants/theme';
 import { fontSize } from '@/design-system/tokens/primitives/typography';
 import { elevation } from '@/design-system/tokens/primitives/elevation';
 import { colors } from '@/design-system/tokens/primitives/colors';
+import { radius } from '@/design-system/tokens/primitives/radius';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { useAppState } from '@/providers/app-state-provider';
 import { QuickCategory } from '@/types/nutrition';
@@ -48,7 +49,7 @@ const QUICK_LOG_COLORS = {
   // セグメントコントロールの選択中ピルと同じ ivory[50] にして、
   // 「選択中タブ→ボタン」で一貫した“浮いた白いカード”の見た目にする。
   buttonBg: colors.ivory[50],
-  labelText: '#2E3B35',
+  labelText: palette.text,
 };
 
 // Identity-first IA bucket labels (PRD-aligned ≤6 char names).
@@ -203,7 +204,7 @@ function QuickLogButton({
             {
               width: iconContainerSize,
               height: iconContainerSize,
-              borderRadius: iconContainerSize / 2,
+              borderRadius: radius.full,
             },
           ]}
         >
@@ -534,7 +535,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   frequentAmount: {
-    color: '#7B857E',
+    color: palette.textMuted,
     textAlign: 'center',
     fontSize: fontSize.xs,
   },
@@ -573,6 +574,3 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
-
-// Re-export palette import sanity (unused direct import removed)
-void palette;
