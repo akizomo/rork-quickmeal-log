@@ -30,21 +30,9 @@ import { elevation } from '@/design-system/tokens/primitives/elevation';
 import { useAppState } from '@/providers/app-state-provider';
 import { useHealthSyncContext } from '@/providers/health-sync-provider';
 import { DishDraft, DishSize, IngredientDraft, Macro, PortionValue } from '@/types/nutrition';
-import { getIdentity } from '@/constants/identity';
-import { getLogDisplayInfo } from '@/utils/log-display';
 import { adjustedTargetKcal, calcBaselineActiveKcal, getAdjustedPfcForDate, getEffectiveSubscriptionStatus, getTdeeExerciseKcalForDate, stepsToActiveKcal, trialDaysRemaining } from '@/utils/goals';
 import { buildDishMacro, clampPortion, computeIngredient, draftFromLog, formatDateKey, formatMacroText, getIngredientSubtypeDef, getIngredientSubtypeDefs, getQuickCategories, getSubtypes, getToppingsForSubtype, summarizeToppings } from '@/utils/nutrition';
 import { formatDayLabel, isSameDay, sumForDate } from '@/utils/history';
-
-function formatNumber(value: number | null | undefined): string {
-  if (value === null || value === undefined) return '--';
-  return Number.isInteger(value) ? `${value}` : value.toFixed(1);
-}
-
-function formatTime(timestamp: string): string {
-  const date = new Date(timestamp);
-  return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
-}
 
 export function MiniProgressBar({ letter, label, current, target, textColor, graphicColor, trackColor }: {
   letter: string;
@@ -286,7 +274,7 @@ const BalanceModal = memo(function BalanceModal({
               </Pressable>
               <Text style={{ color: t.colors.border.default, marginHorizontal: t.spacing['2'] }}>|</Text>
               <Pressable onPress={onCancelCarryoverPlan} hitSlop={8} accessibilityRole="button" accessibilityLabel="調整をやめる">
-                <Body size="sm" weight="semibold" style={{ color: t.colors.status.danger }}>やめる</Body>
+                <Body size="sm" weight="semibold" style={{ color: t.colors.status.danger.default }}>やめる</Body>
               </Pressable>
             </View>
           ) : showCarryoverSection ? (
@@ -377,6 +365,9 @@ function WeeklyRingsRow({
   logs,
   exerciseLogs,
   baseTargetKcal,
+  profile,
+  dailyActivities,
+  carryoverDeductionKcal,
   onDayPress,
 }: {
   today: Date;
@@ -384,6 +375,9 @@ function WeeklyRingsRow({
   logs: import('@/types/nutrition').FoodLog[];
   exerciseLogs: import('@/types/nutrition').ExerciseLog[];
   baseTargetKcal: number;
+  profile: import('@/types/nutrition').UserProfile;
+  dailyActivities?: import('@/types/nutrition').DailyActivitySummary[];
+  carryoverDeductionKcal: number;
   onDayPress?: (dateKey: string) => void;
 }) {
   const t = useTheme();
@@ -402,6 +396,7 @@ function WeeklyRingsRow({
 
   const todayKey = formatDateKey(today);
   const viewedDateKey = formatDateKey(viewedDate);
+  const baselineActiveKcal = useMemo(() => calcBaselineActiveKcal(profile), [profile]);
 
   return (
     <View style={styles.weeklyRingsRow}>
@@ -411,7 +406,21 @@ function WeeklyRingsRow({
         const isViewed = dk === viewedDateKey;
         const isFuture = dk > todayKey;
         const consumed = sumForDate(logs, dk).kcal;
-        const target = adjustedTargetKcal(baseTargetKcal, exerciseLogs, dk, undefined);
+        // ホーム中央のリングと同じロジック (activityCtx + 当日のみcarryover控除) で目標を算出し、
+        // 週次リング行と中央リングの進捗が食い違わないようにする。
+        const da = (dailyActivities ?? []).find((d) => d.date === dk);
+        const measuredActiveKcal = da
+          ? da.activeKcal > 0
+            ? da.activeKcal
+            : stepsToActiveKcal(da.steps, profile.currentWeightKg)
+          : null;
+        const activityCtx = {
+          measuredActiveKcal,
+          baselineActiveKcal,
+          rawActiveKcal: da?.activeKcal ?? 0,
+        };
+        const target = adjustedTargetKcal(baseTargetKcal, exerciseLogs, dk, activityCtx)
+          - (isToday ? carryoverDeductionKcal : 0);
 
         const size = 36;
         const stroke = 5;
@@ -636,7 +645,7 @@ function CarryoverBanner({
           </Body>
           {isNewPlan ? (
             <Body size="sm" tone="secondary">
-              {`昨日 +${surplusKcal} kcal 超過。数日に分けて調整できます`}
+              {`昨日+${surplusKcal}kcal超過。調整を始めますか？`}
             </Body>
           ) : null}
           <Pressable
@@ -877,92 +886,16 @@ export const StatusCard = memo(function StatusCard({
   );
 });
 
-const SegmentedTabLegacy = memo(function SegmentedTabLegacy() {
-  const { selectedMode, setSelectedMode } = useAppState();
-  return (
-    <View style={styles.segmentedWrap} testID="mode-tab">
-      {([
-        { key: 'ingredient', label: '食材' },
-        { key: 'dish', label: '一皿料理' },
-      ] as const).map((item) => {
-        const active = item.key === selectedMode;
-        return (
-          <Pressable
-            key={item.key}
-            onPress={() => setSelectedMode(item.key)}
-            style={[styles.segmentButton, active ? styles.segmentButtonActive : null]}
-            testID={`mode-tab-${item.key}`}
-          >
-            <Text style={[styles.segmentText, active ? styles.segmentTextActive : null]}>{item.label}</Text>
-          </Pressable>
-        );
-      })}
-    </View>
-  );
-});
-
-void SegmentedTabLegacy;
-
-function MacroPill({ label, value }: { label: string; value: number }) {
+function MacroPill({ label, value, macro }: { label: string; value: number; macro: 'protein' | 'fat' | 'carbs' }) {
   const t = useTheme();
+  const tone = t.colors.nutrition[macro];
   return (
-    <View style={[styles.macroPill, { backgroundColor: t.colors.surface.raised }]}>
-      <Text style={styles.macroPillLabel}>{label}</Text>
-      <Text style={styles.macroPillValue}>{Math.round(value)}</Text>
+    <View style={[styles.macroPill, { backgroundColor: tone.background }]}>
+      <Text style={[styles.macroPillLabel, { color: tone.text }]}>{label}</Text>
+      <Text style={[styles.macroPillValue, { color: tone.text }]}>{Math.round(value)}</Text>
     </View>
   );
 }
-
-function LogListItemLegacy({ log }: { log: import('@/types/nutrition').FoodLog }) {
-  const { deleteLog, setEditorLogId, openIdentityLogSheet } = useAppState();
-  const display = getLogDisplayInfo(log);
-  const handlePress = () => {
-    if (log.identityId) {
-      const id = getIdentity(log.identityId);
-      if (id) {
-        openIdentityLogSheet(id.primaryHome.bucket, {
-          identityId: log.originIdentityId ?? log.identityId,
-          editingLogId: log.id,
-        });
-        return;
-      }
-    }
-    setEditorLogId(log.id);
-  };
-  return (
-    <Pressable style={styles.logItem} onPress={handlePress} testID={`log-item-${log.id}`}>
-      <View style={styles.logItemTop}>
-        <View>
-          <Text style={styles.logTitle}>{display.title}{display.bucketHint ? `  · ${display.bucketHint}` : ''}</Text>
-          {display.subtitle ? (
-            <Text style={[styles.logSubtitle, { fontWeight: '500' }]} testID={`log-attr-${log.id}`}>
-              {display.subtitle}
-            </Text>
-          ) : null}
-          {display.addonsText ? (
-            <Text style={styles.logSubtitle} testID={`log-topping-${log.id}`}>
-              {display.addonsText}
-            </Text>
-          ) : null}
-          <Text style={styles.logSubtitle}>{formatTime(log.timestamp)} · {display.amountText}</Text>
-        </View>
-        <Text style={styles.logKcal}>{Math.round(log.macro.kcal)} kcal</Text>
-      </View>
-      <View style={styles.logMacroRow}>
-        <MacroPill label="P" value={log.macro.protein} />
-        <MacroPill label="F" value={log.macro.fat} />
-        <MacroPill label="C" value={log.macro.carbs} />
-      </View>
-      <View style={styles.logActionRow}>
-        <Pressable style={styles.deleteButton} onPress={() => deleteLog(log.id)} testID={`log-delete-${log.id}`}>
-          <Text style={styles.deleteButtonText}>削除</Text>
-        </Pressable>
-      </View>
-    </Pressable>
-  );
-}
-
-void LogListItemLegacy;
 
 /**
  * FloatingFeedback — post-save confirmation bubble at the calorie-ring
@@ -1330,9 +1263,9 @@ function IngredientPreviewCard({ subLabel, portionLabel, portionSecondary, toppi
       ) : null}
       <Text style={styles.previewCalories}>{Math.round(macro.kcal)} kcal</Text>
       <View style={styles.goalMacroRow}>
-        <MacroPill label="P" value={macro.protein} />
-        <MacroPill label="F" value={macro.fat} />
-        <MacroPill label="C" value={macro.carbs} />
+        <MacroPill label="P" value={macro.protein} macro="protein" />
+        <MacroPill label="F" value={macro.fat} macro="fat" />
+        <MacroPill label="C" value={macro.carbs} macro="carbs" />
       </View>
     </View>
   );
@@ -1409,9 +1342,9 @@ function PreviewCard({ macro }: { macro: Macro }) {
       <Text style={styles.previewTitle}>プレビュー</Text>
       <Text style={styles.previewCalories}>{Math.round(macro.kcal)} kcal</Text>
       <View style={styles.goalMacroRow}>
-        <MacroPill label="P" value={macro.protein} />
-        <MacroPill label="F" value={macro.fat} />
-        <MacroPill label="C" value={macro.carbs} />
+        <MacroPill label="P" value={macro.protein} macro="protein" />
+        <MacroPill label="F" value={macro.fat} macro="fat" />
+        <MacroPill label="C" value={macro.carbs} macro="carbs" />
       </View>
     </View>
   );
@@ -1427,7 +1360,7 @@ export function HomeScreen() {
   const openDayLogSheet = useCallback(() => {
     dayLogSheetRef.current?.snapToHalf();
   }, []);
-  const { logs, exerciseLogs, profile } = useAppState();
+  const { logs, exerciseLogs, profile, dailyActivities, carryoverDeductionKcal } = useAppState();
   const today = useMemo(() => new Date(), []);
   const handleDayPress = useCallback((dateKey: string) => {
     router.push(`/?date=${dateKey}`);
@@ -1455,6 +1388,9 @@ export function HomeScreen() {
             logs={logs}
             exerciseLogs={exerciseLogs}
             baseTargetKcal={profile.targetCalories}
+            profile={profile}
+            dailyActivities={dailyActivities}
+            carryoverDeductionKcal={carryoverDeductionKcal}
             onDayPress={handleDayPress}
           />
         </View>
@@ -1471,13 +1407,10 @@ export function HomeScreen() {
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: palette.background },
   safeArea: { flex: 1 },
-  content: { paddingHorizontal: 22, paddingTop: 12, paddingBottom: 160, gap: 24 },
-  topContent: { paddingHorizontal: 16, paddingTop: 8, gap: 16 },
   headerWrap: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 4 },
   // 左右非対称 (avatar 42px vs icon×2 + gap 92px) でも center を視覚的に中央寄せするため、
   // headerCenter は absolute positioning。pointerEvents="none" でタップ素通り。
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', position: 'relative' },
-  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   headerCenter: {
     position: 'absolute',
     left: 0,
@@ -1502,9 +1435,6 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: palette.background,
   },
-  appTitle: { fontSize: fs.lg, fontWeight: '700', color: palette.sageDeep },
-  appSubtitle: { fontSize: fs.sm, color: palette.textMuted, marginTop: 2 },
-  trialBadge: { fontSize: fs.xs, color: palette.sageStrong, marginTop: 2, fontWeight: '600' },
   iconButton: { width: 42, height: 42, borderRadius: radius.full, backgroundColor: palette.surface, alignItems: 'center', justifyContent: 'center' },
   statusCard: { paddingVertical: 4, gap: 16 },
   weeklyRingsRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 16 },
@@ -1639,73 +1569,20 @@ const styles = StyleSheet.create({
   miniBarFill: { height: '100%', borderRadius: radius.full },
   miniBarValue: { fontSize: fs.sm, color: palette.text, fontWeight: '600' },
   miniBarValueTarget: { color: palette.textMuted, fontWeight: '600' },
-  sectionTitle: { fontSize: fs.lg, fontWeight: '700', color: palette.sheetInk, marginBottom: 14 },
-  segmentedWrap: { flexDirection: 'row', backgroundColor: palette.card, borderRadius: 18, padding: 5, marginBottom: 14 },
-  segmentButton: { flex: 1, borderRadius: 14, paddingVertical: 10, alignItems: 'center' },
-  segmentButtonActive: { backgroundColor: palette.surface },
-  segmentText: { color: palette.textMuted, fontSize: fs.md, fontWeight: '600' },
-  segmentTextActive: { color: palette.text, fontWeight: '700' },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 14 },
-  quickButton: { width: '31.5%', aspectRatio: 1, backgroundColor: palette.surface, borderRadius: 28, alignItems: 'center', justifyContent: 'center', gap: 10 },
-  quickEmoji: { fontSize: 31 },
-  quickLabel: { fontSize: fs.md, color: palette.text, textAlign: 'center', fontWeight: '500' },
-  sheetCard: { marginTop: 6, backgroundColor: palette.sheet, borderRadius: radius['3xl'], padding: 18, paddingBottom: 22 },
-  sheetHandle: { width: 52, height: 6, borderRadius: radius.full, backgroundColor: colors.stone[300], alignSelf: 'center', marginBottom: 18 },
-  sheetHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
-  sheetTitle: { fontSize: fs.lg, fontWeight: '700', color: palette.sheetInk },
-  sheetCount: { fontSize: fs.sm, color: palette.textMuted },
-  emptyState: { backgroundColor: palette.surface, borderRadius: radius['2xl'], padding: 22, gap: 8 },
-  emptyTitle: { fontSize: fs.callout, fontWeight: '700', color: palette.text },
-  emptyText: { fontSize: fs.md, lineHeight: 21, color: palette.textMuted },
-  logItem: { backgroundColor: palette.surface, borderRadius: radius['2xl'], padding: 16, marginBottom: 12, gap: 12 },
-  logItemTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 },
-  logTitle: { fontSize: fs.callout, fontWeight: '700', color: palette.sheetInk },
-  logSubtitle: { marginTop: 4, fontSize: fs.sm, color: palette.textMuted },
-  logKcal: { fontSize: fs.md, fontWeight: '700', color: palette.sageDeep },
-  logMacroRow: { flexDirection: 'row', gap: 8 },
   macroPill: { flexDirection: 'row', gap: 4, paddingHorizontal: 11, paddingVertical: 7, borderRadius: radius.full },
   macroPillLabel: { fontSize: fs.caption1, color: palette.textMuted, fontWeight: '700' },
   macroPillValue: { fontSize: fs.caption1, color: palette.text, fontWeight: '700' },
-  logActionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  amountRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  amountButton: { width: 30, height: 30, borderRadius: radius.full, backgroundColor: palette.card, alignItems: 'center', justifyContent: 'center' },
-  amountButtonText: { fontSize: fs.callout, color: palette.text, fontWeight: '700' },
-  amountText: { fontSize: fs.md, color: palette.textMuted },
-  deleteButton: { backgroundColor: colors.clay[100], borderRadius: radius.full, paddingHorizontal: 12, paddingVertical: 8 },
-  deleteButtonText: { color: palette.danger, fontSize: fs.sm, fontWeight: '700' },
   feedbackBubble: { position: 'absolute', top: 340, alignSelf: 'center', backgroundColor: palette.sageDeep, paddingHorizontal: 16, paddingVertical: 12, borderRadius: radius.xl, alignItems: 'center', ...elevation.lg, shadowColor: palette.sageDeep },
   feedbackText: { color: palette.white, fontSize: fs.callout, fontWeight: '700' },
   feedbackMacro: { color: 'rgba(255,255,255,0.82)', fontSize: fs.caption1, marginTop: 2 }, // 暗背景上の半透明白文字。専用トークンなし (許容例外)
   // Live preview state (sheet open, before save). Same position as feedbackBubble
   // but cream/sage-pale to read as "tentative". Pointer-events disabled so it
   // doesn't intercept taps on the open sheet.
-  feedbackBubbleLive: { position: 'absolute', top: 340, alignSelf: 'center', backgroundColor: palette.surface, borderWidth: 1.5, borderColor: palette.sageStrong, paddingHorizontal: 16, paddingVertical: 12, borderRadius: radius.xl, alignItems: 'center', ...elevation.md, shadowColor: palette.sageStrong },
-  feedbackTextLive: { color: palette.sageDeep, fontSize: fs.callout, fontWeight: '700' },
-  feedbackMacroLive: { color: palette.textMuted, fontSize: fs.caption1, marginTop: 2 },
   undoToast: { position: 'absolute', left: 18, right: 18, bottom: 24, borderRadius: radius.xl, paddingHorizontal: 18, paddingVertical: 15, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   undoTitle: { color: palette.white, fontSize: fs.md, fontWeight: '700' },
   undoText: { color: 'rgba(255,255,255,0.72)', fontSize: fs.caption1, marginTop: 4 }, // 暗背景上の半透明白文字。専用トークンなし (許容例外)
   undoAction: { color: colors.amber[200], fontSize: fs.md, fontWeight: '700' },
-  modalOverlay: { flex: 1, backgroundColor: palette.scrimLight, justifyContent: 'flex-end' },
-  modalSheet: { backgroundColor: palette.surface, borderTopLeftRadius: 30, borderTopRightRadius: 30, paddingHorizontal: 20, paddingTop: 12, paddingBottom: 30, gap: 18 },
-  sheetGrabber: { alignSelf: 'center', width: 44, height: 5, borderRadius: radius.xs, backgroundColor: palette.dim, marginBottom: 8 },
-  sheetHero: { alignItems: 'center', gap: 8, paddingTop: 8 },
-  statusAvatarLarge: { width: 84, height: 84, borderRadius: radius.full, backgroundColor: palette.sageDeep, alignItems: 'center', justifyContent: 'center' },
-  statusAvatarEmoji: { fontSize: 42 },
-  sheetHeroTitle: { fontSize: fs['2xl'], fontWeight: '700', color: palette.text },
-  sheetHeroSubtitle: { fontSize: fs.md, color: palette.textMuted },
-  statusInfoGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 12 },
-  statusInfoCard: { width: '48%', backgroundColor: palette.card, borderRadius: 22, padding: 16, gap: 8 },
-  infoLabel: { color: palette.textMuted, fontSize: fs.caption1 },
-  infoValue: { color: palette.text, fontSize: fs.lg, fontWeight: '700' },
-  statusGoalCard: { backgroundColor: palette.card, borderRadius: 28, padding: 18, gap: 12 },
-  goalCardTitle: { fontSize: fs.sm, color: palette.textMuted, textTransform: 'uppercase', letterSpacing: 1 },
-  goalCalories: { fontSize: fs['3xl'], fontWeight: '700', color: palette.sageDeep },
   goalMacroRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
-  goalHint: { fontSize: fs.sm, color: palette.textMuted },
-  editorSheet: { maxHeight: '92%', backgroundColor: palette.surface, borderTopLeftRadius: 30, borderTopRightRadius: 30, paddingHorizontal: 20, paddingTop: 12, paddingBottom: 20 },
-  editorTitle: { fontSize: fs['2xl'], fontWeight: '700', color: palette.text, marginBottom: 12 },
-  editorBody: { gap: 18, paddingBottom: 20 },
   editorSection: { gap: 12 },
   editorSectionTitle: { fontSize: fs.md, fontWeight: '700', color: palette.text },
   optionWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
@@ -1732,8 +1609,6 @@ const styles = StyleSheet.create({
   portionSection: { backgroundColor: palette.surface, borderRadius: 22, padding: 16, gap: 10, borderWidth: 1, borderColor: palette.border },
   portionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   portionTitle: { fontSize: fs.md, fontWeight: '700', color: palette.text },
-  portionBadge: { fontSize: fs.sm, fontWeight: '700', color: palette.sageDeep, backgroundColor: palette.accentSoft, paddingHorizontal: 10, paddingVertical: 4, borderRadius: radius.full },
-  portionBaseline: { fontSize: fs.caption1, color: palette.textMuted },
   portionNowLine: { fontSize: fs.md, color: palette.text, fontWeight: '700', marginTop: 2 },
   portionNowLineMuted: { color: palette.textMuted, fontWeight: '500', fontSize: fs.caption1 },
   sliderWrap: { paddingTop: 10, paddingBottom: 4 },
@@ -1746,9 +1621,4 @@ const styles = StyleSheet.create({
   sliderLabelTap: { alignItems: 'center', flex: 1, paddingVertical: 4 },
   sliderLabelText: { fontSize: fs.caption1, color: palette.textMuted, fontWeight: '600' },
   sliderLabelTextActive: { color: palette.sageDeep, fontWeight: '700' },
-  editorFooter: { flexDirection: 'row', gap: 10, marginTop: 12 },
-  secondaryButton: { flex: 1, backgroundColor: colors.clay[100], borderRadius: radius.full, paddingVertical: 14, alignItems: 'center' },
-  secondaryButtonText: { color: palette.danger, fontSize: fs.md, fontWeight: '700' },
-  primaryButton: { flex: 1, backgroundColor: palette.sageDeep, borderRadius: radius.full, paddingVertical: 14, alignItems: 'center' },
-  primaryButtonText: { color: palette.white, fontSize: fs.md, fontWeight: '700' },
 });
