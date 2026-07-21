@@ -4,15 +4,38 @@ import android.content.Context
 import androidx.glance.GlanceId
 import androidx.glance.action.Action
 import androidx.glance.action.ActionParameters
+import androidx.glance.appwidget.GlanceAppWidget
+import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.action.ActionCallback
 import androidx.glance.appwidget.action.actionStartActivity
-import androidx.glance.appwidget.updateAll
 
 // アプリのホーム画面を開くアクション（カロリーリング等のタップ用）
 internal fun openAppAction(context: Context): Action =
     actionStartActivity(
-        context.packageManager.getLaunchIntentForPackage(context.packageName)!!
+        context.applicationContext.packageManager
+            .getLaunchIntentForPackage(context.packageName)!!
     )
+
+// 全ウィジェットを明示的に更新。
+// updateAll() は Glance 1.1.x で内部例外を swallow しサイレント失敗するケースがあるため、
+// GlanceAppWidgetManager で ID を取得して update() を直接呼ぶ方式に統一する。
+internal suspend fun updateAllWidgets(context: Context) {
+    val ctx = context.applicationContext
+    val mgr = GlanceAppWidgetManager(ctx)
+    listOf<GlanceAppWidget>(
+        Widget2x2Glance(),
+        Widget2x2RingGlance(),
+        Widget4x2Glance(),
+        Widget3x3Glance(),
+        Widget4x3Glance(),
+    ).forEach { widget ->
+        try {
+            mgr.getGlanceIds(widget.javaClass).forEach { id: GlanceId ->
+                widget.update(ctx, id)
+            }
+        } catch (_: Exception) {}
+    }
+}
 
 // ── Log Food ─────────────────────────────────────────────────────────────────
 
@@ -50,11 +73,7 @@ class LogFoodAction : ActionCallback {
         val newConsumed = WidgetStateManager.getConsumedKcal(context) + kcal
         WidgetStateManager.setKcal(context, newConsumed, WidgetStateManager.getTargetKcal(context))
 
-        try { Widget2x2Glance().updateAll(context) } catch (_: Exception) {}
-        try { Widget2x2RingGlance().updateAll(context) } catch (_: Exception) {}
-        try { Widget4x2Glance().updateAll(context) } catch (_: Exception) {}
-        try { Widget3x3Glance().updateAll(context) } catch (_: Exception) {}
-        try { Widget4x3Glance().updateAll(context) } catch (_: Exception) {}
+        updateAllWidgets(context)
     }
 }
 
@@ -82,10 +101,6 @@ class UndoLogAction : ActionCallback {
         val newConsumed = (WidgetStateManager.getConsumedKcal(context) - kcalToRemove).coerceAtLeast(0)
         WidgetStateManager.setKcal(context, newConsumed, WidgetStateManager.getTargetKcal(context))
 
-        try { Widget2x2Glance().updateAll(context) } catch (_: Exception) {}
-        try { Widget2x2RingGlance().updateAll(context) } catch (_: Exception) {}
-        try { Widget4x2Glance().updateAll(context) } catch (_: Exception) {}
-        try { Widget3x3Glance().updateAll(context) } catch (_: Exception) {}
-        try { Widget4x3Glance().updateAll(context) } catch (_: Exception) {}
+        updateAllWidgets(context)
     }
 }

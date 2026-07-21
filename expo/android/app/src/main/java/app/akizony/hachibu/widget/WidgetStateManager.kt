@@ -37,7 +37,7 @@ object WidgetStateManager {
     private const val KEY_LOGGED_CATEGORIES = "widget_logged_categories"
 
     fun prefs(context: Context): SharedPreferences =
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
     // ── Categories ───────────────────────────────────────────────────────────
 

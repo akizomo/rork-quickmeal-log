@@ -4,7 +4,6 @@ import com.facebook.react.bridge.*
 import kotlinx.coroutines.*
 import org.json.JSONArray
 import org.json.JSONObject
-import androidx.glance.appwidget.updateAll
 
 class WidgetBridgeModule(private val reactContext: ReactApplicationContext) :
     ReactContextBaseJavaModule(reactContext) {
@@ -22,13 +21,7 @@ class WidgetBridgeModule(private val reactContext: ReactApplicationContext) :
     fun updateWidgetData(consumed: Int, target: Int) {
         val ctx = reactContext.applicationContext
         WidgetStateManager.setKcal(ctx, consumed, target)
-        scope.launch {
-            try { Widget2x2Glance().updateAll(ctx) } catch (_: Exception) {}
-            try { Widget2x2RingGlance().updateAll(ctx) } catch (_: Exception) {}
-            try { Widget4x2Glance().updateAll(ctx) } catch (_: Exception) {}
-            try { Widget3x3Glance().updateAll(ctx) } catch (_: Exception) {}
-            try { Widget4x3Glance().updateAll(ctx) } catch (_: Exception) {}
-        }
+        scope.launch { updateAllWidgets(ctx) }
     }
 
     /**
@@ -54,16 +47,8 @@ class WidgetBridgeModule(private val reactContext: ReactApplicationContext) :
                 )
             }
             WidgetStateManager.setCategories(ctx, cats)
-            scope.launch {
-                try { Widget2x2Glance().updateAll(ctx) } catch (_: Exception) {}
-                try { Widget2x2RingGlance().updateAll(ctx) } catch (_: Exception) {}
-                try { Widget4x2Glance().updateAll(ctx) } catch (_: Exception) {}
-                try { Widget3x3Glance().updateAll(ctx) } catch (_: Exception) {}
-                try { Widget4x3Glance().updateAll(ctx) } catch (_: Exception) {}
-            }
-        } catch (e: Exception) {
-            // 無効な JSON は無視
-        }
+            scope.launch { updateAllWidgets(ctx) }
+        } catch (_: Exception) {}
     }
 
     /**
@@ -89,15 +74,8 @@ class WidgetBridgeModule(private val reactContext: ReactApplicationContext) :
                 put("timestamp",  e.timestamp)
             })
         }
-        // undo UI リセットのためウィジェットを再描画
         if (queue.isNotEmpty()) {
-            scope.launch {
-                try { Widget2x2Glance().updateAll(ctx) } catch (_: Exception) {}
-                try { Widget2x2RingGlance().updateAll(ctx) } catch (_: Exception) {}
-                try { Widget4x2Glance().updateAll(ctx) } catch (_: Exception) {}
-                try { Widget3x3Glance().updateAll(ctx) } catch (_: Exception) {}
-                try { Widget4x3Glance().updateAll(ctx) } catch (_: Exception) {}
-            }
+            scope.launch { updateAllWidgets(ctx) }
         }
         promise.resolve(arr.toString())
     }
