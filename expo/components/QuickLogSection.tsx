@@ -48,7 +48,6 @@ const QUICK_LOG_COLORS = {
   // セグメントコントロールの選択中ピルと同じ ivory[50] にして、
   // 「選択中タブ→ボタン」で一貫した“浮いた白いカード”の見た目にする。
   buttonBg: colors.ivory[50],
-  iconBg: '#FFFFFF',
   labelText: '#2E3B35',
 };
 
@@ -557,7 +556,6 @@ const styles = StyleSheet.create({
     ...elevation.xs,
   },
   iconContainer: {
-    backgroundColor: QUICK_LOG_COLORS.iconBg,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: QUICK_LOG_TOKENS.iconLabelSpacing,
