@@ -9,6 +9,7 @@ import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.action.ActionCallback
 import androidx.glance.appwidget.action.actionStartActivity
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.delay
 
 // アプリのホーム画面を開くアクション（カロリーリング等のタップ用）
 // !! は自アプリのパッケージなので null にならない
@@ -78,6 +79,12 @@ class LogFoodAction : ActionCallback {
         val newConsumed = WidgetStateManager.getConsumedKcal(context) + kcal
         WidgetStateManager.setKcal(context, newConsumed, WidgetStateManager.getTargetKcal(context))
 
+        // t=0: ✓ 状態 + 新しいリング値を即時表示
+        updateAllWidgets(context)
+
+        // t=4000ms: アプリ内 UndoToast と同じ表示時間で ✓ → 通常ボタンに戻す
+        delay(4_000L)
+        WidgetStateManager.removeLoggedCategory(context, categoryId)
         updateAllWidgets(context)
     }
 }
