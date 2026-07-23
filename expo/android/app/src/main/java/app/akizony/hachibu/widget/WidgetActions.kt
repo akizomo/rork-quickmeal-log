@@ -73,19 +73,35 @@ class LogFoodAction : ActionCallback {
                 timestamp  = System.currentTimeMillis()
             )
         )
+        val previousConsumed = WidgetStateManager.getConsumedKcal(context)
+        val target           = WidgetStateManager.getTargetKcal(context)
+
         WidgetStateManager.setLoggedCategory(context, categoryId)
 
-        // リングを即時更新: consumed に楽観的加算（アプリ起動時に正確な値で上書き）
-        val newConsumed = WidgetStateManager.getConsumedKcal(context) + kcal
-        WidgetStateManager.setKcal(context, newConsumed, WidgetStateManager.getTargetKcal(context))
-
-        // t=0: ✓ 状態 + 新しいリング値を即時表示
+        // t=0: ✓ 状態 + 旧リング値を即表示
         updateAllWidgets(context)
 
-        // t=4000ms: アプリ内 UndoToast と同じ表示時間で ✓ → 通常ボタンに戻す
-        delay(4_000L)
-        WidgetStateManager.removeLoggedCategory(context, categoryId)
-        updateAllWidgets(context)
+        // リングアニメーション: 6ステップ × 100ms = 600ms でカウントアップ
+        // undo が押されたらループを抜けてリング値の書き換えを止める
+        var undone = false
+        for (i in 1..6) {
+            delay(100L)
+            if (categoryId !in WidgetStateManager.getLoggedCategories(context)) {
+                undone = true
+                break
+            }
+            WidgetStateManager.setKcal(context, previousConsumed + kcal * i / 6, target)
+            updateAllWidgets(context)
+        }
+
+        if (!undone) {
+            // アプリ内 UndoToast と同じ 4 秒で ✓ を復帰 (アニメーション 600ms 分を除いた残り)
+            delay(3_400L)
+            if (categoryId in WidgetStateManager.getLoggedCategories(context)) {
+                WidgetStateManager.removeLoggedCategory(context, categoryId)
+                updateAllWidgets(context)
+            }
+        }
     }
 }
 
