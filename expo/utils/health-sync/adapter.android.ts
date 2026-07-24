@@ -167,8 +167,23 @@ async function fetchDailyActivity(rangeDays: number): Promise<HealthDailyActivit
   // aggregateGroupByPeriod を使用: Health Connect が複数ソース(ウォッチ・スマホ等)の
   // 重複を排除した正しい日次合計を返す。readRecords の raw レコードを手動合計すると
   // ソースをまたいだ二重計上が発生するため使用しない。
-  const endTime = new Date().toISOString();
-  const startTime = new Date(Date.now() - rangeDays * 24 * 60 * 60 * 1000).toISOString();
+  //
+  // 🛡️ startTime はローカルの日付境界 (真夜中) に正規化する。
+  //   Health Connect の period 集計は HealthKit の HKStatisticsCollectionQuery と異なり
+  //   ローカル真夜中に自動アンカーしない — 与えた startTime から機械的に24時間単位で
+  //   バケットを切る。「今の時刻」をそのまま起点にすると、同期する時刻によってバケット
+  //   境界が実際の暦日とズレ、深夜0時〜同期時刻の歩数が前日バケットに誤帰属してしまう
+  //   (同期時刻付近まで「今日」バケットがほぼ空に見える) 。
+  //   endTime は「今」のままにして、当日分の途中経過バケットを正しく含める。
+  const now = new Date();
+  const endTime = now.toISOString();
+  const localMidnightNDaysAgo = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate() - rangeDays,
+    0, 0, 0, 0
+  );
+  const startTime = localMidnightNDaysAgo.toISOString();
   const map = new Map<string, { steps: number; activeKcal: number }>();
   try {
     const stepsResult = await aggregateGroupByPeriod({
