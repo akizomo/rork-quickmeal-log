@@ -356,38 +356,85 @@ function buildRankedItem(
 /** ⭐️ タブが出現するのに必要なログ数 */
 export const FREQUENT_TAB_MIN_LOGS = 5;
 
+/** タブ実績 (tabUsageCounts) ベースの判定に切り替えるのに必要な合計記録数。それ未満はコールドスタート扱い。 */
+export const TAB_USAGE_MIN_TOTAL = 5;
+
 /**
- * 直近の history エントリ数からデフォルトタブを導出する。
- *
- * - ログ < FREQUENT_TAB_MIN_LOGS: ingredient/dish の多い方
- * - ログ >= FREQUENT_TAB_MIN_LOGS: ⭐️ タブを優先 (最も使われるパスが最速)
- *   ただし直近 30 件で dish 記録が ingredient の 2 倍以上なら dish を返す
- *   (⭐️ に慣れていないうちは dish ユーザーが使いやすい方を出す)
+ * 現在のデフォルトタブから切り替えるために必要な倍率 (1.2 = 20%以上のリードが必要)。
+ * 僅差の実績でタブがセッションごとに入れ替わる「パタつき」を防ぐヒステリシス。
  */
-export function deriveDefaultTab(
-  history: QuickLogHistoryMap | undefined,
-): QuickLogTabKey {
+export const TAB_SWITCH_MARGIN_RATIO = 1.2;
+
+export interface TabUsageCounts {
+  ingredient: number;
+  dish: number;
+  frequent: number;
+}
+
+/** タブ実績カウントに +1 する純粋関数。呼び出し側で settings への永続化を行う。 */
+export function recordTabUsage(
+  counts: TabUsageCounts | undefined,
+  tab: QuickLogTabKey,
+): TabUsageCounts {
+  const base = counts ?? { ingredient: 0, dish: 0, frequent: 0 };
+  return { ...base, [tab]: base[tab] + 1 };
+}
+
+/**
+ * コールドスタート判定 (タブ実績が TAB_USAGE_MIN_TOTAL 未満のときのフォールバック)。
+ * ⭐️ タブがまだ出現していない可能性が高い段階なので history の直近30件で
+ * dish/ingredient のどちらが多いかだけを見る。
+ */
+function deriveColdStartTab(history: QuickLogHistoryMap | undefined): 'ingredient' | 'dish' {
   if (!history) return 'ingredient';
 
   let ingredientCount = 0;
   let dishCount = 0;
-  let total = 0;
 
   for (const [mapKey, selections] of Object.entries(history)) {
     const isDish = mapKey.startsWith('dish:');
     const count = Math.min(selections.length, 30); // 直近 30 件で判断
-    total += count;
     if (isDish) dishCount += count;
     else ingredientCount += count;
   }
 
-  if (total < FREQUENT_TAB_MIN_LOGS) {
-    return dishCount > ingredientCount ? 'dish' : 'ingredient';
+  return dishCount > ingredientCount ? 'dish' : 'ingredient';
+}
+
+/**
+ * デフォルトタブを導出する。
+ *
+ * - タブ実績合計が TAB_USAGE_MIN_TOTAL 未満: コールドスタート
+ *   → history の直近30件で dish/ingredient の多い方 (⭐️ はまだ対象外)
+ * - それ以降: 食材/一皿料理/⭐️ のうち実際に一番使われているタブを優先する。
+ *   ただし現在の currentDefaultTab から TAB_SWITCH_MARGIN_RATIO 倍以上
+ *   リードしていない限りは currentDefaultTab を維持する (ヒステリシス)。
+ */
+export function deriveDefaultTab(
+  history: QuickLogHistoryMap | undefined,
+  tabUsageCounts?: TabUsageCounts,
+  currentDefaultTab?: QuickLogTabKey,
+): QuickLogTabKey {
+  const counts = tabUsageCounts ?? { ingredient: 0, dish: 0, frequent: 0 };
+  const total = counts.ingredient + counts.dish + counts.frequent;
+
+  if (total < TAB_USAGE_MIN_TOTAL) {
+    return deriveColdStartTab(history);
   }
 
-  // ⭐️ 出現後: dish が圧倒的多数でなければ ⭐️ を優先
-  if (dishCount > ingredientCount * 2) return 'dish';
-  return 'frequent';
+  const tabs: QuickLogTabKey[] = ['ingredient', 'dish', 'frequent'];
+  const leaderTab = tabs.reduce((best, t) => (counts[t] > counts[best] ? t : best), tabs[0]);
+
+  if (!currentDefaultTab || currentDefaultTab === leaderTab) {
+    return leaderTab;
+  }
+
+  const currentCount = counts[currentDefaultTab];
+  const leaderCount = counts[leaderTab];
+  if (leaderCount > currentCount * TAB_SWITCH_MARGIN_RATIO) {
+    return leaderTab;
+  }
+  return currentDefaultTab;
 }
 
 // ---------------------------------------------------------------------------

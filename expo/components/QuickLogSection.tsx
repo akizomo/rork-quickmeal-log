@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { memo, useCallback, useMemo, useRef, useState } from 'react';
 import {
   Animated,
   Pressable,
@@ -167,10 +167,10 @@ function QuickLogButton({
       const bucketDef = getBucketDef(bucketKey);
       const first = getIdentitiesInBucket(bucketKey)[0];
       if (bucketDef?.quickTapDisabled || first?.quickTapDisabled) {
-        openIdentityLogSheet(bucketKey);
+        openIdentityLogSheet(bucketKey, { sourceTab: mode });
         return;
       }
-      if (first) void quickLogIdentity(first.id);
+      if (first) void quickLogIdentity(first.id, mode);
     }
   };
 
@@ -178,7 +178,7 @@ function QuickLogButton({
     // Long-press = open detail sheet so the user can pick an Identity / adjust
     // Attribute, Style, amount, and add-ons.
     if (hasNewBucket) {
-      openIdentityLogSheet(bucketKey);
+      openIdentityLogSheet(bucketKey, { sourceTab: mode });
     } else if (mode === 'dish') {
       // Fallback to legacy dish editor for buckets not yet in the new IA.
       void openDraftEditor(item.key);
@@ -282,7 +282,7 @@ const FrequentGrid = memo(function FrequentGrid({
             // それ以外は legacy draft があれば正確な subcategory/amount、なければ category default。
             const handleLog = () => {
               if (item.identityId) {
-                void quickLogIdentity(item.identityId);
+                void quickLogIdentity(item.identityId, 'frequent');
               } else if (item.mode === 'ingredient' && item.draft) {
                 void submitQuickIngredient(item.draft);
               } else {
@@ -296,9 +296,10 @@ const FrequentGrid = memo(function FrequentGrid({
               if (item.identityId) {
                 openIdentityLogSheet(item.categoryKey as import('@/types/identity').BucketKey, {
                   identityId: item.identityId,
+                  sourceTab: 'frequent',
                 });
               } else if (item.mode === 'ingredient') {
-                openIdentityLogSheet(item.categoryKey as import('@/types/identity').BucketKey);
+                openIdentityLogSheet(item.categoryKey as import('@/types/identity').BucketKey, { sourceTab: 'frequent' });
               } else {
                 setDishQuickEntryKey(item.categoryKey);
               }
@@ -379,20 +380,12 @@ export const QuickLogSection = memo(function QuickLogSection() {
   }, [history]);
   const showFrequentTab = totalHistoryEntries >= FREQUENT_TAB_MIN_LOGS;
 
-  // デフォルトタブを history から導出（初回マウント時のみ）
+  // デフォルトタブを実際のタブ使用実績 (tabUsageCounts) から導出（初回マウント時のみ）。
+  // ⭐️タブが新たに出現しただけでは切り替えない — ユーザーが実際にどのタブを
+  // 使って記録しているかに基づいてデフォルトを決める (ヒステリシス付き)。
   const [selectedTab, setSelectedTab] = useState<QuickLogTabKey>(() =>
-    deriveDefaultTab(history)
+    deriveDefaultTab(history, settings.tabUsageCounts, settings.currentDefaultTab)
   );
-
-  // hydration 後に history が変わった場合に⭐️タブが初出現したら自動遷移
-  useEffect(() => {
-    if (showFrequentTab && (selectedTab === 'ingredient' || selectedTab === 'dish')) {
-      // すでに 'frequent' でなければ再導出
-      const derived = deriveDefaultTab(history);
-      if (derived === 'frequent') setSelectedTab('frequent');
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showFrequentTab]);
 
   // タブ変更: ingredient/dish は selectedMode も連動させる
   const handleTabChange = useCallback((tab: QuickLogTabKey) => {

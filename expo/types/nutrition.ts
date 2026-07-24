@@ -208,6 +208,18 @@ export interface AppSettings {
    */
   quickLogHistory?: Record<string, unknown[]>;
   /**
+   * 食材/一皿料理/⭐️ の各タブで実際に記録した回数の累計 (減らない・全期間)。
+   * デフォルトタブ判定 (最も使われているタブを優先) に使う。
+   * 型はここでは緩く持ち、実ロジックは `quick-log-history.ts` 側で扱う
+   * (quickLogHistory と同じく quick-log.ts との循環依存を避けるため)。
+   */
+  tabUsageCounts?: { ingredient: number; dish: number; frequent: number };
+  /**
+   * 現在採用中のデフォルトタブ。次回判定時のヒステリシス基準にする
+   * (僅差では切り替えず、明確にリードした時だけ更新する)。
+   */
+  currentDefaultTab?: 'ingredient' | 'dish' | 'frequent';
+  /**
    * Identity-first IA schema version applied to the persisted FoodLog list.
    * Bumped when a one-shot backfill of `identityId` runs at boot.
    *   undefined / 0 — never migrated yet

@@ -13,11 +13,11 @@ import type { CustomerInfo } from 'react-native-purchases';
 import { AppSettings, BodyFatEntry, DailyActivitySummary, DishDraft, DishQuickEntryPayload, ExerciseLog, FoodLog, IngredientDraft, LogMode, SubscriptionStatus, UserProfile, WeightEntry } from '@/types/nutrition';
 import { ENTITLEMENT_ID } from '@/constants/iap';
 import { addCustomerInfoListener, getCustomerInfo, restorePurchases as iapRestore } from '@/utils/iap';
-import { IngredientQuickDraft, QuickLogHistoryMap, QuickLogSelection } from '@/types/quick-log';
+import { IngredientQuickDraft, QuickLogHistoryMap, QuickLogSelection, QuickLogTabKey } from '@/types/quick-log';
 import { buildDishMacro, clampPortion, computeIngredient, createFoodLogFromDish, createFoodLogFromDishQuickEntry, createFoodLogFromIngredient, formatDateKey, generateId, getDefaultModeByTime, getMealSlot, getQuickCategories, getSubType, sumToday } from '@/utils/nutrition';
 import { adjustedTargetKcal, calcBaselineActiveKcal, calcExerciseGrossKcal, calcExerciseNetKcal, EXERCISE_TYPES, stepsToActiveKcal } from '@/utils/goals';
 import { isSameDay } from '@/utils/history';
-import { castHistoryMap, deriveDefaultTab, recordDishSelection, recordSelection, selectionFromDraft } from '@/utils/quick-log-history';
+import { castHistoryMap, deriveDefaultTab, recordDishSelection, recordSelection, recordTabUsage, selectionFromDraft } from '@/utils/quick-log-history';
 import { computeQuickLogMacro } from '@/utils/quick-log-macro';
 import { beginSpan } from '@/utils/perf';
 import { widgetUpdateKcal, widgetDrainPendingQueue } from '@/utils/widget-bridge';
@@ -116,6 +116,8 @@ function migrateSettings(raw: Partial<AppSettings> | undefined): AppSettings {
     healthConnectSeenAtISO: raw?.healthConnectSeenAtISO ?? null,
     lastHealthSyncAtISO: raw?.lastHealthSyncAtISO ?? null,
     quickLogHistory: castHistoryMap(raw?.quickLogHistory),
+    tabUsageCounts: raw?.tabUsageCounts ?? { ingredient: 0, dish: 0, frequent: 0 },
+    currentDefaultTab: raw?.currentDefaultTab,
   };
 }
 
@@ -160,6 +162,8 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     identityId?: string;
     /** When set, the sheet edits this existing FoodLog instead of creating new. */
     editingLogId?: string;
+    /** Which QuickLogSection tab opened this sheet (for tabUsageCounts tracking). Absent for edits. */
+    sourceTab?: QuickLogTabKey;
   }>({ visible: false });
   const [pendingLogIds, setPendingLogIds] = useState<string[]>([]);
   const [feedback, setFeedback] = useState<FeedbackState | null>(null);
@@ -521,12 +525,13 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
   // ----- Identity-first IA (Phase 2+) -----
 
   const openIdentityLogSheet = useCallback(
-    (bucketKey: BucketKey, opts?: { identityId?: string; editingLogId?: string }) => {
+    (bucketKey: BucketKey, opts?: { identityId?: string; editingLogId?: string; sourceTab?: QuickLogTabKey }) => {
       setIdentityLogSheet({
         visible: true,
         bucketKey,
         identityId: opts?.identityId,
         editingLogId: opts?.editingLogId,
+        sourceTab: opts?.sourceTab,
       });
     },
     []
@@ -551,8 +556,9 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
    * and history bookkeeping.
    */
   const submitIdentityLog = useCallback(
-    async (resolved: ResolveResult, opts?: { editingLogId?: string; wasShortTap?: boolean }) => {
+    async (resolved: ResolveResult, opts?: { editingLogId?: string; wasShortTap?: boolean; sourceTab?: QuickLogTabKey }) => {
       const editingLogId = opts?.editingLogId ?? identityLogSheet.editingLogId;
+      const sourceTab = opts?.sourceTab ?? identityLogSheet.sourceTab;
 
       // Edit-mode: update the existing FoodLog in place (preserve id/date/timestamp/mealSlot).
       if (editingLogId) {
@@ -601,14 +607,29 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       const mapKey = log.mode === 'dish' ? `dish:${log.categoryKey}` : log.categoryKey;
       const currentHistory = (settings.quickLogHistory ?? {}) as QuickLogHistoryMap;
       const nextHistory = recordSelection(currentHistory, sel, mapKey);
-      const nextSettings: AppSettings = { ...settings, quickLogHistory: nextHistory };
+
+      // タブ実績カウント (デフォルトタブ判定用)。sourceTab が分からないケース
+      // (edit / search bar 等) では更新しない。
+      const nextTabUsageCounts = sourceTab
+        ? recordTabUsage(settings.tabUsageCounts, sourceTab)
+        : settings.tabUsageCounts;
+      const nextDefaultTab = nextTabUsageCounts
+        ? deriveDefaultTab(nextHistory, nextTabUsageCounts, settings.currentDefaultTab)
+        : settings.currentDefaultTab;
+
+      const nextSettings: AppSettings = {
+        ...settings,
+        quickLogHistory: nextHistory,
+        tabUsageCounts: nextTabUsageCounts,
+        currentDefaultTab: nextDefaultTab,
+      };
       setSettings(nextSettings);
       persist(profile, [log, ...logs], nextSettings, weights, bodyFatEntries);
 
       setIdentityLogSheet({ visible: false });
       return log;
     },
-    [identityLogSheet.editingLogId, logs, replaceLog, applyLoggingDate, pushLog, settings, setSettings, persist, profile, weights, bodyFatEntries]
+    [identityLogSheet.editingLogId, identityLogSheet.sourceTab, logs, replaceLog, applyLoggingDate, pushLog, settings, setSettings, persist, profile, weights, bodyFatEntries]
   );
 
   /**
@@ -616,7 +637,7 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
    * Used by single-tap on a chip outside the bottom sheet.
    */
   const quickLogIdentity = useCallback(
-    async (identityId: string) => {
+    async (identityId: string, sourceTab?: QuickLogTabKey) => {
       const identity = getIdentity(identityId);
       if (!identity) {
         console.log('[app-state] quickLogIdentity: unknown identity', identityId);
@@ -624,7 +645,7 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       }
       const input: ResolveInput = { originIdentityId: identityId };
       const resolved = resolveLog(input);
-      return submitIdentityLog(resolved);
+      return submitIdentityLog(resolved, { sourceTab });
     },
     [submitIdentityLog]
   );

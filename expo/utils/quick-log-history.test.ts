@@ -13,6 +13,8 @@ import {
   rankFrequentSelections,
   recordDishSelection,
   recordSelection,
+  recordTabUsage,
+  TAB_USAGE_MIN_TOTAL,
 } from './quick-log-history';
 import type { QuickLogHistoryMap, QuickLogSelection } from '@/types/quick-log';
 
@@ -322,13 +324,13 @@ describe('castHistoryMap — mode フィールド', () => {
 // deriveDefaultTab
 // ---------------------------------------------------------------------------
 
-describe('deriveDefaultTab', () => {
+describe('deriveDefaultTab — コールドスタート (タブ実績 < TAB_USAGE_MIN_TOTAL)', () => {
   it('history が undefined/空のとき ingredient を返す', () => {
     expect(deriveDefaultTab(undefined)).toBe('ingredient');
     expect(deriveDefaultTab({})).toBe('ingredient');
   });
 
-  it(`ログ数が ${FREQUENT_TAB_MIN_LOGS} 未満のとき ingredient を返す`, () => {
+  it(`タブ実績がないとき、ログ数が ${FREQUENT_TAB_MIN_LOGS} 未満なら ingredient を返す`, () => {
     const history: QuickLogHistoryMap = {
       lean_protein: Array.from({ length: FREQUENT_TAB_MIN_LOGS - 1 }, (_, i) =>
         makeSel('lean_protein', 'chicken_breast', i),
@@ -337,40 +339,56 @@ describe('deriveDefaultTab', () => {
     expect(deriveDefaultTab(history)).toBe('ingredient');
   });
 
-  it(`ログ数が ${FREQUENT_TAB_MIN_LOGS} 以上のとき frequent を返す（dish が圧倒的多数でなければ）`, () => {
-    const history: QuickLogHistoryMap = {
-      lean_protein: Array.from({ length: FREQUENT_TAB_MIN_LOGS }, (_, i) =>
-        makeSel('lean_protein', 'chicken_breast', i),
-      ),
-    };
-    expect(deriveDefaultTab(history)).toBe('frequent');
-  });
-
-  it('dish ログが ingredient の 2 倍超のとき dish を返す', () => {
+  it('dish ログが ingredient より多いとき dish を返す', () => {
     const history: QuickLogHistoryMap = {
       lean_protein: Array.from({ length: 3 }, (_, i) =>
         makeSel('lean_protein', 'chicken_breast', i),
       ),
-      'dish:ramen': Array.from({ length: 9 }, (_, i) => ({
+      'dish:ramen': Array.from({ length: 4 }, (_, i) => ({
         ...makeSel('ramen', 'ramen_light', i),
         mode: 'dish' as const,
       })),
     };
-    // dish(9) > ingredient(3) * 2 → dish
     expect(deriveDefaultTab(history)).toBe('dish');
   });
+});
 
-  it('dish がちょうど ingredient の 2 倍以下なら frequent を返す', () => {
-    const history: QuickLogHistoryMap = {
-      lean_protein: Array.from({ length: 5 }, (_, i) =>
-        makeSel('lean_protein', 'chicken_breast', i),
-      ),
-      'dish:ramen': Array.from({ length: 8 }, (_, i) => ({
-        ...makeSel('ramen', 'ramen_light', i),
-        mode: 'dish' as const,
-      })),
-    };
-    // dish(8) <= ingredient(5) * 2(=10) → frequent
-    expect(deriveDefaultTab(history)).toBe('frequent');
+describe('deriveDefaultTab — タブ実績ベース (tabUsageCounts)', () => {
+  it(`タブ実績合計が ${TAB_USAGE_MIN_TOTAL} 未満のときは tabUsageCounts を無視してコールドスタート判定になる`, () => {
+    const counts = { ingredient: 1, dish: 0, frequent: 3 }; // 合計4 < 5
+    expect(deriveDefaultTab(undefined, counts)).toBe('ingredient');
+  });
+
+  it('currentDefaultTab 未設定なら、実績最多のタブをそのまま返す', () => {
+    const counts = { ingredient: 2, dish: 1, frequent: 10 };
+    expect(deriveDefaultTab(undefined, counts)).toBe('frequent');
+  });
+
+  it('候補が currentDefaultTab と同じなら維持する', () => {
+    const counts = { ingredient: 20, dish: 1, frequent: 1 };
+    expect(deriveDefaultTab(undefined, counts, 'ingredient')).toBe('ingredient');
+  });
+
+  it('僅差 (20%未満のリード) では currentDefaultTab を維持する (ヒステリシス)', () => {
+    // frequent(11) は ingredient(10) の 1.1倍 → 1.2倍未満なので切り替えない
+    const counts = { ingredient: 10, dish: 0, frequent: 11 };
+    expect(deriveDefaultTab(undefined, counts, 'ingredient')).toBe('ingredient');
+  });
+
+  it('20%以上リードしたら currentDefaultTab を切り替える', () => {
+    // frequent(13) は ingredient(10) の 1.3倍 → 1.2倍以上なので切り替える
+    const counts = { ingredient: 10, dish: 0, frequent: 13 };
+    expect(deriveDefaultTab(undefined, counts, 'ingredient')).toBe('frequent');
+  });
+});
+
+describe('recordTabUsage', () => {
+  it('counts が undefined のとき 0 から始めて対象タブを +1 する', () => {
+    expect(recordTabUsage(undefined, 'dish')).toEqual({ ingredient: 0, dish: 1, frequent: 0 });
+  });
+
+  it('既存カウントの対象タブだけを +1 する (他は不変)', () => {
+    const counts = { ingredient: 3, dish: 1, frequent: 5 };
+    expect(recordTabUsage(counts, 'frequent')).toEqual({ ingredient: 3, dish: 1, frequent: 6 });
   });
 });
