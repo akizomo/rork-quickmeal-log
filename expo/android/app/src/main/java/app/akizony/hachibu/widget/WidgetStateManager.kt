@@ -75,11 +75,17 @@ object WidgetStateManager {
     fun getConsumedKcal(context: Context): Int = prefs(context).getInt(KEY_CONSUMED_KCAL, 0)
     fun getTargetKcal(context: Context): Int   = prefs(context).getInt(KEY_TARGET_KCAL, 2000)
 
+    // アプリ側専用: consumed と target を同時更新 (widgetUpdateKcal から呼ぶ)
     fun setKcal(context: Context, consumed: Int, target: Int) {
         prefs(context).edit()
             .putInt(KEY_CONSUMED_KCAL, consumed)
             .putInt(KEY_TARGET_KCAL, target)
             .commit()
+    }
+
+    // ウィジェットアクション専用: consumed だけを更新。target はアプリ側が管理する
+    fun setConsumedKcal(context: Context, consumed: Int) {
+        prefs(context).edit().putInt(KEY_CONSUMED_KCAL, consumed).commit()
     }
 
     // ── Pending Queue ─────────────────────────────────────────────────────────

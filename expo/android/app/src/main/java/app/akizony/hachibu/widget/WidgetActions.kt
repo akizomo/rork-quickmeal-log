@@ -63,6 +63,8 @@ class LogFoodAction : ActionCallback {
         val sublabel   = parameters[PARAM_SUBLABEL]    ?: return
         val kcal       = parameters[PARAM_KCAL]        ?: return
 
+        val previousConsumed = WidgetStateManager.getConsumedKcal(context)
+
         WidgetStateManager.enqueuePendingLog(
             context,
             PendingLogEntry(
@@ -73,15 +75,13 @@ class LogFoodAction : ActionCallback {
                 timestamp  = System.currentTimeMillis()
             )
         )
-        val previousConsumed = WidgetStateManager.getConsumedKcal(context)
-        val target           = WidgetStateManager.getTargetKcal(context)
-
         WidgetStateManager.setLoggedCategory(context, categoryId)
 
         // t=0: ✓ 状態 + 旧リング値を即表示
         updateAllWidgets(context)
 
         // リングアニメーション: 6ステップ × 100ms = 600ms でカウントアップ
+        // consumed だけを更新。target はアプリ側専用なので触らない
         // undo が押されたらループを抜けてリング値の書き換えを止める
         var undone = false
         for (i in 1..6) {
@@ -90,7 +90,7 @@ class LogFoodAction : ActionCallback {
                 undone = true
                 break
             }
-            WidgetStateManager.setKcal(context, previousConsumed + kcal * i / 6, target)
+            WidgetStateManager.setConsumedKcal(context, previousConsumed + kcal * i / 6)
             updateAllWidgets(context)
         }
 
@@ -127,7 +127,7 @@ class UndoLogAction : ActionCallback {
         WidgetStateManager.removeLoggedCategory(context, categoryId)
 
         val newConsumed = (WidgetStateManager.getConsumedKcal(context) - kcalToRemove).coerceAtLeast(0)
-        WidgetStateManager.setKcal(context, newConsumed, WidgetStateManager.getTargetKcal(context))
+        WidgetStateManager.setConsumedKcal(context, newConsumed)
 
         updateAllWidgets(context)
     }
