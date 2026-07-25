@@ -226,59 +226,6 @@ export function buildPizzaAmountEditConfig(
   };
 }
 
-/**
- * Minimal shape needed for buildIngredientAmountEditConfig.
- * Matches a subset of AmountCandidate from @/types/quick-log
- * without importing React-Native-coupled types.
- */
-export interface AmountCandidateInput {
-  amount: number;
-  unit: string;
-  label?: string;
-}
-
-/**
- * Build an AmountEditConfig from a QuickIngredientSheet's amount candidates.
- * Filters candidates to the current unit, derives presets, min, max, step.
- */
-export function buildIngredientAmountEditConfig(
-  candidates: AmountCandidateInput[],
-  currentUnit: string,
-): AmountEditConfig {
-  const filtered = candidates
-    .filter((c) => c.unit === currentUnit)
-    .sort((a, b) => a.amount - b.amount);
-
-  const presets = filtered.map((c) => c.amount);
-
-  // piece unit keeps step=1; g/ml use step=5 so the stepper moves in meaningful increments
-  const isPiece = currentUnit === 'piece';
-  const hasFraction = filtered.some((c) => c.amount % 1 !== 0);
-  const step = isPiece ? (hasFraction ? 0.5 : 1) : 5;
-
-  const minAmount = presets[0] ?? (isPiece ? 1 : 5);
-  const maxAmount = presets.at(-1) ?? 100;
-
-  const INGREDIENT_UNIT_LABEL: Record<string, string> = {
-    g: 'g',
-    ml: 'ml',
-    piece: '個',
-  };
-  const unitLabel = INGREDIENT_UNIT_LABEL[currentUnit] ?? currentUnit;
-
-  const defaultValue = minAmount;
-
-  return {
-    min: isPiece ? 1 : 5,
-    max: Math.max(maxAmount * 4, 100),
-    step,
-    decimals: decimalsFromStep(step),
-    unitLabel,
-    presets,
-    defaultValue,
-  };
-}
-
 /** Default suffix labels for AmountUnit values. */
 const UNIT_LABEL_FALLBACK: Record<AmountUnit, string> = {
   g: 'g',
@@ -306,7 +253,10 @@ export function buildIdentityAmountEditConfig(
   const step = spec.step ?? (isPercent ? 10 : 1);
   const presets: number[] = (spec.chips ?? []).map((c) => c.value);
 
-  const derivedMin = spec.min ?? (isPercent ? 10 : 1);
+  // min のデフォルトは step に揃える (例: step=10 の食材は min=10) ことで、
+  // isValidAmount の (value - min) % step === 0 判定がプリセット/既定値と
+  // 自然に整合する。明示的に spec.min が指定されていればそれを優先する。
+  const derivedMin = spec.min ?? (isPercent ? 10 : step);
   const lastChipValue = presets.at(-1);
   const derivedMax =
     spec.max ??

@@ -20,9 +20,7 @@ import {
   buildSushiAmountEditConfig,
   buildPizzaAmountEditConfig,
   buildIdentityAmountEditConfig,
-  buildIngredientAmountEditConfig,
   type AmountEditConfig,
-  type AmountCandidateInput,
 } from './amount-edit';
 
 // ---------------------------------------------------------------------------
@@ -598,96 +596,5 @@ describe('buildIdentityAmountEditConfig', () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// buildIngredientAmountEditConfig
-// ---------------------------------------------------------------------------
-
-describe('buildIngredientAmountEditConfig', () => {
-  const candidates: AmountCandidateInput[] = [
-    { amount: 100, unit: 'g', label: '小' },
-    { amount: 150, unit: 'g', label: '並' },
-    { amount: 200, unit: 'g', label: '大' },
-    { amount: 1,   unit: 'piece', label: '1個' },
-    { amount: 2,   unit: 'piece', label: '2個' },
-  ];
-
-  it('filters to currentUnit and sorts by amount', () => {
-    const config = buildIngredientAmountEditConfig(candidates, 'g');
-    expect(config.presets).toEqual([100, 150, 200]);
-  });
-
-  it('filters to piece unit', () => {
-    const config = buildIngredientAmountEditConfig(candidates, 'piece');
-    expect(config.presets).toEqual([1, 2]);
-  });
-
-  it('unitLabel for g → g', () => {
-    const config = buildIngredientAmountEditConfig(candidates, 'g');
-    expect(config.unitLabel).toBe('g');
-  });
-
-  it('unitLabel for ml → ml', () => {
-    const mlCandidates: AmountCandidateInput[] = [
-      { amount: 100, unit: 'ml' },
-      { amount: 200, unit: 'ml' },
-    ];
-    const config = buildIngredientAmountEditConfig(mlCandidates, 'ml');
-    expect(config.unitLabel).toBe('ml');
-  });
-
-  it('unitLabel for piece → 個', () => {
-    const config = buildIngredientAmountEditConfig(candidates, 'piece');
-    expect(config.unitLabel).toBe('個');
-  });
-
-  it('step=1 when all amounts are integers', () => {
-    const config = buildIngredientAmountEditConfig(candidates, 'g');
-    expect(config.step).toBe(1);
-    expect(config.decimals).toBe(0);
-  });
-
-  it('step=0.5 when any amount has fractional part', () => {
-    const fractionalCandidates: AmountCandidateInput[] = [
-      { amount: 0.5, unit: 'piece' },
-      { amount: 1,   unit: 'piece' },
-      { amount: 1.5, unit: 'piece' },
-    ];
-    const config = buildIngredientAmountEditConfig(fractionalCandidates, 'piece');
-    expect(config.step).toBe(0.5);
-    expect(config.decimals).toBe(1);
-  });
-
-  it('max is at least maxPreset * 4', () => {
-    const config = buildIngredientAmountEditConfig(candidates, 'g');
-    expect(config.max).toBeGreaterThanOrEqual(200 * 4);
-  });
-
-  it('max is at least 100 when no candidates match', () => {
-    const config = buildIngredientAmountEditConfig(candidates, 'kg');
-    expect(config.max).toBeGreaterThanOrEqual(100);
-  });
-
-  it('min is always 1', () => {
-    const config = buildIngredientAmountEditConfig(candidates, 'g');
-    expect(config.min).toBe(1);
-  });
-
-  it('all presets satisfy isValidAmount', () => {
-    const config = buildIngredientAmountEditConfig(candidates, 'g');
-    for (const p of config.presets) {
-      expect(isValidAmount(p, config)).toBe(true);
-    }
-  });
-
-  it('empty candidates for unit → empty presets, sensible defaults', () => {
-    const config = buildIngredientAmountEditConfig(candidates, 'kg');
-    expect(config.presets).toEqual([]);
-    expect(config.min).toBe(1);
-    expect(config.max).toBeGreaterThanOrEqual(100);
-  });
-
-  it('defaultValue is minAmount (first preset)', () => {
-    const config = buildIngredientAmountEditConfig(candidates, 'g');
-    expect(config.defaultValue).toBe(100);
-  });
-});
+// buildIngredientAmountEditConfig と QuickIngredientSheet は到達不能なため削除済み
+// (Identity-first IA 移行により openQuickIngredientSheet の呼び出し元が消滅)。

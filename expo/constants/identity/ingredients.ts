@@ -27,7 +27,7 @@ const BUCKET_STAPLE: Identity[] = [
     defaultMacro: { kcal: 234, protein: 3.8, fat: 0.5, carbs: 56 },
     amount: {
       unit: 'g',
-      default: 150,
+      default: 150, step: 10,
       chips: [
         { label: '小', value: 100 },
         { label: '普通', value: 150 },
@@ -85,7 +85,7 @@ const BUCKET_STAPLE: Identity[] = [
     defaultMacro: { kcal: 140, protein: 2.4, fat: 0.3, carbs: 33 },
     amount: {
       unit: 'g',
-      default: 200,
+      default: 200, step: 10,
       chips: [
         { label: '普通', value: 200 },
         { label: '大盛', value: 280 },
@@ -102,7 +102,7 @@ const BUCKET_STAPLE: Identity[] = [
     defaultMacro: { kcal: 158, protein: 5.3, fat: 2.5, carbs: 28 },
     amount: {
       unit: 'g',
-      default: 60,
+      default: 60, step: 10,
       chips: [
         { label: '1枚', value: 60 },
         { label: '2枚', value: 120 },
@@ -160,7 +160,7 @@ const BUCKET_STAPLE: Identity[] = [
     label: 'オートミール',
     primaryHome: { tab: 'ingredient', bucket: 'staple' },
     defaultMacro: { kcal: 105, protein: 4, fat: 2, carbs: 20 },
-    amount: { unit: 'g', default: 30, chips: [{ label: '30', value: 30 }, { label: '50', value: 50 }] },
+    amount: { unit: 'g', default: 30, step: 10, chips: [{ label: '30', value: 30 }, { label: '50', value: 50 }] },
     defaultAddonIds: ['honey', 'granola_top', 'berry_top', 'banana_slice', 'milk', 'nuts'],
     allowedAddonIds: [
       'honey', 'maple_syrup', 'jam', 'granola_top', 'berry_top', 'banana_slice',
@@ -172,7 +172,7 @@ const BUCKET_STAPLE: Identity[] = [
     label: 'シリアル',
     primaryHome: { tab: 'ingredient', bucket: 'staple' },
     defaultMacro: { kcal: 134, protein: 3, fat: 1.5, carbs: 30 },
-    amount: { unit: 'g', default: 40, chips: [{ label: '30', value: 30 }, { label: '40', value: 40 }, { label: '50', value: 50 }] },
+    amount: { unit: 'g', default: 40, step: 10, chips: [{ label: '30', value: 30 }, { label: '40', value: 40 }, { label: '50', value: 50 }] },
     attributes: [
       { key: 'plain', label: 'プレーン', isDefault: true },
       { key: 'granola', label: 'グラノーラ', factor: { kcal: 1.7, fat: 5.3, carbs: 1.2 } },
@@ -211,7 +211,7 @@ const BUCKET_STAPLE: Identity[] = [
     label: 'じゃがいも・里芋',
     primaryHome: { tab: 'ingredient', bucket: 'staple' },
     defaultMacro: { kcal: 76, protein: 1.9, fat: 0.1, carbs: 17 },
-    amount: { unit: 'g', default: 100, chips: [{ label: '小', value: 70 }, { label: '1個', value: 100 }, { label: '大', value: 180 }] },
+    amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '小', value: 70 }, { label: '1個', value: 100 }, { label: '大', value: 180 }] },
     styles: [
       { key: 'plain', label: '蒸し・茹で', isDefault: true },
       { key: 'baked', label: '焼き', factor: { kcal: 1.11, carbs: 1.17 } },
@@ -234,7 +234,7 @@ const BUCKET_STAPLE: Identity[] = [
     label: 'さつまいも',
     primaryHome: { tab: 'ingredient', bucket: 'staple' },
     defaultMacro: { kcal: 130, protein: 1.2, fat: 0.2, carbs: 32 },
-    amount: { unit: 'g', default: 100, chips: [{ label: '小', value: 70 }, { label: '100', value: 100 }, { label: '大', value: 200 }] },
+    amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '小', value: 70 }, { label: '100', value: 100 }, { label: '大', value: 200 }] },
     styles: [
       { key: 'plain', label: '蒸し・茹で', isDefault: true },
       { key: 'baked', label: '焼き', factor: { kcal: 1.25, carbs: 1.27 } },
@@ -254,7 +254,7 @@ const BUCKET_STAPLE: Identity[] = [
     defaultMacro: { kcal: 210, protein: 5.2, fat: 0.8, carbs: 43 }, // 茹でうどん 200g
     amount: {
       unit: 'g',
-      default: 200,
+      default: 200, step: 10,
       chips: [
         { label: '1玉', value: 200 },
         { label: '大盛', value: 280 },
@@ -272,7 +272,7 @@ const BUCKET_STAPLE: Identity[] = [
     defaultMacro: { kcal: 284, protein: 10.2, fat: 1.4, carbs: 59 }, // 乾燥パスタ 80g
     amount: {
       unit: 'g',
-      default: 80,
+      default: 80, step: 10,
       chips: [
         { label: '60g', value: 60 },
         { label: '80g', value: 80 },
@@ -291,7 +291,7 @@ const BUCKET_STAPLE: Identity[] = [
     defaultMacro: { kcal: 203, protein: 6.4, fat: 0.6, carbs: 42 }, // 茹で中華麺 120g
     amount: {
       unit: 'g',
-      default: 120,
+      default: 120, step: 10,
       chips: [
         { label: '1玉', value: 120 },
         { label: '大盛', value: 180 },
@@ -310,7 +310,7 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
     label: '鶏むね・ささみ',
     primaryHome: { tab: 'ingredient', bucket: 'lean_protein' },
     defaultMacro: { kcal: 105, protein: 23, fat: 1.5, carbs: 0 },
-    amount: { unit: 'g', default: 100, chips: [{ label: '100', value: 100 }, { label: '150', value: 150 }, { label: '200', value: 200 }] },
+    amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '100', value: 100 }, { label: '150', value: 150 }, { label: '200', value: 200 }] },
     attributes: [
       { key: 'no_skin', label: '皮なし', isDefault: true },
       { key: 'with_skin', label: '皮あり', factor: { kcal: 1.4, fat: 6.5 } },
@@ -325,8 +325,8 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
         migration: {
           bucketKey: 'misc_dish',
           identityKey: 'fried_main',
-          attributeKey: 'karaage',
-          confirmMessage: '唐揚げとして記録します',
+          attributeKey: 'karaage_mune',
+          confirmMessage: '唐揚げ(むね)として記録します',
         },
       },
     ],
@@ -353,7 +353,7 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
     // v1.2: default 80g→100g 化 (modal-set 1食量を chicken_lean/red_meat と揃える)
     // base = タラ・カレイ・ヒラメ等の白身魚。マグロ赤身は attribute で分岐。
     defaultMacro: { kcal: 75, protein: 16, fat: 0.7, carbs: 0 },
-    amount: { unit: 'g', default: 100, chips: [{ label: '1切', value: 80 }, { label: '1食', value: 100 }, { label: '2切', value: 160 }] },
+    amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '1切', value: 80 }, { label: '1食', value: 100 }, { label: '2切', value: 160 }] },
     attributes: [
       { key: 'white', label: '白身魚（タラ・カレイ等）', isDefault: true },
       { key: 'tuna_red', label: 'マグロ赤身', factor: { kcal: 1.67, protein: 1.65, fat: 2.0 } },
@@ -380,7 +380,7 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
     primaryHome: { tab: 'ingredient', bucket: 'lean_protein' },
     // v1.2: default 80g→100g 化 (modal-set 1食量を chicken_lean/red_meat と揃える)
     defaultMacro: { kcal: 88, protein: 17.5, fat: 0.8, carbs: 1 },
-    amount: { unit: 'g', default: 100, chips: [{ label: '80', value: 80 }, { label: '1食', value: 100 }, { label: '150', value: 150 }] },
+    amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '80', value: 80 }, { label: '1食', value: 100 }, { label: '150', value: 150 }] },
     styles: [
       { key: 'raw', label: '生・刺身', isDefault: true },
       { key: 'light', label: 'あっさり' },
@@ -404,7 +404,7 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
     // v1.2: Attribute 部位分岐追加。default は もも・ヒレ (純赤身、modal-set median 寄り)。
     // 旧 default 135/21/5 (牛もも基準) → 新 130/22/4 (牛豚もも・ヒレ平均)。
     defaultMacro: { kcal: 130, protein: 22, fat: 4, carbs: 0 },
-    amount: { unit: 'g', default: 100, chips: [{ label: '100', value: 100 }, { label: '150', value: 150 }, { label: '200', value: 200 }] },
+    amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '100', value: 100 }, { label: '150', value: 150 }, { label: '200', value: 200 }] },
     attributes: [
       { key: 'momo_hire', label: 'もも・ヒレ', isDefault: true },
       // 牛もも 138 / 豚もも 119 / 牛豚ヒレ 117-130 → 平均130/F4
@@ -464,8 +464,16 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
     label: 'ジャーキー類',
     primaryHome: { tab: 'ingredient', bucket: 'lean_protein' },
     defaultMacro: { kcal: 85, protein: 15, fat: 2, carbs: 3.5 },
-    amount: { unit: 'g', default: 30, chips: [{ label: '20', value: 20 }, { label: '30', value: 30 }, { label: '50', value: 50 }] },
+    amount: { unit: 'g', default: 30, step: 10, chips: [{ label: '20', value: 20 }, { label: '30', value: 30 }, { label: '50', value: 50 }] },
     searchTags: ['ビーフジャーキー', 'さきいか', 'あたりめ'],
+  },
+  {
+    id: 'liver',
+    label: 'レバー',
+    // 脂質3.5g/100gは同バケットのred_meat(赤身肉, F4g/100g)より低く、fatty_proteinではなくlean_protein相当
+    primaryHome: { tab: 'ingredient', bucket: 'lean_protein' },
+    defaultMacro: { kcal: 130, protein: 20, fat: 3.5, carbs: 2.5 },
+    amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '100', value: 100 }, { label: '150', value: 150 }] },
   },
 ];
 
@@ -515,7 +523,7 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
     label: '鶏もも・手羽',
     primaryHome: { tab: 'ingredient', bucket: 'fatty_protein' },
     defaultMacro: { kcal: 200, protein: 17, fat: 14, carbs: 0 },
-    amount: { unit: 'g', default: 100, chips: [{ label: '100', value: 100 }, { label: '150', value: 150 }, { label: '1枚', value: 250 }] },
+    amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '100', value: 100 }, { label: '150', value: 150 }, { label: '1枚', value: 250 }] },
     attributes: [
       { key: 'with_skin', label: '皮あり', isDefault: true },
       {
@@ -534,8 +542,8 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
         migration: {
           bucketKey: 'misc_dish',
           identityKey: 'fried_main',
-          attributeKey: 'karaage',
-          confirmMessage: '唐揚げとして記録します',
+          attributeKey: 'karaage_momo',
+          confirmMessage: '唐揚げ(もも)として記録します',
         },
       },
     ],
@@ -545,7 +553,7 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
     label: '牛・豚 (普通脂)',
     primaryHome: { tab: 'ingredient', bucket: 'fatty_protein' },
     defaultMacro: { kcal: 230, protein: 17.5, fat: 16.5, carbs: 0 },
-    amount: { unit: 'g', default: 100, chips: [{ label: '100', value: 100 }, { label: '150', value: 150 }, { label: '200', value: 200 }] },
+    amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '100', value: 100 }, { label: '150', value: 150 }, { label: '200', value: 200 }] },
     attributes: [
       { key: 'beef', label: '牛（ロース・もも等）', isDefault: true },
       { key: 'pork', label: '豚（ロース・肩ロース等）', factor: { kcal: 0.96, protein: 1.03, fat: 0.91 } },
@@ -581,7 +589,7 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
     primaryHome: { tab: 'ingredient', bucket: 'fatty_protein' },
     quickTapDisabled: true, // Attribute バラ/サーロイン/ホルモン/タン: kcal 220-470, F 17-46
     defaultMacro: { kcal: 380, protein: 16, fat: 35, carbs: 0 },
-    amount: { unit: 'g', default: 100, chips: [{ label: '100', value: 100 }, { label: '150', value: 150 }, { label: '200', value: 200 }] },
+    amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '100', value: 100 }, { label: '150', value: 150 }, { label: '200', value: 200 }] },
     attributes: [
       { key: 'bara', label: 'バラ（豚）', isDefault: true },
       { key: 'bara_beef', label: 'バラ（牛）', factor: { kcal: 1.24, protein: 0.69, fat: 1.31 } },
@@ -596,7 +604,7 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
     primaryHome: { tab: 'ingredient', bucket: 'fatty_protein' },
     quickTapDisabled: true, // Attribute 鮭/サバ/ぶり/さんま/いわし/うなぎ: kcal 130-290, F 9-24
     defaultMacro: { kcal: 200, protein: 20, fat: 12, carbs: 0 },
-    amount: { unit: 'g', default: 80, chips: [{ label: '1切', value: 80 }, { label: '100', value: 100 }, { label: '2切', value: 160 }] },
+    amount: { unit: 'g', default: 80, step: 10, chips: [{ label: '1切', value: 80 }, { label: '100', value: 100 }, { label: '2切', value: 160 }] },
     attributes: [
       { key: 'salmon', label: '鮭', isDefault: true },
       { key: 'saba', label: 'サバ', factor: { kcal: 1.0, fat: 1.17 } },
@@ -657,18 +665,12 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
     },
   },
   {
-    id: 'liver',
-    label: 'レバー',
-    primaryHome: { tab: 'ingredient', bucket: 'fatty_protein' },
-    defaultMacro: { kcal: 130, protein: 20, fat: 3.5, carbs: 2.5 },
-    amount: { unit: 'g', default: 100, chips: [{ label: '100', value: 100 }, { label: '150', value: 150 }] },
-  },
-  {
     id: 'protein_bar',
     label: 'プロテインバー',
     primaryHome: { tab: 'ingredient', bucket: 'fatty_protein' },
+    // 基準: P15相当のバー(160kcal/P15/F5/C15)を100%とし、protein_drinkと同様タンパク質量ベースでスケール
     defaultMacro: { kcal: 160, protein: 15, fat: 5, carbs: 15 },
-    amount: { unit: 'piece', default: 1, unitLabel: '本', chips: [{ label: '1本', value: 1 }, { label: '2本', value: 2 }] },
+    amount: { unit: 'percent', default: 100, chips: [{ label: 'P10', value: 67 }, { label: 'P15', value: 100 }, { label: 'P20', value: 133 }] },
     searchableFrom: ['snack_drink'],
     searchTags: ['プロテイン', 'バー', '一本満足'],
   },
@@ -684,7 +686,7 @@ const BUCKET_DAIRY_SOY: Identity[] = [
     label: '牛乳',
     primaryHome: { tab: 'ingredient', bucket: 'dairy_soy' },
     defaultMacro: { kcal: 134, protein: 6.6, fat: 7.6, carbs: 9.6 },
-    amount: { unit: 'ml', default: 200, chips: [{ label: 'コップ', value: 100 }, { label: '200', value: 200 }, { label: '500', value: 500 }] },
+    amount: { unit: 'ml', default: 200, step: 10, chips: [{ label: 'コップ', value: 100 }, { label: '200', value: 200 }, { label: '500', value: 500 }] },
     attributes: [
       { key: 'plain', label: '普通', isDefault: true },
       { key: 'low_fat', label: '低脂肪', factor: { kcal: 0.69, fat: 0.26, carbs: 1.15 } },
@@ -704,7 +706,7 @@ const BUCKET_DAIRY_SOY: Identity[] = [
     primaryHome: { tab: 'ingredient', bucket: 'dairy_soy' },
     defaultMacro: { kcal: 62, protein: 3.6, fat: 3, carbs: 4.9 },
     // 飲むヨーグルトは Attribute=drink で吸収するため chip 削除 (単位齟齬解消)
-    amount: { unit: 'g', default: 100, chips: [{ label: '小', value: 80 }, { label: '1パック', value: 100 }, { label: '大', value: 150 }] },
+    amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '小', value: 80 }, { label: '1パック', value: 100 }, { label: '大', value: 150 }] },
     attributes: [
       { key: 'unsweetened', label: '無糖', isDefault: true },
       { key: 'sweetened', label: '加糖', factor: { kcal: 1.39, carbs: 2.45 } },
@@ -715,24 +717,11 @@ const BUCKET_DAIRY_SOY: Identity[] = [
     allowedAddonIds: ['honey', 'granola_top', 'berry_top', 'banana_slice', 'jam', 'nuts', 'peanut_butter', 'kinako'],
   },
   {
-    id: 'soy_milk',
-    label: '豆乳',
-    primaryHome: { tab: 'ingredient', bucket: 'dairy_soy' },
-    defaultMacro: { kcal: 92, protein: 7.2, fat: 4, carbs: 6.2 },
-    amount: { unit: 'ml', default: 200, chips: [{ label: 'コップ', value: 100 }, { label: '200', value: 200 }] },
-    attributes: [
-      { key: 'plain', label: '無調整', isDefault: true },
-      { key: 'adjusted', label: '調整', factor: { kcal: 1.2, fat: 1.15, carbs: 1.23 } },
-    ],
-    defaultAddonIds: ['honey', 'kinako'],
-    allowedAddonIds: ['honey', 'kinako', 'granola_top'],
-  },
-  {
     id: 'cheese',
     label: 'チーズ',
     primaryHome: { tab: 'ingredient', bucket: 'dairy_soy' },
     defaultMacro: { kcal: 80, protein: 5, fat: 6, carbs: 1 },
-    amount: { unit: 'g', default: 20, chips: [{ label: 'スライス1枚', value: 18 }, { label: '30', value: 30 }, { label: '50', value: 50 }] },
+    amount: { unit: 'g', default: 20, chips: [{ label: 'スライス1枚', value: 18 }, { label: '30', value: 30 }, { label: '50', value: 50 }] }, // スライス1枚=18g (実測値。step整合を優先せず精度維持)
     attributes: [
       { key: 'slice', label: 'スライス・6P', isDefault: true },
       { key: 'mozza', label: 'モッツァレラ', factor: { kcal: 0.85, protein: 1.20, fat: 0.83, carbs: 0.50 } },
@@ -750,8 +739,22 @@ const BUCKET_DAIRY_SOY: Identity[] = [
     id: 'cheese_low_fat',
     label: 'チーズ (低脂)',
     primaryHome: { tab: 'ingredient', bucket: 'dairy_soy' },
+    referenceDescription: 'カッテージチーズなど低脂質チーズが基準',
     defaultMacro: { kcal: 32, protein: 4, fat: 1.4, carbs: 1 },
-    amount: { unit: 'g', default: 30, chips: [{ label: '30', value: 30 }, { label: '50', value: 50 }, { label: '100', value: 100 }] },
+    amount: { unit: 'g', default: 30, step: 10, chips: [{ label: '30', value: 30 }, { label: '50', value: 50 }, { label: '100', value: 100 }] },
+  },
+  {
+    id: 'soy_milk',
+    label: '豆乳',
+    primaryHome: { tab: 'ingredient', bucket: 'dairy_soy' },
+    defaultMacro: { kcal: 92, protein: 7.2, fat: 4, carbs: 6.2 },
+    amount: { unit: 'ml', default: 200, step: 10, chips: [{ label: 'コップ', value: 100 }, { label: '200', value: 200 }] },
+    attributes: [
+      { key: 'plain', label: '無調整', isDefault: true },
+      { key: 'adjusted', label: '調整', factor: { kcal: 1.2, fat: 1.15, carbs: 1.23 } },
+    ],
+    defaultAddonIds: ['honey', 'kinako'],
+    allowedAddonIds: ['honey', 'kinako', 'granola_top'],
   },
   {
     id: 'tofu',
@@ -799,7 +802,7 @@ const BUCKET_DAIRY_SOY: Identity[] = [
     label: '大豆・枝豆',
     primaryHome: { tab: 'ingredient', bucket: 'dairy_soy' },
     defaultMacro: { kcal: 65, protein: 6, fat: 3, carbs: 4 },
-    amount: { unit: 'g', default: 50, chips: [{ label: '小皿', value: 50 }, { label: '100', value: 100 }] },
+    amount: { unit: 'g', default: 50, step: 10, chips: [{ label: '小皿', value: 50 }, { label: '100', value: 100 }] },
     attributes: [
       { key: 'edamame', label: '枝豆', isDefault: true },
       { key: 'soybeans_boiled', label: '大豆水煮', factor: { kcal: 1.08, protein: 1.17, fat: 1.5, carbs: 0.75 } },
@@ -817,7 +820,7 @@ const BUCKET_VEGGIES: Identity[] = [
     label: 'サラダ・生野菜',
     primaryHome: { tab: 'ingredient', bucket: 'veggies' },
     defaultMacro: { kcal: 25, protein: 1.4, fat: 0.3, carbs: 5 },
-    amount: { unit: 'g', default: 100, chips: [{ label: '小', value: 50 }, { label: '普通', value: 100 }, { label: '大', value: 150 }] },
+    amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '小', value: 50 }, { label: '普通', value: 100 }, { label: '大', value: 150 }] },
     defaultAddonIds: ['avocado', 'canned_lean_fish', 'nuts', 'dressing', 'salad_chicken', 'crouton'],
     allowedAddonIds: [
       'avocado', 'canned_lean_fish', 'nuts', 'dressing', 'salad_chicken',
@@ -832,7 +835,7 @@ const BUCKET_VEGGIES: Identity[] = [
     // ブロッコリー類など高タンパク野菜は veg_dense へ。
     referenceDescription: '葉物・根菜・きのこ等の一般野菜。ブロッコリー類は「高タンパク野菜」へ',
     defaultMacro: { kcal: 35, protein: 1.5, fat: 0.3, carbs: 7 },
-    amount: { unit: 'g', default: 100, chips: [{ label: '小', value: 50 }, { label: '普通', value: 100 }, { label: '大', value: 150 }] },
+    amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '小', value: 50 }, { label: '普通', value: 100 }, { label: '大', value: 150 }] },
     styles: [
       { key: 'steamed', label: '蒸し・茹で', isDefault: true },
       { key: 'stir_fry', label: '炒め', factor: { kcal: 1.7, fat: 10 } },
@@ -856,7 +859,7 @@ const BUCKET_VEGGIES: Identity[] = [
     primaryHome: { tab: 'ingredient', bucket: 'veggies' },
     // ブロッコリー基準 (生 100g): kcal 35, P 4.3, F 0.4, C 5
     defaultMacro: { kcal: 35, protein: 4.3, fat: 0.4, carbs: 5 },
-    amount: { unit: 'g', default: 100, chips: [{ label: '小', value: 50 }, { label: '普通', value: 100 }, { label: '大', value: 150 }] },
+    amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '小', value: 50 }, { label: '普通', value: 100 }, { label: '大', value: 150 }] },
     attributes: [
       { key: 'broccoli', label: 'ブロッコリー', isDefault: true },
       { key: 'cauliflower', label: 'カリフラワー', factor: { kcal: 0.71, protein: 0.70, fat: 0.25, carbs: 1.0 } },
@@ -876,14 +879,14 @@ const BUCKET_VEGGIES: Identity[] = [
     label: '煮物・和え物',
     primaryHome: { tab: 'ingredient', bucket: 'veggies' },
     defaultMacro: { kcal: 55, protein: 1.7, fat: 2.5, carbs: 6.5 },
-    amount: { unit: 'g', default: 50, chips: [{ label: '小鉢', value: 50 }, { label: '1皿', value: 100 }] },
+    amount: { unit: 'g', default: 50, step: 10, chips: [{ label: '小鉢', value: 50 }, { label: '1皿', value: 100 }] },
   },
   {
     id: 'side_creamy',
     label: 'クリーミー系',
     primaryHome: { tab: 'ingredient', bucket: 'veggies' },
     defaultMacro: { kcal: 130, protein: 1.5, fat: 8, carbs: 12 },
-    amount: { unit: 'g', default: 100, chips: [{ label: '小', value: 50 }, { label: '100', value: 100 }] },
+    amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '小', value: 50 }, { label: '100', value: 100 }] },
     attributes: [
       { key: 'potato_salad', label: 'ポテトサラダ', isDefault: true },
       { key: 'macaroni', label: 'マカロニサラダ', factor: { kcal: 1.12, protein: 2.31, carbs: 1.25 } },
@@ -914,7 +917,7 @@ const BUCKET_VEGGIES: Identity[] = [
     primaryHome: { tab: 'ingredient', bucket: 'veggies' },
     // コンソメ系薄口スープ基準 (野菜 100g + スープ 200ml 程度)。ミネストローネは misc_dish の soup_western へ。
     defaultMacro: { kcal: 35, protein: 1.5, fat: 0.5, carbs: 6 },
-    amount: { unit: 'ml', default: 200, chips: [{ label: '小', value: 150 }, { label: '普通', value: 200 }, { label: '大', value: 300 }] },
+    amount: { unit: 'ml', default: 200, step: 10, chips: [{ label: '小', value: 150 }, { label: '普通', value: 200 }, { label: '大', value: 300 }] },
   },
   // v1.2: 汁物 4 Identity (miso_soup / tonjiru / soup_western / soup_creamy) は
   // 「スープ=料理」の整理に基づき misc_dish (dishes.ts) へ移送。
@@ -982,7 +985,7 @@ const BUCKET_FRUIT: Identity[] = [
     label: 'ベリー・ぶどう',
     primaryHome: { tab: 'ingredient', bucket: 'fruit' },
     defaultMacro: { kcal: 28, protein: 0.5, fat: 0.2, carbs: 7 },
-    amount: { unit: 'g', default: 50, chips: [{ label: '50', value: 50 }, { label: '100', value: 100 }] },
+    amount: { unit: 'g', default: 50, step: 10, chips: [{ label: '50', value: 50 }, { label: '100', value: 100 }] },
     attributes: [
       { key: 'blueberry', label: 'ブルーベリー', isDefault: true },
       { key: 'grape', label: 'ぶどう', factor: { kcal: 1.07, carbs: 1.14 } },
@@ -996,8 +999,9 @@ const BUCKET_FRUIT: Identity[] = [
   },
   {
     id: 'fruit_other',
-    label: 'カットフルーツ・他',
+    label: 'その他の果物',
     primaryHome: { tab: 'ingredient', bucket: 'fruit' },
+    referenceDescription: 'キウイ・桃・パイナップル・マンゴー・柿・すいかなど',
     defaultMacro: { kcal: 60, protein: 0.7, fat: 0.2, carbs: 15 },
     amount: { unit: 'piece', default: 1 },
     searchTags: ['キウイ', '桃', 'パイナップル', 'マンゴー', '柿', 'すいか'],
@@ -1014,7 +1018,7 @@ const BUCKET_ADDED_FAT: Identity[] = [
     label: 'オイル',
     primaryHome: { tab: 'ingredient', bucket: 'added_fat' },
     defaultMacro: { kcal: 110, protein: 0, fat: 12, carbs: 0 },
-    amount: { unit: 'ml', default: 15, chips: [{ label: '小さじ', value: 5 }, { label: '大さじ', value: 15 }] },
+    amount: { unit: 'ml', default: 15, step: 5, chips: [{ label: '小さじ', value: 5 }, { label: '大さじ', value: 15 }] },
     attributes: [
       { key: 'olive', label: 'オリーブ', isDefault: true },
       { key: 'sesame', label: 'ごま' },
@@ -1033,7 +1037,7 @@ const BUCKET_ADDED_FAT: Identity[] = [
     label: 'バター・生クリーム',
     primaryHome: { tab: 'ingredient', bucket: 'added_fat' },
     defaultMacro: { kcal: 75, protein: 0.1, fat: 8.1, carbs: 0 },
-    amount: { unit: 'g', default: 10, chips: [{ label: '5', value: 5 }, { label: '10', value: 10 }, { label: '大さじ', value: 15 }] },
+    amount: { unit: 'g', default: 10, step: 5, chips: [{ label: '5', value: 5 }, { label: '10', value: 10 }, { label: '大さじ', value: 15 }] },
     attributes: [
       { key: 'butter', label: 'バター', isDefault: true },
       { key: 'margarine', label: 'マーガリン', factor: { kcal: 0.95 } },
@@ -1051,7 +1055,7 @@ const BUCKET_ADDED_FAT: Identity[] = [
     label: 'マヨネーズ',
     primaryHome: { tab: 'ingredient', bucket: 'added_fat' },
     defaultMacro: { kcal: 80, protein: 0.2, fat: 8.8, carbs: 0.5 },
-    amount: { unit: 'ml', default: 12, chips: [{ label: '小さじ', value: 5 }, { label: '大さじ', value: 12 }] },
+    amount: { unit: 'ml', default: 12, chips: [{ label: '小さじ', value: 5 }, { label: '大さじ', value: 12 }] }, // 大さじ=12ml (マヨの実測値。step整合を優先せず精度維持)
     asAddon: {
       unit: 'ml',
       unitAmount: 12,
@@ -1064,7 +1068,7 @@ const BUCKET_ADDED_FAT: Identity[] = [
     label: 'ドレッシング',
     primaryHome: { tab: 'ingredient', bucket: 'added_fat' },
     defaultMacro: { kcal: 60, protein: 0.1, fat: 5, carbs: 2 },
-    amount: { unit: 'ml', default: 15, chips: [{ label: '小さじ', value: 5 }, { label: '大さじ', value: 15 }] },
+    amount: { unit: 'ml', default: 15, step: 5, chips: [{ label: '小さじ', value: 5 }, { label: '大さじ', value: 15 }] },
     attributes: [
       { key: 'oily', label: '油あり', isDefault: true },
       { key: 'no_oil', label: 'ノンオイル', factor: { kcal: 0.25, fat: 0, carbs: 1.5 } },
@@ -1098,7 +1102,7 @@ const BUCKET_ADDED_FAT: Identity[] = [
     label: 'ナッツ',
     primaryHome: { tab: 'ingredient', bucket: 'added_fat' },
     defaultMacro: { kcal: 180, protein: 6, fat: 15, carbs: 5 },
-    amount: { unit: 'g', default: 30, chips: [{ label: '一掴み', value: 15 }, { label: '30', value: 30 }, { label: '50', value: 50 }] },
+    amount: { unit: 'g', default: 30, step: 5, chips: [{ label: '一掴み', value: 15 }, { label: '30', value: 30 }, { label: '50', value: 50 }] },
     attributes: [
       { key: 'plain', label: '素焼', isDefault: true },
       { key: 'salted', label: '塩入' },
@@ -1175,7 +1179,7 @@ const BUCKET_SNACK_DRINK: Identity[] = [
     primaryHome: { tab: 'ingredient', bucket: 'snack_drink' },
     defaultMacro: { kcal: 130, protein: 1.8, fat: 5.5, carbs: 17 },
     referenceDescription: 'クッキー・ビスケット・マフィン等。1枚≈10g',
-    amount: { unit: 'g', default: 30, chips: [{ label: '3枚', value: 30 }, { label: '大袋', value: 60 }] },
+    amount: { unit: 'g', default: 30, step: 10, chips: [{ label: '3枚', value: 30 }, { label: '大袋', value: 60 }] },
   },
   {
     id: 'snack',
@@ -1183,7 +1187,7 @@ const BUCKET_SNACK_DRINK: Identity[] = [
     primaryHome: { tab: 'ingredient', bucket: 'snack_drink' },
     defaultMacro: { kcal: 320, protein: 4, fat: 18, carbs: 36 },
     referenceDescription: 'ポテチ・コーンスナック等。1袋(ポテチ普通サイズ)≈60g',
-    amount: { unit: 'g', default: 60, chips: [{ label: '半袋', value: 30 }, { label: '1袋', value: 60 }] },
+    amount: { unit: 'g', default: 60, step: 10, chips: [{ label: '半袋', value: 30 }, { label: '1袋', value: 60 }] },
   },
   {
     id: 'popcorn',
@@ -1225,7 +1229,7 @@ const BUCKET_SNACK_DRINK: Identity[] = [
     primaryHome: { tab: 'ingredient', bucket: 'snack_drink' },
     defaultMacro: { kcal: 90, protein: 1, fat: 0.2, carbs: 22 },
     referenceDescription: 'レーズン・ドライマンゴー等。ひとつかみ≈30g',
-    amount: { unit: 'g', default: 30, chips: [{ label: 'ひとつかみ', value: 30 }, { label: '小袋', value: 50 }] },
+    amount: { unit: 'g', default: 30, step: 10, chips: [{ label: 'ひとつかみ', value: 30 }, { label: '小袋', value: 50 }] },
     searchableFrom: ['fruit'],
     searchTags: ['ドライフルーツ', 'ドライ'],
   },
@@ -1235,7 +1239,7 @@ const BUCKET_SNACK_DRINK: Identity[] = [
     primaryHome: { tab: 'ingredient', bucket: 'snack_drink' },
     defaultMacro: { kcal: 140, protein: 0, fat: 0, carbs: 35 },
     referenceDescription: 'コーラ・サイダー・果汁ジュース・スポーツドリンクなど、サラッと甘い飲み物',
-    amount: { unit: 'ml', default: 350, chips: [{ label: 'コップ1杯', value: 200 }, { label: '缶1本', value: 350 }, { label: '1本(500)', value: 500 }] },
+    amount: { unit: 'ml', default: 350, step: 10, chips: [{ label: 'コップ1杯', value: 200 }, { label: '缶1本', value: 350 }, { label: '1本(500)', value: 500 }] },
     searchTags: ['ジュース', 'コーラ', 'サイダー', 'スポドリ', '炭酸', '果汁'],
   },
   {
@@ -1244,7 +1248,7 @@ const BUCKET_SNACK_DRINK: Identity[] = [
     primaryHome: { tab: 'ingredient', bucket: 'snack_drink' },
     defaultMacro: { kcal: 280, protein: 5, fat: 10, carbs: 50 },
     referenceDescription: 'フラペチーノ・タピオカミルクティーなど、生クリームやトッピングでこってり甘い飲み物',
-    amount: { unit: 'ml', default: 350, chips: [{ label: 'S/Short', value: 240 }, { label: 'M/Tall', value: 350 }, { label: 'L/Grande', value: 470 }] },
+    amount: { unit: 'ml', default: 350, step: 10, chips: [{ label: 'S/Short', value: 240 }, { label: 'M/Tall', value: 350 }, { label: 'L/Grande', value: 470 }] },
     searchTags: ['フラペチーノ', 'タピオカ', 'ミルクティー', 'シェイク', 'スタバ'],
   },
 ];

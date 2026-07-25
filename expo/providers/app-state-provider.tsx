@@ -155,7 +155,6 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
   const [loggingDate, setLoggingDate] = useState<Date | null>(null);
   const [editorLogId, setEditorLogId] = useState<string | null>(null);
   const [dishQuickEntryKey, setDishQuickEntryKey] = useState<string | null>(null);
-  const [quickIngredientSheetCategory, setQuickIngredientSheetCategory] = useState<string | null>(null);
   const [identityLogSheet, setIdentityLogSheet] = useState<{
     visible: boolean;
     bucketKey?: BucketKey;
@@ -460,14 +459,6 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     [applyLoggingDate, pushLog, selectedMode]
   );
 
-  const openQuickIngredientSheet = useCallback((categoryKey: string) => {
-    setQuickIngredientSheetCategory(categoryKey);
-  }, []);
-
-  const closeQuickIngredientSheet = useCallback(() => {
-    setQuickIngredientSheetCategory(null);
-  }, []);
-
   const submitQuickIngredient = useCallback(
     async (draft: IngredientQuickDraft) => {
       const category = getQuickLogCategory(draft.categoryKey);
@@ -516,7 +507,6 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
         persist(profile, [log, ...logs], nextSettings, weights, bodyFatEntries);
       }
 
-      setQuickIngredientSheetCategory(null);
       return log;
     },
     [applyLoggingDate, bodyFatEntries, logs, persist, profile, pushLog, settings, weights]
@@ -1626,9 +1616,6 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     dishQuickEntryKey,
     setDishQuickEntryKey,
     submitDishQuickEntry,
-    quickIngredientSheetCategory,
-    openQuickIngredientSheet,
-    closeQuickIngredientSheet,
     submitQuickIngredient,
     identityLogSheet,
     openIdentityLogSheet,

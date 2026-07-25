@@ -8,7 +8,6 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { DishQuickEntrySheet } from '@/components/DishQuickEntrySheet';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { IdentityLogSheet } from '@/components/IdentityLogSheet';
-import { QuickIngredientSheet } from '@/components/QuickIngredientSheet';
 import { ThemeProvider } from '@/design-system';
 import { AppStateProvider } from '@/providers/app-state-provider';
 import { HealthSyncProvider } from '@/providers/health-sync-provider';
@@ -77,7 +76,6 @@ export default function RootLayout() {
               <HealthSyncProvider>
                 <RootLayoutNav />
                 <DishQuickEntrySheet />
-                <QuickIngredientSheet />
                 <IdentityLogSheet />
               </HealthSyncProvider>
             </AppStateProvider>

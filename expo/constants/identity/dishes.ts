@@ -733,7 +733,28 @@ const BUCKET_MISC_DISH: Identity[] = [
     // 種類ごとに定番の調味料が異なる (唐揚げ=レモン/マヨ, とんかつ=ソース,
     // エビフライ/魚介=タルタル 等)。allowedAddonIds 既定の4種から出し分ける。
     attributes: [
-      { key: 'karaage', label: '唐揚げ', isDefault: true, factor: { kcal: 1.29, protein: 1.56, fat: 1.25 }, defaultAddonIds: ['lemon_squeeze', 'mayo'] },
+      // 唐揚げはむね/もも(手羽含む)で脂質が大きく異なるため部位別に分離。
+      // 食材タブの鶏むね(揚げ)・鶏もも(揚げ)からの振替もここに着地する。
+      // amount は振替元の g 表記をそのまま引き継げるよう g 単位で上書き
+      // (Identity 既定は piece=3個)。数値は日本食品標準成分表ベースの目安 (100gあたり)。
+      {
+        key: 'karaage_momo',
+        label: '唐揚げ(もも)',
+        isDefault: true,
+        factor: { kcal: 0.857, protein: 1.111, fat: 0.95, carbs: 0.556 }, // ≒300kcal/P20/F19/C10 per 100g
+        defaultAddonIds: ['lemon_squeeze', 'mayo'],
+        amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '100', value: 100 }, { label: '150', value: 150 }, { label: '200', value: 200 }] },
+        // 外食・コンビニ等、生肉のgが分からない場面向けの個数入力 (1個≒30g相当)
+        altAmount: { unit: 'piece', default: 3, unitLabel: '個', gramsPerUnit: 30 },
+      },
+      {
+        key: 'karaage_mune',
+        label: '唐揚げ(むね)',
+        factor: { kcal: 0.629, protein: 1.444, fat: 0.4, carbs: 0.5 }, // ≒220kcal/P26/F8/C9 per 100g
+        defaultAddonIds: ['lemon_squeeze', 'mayo'],
+        amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '100', value: 100 }, { label: '150', value: 150 }, { label: '200', value: 200 }] },
+        altAmount: { unit: 'piece', default: 3, unitLabel: '個', gramsPerUnit: 30 },
+      },
       { key: 'tonkatsu', label: 'ロースかつ', factor: { kcal: 1.43, protein: 1.22, fat: 1.5 }, defaultAddonIds: ['sauce', 'mayo'] },
       { key: 'tonkatsu_hire', label: 'ヒレかつ', factor: { kcal: 1.1, protein: 1.45, fat: 0.7, carbs: 1.0 }, defaultAddonIds: ['sauce', 'mayo'] },
       { key: 'menchi', label: 'メンチカツ', factor: { kcal: 0.8, protein: 0.5, fat: 0.85 }, defaultAddonIds: ['sauce', 'mayo'] },
@@ -741,7 +762,15 @@ const BUCKET_MISC_DISH: Identity[] = [
       { key: 'fish_fry', label: '魚介揚げ', factor: { kcal: 0.8, protein: 0.83, fat: 0.75 }, defaultAddonIds: ['tartar', 'lemon_squeeze'] },
       { key: 'korokke', label: 'コロッケ', factor: { kcal: 0.57, protein: 0.22, fat: 0.6 }, defaultAddonIds: ['sauce'] },
       { key: 'tempura', label: '天ぷら盛', factor: { kcal: 0.8, protein: 0.28, fat: 0.9, carbs: 1.22 }, defaultAddonIds: ['lemon_squeeze'] },
-      { key: 'fries', label: 'フライドポテト', factor: { kcal: 0.91, protein: 0.21, fat: 0.75, carbs: 2.22 }, defaultAddonIds: ['mayo'] }, // ~320kcal/serving
+      {
+        key: 'fries',
+        label: 'フライドポテト',
+        // ポテトは個数で数えるものではないため S/M/L のサイズチップにする
+        // (Identity 既定の piece=3個 は上書き)。数値は目安 (M=120g≒336kcal)。
+        factor: { kcal: 0.96, protein: 0.24, fat: 0.81, carbs: 2.47 },
+        defaultAddonIds: ['mayo'],
+        amount: { unit: 'g', default: 120, step: 10, chips: [{ label: 'S', value: 70 }, { label: 'M', value: 120 }, { label: 'L', value: 160 }] },
+      },
     ],
     defaultAddonIds: ['sauce', 'mayo', 'tartar', 'lemon_squeeze'],
     allowedAddonIds: ['sauce', 'mayo', 'tartar', 'lemon_squeeze'],
@@ -760,7 +789,7 @@ const BUCKET_MISC_DISH: Identity[] = [
     primaryHome: { tab: 'dish', bucket: 'misc_dish' },
     defaultMacro: { kcal: 420, protein: 27, fat: 28, carbs: 12 },
     referenceDescription: '主菜のみ (ご飯/副菜なし)',
-    amount: { unit: 'g', default: 150, chips: [{ label: '100', value: 100 }, { label: '150', value: 150 }, { label: '200', value: 200 }] },
+    amount: { unit: 'g', default: 150, step: 10, chips: [{ label: '100', value: 100 }, { label: '150', value: 150 }, { label: '200', value: 200 }] },
     attributes: [
       { key: 'hamburg', label: 'ハンバーグ', isDefault: true, factor: { kcal: 0.9, fat: 0.79, carbs: 1.5 } },
       { key: 'steak', label: 'ステーキ', factor: { kcal: 1.0, protein: 1.19, fat: 1.07, carbs: 0.17 } },
@@ -846,7 +875,7 @@ const BUCKET_MISC_DISH: Identity[] = [
     primaryHome: { tab: 'dish', bucket: 'misc_dish' },
     defaultMacro: { kcal: 50, protein: 2, fat: 1.4, carbs: 8 },
     referenceDescription: 'コンソメ・ミネストローネ等',
-    amount: { unit: 'ml', default: 200, chips: [{ label: '200', value: 200 }, { label: '大', value: 300 }] },
+    amount: { unit: 'ml', default: 200, step: 10, chips: [{ label: '200', value: 200 }, { label: '大', value: 300 }] },
     defaultAddonIds: ['cheese', 'crouton'],
     allowedAddonIds: ['cheese', 'crouton', 'corn_top'],
   },
@@ -856,7 +885,7 @@ const BUCKET_MISC_DISH: Identity[] = [
     primaryHome: { tab: 'dish', bucket: 'misc_dish' },
     defaultMacro: { kcal: 140, protein: 3, fat: 6, carbs: 18 },
     referenceDescription: 'コーン・ポタージュ等',
-    amount: { unit: 'ml', default: 200, chips: [{ label: '200', value: 200 }, { label: '大', value: 300 }] },
+    amount: { unit: 'ml', default: 200, step: 10, chips: [{ label: '200', value: 200 }, { label: '大', value: 300 }] },
     defaultAddonIds: ['crouton', 'cheese'],
     allowedAddonIds: ['crouton', 'cheese', 'corn_top'],
   },
