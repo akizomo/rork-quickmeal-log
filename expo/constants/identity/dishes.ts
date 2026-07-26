@@ -796,6 +796,35 @@ const BUCKET_MISC_DISH: Identity[] = [
     ],
   },
   {
+    id: 'chuka_okazu',
+    label: '中華おかず',
+    primaryHome: { tab: 'dish', bucket: 'misc_dish' },
+    // 中華の主菜おかず (炒め・麻婆・あん・揚げ) を1バケットに集約。種類でPFCが
+    // 大きく変わるため即記録は無効化。数値は「公式PFC比 (文科省食品成分DB 八訂) ×
+    // チェーン店1人前kcal (大阪王将/バーミヤン/日高屋)」ハイブリッド。
+    // percent 単位で 100% = 外食1人前 (料理ごとにグラムは異なる)。
+    quickTapDisabled: true,
+    // 基準は麻婆豆腐 (大阪王将 542kcal/1人前、PFC比は文科省 麻婆豆腐)。
+    defaultMacro: { kcal: 542, protein: 27, fat: 38, carbs: 22 },
+    referenceDescription: '主菜のみ (ご飯なし)。100% = 外食1人前',
+    amount: { unit: 'percent', default: 100, chips: [{ label: '軽め', value: 70 }, { label: '1人前', value: 100 }, { label: 'しっかり', value: 150 }] },
+    attributes: [
+      { key: 'mapo_tofu', label: '麻婆豆腐', isDefault: true },
+      { key: 'mapo_nasu', label: '麻婆茄子', factor: { kcal: 0.895, protein: 0.556, fat: 0.974, carbs: 1.045 } }, // ≒485kcal/P15/F37/C23
+      // 炒め物系 (旧 stir_fry_meat を統合)。レバニラ=日高屋482kcal 基準。
+      { key: 'reba_nira', label: 'レバニラ', factor: { kcal: 0.889, protein: 0.889, fat: 0.782, carbs: 1.591 } }, // ≒482kcal/P24/F30/C35
+      { key: 'pork_vegetable', label: '豚肉野菜炒め', factor: { kcal: 0.952, protein: 0.667, fat: 1.079, carbs: 0.818 } }, // ≒516kcal/P18/F41/C18
+      { key: 'twice_cooked_pork', label: '回鍋肉', factor: { kcal: 0.738, protein: 0.519, fat: 0.842, carbs: 0.636 } }, // ≒400kcal/P14/F32/C14
+      { key: 'chinjao', label: '青椒肉絲', factor: { kcal: 0.823, protein: 0.852, fat: 0.789, carbs: 0.955 } }, // ≒446kcal/P23/F30/C21
+      { key: 'happosai', label: '八宝菜', factor: { kcal: 0.627, protein: 0.667, fat: 0.553, carbs: 0.864 } }, // ≒340kcal/P18/F21/C19
+      { key: 'yurinchi', label: '油淋鶏', factor: { kcal: 1.087, protein: 1.222, fat: 1.079, carbs: 1.0 } }, // ≒589kcal/P33/F41/C22
+      { key: 'subuta', label: '酢豚', factor: { kcal: 1.194, protein: 1.111, fat: 0.816, carbs: 2.818 } }, // ≒647kcal/P30/F31/C62 (甘酢でC高)
+      { key: 'ebi_chili', label: 'エビチリ', factor: { kcal: 1.103, protein: 1.185, fat: 0.789, carbs: 2.273 } }, // ≒598kcal/P32/F30/C50
+      { key: 'ebi_mayo', label: 'エビマヨ', factor: { kcal: 1.122, protein: 0.926, fat: 1.158, carbs: 1.273 } }, // ≒608kcal/P25/F44/C28 (マヨでF高)
+    ],
+    allowedAddonIds: ['rayu'],
+  },
+  {
     id: 'nabe_heavy',
     label: '鍋もの (こってり)',
     primaryHome: { tab: 'dish', bucket: 'misc_dish' },
