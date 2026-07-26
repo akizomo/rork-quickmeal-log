@@ -109,8 +109,8 @@ const gridStyles = StyleSheet.create({
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    width: 240,
-    gap: 14,
+    width: 3 * 70 + 2 * 16, // btn幅70 × 3列 + gap16 × 2 = 242px (3列で確実に折り返すための最小幅)
+    gap: 16,
     justifyContent: 'center',
   },
   btn: {
@@ -139,7 +139,7 @@ const gestureStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 24,
-    gap: 18,
+    gap: 20,
   },
   row: {
     flexDirection: 'row',
@@ -169,7 +169,7 @@ const gestureStyles = StyleSheet.create({
     borderWidth: 1,
     borderColor: palette.border,
     borderRadius: radius.md,
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     paddingVertical: 12,
     gap: 4,
   },
