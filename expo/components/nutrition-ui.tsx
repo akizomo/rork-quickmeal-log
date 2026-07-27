@@ -1,4 +1,3 @@
-import { LinearGradient } from 'expo-linear-gradient';
 import { Link, useFocusEffect, useRouter } from 'expo-router';
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Svg, { Circle, Text as SvgText } from 'react-native-svg';
@@ -1458,7 +1457,6 @@ export function HomeScreen() {
 
   return (
     <View style={styles.page} testID="home-screen">
-      <LinearGradient colors={[t.colors.surface.default, t.colors.surface.raised]} style={StyleSheet.absoluteFillObject} />
       <SafeAreaView edges={['top']} style={styles.safeArea}>
         <View style={styles.headerWrap}>
           <Header viewedDate={viewedDate} />

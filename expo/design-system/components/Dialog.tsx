@@ -22,6 +22,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Animated,
   Dimensions,
+  Easing,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -34,18 +35,20 @@ import { useTheme } from '../theme';
 import { Button } from './Button';
 import { IconButton } from './IconButton';
 import { Heading } from './Typography';
-import { spring } from '../tokens/primitives/motion';
+import { duration, easing } from '../tokens/primitives/motion';
 
 // ---- Constants ------------------------------------------------------------
+// Material Design 3 のダイアログ標準トランジション (spring/独自チューニングは使わない):
+//   enter: emphasized decelerate, exit: emphasized accelerate
 const DIALOG_RADIUS = 20;
 const SCRIM_TINT_OPACITY = 0.18;
 const BLUR_INTENSITY = 24;
 const WEB_BLUR_PX = 24;
 const WEB_BLUR_SAT = 140;
-const OPEN_SPRING = spring.enter;
-// spring.exit (friction20) より少し硬く/速く止める意図的な調整値。
-// 汎用の spring.exit とは別チューニングなので個別に保持する。
-const CLOSE_SPRING = { tension: 100, friction: 14, restSpeedThreshold: 1, restDisplacementThreshold: 1 };
+const OPEN_DURATION = duration.medium;
+const OPEN_EASING = Easing.bezier(...easing.enter);
+const CLOSE_DURATION = duration.short;
+const CLOSE_EASING = Easing.bezier(...easing.exit);
 
 function WebBlurLayer() {
   return (
@@ -114,9 +117,10 @@ export function Dialog({
   }, [onClose]);
 
   const requestClose = useCallback(() => {
-    Animated.spring(progress, {
+    Animated.timing(progress, {
       toValue: 0,
-      ...CLOSE_SPRING,
+      duration: CLOSE_DURATION,
+      easing: CLOSE_EASING,
       useNativeDriver: true,
     }).start(({ finished }) => {
       if (finished) {
@@ -128,15 +132,17 @@ export function Dialog({
   useEffect(() => {
     if (visible) {
       setMounted(true);
-      Animated.spring(progress, {
+      Animated.timing(progress, {
         toValue: 1,
-        ...OPEN_SPRING,
+        duration: OPEN_DURATION,
+        easing: OPEN_EASING,
         useNativeDriver: true,
       }).start();
     } else if (mounted) {
-      Animated.spring(progress, {
+      Animated.timing(progress, {
         toValue: 0,
-        ...CLOSE_SPRING,
+        duration: CLOSE_DURATION,
+        easing: CLOSE_EASING,
         useNativeDriver: true,
       }).start(({ finished }) => {
         if (finished) setMounted(false);
@@ -206,7 +212,19 @@ export function Dialog({
         >
           {/* Header */}
           {cached.title ? (
-            <View style={[styles.header, { paddingHorizontal: t.spacing['5'] }]}>
+            <View
+              style={[
+                styles.header,
+                {
+                  paddingHorizontal: t.spacing['5'],
+                  paddingTop: t.spacing['5'],
+                  // ヘッダー下の余白は content 側の paddingTop (spacing.2) だけが担う。
+                  // ここでも足すと二重取りになり、上端(spacing.5)よりタイトル直下が
+                  // 詰まって見える非対称の原因になる。
+                  paddingBottom: 0,
+                },
+              ]}
+            >
               <Heading size="lg">{cached.title}</Heading>
               <IconButton
                 icon="close"
@@ -239,7 +257,8 @@ export function Dialog({
                 styles.footer,
                 {
                   paddingHorizontal: t.spacing['4'],
-                  paddingBottom: t.spacing['4'],
+                  // header側の外側余白(spacing.5)と揃え、カード上下端の余白を対称にする。
+                  paddingBottom: t.spacing['5'],
                   paddingTop: t.spacing['3'],
                   gap: t.spacing['3'],
                   borderTopColor: t.colors.border.subtle,
@@ -299,8 +318,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: 20,
-    paddingBottom: 8,
   },
   footer: {
     flexDirection: 'row',
