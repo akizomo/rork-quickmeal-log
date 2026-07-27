@@ -87,8 +87,6 @@ export default function StatsScreen() {
                 options={MEALS_SEGMENT_OPTIONS}
                 value={mealsTab}
                 onChange={setMealsTab}
-                trackColor={theme.colors.surface.raised}
-                pillColor={theme.colors.surface.raised}
                 textColor={theme.colors.content.secondary}
                 activeTextColor={theme.colors.action.primary.default}
                 padding={5}
@@ -105,8 +103,6 @@ export default function StatsScreen() {
                 options={BODY_SEGMENT_OPTIONS}
                 value={bodyPeriod}
                 onChange={setBodyPeriod}
-                trackColor={theme.colors.surface.raised}
-                pillColor={theme.colors.surface.raised}
                 textColor={theme.colors.content.secondary}
                 activeTextColor={theme.colors.action.primary.default}
                 padding={5}

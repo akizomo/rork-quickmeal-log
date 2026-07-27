@@ -408,7 +408,7 @@ const makeStyles = (t: Theme) => StyleSheet.create({
     backgroundColor: t.colors.surface.raised,
     borderRadius: radius.xl,
     overflow: 'hidden',
-    padding: 0,
+    paddingBottom: t.spacing['3'],
     alignSelf: 'center',
   },
   summaryCard: {

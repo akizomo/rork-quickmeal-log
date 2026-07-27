@@ -16,9 +16,9 @@ import { useAppState } from '@/providers/app-state-provider';
 import type { BodyFatEntry, WeightEntry } from '@/types/nutrition';
 import { formatMonthLabel, formatShortDay, formatWeekRangeLabel } from '@/utils/history';
 
-const CHART_HEIGHT = 150;
+const CHART_HEIGHT = 158;
 const CHART_PAD_TOP = 16;
-const CHART_PAD_BOTTOM = 24;
+const CHART_PAD_BOTTOM = 32;
 const CHART_PAD_X = 14;
 const DAY_MS = 86_400_000;
 
@@ -326,7 +326,7 @@ function TrendChart({
         {/* X軸: 開始/終了日付 */}
         <SvgText
           x={CHART_PAD_X}
-          y={CHART_HEIGHT - 8}
+          y={CHART_HEIGHT - 16}
           fontSize={labelFontSize}
           fill={labelColor}
           textAnchor="start"
@@ -336,7 +336,7 @@ function TrendChart({
         {tMax !== tMin ? (
           <SvgText
             x={width - CHART_PAD_X}
-            y={CHART_HEIGHT - 8}
+            y={CHART_HEIGHT - 16}
             fontSize={labelFontSize}
             fill={labelColor}
             textAnchor="end"
