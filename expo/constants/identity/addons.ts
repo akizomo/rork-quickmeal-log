@@ -224,7 +224,7 @@ export const PURE_ADDONS: Addon[] = [
     unitAmount: 30,
     unitLabel: '30g',
     addedMacro: { kcal: 30, protein: 1, fat: 0.5, carbs: 7 },
-    allowedIdentityIds: ['salad_raw', 'soup_creamy', 'ramen_heavy'], // 味噌コーンラーメン
+    allowedIdentityIds: ['salad_raw', 'soup', 'ramen_heavy'], // 味噌コーンラーメン
   },
 
   // ---- Ramen / noodle toppings (cross-bucket capable Identities not used here) ----

@@ -2,19 +2,13 @@
 import { INGREDIENT_BUCKETS, DISH_BUCKETS, IDENTITY_REGISTRY, INGREDIENT_IDENTITIES_BY_BUCKET, DISH_IDENTITIES_BY_BUCKET, getBucketDef, getIdentitiesInBucket } from './index';
 
 describe('v1.2 IA changes sanity', () => {
-  it('soup Identities are in misc_dish, not veggies', () => {
-    expect(IDENTITY_REGISTRY.byId['miso_soup']?.primaryHome.bucket).toBe('misc_dish');
-    expect(IDENTITY_REGISTRY.byId['tonjiru']?.primaryHome.bucket).toBe('misc_dish');
-    expect(IDENTITY_REGISTRY.byId['soup_western']?.primaryHome.bucket).toBe('misc_dish');
-    expect(IDENTITY_REGISTRY.byId['soup_creamy']?.primaryHome.bucket).toBe('misc_dish');
+  it('soup Identity is in misc_dish, not veggies', () => {
+    // v1.9: 味噌汁/豚汁/洋風/クリームの4 Identity → 1 (soup) に統合。
+    expect(IDENTITY_REGISTRY.byId['soup']?.primaryHome.bucket).toBe('misc_dish');
     const veggieIds = INGREDIENT_IDENTITIES_BY_BUCKET.veggies.map(x => x.id);
-    expect(veggieIds).not.toContain('miso_soup');
-    expect(veggieIds).not.toContain('tonjiru');
+    expect(veggieIds).not.toContain('soup');
     const miscIds = DISH_IDENTITIES_BY_BUCKET.misc_dish.map(x => x.id);
-    expect(miscIds).toContain('miso_soup');
-    expect(miscIds).toContain('tonjiru');
-    expect(miscIds).toContain('soup_western');
-    expect(miscIds).toContain('soup_creamy');
+    expect(miscIds).toContain('soup');
   });
   it('veggies bucket label is 野菜', () => {
     const def = getBucketDef('veggies');

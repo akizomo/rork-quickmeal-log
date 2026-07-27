@@ -621,6 +621,8 @@ const BUCKET_PIZZA: Identity[] = [
 //        なので汁物単独ログは長押しシートで Identity を選ぶ運用。)
 // ---------------------------------------------------------------------------
 
+// misc_dish は「主食で分類されないもの」の受け皿になるため、識別しやすいよう
+// テーマ順に並べる: 定食類 → 主菜単品 → 中華 → 鍋 → 生もの → 粉もの → 汁物。
 const BUCKET_MISC_DISH: Identity[] = [
   {
     id: 'teishoku',
@@ -674,53 +676,6 @@ const BUCKET_MISC_DISH: Identity[] = [
       { key: 'makunouchi', label: '幕の内弁当', factor: { kcal: 1.0, protein: 1.04, fat: 1.0, carbs: 0.98 } }, // ~700 (balance)
       { key: 'salad_bowl', label: 'サラダボウル系', factor: { kcal: 0.64, protein: 1.04, fat: 0.85, carbs: 0.46 } }, // ~450 (高P低C)
     ],
-  },
-  {
-    id: 'okonomi',
-    label: '粉もの',
-    primaryHome: { tab: 'dish', bucket: 'misc_dish' },
-    quickTapDisabled: true, // Attribute お好み焼き/広島/もんじゃ/たこ焼き: kcal 420-852
-    defaultMacro: { kcal: 580, protein: 20, fat: 24, carbs: 70 },
-    referenceDescription: '1枚=生地+具+卵 (お好み焼き相当)',
-    amount: { unit: 'piece', default: 1, unitLabel: '枚', step: 0.5, chips: [{ label: '半分', value: 0.5 }, { label: '1枚', value: 1 }, { label: '2枚', value: 2 }] },
-    attributes: [
-      // お好み焼き・広島: sauce/mayo/削り節が定番。卵は具に入ることが多いが追加もあり。
-      { key: 'okonomiyaki', label: 'お好み焼き', isDefault: true },
-      { key: 'hiroshima', label: '広島お好み焼き', factor: { kcal: 1.47, protein: 1.6, fat: 1.33, carbs: 1.54 } },
-      { key: 'monjayaki', label: 'もんじゃ', factor: { kcal: 0.72, protein: 0.9, fat: 0.63, carbs: 0.74 } },
-      // たこ焼きは sauce(ソース)が定番。mayo は任意、cheese/卵は一般的でない。
-      {
-        key: 'takoyaki',
-        label: 'たこ焼き',
-        factor: { kcal: 0.72, protein: 0.6, fat: 0.75, carbs: 0.71 },
-        defaultAddonIds: ['sauce'],
-        allowedAddonIds: ['sauce', 'mayo', 'katsuobushi'],
-      },
-    ],
-    defaultAddonIds: ['sauce', 'mayo', 'katsuobushi', 'egg'],
-    allowedAddonIds: ['sauce', 'mayo', 'katsuobushi', 'egg', 'cheese'],
-  },
-  {
-    id: 'tenshin',
-    label: '中華点心',
-    primaryHome: { tab: 'dish', bucket: 'misc_dish' },
-    defaultMacro: { kcal: 250, protein: 10, fat: 10, carbs: 28 },
-    referenceDescription: '餃子=5個 / 春巻=1本≒140kcal / 小籠包=5個',
-    amount: { unit: 'piece', default: 5 },
-    attributes: [
-      { key: 'gyoza', label: '餃子(焼き)', isDefault: true },
-      { key: 'gyoza_water', label: '水餃子', factor: { kcal: 0.82, fat: 0.58 } },
-      { key: 'shumai', label: 'シューマイ', factor: { kcal: 0.88, fat: 0.83 } },
-      // 春巻きは1本が大きい。2本デフォルトに設定 (factor は5個換算済み → 2本で280kcal≒1本140kcal)。
-      {
-        key: 'harumaki',
-        label: '春巻',
-        factor: { kcal: 1.12, fat: 1.17 },
-        amount: { unit: 'piece', default: 2, unitLabel: '本', chips: [{ label: '1本', value: 1 }, { label: '2本', value: 2 }, { label: '3本', value: 3 }] },
-      },
-      { key: 'xiaolongbao', label: '小籠包', factor: { kcal: 1.0, fat: 0.75, carbs: 1.14 } },
-    ],
-    defaultAddonIds: ['rayu'],
   },
   {
     id: 'fried_main',
@@ -796,6 +751,28 @@ const BUCKET_MISC_DISH: Identity[] = [
     ],
   },
   {
+    id: 'tenshin',
+    label: '中華点心',
+    primaryHome: { tab: 'dish', bucket: 'misc_dish' },
+    defaultMacro: { kcal: 250, protein: 10, fat: 10, carbs: 28 },
+    referenceDescription: '餃子=5個 / 春巻=1本≒140kcal / 小籠包=5個',
+    amount: { unit: 'piece', default: 5 },
+    attributes: [
+      { key: 'gyoza', label: '餃子(焼き)', isDefault: true },
+      { key: 'gyoza_water', label: '水餃子', factor: { kcal: 0.82, fat: 0.58 } },
+      { key: 'shumai', label: 'シューマイ', factor: { kcal: 0.88, fat: 0.83 } },
+      // 春巻きは1本が大きい。2本デフォルトに設定 (factor は5個換算済み → 2本で280kcal≒1本140kcal)。
+      {
+        key: 'harumaki',
+        label: '春巻',
+        factor: { kcal: 1.12, fat: 1.17 },
+        amount: { unit: 'piece', default: 2, unitLabel: '本', chips: [{ label: '1本', value: 1 }, { label: '2本', value: 2 }, { label: '3本', value: 3 }] },
+      },
+      { key: 'xiaolongbao', label: '小籠包', factor: { kcal: 1.0, fat: 0.75, carbs: 1.14 } },
+    ],
+    defaultAddonIds: ['rayu'],
+  },
+  {
     id: 'chuka_okazu',
     label: '中華おかず',
     primaryHome: { tab: 'dish', bucket: 'misc_dish' },
@@ -825,29 +802,23 @@ const BUCKET_MISC_DISH: Identity[] = [
     allowedAddonIds: ['rayu'],
   },
   {
-    id: 'nabe_heavy',
-    label: '鍋もの (こってり)',
+    id: 'nabe',
+    label: '鍋もの',
     primaryHome: { tab: 'dish', bucket: 'misc_dish' },
+    // こってり系(すき焼き/しゃぶしゃぶ)とあっさり系(寄せ鍋/水炊き/豆乳鍋)を統合。
+    // 基準はすき焼き (旧 nabe_heavy)。おでんは具のばらつきが大きすぎるため除外
+    // (食材タブから個別記録推奨)。
+    quickTapDisabled: true,
     defaultMacro: { kcal: 700, protein: 33, fat: 35, carbs: 41 },
     referenceDescription: '肉150g+野菜+つゆ (1人前)',
     amount: { unit: 'percent', default: 100, chips: [{ label: '軽め', value: 70 }, { label: '1人前', value: 100 }, { label: 'しっかり', value: 150 }] },
     attributes: [
       { key: 'sukiyaki', label: 'すき焼き', isDefault: true },
       { key: 'shabu', label: 'しゃぶしゃぶ', factor: { kcal: 0.93, fat: 0.86 } },
-    ],
-  },
-  {
-    id: 'nabe_light',
-    label: '鍋もの (あっさり)',
-    primaryHome: { tab: 'dish', bucket: 'misc_dish' },
-    defaultMacro: { kcal: 450, protein: 28, fat: 14, carbs: 42 },
-    referenceDescription: '肉100g+野菜+出汁 (1人前)',
-    amount: { unit: 'percent', default: 100, chips: [{ label: '軽め', value: 70 }, { label: '1人前', value: 100 }, { label: 'しっかり', value: 150 }] },
-    // おでんは具のばらつきが大きすぎるため除外。食材タブから個別記録推奨
-    attributes: [
-      { key: 'yose', label: '寄せ鍋', isDefault: true },
-      { key: 'mizutaki', label: '水炊き', factor: { kcal: 0.95 } },
-      { key: 'tonyu_nabe', label: '豆乳鍋', factor: { kcal: 1.05 } },
+      // 旧 nabe_light (寄せ鍋=450kcal 基準) を新基準(700kcal)に対する factor に換算。
+      { key: 'yose', label: '寄せ鍋', factor: { kcal: 0.643, protein: 0.848, fat: 0.4, carbs: 1.024 } },
+      { key: 'mizutaki', label: '水炊き', factor: { kcal: 0.611, protein: 0.848, fat: 0.4, carbs: 1.024 } },
+      { key: 'tonyu_nabe', label: '豆乳鍋', factor: { kcal: 0.675, protein: 0.848, fat: 0.4, carbs: 1.024 } },
     ],
   },
   {
@@ -877,46 +848,60 @@ const BUCKET_MISC_DISH: Identity[] = [
     amount: { unit: 'piece', default: 2, unitLabel: '本' },
     searchTags: ['ベトナム', 'エスニック', 'ライスペーパー', 'ヘルシー'],
   },
-  // ---- v1.2: 汁物 4 Identity (旧 veggies bucket から移送) ----
   {
-    id: 'miso_soup',
-    label: '味噌汁・お吸い物',
+    id: 'okonomi',
+    label: '粉もの',
     primaryHome: { tab: 'dish', bucket: 'misc_dish' },
+    quickTapDisabled: true, // Attribute お好み焼き/広島/もんじゃ/たこ焼き: kcal 420-852
+    defaultMacro: { kcal: 580, protein: 20, fat: 24, carbs: 70 },
+    referenceDescription: '1枚=生地+具+卵 (お好み焼き相当)',
+    amount: { unit: 'piece', default: 1, unitLabel: '枚', step: 0.5, chips: [{ label: '半分', value: 0.5 }, { label: '1枚', value: 1 }, { label: '2枚', value: 2 }] },
+    attributes: [
+      // お好み焼き・広島: sauce/mayo/削り節が定番。卵は具に入ることが多いが追加もあり。
+      { key: 'okonomiyaki', label: 'お好み焼き', isDefault: true },
+      { key: 'hiroshima', label: '広島お好み焼き', factor: { kcal: 1.47, protein: 1.6, fat: 1.33, carbs: 1.54 } },
+      { key: 'monjayaki', label: 'もんじゃ', factor: { kcal: 0.72, protein: 0.9, fat: 0.63, carbs: 0.74 } },
+      // たこ焼きは sauce(ソース)が定番。mayo は任意、cheese/卵は一般的でない。
+      {
+        key: 'takoyaki',
+        label: 'たこ焼き',
+        factor: { kcal: 0.72, protein: 0.6, fat: 0.75, carbs: 0.71 },
+        defaultAddonIds: ['sauce'],
+        allowedAddonIds: ['sauce', 'mayo', 'katsuobushi'],
+      },
+    ],
+    defaultAddonIds: ['sauce', 'mayo', 'katsuobushi', 'egg'],
+    allowedAddonIds: ['sauce', 'mayo', 'katsuobushi', 'egg', 'cheese'],
+  },
+  // ---- v1.2: 汁物 (旧 veggies bucket から移送)。v1.9 で 4 Identity → 1 に統合 ----
+  {
+    id: 'soup',
+    label: '汁物・スープ',
+    primaryHome: { tab: 'dish', bucket: 'misc_dish' },
+    // 和風(味噌汁/豚汁)と洋風(コンソメ/クリーム)を統合。基準は味噌汁(具薄)。
+    quickTapDisabled: true,
     defaultMacro: { kcal: 40, protein: 2.5, fat: 1, carbs: 4 },
     referenceDescription: '1杯=200ml相当',
     amount: { unit: 'piece', default: 1, unitLabel: '杯', chips: [{ label: '1杯', value: 1 }, { label: '大', value: 2 }] },
     attributes: [
-      { key: 'light', label: '具薄', isDefault: true },
-      { key: 'rich', label: '具沢山', factor: { kcal: 2.0, protein: 2.0, fat: 3.0, carbs: 2.0 } },
+      { key: 'miso_light', label: '味噌汁・お吸い物', isDefault: true },
+      { key: 'miso_rich', label: '味噌汁(具沢山)', factor: { kcal: 2.0, protein: 2.0, fat: 3.0, carbs: 2.0 } },
+      { key: 'tonjiru', label: '豚汁・けんちん汁', factor: { kcal: 4.125, protein: 3.2, fat: 8.0, carbs: 3.75 } },
+      {
+        key: 'western',
+        label: '洋風スープ',
+        factor: { kcal: 1.25, protein: 0.8, fat: 1.4, carbs: 2.0 },
+        defaultAddonIds: ['cheese', 'crouton'],
+        allowedAddonIds: ['cheese', 'crouton', 'corn_top'],
+      },
+      {
+        key: 'creamy',
+        label: 'クリームスープ',
+        factor: { kcal: 3.5, protein: 1.2, fat: 6.0, carbs: 4.5 },
+        defaultAddonIds: ['crouton', 'cheese'],
+        allowedAddonIds: ['crouton', 'cheese', 'corn_top'],
+      },
     ],
-  },
-  {
-    id: 'tonjiru',
-    label: '豚汁・けんちん汁',
-    primaryHome: { tab: 'dish', bucket: 'misc_dish' },
-    defaultMacro: { kcal: 165, protein: 8, fat: 8, carbs: 15 },
-    referenceDescription: '1杯=200ml相当 (豚肉・根菜入り)',
-    amount: { unit: 'piece', default: 1, unitLabel: '杯', chips: [{ label: '1杯', value: 1 }, { label: '大', value: 2 }] },
-  },
-  {
-    id: 'soup_western',
-    label: '洋風スープ (薄)',
-    primaryHome: { tab: 'dish', bucket: 'misc_dish' },
-    defaultMacro: { kcal: 50, protein: 2, fat: 1.4, carbs: 8 },
-    referenceDescription: 'コンソメ・ミネストローネ等',
-    amount: { unit: 'ml', default: 200, step: 10, chips: [{ label: '200', value: 200 }, { label: '大', value: 300 }] },
-    defaultAddonIds: ['cheese', 'crouton'],
-    allowedAddonIds: ['cheese', 'crouton', 'corn_top'],
-  },
-  {
-    id: 'soup_creamy',
-    label: 'クリームスープ',
-    primaryHome: { tab: 'dish', bucket: 'misc_dish' },
-    defaultMacro: { kcal: 140, protein: 3, fat: 6, carbs: 18 },
-    referenceDescription: 'コーン・ポタージュ等',
-    amount: { unit: 'ml', default: 200, step: 10, chips: [{ label: '200', value: 200 }, { label: '大', value: 300 }] },
-    defaultAddonIds: ['crouton', 'cheese'],
-    allowedAddonIds: ['crouton', 'cheese', 'corn_top'],
   },
 ];
 

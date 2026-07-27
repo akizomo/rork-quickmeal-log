@@ -56,7 +56,7 @@ const BUCKET_STAPLE: Identity[] = [
       {
         key: 'nabe_yaki',
         label: '雑炊・鍋焼き',
-        migration: { bucketKey: 'misc_dish', identityKey: 'nabe_light', confirmMessage: '雑炊として記録します' },
+        migration: { bucketKey: 'misc_dish', identityKey: 'nabe', attributeKey: 'yose', confirmMessage: '雑炊として記録します' },
       },
     ],
     defaultAddonIds: ['natto', 'egg', 'kimchi_top', 'salmon_flake', 'mentaiko', 'nori_furikake'],

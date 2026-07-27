@@ -53,7 +53,7 @@ export const MODAL_SETS: Record<BucketKey, string[]> = {
   sushi: ['sushi_plate', 'sushi_piece'], // bucket quickTapDisabled
   sandwich: ['cold_sand', 'burger'],
   pizza: ['pizza_simple', 'pizza_meat', 'pizza_cheese'], // bucket quickTapDisabled
-  misc_dish: ['teishoku', 'bento', 'fried_main', 'sashimi', 'nabe_light'], // bucket quickTapDisabled
+  misc_dish: ['teishoku', 'bento', 'fried_main', 'sashimi', 'nabe'], // bucket quickTapDisabled
 };
 
 // ---------------------------------------------------------------------------

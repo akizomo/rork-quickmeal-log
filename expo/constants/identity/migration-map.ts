@@ -55,7 +55,7 @@ export const LEGACY_TO_IDENTITY_MAP: Record<string, string> = {
   'veggies/steamed_veg': 'veg_cooked',
   'veggies/veggie_side': 'side_seasoned',
   'veggies/stir_fry_veg': 'veg_cooked',
-  'veggies/veggie_soup': 'miso_soup',
+  'veggies/veggie_soup': 'soup',
   'veggies/pickles': 'pickles',
 
   // ---- Ingredient: fruit ----

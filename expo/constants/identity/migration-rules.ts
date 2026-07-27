@@ -55,7 +55,7 @@ export const STYLE_MIGRATIONS: MigrationRule[] = [
     fromIdentityId: 'rice',
     trigger: 'style',
     triggerKey: 'nabe_yaki',
-    to: { bucketKey: 'misc_dish', identityKey: 'nabe_light', confirmMessage: '雑炊・鍋焼きとして記録します' },
+    to: { bucketKey: 'misc_dish', identityKey: 'nabe', attributeKey: 'yose', confirmMessage: '雑炊・鍋焼きとして記録します' },
     description: 'ご飯 + 雑炊化 → おかず・単品/鍋(あっさり)',
   },
 
@@ -93,7 +93,7 @@ export const STYLE_MIGRATIONS: MigrationRule[] = [
     description: 'さつまいも + 焼き蜜・揚げ蜜 → おやつ甘飲/和菓子',
   },
 
-  // Chicken (lean) — 揚げ → 唐揚げ
+  // Chicken (lean) — 揚げ → 唐揚げ(むね)
   {
     fromIdentityId: 'chicken_lean',
     trigger: 'style',
@@ -101,13 +101,13 @@ export const STYLE_MIGRATIONS: MigrationRule[] = [
     to: {
       bucketKey: 'misc_dish',
       identityKey: 'fried_main',
-      attributeKey: 'karaage',
-      confirmMessage: '唐揚げとして記録します',
+      attributeKey: 'karaage_mune',
+      confirmMessage: '唐揚げ(むね)として記録します',
     },
-    description: '鶏むね・ささみ + 揚げ → おかず・単品/揚げもの単品(唐揚げ)',
+    description: '鶏むね・ささみ + 揚げ → おかず・単品/揚げもの単品(唐揚げ・むね)',
   },
 
-  // Chicken (thigh) — 揚げ → 唐揚げ
+  // Chicken (thigh) — 揚げ → 唐揚げ(もも)
   {
     fromIdentityId: 'chicken_thigh',
     trigger: 'style',
@@ -115,10 +115,10 @@ export const STYLE_MIGRATIONS: MigrationRule[] = [
     to: {
       bucketKey: 'misc_dish',
       identityKey: 'fried_main',
-      attributeKey: 'karaage',
-      confirmMessage: '唐揚げとして記録します',
+      attributeKey: 'karaage_momo',
+      confirmMessage: '唐揚げ(もも)として記録します',
     },
-    description: '鶏もも + 揚げ → おかず・単品/揚げもの単品(唐揚げ)',
+    description: '鶏もも + 揚げ → おかず・単品/揚げもの単品(唐揚げ・もも)',
   },
 
   // Pork — 衣付揚げ → とんかつ
