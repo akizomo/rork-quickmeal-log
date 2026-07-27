@@ -21,8 +21,7 @@ import {
   getDishTopCategory,
   multiplyMacroSimple,
 } from '@/constants/dish-master';
-import { palette } from '@/constants/theme';
-import { BottomSheet, Chip as DSChip, Icon } from '@/design-system';
+import { BottomSheet, Chip as DSChip, Icon, useTheme, type Theme } from '@/design-system';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { useAppState } from '@/providers/app-state-provider';
 import {
@@ -44,6 +43,8 @@ function formatKcal(m: Macro): string {
 }
 
 function MacroLine({ m }: { m: Macro }) {
+  const t = useTheme();
+  const styles = useMemo(() => makeStyles(t), [t]);
   return (
     <Text style={styles.macroLine}>
       P {Math.round(m.protein)} · F {Math.round(m.fat)} · C {Math.round(m.carbs)}
@@ -81,6 +82,8 @@ function PortionRow({
   factor: StandardPortionFactor;
   onChange: (f: StandardPortionFactor) => void;
 }) {
+  const t = useTheme();
+  const styles = useMemo(() => makeStyles(t), [t]);
   return (
     <View style={styles.row}>
       {options.map((opt) => (
@@ -105,6 +108,8 @@ function InstantPreview({
   portionLabel?: string;
   macro: Macro;
 }) {
+  const t = useTheme();
+  const styles = useMemo(() => makeStyles(t), [t]);
   const meta = [subcategoryLabel, portionLabel].filter(Boolean).join(' · ');
   return (
     <View style={styles.previewCard}>
@@ -122,6 +127,8 @@ function ChineseNoodlesBody({
   category: DishTopCategoryDef;
   onSubmit: (p: DishQuickEntryPayload) => void;
 }) {
+  const t = useTheme();
+  const styles = useMemo(() => makeStyles(t), [t]);
   if (category.quickEntry.kind !== 'chinese_noodles') return null;
   const primaryOptions = category.quickEntry.primaryOptions;
   const [primaryKey, setPrimaryKey] = useState<ChineseNoodlesPrimaryType>(primaryOptions[0].key);
@@ -224,6 +231,8 @@ function SushiBody({
   onSubmit: (p: DishQuickEntryPayload) => void;
   onOpenAmountEditor: (config: AmountEditConfig, initialValue: number, onClose: (n: number | null) => void) => void;
 }) {
+  const t = useTheme();
+  const styles = useMemo(() => makeStyles(t), [t]);
   if (category.quickEntry.kind !== 'sushi_count') return null;
   const config = category.quickEntry;
   const [modeKey, setModeKey] = useState<SushiCountMode>(config.defaultMode);
@@ -267,7 +276,7 @@ function SushiBody({
         testID="dqe-sushi-amount-row"
       >
         <Text style={styles.amountRowValue}>{count}{mode.unitLabel}</Text>
-        <Icon name="edit" size={14} color={palette.textMuted} />
+        <Icon name="edit" size={14} color={t.colors.content.secondary} />
       </Pressable>
 
       <InstantPreview
@@ -303,6 +312,8 @@ function PizzaBody({
   onSubmit: (p: DishQuickEntryPayload) => void;
   onOpenAmountEditor: (config: AmountEditConfig, initialValue: number, onClose: (n: number | null) => void) => void;
 }) {
+  const theme = useTheme();
+  const styles = useMemo(() => makeStyles(theme), [theme]);
   if (category.quickEntry.kind !== 'pizza_slices') return null;
   const config = category.quickEntry;
   const [typeKey, setTypeKey] = useState<PizzaType>('regular');
@@ -342,7 +353,7 @@ function PizzaBody({
         testID="dqe-pizza-amount-row"
       >
         <Text style={styles.amountRowValue}>{slices}切</Text>
-        <Icon name="edit" size={14} color={palette.textMuted} />
+        <Icon name="edit" size={14} color={theme.colors.content.secondary} />
       </Pressable>
 
       <InstantPreview
@@ -376,6 +387,8 @@ function SetMealBody({
   category: DishTopCategoryDef;
   onSubmit: (p: DishQuickEntryPayload) => void;
 }) {
+  const t = useTheme();
+  const styles = useMemo(() => makeStyles(t), [t]);
   if (category.quickEntry.kind !== 'set_meal_select') return null;
   const config = category.quickEntry;
   const [typeKey, setTypeKey] = useState<SetMealType>(config.options[0].key);
@@ -430,6 +443,8 @@ function InstantSaveBody({
   category: DishTopCategoryDef;
   onSubmit: (p: DishQuickEntryPayload) => void;
 }) {
+  const t = useTheme();
+  const styles = useMemo(() => makeStyles(t), [t]);
   if (category.quickEntry.kind !== 'instant_save') return null;
   const defaultKey = category.quickEntry.defaultSubcategoryKey;
   const [subKey, setSubKey] = useState<string>(defaultKey);
@@ -476,6 +491,8 @@ function InstantSaveBody({
 }
 
 function PrimaryActionButton({ label, onPress }: { label: string; onPress: () => void }) {
+  const t = useTheme();
+  const styles = useMemo(() => makeStyles(t), [t]);
   return (
     <Pressable style={styles.primaryButton} onPress={onPress} testID="dqe-submit">
       <Text style={styles.primaryButtonText}>{label}</Text>
@@ -561,12 +578,12 @@ export const DishQuickEntrySheet = memo(function DishQuickEntrySheet() {
   );
 });
 
-const styles = StyleSheet.create({
+const makeStyles = (t: Theme) => StyleSheet.create({
   sectionLabel: {
     fontSize: fs.caption1,
     fontWeight: '700',
-    color: palette.textMuted,
-    marginTop: 14,
+    color: t.colors.content.secondary,
+    marginTop: 16,
     marginBottom: 8,
     letterSpacing: 0.4,
   },
@@ -580,48 +597,48 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     marginTop: 4,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    backgroundColor: palette.card,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: t.colors.surface.raised,
     borderRadius: 12,
     minHeight: 44,
   },
   amountRowValue: {
     fontSize: fs.md,
     fontWeight: '700',
-    color: palette.text,
+    color: t.colors.content.primary,
     flex: 1,
   },
   previewCard: {
-    marginTop: 18,
-    padding: 14,
+    marginTop: 20,
+    padding: 16,
     borderRadius: 16,
-    backgroundColor: palette.surface,
+    backgroundColor: t.colors.surface.raised,
     gap: 4,
   },
   previewMeta: {
     fontSize: fs.caption1,
-    color: palette.textMuted,
+    color: t.colors.content.secondary,
     fontWeight: '600',
   },
   previewKcal: {
     fontSize: fs['2xl'],
     fontWeight: '700',
-    color: palette.sageDeep,
+    color: t.colors.action.primary.default,
   },
   macroLine: {
     fontSize: fs.caption1,
-    color: palette.textMuted,
+    color: t.colors.content.secondary,
   },
   primaryButton: {
     marginTop: 16,
-    backgroundColor: palette.sageDeep,
+    backgroundColor: t.colors.action.primary.default,
     borderRadius: 999,
-    paddingVertical: 14,
+    paddingVertical: 16,
     alignItems: 'center',
   },
   primaryButtonText: {
-    color: palette.white,
+    color: t.colors.content.onAction,
     fontSize: fs.md,
     fontWeight: '700',
   },

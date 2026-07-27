@@ -84,7 +84,7 @@ const styles = StyleSheet.create({
   sectionLabel: {
     paddingHorizontal: 4,
     paddingTop: 4,
-    paddingBottom: 6,
+    paddingBottom: 8,
   },
   listCard: {
     paddingVertical: 4,

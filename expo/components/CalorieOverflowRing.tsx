@@ -4,7 +4,7 @@ import Svg, { Circle, Polyline } from 'react-native-svg';
 
 import { useTheme } from '@/design-system';
 import { colors } from '@/design-system/tokens/primitives/colors';
-import { duration } from '@/design-system/tokens/primitives/motion';
+import { duration, easing } from '@/design-system/tokens/primitives/motion';
 import { fontSize, fontWeight, letterSpacing } from '@/design-system/tokens/primitives/typography';
 
 export type RingStatusMode = 'auto' | 'remaining' | 'over' | 'percent';
@@ -165,13 +165,13 @@ export const CalorieOverflowRing = memo(function CalorieOverflowRing(props: Calo
     Animated.timing(progressAnim, {
       toValue: rawProgress,
       duration: animationDurationMs,
-      easing: Easing.out(Easing.cubic),
+      easing: Easing.bezier(...easing.enter),
       useNativeDriver: false,
     }).start();
     Animated.timing(centerAnim, {
       toValue: centerValue,
       duration: numberAnimationDurationMs,
-      easing: Easing.out(Easing.quad),
+      easing: Easing.bezier(...easing.enter),
       useNativeDriver: false,
     }).start();
     statusOpacity.setValue(0);

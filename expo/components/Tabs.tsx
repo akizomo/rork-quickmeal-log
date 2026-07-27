@@ -10,7 +10,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 
-import { palette } from '@/constants/theme';
+import { useTheme } from '@/design-system';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 
 /**
@@ -47,6 +47,7 @@ export function Tabs<T extends string = string>({
   style,
   testID,
 }: Props<T>) {
+  const t = useTheme();
   const [containerWidth, setContainerWidth] = useState(0);
   // 各ラベルの幅を記録
   const [labelWidths, setLabelWidths] = useState<number[]>(() => items.map(() => 0));
@@ -113,7 +114,7 @@ export function Tabs<T extends string = string>({
   };
 
   return (
-    <View style={[styles.container, style]} testID={testID}>
+    <View style={[styles.container, { borderBottomColor: t.colors.border.default }, style]} testID={testID}>
       <View style={styles.row} onLayout={handleContainerLayout}>
         {items.map((item, index) => {
           const active = item.key === value;
@@ -127,7 +128,7 @@ export function Tabs<T extends string = string>({
               testID={`${testID ?? 'tabs'}-${item.key}`}
             >
               <Text
-                style={[styles.label, active ? styles.labelActive : styles.labelInactive]}
+                style={[styles.label, { color: active ? t.colors.action.primary.default : t.colors.content.secondary }]}
                 onLayout={handleLabelLayout(index)}
               >
                 {item.label}
@@ -141,7 +142,7 @@ export function Tabs<T extends string = string>({
         <Animated.View
           style={[
             styles.indicator,
-            { width: indicatorW, transform: [{ translateX: indicatorX }] },
+            { backgroundColor: t.colors.action.primary.default, width: indicatorW, transform: [{ translateX: indicatorX }] },
           ]}
         />
       </View>
@@ -152,7 +153,6 @@ export function Tabs<T extends string = string>({
 const styles = StyleSheet.create({
   container: {
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: palette.border,
   },
   row: {
     flexDirection: 'row',
@@ -169,12 +169,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
     marginBottom: 8,
   },
-  labelActive: {
-    color: palette.sageDeep,
-  },
-  labelInactive: {
-    color: palette.textMuted,
-  },
   indicatorSlot: {
     height: INDICATOR_HEIGHT,
   },
@@ -185,6 +179,5 @@ const styles = StyleSheet.create({
     height: INDICATOR_HEIGHT,
     borderTopLeftRadius: INDICATOR_HEIGHT,
     borderTopRightRadius: INDICATOR_HEIGHT,
-    backgroundColor: palette.sageDeep,
   },
 });

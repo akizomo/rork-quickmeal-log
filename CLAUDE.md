@@ -22,6 +22,12 @@
 ## デザインシステム運用ルール（必読）
 UI の実装・修正を行う際は**必ず以下の順序**で参照すること。
 
+0. **`expo/app/dev/` にトークン/コンポーネントのショーケース画面がある（一般的なデザインシステムに合わせた Foundations / Components 2系統構成）**
+   - `/dev/foundations` — Colors / Typography / Spacing / Radius / Elevation / **Motion** の各ページ (`expo/app/dev/foundations/*.tsx`)。Motion は duration/easing/spring を実際にアニメーション再生して比較できる。
+   - `/dev/components` — Buttons (Button/IconButton) / Inputs (NumberField/SelectCard/Chip) / Data Display (Typography/Card/Badge) / Overlays (Dialog/BottomSheet) の各ページ (`expo/app/dev/components/*.tsx`)。
+   - 共通の `Section`/`NavList` 等の見た目ヘルパーは `expo/app/dev/_shared.tsx` (routing対象外)。
+   - 新しいトークンやコンポーネントを追加・変更したら、**必ず該当カテゴリのページにも反映する**。LAN/Simulator/Web からそのまま確認できる。
+
 1. **まず `expo/design-system/` を見る**
    - `tokens/primitives/` — colors, spacing, radius, elevation, typography の数値ソース
    - `tokens/semantic/light.ts` — surface/content/border/status など意味付きトークン
@@ -35,12 +41,35 @@ UI の実装・修正を行う際は**必ず以下の順序**で参照するこ�
      - legacy な `constants/theme.ts` の `palette` も同様に非推奨。`palette.X` が既存コードにあっても、対応する semantic token (`t.colors.*`) が使える文脈なら置き換える。
      - **最適な semantic token が存在しない場合、primitive にフォールバックしたり独自 hex を書いたりして黙って解決しない。** どんな意味の色が必要か (例: 「status.danger の淡い container 色」「暗背景上の warning アクセント」) を整理した上で、新規 semantic token を `tokens/semantic/light.ts` に追加すべきか**ユーザーに相談・提案する**。
    - 影は `elevation.xs / sm / md` を使う。SVG 内で影を手書きしない。
-   - 角丸は `radius.xs(4) / sm(8) / md(12) / lg(16) / xl(20) / 2xl(24)`
+   - 角丸は `radius.xs(4) / sm(8) / md(12) / lg(16) / xl(20) / 2xl(24)`。用途別の目安 (実運用パターンから逆算):
+     - `md(12)`: 小型カード・バナー・ツールチップ・リスト行 (他カードの中/隣に収まる密度の高い面)
+     - `lg(16)`: ボタン・ボタン的な選択タイル (Button公式値、SelectCard等)
+     - `xl(20)`: 大型サマリー/チャート/カレンダーカード、浮遊トースト
+     - `2xl(24)`: 標準「カード」(design-system Cardコンポーネントの公式デフォルト)
+     - `full(9999)`: ピル・バッジ・チップ・円形ボタン・トラック/フィルバー (丸系は数値一致より形状で判断する)
+     - 非標準値 (14/18/22/28等) を見つけたら上記の役割に最も近いものへスナップする。visual diff は最大2px程度で許容範囲。
    - フォントサイズは `fontSize.xs(11)` が最小。9px・10px はシステム外。
-   - スペースは `spacing` の 4px グリッドを使う。
+   - スペースは `spacing` の 4px グリッドを使う。用途別の目安 (実運用パターンから逆算、詳細は `/dev/foundations/spacing`):
+     - `0.5(2px)`: ごく僅かな微調整 (Badge sm の paddingV 等)
+     - `1(4px)`: インライン要素間の詰めたgap (アイコン+ラベル、Chip内部のgap)
+     - `2(8px)`: 標準の行内/リスト項目内gap。Dialog/BottomSheetの「隣接chromeがある側」の余白
+     - `3(12px)`: リスト項目間のgap。Footerのtop padding。Chip/Badgeの横paddingの下限(sm)
+     - `4(16px)`: カード内側の小要素のpadding。Footerの横/下padding。Button(sm)の横padding
+     - `5(20px)`: 画面全体の外側padding (contentContainerStyle)。Cardコンポーネント公式paddingそのもの。Dialog/BottomSheetの横paddingと「隣接chromeが無い側」の余白
+     - `6(24px)`: より余裕を持たせた画面padding。Button(lg)の横padding
+     - `8(32px)`: 画面内の独立したセクション同士の縦rhythm
+     - Dialog/BottomSheet のコンテンツ余白は「header/footerがある側は控えめ (spacing.2)、無い側はカード端に直接触れるので広め (spacing.5)」というルールで統一している (`Dialog.tsx` 参照)。同様の「カード端に接する要素」を作る際はこのパターンを踏襲する。
+     - 非グリッド値 (6/10/14/18/22px等) を見つけたら上記の役割に最も近いトークンへスナップする。これらは 2px 内のズレで隣接グリッド点が等距離のため、**縮めると content clip リスクがある分、大きい側へ丸める (+2px: 6→8/10→12/14→16/18→20/22→24) のを既定**とする。app全体の既存ドリフト (約80箇所) は 2026-07-25 にこの規則で解消済み。新規実装では発生させないこと。
+   - アニメーションは **必ず `duration` / `easing` / `spring` トークン** (`design-system/tokens/primitives/motion.ts`) を使う。
+     - `Animated.timing({ duration: 200, easing: Easing.bezier(0.2, 0, 0, 1) })` のような生の数値・自前 bezier 定義は禁止。
+     - `duration.fast(120)`=マイクロフィードバック、`short(200)`=退場、`medium(300)`=画面内遷移、`long(450)`=入場、`xlong(600)`=長い演出。
+     - `easing.standard`=汎用/画面遷移、`enter`=入場(減速)、`exit`=退場(加速)。`spring.enter/exit/snap/pop` も同様に用途別。
+     - **既存トークンと数値がほぼ同じ独自定義 (例: 独自の `MD3_STANDARD` 定数) を見つけたら、トークン側に寄せて重複を解消する。** 明確に異なるチューニングが必要な場合のみ、独自定数を保持してよいが、その理由をコメントで明記し、トークン名を騙る紛らわしい命名 (`MD3_*` 等) は避ける。
+   - 生の RN `<Modal>` を直接使わない。モーダル/ボトムシートが必要な場合は必ず `design-system` の `Dialog`（中央配置）または `BottomSheet`（下からのシート）を使う。
+   - アイコン単体のタップ領域 (close/削除/前後ナビ等) は必ず `IconButton` (`design-system/components/IconButton.tsx`) を使う。`Pressable + Icon` の手書きは禁止。`variant`(ghost/filled) と `size`(sm/md/lg) と `tone`(secondary/tertiary/danger/action) で表現し、新しい組み合わせが要る場合は `IconButton` 側を拡張する。
 
 3. **コンポーネントは既存の流用を優先する**
-   - 新しい UI を作る前に、必ず `design-system/components/` (Badge, Button, Card, Chip, Dialog, Icon, MacroChip, MealLogCard, NumberField, SelectCard, Typography 等) に流用できるものがないか確認する。
+   - 新しい UI を作る前に、必ず `design-system/components/` (Badge, Button, Card, Chip, Dialog, Icon, IconButton, MacroChip, MealLogCard, NumberField, SelectCard, Typography 等) に流用できるものがないか確認する。
    - 既存コンポーネントの props / variant で表現できる場合はそれを使い、画面側でスタイルを個別に書き直さない。
    - **既存コンポーネントで賄えない新パターンが必要そうな場合は、実装前に「新規コンポーネントが必要か」をユーザーに相談・提案する。** 独断で一時しのぎの独自実装を作らない。
    - 相談の結果、新規作成が妥当と判断されたら、必ずトークン・既存コンポーネントをベースに構築し、実装後は `design-system/components/` に追加してシステムを進化させる。

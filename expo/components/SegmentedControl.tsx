@@ -4,7 +4,7 @@ import { Animated, Pressable, StyleSheet, Text, View, ViewStyle } from 'react-na
 import { spring } from '@/design-system/tokens/primitives/motion';
 import { colors } from '@/design-system/tokens/primitives/colors';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
-import { palette } from '@/constants/theme';
+import { useTheme } from '@/design-system';
 
 interface Option<T extends string = string> {
   key: T;
@@ -33,8 +33,8 @@ export function SegmentedControl<T extends string = string>({
   onChange,
   trackColor = colors.ivory[400],
   pillColor = colors.ivory[50],
-  textColor = palette.textMuted,
-  activeTextColor = palette.sageDeep,
+  textColor,
+  activeTextColor,
   padding = 3,
   borderRadius = 18,
   height = 36,
@@ -42,6 +42,9 @@ export function SegmentedControl<T extends string = string>({
   style,
   testID,
 }: Props<T>) {
+  const t = useTheme();
+  const resolvedTextColor = textColor ?? t.colors.content.secondary;
+  const resolvedActiveTextColor = activeTextColor ?? t.colors.action.primary.default;
   const selectedIndex = Math.max(0, options.findIndex((o) => o.key === value));
   const pillAnim = useRef(new Animated.Value(selectedIndex)).current;
   const [containerWidth, setContainerWidth] = useState(0);
@@ -118,7 +121,7 @@ export function SegmentedControl<T extends string = string>({
                 styles.text,
                 {
                   fontSize,
-                  color: active ? activeTextColor : textColor,
+                  color: active ? resolvedActiveTextColor : resolvedTextColor,
                   fontWeight: active ? '700' : '600',
                 },
               ]}

@@ -80,7 +80,7 @@ export function Chip({
         style,
       ]}
     >
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.spacing['1'] }}>
         {leadingIcon ? <Icon name={leadingIcon} size={iconSize} color={textColor} /> : null}
         <Text
           style={{

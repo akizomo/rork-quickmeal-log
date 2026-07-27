@@ -106,6 +106,6 @@ export default function SettingsRoute() {
 
 const styles = StyleSheet.create({
   page: { flex: 1 },
-  scroll: { padding: 18, gap: 22, paddingBottom: 40 },
-  section: { gap: 6 },
+  scroll: { padding: 20, gap: 24, paddingBottom: 40 },
+  section: { gap: 8 },
 });

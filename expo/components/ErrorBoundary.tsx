@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { palette } from '@/constants/theme';
+import { lightTheme } from '@/design-system';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 
 interface State {
@@ -26,12 +26,12 @@ export class ErrorBoundary extends React.Component<React.PropsWithChildren, Stat
   render() {
     if (this.state.hasError) {
       return (
-        <View style={styles.container} testID="error-boundary">
-          <View style={styles.card}>
-            <Text style={styles.title}>画面の表示で問題が起きました</Text>
-            <Text style={styles.text}>もう一度開き直してください。</Text>
-            <Pressable onPress={this.handleReset} style={styles.button} testID="error-boundary-reset-button">
-              <Text style={styles.buttonText}>再表示</Text>
+        <View style={[styles.container, { backgroundColor: lightTheme.colors.surface.default }]} testID="error-boundary">
+          <View style={[styles.card, { backgroundColor: lightTheme.colors.surface.raised }]}>
+            <Text style={[styles.title, { color: lightTheme.colors.content.primary }]}>画面の表示で問題が起きました</Text>
+            <Text style={[styles.text, { color: lightTheme.colors.content.secondary }]}>もう一度開き直してください。</Text>
+            <Pressable onPress={this.handleReset} style={[styles.button, { backgroundColor: lightTheme.colors.action.primary.default }]} testID="error-boundary-reset-button">
+              <Text style={[styles.buttonText, { color: lightTheme.colors.content.onAction }]}>再表示</Text>
             </Pressable>
           </View>
         </View>
@@ -47,37 +47,31 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: palette.background,
     padding: 24,
   },
   card: {
     width: '100%',
     maxWidth: 420,
-    backgroundColor: palette.surface,
     borderRadius: 24,
     padding: 24,
     gap: 12,
   },
   title: {
-    color: palette.text,
     fontSize: fs['2xl'],
     fontWeight: '700',
   },
   text: {
-    color: palette.textMuted,
     fontSize: fs.md,
     lineHeight: 22,
   },
   button: {
     marginTop: 8,
     alignSelf: 'flex-start',
-    backgroundColor: palette.sageDeep,
     borderRadius: 999,
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingVertical: 12,
   },
   buttonText: {
-    color: palette.white,
     fontSize: fs.md,
     fontWeight: '700',
   },

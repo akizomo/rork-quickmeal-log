@@ -26,6 +26,7 @@ import { HelpInfographic } from '@/components/help/HelpInfographic';
 import { GestureDemoIllustration } from '@/components/onboarding-illustrations';
 import { Body, Caption, Heading, Icon, useTheme } from '@/design-system';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
+import { duration, easing } from '@/design-system/tokens/primitives/motion';
 import type { BucketKey } from '@/types/identity';
 
 if (Platform.OS === 'android') {
@@ -56,10 +57,10 @@ const DISH_BUCKETS: BucketKey[] = [
   'misc_dish',
 ];
 
-// MD3 motion tokens
-// Standard: cubic-bezier(0.2, 0, 0, 1) — x2=0 can cause JS-fallback edge case,
-// so we use (0.2, 0, 0.01, 1) which is perceptually identical.
-const MD3_STANDARD   = Easing.bezier(0.2, 0, 0.01, 1.0);
+// 汎用の M3 Standard は motion.ts の easing.standard を使う (Easing.bezier(...easing.standard))。
+// 以下の2つは、このステップページャー専用に少し強めにチューニングした
+// 固有カーブ。motion.ts の easing.enter/exit とは別物なので個別に保持する
+// (安易に汎用トークンへ差し替えると見た目が変わるため)。
 const MD3_DECELERATE = Easing.bezier(0.05, 0.7, 0.1, 1.0); // screen enter
 const MD3_ACCELERATE = Easing.bezier(0.3, 0, 0.8, 0.15);   // screen exit
 
@@ -220,8 +221,8 @@ function StepIndicator({ total, current }: { total: number; current: number }) {
       widthAnims.map((anim, i) =>
         Animated.timing(anim, {
           toValue: i === current ? 20 : 8,
-          duration: 200,
-          easing: MD3_STANDARD,
+          duration: duration.short,
+          easing: Easing.bezier(...easing.standard),
           useNativeDriver: false,
         })
       )
@@ -380,7 +381,7 @@ function FaqItem({ q, a }: { q: string; a: string }) {
     Animated.timing(rotateAnim, {
       toValue,
       duration: 250,
-      easing: MD3_STANDARD,
+      easing: Easing.bezier(...easing.standard),
       useNativeDriver: true,
     }).start();
     LayoutAnimation.configureNext({
@@ -424,7 +425,7 @@ function FaqItem({ q, a }: { q: string; a: string }) {
 
 const styles = StyleSheet.create({
   page: { flex: 1 },
-  scroll: { padding: 18, gap: 16, paddingBottom: 16 },
+  scroll: { padding: 20, gap: 16, paddingBottom: 16 },
 
   // Step content area
   stepContent: {
@@ -433,15 +434,15 @@ const styles = StyleSheet.create({
 
   // Fixed bottom nav bar
   navBar: {
-    gap: 10,
-    paddingHorizontal: 18,
+    gap: 12,
+    paddingHorizontal: 20,
     paddingTop: 12,
-    paddingBottom: 14,
+    paddingBottom: 16,
     borderTopWidth: 1,
   },
   navButtons: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 12,
   },
   navBtn: {
     flex: 1,
@@ -460,7 +461,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
     paddingTop: 4,
   },
   dot: {
@@ -491,7 +492,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   subsection: {
-    marginTop: 6,
+    marginTop: 8,
     gap: 4,
   },
   calloutBox: {
@@ -516,8 +517,8 @@ const styles = StyleSheet.create({
 
   // FAQ accordion
   faqItem: {
-    paddingTop: 14,
-    paddingBottom: 14,
+    paddingTop: 16,
+    paddingBottom: 16,
     borderTopWidth: 1,
   },
   faqHeader: {

@@ -1,27 +1,27 @@
 /**
- * Token Preview — primitive / semantic / component トークンの視覚確認。
- * DEV 専用。`/dev/tokens` から開く。
+ * Colors — primitive / semantic / nutrition domain の視覚確認。DEV 専用。
  */
 
+import { Stack } from 'expo-router';
 import React from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { tokens, useTheme, type Theme } from '@/design-system';
+import { Section, labelStyle, subLabelStyle } from '../_shared';
 
-export default function TokensScreen() {
+export default function ColorsScreen() {
   const t = useTheme();
   return (
-    <ScrollView
-      style={{ backgroundColor: t.colors.surface.default }}
-      contentContainerStyle={{ padding: t.spacing['5'], gap: t.spacing['8'] }}
-    >
-      <PrimitiveColors t={t} />
-      <SemanticColors t={t} />
-      <NutritionColors t={t} />
-      <SpacingScale t={t} />
-      <RadiusScale t={t} />
-      <TypographyScale t={t} />
-      <ElevationScale t={t} />
-    </ScrollView>
+    <>
+      <Stack.Screen options={{ title: 'Colors' }} />
+      <ScrollView
+        style={{ backgroundColor: t.colors.surface.default }}
+        contentContainerStyle={{ padding: t.spacing['5'], gap: t.spacing['8'] }}
+      >
+        <PrimitiveColors t={t} />
+        <SemanticColors t={t} />
+        <NutritionColors t={t} />
+      </ScrollView>
+    </>
   );
 }
 
@@ -83,7 +83,7 @@ function SwatchRows({
     <>
       {states.map((s) => (
         <View key={s.name} style={{ gap: t.spacing['1'] }}>
-          <Text style={{ fontSize: t.typography.fontSize.caption1, color: t.colors.content.secondary }}>{s.name}</Text>
+          <Text style={subLabelStyle(t)}>{s.name}</Text>
           <View style={{ flexDirection: 'row', gap: t.spacing['2'], alignItems: 'center' }}>
             <View
               style={{
@@ -158,7 +158,6 @@ function SemanticColors({ t }: { t: Theme }) {
     ['surface', t.colors.surface],
     ['content', t.colors.content],
     ['border', t.colors.border],
-    ['status', t.colors.status],
     ['accent', t.colors.accent],
   ];
   return (
@@ -173,6 +172,19 @@ function SemanticColors({ t }: { t: Theme }) {
           </View>
         </View>
       ))}
+      <View style={{ gap: t.spacing['2'] }}>
+        <Text style={labelStyle(t)}>status</Text>
+        {(['success', 'warning', 'danger', 'info'] as const).map((role) => (
+          <View key={role} style={{ gap: t.spacing['1'] }}>
+            <Text style={subLabelStyle(t)}>{role}</Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: t.spacing['2'] }}>
+              {Object.entries(t.colors.status[role]).map(([state, v]) => (
+                <ColorChip key={state} name={state} value={v} t={t} />
+              ))}
+            </View>
+          </View>
+        ))}
+      </View>
       <View style={{ gap: t.spacing['2'] }}>
         <Text style={labelStyle(t)}>action</Text>
         {(['primary', 'secondary', 'ghost'] as const).map((role) => (
@@ -216,153 +228,3 @@ function ColorChip({
     </View>
   );
 }
-
-// ---------- Spacing ----------
-function SpacingScale({ t }: { t: Theme }) {
-  const steps = Object.entries(t.spacing) as [string, number][];
-  return (
-    <Section title="Spacing (px)" t={t}>
-      {steps.map(([k, v]) => (
-        <View key={k} style={{ flexDirection: 'row', alignItems: 'center', gap: t.spacing['3'] }}>
-          <Text style={{ width: 40, color: t.colors.content.secondary, fontSize: t.typography.fontSize.caption1 }}>{k}</Text>
-          <View
-            style={{
-              height: 12,
-              width: v || 1,
-              backgroundColor: t.colors.action.primary.default,
-              borderRadius: 2,
-            }}
-          />
-          <Text style={{ color: t.colors.content.tertiary, fontSize: t.typography.fontSize.xs }}>{v}px</Text>
-        </View>
-      ))}
-    </Section>
-  );
-}
-
-// ---------- Radius ----------
-function RadiusScale({ t }: { t: Theme }) {
-  const steps = Object.entries(t.radius) as [string, number][];
-  return (
-    <Section title="Radius" t={t}>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: t.spacing['3'] }}>
-        {steps.map(([k, v]) => (
-          <View key={k} style={{ alignItems: 'center', gap: t.spacing['1'] }}>
-            <View
-              style={{
-                width: 64,
-                height: 64,
-                backgroundColor: t.colors.surface.raised,
-                borderRadius: Math.min(v, 32),
-                borderWidth: 1,
-                borderColor: t.colors.border.default,
-              }}
-            />
-            <Text style={{ fontSize: t.typography.fontSize.xs, color: t.colors.content.primary }}>{k}</Text>
-            <Text style={{ fontSize: t.typography.fontSize.xs, color: t.colors.content.tertiary }}>
-              {v === 9999 ? 'full' : `${v}px`}
-            </Text>
-          </View>
-        ))}
-      </View>
-    </Section>
-  );
-}
-
-// ---------- Typography ----------
-function TypographyScale({ t }: { t: Theme }) {
-  const sizes = Object.entries(t.typography.fontSize) as [string, number][];
-  return (
-    <Section title="Typography — fontSize" t={t}>
-      {sizes.map(([k, v]) => (
-        <View key={k} style={{ gap: 2 }}>
-          <Text style={{ fontSize: v, color: t.colors.content.primary }}>
-            {k} — あいうAa 123
-          </Text>
-          <Text style={{ fontSize: t.typography.fontSize.xs, color: t.colors.content.tertiary }}>
-            {v}px / line {t.typography.lineHeight[k as keyof typeof t.typography.lineHeight]}px
-          </Text>
-        </View>
-      ))}
-    </Section>
-  );
-}
-
-// ---------- Elevation ----------
-function ElevationScale({ t }: { t: Theme }) {
-  const levels = Object.entries(t.elevation) as [string, (typeof t.elevation)['sm']][];
-  return (
-    <Section title="Elevation" t={t}>
-      <View
-        style={{
-          flexDirection: 'row',
-          flexWrap: 'wrap',
-          gap: t.spacing['4'],
-          padding: t.spacing['3'],
-        }}
-      >
-        {levels.map(([k, v]) => (
-          <View key={k} style={{ alignItems: 'center', gap: t.spacing['2'] }}>
-            <View
-              style={{
-                width: 72,
-                height: 72,
-                backgroundColor: t.colors.surface.raised,
-                borderRadius: t.radius.lg,
-                ...v,
-              }}
-            />
-            <Text style={{ fontSize: t.typography.fontSize.xs, color: t.colors.content.primary }}>{k}</Text>
-          </View>
-        ))}
-      </View>
-    </Section>
-  );
-}
-
-// ---------- Section wrapper ----------
-function Section({
-  title,
-  t,
-  children,
-}: {
-  title: string;
-  t: Theme;
-  children: React.ReactNode;
-}) {
-  return (
-    <View style={{ gap: t.spacing['3'] }}>
-      <Text
-        style={{
-          color: t.colors.content.primary,
-          fontSize: t.typography.fontSize.xl,
-          fontWeight: t.typography.fontWeight.semibold,
-        }}
-      >
-        {title}
-      </Text>
-      <View
-        style={{
-          backgroundColor: t.colors.surface.overlay,
-          borderRadius: t.radius['2xl'],
-          padding: t.spacing['4'],
-          gap: t.spacing['4'],
-        }}
-      >
-        {children}
-      </View>
-    </View>
-  );
-}
-
-const labelStyle = (t: Theme) => ({
-  color: t.colors.content.secondary,
-  fontSize: t.typography.fontSize.sm,
-  fontWeight: t.typography.fontWeight.semibold,
-});
-
-const subLabelStyle = (t: Theme) => ({
-  color: t.colors.content.tertiary,
-  fontSize: t.typography.fontSize.xs,
-});
-

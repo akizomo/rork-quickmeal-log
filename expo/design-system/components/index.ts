@@ -2,6 +2,8 @@ export { Button } from './Button';
 export type { ButtonProps } from './Button';
 export { Icon } from './Icon';
 export type { IconProps, IconName } from './Icon';
+export { IconButton } from './IconButton';
+export type { IconButtonProps, IconButtonSize, IconButtonVariant, IconButtonTone } from './IconButton';
 export { Card } from './Card';
 export type { CardProps } from './Card';
 export { Heading, Body, Caption } from './Typography';

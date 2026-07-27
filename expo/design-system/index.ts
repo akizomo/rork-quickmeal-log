@@ -13,6 +13,7 @@ export type { Theme } from './theme';
 export {
   Button,
   Icon,
+  IconButton,
   Card,
   Heading,
   Body,
@@ -30,6 +31,10 @@ export type {
   ButtonProps,
   IconProps,
   IconName,
+  IconButtonProps,
+  IconButtonSize,
+  IconButtonVariant,
+  IconButtonTone,
   CardProps,
   HeadingProps,
   BodyProps,

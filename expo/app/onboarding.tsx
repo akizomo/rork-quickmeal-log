@@ -405,8 +405,8 @@ export default function OnboardingRoute() {
 
 /* -------- Step components -------- */
 
-const stepWrap = { gap: 14, flex: 1 } as const;
-const cardColBottom = { gap: 10, marginTop: 'auto' as const };
+const stepWrap = { gap: 16, flex: 1 } as const;
+const cardColBottom = { gap: 12, marginTop: 'auto' as const };
 
 function StepBasis({ basis, onBasis }: { basis: BiologicalBasis | null; onBasis: (v: BiologicalBasis) => void }) {
   return (

@@ -4,7 +4,7 @@ import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from '
 import Svg, { Circle, Text as SvgText } from 'react-native-svg';
 import {
   Animated,
-  Modal,
+  Easing,
   PanResponder,
   Pressable,
   StyleSheet,
@@ -16,14 +16,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CalorieOverflowRing } from '@/components/CalorieOverflowRing';
 import { ExerciseSheet } from '@/components/ExerciseSheet';
-import { HomeDatePager } from '@/components/HomeDatePager';
+import { HomeDatePager, type HomeDatePagerRef } from '@/components/HomeDatePager';
 import { DayLogBottomSheet, type DayLogBottomSheetRef } from '@/components/DayLogBottomSheet';
 import { additionPresets, portionSnapPoints, sizeOptions } from '@/constants/nutrition-data';
 import { ACTIVITY_LEVEL_OPTIONS, TRIAL_DURATION_DAYS } from '@/constants/onboarding';
-import { palette } from '@/constants/theme';
-import { colors } from '@/design-system/tokens/primitives/colors';
-import { Badge, Body, BottomSheet, Button, Caption, Icon, useTheme } from '@/design-system';
-import { duration, spring } from '@/design-system/tokens/primitives/motion';
+import { Badge, Body, BottomSheet, Button, Caption, Dialog, Icon, IconButton, useTheme, type Theme } from '@/design-system';
+import { duration, easing, spring } from '@/design-system/tokens/primitives/motion';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { radius } from '@/design-system/tokens/primitives/radius';
 import { elevation } from '@/design-system/tokens/primitives/elevation';
@@ -46,6 +44,8 @@ export function MiniProgressBar({ letter, label, current, target, textColor, gra
   /** 空バーの下地色。nutrition.*.background (マクロごとの薄いトーン) を渡す。 */
   trackColor: string;
 }) {
+  const t = useTheme();
+  const styles = useMemo(() => makeStyles(t), [t]);
   const progress = target > 0 ? Math.min(current / target, 1) : 0;
   return (
     <View style={styles.miniBarItem}>
@@ -67,8 +67,9 @@ export function MiniProgressBar({ letter, label, current, target, textColor, gra
 
 export const Header = memo(function Header({ viewedDate }: { viewedDate?: Date }) {
   const router = useRouter();
-  const { settings } = useAppState();
   const t = useTheme();
+  const styles = useMemo(() => makeStyles(t), [t]);
+  const { settings } = useAppState();
   const avatarScale = useRef(new Animated.Value(0.88)).current;
 
   useEffect(() => {
@@ -94,35 +95,37 @@ export const Header = memo(function Header({ viewedDate }: { viewedDate?: Date }
   return (
     <View style={styles.headerRow}>
       <Animated.View style={{ transform: [{ scale: avatarScale }] }}>
-        <Pressable
+        <IconButton
+          icon="user"
+          size="lg"
+          variant="filled"
           onPress={() => router.push('/status')}
-          style={styles.avatarButton}
           testID="avatar-button"
+          accessibilityLabel="プロフィール"
         >
-          <Icon name="user" size={20} color={t.colors.content.secondary} />
           {showTrialBadge ? <View style={styles.avatarBadge} testID="avatar-trial-badge" /> : null}
-        </Pressable>
+        </IconButton>
       </Animated.View>
       <View style={styles.headerCenter} pointerEvents="none">
         <Text style={styles.headerDate} testID="header-date-label">{dateLabel}</Text>
       </View>
       <View style={styles.headerRight}>
-        <Pressable
-          style={styles.iconButton}
+        <IconButton
+          icon="help"
+          size="lg"
+          variant="filled"
           onPress={() => router.push('/help')}
           testID="help-link"
           accessibilityLabel="使い方を見る"
-        >
-          <Icon name="help" color={t.colors.content.secondary} size={20} />
-        </Pressable>
-        <Pressable
-          style={styles.iconButton}
+        />
+        <IconButton
+          icon="barChart"
+          size="lg"
+          variant="filled"
           onPress={() => router.push('/stats')}
           testID="stats-link"
           accessibilityLabel="実績を見る"
-        >
-          <Icon name="barChart" color={t.colors.content.secondary} size={20} />
-        </Pressable>
+        />
       </View>
     </View>
   );
@@ -176,6 +179,7 @@ const BalanceModal = memo(function BalanceModal({
   onCancelCarryoverPlan: () => void;
 }) {
   const t = useTheme();
+  const styles = useMemo(() => makeStyles(t), [t]);
   const remaining = adjustedTargetKcal - consumedKcal;
   const progress = adjustedTargetKcal > 0 ? Math.min(1, Math.max(0, consumedKcal / adjustedTargetKcal)) : 0;
   const overshoot = remaining < 0;
@@ -183,26 +187,17 @@ const BalanceModal = memo(function BalanceModal({
   const showCarryoverSection = carryoverPlanActive ||
     yesterdayOvershootKcal > Math.round(baseTargetKcal * 0.15);
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable style={styles.balanceOverlay} onPress={onClose} accessibilityRole="button" accessibilityLabel="閉じる">
-        <Pressable
-          style={styles.balanceCard}
-          onPress={() => undefined}
-          accessibilityRole="summary"
-          accessibilityLabel="今日の収支"
-        >
-          {/* close ボタン (右上) */}
-          <Pressable
-            onPress={onClose}
-            hitSlop={12}
-            style={styles.balanceCloseButton}
-            accessibilityRole="button"
-            accessibilityLabel="閉じる"
-          >
-            <Icon name="close" size={18} color={t.colors.content.secondary} />
-          </Pressable>
+    <Dialog visible={visible} onClose={onClose} testID="balance-modal">
+      {/* close ボタン (右上) */}
+      <IconButton
+        icon="close"
+        size="md"
+        onPress={onClose}
+        style={styles.balanceCloseButton}
+        accessibilityLabel="閉じる"
+      />
 
-          {/* HERO (Tier 1): 残り or オーバー */}
+      {/* HERO (Tier 1): 残り or オーバー */}
           <View style={styles.balanceHero}>
             <Text style={styles.balanceHeroCaption}>{overshoot ? 'オーバー' : '残り'}</Text>
             <Text style={[styles.balanceHeroValue, overshoot && { color: t.colors.status.danger.default }]}>
@@ -295,9 +290,7 @@ const BalanceModal = memo(function BalanceModal({
               </View>
             </Pressable>
           ) : null}
-        </Pressable>
-      </Pressable>
-    </Modal>
+    </Dialog>
   );
 });
 
@@ -320,16 +313,16 @@ function BalanceMathRow({
   tone?: 'positive' | 'alert';
   emphasis?: 'mid' | 'strong';
 }) {
+  const t = useTheme();
+  const styles = useMemo(() => makeStyles(t), [t]);
   const isStrong = emphasis === 'strong';
   const isMid = emphasis === 'mid';
   const valueColor =
     tone === 'alert'
-      ? palette.danger
+      ? t.colors.status.danger.default
       : tone === 'positive'
-        ? palette.sageStrong
-        : isStrong || isMid
-          ? palette.text
-          : palette.text;
+        ? t.colors.action.text.default
+        : t.colors.content.primary;
   return (
     <View style={[styles.balanceMathRow, isStrong && styles.balanceMathRowStrong]}>
       <Text
@@ -381,6 +374,7 @@ function WeeklyRingsRow({
   onDayPress?: (dateKey: string) => void;
 }) {
   const t = useTheme();
+  const styles = useMemo(() => makeStyles(t), [t]);
 
   const weekDays = useMemo(() => {
     const dow = today.getDay();
@@ -660,9 +654,7 @@ function CarryoverBanner({
             </Body>
           </Pressable>
         </View>
-        <Pressable onPress={onDismiss} hitSlop={12} accessibilityRole="button" accessibilityLabel="閉じる">
-          <Icon name="close" size={16} color={t.colors.content.tertiary} />
-        </Pressable>
+        <IconButton icon="close" size="sm" tone="tertiary" onPress={onDismiss} accessibilityLabel="閉じる" />
       </View>
     </View>
   );
@@ -684,6 +676,7 @@ export const StatusCard = memo(function StatusCard({
     applyCarryover, cancelCarryoverPlan, dismissCarryoverBanner,
   } = useAppState();
   const t = useTheme();
+  const styles = useMemo(() => makeStyles(t), [t]);
   const { width: screenWidth } = useWindowDimensions();
   const [exerciseSheetVisible, setExerciseSheetVisible] = useState(false);
   const [balanceVisible, setBalanceVisible] = useState(false);
@@ -888,6 +881,7 @@ export const StatusCard = memo(function StatusCard({
 
 function MacroPill({ label, value, macro }: { label: string; value: number; macro: 'protein' | 'fat' | 'carbs' }) {
   const t = useTheme();
+  const styles = useMemo(() => makeStyles(t), [t]);
   const tone = t.colors.nutrition[macro];
   return (
     <View style={[styles.macroPill, { backgroundColor: tone.background }]}>
@@ -907,23 +901,43 @@ function MacroPill({ label, value, macro }: { label: string; value: number; macr
  */
 export const FloatingFeedback = memo(function FloatingFeedback() {
   const { feedback } = useAppState();
+  const t = useTheme();
+  const styles = useMemo(() => makeStyles(t), [t]);
   const opacity = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(8)).current;
+  // feedback が null に戻った後も退場アニメーションが終わるまで直前の内容を保持する。
+  // ただし表示条件自体は feedback (実データ) を優先し、View は feedback が真になった
+  // 瞬間の render で即マウントする (effect 内で state を立ててから mount すると
+  // アニメーション開始が View 未マウントのタイミングと重なり、進行しない)。
+  const [content, setContent] = useState<typeof feedback>(null);
 
   useEffect(() => {
-    if (!feedback) return;
-    opacity.setValue(0);
-    translateY.setValue(8);
-    Animated.parallel([
-      Animated.timing(opacity, { toValue: 1, duration: duration.fast, useNativeDriver: true }),
-      Animated.spring(translateY, { toValue: -16, useNativeDriver: true, ...spring.pop }),
-    ]).start();
+    if (feedback) {
+      opacity.setValue(0);
+      translateY.setValue(8);
+      Animated.parallel([
+        Animated.timing(opacity, { toValue: 1, duration: duration.fast, useNativeDriver: true }),
+        Animated.spring(translateY, { toValue: -16, useNativeDriver: true, ...spring.pop }),
+      ]).start();
+      return;
+    }
+    // 退場: M3 Emphasized Accelerate でシンプルにフェードアウト (duration.short)。
+    Animated.timing(opacity, {
+      toValue: 0,
+      duration: duration.short,
+      easing: Easing.bezier(...easing.exit),
+      useNativeDriver: true,
+    }).start(({ finished }) => {
+      if (finished) setContent(null);
+    });
   }, [feedback, opacity, translateY]);
 
-  if (!feedback) return null;
+  const active = feedback ?? content;
+  if (feedback && feedback !== content) setContent(feedback);
+  if (!active) return null;
 
-  const label = feedback.label;
-  const macro = feedback.macro;
+  const label = active.label;
+  const macro = active.macro;
   const bubbleStyle = styles.feedbackBubble;
   const labelStyle = styles.feedbackText;
   const macroStyle = styles.feedbackMacro;
@@ -935,7 +949,7 @@ export const FloatingFeedback = memo(function FloatingFeedback() {
       pointerEvents="none"
     >
       <Text style={labelStyle}>{label}</Text>
-      <Text style={macroStyle}>{formatMacroText(macro)}</Text>
+      <Text style={[macroStyle, { color: t.colors.content.inverseSecondary }]}>{formatMacroText(macro)}</Text>
     </Animated.View>
   );
 });
@@ -943,17 +957,67 @@ export const FloatingFeedback = memo(function FloatingFeedback() {
 export const UndoToast = memo(function UndoToast() {
   const { undoState, undoLastLog } = useAppState();
   const t = useTheme();
-  if (!undoState) return null;
+  const styles = useMemo(() => makeStyles(t), [t]);
+  const opacity = useRef(new Animated.Value(0)).current;
+  const translateY = useRef(new Animated.Value(16)).current;
+  // undoState が null に戻った後も退場アニメーションが終わるまで直前の内容を保持する。
+  // 表示条件は undoState (実データ) を優先し、View は undoState が真になった瞬間の
+  // render で即マウントする (effect 内で state を立ててから mount すると
+  // アニメーション開始が View 未マウントのタイミングと重なり、進行しない)。
+  const [content, setContent] = useState<typeof undoState>(null);
+
+  useEffect(() => {
+    if (undoState) {
+      opacity.setValue(0);
+      translateY.setValue(16);
+      // 入場: M3 Emphasized Decelerate で下から浮き上がる (duration.medium)。
+      Animated.parallel([
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: duration.medium,
+          easing: Easing.bezier(...easing.enter),
+          useNativeDriver: true,
+        }),
+        Animated.timing(translateY, {
+          toValue: 0,
+          duration: duration.medium,
+          easing: Easing.bezier(...easing.enter),
+          useNativeDriver: true,
+        }),
+      ]).start();
+      return;
+    }
+    // 退場: M3 Emphasized Accelerate でシンプルにフェードアウト (duration.short)。
+    Animated.timing(opacity, {
+      toValue: 0,
+      duration: duration.short,
+      easing: Easing.bezier(...easing.exit),
+      useNativeDriver: true,
+    }).start(({ finished }) => {
+      if (finished) setContent(null);
+    });
+  }, [undoState, opacity, translateY]);
+
+  const active = undoState ?? content;
+  if (undoState && undoState !== content) setContent(undoState);
+  if (!active) return null;
+
   return (
-    <View style={[styles.undoToast, { backgroundColor: t.colors.surface.inverse }]} testID="undo-toast">
+    <Animated.View
+      style={[
+        styles.undoToast,
+        { backgroundColor: t.colors.surface.inverse, opacity, transform: [{ translateY }] },
+      ]}
+      testID="undo-toast"
+    >
       <View>
-        <Text style={styles.undoTitle}>{undoState.log.categoryLabel} を記録しました</Text>
-        <Text style={styles.undoText}>必要なら元に戻せます</Text>
+        <Text style={styles.undoTitle}>{active.log.categoryLabel} を記録しました</Text>
+        <Text style={[styles.undoText, { color: t.colors.content.inverseSecondary }]}>必要なら元に戻せます</Text>
       </View>
       <Pressable onPress={undoLastLog} testID="undo-button">
-        <Text style={styles.undoAction}>取り消す</Text>
+        <Text style={[styles.undoAction, { color: t.colors.action.text.onInverse }]}>取り消す</Text>
       </Pressable>
-    </View>
+    </Animated.View>
   );
 });
 
@@ -1041,6 +1105,8 @@ export const LogEditorSheet = memo(function LogEditorSheet() {
 });
 
 function IngredientEditorContent({ draft, onChange }: { draft: IngredientDraft; onChange: (draft: IngredientDraft) => void }) {
+  const t = useTheme();
+  const styles = useMemo(() => makeStyles(t), [t]);
   const categories = getQuickCategories('ingredient');
   const currentCategory = categories.find((item) => item.key === draft.categoryKey);
   const subtypeDefs = getIngredientSubtypeDefs(draft.categoryKey);
@@ -1088,7 +1154,7 @@ function IngredientEditorContent({ draft, onChange }: { draft: IngredientDraft; 
           <Text style={styles.categoryRowValueText}>
             {currentCategory ? `${currentCategory.emoji} ${currentCategory.label}` : '—'}
           </Text>
-          <Icon name="chevronDown" size={14} color={palette.textMuted} />
+          <Icon name="chevronDown" size={14} color={t.colors.content.secondary} />
         </View>
       </Pressable>
       {categoryOpen ? (
@@ -1167,6 +1233,8 @@ function IngredientEditorContent({ draft, onChange }: { draft: IngredientDraft; 
 }
 
 function PortionSlider({ value, onChange }: { value: PortionValue; onChange: (portion: PortionValue) => void }) {
+  const t = useTheme();
+  const styles = useMemo(() => makeStyles(t), [t]);
   const [trackWidth, setTrackWidth] = useState<number>(0);
   const points = portionSnapPoints;
   const minVal = points[0];
@@ -1244,6 +1312,8 @@ function PortionSlider({ value, onChange }: { value: PortionValue; onChange: (po
 }
 
 function IngredientPreviewCard({ subLabel, portionLabel, portionSecondary, toppingSummary, macro }: { subLabel: string; portionLabel: string; portionSecondary?: string; toppingSummary: string | null; macro: Macro }) {
+  const t = useTheme();
+  const styles = useMemo(() => makeStyles(t), [t]);
   return (
     <View style={styles.previewCard}>
       <Text style={styles.previewTitle}>プレビュー</Text>
@@ -1272,6 +1342,8 @@ function IngredientPreviewCard({ subLabel, portionLabel, portionSecondary, toppi
 }
 
 function DishEditorContent({ draft, onChange }: { draft: DishDraft; onChange: (draft: DishDraft) => void }) {
+  const t = useTheme();
+  const styles = useMemo(() => makeStyles(t), [t]);
   const categories = getQuickCategories('dish');
   const subtypes = getSubtypes('dish', draft.categoryKey);
   const preview = buildDishMacro(draft);
@@ -1329,6 +1401,8 @@ function DishEditorContent({ draft, onChange }: { draft: DishDraft; onChange: (d
 }
 
 function Chip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
+  const t = useTheme();
+  const styles = useMemo(() => makeStyles(t), [t]);
   return (
     <Pressable onPress={onPress} style={[styles.chip, active ? styles.chipActive : null]}>
       <Text style={[styles.chipText, active ? styles.chipTextActive : null]}>{label}</Text>
@@ -1337,6 +1411,8 @@ function Chip({ label, active, onPress }: { label: string; active: boolean; onPr
 }
 
 function PreviewCard({ macro }: { macro: Macro }) {
+  const t = useTheme();
+  const styles = useMemo(() => makeStyles(t), [t]);
   return (
     <View style={styles.previewCard}>
       <Text style={styles.previewTitle}>プレビュー</Text>
@@ -1354,17 +1430,21 @@ void PreviewCard;
 void getSubtypes;
 
 export function HomeScreen() {
-  const router = useRouter();
+  const t = useTheme();
+  const styles = useMemo(() => makeStyles(t), [t]);
   const [viewedDate, setViewedDate] = useState<Date>(() => new Date());
   const dayLogSheetRef = useRef<DayLogBottomSheetRef>(null);
+  const homeDatePagerRef = useRef<HomeDatePagerRef>(null);
   const openDayLogSheet = useCallback(() => {
     dayLogSheetRef.current?.snapToHalf();
   }, []);
   const { logs, exerciseLogs, profile, dailyActivities, carryoverDeductionKcal } = useAppState();
   const today = useMemo(() => new Date(), []);
+  // router.push によるページ遷移風の切り替えではなく、pager のスワイプと同じ
+  // 横スライドで移動させる (WeeklyRingsRow の曜日タップ)。
   const handleDayPress = useCallback((dateKey: string) => {
-    router.push(`/?date=${dateKey}`);
-  }, [router]);
+    homeDatePagerRef.current?.jumpToDate(new Date(dateKey));
+  }, []);
 
   // 画面フォーカス時 (タブ切替・他画面からの復帰・初回マウント含む) に、
   // スロットルを満たしていれば軽量に再同期する。バックグラウンド往復なしで
@@ -1378,7 +1458,7 @@ export function HomeScreen() {
 
   return (
     <View style={styles.page} testID="home-screen">
-      <LinearGradient colors={[palette.background, palette.surface]} style={StyleSheet.absoluteFillObject} />
+      <LinearGradient colors={[t.colors.surface.default, t.colors.surface.raised]} style={StyleSheet.absoluteFillObject} />
       <SafeAreaView edges={['top']} style={styles.safeArea}>
         <View style={styles.headerWrap}>
           <Header viewedDate={viewedDate} />
@@ -1394,7 +1474,7 @@ export function HomeScreen() {
             onDayPress={handleDayPress}
           />
         </View>
-        <HomeDatePager onViewedDateChange={setViewedDate} onFoodPress={openDayLogSheet} />
+        <HomeDatePager ref={homeDatePagerRef} onViewedDateChange={setViewedDate} onFoodPress={openDayLogSheet} />
       </SafeAreaView>
       <DayLogBottomSheet ref={dayLogSheetRef} viewedDate={viewedDate} />
       <FloatingFeedback />
@@ -1404,8 +1484,8 @@ export function HomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: palette.background },
+const makeStyles = (t: Theme) => StyleSheet.create({
+  page: { flex: 1, backgroundColor: t.colors.surface.default },
   safeArea: { flex: 1 },
   headerWrap: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 4 },
   // 左右非対称 (avatar 42px vs icon×2 + gap 92px) でも center を視覚的に中央寄せするため、
@@ -1421,8 +1501,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  headerDate: { fontSize: fs.callout, fontWeight: '700', color: palette.sageDeep },
-  avatarButton: { width: 42, height: 42, borderRadius: radius.full, backgroundColor: palette.surface, alignItems: 'center', justifyContent: 'center', position: 'relative' },
+  headerDate: { fontSize: fs.callout, fontWeight: '700', color: t.colors.action.primary.default },
   // トライアル残り≤2日で表示するバッジ (右上の小さい丸)
   avatarBadge: {
     position: 'absolute',
@@ -1431,11 +1510,10 @@ const styles = StyleSheet.create({
     width: 11,
     height: 11,
     borderRadius: radius.full,
-    backgroundColor: palette.danger,
+    backgroundColor: t.colors.status.danger.default,
     borderWidth: 2,
-    borderColor: palette.background,
+    borderColor: t.colors.surface.default,
   },
-  iconButton: { width: 42, height: 42, borderRadius: radius.full, backgroundColor: palette.surface, alignItems: 'center', justifyContent: 'center' },
   statusCard: { paddingVertical: 4, gap: 16 },
   weeklyRingsRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 16 },
   weeklyRingItem: { alignItems: 'center', paddingHorizontal: 4, paddingVertical: 4, borderRadius: radius.md },
@@ -1444,35 +1522,14 @@ const styles = StyleSheet.create({
   ringRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   sideColumn: { flex: 1, alignItems: 'center', gap: 2, paddingVertical: 8, borderRadius: radius.md },
   sideColumnPressed: { opacity: 0.6 },
-  sideLabel: { fontSize: fs.xs, fontWeight: '600', color: palette.textMuted, letterSpacing: 0.4 },
+  sideLabel: { fontSize: fs.xs, fontWeight: '600', color: t.colors.content.secondary, letterSpacing: 0.4 },
   sideLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 2, justifyContent: 'center' },
   /** chevron と同幅の透明スペーサーで Label を視覚的に中央寄せ */
   sideLabelChevronSpacer: { width: 12 + 2 /* chevron size + gap */ },
-  sideValue: { fontSize: fs.lg, fontWeight: '700', color: palette.text, letterSpacing: -0.3 },
-  sideUnit: { fontSize: fs.xs, fontWeight: '500', color: palette.textMuted },
-  balanceOverlay: {
-    flex: 1,
-    backgroundColor: palette.scrimHeavy,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-  },
-  balanceCard: {
-    width: '100%',
-    maxWidth: 320,
-    backgroundColor: palette.surface,
-    borderRadius: radius['2xl'],
-    paddingHorizontal: 24,
-    paddingTop: 12,
-    paddingBottom: 24,
-  },
+  sideValue: { fontSize: fs.lg, fontWeight: '700', color: t.colors.content.primary, letterSpacing: -0.3 },
+  sideUnit: { fontSize: fs.xs, fontWeight: '500', color: t.colors.content.secondary },
   balanceCloseButton: {
     alignSelf: 'flex-end',
-    width: 32,
-    height: 32,
-    borderRadius: radius.full,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   /** HERO: 残り N kcal (主役、最大の数字) */
   balanceHero: {
@@ -1483,14 +1540,14 @@ const styles = StyleSheet.create({
   balanceHeroCaption: {
     fontSize: fs.caption1,
     fontWeight: '600',
-    color: palette.textMuted,
+    color: t.colors.content.secondary,
     letterSpacing: 1,
     textTransform: 'uppercase',
   },
   balanceHeroValue: {
     fontSize: 52,
     fontWeight: '700',
-    color: palette.text,
+    color: t.colors.content.primary,
     letterSpacing: -1.5,
     lineHeight: 56,
     marginTop: 4,
@@ -1498,7 +1555,7 @@ const styles = StyleSheet.create({
   balanceHeroUnit: {
     fontSize: fs.caption1,
     fontWeight: '500',
-    color: palette.textMuted,
+    color: t.colors.content.secondary,
     marginTop: -2,
     letterSpacing: 0.6,
   },
@@ -1511,11 +1568,11 @@ const styles = StyleSheet.create({
   balanceProgressFill: { height: '100%', borderRadius: radius.full },
   /** 計算式ブロック (常に表示) */
   balanceMath: {
-    marginTop: 22,
+    marginTop: 24,
     paddingTop: 16,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: palette.border,
-    gap: 10,
+    borderTopColor: t.colors.border.default,
+    gap: 12,
   },
   balanceMathRow: {
     flexDirection: 'row',
@@ -1524,29 +1581,29 @@ const styles = StyleSheet.create({
   },
   balanceMathRowStrong: { paddingTop: 2 },
   /** Tier 3: 通常ラベル (muted, regular) */
-  balanceMathLabel: { fontSize: fs.sm, color: palette.textMuted, fontWeight: '500' },
+  balanceMathLabel: { fontSize: fs.sm, color: t.colors.content.secondary, fontWeight: '500' },
   /** Tier 2 emphasis: 中間結果ラベル (text色, medium) */
-  balanceMathLabelMid: { color: palette.text, fontWeight: '600', fontSize: fs.sm },
+  balanceMathLabelMid: { color: t.colors.content.primary, fontWeight: '600', fontSize: fs.sm },
   /** Tier 1 emphasis: 最終結果ラベル (text色, bold) */
-  balanceMathLabelStrong: { color: palette.text, fontWeight: '700', fontSize: fs.md },
+  balanceMathLabelStrong: { color: t.colors.content.primary, fontWeight: '700', fontSize: fs.md },
   /** Tier 2: 通常値 (text色, medium) */
   balanceMathValue: { fontSize: fs.md, fontWeight: '500', letterSpacing: -0.2 },
   /** Tier 2 emphasis: 中間結果値 (semibold, slightly larger) */
   balanceMathValueMid: { fontSize: fs.md, fontWeight: '700' },
   /** Tier 1 emphasis: 最終結果値 (bold, largest) */
   balanceMathValueStrong: { fontSize: fs.xl, fontWeight: '700', letterSpacing: -0.5 },
-  balanceMathUnit: { fontSize: fs.xs, color: palette.textMuted, fontWeight: '500' },
+  balanceMathUnit: { fontSize: fs.xs, color: t.colors.content.secondary, fontWeight: '500' },
   /** Tier 3: ベース目標の補足 (運動習慣ラベル) */
   balanceMathSubtitle: {
     fontSize: fs.xs,
-    color: palette.textMuted,
+    color: t.colors.content.secondary,
     marginTop: -4,
     marginBottom: 2,
     opacity: 0.85,
   },
   balanceMathDivider: {
     height: StyleSheet.hairlineWidth,
-    backgroundColor: palette.border,
+    backgroundColor: t.colors.border.default,
     marginVertical: 2,
   },
   carryoverToggle: {
@@ -1556,69 +1613,69 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 10,
     paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingVertical: 12,
     marginTop: 12,
   },
-  carryoverToggleLeft: { flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 },
+  carryoverToggleLeft: { flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 },
   carryoverToggleLabel: { fontSize: fs.sm, fontWeight: '600', flex: 1 },
   pfcMiniRow: { flexDirection: 'row', gap: 12, marginHorizontal: 12 },
   miniBarItem: { flex: 1, gap: 4 },
-  miniBarLabel: { fontSize: fs.sm, color: palette.textMuted, fontWeight: '600' },
+  miniBarLabel: { fontSize: fs.sm, color: t.colors.content.secondary, fontWeight: '600' },
   miniBarLetter: { fontWeight: '700' },
   miniBarTrack: { height: 6, borderRadius: radius.full, overflow: 'hidden' },
   miniBarFill: { height: '100%', borderRadius: radius.full },
-  miniBarValue: { fontSize: fs.sm, color: palette.text, fontWeight: '600' },
-  miniBarValueTarget: { color: palette.textMuted, fontWeight: '600' },
+  miniBarValue: { fontSize: fs.sm, color: t.colors.content.primary, fontWeight: '600' },
+  miniBarValueTarget: { color: t.colors.content.secondary, fontWeight: '600' },
   macroPill: { flexDirection: 'row', gap: 4, paddingHorizontal: 11, paddingVertical: 7, borderRadius: radius.full },
-  macroPillLabel: { fontSize: fs.caption1, color: palette.textMuted, fontWeight: '700' },
-  macroPillValue: { fontSize: fs.caption1, color: palette.text, fontWeight: '700' },
-  feedbackBubble: { position: 'absolute', top: 340, alignSelf: 'center', backgroundColor: palette.sageDeep, paddingHorizontal: 16, paddingVertical: 12, borderRadius: radius.xl, alignItems: 'center', ...elevation.lg, shadowColor: palette.sageDeep },
-  feedbackText: { color: palette.white, fontSize: fs.callout, fontWeight: '700' },
-  feedbackMacro: { color: 'rgba(255,255,255,0.82)', fontSize: fs.caption1, marginTop: 2 }, // 暗背景上の半透明白文字。専用トークンなし (許容例外)
+  macroPillLabel: { fontSize: fs.caption1, color: t.colors.content.secondary, fontWeight: '700' },
+  macroPillValue: { fontSize: fs.caption1, color: t.colors.content.primary, fontWeight: '700' },
+  feedbackBubble: { position: 'absolute', top: 340, alignSelf: 'center', backgroundColor: t.colors.action.primary.default, paddingHorizontal: 16, paddingVertical: 12, borderRadius: radius.xl, alignItems: 'center', ...elevation.lg, shadowColor: t.colors.action.primary.default },
+  feedbackText: { color: t.colors.content.onAction, fontSize: fs.callout, fontWeight: '700' },
+  feedbackMacro: { fontSize: fs.caption1, marginTop: 2 },
   // Live preview state (sheet open, before save). Same position as feedbackBubble
   // but cream/sage-pale to read as "tentative". Pointer-events disabled so it
   // doesn't intercept taps on the open sheet.
-  undoToast: { position: 'absolute', left: 18, right: 18, bottom: 24, borderRadius: radius.xl, paddingHorizontal: 18, paddingVertical: 15, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  undoTitle: { color: palette.white, fontSize: fs.md, fontWeight: '700' },
-  undoText: { color: 'rgba(255,255,255,0.72)', fontSize: fs.caption1, marginTop: 4 }, // 暗背景上の半透明白文字。専用トークンなし (許容例外)
-  undoAction: { color: colors.amber[200], fontSize: fs.md, fontWeight: '700' },
+  undoToast: { position: 'absolute', left: 18, right: 18, bottom: 24, borderRadius: radius.xl, paddingHorizontal: 20, paddingVertical: 15, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  undoTitle: { color: t.colors.content.onAction, fontSize: fs.md, fontWeight: '700' },
+  undoText: { fontSize: fs.caption1, marginTop: 4 },
+  undoAction: { fontSize: fs.md, fontWeight: '700' },
   goalMacroRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
   editorSection: { gap: 12 },
-  editorSectionTitle: { fontSize: fs.md, fontWeight: '700', color: palette.text },
+  editorSectionTitle: { fontSize: fs.md, fontWeight: '700', color: t.colors.content.primary },
   optionWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: radius.full, backgroundColor: palette.card },
-  chipActive: { backgroundColor: palette.sageDeep },
-  chipText: { fontSize: fs.sm, color: palette.text, fontWeight: '600' },
-  chipTextActive: { color: palette.white },
-  previewCard: { backgroundColor: palette.card, borderRadius: radius['2xl'], padding: 16, gap: 10 },
-  previewTitle: { fontSize: fs.sm, color: palette.textMuted },
-  previewSummaryText: { fontSize: fs.md, color: palette.text, fontWeight: '600', lineHeight: 20 },
-  previewSummaryDivider: { color: palette.textMuted, fontWeight: '400' },
-  previewSummarySecondary: { fontSize: fs.caption1, color: palette.textMuted, marginTop: -2 },
-  previewCalories: { fontSize: fs['3xl'], fontWeight: '700', color: palette.sageDeep },
-  categoryRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: palette.card, borderRadius: radius.lg, paddingHorizontal: 14, paddingVertical: 12 },
-  categoryRowLabel: { fontSize: fs.sm, color: palette.textMuted, fontWeight: '600' },
-  categoryRowValue: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  categoryRowValueText: { fontSize: fs.md, color: palette.text, fontWeight: '700' },
-  categoryDropdown: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, backgroundColor: palette.surface, borderRadius: 18, padding: 10, borderWidth: 1, borderColor: palette.border },
-  categoryOption: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 14, backgroundColor: palette.card },
-  categoryOptionActive: { backgroundColor: palette.sageDeep },
-  categoryOptionText: { fontSize: fs.sm, color: palette.text, fontWeight: '600' },
-  categoryOptionTextActive: { color: palette.white },
-  subSection: { gap: 10, marginTop: 4 },
-  portionSection: { backgroundColor: palette.surface, borderRadius: 22, padding: 16, gap: 10, borderWidth: 1, borderColor: palette.border },
+  chip: { paddingHorizontal: 16, paddingVertical: 12, borderRadius: radius.full, backgroundColor: t.colors.surface.raised },
+  chipActive: { backgroundColor: t.colors.action.primary.default },
+  chipText: { fontSize: fs.sm, color: t.colors.content.primary, fontWeight: '600' },
+  chipTextActive: { color: t.colors.content.onAction },
+  previewCard: { backgroundColor: t.colors.surface.raised, borderRadius: radius['2xl'], padding: 16, gap: 12 },
+  previewTitle: { fontSize: fs.sm, color: t.colors.content.secondary },
+  previewSummaryText: { fontSize: fs.md, color: t.colors.content.primary, fontWeight: '600', lineHeight: 20 },
+  previewSummaryDivider: { color: t.colors.content.secondary, fontWeight: '400' },
+  previewSummarySecondary: { fontSize: fs.caption1, color: t.colors.content.secondary, marginTop: -2 },
+  previewCalories: { fontSize: fs['3xl'], fontWeight: '700', color: t.colors.action.primary.default },
+  categoryRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: t.colors.surface.raised, borderRadius: radius.lg, paddingHorizontal: 16, paddingVertical: 12 },
+  categoryRowLabel: { fontSize: fs.sm, color: t.colors.content.secondary, fontWeight: '600' },
+  categoryRowValue: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  categoryRowValueText: { fontSize: fs.md, color: t.colors.content.primary, fontWeight: '700' },
+  categoryDropdown: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, backgroundColor: t.colors.surface.raised, borderRadius: 18, padding: 12, borderWidth: 1, borderColor: t.colors.border.default },
+  categoryOption: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 14, backgroundColor: t.colors.surface.raised },
+  categoryOptionActive: { backgroundColor: t.colors.action.primary.default },
+  categoryOptionText: { fontSize: fs.sm, color: t.colors.content.primary, fontWeight: '600' },
+  categoryOptionTextActive: { color: t.colors.content.onAction },
+  subSection: { gap: 12, marginTop: 4 },
+  portionSection: { backgroundColor: t.colors.surface.raised, borderRadius: 22, padding: 16, gap: 12, borderWidth: 1, borderColor: t.colors.border.default },
   portionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  portionTitle: { fontSize: fs.md, fontWeight: '700', color: palette.text },
-  portionNowLine: { fontSize: fs.md, color: palette.text, fontWeight: '700', marginTop: 2 },
-  portionNowLineMuted: { color: palette.textMuted, fontWeight: '500', fontSize: fs.caption1 },
-  sliderWrap: { paddingTop: 10, paddingBottom: 4 },
+  portionTitle: { fontSize: fs.md, fontWeight: '700', color: t.colors.content.primary },
+  portionNowLine: { fontSize: fs.md, color: t.colors.content.primary, fontWeight: '700', marginTop: 2 },
+  portionNowLineMuted: { color: t.colors.content.secondary, fontWeight: '500', fontSize: fs.caption1 },
+  sliderWrap: { paddingTop: 12, paddingBottom: 4 },
   sliderTrack: { height: 36, justifyContent: 'center', borderRadius: radius.full },
-  sliderFill: { position: 'absolute', left: 0, height: 6, backgroundColor: palette.sageStrong, borderRadius: radius.full, top: 15 },
-  sliderTick: { position: 'absolute', width: 6, height: 6, borderRadius: radius.full, backgroundColor: palette.cardStrong, top: 15 },
-  sliderTickActive: { backgroundColor: palette.sageDeep },
-  sliderThumb: { position: 'absolute', width: 28, height: 28, borderRadius: radius.full, backgroundColor: palette.white, borderWidth: 2, borderColor: palette.sageDeep, top: 4, ...elevation.sm },
+  sliderFill: { position: 'absolute', left: 0, height: 6, backgroundColor: t.colors.action.text.default, borderRadius: radius.full, top: 15 },
+  sliderTick: { position: 'absolute', width: 6, height: 6, borderRadius: radius.full, backgroundColor: t.colors.surface.sunken, top: 15 },
+  sliderTickActive: { backgroundColor: t.colors.action.primary.default },
+  sliderThumb: { position: 'absolute', width: 28, height: 28, borderRadius: radius.full, backgroundColor: t.colors.content.onAction, borderWidth: 2, borderColor: t.colors.action.primary.default, top: 4, ...elevation.sm },
   sliderLabelsRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 2 },
   sliderLabelTap: { alignItems: 'center', flex: 1, paddingVertical: 4 },
-  sliderLabelText: { fontSize: fs.caption1, color: palette.textMuted, fontWeight: '600' },
-  sliderLabelTextActive: { color: palette.sageDeep, fontWeight: '700' },
+  sliderLabelText: { fontSize: fs.caption1, color: t.colors.content.secondary, fontWeight: '600' },
+  sliderLabelTextActive: { color: t.colors.action.primary.default, fontWeight: '700' },
 });

@@ -82,7 +82,7 @@ export default function AboutRoute() {
 
 const styles = StyleSheet.create({
   page: { flex: 1 },
-  scroll: { padding: 18, gap: 22, paddingBottom: 40 },
-  brandHeader: { alignItems: 'center', gap: 6, paddingVertical: 12 },
-  section: { gap: 6 },
+  scroll: { padding: 20, gap: 24, paddingBottom: 40 },
+  brandHeader: { alignItems: 'center', gap: 8, paddingVertical: 12 },
+  section: { gap: 8 },
 });

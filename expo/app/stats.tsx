@@ -8,9 +8,9 @@ import { MonthlyStatsView } from '@/components/MonthlyStatsView';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { Tabs } from '@/components/Tabs';
 import { WeeklyStatsView } from '@/components/WeeklyStatsView';
-import { palette } from '@/constants/theme';
 import { useTheme } from '@/design-system';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
+import { duration, easing } from '@/design-system/tokens/primitives/motion';
 
 type TopTab = 'meals' | 'body';
 type MealsTab = 'week' | 'month';
@@ -32,10 +32,10 @@ const BODY_SEGMENT_OPTIONS = [
   { key: 'year' as const, label: '年' },
 ];
 
-// M3 fade through: 100ms out → swap → 200ms in
+// M3 fade through: 100ms out → swap → 200ms(duration.short) in
 const FADE_OUT_DURATION = 100;
-const FADE_IN_DURATION = 200;
-const M3_EMPHASIZED = Easing.bezier(0.2, 0, 0.01, 1.0);
+const FADE_IN_DURATION = duration.short;
+const M3_EMPHASIZED = Easing.bezier(...easing.standard);
 
 export default function StatsScreen() {
   const theme = useTheme();
@@ -62,7 +62,7 @@ export default function StatsScreen() {
   }, [contentOpacity]);
 
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, { backgroundColor: theme.colors.surface.default }]}>
       <Stack.Screen
         options={{
           title: '実績',
@@ -125,7 +125,7 @@ export default function StatsScreen() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: palette.background },
+  root: { flex: 1 },
   safe: { flex: 1 },
   tabs: {
     marginTop: 4,

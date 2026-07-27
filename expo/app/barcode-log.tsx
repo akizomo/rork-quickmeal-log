@@ -25,7 +25,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Body, Caption, useTheme } from '@/design-system';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { colors as primitiveColors } from '@/design-system/tokens/primitives/colors';
-import { palette } from '@/constants/theme';
 import { useAppState } from '@/providers/app-state-provider';
 import { fetchByBarcode, type FoodFactsResult } from '@/utils/open-food-facts';
 import { formatDateKey, generateId, getMealSlot } from '@/utils/nutrition';
@@ -169,7 +168,7 @@ export default function BarcodLogRoute() {
             バーコードをスキャンするにはカメラへのアクセスが必要です。
           </Body>
           <Pressable style={[styles.btn, { backgroundColor: colors.action.primary.default }]} onPress={requestPermission}>
-            <Body weight="bold" style={{ color: palette.white }}>カメラを許可する</Body>
+            <Body weight="bold" style={{ color: colors.content.onAction }}>カメラを許可する</Body>
           </Pressable>
         </SafeAreaView>
       </>
@@ -197,13 +196,13 @@ export default function BarcodLogRoute() {
           />
           {loading && (
             <View style={styles.loadingOverlay}>
-              <ActivityIndicator size="large" color={palette.white} />
-              <Body style={{ color: palette.white, marginTop: 8 }}>検索中...</Body>
+              <ActivityIndicator size="large" color={primitiveColors.white} />
+              <Body style={{ color: primitiveColors.white, marginTop: 8 }}>検索中...</Body>
             </View>
           )}
           <View style={styles.scanFrame} pointerEvents="none">
             <View style={[styles.scanBox, { borderColor: colors.action.primary.default }]} />
-            <Caption style={{ color: palette.white, marginTop: 12, textAlign: 'center' }}>
+            <Caption style={{ color: primitiveColors.white, marginTop: 12, textAlign: 'center' }}>
               バーコードを枠内に合わせてください
             </Caption>
           </View>
@@ -252,7 +251,7 @@ export default function BarcodLogRoute() {
                 style={[styles.btn, { backgroundColor: colors.action.primary.default, marginTop: 24 }]}
                 onPress={handleAdd}
               >
-                <Body weight="bold" style={{ color: palette.white }}>ログに追加</Body>
+                <Body weight="bold" style={{ color: colors.content.onAction }}>ログに追加</Body>
               </Pressable>
 
               {screen === 'confirm' && (
@@ -307,8 +306,8 @@ const styles = StyleSheet.create({
   form: { padding: 20, gap: 4, paddingBottom: 40 },
   fieldRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
   input: { flex: 1, borderWidth: 1, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, fontSize: fs.md },
-  btn: { borderRadius: 10, paddingVertical: 14, alignItems: 'center' },
-  btnOutline: { borderRadius: 10, paddingVertical: 14, alignItems: 'center', borderWidth: 1 },
+  btn: { borderRadius: 10, paddingVertical: 16, alignItems: 'center' },
+  btnOutline: { borderRadius: 10, paddingVertical: 16, alignItems: 'center', borderWidth: 1 },
   loadingOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' }, // カメラ映像上の暗幕。palette.scrimはivory系で真っ黒背景と合わないため維持
   scanFrame: { ...StyleSheet.absoluteFillObject, justifyContent: 'center', alignItems: 'center' },
   scanBox: { width: 260, height: 160, borderWidth: 2, borderRadius: 12 },

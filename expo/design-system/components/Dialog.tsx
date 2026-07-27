@@ -18,7 +18,6 @@
  */
 
 import { BlurView } from 'expo-blur';
-import { Icon } from './Icon';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Animated,
@@ -26,7 +25,6 @@ import {
   KeyboardAvoidingView,
   Modal,
   Platform,
-  Pressable,
   StyleSheet,
   TouchableWithoutFeedback,
   View,
@@ -34,7 +32,9 @@ import {
 
 import { useTheme } from '../theme';
 import { Button } from './Button';
+import { IconButton } from './IconButton';
 import { Heading } from './Typography';
+import { spring } from '../tokens/primitives/motion';
 
 // ---- Constants ------------------------------------------------------------
 const DIALOG_RADIUS = 20;
@@ -42,7 +42,9 @@ const SCRIM_TINT_OPACITY = 0.18;
 const BLUR_INTENSITY = 24;
 const WEB_BLUR_PX = 24;
 const WEB_BLUR_SAT = 140;
-const OPEN_SPRING = { tension: 65, friction: 11 };
+const OPEN_SPRING = spring.enter;
+// spring.exit (friction20) より少し硬く/速く止める意図的な調整値。
+// 汎用の spring.exit とは別チューニングなので個別に保持する。
 const CLOSE_SPRING = { tension: 100, friction: 14, restSpeedThreshold: 1, restDisplacementThreshold: 1 };
 
 function WebBlurLayer() {
@@ -206,20 +208,27 @@ export function Dialog({
           {cached.title ? (
             <View style={[styles.header, { paddingHorizontal: t.spacing['5'] }]}>
               <Heading size="lg">{cached.title}</Heading>
-              <Pressable
+              <IconButton
+                icon="close"
+                size="lg"
                 onPress={requestClose}
-                hitSlop={12}
                 accessibilityLabel="閉じる"
-                accessibilityRole="button"
                 testID={testID ? `${testID}-close` : undefined}
-              >
-                <Icon name="close" size={22} color={t.colors.content.secondary} />
-              </Pressable>
+              />
             </View>
           ) : null}
 
           {/* Content */}
-          <View style={[styles.content, { paddingHorizontal: t.spacing['5'] }]}>
+          {/* header/footer が無い側は、カード端に直接触れないよう content 自身が
+              広めの余白 (spacing.5) を持つ。ある側は header/footer 自体が余白を
+              担うため content 側は控えめ (spacing.2) にする。 */}
+          <View
+            style={{
+              paddingHorizontal: t.spacing['5'],
+              paddingTop: cached.title ? t.spacing['2'] : t.spacing['5'],
+              paddingBottom: hasFooter ? t.spacing['2'] : t.spacing['5'],
+            }}
+          >
             {cached.children}
           </View>
 
@@ -292,9 +301,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingTop: 20,
     paddingBottom: 8,
-  },
-  content: {
-    paddingVertical: 8,
   },
   footer: {
     flexDirection: 'row',

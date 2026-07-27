@@ -1,5 +1,5 @@
 import { useLocalSearchParams } from 'expo-router';
-import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import {
   FlatList,
   ListRenderItemInfo,
@@ -10,7 +10,7 @@ import {
   View,
 } from 'react-native';
 
-import { palette } from '@/constants/theme';
+import { useTheme } from '@/design-system';
 import { MAX_PAST_LOGGING_DAYS, useAppState } from '@/providers/app-state-provider';
 import { useHealthSyncContext } from '@/providers/health-sync-provider';
 import {
@@ -50,6 +50,15 @@ interface HomeDatePagerProps {
   onFoodPress?: () => void;
 }
 
+export interface HomeDatePagerRef {
+  /**
+   * 指定日へスワイプと同じ横スライドで移動する (WeeklyRingsRow の曜日タップ用)。
+   * router.push によるページ遷移風の切り替えではなく、pager 自身のアニメーション
+   * スクロールを使うことでスワイプ操作と見た目を統一する。
+   */
+  jumpToDate: (date: Date) => void;
+}
+
 interface DayPageProps {
   date: Date;
   width: number;
@@ -69,6 +78,7 @@ const DayPage = memo(function DayPage({
   refreshing,
   onRefresh,
 }: DayPageProps) {
+  const t = useTheme();
   // height === 0 (初回 layout 前) は flex:1 にフォールバック。
   if (height <= 0) {
     return (
@@ -86,8 +96,8 @@ const DayPage = memo(function DayPage({
       <RefreshControl
         refreshing={!!refreshing}
         onRefresh={onRefresh}
-        tintColor={palette.sageDeep}
-        colors={[palette.sageDeep]}
+        tintColor={t.colors.action.primary.default}
+        colors={[t.colors.action.primary.default]}
         progressViewOffset={8}
       />
     ) : undefined;
@@ -97,7 +107,7 @@ const DayPage = memo(function DayPage({
       contentContainerStyle={{
         flexGrow: 1,
         paddingHorizontal: 16,
-        paddingTop: 6,
+        paddingTop: 8,
         paddingBottom: bottomReserve,
         justifyContent: 'center',
       }}
@@ -109,7 +119,8 @@ const DayPage = memo(function DayPage({
   );
 });
 
-export const HomeDatePager = memo(function HomeDatePager({ onViewedDateChange, onFoodPress }: HomeDatePagerProps) {
+export const HomeDatePager = memo(
+  forwardRef<HomeDatePagerRef, HomeDatePagerProps>(function HomeDatePager({ onViewedDateChange, onFoodPress }, ref) {
   // Defensive default — useAppState() can momentarily return undefined during
   // ErrorBoundary recovery / fast HMR re-mounts before the provider context is
   // wired up. Read each field through optional chaining + per-field fallbacks
@@ -177,6 +188,17 @@ export const HomeDatePager = memo(function HomeDatePager({ onViewedDateChange, o
 
   const listRef = useRef<FlatList<Date>>(null);
   const [currentIndex, setCurrentIndex] = useState<number>(initialIndex);
+
+  useImperativeHandle(ref, () => ({
+    jumpToDate: (date: Date) => {
+      const idx = diffInDays(startOfDay(date), startDate);
+      if (idx < 0 || idx >= totalDays || idx === currentIndex) return;
+      // FlatList.scrollToIndex は RN-Web の horizontal + pagingEnabled 構成では
+      // 目的のオフセットに正しく着地しないことがあるため、getItemLayout と同じ
+      // 計算式 (width * index) を使う scrollToOffset で直接指定する。
+      listRef.current?.scrollToOffset({ offset: width * idx, animated: true });
+    },
+  }), [startDate, totalDays, currentIndex, width]);
 
   // FlatList の親コンテナ高さ実測値。FlatList horizontal の item は RN-Web 上で
   // 親 height を継承しないため、measured height を DayPage に明示的に渡す。
@@ -287,14 +309,14 @@ export const HomeDatePager = memo(function HomeDatePager({ onViewedDateChange, o
       </View>
     </View>
   );
-});
+}));
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
   page: {
     flex: 1,
     paddingHorizontal: 16,
-    paddingTop: 6,
+    paddingTop: 8,
     gap: 12,
   },
   quickLogPin: {

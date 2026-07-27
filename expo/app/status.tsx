@@ -3,9 +3,6 @@ import React, { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -13,13 +10,12 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { SettingsDivider, SettingsLinkRow, SettingsListCard, SettingsSectionLabel } from '@/components/SettingsList';
 import { TRIAL_DURATION_DAYS } from '@/constants/onboarding';
-import { Body, Caption, Card, Heading, Icon, useTheme } from '@/design-system';
+import { Body, BottomSheet, Caption, Card, Heading, Icon, useTheme } from '@/design-system';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
-import { palette } from '@/constants/theme';
 import { useHealthSyncContext } from '@/providers/health-sync-provider';
 import type { HealthSyncStatus } from '@/utils/health-sync';
 import { useAppState } from '@/providers/app-state-provider';
@@ -205,7 +201,7 @@ export default function StatusRoute() {
                 </View>
                 <View style={styles.kcalRow}>
                   <Heading size="3xl">{profile.targetCalories || '--'}</Heading>
-                  <Caption tone="tertiary" style={{ marginLeft: 4, marginBottom: 6 }}>kcal / 日</Caption>
+                  <Caption tone="tertiary" style={{ marginLeft: 4, marginBottom: 8 }}>kcal / 日</Caption>
                 </View>
                 <View style={styles.pfcRow}>
                   <PfcCell label="P" value={profile.targetProtein} color={theme.colors.nutrition.protein.text} />
@@ -403,62 +399,37 @@ function BodyFatSheet({
   onSubmit: () => void;
   currentBfPct: number | null;
 }) {
-  const insets = useSafeAreaInsets();
   const theme = useTheme();
   const diff =
     currentBfPct !== null && value !== '' ? Number((Number(value) - currentBfPct).toFixed(1)) : null;
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable
-        style={styles.modalOverlay}
-        onPress={onClose}
-        accessibilityRole="button"
-        accessibilityLabel="シートを閉じる"
-      >
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-          <Pressable
-            style={[
-              styles.weightSheet,
-              {
-                backgroundColor: theme.colors.surface.raised,
-                paddingBottom: 24 + insets.bottom,
-              },
-            ]}
-            onPress={() => undefined}
-          >
-            <View style={[styles.sheetGrabber, { backgroundColor: theme.colors.border.default }]} />
-            <Heading size="xl">体脂肪率を更新</Heading>
-            <View style={[styles.weightInputWrap, { backgroundColor: theme.colors.surface.sunken }]}>
-              <TextInput
-                style={[styles.weightInput, { color: theme.colors.content.primary }]}
-                value={value}
-                onChangeText={onChange}
-                keyboardType="numeric"
-                placeholder="18.5"
-                placeholderTextColor={theme.colors.content.tertiary}
-                autoFocus
-                testID="bf-input"
-              />
-              <Text style={[styles.weightInputSuffix, { color: theme.colors.content.tertiary }]}>%</Text>
-            </View>
-            {diff !== null && Number.isFinite(diff) ? (
-              <Caption tone="secondary">
-                前回との差 {diff > 0 ? '+' : ''}{diff} %
-              </Caption>
-            ) : null}
-            <Pressable
-              style={[styles.weightSubmit, { backgroundColor: theme.colors.action.primary.default }]}
-              onPress={onSubmit}
-              testID="bf-submit"
-              accessibilityRole="button"
-              accessibilityLabel="体脂肪率を保存"
-            >
-              <Text style={[styles.weightSubmitText, { color: theme.colors.content.onAction }]}>保存</Text>
-            </Pressable>
-          </Pressable>
-        </KeyboardAvoidingView>
-      </Pressable>
-    </Modal>
+    <BottomSheet
+      visible={visible}
+      onClose={onClose}
+      title="体脂肪率を更新"
+      scrollable={false}
+      primaryAction={{ label: '保存', onPress: onSubmit }}
+      testID="bf-sheet"
+    >
+      <View style={[styles.weightInputWrap, { backgroundColor: theme.colors.surface.sunken }]}>
+        <TextInput
+          style={[styles.weightInput, { color: theme.colors.content.primary }]}
+          value={value}
+          onChangeText={onChange}
+          keyboardType="numeric"
+          placeholder="18.5"
+          placeholderTextColor={theme.colors.content.tertiary}
+          autoFocus
+          testID="bf-input"
+        />
+        <Text style={[styles.weightInputSuffix, { color: theme.colors.content.tertiary }]}>%</Text>
+      </View>
+      {diff !== null && Number.isFinite(diff) ? (
+        <Caption tone="secondary">
+          前回との差 {diff > 0 ? '+' : ''}{diff} %
+        </Caption>
+      ) : null}
+    </BottomSheet>
   );
 }
 
@@ -475,71 +446,46 @@ function WeightSheet({
   onChange: (v: string) => void;
   onSubmit: () => void;
 }) {
-  const insets = useSafeAreaInsets();
   const theme = useTheme();
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable
-        style={styles.modalOverlay}
-        onPress={onClose}
-        accessibilityRole="button"
-        accessibilityLabel="シートを閉じる"
-      >
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-          <Pressable
-            style={[
-              styles.weightSheet,
-              {
-                backgroundColor: theme.colors.surface.raised,
-                paddingBottom: 24 + insets.bottom,
-              },
-            ]}
-            onPress={() => undefined}
-          >
-            <View style={[styles.sheetGrabber, { backgroundColor: theme.colors.border.default }]} />
-            <Heading size="xl">体重を更新</Heading>
-            <View style={[styles.weightInputWrap, { backgroundColor: theme.colors.surface.sunken }]}>
-              <TextInput
-                style={[styles.weightInput, { color: theme.colors.content.primary }]}
-                value={value}
-                onChangeText={onChange}
-                keyboardType="numeric"
-                placeholder="56.4"
-                placeholderTextColor={theme.colors.content.tertiary}
-                autoFocus
-                testID="weight-input"
-              />
-              <Text style={[styles.weightInputSuffix, { color: theme.colors.content.tertiary }]}>kg</Text>
-            </View>
-            <Pressable
-              style={[styles.weightSubmit, { backgroundColor: theme.colors.action.primary.default }]}
-              onPress={onSubmit}
-              testID="weight-submit"
-              accessibilityRole="button"
-              accessibilityLabel="体重を保存"
-            >
-              <Text style={[styles.weightSubmitText, { color: theme.colors.content.onAction }]}>保存</Text>
-            </Pressable>
-          </Pressable>
-        </KeyboardAvoidingView>
-      </Pressable>
-    </Modal>
+    <BottomSheet
+      visible={visible}
+      onClose={onClose}
+      title="体重を更新"
+      scrollable={false}
+      primaryAction={{ label: '保存', onPress: onSubmit }}
+      testID="weight-sheet"
+    >
+      <View style={[styles.weightInputWrap, { backgroundColor: theme.colors.surface.sunken }]}>
+        <TextInput
+          style={[styles.weightInput, { color: theme.colors.content.primary }]}
+          value={value}
+          onChangeText={onChange}
+          keyboardType="numeric"
+          placeholder="56.4"
+          placeholderTextColor={theme.colors.content.tertiary}
+          autoFocus
+          testID="weight-input"
+        />
+        <Text style={[styles.weightInputSuffix, { color: theme.colors.content.tertiary }]}>kg</Text>
+      </View>
+    </BottomSheet>
   );
 }
 
 const styles = StyleSheet.create({
   page: { flex: 1 },
-  scroll: { padding: 18, gap: 22, paddingBottom: 40 },
+  scroll: { padding: 20, gap: 24, paddingBottom: 40 },
   heroMetricRow: { flexDirection: 'row', alignItems: 'center' },
   heroMetric: { flex: 1, alignItems: 'center', gap: 4 },
   heroDivider: { width: StyleSheet.hairlineWidth, height: 48, marginHorizontal: 8 },
   recordButtonRow: { flexDirection: 'row' },
-  textButton: { flex: 1, alignItems: 'center', paddingVertical: 6 },
+  textButton: { flex: 1, alignItems: 'center', paddingVertical: 8 },
   textButtonLabel: { fontSize: fs.sm, fontWeight: '500' },
   healthSyncRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 12,
     borderRadius: 14,
     paddingHorizontal: 16,
     paddingVertical: 12,
@@ -552,13 +498,8 @@ const styles = StyleSheet.create({
   pfcCell: { flex: 1, borderRadius: 12, paddingVertical: 8, alignItems: 'center' },
   pfcLabel: { fontSize: fs.xs, fontWeight: '700' },
   pfcValue: { fontSize: fs.md, fontWeight: '700', marginTop: 2 },
-  section: { gap: 6 },
-  modalOverlay: { flex: 1, backgroundColor: palette.scrimMedium, justifyContent: 'flex-end' },
-  weightSheet: { borderTopLeftRadius: 26, borderTopRightRadius: 26, paddingHorizontal: 22, paddingTop: 12, gap: 16 },
-  sheetGrabber: { alignSelf: 'center', width: 44, height: 5, borderRadius: 3, marginBottom: 8 },
-  weightInputWrap: { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 14 },
+  section: { gap: 8 },
+  weightInputWrap: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 16 },
   weightInput: { flex: 1, fontSize: fs['3xl'], fontWeight: '700' },
   weightInputSuffix: { fontSize: fs.md, fontWeight: '700' },
-  weightSubmit: { borderRadius: 999, paddingVertical: 14, alignItems: 'center' },
-  weightSubmitText: { fontSize: fs.md, fontWeight: '700' },
 });

@@ -121,7 +121,7 @@ function SubSection({ title, children }: { title: string; children: React.ReactN
 
 const styles = StyleSheet.create({
   page: { flex: 1 },
-  scroll: { padding: 18, paddingBottom: 40, gap: 16 },
+  scroll: { padding: 20, paddingBottom: 40, gap: 16 },
   section: { gap: 8 },
   subSection: { gap: 4 },
 });

@@ -8,9 +8,10 @@ import {
   View,
 } from 'react-native';
 
-import { palette } from '@/constants/theme';
+import { useTheme } from '@/design-system';
 import { fontSize } from '@/design-system/tokens/primitives/typography';
 import { elevation } from '@/design-system/tokens/primitives/elevation';
+import { duration } from '@/design-system/tokens/primitives/motion';
 import { colors } from '@/design-system/tokens/primitives/colors';
 import { radius } from '@/design-system/tokens/primitives/radius';
 import { SegmentedControl } from '@/components/SegmentedControl';
@@ -49,7 +50,6 @@ const QUICK_LOG_COLORS = {
   // セグメントコントロールの選択中ピルと同じ ivory[50] にして、
   // 「選択中タブ→ボタン」で一貫した“浮いた白いカード”の見た目にする。
   buttonBg: colors.ivory[50],
-  labelText: palette.text,
 };
 
 // Identity-first IA bucket labels (PRD-aligned ≤6 char names).
@@ -127,6 +127,7 @@ function QuickLogButton({
   labelFontSize: number;
 }) {
   const { openDraftEditor, openIdentityLogSheet, quickLogIdentity } = useAppState();
+  const t = useTheme();
   const scale = useRef(new Animated.Value(1)).current;
 
   const shortLabel = mode === 'ingredient'
@@ -136,7 +137,7 @@ function QuickLogButton({
   const handlePressIn = () => {
     Animated.timing(scale, {
       toValue: 0.97,
-      duration: 80,
+      duration: duration.fast,
       useNativeDriver: true,
     }).start();
   };
@@ -144,7 +145,7 @@ function QuickLogButton({
   const handlePressOut = () => {
     Animated.timing(scale, {
       toValue: 1,
-      duration: 140,
+      duration: duration.fast,
       useNativeDriver: true,
     }).start();
   };
@@ -212,7 +213,7 @@ function QuickLogButton({
             {item.emoji}
           </Text>
         </View>
-        <Text style={[styles.label, { fontSize: labelFontSize }]} numberOfLines={1}>
+        <Text style={[styles.label, { fontSize: labelFontSize, color: t.colors.content.primary }]} numberOfLines={1}>
           {shortLabel}
         </Text>
       </Pressable>
@@ -343,6 +344,7 @@ function FrequentButton({
   onLog: () => void;
   onLongPress: () => void;
 }) {
+  const t = useTheme();
   return (
     <Pressable
       onPress={onLog}
@@ -356,12 +358,12 @@ function FrequentButton({
         pressed && styles.frequentButtonPressed,
       ]}
     >
-      <Text style={[styles.frequentLabel, { fontSize: labelFontSize }]} numberOfLines={1}>
+      <Text style={[styles.frequentLabel, { fontSize: labelFontSize, color: t.colors.content.primary }]} numberOfLines={1}>
         {item.label}
       </Text>
       {/* 種類・調理・量をまとめた副テキスト。fontSize.xs(11) を下回らせず、
           収まらない場合は省略せず2行まで折り返す。 */}
-      <Text style={styles.frequentAmount} numberOfLines={2}>
+      <Text style={[styles.frequentAmount, { color: t.colors.content.secondary }]} numberOfLines={2}>
         {item.amountLabel}
       </Text>
     </Pressable>
@@ -523,12 +525,10 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   frequentLabel: {
-    color: QUICK_LOG_COLORS.labelText,
     fontWeight: '600',
     textAlign: 'center',
   },
   frequentAmount: {
-    color: palette.textMuted,
     textAlign: 'center',
     fontSize: fontSize.xs,
   },
@@ -563,7 +563,6 @@ const styles = StyleSheet.create({
   label: {
     lineHeight: QUICK_LOG_TOKENS.labelLineHeight,
     fontWeight: '600',
-    color: QUICK_LOG_COLORS.labelText,
     textAlign: 'center',
   },
 });

@@ -36,7 +36,6 @@
  */
 
 import { BlurView } from 'expo-blur';
-import { Icon } from './Icon';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
@@ -44,7 +43,6 @@ import {
   Modal,
   PanResponder,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   TouchableWithoutFeedback,
@@ -56,7 +54,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTheme } from '../theme';
 import { Button } from './Button';
+import { IconButton } from './IconButton';
 import { Heading } from './Typography';
+import { duration, easing, spring } from '../tokens/primitives/motion';
 
 // ---- M3 / HIG numeric constants -------------------------------------------
 const HANDLE_WIDTH = 32;
@@ -68,10 +68,10 @@ const SCRIM_TINT_OPACITY = 0.18;      // 半透明 dark overlay (blur と合わ�
 const BLUR_INTENSITY = 24;            // expo-blur (native)
 const WEB_BLUR_PX = 24;               // CSS backdrop-filter blur (web)
 const WEB_BLUR_SAT = 140;             // 彩度を少し上げてガラス感
-const OPEN_SPRING = { tension: 65, friction: 11 };
-// M3 Emphasized Accelerate: cubic-bezier(0.3, 0, 1, 1) 200ms
-const CLOSE_DURATION = 200;
-const CLOSE_EASING = Easing.bezier(0.3, 0, 1, 1);
+const OPEN_SPRING = spring.enter;
+// M3 Emphasized Accelerate — motion.ts の duration.short / easing.exit と同一。
+const CLOSE_DURATION = duration.short;
+const CLOSE_EASING = Easing.bezier(...easing.exit);
 const TRANSLATE_OFFSCREEN = 800;      // off-screen distance for drag-released close
 const FALLBACK_SHEET_HEIGHT = 600;    // sheetHeight が onLayout 前のときの暫定値
 
@@ -341,15 +341,13 @@ export function BottomSheet({
   const renderHeaderRight = (): React.ReactNode => {
     if (cached.headerRight !== undefined) return cached.headerRight;
     return (
-      <Pressable
+      <IconButton
+        icon="close"
+        size="lg"
         onPress={requestClose}
-        hitSlop={12}
         accessibilityLabel="閉じる"
-        accessibilityRole="button"
         testID={testID ? `${testID}-close` : undefined}
-      >
-        <Icon name="close" size={22} color={t.colors.content.secondary} />
-      </Pressable>
+      />
     );
   };
 
@@ -552,7 +550,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 6,
+    paddingVertical: 8,
   },
   actions: {
     flexDirection: 'row',

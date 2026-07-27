@@ -1,7 +1,7 @@
 import { View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 
-import { palette } from '@/constants/theme';
+import { useTheme } from '@/design-system';
 
 type Props = {
   size?: number;
@@ -15,7 +15,9 @@ type Props = {
  * 3×3 grid, bottom-right cell removed, bottom-middle cell at 20% opacity.
  * The faded 8th dot is the brand thesis (80% on a 9-cell grid is impossible).
  */
-export function Logo({ size = 48, color = palette.text, compact }: Props) {
+export function Logo({ size = 48, color, compact }: Props) {
+  const t = useTheme();
+  const resolvedColor = color ?? t.colors.content.primary;
   const useCompact = compact ?? size < 16;
   const cell = size / 4;
   const dotR = cell * 0.32;
@@ -37,7 +39,7 @@ export function Logo({ size = 48, color = palette.text, compact }: Props) {
             cx={col * cell + cell + cell / 2}
             cy={row * cell + cell + cell / 2}
             r={dotR}
-            fill={color}
+            fill={resolvedColor}
             opacity={opacity}
           />
         ))}

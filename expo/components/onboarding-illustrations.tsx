@@ -15,7 +15,7 @@
 import React from 'react';
 import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
-import { palette } from '@/constants/theme';
+import { useTheme } from '@/design-system';
 import { colors } from '@/design-system/tokens/primitives/colors';
 import { radius } from '@/design-system/tokens/primitives/radius';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
@@ -38,6 +38,7 @@ const GRID_BUTTONS: GridButton[] = [
 ];
 
 export function ButtonGridIllustration() {
+  const t = useTheme();
   const { height: screenHeight } = useWindowDimensions();
   const scale = Math.max(0.7, Math.min(1, (screenHeight - 349) / 420));
   return (
@@ -46,10 +47,14 @@ export function ButtonGridIllustration() {
         {GRID_BUTTONS.map((btn, i) => (
           <View
             key={i}
-            style={[gridStyles.btn, btn.highlight ? gridStyles.btnHighlight : null]}
+            style={[
+              gridStyles.btn,
+              { backgroundColor: t.colors.surface.raised, borderColor: t.colors.border.default },
+              btn.highlight ? [gridStyles.btnHighlight, { borderColor: t.colors.action.primary.default }] : null,
+            ]}
           >
             <Text style={gridStyles.btnEmoji}>{btn.e}</Text>
-            <Text style={gridStyles.btnLabel}>{btn.l}</Text>
+            <Text style={[gridStyles.btnLabel, { color: t.colors.content.secondary }]}>{btn.l}</Text>
           </View>
         ))}
       </View>
@@ -62,6 +67,7 @@ export function ButtonGridIllustration() {
 // ---------------------------------------------------------------------------
 
 export function GestureDemoIllustration() {
+  const t = useTheme();
   const { height: screenHeight } = useWindowDimensions();
   const scale = Math.max(0.7, Math.min(1, (screenHeight - 349) / 420));
   return (
@@ -70,24 +76,24 @@ export function GestureDemoIllustration() {
       <View style={gestureStyles.row}>
         <View style={gestureStyles.action}>
           <Text style={gestureStyles.gesture}>👆</Text>
-          <Text style={gestureStyles.gestureLabel}>タップ</Text>
+          <Text style={[gestureStyles.gestureLabel, { color: t.colors.content.secondary }]}>タップ</Text>
         </View>
-        <Text style={gestureStyles.arrow}>→</Text>
-        <View style={gestureStyles.result}>
-          <Text style={gestureStyles.resultTitle}>ご飯1杯 234 kcal</Text>
-          <Text style={gestureStyles.resultSub}>代表値で即記録</Text>
+        <Text style={[gestureStyles.arrow, { color: t.colors.action.primary.default }]}>→</Text>
+        <View style={[gestureStyles.result, { backgroundColor: t.colors.surface.raised, borderColor: t.colors.border.default }]}>
+          <Text style={[gestureStyles.resultTitle, { color: t.colors.content.primary }]}>ご飯1杯 234 kcal</Text>
+          <Text style={[gestureStyles.resultSub, { color: t.colors.content.secondary }]}>代表値で即記録</Text>
         </View>
       </View>
       {/* 長押しデモ */}
       <View style={gestureStyles.row}>
         <View style={gestureStyles.action}>
           <Text style={gestureStyles.gesture}>✋</Text>
-          <Text style={gestureStyles.gestureLabel}>長押し</Text>
+          <Text style={[gestureStyles.gestureLabel, { color: t.colors.content.secondary }]}>長押し</Text>
         </View>
-        <Text style={gestureStyles.arrow}>→</Text>
-        <View style={gestureStyles.result}>
-          <Text style={gestureStyles.resultTitle}>種類・量を選択</Text>
-          <Text style={gestureStyles.resultSub}>パン / 麺 / 大盛 …</Text>
+        <Text style={[gestureStyles.arrow, { color: t.colors.action.primary.default }]}>→</Text>
+        <View style={[gestureStyles.result, { backgroundColor: t.colors.surface.raised, borderColor: t.colors.border.default }]}>
+          <Text style={[gestureStyles.resultTitle, { color: t.colors.content.primary }]}>種類・量を選択</Text>
+          <Text style={[gestureStyles.resultSub, { color: t.colors.content.secondary }]}>パン / 麺 / 大盛 …</Text>
         </View>
       </View>
     </View>
@@ -116,21 +122,18 @@ const gridStyles = StyleSheet.create({
   btn: {
     width: 70,
     height: 70,
-    backgroundColor: palette.surface,
     borderWidth: 1,
-    borderColor: palette.border,
     borderRadius: radius.lg,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 4,
   },
   btnHighlight: {
-    borderColor: palette.sageDeep,
     backgroundColor: colors.sage[50],
     transform: [{ scale: 1.06 }],
   },
   btnEmoji: { fontSize: 28 },
-  btnLabel: { fontSize: fs.xs, color: palette.textMuted },
+  btnLabel: { fontSize: fs.xs },
 });
 
 const gestureStyles = StyleSheet.create({
@@ -156,18 +159,14 @@ const gestureStyles = StyleSheet.create({
   gestureLabel: {
     fontSize: fs.xs,
     fontWeight: '600',
-    color: palette.textMuted,
     letterSpacing: 0.5,
   },
   arrow: {
     fontSize: 22,
-    color: palette.sageDeep,
   },
   result: {
     flex: 1,
-    backgroundColor: palette.surface,
     borderWidth: 1,
-    borderColor: palette.border,
     borderRadius: radius.md,
     paddingHorizontal: 16,
     paddingVertical: 12,
@@ -176,10 +175,8 @@ const gestureStyles = StyleSheet.create({
   resultTitle: {
     fontSize: fs.sm,
     fontWeight: '600',
-    color: palette.text,
   },
   resultSub: {
     fontSize: fs.xs,
-    color: palette.textMuted,
   },
 });

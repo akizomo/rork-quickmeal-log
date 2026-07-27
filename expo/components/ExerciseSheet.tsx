@@ -1,10 +1,9 @@
 import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { BottomSheet, Chip, Icon, useTheme } from '@/design-system';
+import { BottomSheet, Chip, IconButton, useTheme, type Theme } from '@/design-system';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { radius } from '@/design-system/tokens/primitives/radius';
-import { palette } from '@/constants/theme';
 import { ACTIVITY_LEVEL_OPTIONS } from '@/constants/onboarding';
 import {
   ACTIVITY_BONUS_DAILY_CAP_KCAL,
@@ -32,6 +31,7 @@ interface ExerciseSheetProps {
 
 export const ExerciseSheet = memo(function ExerciseSheet({ visible, onClose, dateKey: dateKeyProp }: ExerciseSheetProps) {
   const t = useTheme();
+  const styles = useMemo(() => makeStyles(t), [t]);
   const {
     logExercise,
     deleteExerciseLog,
@@ -283,6 +283,8 @@ function formatLogTime(timestamp: string): string | null {
 }
 
 function ExerciseHistoryRow({ log, onDelete }: { log: ExerciseLog; onDelete: () => void }) {
+  const theme = useTheme();
+  const styles = useMemo(() => makeStyles(theme), [theme]);
   const type = EXERCISE_TYPES.find((t) => t.key === log.exerciseType);
   const isHealth = log.source === 'health';
   const time = formatLogTime(log.timestamp);
@@ -302,28 +304,25 @@ function ExerciseHistoryRow({ log, onDelete }: { log: ExerciseLog; onDelete: () 
         <Text style={styles.historySub}>{subParts.join(' · ')}</Text>
       </View>
       <Text style={styles.historyKcal}>+{Math.round(log.grossKcal).toLocaleString()} kcal</Text>
-      <Pressable
+      <IconButton
+        icon="close"
+        size="sm"
         onPress={onDelete}
-        hitSlop={8}
-        style={styles.historyDelete}
         testID={`exercise-history-delete-${log.id}`}
-        accessibilityRole="button"
         accessibilityLabel={`${log.exerciseLabel} を削除`}
-      >
-        <Icon name="close" size={14} color={palette.textMuted} />
-      </Pressable>
+      />
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (t: Theme) => StyleSheet.create({
   scroll: { maxHeight: 520 },
-  content: { gap: 18, paddingBottom: 16 },
+  content: { gap: 20, paddingBottom: 16 },
   summaryCard: {
-    backgroundColor: palette.card,
+    backgroundColor: t.colors.surface.raised,
     borderRadius: radius.lg,
     paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingVertical: 16,
     gap: 8,
   },
   summaryHeader: {
@@ -331,64 +330,57 @@ const styles = StyleSheet.create({
     alignItems: 'baseline',
     justifyContent: 'space-between',
   },
-  summaryLabel: { fontSize: fs.sm, fontWeight: '600', color: palette.textMuted, letterSpacing: 0.4 },
-  summaryKcal: { fontSize: fs['3xl'], fontWeight: '700', color: palette.text, letterSpacing: -0.4 },
-  summaryKcalUnit: { fontSize: fs.caption1, fontWeight: '500', color: palette.textMuted },
+  summaryLabel: { fontSize: fs.sm, fontWeight: '600', color: t.colors.content.secondary, letterSpacing: 0.4 },
+  summaryKcal: { fontSize: fs['3xl'], fontWeight: '700', color: t.colors.content.primary, letterSpacing: -0.4 },
+  summaryKcalUnit: { fontSize: fs.caption1, fontWeight: '500', color: t.colors.content.secondary },
   ledgerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'baseline',
-    paddingTop: 6,
+    paddingTop: 8,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: palette.border,
+    borderTopColor: t.colors.border.default,
   },
-  ledgerLabel: { fontSize: fs.caption1, fontWeight: '500', color: palette.textMuted, flex: 1 },
-  ledgerValue: { fontSize: fs.caption1, fontWeight: '600', color: palette.textMuted },
+  ledgerLabel: { fontSize: fs.caption1, fontWeight: '500', color: t.colors.content.secondary, flex: 1 },
+  ledgerValue: { fontSize: fs.caption1, fontWeight: '600', color: t.colors.content.secondary },
   ledgerResultRow: { borderTopWidth: 0, paddingTop: 4 },
-  ledgerResultLabel: { fontSize: fs.sm, fontWeight: '700', color: palette.text, flex: 1 },
-  ledgerResultValue: { fontSize: fs.md, fontWeight: '700', color: palette.sageDeep },
-  ledgerResultZero: { color: palette.textMuted },
+  ledgerResultLabel: { fontSize: fs.sm, fontWeight: '700', color: t.colors.content.primary, flex: 1 },
+  ledgerResultValue: { fontSize: fs.md, fontWeight: '700', color: t.colors.action.primary.default },
+  ledgerResultZero: { color: t.colors.content.secondary },
   historyBlock: { gap: 8 },
   historyRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    paddingVertical: 10,
+    paddingVertical: 12,
     paddingHorizontal: 12,
-    backgroundColor: palette.surface,
+    backgroundColor: t.colors.surface.raised,
     borderRadius: radius.md,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: palette.border,
+    borderColor: t.colors.border.default,
   },
   historyEmoji: { fontSize: 20 },
   historyMeta: { flex: 1, gap: 2 },
-  historyLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  historyLabel: { fontSize: fs.md, fontWeight: '600', color: palette.text },
-  historySub: { fontSize: fs.xs, color: palette.textMuted },
+  historyLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  historyLabel: { fontSize: fs.md, fontWeight: '600', color: t.colors.content.primary },
+  historySub: { fontSize: fs.xs, color: t.colors.content.secondary },
   sourceBadge: {
-    paddingHorizontal: 6,
+    paddingHorizontal: 8,
     paddingVertical: 1,
     borderRadius: radius.full,
     borderWidth: StyleSheet.hairlineWidth,
   },
-  sourceBadgeHealth: { backgroundColor: palette.accentSoft, borderColor: palette.accentSoft },
-  sourceBadgeManual: { backgroundColor: 'transparent', borderColor: palette.border },
+  sourceBadgeHealth: { backgroundColor: t.colors.accent.subtle, borderColor: t.colors.accent.subtle },
+  sourceBadgeManual: { backgroundColor: 'transparent', borderColor: t.colors.border.default },
   sourceBadgeText: { fontSize: fs.xs, fontWeight: '600', letterSpacing: 0.2 },
-  sourceBadgeTextHealth: { color: palette.accent },
-  sourceBadgeTextManual: { color: palette.textMuted },
-  historyKcal: { fontSize: fs.sm, fontWeight: '700', color: palette.sageDeep },
-  historyDelete: {
-    width: 26,
-    height: 26,
-    borderRadius: radius.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  sourceBadgeTextHealth: { color: t.colors.accent.default },
+  sourceBadgeTextManual: { color: t.colors.content.secondary },
+  historyKcal: { fontSize: fs.sm, fontWeight: '700', color: t.colors.action.primary.default },
   addBlock: { gap: 12 },
   sectionLabel: {
     fontSize: fs.sm,
     fontWeight: '700',
-    color: palette.textMuted,
+    color: t.colors.content.secondary,
     textTransform: 'uppercase',
     letterSpacing: 0.8,
   },
@@ -397,12 +389,12 @@ const styles = StyleSheet.create({
   typeEmoji: { fontSize: 22 },
   durationRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
   previewCard: {
-    backgroundColor: palette.card,
+    backgroundColor: t.colors.surface.raised,
     borderRadius: radius.xl,
     padding: 16,
     gap: 8,
   },
   previewRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  previewLabel: { fontSize: fs.md, fontWeight: '600', color: palette.text },
-  previewKcal: { fontSize: fs.xl, fontWeight: '700', color: palette.sageDeep },
+  previewLabel: { fontSize: fs.md, fontWeight: '600', color: t.colors.content.primary },
+  previewKcal: { fontSize: fs.xl, fontWeight: '700', color: t.colors.action.primary.default },
 });

@@ -3,12 +3,13 @@ import React, { useEffect, useRef } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { HomeScreen } from '@/components/nutrition-ui';
-import { palette } from '@/constants/theme';
+import { useTheme } from '@/design-system';
 import { useAppState } from '@/providers/app-state-provider';
 import { decideInitialRoute } from '@/utils/initial-route';
 
 export default function HomeRoute() {
   const router = useRouter();
+  const t = useTheme();
   const { settings, isHydrating } = useAppState();
   const redirectedRef = useRef<boolean>(false);
 
@@ -29,8 +30,8 @@ export default function HomeRoute() {
 
   if (isHydrating) {
     return (
-      <View style={styles.loading}>
-        <ActivityIndicator color={palette.sageDeep} />
+      <View style={[styles.loading, { backgroundColor: t.colors.surface.default }]}>
+        <ActivityIndicator color={t.colors.action.primary.default} />
       </View>
     );
   }
@@ -44,5 +45,5 @@ export default function HomeRoute() {
 }
 
 const styles = StyleSheet.create({
-  loading: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: palette.background },
+  loading: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 });

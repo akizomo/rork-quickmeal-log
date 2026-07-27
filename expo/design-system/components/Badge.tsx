@@ -63,7 +63,7 @@ export function Badge({
         }
       : {
           paddingH: t.spacing['2'],
-          paddingV: 2,
+          paddingV: t.spacing['0.5'],
           fontSize: t.typography.fontSize.xs,
           lineHeight: t.typography.lineHeight.xs,
         };

@@ -242,7 +242,7 @@ const styles = StyleSheet.create({
   container: {
     borderRadius: 14,
     paddingVertical: 12,
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     gap: 0,
   },
   legend: {
@@ -266,7 +266,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   row: {
-    paddingVertical: 6,
+    paddingVertical: 8,
   },
   rowTop: {
     flexDirection: 'row',
@@ -334,7 +334,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   tag: {
-    paddingHorizontal: 6,
+    paddingHorizontal: 8,
     paddingVertical: 1,
     borderRadius: 8,
     alignSelf: 'flex-start',

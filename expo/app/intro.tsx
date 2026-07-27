@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   FlatList,
   Linking,
@@ -23,7 +23,7 @@ import Svg, {
 import { Logo } from '@/components/Logo';
 import { ButtonGridIllustration, GestureDemoIllustration } from '@/components/onboarding-illustrations';
 import { INTRO_VERSION, LEGAL_LINKS } from '@/constants/onboarding';
-import { palette } from '@/constants/theme';
+import { lightTheme, useTheme, type Theme } from '@/design-system';
 import { colors } from '@/design-system/tokens/primitives/colors';
 import { radius } from '@/design-system/tokens/primitives/radius';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
@@ -62,7 +62,7 @@ const SLIDES: Slide[] = [
     key: 's3',
     title: '進みは、ひと目で。',
     subtitle: '目標と今の差が、グラフでそのまま見える。',
-    accent: palette.accentSoft, // ai (indigo)
+    accent: lightTheme.colors.accent.subtle, // ai (indigo)
     media: { kind: 'progress' },
   },
 ];
@@ -73,10 +73,12 @@ const SLIDES: Slide[] = [
 const ILLUST_COLORS = {
   protein: colors.clay[400], // clay 系
   fat: colors.ivory[500], // kinari
-  carb: palette.sageStrong,
+  carb: lightTheme.colors.action.text.default,
 } as const;
 
 function IntroProgressIllustration() {
+  const t = useTheme();
+  const illustStyles = useMemo(() => makeIllustStyles(t), [t]);
   const { height: screenHeight } = useWindowDimensions();
   // 画面高さに応じて 0.6〜1.0 の範囲でスケール。
   // ヒーロー利用可能高さ ≒ screenHeight - 349 (TopBar + footer + textBlock 等のクローム概算)。
@@ -100,7 +102,7 @@ function IntroProgressIllustration() {
               cx={60}
               cy={60}
               r={46}
-              stroke={palette.border}
+              stroke={t.colors.border.default}
               strokeWidth={9}
               fill="none"
             />
@@ -108,7 +110,7 @@ function IntroProgressIllustration() {
               cx={60}
               cy={60}
               r={46}
-              stroke={palette.sageDeep}
+              stroke={t.colors.action.primary.default}
               strokeWidth={9}
               fill="none"
               strokeDasharray="289"
@@ -138,8 +140,8 @@ function IntroProgressIllustration() {
         >
           <Defs>
             <SvgLinearGradient id="sparkfill" x1="0" y1="0" x2="0" y2="1">
-              <Stop offset="0%" stopColor={palette.sageDeep} stopOpacity={0.18} />
-              <Stop offset="100%" stopColor={palette.sageDeep} stopOpacity={0} />
+              <Stop offset="0%" stopColor={t.colors.action.primary.default} stopOpacity={0.18} />
+              <Stop offset="100%" stopColor={t.colors.action.primary.default} stopOpacity={0} />
             </SvgLinearGradient>
           </Defs>
           <Path
@@ -148,13 +150,13 @@ function IntroProgressIllustration() {
           />
           <Path
             d="M0,18 L20,16 L40,22 L60,20 L80,28 L100,30 L120,34 L140,32 L160,40 L180,38 L200,44 L220,46"
-            stroke={palette.sageDeep}
+            stroke={t.colors.action.primary.default}
             strokeWidth={2}
             fill="none"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
-          <Circle cx={220} cy={46} r={3.5} fill={palette.sageDeep} />
+          <Circle cx={220} cy={46} r={3.5} fill={t.colors.action.primary.default} />
         </Svg>
         <View style={illustStyles.sparkAxis}>
           <Text style={illustStyles.sparkAxisText}>1月</Text>
@@ -187,6 +189,8 @@ function IntroProgressIllustration() {
 
 export default function IntroRoute() {
   const router = useRouter();
+  const t = useTheme();
+  const styles = useMemo(() => makeStyles(t), [t]);
   const { markIntroSeen } = useAppState();
   const [index, setIndex] = useState<number>(0);
   const [listHeight, setListHeight] = useState<number>(0);
@@ -222,12 +226,12 @@ export default function IntroRoute() {
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={styles.page} testID="intro-screen">
-        <LinearGradient colors={[palette.background, palette.surface]} style={StyleSheet.absoluteFillObject} />
+        <LinearGradient colors={[t.colors.surface.default, t.colors.surface.raised]} style={StyleSheet.absoluteFillObject} />
         <SafeAreaView edges={['top', 'bottom']} style={styles.safe}>
           {/* TOP BAR: brand + skip */}
           <View style={styles.topBar}>
             <View style={styles.brandRow}>
-              <Logo size={22} color={palette.sageDeep} />
+              <Logo size={22} color={t.colors.action.primary.default} />
               <Text style={styles.brandText}>Hachibu</Text>
             </View>
             <Pressable
@@ -323,8 +327,8 @@ export default function IntroRoute() {
 }
 
 
-const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: palette.background },
+const makeStyles = (t: Theme) => StyleSheet.create({
+  page: { flex: 1, backgroundColor: t.colors.surface.default },
   safe: { flex: 1 },
   topBar: {
     flexDirection: 'row',
@@ -336,8 +340,8 @@ const styles = StyleSheet.create({
     height: 48,
   },
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  brandText: { fontSize: fs.md, fontWeight: '700', color: palette.text, letterSpacing: 0.3 },
-  skipText: { color: palette.textMuted, fontSize: fs.sm, fontWeight: '600' },
+  brandText: { fontSize: fs.md, fontWeight: '700', color: t.colors.content.primary, letterSpacing: 0.3 },
+  skipText: { color: t.colors.content.secondary, fontSize: fs.sm, fontWeight: '600' },
   slideList: { flex: 1 },
   slide: { flex: 1, paddingHorizontal: 20, paddingTop: 8 },
   heroWrap: {
@@ -350,26 +354,26 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     marginBottom: 24,
   },
-  textBlock: { gap: 6, paddingBottom: 8 },
-  title: { fontSize: fs['2xl'], fontWeight: '700', color: palette.text, lineHeight: 32, letterSpacing: 0.2 },
-  subtitle: { fontSize: fs.sm, lineHeight: 23, color: palette.textMuted },
-  footer: { paddingHorizontal: 20, paddingBottom: 12, gap: 14 },
-  dots: { flexDirection: 'row', justifyContent: 'center', gap: 6 },
-  dot: { width: 6, height: 6, borderRadius: radius.full, backgroundColor: palette.border },
-  dotActive: { backgroundColor: palette.sageDeep, width: 18 },
+  textBlock: { gap: 8, paddingBottom: 8 },
+  title: { fontSize: fs['2xl'], fontWeight: '700', color: t.colors.content.primary, lineHeight: 32, letterSpacing: 0.2 },
+  subtitle: { fontSize: fs.sm, lineHeight: 23, color: t.colors.content.secondary },
+  footer: { paddingHorizontal: 20, paddingBottom: 12, gap: 16 },
+  dots: { flexDirection: 'row', justifyContent: 'center', gap: 8 },
+  dot: { width: 6, height: 6, borderRadius: radius.full, backgroundColor: t.colors.border.default },
+  dotActive: { backgroundColor: t.colors.action.primary.default, width: 18 },
   cta: {
-    backgroundColor: palette.sageDeep,
+    backgroundColor: t.colors.action.primary.default,
     borderRadius: radius.full,
     paddingVertical: 15,
     alignItems: 'center',
   },
-  ctaText: { color: palette.white, fontSize: fs.md, fontWeight: '700', letterSpacing: 0.2 },
+  ctaText: { color: t.colors.content.onAction, fontSize: fs.md, fontWeight: '700', letterSpacing: 0.2 },
   legalRow: { flexDirection: 'row', justifyContent: 'center', gap: 8 },
-  legalLink: { fontSize: fs.caption1, color: palette.textMuted, textDecorationLine: 'underline' },
-  legalSep: { fontSize: fs.caption1, color: palette.textMuted },
+  legalLink: { fontSize: fs.caption1, color: t.colors.content.secondary, textDecorationLine: 'underline' },
+  legalSep: { fontSize: fs.caption1, color: t.colors.content.secondary },
 });
 
-const illustStyles = StyleSheet.create({
+const makeIllustStyles = (t: Theme) => StyleSheet.create({
   // hero の縦をフルに使い、3 カードを均等に縦中央寄せ。
   // 画面高さが変わっても各カードの比率と余白が保たれる。
   wrap: {
@@ -377,19 +381,19 @@ const illustStyles = StyleSheet.create({
     flex: 1,
     flexDirection: 'column',
     justifyContent: 'center',
-    gap: 14,
+    gap: 16,
     paddingVertical: 32,
   },
   card: {
-    backgroundColor: palette.surface,
+    backgroundColor: t.colors.surface.raised,
     borderRadius: radius['2xl'],
     borderWidth: 1,
-    borderColor: palette.border,
+    borderColor: t.colors.border.default,
     paddingVertical: 20,
     paddingHorizontal: 20,
     alignItems: 'center',
   },
-  cardSpark: { paddingVertical: 18, paddingHorizontal: 20, alignItems: 'stretch', gap: 10 },
+  cardSpark: { paddingVertical: 20, paddingHorizontal: 20, alignItems: 'stretch', gap: 12 },
   cardPfc: { paddingVertical: 16, paddingHorizontal: 20, alignItems: 'stretch', gap: 9 },
   // Card 1
   ringBox: { position: 'relative', width: 120, height: 120 },
@@ -402,31 +406,31 @@ const illustStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  ringNumber: { fontSize: fs['3xl'], fontWeight: '700', color: palette.text, lineHeight: 28 },
-  ringUnit: { fontSize: fs.xs, color: palette.textMuted, marginTop: 4 },
+  ringNumber: { fontSize: fs['3xl'], fontWeight: '700', color: t.colors.content.primary, lineHeight: 28 },
+  ringUnit: { fontSize: fs.xs, color: t.colors.content.secondary, marginTop: 4 },
   // Card 2
   sparkHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'baseline',
   },
-  sparkLabel: { fontSize: fs.caption1, color: palette.textMuted, letterSpacing: 0.5 },
-  sparkDelta: { fontSize: fs.caption1, color: palette.sageStrong, fontWeight: '600' },
+  sparkLabel: { fontSize: fs.caption1, color: t.colors.content.secondary, letterSpacing: 0.5 },
+  sparkDelta: { fontSize: fs.caption1, color: t.colors.action.text.default, fontWeight: '600' },
   sparkAxis: { flexDirection: 'row', justifyContent: 'space-between' },
-  sparkAxisText: { fontSize: fs.xs, color: palette.textMuted, letterSpacing: 0.3 },
+  sparkAxisText: { fontSize: fs.xs, color: t.colors.content.secondary, letterSpacing: 0.3 },
   // Card 3
-  pfcRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  pfcRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   pfcLabel: {
     width: 12,
     fontSize: fs.caption1,
     fontWeight: '700',
-    color: palette.text,
+    color: t.colors.content.primary,
   },
   pfcTrack: {
     flex: 1,
     height: 6,
     borderRadius: radius.full,
-    backgroundColor: palette.border,
+    backgroundColor: t.colors.border.default,
     overflow: 'hidden',
   },
   pfcFill: { height: '100%', borderRadius: radius.full },

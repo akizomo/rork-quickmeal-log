@@ -79,7 +79,9 @@ export function Button({
           paddingHorizontal: s.paddingH,
           gap: s.gap,
           width: fullWidth ? '100%' : undefined,
-          opacity: isDisabled ? 0.6 : 1,
+          // disabledであることが一目でわかるよう軽い減光を残す。ただし0.6のような強い値だと
+          // label.disabled側で確保したコントラストごと潰れて判読不能になるため0.75に留める。
+          opacity: isDisabled ? 0.75 : 1,
         },
         style,
       ];

@@ -318,7 +318,7 @@ export default function GoalEditRoute() {
                   )}
 
                   <View style={[styles.hr, { backgroundColor: theme.colors.border.subtle }]} />
-                  <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 6 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8 }}>
                     <Heading size="2xl">{card.targetKcal}</Heading>
                     <Caption tone="tertiary" style={{ marginBottom: 4 }}>kcal / 日</Caption>
                   </View>
@@ -467,7 +467,7 @@ function SegmentedRow({
 
 const styles = StyleSheet.create({
   page: { flex: 1 },
-  container: { flex: 1, padding: 18, gap: 16 },
+  container: { flex: 1, padding: 20, gap: 16 },
   cardHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   metricsRow: { flexDirection: 'row', alignItems: 'center' },
   metricBlock: { flex: 1, gap: 2 },
@@ -485,5 +485,5 @@ const styles = StyleSheet.create({
   divider: { width: StyleSheet.hairlineWidth, height: 40, marginHorizontal: 8 },
   hr: { height: StyleSheet.hairlineWidth, marginVertical: 2 },
   segmented: { flexDirection: 'row', borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, padding: 4 },
-  segment: { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: 8 },
+  segment: { flex: 1, paddingVertical: 12, alignItems: 'center', borderRadius: 8 },
 });

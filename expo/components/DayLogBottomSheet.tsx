@@ -11,12 +11,10 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { palette } from '@/constants/theme';
 import { getIdentity } from '@/constants/identity';
-import { MealLogCard } from '@/design-system';
+import { MealLogCard, useTheme } from '@/design-system';
 import { spring } from '@/design-system/tokens/primitives/motion';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
-import { colors } from '@/design-system/tokens/primitives/colors';
 import { radius } from '@/design-system/tokens/primitives/radius';
 import { elevation } from '@/design-system/tokens/primitives/elevation';
 import { useAppState } from '@/providers/app-state-provider';
@@ -97,6 +95,7 @@ export interface DayLogBottomSheetRef {
 
 export const DayLogBottomSheet = memo(
   forwardRef<DayLogBottomSheetRef, Props>(function DayLogBottomSheet({ viewedDate }, ref) {
+  const t = useTheme();
   const { logs, todayLogs, todayMacro } = useAppState();
   const { height: screenHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -227,7 +226,7 @@ export const DayLogBottomSheet = memo(
     <>
       <Animated.View
         pointerEvents={stage === 'full' ? 'auto' : 'none'}
-        style={[styles.backdrop, { opacity: overlayOpacity }]}
+        style={[styles.backdrop, { backgroundColor: t.colors.surface.inverse, opacity: overlayOpacity }]}
       >
         <Pressable style={StyleSheet.absoluteFill} onPress={() => animateTo('half')} />
       </Animated.View>
@@ -235,6 +234,8 @@ export const DayLogBottomSheet = memo(
         style={[
           styles.sheet,
           {
+            backgroundColor: t.colors.surface.overlay,
+            shadowColor: t.colors.surface.inverse,
             height: sheetMaxHeight,
             transform: [{ translateY }],
           },
@@ -243,21 +244,21 @@ export const DayLogBottomSheet = memo(
       >
         <View style={styles.handleArea} {...panResponder.panHandlers}>
           <Pressable onPress={handleHandlePress} style={styles.handlePressable}>
-            <View style={styles.handle} />
+            <View style={[styles.handle, { backgroundColor: t.colors.content.disabled }]} />
           </Pressable>
           <View style={styles.headerRow}>
             <View>
-              <Text style={styles.title}>{titleText}</Text>
-              <Text style={styles.subtitle}>
+              <Text style={[styles.title, { color: t.colors.content.primary }]}>{titleText}</Text>
+              <Text style={[styles.subtitle, { color: t.colors.content.secondary }]}>
                 {dayLogs.length}件 · {Math.round(dayMacro.kcal)} kcal
               </Text>
             </View>
             <Pressable
               onPress={handleHandlePress}
-              style={styles.stagePill}
+              style={[styles.stagePill, { backgroundColor: t.colors.surface.raised }]}
               testID="sheet-stage-toggle"
             >
-              <Text style={styles.stagePillText}>
+              <Text style={[styles.stagePillText, { color: t.colors.action.primary.default }]}>
                 {stage === 'peek' ? '開く' : stage === 'half' ? '全画面' : '閉じる'}
               </Text>
             </Pressable>
@@ -273,9 +274,9 @@ export const DayLogBottomSheet = memo(
           scrollEnabled={stage !== 'peek'}
         >
           {dayLogs.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyTitle}>まだ記録はありません</Text>
-              <Text style={styles.emptyText}>上のボタンから、その日の食事をすばやく残せます。</Text>
+            <View style={[styles.emptyState, { backgroundColor: t.colors.surface.raised }]}>
+              <Text style={[styles.emptyTitle, { color: t.colors.content.primary }]}>まだ記録はありません</Text>
+              <Text style={[styles.emptyText, { color: t.colors.content.secondary }]}>上のボタンから、その日の食事をすばやく残せます。</Text>
             </View>
           ) : (
             dayLogs.map((log) => <LogListItem key={log.id} log={log} />)
@@ -290,22 +291,19 @@ DayLogBottomSheet.displayName = 'DayLogBottomSheet';
 const styles = StyleSheet.create({
   backdrop: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: palette.sheetInk,
   },
   sheet: {
     position: 'absolute',
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: palette.sheet,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     ...elevation.xl,
-    shadowColor: palette.sheetInk,
     shadowOffset: { width: 0, height: -6 },
   },
   handleArea: {
-    paddingTop: 6,
+    paddingTop: 8,
     paddingHorizontal: 20,
     paddingBottom: 4,
   },
@@ -317,7 +315,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 4,
     borderRadius: radius.full,
-    backgroundColor: colors.stone[300],
   },
   headerRow: {
     marginTop: 4,
@@ -328,46 +325,39 @@ const styles = StyleSheet.create({
   title: {
     fontSize: fs.md,
     fontWeight: '700',
-    color: palette.sheetInk,
   },
   subtitle: {
     marginTop: 1,
     fontSize: fs.caption1,
-    color: palette.textMuted,
   },
   stagePill: {
     paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingVertical: 8,
     borderRadius: radius.full,
-    backgroundColor: palette.card,
   },
   stagePillText: {
     fontSize: fs.caption1,
     fontWeight: '700',
-    color: palette.sageDeep,
   },
   scroll: {
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: 18,
+    paddingHorizontal: 20,
     paddingTop: 4,
-    gap: 10,
+    gap: 12,
   },
   emptyState: {
-    backgroundColor: palette.surface,
     borderRadius: radius.xl,
     padding: 20,
-    gap: 6,
+    gap: 8,
   },
   emptyTitle: {
     fontSize: fs.md,
     fontWeight: '700',
-    color: palette.text,
   },
   emptyText: {
     fontSize: fs.sm,
     lineHeight: 19,
-    color: palette.textMuted,
   },
 });

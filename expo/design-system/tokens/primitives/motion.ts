@@ -38,8 +38,10 @@ export const duration = {
 } as const;
 
 export const easing = {
-  // 画面内遷移・汎用 (M3 Emphasized: cubic-bezier(0.2, 0, 0, 1))
-  standard: [0.2, 0, 0, 1] as const,
+  // 画面内遷移・汎用 (M3 Emphasized: cubic-bezier(0.2, 0, 0, 1))。
+  // x2=0 だと Easing.bezier の JS フォールバック実装でエッジケースが起きるため、
+  // 知覚上ほぼ同一の 0.01 を使う (app/help.tsx で発見・検証済み)。
+  standard: [0.2, 0, 0.01, 1] as const,
   // 要素の入場 — 滑らかに減速 (M3 Emphasized Decelerate: cubic-bezier(0, 0, 0, 1))
   enter:    [0, 0, 0, 1] as const,
   // 要素の退場 — すばやく加速 (M3 Emphasized Accelerate: cubic-bezier(0.3, 0, 1, 1))

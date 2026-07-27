@@ -30,6 +30,7 @@ export const lightColors: SemanticColors = {
     tertiary: colors.stone[400],  // MD3 disabled/hint level (~38%)
     disabled: colors.stone[300],  // disabled は AA 対象外 (WCAG 1.4.3)
     inverse: colors.stone[50], // 反転面 (ivory[900]) 上の明色テキスト
+    inverseSecondary: colors.stone[200], // 反転面上のセカンダリ (キャプション等)。ivory[900]比コントラスト比約12.2:1
     onAction: colors.ivory[50], // action.primary 面上はウォームな明色
   },
 
@@ -56,6 +57,9 @@ export const lightColors: SemanticColors = {
       default: colors.sage[700], // AA compliant on light surface
       pressed: colors.sage[900],
       disabled: colors.stone[300],
+      // surface.inverse (ivory[900]) 上で使うテキストボタン色。sage[700]は暗背景でコントラスト比
+      // 約3.4:1 しか出ずAA不適合なため、約7.9:1を確保できるsage[400]を別途用意する。
+      onInverse: colors.sage[400],
     },
   },
 

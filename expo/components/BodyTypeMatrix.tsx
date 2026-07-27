@@ -10,7 +10,6 @@ import {
   getCellReferenceWeightRange,
   getMatrix,
 } from '@/constants/body-matrix';
-import { palette } from '@/constants/theme';
 import { useTheme } from '@/design-system';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { BiologicalBasis, BodyAxisLevel, BodyType9 } from '@/types/nutrition';
@@ -48,9 +47,9 @@ export function BodyTypeMatrix({
       {/* Column labels (fat axis) */}
       <View style={styles.colHeaderRow}>
         <View style={styles.rowAxisSpacer} />
-        <Text style={styles.colHeader}>脂肪{'\n'}少なめ</Text>
-        <Text style={styles.colHeader}>脂肪{'\n'}ふつう</Text>
-        <Text style={styles.colHeader}>脂肪{'\n'}多め</Text>
+        <Text style={[styles.colHeader, { color: t.colors.content.secondary }]}>脂肪{'\n'}少なめ</Text>
+        <Text style={[styles.colHeader, { color: t.colors.content.secondary }]}>脂肪{'\n'}ふつう</Text>
+        <Text style={[styles.colHeader, { color: t.colors.content.secondary }]}>脂肪{'\n'}多め</Text>
       </View>
 
       {/* Muscle axis rows, rendered top = 多め, bottom = 少なめ */}
@@ -59,8 +58,8 @@ export function BodyTypeMatrix({
         return (
           <View key={muscle} style={styles.row}>
             <View style={styles.rowAxis}>
-              <Text style={styles.rowAxisText}>筋量</Text>
-              <Text style={styles.rowAxisValue}>
+              <Text style={[styles.rowAxisText, { color: t.colors.content.secondary }]}>筋量</Text>
+              <Text style={[styles.rowAxisValue, { color: t.colors.content.primary }]}>
                 {muscle === 0 ? '少なめ' : muscle === 1 ? 'ふつう' : '多め'}
               </Text>
             </View>
@@ -81,20 +80,21 @@ export function BodyTypeMatrix({
                   onPress={() => onSelect(cell)}
                   style={[
                     styles.cell,
+                    { backgroundColor: t.colors.surface.raised },
                     isSelected ? activeCellStyle : null,
-                    isCurrent && !isSelected ? styles.cellCurrent : null,
+                    isCurrent && !isSelected ? { borderColor: t.colors.border.default } : null,
                   ]}
                   testID={`body-matrix-cell-${muscle}-${fat}`}
                 >
-                  {isCurrent ? <Text style={styles.currentDot}>●今</Text> : null}
+                  {isCurrent ? <Text style={[styles.currentDot, { color: t.colors.action.text.default }]}>●今</Text> : null}
                   <BodyTypeSilhouette basis={basis} stage={stage} active={isSelected} size={42} />
                   {mode === 'target' ? (
                     <>
-                      <Text style={styles.refText}>{weightText}</Text>
-                      <Text style={styles.refSub}>{bfText}</Text>
+                      <Text style={[styles.refText, { color: t.colors.content.primary }]}>{weightText}</Text>
+                      <Text style={[styles.refSub, { color: t.colors.content.secondary }]}>{bfText}</Text>
                     </>
                   ) : (
-                    <Text style={styles.refText}>{bfText}</Text>
+                    <Text style={[styles.refText, { color: t.colors.content.primary }]}>{bfText}</Text>
                   )}
                 </Pressable>
               );
@@ -107,36 +107,32 @@ export function BodyTypeMatrix({
 }
 
 const styles = StyleSheet.create({
-  colHeaderRow: { flexDirection: 'row', marginBottom: 6 },
+  colHeaderRow: { flexDirection: 'row', marginBottom: 8 },
   rowAxisSpacer: { width: 44 },
-  colHeader: { flex: 1, textAlign: 'center', fontSize: fs.xs, color: palette.textMuted, fontWeight: '600', lineHeight: 14 },
-  row: { flexDirection: 'row', marginBottom: 6 },
+  colHeader: { flex: 1, textAlign: 'center', fontSize: fs.xs, fontWeight: '600', lineHeight: 14 },
+  row: { flexDirection: 'row', marginBottom: 8 },
   rowAxis: { width: 44, justifyContent: 'center', alignItems: 'center' },
-  rowAxisText: { fontSize: fs.xs, color: palette.textMuted, fontWeight: '600' },
-  rowAxisValue: { fontSize: fs.xs, color: palette.text, fontWeight: '700' },
+  rowAxisText: { fontSize: fs.xs, fontWeight: '600' },
+  rowAxisValue: { fontSize: fs.xs, fontWeight: '700' },
   cell: {
     flex: 1,
     marginHorizontal: 3,
     paddingVertical: 8,
     paddingHorizontal: 2,
     borderRadius: 12,
-    backgroundColor: palette.surface,
     alignItems: 'center',
     borderWidth: 2,
     borderColor: 'transparent',
     position: 'relative',
   },
-  cellActive: { backgroundColor: palette.accentSoft, borderColor: palette.sageDeep },
-  cellCurrent: { borderColor: palette.border },
   currentDot: {
     position: 'absolute',
     top: 4,
     left: 4,
     fontSize: fs.xs,
-    color: palette.sageStrong,
     fontWeight: '700',
     zIndex: 2,
   },
-  refText: { marginTop: 4, fontSize: fs.xs, color: palette.text, fontWeight: '700' },
-  refSub: { fontSize: fs.xs, color: palette.textMuted, fontWeight: '600' },
+  refText: { marginTop: 4, fontSize: fs.xs, fontWeight: '700' },
+  refSub: { fontSize: fs.xs, fontWeight: '600' },
 });

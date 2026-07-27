@@ -1,18 +1,18 @@
-import { Link } from 'expo-router';
 import React from 'react';
 import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
 import { useTheme } from '@/design-system';
 import { useAppState } from '@/providers/app-state-provider';
+import { NavList, type NavItem } from './_shared';
+
+const ITEMS: NavItem[] = [
+  { label: 'Foundations', href: '/dev/foundations', desc: 'Color / Typography / Spacing / Radius / Elevation / Motion' },
+  { label: 'Components', href: '/dev/components', desc: 'Buttons / Inputs / Data Display / Overlays' },
+  { label: 'Widget Prototype', href: '/dev/widget-prototype', desc: '1×1 / 2×2 / 4×2 / 3×3 — ホーム画面ウィジェット UI 確認' },
+];
 
 export default function DevHub() {
   const t = useTheme();
   const { settings, updateSettingsValues } = useAppState();
-
-  const items: { label: string; href: '/dev/tokens' | '/dev/components' | '/dev/widget-prototype'; desc: string }[] = [
-    { label: 'Tokens', href: '/dev/tokens', desc: 'Color / Spacing / Typography / Radius / Elevation' },
-    { label: 'Components', href: '/dev/components', desc: 'Button / Card variants & sizes' },
-    { label: 'Widget Prototype', href: '/dev/widget-prototype', desc: '1×1 / 2×2 / 4×2 / 3×3 — ホーム画面ウィジェット UI 確認' },
-  ];
 
   return (
     <ScrollView
@@ -91,39 +91,7 @@ export default function DevHub() {
         </View>
       </View>
 
-      {items.map((item) => (
-        <Link key={item.href} href={item.href} asChild>
-          <Pressable
-            style={{
-              backgroundColor: t.colors.surface.raised,
-              borderRadius: t.radius['2xl'],
-              padding: t.spacing['5'],
-              gap: t.spacing['1'],
-              ...t.elevation.sm,
-            }}
-          >
-            <Text
-              style={{
-                color: t.colors.content.primary,
-                fontSize: t.typography.fontSize.xl,
-                fontWeight: t.typography.fontWeight.semibold,
-                lineHeight: t.typography.lineHeight.xl,
-              }}
-            >
-              {item.label}
-            </Text>
-            <Text
-              style={{
-                color: t.colors.content.secondary,
-                fontSize: t.typography.fontSize.sm,
-                lineHeight: t.typography.lineHeight.sm,
-              }}
-            >
-              {item.desc}
-            </Text>
-          </Pressable>
-        </Link>
-      ))}
+      <NavList t={t} items={ITEMS} />
     </ScrollView>
   );
 }

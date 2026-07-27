@@ -2,8 +2,7 @@ import { useRouter } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
-import { palette } from '@/constants/theme';
-import { Icon, useTheme } from '@/design-system';
+import { IconButton, useTheme, type Theme } from '@/design-system';
 import { colors } from '@/design-system/tokens/primitives/colors';
 import { radius } from '@/design-system/tokens/primitives/radius';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
@@ -29,6 +28,7 @@ const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'] as const;
 export function MonthlyStatsView() {
   const { logs, profile, settings, exerciseLogs, dailyActivities } = useAppState();
   const t = useTheme();
+  const styles = useMemo(() => makeStyles(t), [t]);
   const router = useRouter();
   const { width: screenWidth } = useWindowDimensions();
   const today = useMemo(() => startOfDay(new Date()), []);
@@ -190,13 +190,27 @@ export function MonthlyStatsView() {
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
       <View style={styles.headerRow} testID="month-header">
-        <Pressable onPress={goPrev} disabled={!canGoPrev} style={styles.navBtn} testID="month-prev">
-          <Icon name="chevronLeft" color={canGoPrev ? t.colors.action.text.default : t.colors.content.disabled} size={20} />
-        </Pressable>
+        <IconButton
+          icon="chevronLeft"
+          size="md"
+          variant="filled"
+          tone="action"
+          onPress={goPrev}
+          disabled={!canGoPrev}
+          testID="month-prev"
+          accessibilityLabel="前の月へ"
+        />
         <Text style={styles.headerLabel}>{formatMonthLabel(anchor)}</Text>
-        <Pressable onPress={goNext} disabled={!canGoNext} style={styles.navBtn} testID="month-next">
-          <Icon name="chevronRight" color={canGoNext ? t.colors.action.text.default : t.colors.content.disabled} size={20} />
-        </Pressable>
+        <IconButton
+          icon="chevronRight"
+          size="md"
+          variant="filled"
+          tone="action"
+          onPress={goNext}
+          disabled={!canGoNext}
+          testID="month-next"
+          accessibilityLabel="次の月へ"
+        />
       </View>
 
       <View style={[styles.calendarCard, { padding: 12 }]}>
@@ -367,7 +381,7 @@ export function MonthlyStatsView() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (t: Theme) => StyleSheet.create({
   scroll: { flex: 1 },
   content: { padding: 16, gap: 16, paddingBottom: 60 },
   headerRow: {
@@ -376,26 +390,18 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 4,
   },
-  navBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.full,
-    backgroundColor: palette.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   headerLabel: {
     fontSize: fs.callout,
     fontWeight: '700',
-    color: palette.text,
+    color: t.colors.content.primary,
   },
   calendarCard: {
-    backgroundColor: palette.surface,
+    backgroundColor: t.colors.surface.raised,
     borderRadius: radius.xl,
   },
   weekdayRow: {
     flexDirection: 'row',
-    paddingBottom: 6,
+    paddingBottom: 8,
   },
   weekdayCell: {
     alignItems: 'center',
@@ -404,7 +410,7 @@ const styles = StyleSheet.create({
   },
   weekdayText: {
     fontSize: fs.xs,
-    color: palette.textMuted,
+    color: t.colors.content.secondary,
     fontWeight: '600',
   },
   sunday: { color: colors.clay[300] },
@@ -420,20 +426,20 @@ const styles = StyleSheet.create({
   },
   cellText: {
     fontSize: fs.caption1,
-    color: palette.text,
+    color: t.colors.content.primary,
     fontWeight: '600',
     zIndex: 1,
   },
   cellTextDim: {
-    color: palette.textMuted,
+    color: t.colors.content.secondary,
     opacity: 0.5,
   },
   cellTextToday: {
-    color: palette.sageDeep,
+    color: t.colors.action.primary.default,
     fontWeight: '800',
   },
   summaryCard: {
-    backgroundColor: palette.surface,
+    backgroundColor: t.colors.surface.raised,
     borderRadius: radius.xl,
     padding: 16,
   },
@@ -449,23 +455,23 @@ const styles = StyleSheet.create({
   },
   summaryTitle: {
     fontSize: fs.caption1,
-    color: palette.textMuted,
+    color: t.colors.content.secondary,
     fontWeight: '600',
   },
   summaryKcal: {
     fontSize: fs['2xl'],
     fontWeight: '700',
-    color: palette.sageDeep,
+    color: t.colors.action.primary.default,
   },
   summaryKcalTarget: {
     fontSize: fs.md,
     fontWeight: '600',
-    color: palette.textMuted,
+    color: t.colors.content.secondary,
   },
   summaryDivider: {
     height: StyleSheet.hairlineWidth,
-    backgroundColor: palette.border,
-    marginVertical: 14,
+    backgroundColor: t.colors.border.default,
+    marginVertical: 16,
   },
   pfcRow: {
     flexDirection: 'row',
@@ -474,16 +480,16 @@ const styles = StyleSheet.create({
   summaryConsume: {
     marginTop: 2,
     fontSize: fs.caption1,
-    color: palette.textMuted,
+    color: t.colors.content.secondary,
     fontWeight: '600',
   },
   listSection: {
-    gap: 6,
+    gap: 8,
   },
   listTitle: {
     fontSize: fs.md,
     fontWeight: '700',
-    color: palette.text,
+    color: t.colors.content.primary,
     paddingHorizontal: 4,
     marginBottom: 4,
   },
@@ -491,7 +497,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: palette.surface,
+    backgroundColor: t.colors.surface.raised,
     borderRadius: radius.md,
     padding: 12,
   },
@@ -503,11 +509,11 @@ const styles = StyleSheet.create({
   dayLabel: {
     fontSize: fs.md,
     fontWeight: '700',
-    color: palette.text,
+    color: t.colors.content.primary,
   },
   dayNoLog: {
     fontSize: fs.xs,
-    color: palette.textMuted,
+    color: t.colors.content.secondary,
   },
   dayRowRight: {
     alignItems: 'flex-end',
@@ -515,15 +521,15 @@ const styles = StyleSheet.create({
   dayKcal: {
     fontSize: fs.md,
     fontWeight: '700',
-    color: palette.sageDeep,
+    color: t.colors.action.primary.default,
   },
   dayMacroLine: {
     fontSize: fs.xs,
-    color: palette.textMuted,
+    color: t.colors.content.secondary,
     marginTop: 2,
   },
   dayDash: {
     fontSize: fs.md,
-    color: palette.textMuted,
+    color: t.colors.content.secondary,
   },
 });

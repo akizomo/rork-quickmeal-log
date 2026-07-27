@@ -1,10 +1,10 @@
 import { useRouter } from 'expo-router';
-import { Icon, useTheme } from '@/design-system';
+import { IconButton, useTheme } from '@/design-system';
 import React, { useCallback, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Svg, { Circle, Polyline, Rect, Text as SvgText } from 'react-native-svg';
 
-import { palette } from '@/constants/theme';
+import type { Theme } from '@/design-system';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { radius } from '@/design-system/tokens/primitives/radius';
 import { CalorieOverflowRing } from '@/components/CalorieOverflowRing';
@@ -29,6 +29,7 @@ const CHART_PADDING_BOTTOM = 38;
 export function WeeklyStatsView() {
   const { logs, profile, settings, exerciseLogs, dailyActivities } = useAppState();
   const t = useTheme();
+  const styles = useMemo(() => makeStyles(t), [t]);
   const router = useRouter();
   const { width: screenWidth } = useWindowDimensions();
   const today = useMemo(() => startOfDay(new Date()), []);
@@ -208,13 +209,27 @@ export function WeeklyStatsView() {
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
       <View style={styles.headerRow} testID="week-header">
-        <Pressable onPress={goPrev} disabled={!canGoPrev} style={styles.navBtn} testID="week-prev">
-          <Icon name="chevronLeft" color={canGoPrev ? t.colors.action.text.default : t.colors.content.disabled} size={20} />
-        </Pressable>
+        <IconButton
+          icon="chevronLeft"
+          size="md"
+          variant="filled"
+          tone="action"
+          onPress={goPrev}
+          disabled={!canGoPrev}
+          testID="week-prev"
+          accessibilityLabel="前の週へ"
+        />
         <Text style={styles.headerLabel}>{formatWeekRangeLabel(range)}</Text>
-        <Pressable onPress={goNext} disabled={!canGoNext} style={styles.navBtn} testID="week-next">
-          <Icon name="chevronRight" color={canGoNext ? t.colors.action.text.default : t.colors.content.disabled} size={20} />
-        </Pressable>
+        <IconButton
+          icon="chevronRight"
+          size="md"
+          variant="filled"
+          tone="action"
+          onPress={goNext}
+          disabled={!canGoNext}
+          testID="week-next"
+          accessibilityLabel="次の週へ"
+        />
       </View>
 
       <View style={[styles.chartWrap, { width: chartWidth, height: CHART_HEIGHT }]}>
@@ -375,7 +390,7 @@ export function WeeklyStatsView() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (t: Theme) => StyleSheet.create({
   scroll: { flex: 1 },
   content: { padding: 16, gap: 16, paddingBottom: 60 },
   headerRow: {
@@ -384,28 +399,20 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 4,
   },
-  navBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: radius.full,
-    backgroundColor: palette.surface,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   headerLabel: {
     fontSize: fs.callout,
     fontWeight: '700',
-    color: palette.text,
+    color: t.colors.content.primary,
   },
   chartWrap: {
-    backgroundColor: palette.surface,
+    backgroundColor: t.colors.surface.raised,
     borderRadius: radius.xl,
     overflow: 'hidden',
     padding: 0,
     alignSelf: 'center',
   },
   summaryCard: {
-    backgroundColor: palette.surface,
+    backgroundColor: t.colors.surface.raised,
     borderRadius: radius.xl,
     padding: 16,
   },
@@ -421,23 +428,23 @@ const styles = StyleSheet.create({
   },
   summaryTitle: {
     fontSize: fs.caption1,
-    color: palette.textMuted,
+    color: t.colors.content.secondary,
     fontWeight: '600',
   },
   summaryKcal: {
     fontSize: fs['2xl'],
     fontWeight: '700',
-    color: palette.sageDeep,
+    color: t.colors.action.primary.default,
   },
   summaryKcalTarget: {
     fontSize: fs.md,
     fontWeight: '600',
-    color: palette.textMuted,
+    color: t.colors.content.secondary,
   },
   summaryDivider: {
     height: StyleSheet.hairlineWidth,
-    backgroundColor: palette.border,
-    marginVertical: 14,
+    backgroundColor: t.colors.border.default,
+    marginVertical: 16,
   },
   pfcRow: {
     flexDirection: 'row',
@@ -446,16 +453,16 @@ const styles = StyleSheet.create({
   summaryConsume: {
     marginTop: 2,
     fontSize: fs.caption1,
-    color: palette.textMuted,
+    color: t.colors.content.secondary,
     fontWeight: '600',
   },
   listSection: {
-    gap: 6,
+    gap: 8,
   },
   listTitle: {
     fontSize: fs.md,
     fontWeight: '700',
-    color: palette.text,
+    color: t.colors.content.primary,
     paddingHorizontal: 4,
     marginBottom: 4,
   },
@@ -463,7 +470,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: palette.surface,
+    backgroundColor: t.colors.surface.raised,
     borderRadius: radius.md,
     padding: 12,
   },
@@ -475,11 +482,11 @@ const styles = StyleSheet.create({
   dayLabel: {
     fontSize: fs.md,
     fontWeight: '700',
-    color: palette.text,
+    color: t.colors.content.primary,
   },
   dayNoLog: {
     fontSize: fs.xs,
-    color: palette.textMuted,
+    color: t.colors.content.secondary,
   },
   dayRowRight: {
     alignItems: 'flex-end',
@@ -487,15 +494,15 @@ const styles = StyleSheet.create({
   dayKcal: {
     fontSize: fs.md,
     fontWeight: '700',
-    color: palette.sageDeep,
+    color: t.colors.action.primary.default,
   },
   dayMacroLine: {
     fontSize: fs.xs,
-    color: palette.textMuted,
+    color: t.colors.content.secondary,
     marginTop: 2,
   },
   dayDash: {
     fontSize: fs.md,
-    color: palette.textMuted,
+    color: t.colors.content.secondary,
   },
 });

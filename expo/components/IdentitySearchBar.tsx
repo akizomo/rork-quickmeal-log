@@ -11,7 +11,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
-import { Body, Caption, Icon, useTheme } from '@/design-system';
+import { Body, Caption, Icon, IconButton, useTheme } from '@/design-system';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import {
   getBucketDef,
@@ -79,9 +79,7 @@ export function IdentitySearchBar() {
           testID="identity-search-input"
         />
         {query.length > 0 ? (
-          <Pressable onPress={handleClear} hitSlop={10} accessibilityLabel="検索をクリア">
-            <Icon name="close" size={16} color={t.colors.content.secondary} />
-          </Pressable>
+          <IconButton icon="close" size="sm" onPress={handleClear} accessibilityLabel="検索をクリア" />
         ) : null}
       </View>
 

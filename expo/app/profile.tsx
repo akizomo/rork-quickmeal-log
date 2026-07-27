@@ -171,7 +171,7 @@ function DataRow({ label, children }: { label: string; children: React.ReactNode
 
 const styles = StyleSheet.create({
   page: { flex: 1 },
-  scroll: { padding: 18, gap: 14, paddingBottom: 40 },
+  scroll: { padding: 20, gap: 16, paddingBottom: 40 },
   listCard: { gap: 0, padding: 0, paddingBottom: 8, overflow: 'hidden' },
   listCardHeader: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 0 },
   dataRow: {
@@ -185,8 +185,8 @@ const styles = StyleSheet.create({
   input: {
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     fontSize: fs.md,
     textAlign: 'right',
     minWidth: 72,

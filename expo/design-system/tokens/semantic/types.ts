@@ -20,6 +20,7 @@ export type SemanticColors = {
     tertiary: string; // さらに弱いテキスト
     disabled: string;
     inverse: string; // 反転面上のテキスト
+    inverseSecondary: string; // 反転面上の補助テキスト (キャプション等)
     onAction: string; // action.primary 面上のテキスト
   };
 
@@ -50,6 +51,7 @@ export type SemanticColors = {
       default: string;
       pressed: string;
       disabled: string;
+      onInverse: string; // surface.inverse 上で使う、AA準拠のコントラストを確保した明るいsage
     };
   };
 

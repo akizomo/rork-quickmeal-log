@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import Svg, { Circle, Line, Polyline, Text as SvgText } from 'react-native-svg';
 
-import { palette } from '@/constants/theme';
 import { useTheme } from '@/design-system';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { useAppState } from '@/providers/app-state-provider';
@@ -114,31 +113,32 @@ interface ProgressCardProps {
 // v1.7 (PRD §6.4.4): 「出発点→現在→目標」の3点進捗バーは撤去。現在値＋目標(=固定アンカー)
 // への残量テキストのみ。推移は下の TrendChart + 目標ラインで表現する。
 function ProgressCard({ title, unit, current, target, fractionDigits }: ProgressCardProps) {
+  const t = useTheme();
   const fmt = (v: number) => v.toFixed(fractionDigits);
   const hasGoal = current != null && target != null;
   const remaining = hasGoal ? current! - target! : null;
 
   return (
-    <View style={styles.card} testID={`body-progress-${title}`}>
-      <Text style={styles.cardTitle}>{title}</Text>
+    <View style={[styles.card, { backgroundColor: t.colors.surface.raised }]} testID={`body-progress-${title}`}>
+      <Text style={[styles.cardTitle, { color: t.colors.content.secondary }]}>{title}</Text>
 
       {current != null ? (
-        <Text style={styles.cardCurrent}>
+        <Text style={[styles.cardCurrent, { color: t.colors.action.primary.default }]}>
           {fmt(current)}
-          <Text style={styles.cardUnit}> {unit}</Text>
+          <Text style={[styles.cardUnit, { color: t.colors.content.secondary }]}> {unit}</Text>
         </Text>
       ) : (
-        <Text style={styles.cardEmpty}>記録なし</Text>
+        <Text style={[styles.cardEmpty, { color: t.colors.content.secondary }]}>記録なし</Text>
       )}
 
       {hasGoal ? (
-        <Text style={styles.cardMeta}>
+        <Text style={[styles.cardMeta, { color: t.colors.content.secondary }]}>
           {Math.abs(remaining!) < Math.pow(10, -fractionDigits) / 2
             ? `目標 ${fmt(target!)} ${unit} に到達`
             : `目標 ${fmt(target!)} ${unit}（あと ${Math.abs(remaining!).toFixed(fractionDigits)} ${unit}）`}
         </Text>
       ) : current != null ? (
-        <Text style={styles.cardMeta}>目標が未設定です</Text>
+        <Text style={[styles.cardMeta, { color: t.colors.content.secondary }]}>目標が未設定です</Text>
       ) : null}
     </View>
   );
@@ -176,8 +176,8 @@ function TrendChart({
 
   if (points.length === 0) {
     return (
-      <View style={[styles.chartWrap, { width, height: CHART_HEIGHT }]}>
-        <Text style={styles.chartEmpty}>{emptyMessage}</Text>
+      <View style={[styles.chartWrap, { width, height: CHART_HEIGHT, backgroundColor: t.colors.surface.raised }]}>
+        <Text style={[styles.chartEmpty, { color: t.colors.content.secondary }]}>{emptyMessage}</Text>
       </View>
     );
   }
@@ -254,7 +254,7 @@ function TrendChart({
 
   return (
     <View
-      style={[styles.chartWrap, { width, height: CHART_HEIGHT }]}
+      style={[styles.chartWrap, { width, height: CHART_HEIGHT, backgroundColor: t.colors.surface.raised }]}
       onStartShouldSetResponder={() => true}
       onMoveShouldSetResponder={() => true}
       onResponderGrant={handleTouch}
@@ -440,6 +440,7 @@ function TrendChart({
 }
 
 export function BodyStatsView({ period = 'month' }: { period?: BodyPeriod }) {
+  const t = useTheme();
   const { weights, bodyFatEntries, profile } = useAppState();
   const { width: screenWidth } = useWindowDimensions();
   const chartWidth = screenWidth - 32;
@@ -506,7 +507,7 @@ export function BodyStatsView({ period = 'month' }: { period?: BodyPeriod }) {
           width={chartWidth}
           points={weightPoints}
           target={profile.targetWeightKg}
-          color={palette.sageStrong}
+          color={t.colors.action.text.default}
           unit="kg"
           fractionDigits={1}
           grain={grain}
@@ -528,7 +529,7 @@ export function BodyStatsView({ period = 'month' }: { period?: BodyPeriod }) {
           width={chartWidth}
           points={bodyFatPoints}
           target={profile.targetBodyFatPct ?? null}
-          color={palette.accent}
+          color={t.colors.accent.default}
           unit="%"
           fractionDigits={1}
           grain={grain}
@@ -548,38 +549,31 @@ const styles = StyleSheet.create({
   content: { padding: 16, gap: 20, paddingBottom: 60 },
   group: { gap: 8 },
   card: {
-    backgroundColor: palette.surface,
     borderRadius: 20,
     padding: 16,
-    gap: 6,
+    gap: 8,
   },
   cardTitle: {
     fontSize: fs.caption1,
-    color: palette.textMuted,
     fontWeight: '600',
   },
   cardCurrent: {
     fontSize: fs['3xl'],
     fontWeight: '700',
-    color: palette.sageDeep,
   },
   cardUnit: {
     fontSize: fs.md,
     fontWeight: '600',
-    color: palette.textMuted,
   },
   cardEmpty: {
     fontSize: fs.callout,
-    color: palette.textMuted,
     fontWeight: '600',
   },
   cardMeta: {
     fontSize: fs.caption1,
-    color: palette.textMuted,
     marginTop: 2,
   },
   chartWrap: {
-    backgroundColor: palette.surface,
     borderRadius: 20,
     // ツールチップの影 (elevation.md) がカード端で切れないよう visible。
     // SVG は背景を塗らないため角丸の見た目には影響しない。
@@ -590,6 +584,5 @@ const styles = StyleSheet.create({
   },
   chartEmpty: {
     fontSize: fs.caption1,
-    color: palette.textMuted,
   },
 });
