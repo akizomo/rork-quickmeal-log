@@ -875,6 +875,28 @@ const BUCKET_VEGGIES: Identity[] = [
     allowedAddonIds: ['mayo', 'dressing', 'cheese', 'oil'],
   },
   {
+    id: 'corn',
+    label: 'とうもろこし',
+    primaryHome: { tab: 'ingredient', bucket: 'veggies' },
+    // 茹でとうもろこし1本 (可食部120g目安)。日本食品標準成分表ベース (100gあたり
+    // kcal 99/P3.5/F1.7/C18.6)。温野菜(35kcal/100g)より糖質が高く別項目にする。
+    defaultMacro: { kcal: 118, protein: 4.2, fat: 2, carbs: 22 },
+    referenceDescription: '1本(可食部)=120g目安',
+    amount: { unit: 'piece', default: 1, unitLabel: '本', chips: [{ label: '半分', value: 0.5 }, { label: '1本', value: 1 }, { label: '2本', value: 2 }] },
+    attributes: [
+      { key: 'boiled', label: '茹で', isDefault: true },
+      {
+        key: 'canned',
+        label: 'コーン缶',
+        factor: { kcal: 0.331, protein: 0.321, fat: 0.125, carbs: 0.382 }, // ≒39kcal/P1.4/F0.25/C8.4 (50g、缶詰は汁切り後)
+        amount: { unit: 'g', default: 50, chips: [{ label: '大さじ2', value: 20 }, { label: '小鉢', value: 50 }] },
+      },
+    ],
+    defaultAddonIds: ['mayo'],
+    allowedAddonIds: ['mayo', 'cheese'],
+    searchTags: ['コーン', 'とうもろこし', 'コーン缶'],
+  },
+  {
     id: 'side_seasoned',
     label: '煮物・和え物',
     primaryHome: { tab: 'ingredient', bucket: 'veggies' },
