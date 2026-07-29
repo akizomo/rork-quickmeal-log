@@ -19,7 +19,7 @@ describe('Identity registry sanity', () => {
     expect(getIdentity('chicken_thigh')).toBeDefined();
     expect(getIdentity('chicken_lean')).toBeDefined();
     expect(getIdentity('potato')).toBeDefined();
-    expect(getIdentity('fries')).toBeDefined();
+    // 'fries' は独立 Identity ではなく fried_main の attribute (種類) として実装されている。
     expect(getIdentity('canned_lean_fish')).toBeDefined();
     expect(getIdentity('canned_fatty_fish')).toBeDefined();
     expect(getIdentity('fried_main')).toBeDefined();
@@ -82,38 +82,58 @@ describe('resolveLog — Attribute migration', () => {
 });
 
 describe('resolveLog — Style migration', () => {
-  it('migrates potato + Style=fried to fries with confirmMessage', () => {
+  it('migrates potato + Style=fried to fried_main (attribute=fries) with confirmMessage', () => {
     const result = resolveLog({
       originIdentityId: 'potato',
       styleKey: 'fried',
     });
 
-    expect(result.recordIdentityId).toBe('fries');
-    // fries default 150g = 320 kcal
-    expect(result.baseMacro.kcal).toBeCloseTo(320, 1);
-    expect(result.baseMacro.fat).toBeCloseTo(15, 1);
+    // 'fries' は独立 Identity ではなく fried_main の attribute。
+    expect(result.recordIdentityId).toBe('fried_main');
+    expect(result.attributeKey).toBe('fries');
+    // fried_main defaultMacro(350kcal/F20) × fries factor(0.96/F0.81) = 336kcal/F16.2
+    expect(result.baseMacro.kcal).toBeCloseTo(336, 1);
+    expect(result.baseMacro.fat).toBeCloseTo(16.2, 1);
     expect(result.confirmMessage).toBe('フライドポテトとして記録します');
     // Style key is dropped after migration
     expect(result.styleKey).toBeUndefined();
   });
 
-  it('discards amountValue when migration crosses to a different unit (chicken_thigh 100g + fried)', () => {
-    // Bug regression: previously amountValue=100 (g) was applied to fried_main
-    // (piece, default 3) → 100/3 ≈ 33x → ~15050 kcal. After the fix the
-    // resolver must use fried_main's default amount (3 pieces).
+  it('honors amountValue across a migration when units match (chicken_thigh 100g + fried → karaage_momo 100g)', () => {
+    // resolveLog is a pure function that trusts the caller's amountValue as-is;
+    // it does NOT know whether the unit is meaningful for the recordIdentity.
+    // That responsibility lives in IdentityLogSheet's resolveAmountBasis(),
+    // which only carries the numeric value across a migration when the origin
+    // and recordIdentity share the same amount unit (both 'g' here, since
+    // karaage_momo/karaage_mune were given g-based amount overrides precisely
+    // so a raw-chicken gram value keeps meaning after the 唐揚げ振替).
     const result = resolveLog({
       originIdentityId: 'chicken_thigh',
       styleKey: 'fried',
-      amountValue: 100, // origin's unit (g) — should be ignored after migration
+      amountValue: 100,
     });
 
     expect(result.recordIdentityId).toBe('fried_main');
-    expect(result.amountValue).toBe(3); // fried_main.amount.default
-    // 350 × 1.29 (karaage) = 451.5 — sensible value, not 15050.
-    expect(result.baseMacro.kcal).toBeCloseTo(451.5, 1);
+    expect(result.attributeKey).toBe('karaage_momo');
+    expect(result.amountValue).toBe(100);
+    // fried_main default 350 × karaage_momo factor 0.857 (≒300kcal/100g) at amountFactor=1
+    expect(result.baseMacro.kcal).toBeCloseTo(300, 0);
   });
 
-  it('Style migration takes priority over Attribute migration (chicken_thigh + no_skin + fried → fried_main(karaage))', () => {
+  it('scales amountValue proportionally past a migration (chicken_thigh 200g + fried)', () => {
+    const result = resolveLog({
+      originIdentityId: 'chicken_thigh',
+      styleKey: 'fried',
+      amountValue: 200,
+    });
+
+    expect(result.recordIdentityId).toBe('fried_main');
+    expect(result.amountValue).toBe(200);
+    // 300kcal/100g baseline × 2 = ~600kcal
+    expect(result.baseMacro.kcal).toBeCloseTo(600, 0);
+  });
+
+  it('Style migration takes priority over Attribute migration (chicken_thigh + no_skin + fried → fried_main(karaage_momo))', () => {
     const result = resolveLog({
       originIdentityId: 'chicken_thigh',
       attributeKey: 'no_skin',
@@ -121,10 +141,24 @@ describe('resolveLog — Style migration', () => {
     });
 
     expect(result.recordIdentityId).toBe('fried_main');
-    expect(result.attributeKey).toBe('karaage');
-    expect(result.confirmMessage).toBe('唐揚げとして記録します');
-    // fried_main default 350 × karaage factor 1.29 = 451.5
-    expect(result.baseMacro.kcal).toBeCloseTo(451.5, 1);
+    expect(result.attributeKey).toBe('karaage_momo');
+    expect(result.confirmMessage).toBe('唐揚げ(もも)として記録します');
+    // fried_main default 350 × karaage_momo factor 0.857 = ~300kcal (at default 100g)
+    expect(result.baseMacro.kcal).toBeCloseTo(300, 0);
+  });
+
+  it('migrates chicken_lean + fried to karaage_mune (distinct, lower-fat macro from karaage_momo)', () => {
+    const result = resolveLog({
+      originIdentityId: 'chicken_lean',
+      styleKey: 'fried',
+    });
+
+    expect(result.recordIdentityId).toBe('fried_main');
+    expect(result.attributeKey).toBe('karaage_mune');
+    expect(result.confirmMessage).toBe('唐揚げ(むね)として記録します');
+    // fried_main default 350 × karaage_mune factor 0.629 = ~220kcal (at default 100g)
+    expect(result.baseMacro.kcal).toBeCloseTo(220, 0);
+    expect(result.baseMacro.fat).toBeLessThan(10);
   });
 });
 

@@ -9,11 +9,23 @@
  * 値にフォールバックする。hiddenAddonIds は二重計上防止のため最終結果から除外する。
  */
 
-import { AmountSpec, Identity } from '@/types/identity';
+import { AltAmountSpec, AmountSpec, Identity } from '@/types/identity';
 
 function findAttribute(identity: Identity, attributeKey: string | undefined) {
   if (!attributeKey) return undefined;
   return identity.attributes?.find((a) => a.key === attributeKey);
+}
+
+/**
+ * 種類に「代替の量単位」(例: 唐揚げのg⇔個数) が定義されていればそれを返す。
+ * 保存・計算は常に主単位 (getEffectiveAmountSpec) で行い、これは入力UIの
+ * 便宜レイヤーに過ぎない。
+ */
+export function getEffectiveAltAmountSpec(
+  identity: Identity,
+  attributeKey: string | undefined,
+): AltAmountSpec | undefined {
+  return findAttribute(identity, attributeKey)?.altAmount;
 }
 
 /** この種類で隠すべき Add-on id の集合 (factor に織り込み済み等)。 */

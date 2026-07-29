@@ -6,7 +6,7 @@
 import { Stack } from 'expo-router';
 import React, { useRef, useState } from 'react';
 import { Animated, Easing, Pressable, ScrollView, Text, View } from 'react-native';
-import { tokens, useTheme, type Theme } from '@/design-system';
+import { Label, tokens, useTheme, type Theme } from '@/design-system';
 import { Section, labelStyle } from '../_shared';
 
 export default function MotionScreen() {
@@ -95,9 +95,9 @@ function PlayableRow({
       onPress={play}
       style={{ flexDirection: 'row', alignItems: 'center', gap: t.spacing['3'] }}
     >
-      <Text style={{ width: 150, fontSize: t.typography.fontSize.caption1, color: t.colors.content.secondary }}>
+      <Label size="sm" tone="secondary" style={{ width: 150 }}>
         {label}
-      </Text>
+      </Label>
       <View
         style={{
           width: TRACK_WIDTH,
@@ -155,9 +155,9 @@ function PlayableSpringRow({
       onPress={play}
       style={{ flexDirection: 'row', alignItems: 'center', gap: t.spacing['3'] }}
     >
-      <Text style={{ width: 220, fontSize: t.typography.fontSize.caption1, color: t.colors.content.secondary }}>
+      <Label size="sm" tone="secondary" style={{ width: 220 }}>
         {label}
-      </Text>
+      </Label>
       <View
         style={{
           width: TRACK_WIDTH,

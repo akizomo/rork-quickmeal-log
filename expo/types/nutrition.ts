@@ -240,6 +240,11 @@ export interface AppSettings {
   kcalCarryoverDailyAmount?: number;
   /** プランの総日数。 */
   kcalCarryoverDaysTotal?: number;
+  /**
+   * Android ホーム画面ウィジェット追加を促すバナーを dismiss した時刻 (ISO)。
+   * undefined / null = 未 dismiss。一度 dismiss したら二度と表示しない。
+   */
+  widgetNudgeDismissedAtISO?: string | null;
 }
 
 export interface QuickCategory {

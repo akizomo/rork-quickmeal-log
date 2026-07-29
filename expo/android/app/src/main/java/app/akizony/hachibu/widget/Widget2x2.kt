@@ -2,10 +2,10 @@ package app.akizony.hachibu.widget
 
 import android.content.Context
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.*
+import app.akizony.hachibu.R
 import androidx.glance.GlanceId
 import androidx.glance.action.actionParametersOf
 import androidx.glance.action.clickable
@@ -34,7 +34,7 @@ class Widget2x2Glance : GlanceAppWidget() {
         Box(
             modifier = GlanceModifier
                 .fillMaxSize()
-                .background(ColorProvider(Color(0xFF1D1913.toInt())))
+                .background(ColorProvider(R.color.widget_surface_inverse))
                 .cornerRadius(16.dp)   // radius.lg
                 .padding(4.dp),        // spacing['1'] = 4
             contentAlignment = Alignment.Center
@@ -68,15 +68,13 @@ class Widget2x2Receiver : GlanceAppWidgetReceiver() {
 }
 
 // ── 共有: カテゴリボタン ──────────────────────────────────────────────────────
-// Colors: DS トークン直訳 (dark surface 上の inverse テキスト)
-//   sage[500]=#82A280  ivory[50]=#FFFDF7 に近い #F0F4EF (sage微tint版)
-//   secondary = 55% #F0F4EF,  dim = 36% #F0F4EF
+// Colors: @color/widget_* トークン参照 (colors.xml で DS primitive → semantic を宣言)
 
-private val COLOR_ACCENT    = ColorProvider(Color(0xFF82A280.toInt())) // sage[500]
-private val COLOR_PRIMARY   = ColorProvider(Color(0xFFF0F4EF.toInt())) // inverse primary
-private val COLOR_SECONDARY = ColorProvider(Color(0x8CF0F4EF.toInt())) // inverse secondary (55%)
-private val COLOR_UNDO      = ColorProvider(Color(0xFFE9C28F.toInt())) // amber — アプリ UndoToast と同色
-private val COLOR_BTN_BG    = ColorProvider(Color(0x14FFFFFF))         // white 8% — surface raised subtle
+private val COLOR_ACCENT    = ColorProvider(R.color.widget_accent)      // sage[500]
+private val COLOR_PRIMARY   = ColorProvider(R.color.widget_text_primary)
+private val COLOR_SECONDARY = ColorProvider(R.color.widget_text_secondary)
+private val COLOR_UNDO      = ColorProvider(R.color.widget_undo)
+private val COLOR_BTN_BG    = ColorProvider(R.color.widget_btn_surface)
 
 @Composable
 internal fun CategoryButtonGlance(
@@ -91,7 +89,7 @@ internal fun CategoryButtonGlance(
             Box(
                 modifier = GlanceModifier
                     .fillMaxSize()
-                    .background(ColorProvider(Color(0x3882A280))) // sage[500] 22%
+                    .background(ColorProvider(R.color.widget_btn_logged))
                     .cornerRadius(12.dp)                          // radius.md
                     .clickable(
                         actionRunCallback<UndoLogAction>(

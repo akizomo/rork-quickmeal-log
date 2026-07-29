@@ -3,4 +3,33 @@
   <color name="iconBackground">#FBF8F2</color>
   <color name="colorPrimary">#023c69</color>
   <color name="colorPrimaryDark">#355E52</color>
+
+  <!-- ── ウィジェット カラートークン ──────────────────────────────────────────
+       DS の primitive → semantic の対応をここで宣言し、
+       drawable / layout から @color/widget_* で参照する。
+       Kotlin 側の Color() リテラルもこの命名規則と揃える。      -->
+
+  <!-- surface.inverse = ivory[900] — ウィジェット背景 (dark) -->
+  <color name="widget_surface_inverse">#FF1D1913</color>
+
+  <!-- content.inverse = near-ivory[50] sage-tint — 暗面上のメインテキスト -->
+  <color name="widget_text_primary">#FFF0F4EF</color>
+
+  <!-- content.inverseSecondary = 55% widget_text_primary — サブテキスト -->
+  <color name="widget_text_secondary">#8CF0F4EF</color>
+
+  <!-- action.primary.default (dark 面) = sage[500] — アクセント / リング -->
+  <color name="widget_accent">#FF82A280</color>
+
+  <!-- undo ラベル = amber トーン (UndoToast と同色) -->
+  <color name="widget_undo">#FFE9C28F</color>
+
+  <!-- ボタン背景 = white 8% — 暗面上の raised surface -->
+  <color name="widget_btn_surface">#14FFFFFF</color>
+
+  <!-- 記録済みボタン背景 = sage[500] 22% tint -->
+  <color name="widget_btn_logged">#3882A280</color>
+
+  <!-- セパレータ/区切り線 = white 10% — 4×2 のリング列とボタン列の間の線 -->
+  <color name="widget_divider">#1AFFFFFF</color>
 </resources>

@@ -16,6 +16,7 @@ import {
   Caption,
   Chip,
   Icon,
+  IconButton,
   useTheme,
 } from '@/design-system';
 import { AmountEditDialog } from '@/components/AmountEditDialog';
@@ -28,6 +29,7 @@ import {
   resolveAddonRef,
 } from '@/constants/identity';
 import {
+  AmountSpec,
   AmountUnit,
   Identity,
 } from '@/types/identity';
@@ -38,11 +40,11 @@ import {
 } from '@/utils/identity-resolver';
 import { migrateAmountValueForUnit } from '@/utils/amount-migration';
 import {
+  getEffectiveAltAmountSpec,
   getEffectiveAmountSpec,
   getEffectiveDefaultAddonIds,
   getHiddenAddonIds,
 } from '@/utils/identity-attribute';
-import { palette } from '@/constants/theme';
 import { Macro } from '@/types/nutrition';
 
 // ---------------------------------------------------------------------------
@@ -153,6 +155,9 @@ export function IdentityLogSheet() {
   const [styleKey, setStyleKey] = useState<string | undefined>(undefined);
   const [amountValue, setAmountValue] = useState<number>(0);
   const [amountEditorOpen, setAmountEditorOpen] = useState(false);
+  // 量欄の表示単位切替 (例: 唐揚げ g⇔個)。保存・計算は常に amountValue (主単位)
+  // で行い、これは入力の便宜のための表示モードに過ぎない。
+  const [amountModeAlt, setAmountModeAlt] = useState(false);
   const [addons, setAddons] = useState<ResolveAddonInput[]>([]);
 
   // When in edit mode, use the existing log to pre-fill state.
@@ -169,12 +174,24 @@ export function IdentityLogSheet() {
       setStyleKey(undefined);
       setAmountValue(0);
       setAmountEditorOpen(false);
+      setAmountModeAlt(false);
       setAddons([]);
       return;
     }
     // Edit mode: pre-fill from the existing log
     if (editingLog) {
-      const id = editingLog.originIdentityId ?? editingLog.identityId ?? identitiesInBucket[0]?.id;
+      // A migrated log (e.g. 鶏むね + 揚げ → 唐揚げ) has originIdentityId !==
+      // identityId; its attrKey/styleKey/amountValue were all resolved against
+      // the *record* Identity (fried_main), not the origin (chicken_lean), which
+      // doesn't even define a matching Attribute. Re-open directly on the
+      // record Identity so the chip state and 量 spec line up with saved data.
+      const isMigratedLog =
+        !!editingLog.originIdentityId &&
+        !!editingLog.identityId &&
+        editingLog.originIdentityId !== editingLog.identityId;
+      const id = isMigratedLog
+        ? editingLog.identityId
+        : editingLog.originIdentityId ?? editingLog.identityId ?? identitiesInBucket[0]?.id;
       if (!id) return;
       const identity = getIdentity(id);
       const restoreAttrKey = editingLog.attrKey ?? defaultAttributeKey(identity);
@@ -189,6 +206,7 @@ export function IdentityLogSheet() {
         ? migrateAmountValueForUnit(rawAmount, editingLog.amountUnit, targetUnit)
         : rawAmount;
       setAmountValue(migrated);
+      setAmountModeAlt(false);
       setAddons(
         (editingLog.appliedAddons ?? []).map((a) => ({
           refId: a.refId,
@@ -209,6 +227,7 @@ export function IdentityLogSheet() {
     setAmountValue(
       identity ? getEffectiveAmountSpec(identity, initAttrKey).default : 1,
     );
+    setAmountModeAlt(false);
     setAddons([]);
   }, [visible, bucketKey, identityLogSheet.identityId, identitiesInBucket, editingLog]);
 
@@ -220,8 +239,30 @@ export function IdentityLogSheet() {
     setAttributeKey(attrKey);
     setStyleKey(defaultStyleKey(identity));
     setAmountValue(getEffectiveAmountSpec(identity, attrKey).default);
+    setAmountModeAlt(false);
     setAddons([]);
   }, []);
+
+  // Style/Attribute の組み合わせが PFC崩壊遮断で振替を発生させる場合、量欄が
+  // 見るべき基準は origin ではなく振替先 (recordIdentity) になる。
+  // 例: 鶏むね(g) + 調理=揚げ → 唐揚げ(むね)(g) は同じ単位なので数値を維持できるが、
+  // 振替先が piece 単位など別単位なら維持しても無意味なので既定値にリセットする。
+  const resolveAmountBasis = useCallback(
+    (attrKey: string | undefined, styleKeyArg: string | undefined) => {
+      if (!origin) return undefined;
+      const styleMigration = styleKeyArg
+        ? origin.styles?.find((s) => s.key === styleKeyArg)?.migration
+        : undefined;
+      const migration =
+        styleMigration ??
+        (attrKey ? origin.attributes?.find((a) => a.key === attrKey)?.migration : undefined);
+      if (!migration) return { identity: origin, attributeKey: attrKey };
+      const target = getIdentity(migration.identityKey);
+      if (!target) return { identity: origin, attributeKey: attrKey };
+      return { identity: target, attributeKey: migration.attributeKey ?? defaultAttributeKey(target) };
+    },
+    [origin],
+  );
 
   const handleSelectAttribute = useCallback((key: string) => {
     setAttributeKey((prev) => {
@@ -231,14 +272,29 @@ export function IdentityLogSheet() {
       if (hidden.size > 0) {
         setAddons((cur) => cur.filter((a) => !hidden.has(a.refId)));
       }
-      // 種類が変わったら常に新しい種類の既定量にリセットする。
-      // unit が同じでも default が違う (春巻=2本 vs 餃子=5個, 太巻き=1切 vs 細巻=1本 など)
-      // ため、種類切替 = 「1人前の基準が変わった」として常にリセットするのが正しい。
-      const nextSpec = getEffectiveAmountSpec(origin, key);
-      setAmountValue(nextSpec.default);
+      setAmountModeAlt(false);
+      const nextBasis = resolveAmountBasis(key, styleKey);
+      if (nextBasis?.identity) {
+        const nextSpec = getEffectiveAmountSpec(nextBasis.identity, nextBasis.attributeKey);
+        const migratesNow = !!origin.attributes?.find((a) => a.key === key)?.migration;
+        if (migratesNow) {
+          // 振替時は単位が一致する限り数値を引き継ぐ (例: g→g の唐揚げ振替)。
+          // 単位が変わる場合のみ振替先の既定値にリセットする。
+          const prevBasis = resolveAmountBasis(prev, styleKey);
+          const prevSpec = prevBasis?.identity
+            ? getEffectiveAmountSpec(prevBasis.identity, prevBasis.attributeKey)
+            : undefined;
+          setAmountValue((cur) => (prevSpec?.unit === nextSpec.unit ? cur : nextSpec.default));
+        } else {
+          // 通常の種類切替は常に新しい種類の既定量にリセットする。
+          // unit が同じでも default が違う (春巻=2本 vs 餃子=5個 等) ため、
+          // 種類切替 = 「1人前の基準が変わった」として常にリセットするのが正しい。
+          setAmountValue(nextSpec.default);
+        }
+      }
       return key;
     });
-  }, [origin]);
+  }, [origin, styleKey, resolveAmountBasis]);
 
   const handleSelectStyle = useCallback((key: string) => {
     const targetMigration = origin?.styles?.find((s) => s.key === key)?.migration;
@@ -248,25 +304,74 @@ export function IdentityLogSheet() {
       openIdentityLogSheet(targetMigration.bucketKey, {
         identityId: targetMigration.identityKey,
         editingLogId: identityLogSheet.editingLogId,
+        sourceTab: identityLogSheet.sourceTab,
       });
       return;
     }
-    setStyleKey((prev) => (prev === key ? prev : key));
-  }, [origin, openIdentityLogSheet, identityLogSheet.editingLogId]);
+    setStyleKey((prev) => {
+      if (prev === key || !origin) return prev;
+      setAmountModeAlt(false);
+      const nextBasis = resolveAmountBasis(attributeKey, key);
+      if (nextBasis?.identity) {
+        const prevBasis = resolveAmountBasis(attributeKey, prev);
+        const nextSpec = getEffectiveAmountSpec(nextBasis.identity, nextBasis.attributeKey);
+        const prevSpec = prevBasis?.identity
+          ? getEffectiveAmountSpec(prevBasis.identity, prevBasis.attributeKey)
+          : undefined;
+        setAmountValue((cur) => (prevSpec?.unit === nextSpec.unit ? cur : nextSpec.default));
+      }
+      return key;
+    });
+  }, [origin, attributeKey, resolveAmountBasis, openIdentityLogSheet, identityLogSheet.editingLogId]);
 
-  const handleSelectAmountChip = useCallback((value: number) => {
-    setAmountValue(value);
-  }, []);
-
-  // 種類連動の実効 amount spec (種類に量上書きが無ければ Identity.amount)
-  const effectiveAmount = useMemo(
-    () => (origin ? getEffectiveAmountSpec(origin, attributeKey) : undefined),
-    [origin, attributeKey],
+  // 種類/調理連動の実効 amount spec。振替が発生している場合は振替先 Identity の
+  // spec を見る (量欄の単位・チップ・既定値を実際の計算基準と一致させるため)。
+  const amountBasis = useMemo(
+    () => resolveAmountBasis(attributeKey, styleKey),
+    [resolveAmountBasis, attributeKey, styleKey],
   );
 
+  const effectiveAmount = useMemo(
+    () => (amountBasis?.identity ? getEffectiveAmountSpec(amountBasis.identity, amountBasis.attributeKey) : undefined),
+    [amountBasis],
+  );
+
+  // 主単位とは別の入力単位 (例: 唐揚げのg⇔個)。保存は常に主単位 (amountValue)
+  // で行い、これは表示・入力の便宜レイヤーに過ぎない。
+  const altAmountSpec = useMemo(
+    () => (amountBasis?.identity ? getEffectiveAltAmountSpec(amountBasis.identity, amountBasis.attributeKey) : undefined),
+    [amountBasis],
+  );
+  const isAltMode = amountModeAlt && !!altAmountSpec;
+
+  // 画面に出す実効 spec / 値。alt モードのときだけ換算する。
+  const activeAmountSpec: AmountSpec | undefined = isAltMode && altAmountSpec
+    ? {
+        unit: altAmountSpec.unit,
+        default: altAmountSpec.default,
+        unitLabel: altAmountSpec.unitLabel,
+        chips: altAmountSpec.chips,
+        min: altAmountSpec.min,
+        max: altAmountSpec.max,
+        step: altAmountSpec.step,
+      }
+    : effectiveAmount;
+  const displayAmountValue = isAltMode && altAmountSpec
+    ? Math.round(amountValue / altAmountSpec.gramsPerUnit)
+    : amountValue;
+
+  const handleSelectAmountChip = useCallback((value: number) => {
+    setAmountValue(isAltMode && altAmountSpec ? value * altAmountSpec.gramsPerUnit : value);
+  }, [isAltMode, altAmountSpec]);
+
+  const handleToggleAmountMode = useCallback(() => {
+    if (!altAmountSpec) return;
+    setAmountModeAlt((prev) => !prev);
+  }, [altAmountSpec]);
+
   const amountConfig = useMemo(
-    () => (effectiveAmount ? buildIdentityAmountEditConfig(effectiveAmount) : null),
-    [effectiveAmount],
+    () => (activeAmountSpec ? buildIdentityAmountEditConfig(activeAmountSpec) : null),
+    [activeAmountSpec],
   );
 
   const toggleAddon = useCallback(
@@ -347,17 +452,18 @@ export function IdentityLogSheet() {
 
   const canSave = !!resolved && resolved.totalMacro.kcal > 0;
 
-  // 種類連動のトッピング既定リスト。選択中の Add-on は (既定外でも) 常に表示し続け、
-  // 編集再開時や種類切替時に選択済みチップが消えないようにする。
+  // 種類連動のトッピング既定リスト。振替が発生している場合は振替先 Identity の
+  // トッピング (例: 唐揚げ=レモン/マヨ) を表示する。選択中の Add-on は (既定外でも)
+  // 常に表示し続け、編集再開時や種類切替時に選択済みチップが消えないようにする。
   const visibleAddonIds = useMemo(() => {
-    if (!origin) return [];
-    const base = getEffectiveDefaultAddonIds(origin, attributeKey);
-    const hidden = getHiddenAddonIds(origin, attributeKey);
+    if (!amountBasis?.identity) return [];
+    const base = getEffectiveDefaultAddonIds(amountBasis.identity, amountBasis.attributeKey);
+    const hidden = getHiddenAddonIds(amountBasis.identity, amountBasis.attributeKey);
     const selectedExtra = addons
       .map((a) => a.refId)
       .filter((id) => !base.includes(id) && !hidden.has(id));
     return [...base, ...selectedExtra];
-  }, [origin, attributeKey, addons]);
+  }, [amountBasis, addons]);
 
   return (
     <>
@@ -374,25 +480,22 @@ export function IdentityLogSheet() {
       headerRight={
         <View style={{ flexDirection: 'row', gap: t.spacing['3'], alignItems: 'center' }}>
           {editingLog ? (
-            <Pressable
+            <IconButton
+              icon="delete"
+              size="lg"
+              tone="danger"
               onPress={confirmDelete}
-              accessibilityRole="button"
               accessibilityLabel="この記録を削除"
-              hitSlop={8}
               testID="ils-delete"
-            >
-              <Icon name="delete" size={22} color={palette.danger} />
-            </Pressable>
+            />
           ) : null}
-          <Pressable
+          <IconButton
+            icon="close"
+            size="lg"
             onPress={closeIdentityLogSheet}
-            accessibilityRole="button"
             accessibilityLabel="閉じる"
-            hitSlop={8}
             testID="ils-close"
-          >
-            <Icon name="close" size={22} color={t.colors.content.secondary} />
-          </Pressable>
+          />
         </View>
       }
       // Fixed half-screen sheet. `expandToFull` keeps the sheet from shrinking
@@ -465,24 +568,38 @@ export function IdentityLogSheet() {
             </Section>
           ) : null}
 
-          {/* Amount (種類連動の実効 spec を使う) */}
+          {/* Amount (振替先があればその実効 spec を使う) */}
           {(() => {
-            const amt = effectiveAmount ?? origin.amount;
+            const amt = activeAmountSpec ?? origin.amount;
             const amtUnitLabel = amt.unitLabel ?? UNIT_LABEL[amt.unit];
+            const amountRefIdentity = amountBasis?.identity ?? origin;
+            const toggleLabel = isAltMode ? 'gに切り替え' : '個数に切り替え';
             return (
           <Section title="量">
-            {amt.chips && amt.chips.length > 0 ? (
+            {(amt.chips && amt.chips.length > 0) || altAmountSpec ? (
               <ChipRow>
-                {amt.chips.map((c) => (
+                {(amt.chips ?? []).map((c) => (
                   <Chip
                     key={`${c.label}-${c.value}`}
                     label={chipDisplayLabel(c.label, amtUnitLabel)}
-                    selected={amountValue === c.value}
+                    selected={displayAmountValue === c.value}
                     onPress={() => handleSelectAmountChip(c.value)}
                     size="sm"
                     testID={`ils-amount-${c.value}`}
                   />
                 ))}
+                {altAmountSpec ? (
+                  <Pressable
+                    onPress={handleToggleAmountMode}
+                    hitSlop={8}
+                    accessibilityRole="button"
+                    accessibilityLabel={toggleLabel}
+                    testID="ils-amount-mode-toggle"
+                    style={{ justifyContent: 'center', paddingHorizontal: t.spacing['2'] }}
+                  >
+                    <Caption tone="secondary">{toggleLabel}</Caption>
+                  </Pressable>
+                ) : null}
               </ChipRow>
             ) : null}
             <Pressable
@@ -490,26 +607,26 @@ export function IdentityLogSheet() {
               style={[
                 ilsStyles.amountRow,
                 {
-                  marginTop: amt.chips ? t.spacing['2'] : 0,
+                  marginTop: (amt.chips && amt.chips.length > 0) || altAmountSpec ? t.spacing['2'] : 0,
                   backgroundColor: t.colors.surface.raised,
                   borderRadius: t.radius.lg,
                 },
               ]}
               accessibilityRole="button"
-              accessibilityLabel={`量を変更。現在 ${amountValue}${amtUnitLabel}`}
+              accessibilityLabel={`量を変更。現在 ${displayAmountValue}${amtUnitLabel}`}
               testID="ils-amount-row"
             >
               <Text style={[ilsStyles.amountRowValue, { color: t.colors.content.primary, fontSize: t.typography.fontSize['2xl'] }]}>
-                {amountValue}
+                {displayAmountValue}
                 <Text style={{ color: t.colors.content.secondary, fontSize: t.typography.fontSize.sm }}>
                   {' '}{amtUnitLabel}
                 </Text>
               </Text>
               <Icon name="edit" size={16} color={t.colors.content.tertiary} />
             </Pressable>
-            {origin.referenceDescription ? (
+            {amountRefIdentity.referenceDescription && amt.unit === amountRefIdentity.amount.unit ? (
               <Caption tone="tertiary" style={{ marginTop: t.spacing['2'] }} testID="ils-amount-ref">
-                目安: {origin.referenceDescription}
+                目安: {amountRefIdentity.referenceDescription}
               </Caption>
             ) : null}
           </Section>
@@ -561,10 +678,10 @@ export function IdentityLogSheet() {
       <AmountEditDialog
         visible={amountEditorOpen}
         config={amountConfig}
-        initialValue={amountValue}
+        initialValue={displayAmountValue}
         onClose={(next) => {
           setAmountEditorOpen(false);
-          if (next !== null) setAmountValue(next);
+          if (next !== null) setAmountValue(isAltMode && altAmountSpec ? next * altAmountSpec.gramsPerUnit : next);
         }}
         testID="ils-amount-dialog"
       />
@@ -608,7 +725,7 @@ function FooterPreview({ macro }: { macro: Macro | null }) {
         style={{
           fontSize: t.typography.fontSize.lg,
           fontWeight: '700',
-          color: ready ? palette.sageDeep : t.colors.content.tertiary,
+          color: ready ? t.colors.action.primary.default : t.colors.content.tertiary,
         }}
         testID="ils-preview-kcal"
       >
@@ -617,7 +734,7 @@ function FooterPreview({ macro }: { macro: Macro | null }) {
       <Text
         style={{
           fontSize: t.typography.fontSize.xs,
-          color: palette.textMuted,
+          color: t.colors.content.secondary,
           marginTop: 2,
         }}
         testID="ils-preview-pfc"

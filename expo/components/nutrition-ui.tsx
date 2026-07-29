@@ -27,7 +27,7 @@ import { elevation } from '@/design-system/tokens/primitives/elevation';
 import { useAppState } from '@/providers/app-state-provider';
 import { useHealthSyncContext } from '@/providers/health-sync-provider';
 import { DishDraft, DishSize, IngredientDraft, Macro, PortionValue } from '@/types/nutrition';
-import { adjustedTargetKcal, calcBaselineActiveKcal, getAdjustedPfcForDate, getEffectiveSubscriptionStatus, getTdeeExerciseKcalForDate, stepsToActiveKcal, trialDaysRemaining } from '@/utils/goals';
+import { adjustedTargetKcal, calcBaselineActiveKcal, carryoverSoftFloorKcal, classifyCarryoverDeduction, getAdjustedPfcForDate, getEffectiveSubscriptionStatus, getTdeeExerciseKcalForDate, minCarryoverDays, stepsToActiveKcal, trialDaysRemaining } from '@/utils/goals';
 import { buildDishMacro, clampPortion, computeIngredient, draftFromLog, formatDateKey, formatMacroText, getIngredientSubtypeDef, getIngredientSubtypeDefs, getQuickCategories, getSubtypes, getToppingsForSubtype, summarizeToppings } from '@/utils/nutrition';
 import { formatDayLabel, isSameDay, sumForDate } from '@/utils/history';
 
@@ -511,16 +511,58 @@ function CarryoverDaySheet({
   mode?: 'start' | 'edit';
 }) {
   const t = useTheme();
-  const MAX_PER_DAY = 250;
-  const minDays = Math.max(1, Math.ceil(surplusKcal / MAX_PER_DAY));
+  const { profile } = useAppState();
   const maxDays = 14;
-  const [days, setDays] = useState(() => Math.min(Math.max(minDays, 7), maxDays));
+  // hard床を割らない最小日数 (ユーザーが下回れないように−ボタンをブロックする境界)
+  const hardMinDays = minCarryoverDays(profile.targetCalories, surplusKcal, maxDays);
+  const [days, setDays] = useState(() => Math.min(Math.max(hardMinDays, 7), maxDays));
+  // hard境界で−を押したときだけ一時表示するエラーフラグ
+  const [showHardError, setShowHardError] = useState(false);
 
   useEffect(() => {
-    if (visible) setDays(Math.min(Math.max(minDays, 7), maxDays));
-  }, [visible, minDays, maxDays]);
+    if (visible) {
+      setDays(Math.min(Math.max(hardMinDays, 7), maxDays));
+      setShowHardError(false);
+    }
+  }, [visible, hardMinDays, maxDays]);
 
   const perDay = Math.ceil(surplusKcal / days);
+  const verdict = classifyCarryoverDeduction(profile.targetCalories, perDay, profile.biologicalBasis);
+
+  const handleDecrement = useCallback(() => {
+    if (days <= 1) return;
+    const newDays = days - 1;
+    const newPerDay = Math.ceil(surplusKcal / newDays);
+    const newVerdict = classifyCarryoverDeduction(profile.targetCalories, newPerDay, profile.biologicalBasis);
+    if (newVerdict === 'hard') {
+      setShowHardError(true);
+      return;
+    }
+    setShowHardError(false);
+    setDays(newDays);
+  }, [days, surplusKcal, profile.targetCalories, profile.biologicalBasis]);
+
+  const handleIncrement = useCallback(() => {
+    if (days >= maxDays) return;
+    setShowHardError(false);
+    setDays((d) => Math.min(maxDays, d + 1));
+  }, [days, maxDays]);
+
+  // インラインの注意 / エラー文言
+  let warnText: string | null = null;
+  let warnColor = t.colors.status.warning.default;
+  if (showHardError) {
+    const blocked = profile.targetCalories - Math.ceil(surplusKcal / (days - 1));
+    warnText = `1日 ${blocked.toLocaleString()} kcal は健康的な目安を大きく下回るため設定できません`;
+    warnColor = t.colors.status.danger.default;
+  } else if (verdict === 'soft') {
+    const effective = profile.targetCalories - perDay;
+    const softFloor = carryoverSoftFloorKcal(profile.biologicalBasis);
+    warnText = `1日 ${effective.toLocaleString()} kcal — 推奨される最低ライン（${softFloor.toLocaleString()} kcal）を下回ります`;
+  }
+
+  const canDecrease = days > 1;
+  const canIncrease = days < maxDays;
 
   return (
     <BottomSheet
@@ -530,6 +572,7 @@ function CarryoverDaySheet({
       primaryAction={{
         label: mode === 'edit' ? `${days}日間に変更` : `${days}日間で調整を開始`,
         onPress: () => { onClose(); onConfirm(days); },
+        disabled: verdict === 'hard',
       }}
       secondaryAction={mode === 'edit' && onCancel ? {
         label: 'プランをやめる',
@@ -540,26 +583,26 @@ function CarryoverDaySheet({
     >
       <View style={{ gap: t.spacing['1'] }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: t.spacing['2'] }}>
-          <Caption tone="secondary">余剰カロリー</Caption>
-          <Caption weight="semibold">+{surplusKcal} kcal</Caption>
+          <Body size="sm" tone="secondary">余剰カロリー</Body>
+          <Body size="sm" weight="semibold">+{surplusKcal} kcal</Body>
         </View>
         <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: t.colors.border.subtle }} />
         <View style={{ paddingVertical: t.spacing['4'], alignItems: 'center', gap: t.spacing['2'] }}>
-          <Caption tone="secondary">分割する日数</Caption>
+          <Body size="sm" tone="secondary">分割する日数</Body>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.spacing['6'] }}>
             <Pressable
-              onPress={() => setDays((d) => Math.max(minDays, d - 1))}
+              onPress={handleDecrement}
               hitSlop={12}
-              disabled={days <= minDays}
+              disabled={!canDecrease}
               style={({ pressed }) => ({
                 width: 40, height: 40,
                 borderRadius: t.radius.full,
-                backgroundColor: days <= minDays ? t.colors.surface.sunken : pressed ? t.colors.surface.sunken : t.colors.surface.raised,
+                backgroundColor: !canDecrease ? t.colors.surface.sunken : pressed ? t.colors.surface.sunken : t.colors.surface.raised,
                 alignItems: 'center', justifyContent: 'center',
               })}
               accessibilityLabel="日数を減らす"
             >
-              <Icon name="remove" size={20} color={days <= minDays ? t.colors.content.disabled : t.colors.content.primary} />
+              <Icon name="remove" size={20} color={!canDecrease ? t.colors.content.disabled : t.colors.content.primary} />
             </Pressable>
             <View style={{ alignItems: 'center' }}>
               <Text style={{
@@ -573,25 +616,30 @@ function CarryoverDaySheet({
               <Caption tone="secondary">日間</Caption>
             </View>
             <Pressable
-              onPress={() => setDays((d) => Math.min(maxDays, d + 1))}
+              onPress={handleIncrement}
               hitSlop={12}
-              disabled={days >= maxDays}
+              disabled={!canIncrease}
               style={({ pressed }) => ({
                 width: 40, height: 40,
                 borderRadius: t.radius.full,
-                backgroundColor: days >= maxDays ? t.colors.surface.sunken : pressed ? t.colors.surface.sunken : t.colors.surface.raised,
+                backgroundColor: !canIncrease ? t.colors.surface.sunken : pressed ? t.colors.surface.sunken : t.colors.surface.raised,
                 alignItems: 'center', justifyContent: 'center',
               })}
               accessibilityLabel="日数を増やす"
             >
-              <Icon name="add" size={20} color={days >= maxDays ? t.colors.content.disabled : t.colors.content.primary} />
+              <Icon name="add" size={20} color={!canIncrease ? t.colors.content.disabled : t.colors.content.primary} />
             </Pressable>
           </View>
-          <Caption tone="secondary">
+          <Body size="sm" tone="secondary">
             1日あたり{' '}
-            <Caption weight="semibold" tone="primary">{perDay} kcal</Caption>
+            <Body size="sm" weight="semibold" tone="primary">{perDay} kcal</Body>
             {' '}ずつ差し引き
-          </Caption>
+          </Body>
+          {warnText ? (
+            <Body size="sm" style={{ color: warnColor, textAlign: 'center', paddingHorizontal: t.spacing['4'] }}>
+              {warnText}
+            </Body>
+          ) : null}
         </View>
         <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: t.colors.border.subtle }} />
         <Body size="sm" tone="secondary" style={{ paddingTop: t.spacing['2'] }}>

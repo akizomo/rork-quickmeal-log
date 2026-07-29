@@ -1,6 +1,7 @@
 import React, { memo, useCallback, useMemo, useRef, useState } from 'react';
 import {
   Animated,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -8,7 +9,7 @@ import {
   View,
 } from 'react-native';
 
-import { useTheme } from '@/design-system';
+import { Body, Icon, IconButton, useTheme } from '@/design-system';
 import { fontSize } from '@/design-system/tokens/primitives/typography';
 import { elevation } from '@/design-system/tokens/primitives/elevation';
 import { duration } from '@/design-system/tokens/primitives/motion';
@@ -22,6 +23,7 @@ import type { BucketKey } from '@/types/identity';
 import { getIdentitiesInBucket, getBucketDef } from '@/constants/identity';
 import { deriveDefaultTab, FREQUENT_TAB_MIN_LOGS, rankFrequentSelections } from '@/utils/quick-log-history';
 import type { QuickLogTabKey, RankedLogItem } from '@/types/quick-log';
+import { widgetRequestPin } from '@/utils/widget-bridge';
 // MVP では非表示 (PRD v1.5 §4.2 / §13 P0)。P1-C 再有効化時に import コメントを外す。
 // import { IdentitySearchBar } from '@/components/IdentitySearchBar';
 
@@ -45,6 +47,69 @@ export const QUICK_LOG_TOKENS = {
   labelFontSize: 11,
   labelLineHeight: 14,
 };
+
+/** ウィジェット追加ナッジバナーの高さ (paddingTop + content + paddingBottom + marginBottom)。
+ *  HomeDatePager の bottomReserve 計算に使う。 */
+export const WIDGET_NUDGE_HEIGHT = 84;
+
+function WidgetNudgeBanner() {
+  const t = useTheme();
+  const { settings, updateSettingsValues } = useAppState();
+
+  const history = settings.quickLogHistory as Record<string, unknown[]> | undefined;
+  const totalEntries = history
+    ? Object.values(history).reduce((sum, arr) => sum + arr.length, 0)
+    : 0;
+
+  if (
+    Platform.OS !== 'android' ||
+    !!settings.widgetNudgeDismissedAtISO ||
+    totalEntries < FREQUENT_TAB_MIN_LOGS
+  ) {
+    return null;
+  }
+
+  const handleDismiss = () => {
+    updateSettingsValues({ widgetNudgeDismissedAtISO: new Date().toISOString() });
+  };
+
+  const handleAdd = () => {
+    void widgetRequestPin();
+    updateSettingsValues({ widgetNudgeDismissedAtISO: new Date().toISOString() });
+  };
+
+  return (
+    <View
+      style={{
+        backgroundColor: t.colors.action.primary.container,
+        borderRadius: t.radius.md,
+        paddingHorizontal: t.spacing['4'],
+        paddingTop: t.spacing['3'],
+        paddingBottom: t.spacing['2'],
+        marginBottom: t.spacing['2'],
+      }}
+      accessibilityRole="alert"
+    >
+      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: t.spacing['2'] }}>
+        <Icon name="widget" size={18} color={t.colors.action.primary.default} />
+        <View style={{ flex: 1, gap: t.spacing['0.5'] }}>
+          <Body size="md" weight="semibold" tone="primary">ホーム画面から1タップで記録</Body>
+          <Body size="sm" tone="secondary">アプリを開かずに記録できます</Body>
+          <Pressable
+            onPress={handleAdd}
+            hitSlop={8}
+            style={({ pressed }) => ({ alignSelf: 'flex-start', opacity: pressed ? 0.5 : 1, marginTop: t.spacing['0.5'] })}
+            accessibilityRole="button"
+            accessibilityLabel="ウィジェットをホーム画面に追加する"
+          >
+            <Body size="sm" weight="semibold" tone="link">追加する</Body>
+          </Pressable>
+        </View>
+        <IconButton icon="close" size="sm" tone="tertiary" onPress={handleDismiss} accessibilityLabel="閉じる" />
+      </View>
+    </View>
+  );
+}
 
 const QUICK_LOG_COLORS = {
   // セグメントコントロールの選択中ピルと同じ ivory[50] にして、
@@ -425,12 +490,7 @@ export const QuickLogSection = memo(function QuickLogSection() {
 
   return (
     <View style={styles.section} testID="quick-log-section">
-      {/*
-        Identity 検索バーは MVP では非表示 (PRD v1.5 §4.2 / §13 P0)。
-        9 ボタン × 自動学習の効果を純粋に計測するため一旦オフ。
-        P1-C で `quick_log_unfound_event` (§10.2.1) を見て再有効化を判断する。
-        開発時の動作確認は app/dev/identity-log.tsx 経由で可能。
-      */}
+      <WidgetNudgeBanner />
       {/* <View style={{ marginBottom: QUICK_LOG_TOKENS.segmentBottomSpacing }}>
         <IdentitySearchBar />
       </View> */}

@@ -1,11 +1,12 @@
 import { Stack, useRouter } from 'expo-router';
 import React from 'react';
-import { Alert, ScrollView, StyleSheet, Switch, View } from 'react-native';
+import { Alert, Platform, ScrollView, StyleSheet, Switch, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { SettingsLinkRow, SettingsListCard, SettingsSectionLabel } from '@/components/SettingsList';
 import { Body, Card, useTheme } from '@/design-system';
 import { useAppState } from '@/providers/app-state-provider';
+import { widgetRequestPin } from '@/utils/widget-bridge';
 
 export default function SettingsRoute() {
   const router = useRouter();
@@ -84,6 +85,20 @@ export default function SettingsRoute() {
                 />
               </SettingsListCard>
             </View>
+
+            {/* §ウィジェット (Android のみ) */}
+            {Platform.OS === 'android' && (
+              <View style={styles.section}>
+                <SettingsSectionLabel>ウィジェット</SettingsSectionLabel>
+                <SettingsListCard>
+                  <SettingsLinkRow
+                    label="ホーム画面ウィジェットを追加"
+                    showChevron={false}
+                    onPress={() => { void widgetRequestPin(); }}
+                  />
+                </SettingsListCard>
+              </View>
+            )}
 
             {/* §情報 */}
             <View style={styles.section}>

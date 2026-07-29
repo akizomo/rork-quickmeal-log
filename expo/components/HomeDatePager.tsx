@@ -3,6 +3,7 @@ import React, { forwardRef, memo, useCallback, useEffect, useImperativeHandle, u
 import {
   FlatList,
   ListRenderItemInfo,
+  Platform,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -22,20 +23,22 @@ import {
 import { formatDateKey } from '@/utils/nutrition';
 
 import { PEEK_HEIGHT_PX } from '@/components/DayLogBottomSheet';
-import { getQuickLogButtonHeight, QUICK_LOG_TOKENS, QuickLogSection } from '@/components/QuickLogSection';
+import { getQuickLogButtonHeight, QUICK_LOG_TOKENS, QuickLogSection, WIDGET_NUDGE_HEIGHT } from '@/components/QuickLogSection';
+import { FREQUENT_TAB_MIN_LOGS } from '@/utils/quick-log-history';
 import { StatusCard } from '@/components/nutrition-ui';
 
 // QuickLog と BottomSheet peek の間のギャップ (左右パディングと揃える)
 const QUICKLOG_BOTTOM_GAP = 16;
 
 // QuickLogSection の自然高さ (search bar コメントアウト中の前提):
-// sectionPaddingTop + segmentHeight + segmentBottomSpacing
+// sectionPaddingTop + [nudge banner] + segmentHeight + segmentBottomSpacing
 // + 3 * buttonHeight + 2 * gridGap + sectionPaddingBottom
-function computeQuickLogHeight(screenWidth: number): number {
+function computeQuickLogHeight(screenWidth: number, showWidgetNudge: boolean): number {
   const buttonH = getQuickLogButtonHeight(screenWidth);
   const t = QUICK_LOG_TOKENS;
   return (
     t.sectionPaddingTop +
+    (showWidgetNudge ? WIDGET_NUDGE_HEIGHT : 0) +
     t.segmentHeight +
     t.segmentBottomSpacing +
     3 * buttonH +
@@ -211,8 +214,16 @@ export const HomeDatePager = memo(
     []
   );
 
+  // ウィジェットナッジバナーの表示有無 (QuickLogSection と判定を揃える)
+  const showWidgetNudge = useMemo(() => {
+    if (Platform.OS !== 'android' || !!settings.widgetNudgeDismissedAtISO) return false;
+    const h = settings.quickLogHistory as Record<string, unknown[]> | undefined;
+    const total = h ? Object.values(h).reduce((sum, arr) => sum + arr.length, 0) : 0;
+    return total >= FREQUENT_TAB_MIN_LOGS;
+  }, [settings.widgetNudgeDismissedAtISO, settings.quickLogHistory]);
+
   // QuickLog の自然高さ + peek 領域 = DayPage 下端で空けておくべきエリア
-  const quickLogHeight = useMemo(() => computeQuickLogHeight(width), [width]);
+  const quickLogHeight = useMemo(() => computeQuickLogHeight(width, showWidgetNudge), [width, showWidgetNudge]);
   const bottomReserve = PEEK_HEIGHT_PX + QUICKLOG_BOTTOM_GAP + quickLogHeight;
 
   // Notify parent and sync loggingDate so QuickLog writes to the viewed day.

@@ -2,9 +2,9 @@ package app.akizony.hachibu.widget
 
 import android.content.Context
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.glance.*
+import app.akizony.hachibu.R
 import androidx.glance.GlanceId
 import androidx.glance.LocalSize
 import androidx.glance.action.clickable
@@ -37,7 +37,7 @@ class Widget2x2RingGlance : GlanceAppWidget() {
         Box(
             modifier = GlanceModifier
                 .fillMaxSize()
-                .background(ColorProvider(Color(0xFF1D1913.toInt())))
+                .background(ColorProvider(R.color.widget_surface_inverse))
                 .cornerRadius(16.dp)
                 .padding(8.dp)
                 .clickable(openAppAction(context)),

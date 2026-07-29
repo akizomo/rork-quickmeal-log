@@ -7,6 +7,7 @@
 
 import { getIdentity } from '@/constants/identity';
 import {
+  getEffectiveAltAmountSpec,
   getEffectiveAmountSpec,
   getEffectiveDefaultAddonIds,
   getHiddenAddonIds,
@@ -31,11 +32,19 @@ describe('getEffectiveDefaultAddonIds', () => {
     expect(dango).not.toContain('honey');
   });
 
-  it('揚げもの: 唐揚げ=レモン/マヨ, とんかつ=ソース と出し分かれる', () => {
+  it('揚げもの: 唐揚げ(もも/むね)=レモン/マヨ, とんかつ=ソース と出し分かれる', () => {
     const fried = getIdentity('fried_main')!;
-    expect(getEffectiveDefaultAddonIds(fried, 'karaage')).toEqual(['lemon_squeeze', 'mayo']);
+    expect(getEffectiveDefaultAddonIds(fried, 'karaage_momo')).toEqual(['lemon_squeeze', 'mayo']);
+    expect(getEffectiveDefaultAddonIds(fried, 'karaage_mune')).toEqual(['lemon_squeeze', 'mayo']);
     expect(getEffectiveDefaultAddonIds(fried, 'tonkatsu')).toEqual(['sauce', 'mayo']);
     expect(getEffectiveDefaultAddonIds(fried, 'ebi_fry')).toEqual(['tartar', 'lemon_squeeze']);
+  });
+
+  it('唐揚げ(もも/むね)は g 単位の量に切り替わる (振替元の鶏肉gと単位を揃える)', () => {
+    const fried = getIdentity('fried_main')!;
+    expect(getEffectiveAmountSpec(fried, 'karaage_momo').unit).toBe('g');
+    expect(getEffectiveAmountSpec(fried, 'karaage_mune').unit).toBe('g');
+    expect(getEffectiveAmountSpec(fried, 'tonkatsu').unit).toBe('piece');
   });
 
   it('hiddenAddonIds の Add-on は既定リストから除外される (月見うどんの卵)', () => {
@@ -110,6 +119,26 @@ describe('getEffectiveAmountSpec', () => {
     const spec = getEffectiveAmountSpec(tenshin, 'harumaki');
     expect(spec.default).toBe(2);
     expect(spec.unitLabel).toBe('本');
+  });
+});
+
+describe('getEffectiveAltAmountSpec', () => {
+  it('唐揚げ(もも/むね)は g⇔個数 の代替単位を持つ (外食時は個数で数えられる)', () => {
+    const fried = getIdentity('fried_main')!;
+    const momoAlt = getEffectiveAltAmountSpec(fried, 'karaage_momo');
+    expect(momoAlt?.unit).toBe('piece');
+    expect(momoAlt?.gramsPerUnit).toBeGreaterThan(0);
+    expect(getEffectiveAltAmountSpec(fried, 'karaage_mune')?.unit).toBe('piece');
+  });
+
+  it('とんかつ等 altAmount 未定義の種類は undefined', () => {
+    const fried = getIdentity('fried_main')!;
+    expect(getEffectiveAltAmountSpec(fried, 'tonkatsu')).toBeUndefined();
+  });
+
+  it('属性キー未指定なら undefined', () => {
+    const fried = getIdentity('fried_main')!;
+    expect(getEffectiveAltAmountSpec(fried, undefined)).toBeUndefined();
   });
 });
 

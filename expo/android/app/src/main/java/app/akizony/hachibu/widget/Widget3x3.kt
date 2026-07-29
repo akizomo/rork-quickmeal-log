@@ -2,10 +2,10 @@ package app.akizony.hachibu.widget
 
 import android.content.Context
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.*
+import app.akizony.hachibu.R
 import androidx.glance.GlanceId
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
@@ -38,7 +38,7 @@ class Widget3x3Glance : GlanceAppWidget() {
         Box(
             modifier = GlanceModifier
                 .fillMaxSize()
-                .background(ColorProvider(Color(0xFF1D1913.toInt())))
+                .background(ColorProvider(R.color.widget_surface_inverse))
                 .cornerRadius(16.dp)
                 .padding(8.dp),
             contentAlignment = Alignment.TopStart
@@ -67,7 +67,7 @@ class Widget3x3Glance : GlanceAppWidget() {
                             Text(
                                 consumed.toString(),
                                 style = TextStyle(
-                                    color      = ColorProvider(Color(0xFFF0F4EF.toInt())),
+                                    color      = ColorProvider(R.color.widget_text_primary),
                                     fontSize   = 13.sp,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -75,7 +75,7 @@ class Widget3x3Glance : GlanceAppWidget() {
                             Text(
                                 " / $target kcal",
                                 style = TextStyle(
-                                    color    = ColorProvider(Color(0x8CF0F4EF.toInt())),
+                                    color    = ColorProvider(R.color.widget_text_secondary),
                                     fontSize = 11.sp  // fontSize.xs (minimum)
                                 )
                             )
@@ -83,7 +83,7 @@ class Widget3x3Glance : GlanceAppWidget() {
                         Text(
                             "あと $remaining kcal",
                             style = TextStyle(
-                                color      = ColorProvider(Color(0xFF82A280.toInt())),
+                                color      = ColorProvider(R.color.widget_accent),
                                 fontSize   = 11.sp,
                                 fontWeight = FontWeight.Bold
                             )

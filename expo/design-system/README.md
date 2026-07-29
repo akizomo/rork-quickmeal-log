@@ -152,6 +152,6 @@ primitive の色相 (hue) ごとに担う役割を固定し、semantic 層が必
 - [ ] Input / TextField
 - [ ] Sheet / Modal
 - [ ] Chip / Badge
-- [ ] Typography コンポーネント (Heading / Body / Caption)
+- [x] Typography コンポーネント (Heading / Body / Label / Caption / Overline) — 役割ベース。判定表は `/dev/components/data-display`
 - [ ] Dark theme
 - [ ] Motion helpers (useSpring / useFade)

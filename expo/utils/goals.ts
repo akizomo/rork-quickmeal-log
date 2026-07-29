@@ -233,6 +233,67 @@ export function classifyTargetWeight(
   return 'ok';
 }
 
+// ---------------------------------------------------------------------------
+// 帳尻調整プラン (carryover) の安全ガード
+// ---------------------------------------------------------------------------
+
+/**
+ * 帳尻調整で「その日の実効目標」が下回ってはいけない絶対床。
+ * 臨床的な VLCD (very low calorie diet) の定義が 800kcal/日未満・医学管理下前提のため、
+ * その手前に保守的に置いた値。ここを割る日数は選ばせない。
+ */
+export const CARRYOVER_HARD_FLOOR_KCAL = 1000;
+
+/**
+ * 注意文を出す閾値 = アプリが「目標」として許容するカロリー下限 (PRD §6.4.1)。
+ * `computeGoalPlan` の minKcal と同じ数値を意図的に流用している:
+ * 恒久的な目標として設定を拒む水準を、数日の一時的な調整で割る場合は
+ * ブロックまではしないが事実として知らせる、という段階付け。
+ * hard 側と逆転しないよう必ず hard + 1 以上にクランプする。
+ */
+export function carryoverSoftFloorKcal(basis: BiologicalBasis | null | undefined): number {
+  // basis 不明時は低い方 (1200) を採用し、情報不足で過剰に警告しない
+  // (classifyTargetWeight が heightCm 不明時に判定をスキップするのと同じ方針)。
+  const floor = basis === 'male_basis' ? 1500 : 1200;
+  return Math.max(CARRYOVER_HARD_FLOOR_KCAL + 1, floor);
+}
+
+export type CarryoverVerdict = 'ok' | 'soft' | 'hard';
+
+/**
+ * 1日あたりの差し引き額が安全かを、控除額そのものではなく
+ * **その日の実効目標 (targetKcal - perDayKcal)** で判定する。
+ * 同じ 300kcal 控除でも目標 2400 の人と 1300 の人では意味が違うため。
+ */
+export function classifyCarryoverDeduction(
+  targetKcal: number,
+  perDayKcal: number,
+  basis: BiologicalBasis | null | undefined
+): CarryoverVerdict {
+  if (!targetKcal || targetKcal <= 0) return 'ok'; // 目標未設定時は判定スキップ
+  const effective = targetKcal - perDayKcal;
+  if (effective < CARRYOVER_HARD_FLOOR_KCAL) return 'hard';
+  if (effective < carryoverSoftFloorKcal(basis)) return 'soft';
+  return 'ok';
+}
+
+/**
+ * hard 床を割らない最小の分割日数。`CarryoverDaySheet` の「−」下限に使う。
+ * 1日あたり = ceil(surplus / days) なので、これが (targetKcal - hardFloor) 以下に
+ * 収まる最小の days を求める。maxDays まで伸ばしても足りない場合は maxDays を返す
+ * (それ以上分割しようがないため、その時は soft 警告のみで通す)。
+ */
+export function minCarryoverDays(
+  targetKcal: number,
+  surplusKcal: number,
+  maxDays: number
+): number {
+  if (!targetKcal || targetKcal <= 0 || surplusKcal <= 0) return 1;
+  const maxPerDay = targetKcal - CARRYOVER_HARD_FLOOR_KCAL;
+  if (maxPerDay <= 0) return maxDays; // 目標自体が床以下 (通常起きない) — 最大分割に倒す
+  return Math.min(maxDays, Math.max(1, Math.ceil(surplusKcal / maxPerDay)));
+}
+
 /**
  * 現在体重と目標体重から方向を導出 (手動指定時, PRD §6.4.4)。
  * 差が thresholdKg 以内なら maintain。

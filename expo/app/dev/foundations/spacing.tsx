@@ -5,7 +5,7 @@
 import { Stack } from 'expo-router';
 import React from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useTheme, type Theme } from '@/design-system';
+import { Label, useTheme, type Theme } from '@/design-system';
 import { Section } from '../_shared';
 
 export default function SpacingScreen() {
@@ -105,7 +105,7 @@ function SpacingScale({ t }: { t: Theme }) {
     <Section title="Spacing (px)" t={t}>
       {steps.map(([k, v]) => (
         <View key={k} style={{ flexDirection: 'row', alignItems: 'center', gap: t.spacing['3'] }}>
-          <Text style={{ width: 40, color: t.colors.content.secondary, fontSize: t.typography.fontSize.caption1 }}>{k}</Text>
+          <Label size="sm" tone="secondary" style={{ width: 40 }}>{k}</Label>
           <View
             style={{
               height: 12,

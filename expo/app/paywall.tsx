@@ -8,7 +8,7 @@ import type { PurchasesOffering, PurchasesPackage } from 'react-native-purchases
 import { TRIAL_DAYS } from '@/constants/iap';
 import { LEGAL_LINKS } from '@/constants/onboarding';
 import { Badge, Icon, useTheme, type Theme } from '@/design-system';
-import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
+import { fontSize as fs, lineHeight as lh } from '@/design-system/tokens/primitives/typography';
 import { useAppState } from '@/providers/app-state-provider';
 import { fetchOffering, purchase } from '@/utils/iap';
 import {
@@ -280,15 +280,16 @@ const makeStyles = (t: Theme) => StyleSheet.create({
   loadingBox: { backgroundColor: t.colors.surface.raised, borderRadius: 24, padding: 20, alignItems: 'center', gap: 8 },
   priceCard: { backgroundColor: t.colors.surface.raised, borderRadius: 20, padding: 20, flexDirection: 'row', alignItems: 'center', gap: 12 },
   planHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  priceValue: { fontSize: fs.callout, fontWeight: '700', color: t.colors.content.primary },
+  // プラン名 = Label md 相当 (15/semibold)。priceSub と同サイズだが weight と tone で階層を作る。
+  priceValue: { fontSize: fs.md, fontWeight: '700', color: t.colors.content.primary },
   priceSub: { fontSize: fs.md, color: t.colors.content.secondary, marginTop: 2 },
-  priceHint: { fontSize: fs.caption1, lineHeight: 18, color: t.colors.content.secondary },
+  priceHint: { fontSize: fs.sm, lineHeight: lh.sm, color: t.colors.content.secondary },
   ctaPill: { backgroundColor: t.colors.action.primary.default, borderRadius: 999, paddingVertical: 8, paddingHorizontal: 16 },
   ctaPillText: { color: t.colors.content.onAction, fontSize: fs.sm, fontWeight: '700' },
   footer: { paddingHorizontal: 24, paddingTop: 8, paddingBottom: 16, gap: 12 },
   secondaryRow: { flexDirection: 'row', justifyContent: 'center', gap: 12 },
   secondaryText: { fontSize: fs.sm, color: t.colors.content.secondary, fontWeight: '600' },
   legalRow: { flexDirection: 'row', justifyContent: 'center', gap: 8 },
-  legalLink: { fontSize: fs.caption1, color: t.colors.content.secondary, textDecorationLine: 'underline' },
-  legalSep: { fontSize: fs.caption1, color: t.colors.content.secondary },
+  legalLink: { fontSize: fs.sm, color: t.colors.content.secondary, textDecorationLine: 'underline' },
+  legalSep: { fontSize: fs.sm, color: t.colors.content.secondary },
 });

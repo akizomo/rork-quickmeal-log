@@ -369,8 +369,8 @@ const makeStyles = (t: Theme) => StyleSheet.create({
   },
   ctaText: { color: t.colors.content.onAction, fontSize: fs.md, fontWeight: '700', letterSpacing: 0.2 },
   legalRow: { flexDirection: 'row', justifyContent: 'center', gap: 8 },
-  legalLink: { fontSize: fs.caption1, color: t.colors.content.secondary, textDecorationLine: 'underline' },
-  legalSep: { fontSize: fs.caption1, color: t.colors.content.secondary },
+  legalLink: { fontSize: fs.sm, color: t.colors.content.secondary, textDecorationLine: 'underline' },
+  legalSep: { fontSize: fs.sm, color: t.colors.content.secondary },
 });
 
 const makeIllustStyles = (t: Theme) => StyleSheet.create({
@@ -414,15 +414,17 @@ const makeIllustStyles = (t: Theme) => StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'baseline',
   },
-  sparkLabel: { fontSize: fs.caption1, color: t.colors.content.secondary, letterSpacing: 0.5 },
-  sparkDelta: { fontSize: fs.caption1, color: t.colors.action.text.default, fontWeight: '600' },
+  // カードのヘッダ行 (ラベル+値)。下の sparkAxisText(xs) より一段上に置く。
+  sparkLabel: { fontSize: fs.sm, color: t.colors.content.secondary, letterSpacing: 0.5 },
+  sparkDelta: { fontSize: fs.sm, color: t.colors.action.text.default, fontWeight: '600' },
   sparkAxis: { flexDirection: 'row', justifyContent: 'space-between' },
   sparkAxisText: { fontSize: fs.xs, color: t.colors.content.secondary, letterSpacing: 0.3 },
   // Card 3
   pfcRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  // P/F/C の1文字ラベル = 添え字なので Caption 相当 (xs)
   pfcLabel: {
     width: 12,
-    fontSize: fs.caption1,
+    fontSize: fs.xs,
     fontWeight: '700',
     color: t.colors.content.primary,
   },

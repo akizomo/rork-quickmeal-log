@@ -1,5 +1,8 @@
 package app.akizony.hachibu.widget
 
+import android.appwidget.AppWidgetManager
+import android.content.ComponentName
+import android.os.Build
 import com.facebook.react.bridge.*
 import kotlinx.coroutines.*
 import org.json.JSONArray
@@ -78,6 +81,37 @@ class WidgetBridgeModule(private val reactContext: ReactApplicationContext) :
             scope.launch { updateAllWidgets(ctx) }
         }
         promise.resolve(arr.toString())
+    }
+
+    /**
+     * Android ランチャーに「ホーム画面にウィジェットを追加」のピンダイアログを表示する。
+     * Android 8.0+ (API 26) かつランチャーがピンをサポートしている場合のみ有効。
+     * サポート外の場合は false を返す。
+     */
+    @ReactMethod
+    fun requestPinWidget(promise: Promise) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+            promise.resolve(false)
+            return
+        }
+        val manager = AppWidgetManager.getInstance(reactContext.applicationContext)
+        if (!manager.isRequestPinAppWidgetSupported) {
+            promise.resolve(false)
+            return
+        }
+        val activity = reactContext.currentActivity
+        if (activity == null) {
+            promise.resolve(false)
+            return
+        }
+        val component = ComponentName(reactContext.applicationContext, Widget2x2Receiver::class.java)
+        activity.runOnUiThread {
+            try {
+                promise.resolve(manager.requestPinAppWidget(component, null, null))
+            } catch (e: Exception) {
+                promise.resolve(false)
+            }
+        }
     }
 
     override fun invalidate() {

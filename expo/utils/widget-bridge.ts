@@ -51,6 +51,19 @@ export function widgetUpdateCategories(
 }
 
 /**
+ * Android システムに「ホーム画面にウィジェットを追加」のピンダイアログを表示する。
+ * Android 8.0+ (API 26) のみ有効。サポートしていないランチャーでは false を返す。
+ */
+export async function widgetRequestPin(): Promise<boolean> {
+  if (!isAvailable) return false;
+  try {
+    return (await WidgetBridge.requestPinWidget()) as boolean;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * ウィジェットから積まれた pending queue を取り出して空にする。
  * フォアグラウンド復帰時に呼び出し、各エントリを quickLog フローへ流す。
  * @returns pending entries (空配列 = ウィジェット未操作 or 既に drain済み)

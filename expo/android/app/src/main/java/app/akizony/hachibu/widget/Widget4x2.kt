@@ -2,10 +2,10 @@ package app.akizony.hachibu.widget
 
 import android.content.Context
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.glance.*
+import app.akizony.hachibu.R
 import androidx.glance.GlanceId
 import androidx.glance.LocalSize
 import androidx.glance.action.clickable
@@ -41,7 +41,7 @@ class Widget4x2Glance : GlanceAppWidget() {
         Box(
             modifier = GlanceModifier
                 .fillMaxSize()
-                .background(ColorProvider(Color(0xFF1D1913.toInt())))
+                .background(ColorProvider(R.color.widget_surface_inverse))
                 .cornerRadius(16.dp)   // radius.lg
                 .padding(8.dp),        // spacing['2'] = 8
             contentAlignment = Alignment.Center
@@ -73,7 +73,7 @@ class Widget4x2Glance : GlanceAppWidget() {
                         modifier = GlanceModifier
                             .width(1.dp)
                             .fillMaxHeight()
-                            .background(ColorProvider(Color(0x1AFFFFFF)))
+                            .background(ColorProvider(R.color.widget_divider))
                     ) {}
                 }
 

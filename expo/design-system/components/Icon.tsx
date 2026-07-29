@@ -37,6 +37,7 @@ const ICON_GLYPH = {
   balance: 'balance',
   steps: 'directions-walk',
   exercise: 'fitness-center',
+  widget: 'widgets',
 } as const satisfies Record<string, React.ComponentProps<typeof MaterialIcons>['name']>;
 
 export type IconName = keyof typeof ICON_GLYPH;

@@ -1,5 +1,5 @@
 /**
- * Data Display — Typography(Heading/Body/Caption) / Card / Badge。DEV 専用。
+ * Data Display — Typography(Heading/Body/Label/Caption/Overline) / Card / Badge。DEV 専用。
  * fontSize の生スケールは `/dev/foundations/typography` 参照。
  */
 
@@ -13,6 +13,7 @@ import {
   Caption,
   Card,
   Heading,
+  Label,
   Overline,
   useTheme,
   type CardVariant,
@@ -50,17 +51,47 @@ function TypographySection({ t }: { t: Theme }) {
         <Heading size="lg">Heading lg</Heading>
       </View>
       <View style={{ gap: t.spacing['1'] }}>
+        <Caption tone="tertiary">Body — 読ませる文章</Caption>
         <Body size="lg">Body lg — 本文のサンプルです。</Body>
         <Body size="md">Body md — 本文のサンプルです。</Body>
         <Body size="sm" tone="secondary">Body sm secondary — 補助テキスト。</Body>
-        <Body size="xs" tone="tertiary">Body xs tertiary — さらに弱いテキスト。</Body>
       </View>
       <View style={{ gap: t.spacing['1'] }}>
-        <Overline>Overline — セクション/グループ見出し</Overline>
+        <Caption tone="tertiary">Label — UI要素の名前 (文章ではない短い名詞句)</Caption>
+        <Label size="md">Label md — リスト行の主見出し・トグル名</Label>
+        <Label size="sm" tone="secondary">Label sm — フォーム項目名・カード内の項目名</Label>
+      </View>
+      <View style={{ gap: t.spacing['1'] }}>
+        <Caption tone="tertiary">Overline / Caption</Caption>
+        <Overline>Overline — 後続の複数項目をまとめるグループ見出し</Overline>
         <Caption>Caption — 単位・軸ラベル・数値の添え字専用 (文章には使わない)</Caption>
         <Body size="sm" tone="link" weight="semibold">→ Text link (sage)</Body>
       </View>
+      <RoleGuide t={t} />
     </Section>
+  );
+}
+
+// ---------- Role guide ----------
+// 迷いが起きるのは常に Body / Label / Caption の3者間なので、その境界だけを対比で示す。
+const ROLE_RULES: { q: string; a: string }[] = [
+  { q: '読ませる文章か？', a: 'Body — 説明文・注釈文。短くても Caption にしない' },
+  { q: 'UI要素の名前か？', a: 'Label — トグル名・項目名。太字にしたい Body は Label' },
+  { q: '複数項目をまとめる見出しか？', a: 'Overline — 単一要素に付く名前なら Label' },
+  { q: '隣の主要素の添え物か？', a: 'Caption — 単位・軸ラベル・数値の添え字のみ' },
+];
+
+function RoleGuide({ t }: { t: Theme }) {
+  return (
+    <View style={{ gap: t.spacing['3'] }}>
+      <Overline>役割の決め方 (上から順に判定)</Overline>
+      {ROLE_RULES.map(({ q, a }) => (
+        <View key={q} style={{ gap: t.spacing['1'] }}>
+          <Label size="sm">{q}</Label>
+          <Body size="sm" tone="secondary">{a}</Body>
+        </View>
+      ))}
+    </View>
   );
 }
 

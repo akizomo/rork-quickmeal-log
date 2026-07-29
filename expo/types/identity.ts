@@ -133,6 +133,26 @@ export interface AttributeOption {
    * 省略時は Identity.amount を使う。
    */
   amount?: AmountSpec;
+  /**
+   * 主単位 (amount/Identity.amount, 通常g) とは別に、個数など別単位でも入力
+   * したい場合の代替表示。例: 唐揚げは家庭調理ならg、外食なら個数で数えたい。
+   * 保存・計算は常に主単位側で行い、これは入力UIの便宜のための換算レイヤーに
+   * すぎない (gramsPerUnit で相互変換する)。
+   */
+  altAmount?: AltAmountSpec;
+}
+
+export interface AltAmountSpec {
+  unit: AmountUnit;
+  /** Default amount in the alt unit (e.g. 3 個). */
+  default: number;
+  unitLabel?: string;
+  chips?: AmountChip[];
+  min?: number;
+  max?: number;
+  step?: number;
+  /** How many of the primary AmountSpec's unit (typically g) one alt unit equals. */
+  gramsPerUnit: number;
 }
 
 export interface StyleOption {

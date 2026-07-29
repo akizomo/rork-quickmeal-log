@@ -91,19 +91,16 @@ export function resolveLog(input: ResolveInput): ResolveResult {
     macro = applyFactor(macro, styleOption.factor);
   }
 
-  // Amount handling:
-  //   - With migration: the user's amountValue was sized for the *origin*
-  //     Identity (e.g. 100g of 鶏もも) and becomes meaningless once we route to
-  //     an Identity in a different unit (e.g. fried_main is "piece"). Always
-  //     use the recordIdentity's default in that case.
-  //   - Without migration: honor the caller's amountValue if provided.
+  // Amount handling: callers are expected to size `amountValue` against the
+  // recordIdentity's unit (e.g. once a migration routes 鶏むね→唐揚げ, the
+  // caller re-bases the amount to fried_main's "piece" unit *before* calling
+  // resolveLog — see IdentityLogSheet's amount-basis tracking). This function
+  // just honors whatever was passed in.
   // 量は「種類(Attribute)別の実効 amount spec」の default を基準にスケールする。
   // 種類に amount 上書きが無ければ Identity.amount にフォールバックするので、
   // 既存データの計算結果は不変。種類別 default を入れたとき UI と一致する。
   const effectiveAmountSpec = getEffectiveAmountSpec(recordIdentity, effectiveAttributeKey);
-  const amountValue = migration
-    ? effectiveAmountSpec.default
-    : input.amountValue ?? effectiveAmountSpec.default;
+  const amountValue = input.amountValue ?? effectiveAmountSpec.default;
   const amountFactor = amountValue / effectiveAmountSpec.default;
   if (amountFactor !== 1) {
     macro = multiplyMacro(macro, amountFactor);

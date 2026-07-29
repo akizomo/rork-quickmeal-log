@@ -15,7 +15,7 @@ import { ENTITLEMENT_ID } from '@/constants/iap';
 import { addCustomerInfoListener, getCustomerInfo, restorePurchases as iapRestore } from '@/utils/iap';
 import { IngredientQuickDraft, QuickLogHistoryMap, QuickLogSelection, QuickLogTabKey } from '@/types/quick-log';
 import { buildDishMacro, clampPortion, computeIngredient, createFoodLogFromDish, createFoodLogFromDishQuickEntry, createFoodLogFromIngredient, formatDateKey, generateId, getDefaultModeByTime, getMealSlot, getQuickCategories, getSubType, sumToday } from '@/utils/nutrition';
-import { adjustedTargetKcal, calcBaselineActiveKcal, calcExerciseGrossKcal, calcExerciseNetKcal, EXERCISE_TYPES, stepsToActiveKcal } from '@/utils/goals';
+import { adjustedTargetKcal, calcBaselineActiveKcal, calcExerciseGrossKcal, calcExerciseNetKcal, EXERCISE_TYPES, minCarryoverDays, stepsToActiveKcal } from '@/utils/goals';
 import { isSameDay } from '@/utils/history';
 import { castHistoryMap, deriveDefaultTab, recordDishSelection, recordSelection, recordTabUsage, selectionFromDraft } from '@/utils/quick-log-history';
 import { computeQuickLogMacro } from '@/utils/quick-log-macro';
@@ -1450,8 +1450,6 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
   }, [logs, yesterdayKey, profile, dailyActivities, exerciseLogs]);
 
   // ── 帳尻調整プラン ──────────────────────────────────────────────────────────
-  // MAX_PER_DAY = 250 kcal (健康的な上限: 既存赤字との合計が安全範囲内に収まる量)
-  const CARRYOVER_MAX_PER_DAY = 250;
 
   // 現在のプランが有効か、今日は何日目かを算出
   const carryoverDayIndex = useMemo(() => {
@@ -1546,8 +1544,10 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
   const editorIsPending = useMemo(() => (editorLogId ? pendingLogIds.includes(editorLogId) : false), [editorLogId, pendingLogIds]);
 
   // プランを開始する（提案バナーの「調整する」タップ時）。daysOverride で日数を上書き可能。
+  // daysOverride 省略時は「hard床を割らない最小日数」か「7日」の大きい方をデフォルトにする。
   const applyCarryover = useCallback((daysOverride?: number) => {
-    const daysTotal = daysOverride ?? Math.ceil(yesterdayOvershootKcal / CARRYOVER_MAX_PER_DAY);
+    const safeMin = minCarryoverDays(profile.targetCalories, yesterdayOvershootKcal, 14);
+    const daysTotal = daysOverride ?? Math.min(14, Math.max(safeMin, 7));
     const dailyAmount = Math.ceil(yesterdayOvershootKcal / daysTotal);
     const next: AppSettings = {
       ...settings,
@@ -1558,7 +1558,7 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     };
     setSettings(next);
     persist(profile, logs, next, weights, bodyFatEntries);
-  }, [settings, todayKey, yesterdayOvershootKcal, CARRYOVER_MAX_PER_DAY, profile, logs, weights, bodyFatEntries, persist]);
+  }, [settings, todayKey, yesterdayOvershootKcal, profile, logs, weights, bodyFatEntries, persist]);
 
   // プランをキャンセルする（BalanceModal のトグルOFF）
   const cancelCarryoverPlan = useCallback(() => {
