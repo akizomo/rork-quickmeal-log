@@ -105,11 +105,11 @@ export default function StatusRoute() {
                     </Body>
                     <Icon name="chevronRight" size={14} color={theme.colors.content.tertiary} />
                   </View>
-                  <Caption tone="tertiary">
+                  <Body size="sm" tone="secondary">
                     {trialDays <= 2
                       ? `あと${trialDays}日で本登録に切り替わります。継続される場合は何もしなくてOK。`
                       : 'いつでも解約できます。詳細はサブスクリプション画面から。'}
-                  </Caption>
+                  </Body>
                 </Card>
               </Pressable>
             ) : null}
@@ -201,7 +201,7 @@ export default function StatusRoute() {
                 </View>
                 <View style={styles.kcalRow}>
                   <Heading size="3xl">{profile.targetCalories || '--'}</Heading>
-                  <Caption tone="tertiary" style={{ marginLeft: 4, marginBottom: 8 }}>kcal / 日</Caption>
+                  <Caption tone="secondary" style={{ marginLeft: 4, marginBottom: 8 }}>kcal / 日</Caption>
                 </View>
                 <View style={styles.pfcRow}>
                   <PfcCell label="P" value={profile.targetProtein} color={theme.colors.nutrition.protein.text} />
@@ -243,12 +243,6 @@ export default function StatusRoute() {
                   label="設定"
                   onPress={() => router.push('/settings')}
                   testID="status-link-settings"
-                />
-                <SettingsDivider />
-                <SettingsLinkRow
-                  label="アプリについて"
-                  onPress={() => router.push('/about')}
-                  testID="status-link-about"
                 />
               </SettingsListCard>
             </View>
@@ -367,7 +361,7 @@ function formatRelativeTime(iso: string): string {
 function HeroMetric({ label, value, target }: { label: string; value: string; target: string }) {
   return (
     <View style={styles.heroMetric}>
-      <Caption tone="tertiary">{label}</Caption>
+      <Caption tone="secondary">{label}</Caption>
       <Heading size="2xl">{value}</Heading>
       <Caption tone="secondary">目標 {target}</Caption>
     </View>

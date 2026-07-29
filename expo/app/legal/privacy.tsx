@@ -20,7 +20,7 @@ export default function PrivacyRoute() {
       <View style={[styles.page, { backgroundColor: theme.colors.surface.default }]}>
         <SafeAreaView edges={['bottom']} style={{ flex: 1 }}>
           <ScrollView contentContainerStyle={styles.scroll} testID="privacy-screen">
-            <Caption tone="tertiary">最終更新日: 2026-04-28</Caption>
+            <Caption tone="secondary">最終更新日: 2026-04-28</Caption>
 
             <Body>
               Hachibu (以下「本アプリ」) は、ユーザーのプライバシーを尊重します。本ポリシーは、本アプリが収集する情報、利用目的、および管理方法について説明します。

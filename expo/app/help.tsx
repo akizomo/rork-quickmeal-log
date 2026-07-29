@@ -360,12 +360,11 @@ function StepContent({ stepKey }: { stepKey: string }) {
 }
 
 function Footnote({ children }: { children: React.ReactNode }) {
-  const t = useTheme();
   return (
     <View style={styles.footnoteRow}>
-      <Caption tone="tertiary" style={{ color: t.colors.content.tertiary }}>
+      <Body size="sm" tone="secondary">
         ※ {children}
-      </Caption>
+      </Body>
     </View>
   );
 }

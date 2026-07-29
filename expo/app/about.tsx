@@ -40,7 +40,7 @@ export default function AboutRoute() {
             <View style={styles.brandHeader}>
               <Logo size={48} color={theme.colors.action.primary.default} />
               <Body style={{ fontWeight: '700' }}>Hachibu</Body>
-              <Caption tone="tertiary">Eight Tenths is Enough.</Caption>
+              <Caption tone="secondary">Eight Tenths is Enough.</Caption>
             </View>
 
             {/* §法的情報 */}

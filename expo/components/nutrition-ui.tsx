@@ -570,7 +570,7 @@ function CarryoverDaySheet({
               }}>
                 {days}
               </Text>
-              <Caption tone="tertiary">日間</Caption>
+              <Caption tone="secondary">日間</Caption>
             </View>
             <Pressable
               onPress={() => setDays((d) => Math.min(maxDays, d + 1))}
@@ -594,9 +594,9 @@ function CarryoverDaySheet({
           </Caption>
         </View>
         <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: t.colors.border.subtle }} />
-        <Caption tone="tertiary" style={{ paddingTop: t.spacing['2'] }}>
+        <Body size="sm" tone="secondary" style={{ paddingTop: t.spacing['2'] }}>
           明日から{days}日間、毎日の目標から{perDay} kcalを差し引きます。
-        </Caption>
+        </Body>
       </View>
     </BottomSheet>
   );

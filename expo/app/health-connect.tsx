@@ -3,10 +3,47 @@ import { Stack, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Svg, { Circle, Path, Polyline } from 'react-native-svg';
 
-import { Body, Button, Card, Caption, Heading, useTheme } from '@/design-system';
+import { Body, Button, Card, Caption, Heading, Icon, type IconName, useTheme, type Theme } from '@/design-system';
 import { useAppState } from '@/providers/app-state-provider';
 import { useHealthSyncContext } from '@/providers/health-sync-provider';
+
+// ハート + パルスラインの簡易イラスト。react-native-svg + テーマトークンのみで構成し、
+// components/onboarding-illustrations.tsx と同じ「トークンベースの自作イラスト」方針に揃える。
+function HealthSyncIllustration({ t }: { t: Theme }) {
+  return (
+    <View style={{ alignItems: 'center', justifyContent: 'center', paddingVertical: t.spacing['4'] }}>
+      <Svg width={140} height={140} viewBox="0 0 140 140">
+        <Circle cx={70} cy={70} r={70} fill={t.colors.action.primary.container} />
+        <Path
+          d="M70 112
+             C 40 92, 22 74, 22 54
+             C 22 38, 34 28, 48 28
+             C 58 28, 66 34, 70 43
+             C 74 34, 82 28, 92 28
+             C 106 28, 118 38, 118 54
+             C 118 74, 100 92, 70 112 Z"
+          fill={t.colors.action.primary.default}
+        />
+        <Polyline
+          points="30,70 50,70 58,54 66,82 74,62 82,70 110,70"
+          fill="none"
+          stroke={t.colors.content.onAction}
+          strokeWidth={4}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </Svg>
+    </View>
+  );
+}
+
+const DATA_ITEMS: { icon: IconName; label: string }[] = [
+  { icon: 'balance', label: '体重 / 体脂肪率' },
+  { icon: 'steps', label: '歩数 / 消費カロリー' },
+  { icon: 'exercise', label: '運動セッション' },
+];
 
 /**
  * ペイウォール突破後に表示するヘルス連携誘導画面。
@@ -81,30 +118,36 @@ export default function HealthConnectRoute() {
             <Body tone="secondary">
               歩数・運動・体重を自動で取り込んで、毎日の入力をすこし軽くします。あとからでも変更できます。
             </Body>
+
+            <HealthSyncIllustration t={t} />
+
             <View style={{ gap: t.spacing['2'], marginTop: 'auto' }}>
-              <Card variant="raised" style={{ gap: t.spacing['2'] }}>
+              <Card variant="raised" style={{ gap: t.spacing['3'] }}>
                 <Body weight="semibold">取り込むデータ</Body>
-                <Caption tone="secondary">・体重 / 体脂肪率</Caption>
-                <Caption tone="secondary">・歩数 / 消費カロリー (今後)</Caption>
-                <Caption tone="secondary">・運動セッション (今後)</Caption>
+                {DATA_ITEMS.map((item) => (
+                  <View key={item.label} style={{ flexDirection: 'row', alignItems: 'center', gap: t.spacing['2'] }}>
+                    <Icon name={item.icon} size={18} color={t.colors.content.secondary} />
+                    <Body size="sm" tone="secondary">{item.label}</Body>
+                  </View>
+                ))}
               </Card>
               {needsInstall ? (
                 <Card variant="raised" style={{ gap: t.spacing['1'] }}>
                   <Body weight="semibold">Health Connect が必要です</Body>
-                  <Caption tone="secondary">
+                  <Body size="sm" tone="secondary">
                     {healthSync.status === 'provider_update_required'
                       ? 'インストール済みの Health Connect アプリのアップデートが必要です。Play Store で更新してから戻ってきてください。'
                       : 'Android では Google の Health Connect アプリ経由でデータを取り込みます。Play Store からインストールして戻ってきてください。'}
-                  </Caption>
+                  </Body>
                 </Card>
               ) : null}
               {!healthSync.supported ? (
-                <Caption tone="tertiary" align="center" testID="health-connect-unsupported">
+                <Body size="sm" tone="secondary" align="center" testID="health-connect-unsupported">
                   このプラットフォームではヘルスデータ連携は利用できません。
-                </Caption>
+                </Body>
               ) : null}
               {__DEV__ ? (
-                <Caption tone="tertiary" align="center">
+                <Caption tone="secondary" align="center">
                   [DEV] status: {healthSync.status} | supported: {String(healthSync.supported)}
                 </Caption>
               ) : null}

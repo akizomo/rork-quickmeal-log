@@ -11,13 +11,13 @@
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { Body, Caption, Card, Icon, useTheme } from '@/design-system';
+import { Body, Card, Icon, Overline, useTheme } from '@/design-system';
 
 export function SettingsSectionLabel({ children }: { children: string }) {
   return (
-    <Caption tone="tertiary" style={styles.sectionLabel}>
+    <Overline style={styles.sectionLabel}>
       {children}
-    </Caption>
+    </Overline>
   );
 }
 
@@ -67,7 +67,7 @@ export function SettingsLinkRow({
     >
       <View style={{ flex: 1 }}>
         <Body style={labelStyle}>{label}</Body>
-        {sub ? <Caption tone="tertiary">{sub}</Caption> : null}
+        {sub ? <Body size="sm" tone="secondary">{sub}</Body> : null}
       </View>
       {trailing ?? null}
       {showRightChevron ? <Icon name="chevronRight" size={16} color={theme.colors.content.tertiary} /> : null}
@@ -82,9 +82,10 @@ export function SettingsDivider() {
 
 const styles = StyleSheet.create({
   sectionLabel: {
+    // ラベル→カード間の余白は呼び出し側の `section: { gap: 8 }` が単独で担う。
+    // ここでも paddingBottom を足すと二重取りになり間延びするため、横方向の
+    // カード整列調整(paddingHorizontal)だけ残す。
     paddingHorizontal: 4,
-    paddingTop: 4,
-    paddingBottom: 8,
   },
   listCard: {
     paddingVertical: 4,

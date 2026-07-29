@@ -266,7 +266,7 @@ export default function OnboardingRoute() {
               {step === 1 ? (
                 <StepNumber
                   title="身長を教えてください"
-                  subtitle="→ 必要カロリー計算に使います"
+                  subtitle="必要カロリー計算に使います"
                   value={heightCm}
                   onChange={setHeightCm}
                   suffix="cm"
@@ -280,7 +280,7 @@ export default function OnboardingRoute() {
               {step === 2 ? (
                 <StepNumber
                   title="現在の体重は？"
-                  subtitle="→ 必要カロリー・タンパク質量の基準になります"
+                  subtitle="必要カロリー・タンパク質量の基準になります"
                   value={weightKg}
                   onChange={setWeightKg}
                   suffix="kg"
@@ -294,7 +294,7 @@ export default function OnboardingRoute() {
               {step === 3 ? (
                 <StepNumber
                   title="年齢を教えてください"
-                  subtitle="→ 基礎代謝の計算に使います"
+                  subtitle="基礎代謝の計算に使います"
                   value={ageYears}
                   onChange={setAgeYears}
                   suffix="歳"
@@ -412,7 +412,7 @@ function StepBasis({ basis, onBasis }: { basis: BiologicalBasis | null; onBasis:
   return (
     <View style={stepWrap}>
       <Heading size="2xl">身体の基準を教えてください</Heading>
-      <Body tone="secondary">→ 体脂肪率やカロリー目安の計算に使います</Body>
+      <Body tone="secondary">体脂肪率やカロリー目安の計算に使います</Body>
       <View style={cardColBottom}>
         {BASIS_OPTIONS.map((opt) => (
           <SelectCard
@@ -485,10 +485,10 @@ function StepActivity({
   return (
     <View style={stepWrap}>
       <Heading size="2xl">普段の生活はどんな感じ？</Heading>
-      <Body tone="secondary">→ 仕事や日常の動きから 1日の代謝を見積もります</Body>
-      <Caption tone="tertiary">
+      <Body tone="secondary">仕事や日常の動きから 1日の代謝を見積もります</Body>
+      <Body size="sm" tone="secondary">
         運動は別途記録すれば自動で目標に加算されます。ここでは普段の生活パターンだけ選んでください。
-      </Caption>
+      </Body>
       <View style={cardColBottom}>
         {ACTIVITY_LEVEL_OPTIONS.map((opt) => (
           <SelectCard
@@ -528,7 +528,7 @@ function StepCurrentBody({
     <View style={stepWrap}>
       <Heading size="2xl">今の自分に近いのは？</Heading>
       <Body tone="secondary">
-        → 脂肪と筋量の2軸で、いちばん近い体格を選んでください。選ぶと体脂肪率の目安が自動で入ります。
+        脂肪と筋量の2軸で、いちばん近い体格を選んでください。選ぶと体脂肪率の目安が自動で入ります。
       </Body>
       <BodyTypeMatrix
         basis={basis}
@@ -657,7 +657,7 @@ function StepDirection({
   return (
     <View style={stepWrap}>
       <Heading size="2xl">どう変わりたいですか？</Heading>
-      <Body tone="secondary">→ プランの提案に使います。あとから変更できます。</Body>
+      <Body tone="secondary">プランの提案に使います。あとから変更できます。</Body>
       <View style={cardColBottom}>
         {opts.map((opt) => (
           <SelectCard
@@ -717,7 +717,7 @@ function StepPlan({
       <View style={stepWrap}>
         <Heading size="2xl">今の体格をキープするプラン</Heading>
         <Body tone="secondary">
-          → ペース指定は不要です。現在の体格を維持する目安はこちらです。
+          ペース指定は不要です。現在の体格を維持する目安はこちらです。
         </Body>
         <Card variant="raised" style={{ gap: t.spacing['3'] }}>
           <SummaryRow label="目標体重" value={`${recommendation.targetWeightKg.toFixed(1)} kg`} />
@@ -762,7 +762,7 @@ function StepPlan({
   return (
     <View style={stepWrap}>
       <Heading size="2xl">3ヶ月後、どう変わりたい？</Heading>
-      <Body tone="secondary">→ 選んだプランで kcal・PFC が決まります。</Body>
+      <Body tone="secondary">選んだプランで kcal・PFC が決まります。</Body>
       <View style={cardColBottom}>
         {PACE_OPTIONS.map((opt) => {
           const active = paceLevel === opt.key;
@@ -816,7 +816,7 @@ function StepPlan({
                     {bfDelta}
                   </Caption>
                 ) : null}
-                <Caption tone="tertiary">{reachHint}</Caption>
+                <Caption tone="secondary">{reachHint}</Caption>
               </View>
             </Pressable>
           );
@@ -873,7 +873,7 @@ function StepPreview({
   return (
     <View style={stepWrap}>
       <Heading size="2xl">この目標で進めます</Heading>
-      <Body tone="secondary">→ あとで My Status からいつでも変更できます。</Body>
+      <Body tone="secondary">あとで My Status からいつでも変更できます。</Body>
 
       <Card variant="raised" style={{ gap: t.spacing['3'] }}>
         <SummaryRow label="目標体重" value={`${recommendation.targetWeightKg.toFixed(1)} kg`} />
@@ -906,16 +906,26 @@ function StepPreview({
       </Card>
 
       {tips.length ? (
-        <Card variant="flat" style={{ gap: t.spacing['2'] }}>
+        <Card variant="raised" style={{ gap: t.spacing['2'] }}>
           <Body weight="semibold">食事のコツ</Body>
           {tips.map((tip, i) => (
             <View
               key={i}
               style={{ flexDirection: 'row', gap: t.spacing['2'], alignItems: 'flex-start' }}
             >
-              <Body size="sm" tone="link" weight="bold">
-                •
-              </Body>
+              <View
+                style={{
+                  width: 20,
+                  height: 20,
+                  borderRadius: 10,
+                  marginTop: 1,
+                  backgroundColor: t.colors.action.primary.default,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Icon name="check" size={12} color={t.colors.content.onAction} />
+              </View>
               <Body size="sm" style={{ flex: 1 }}>
                 {tip}
               </Body>

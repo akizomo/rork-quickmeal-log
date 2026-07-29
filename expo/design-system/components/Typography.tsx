@@ -103,10 +103,12 @@ export function Body({
 }
 
 // ---------- Caption ----------
+// 単位・軸ラベル・数値の添え字など、ごく短い添え物専用。文章 (説明文・注釈文) には
+// 使わないこと — 読ませる文章は Body size="sm" を使う。
 export type CaptionProps = BaseProps;
 
 export function Caption({
-  tone = 'tertiary',
+  tone = 'secondary',
   align,
   weight = 'regular',
   style,
@@ -123,6 +125,40 @@ export function Caption({
           fontSize: t.typography.fontSize.xs,
           lineHeight: t.typography.lineHeight.xs,
           fontWeight: t.typography.fontWeight[weight] as TextStyle['fontWeight'],
+          textAlign: align,
+        },
+        style,
+      ]}
+    >
+      {children}
+    </Text>
+  );
+}
+
+// ---------- Overline ----------
+// セクション/グループ見出し専用 (例: 設定画面の「データ」「情報」等)。
+// Caption(11px)では小さすぎるため、Body smと同じ13pxをsemibold+letterSpacing.wideで
+// 差別化する。MD3ではoverline(10px)自体が廃止されlabelLargeに統合された経緯を踏まえた値。
+export type OverlineProps = Omit<BaseProps, 'weight'>;
+
+export function Overline({
+  tone = 'secondary',
+  align,
+  style,
+  children,
+  ...rest
+}: OverlineProps) {
+  const t = useTheme();
+  return (
+    <Text
+      {...rest}
+      style={[
+        {
+          color: resolveTone(t, tone),
+          fontSize: t.typography.fontSize.sm,
+          lineHeight: t.typography.lineHeight.sm,
+          fontWeight: t.typography.fontWeight.semibold as TextStyle['fontWeight'],
+          letterSpacing: t.typography.letterSpacing.wide,
           textAlign: align,
         },
         style,

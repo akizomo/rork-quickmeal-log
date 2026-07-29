@@ -28,7 +28,7 @@ export default function DevIdentityLog() {
       <Body tone="secondary" style={{ marginTop: t.spacing['4'] }}>
         検証手順:
       </Body>
-      <Caption tone="tertiary">
+      <Caption tone="secondary">
         1. 検索バーに「アボカド」「プロテイン」と入力 → ヒットを確認{'\n'}
         2. 9ボタンの 1 つをタップ → IdentityLogSheet が開く{'\n'}
         3. 鶏もも → 揚げ Style → 唐揚げ migration を確認{'\n'}

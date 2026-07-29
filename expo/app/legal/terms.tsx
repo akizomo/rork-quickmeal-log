@@ -20,7 +20,7 @@ export default function TermsRoute() {
       <View style={[styles.page, { backgroundColor: theme.colors.surface.default }]}>
         <SafeAreaView edges={['bottom']} style={{ flex: 1 }}>
           <ScrollView contentContainerStyle={styles.scroll} testID="terms-screen">
-            <Caption tone="tertiary">最終更新日: 2026-04-28</Caption>
+            <Caption tone="secondary">最終更新日: 2026-04-28</Caption>
 
             <Body>
               本利用規約 (以下「本規約」) は、Hachibu (以下「本アプリ」) の利用条件を定めるものです。本アプリをダウンロード・使用することで、本規約に同意したものとみなします。

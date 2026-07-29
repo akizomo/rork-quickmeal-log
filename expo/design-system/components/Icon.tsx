@@ -35,6 +35,8 @@ const ICON_GLYPH = {
   trendingDown: 'trending-down',
   sync: 'sync',
   balance: 'balance',
+  steps: 'directions-walk',
+  exercise: 'fitness-center',
 } as const satisfies Record<string, React.ComponentProps<typeof MaterialIcons>['name']>;
 
 export type IconName = keyof typeof ICON_GLYPH;

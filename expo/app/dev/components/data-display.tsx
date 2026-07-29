@@ -13,6 +13,7 @@ import {
   Caption,
   Card,
   Heading,
+  Overline,
   useTheme,
   type CardVariant,
   type Theme,
@@ -55,7 +56,8 @@ function TypographySection({ t }: { t: Theme }) {
         <Body size="xs" tone="tertiary">Body xs tertiary — さらに弱いテキスト。</Body>
       </View>
       <View style={{ gap: t.spacing['1'] }}>
-        <Caption>Caption — 注釈や凡例。</Caption>
+        <Overline>Overline — セクション/グループ見出し</Overline>
+        <Caption>Caption — 単位・軸ラベル・数値の添え字専用 (文章には使わない)</Caption>
         <Body size="sm" tone="link" weight="semibold">→ Text link (sage)</Body>
       </View>
     </Section>

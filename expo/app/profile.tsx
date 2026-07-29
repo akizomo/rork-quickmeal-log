@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BodyTypeMatrix } from '@/components/BodyTypeMatrix';
 import { ACTIVITY_LEVEL_OPTIONS, BASIS_OPTIONS } from '@/constants/onboarding';
-import { Body, Button, Caption, Card, Heading, SelectCard, useTheme } from '@/design-system';
+import { Body, Button, Card, Heading, SelectCard, useTheme } from '@/design-system';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { useAppState } from '@/providers/app-state-provider';
 import { ActivityLevel, BiologicalBasis, BodyType9 } from '@/types/nutrition';
@@ -59,8 +59,6 @@ export default function ProfileRoute() {
       <View style={[styles.page, { backgroundColor: theme.colors.surface.default }]}>
         <SafeAreaView edges={['bottom']} style={{ flex: 1 }}>
           <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" testID="profile-screen">
-            <Caption tone="secondary">→ 計算の基準として使います</Caption>
-
             {/* 基礎データ: コンパクトなリスト形式 */}
             <Card variant="raised" style={styles.listCard}>
               <View style={styles.listCardHeader}>
@@ -107,8 +105,10 @@ export default function ProfileRoute() {
             </Card>
 
             <Card variant="raised" style={{ gap: theme.spacing['3'] }}>
-              <Heading size="lg">身体基準</Heading>
-              <Caption tone="secondary">RMR・推奨タンパク質量に反映されます</Caption>
+              <View style={{ gap: theme.spacing['1'] }}>
+                <Heading size="lg">身体基準</Heading>
+                <Body size="sm" tone="secondary">RMR・推奨タンパク質量に反映されます</Body>
+              </View>
               <View style={{ gap: theme.spacing['2'] }}>
                 {BASIS_OPTIONS.map((opt) => (
                   <SelectCard
@@ -123,8 +123,10 @@ export default function ProfileRoute() {
             </Card>
 
             <Card variant="raised" style={{ gap: theme.spacing['3'] }}>
-              <Heading size="lg">運動習慣</Heading>
-              <Caption tone="secondary">活動係数・推奨タンパク質量に反映されます</Caption>
+              <View style={{ gap: theme.spacing['1'] }}>
+                <Heading size="lg">運動習慣</Heading>
+                <Body size="sm" tone="secondary">活動係数・推奨タンパク質量に反映されます</Body>
+              </View>
               <View style={{ gap: theme.spacing['2'] }}>
                 {ACTIVITY_LEVEL_OPTIONS.map((opt) => (
                   <SelectCard
@@ -140,8 +142,10 @@ export default function ProfileRoute() {
             </Card>
 
             <Card variant="raised" style={{ gap: theme.spacing['3'] }}>
-              <Heading size="lg">現在の体型</Heading>
-              <Caption tone="secondary">体脂肪率の推定や目標計算の基準に使います</Caption>
+              <View style={{ gap: theme.spacing['1'] }}>
+                <Heading size="lg">現在の体型</Heading>
+                <Body size="sm" tone="secondary">体脂肪率の推定や目標計算の基準に使います</Body>
+              </View>
               <BodyTypeMatrix
                 basis={basis ?? 'male_basis'}
                 heightCm={Number.isFinite(Number(heightCm)) ? Number(heightCm) : null}

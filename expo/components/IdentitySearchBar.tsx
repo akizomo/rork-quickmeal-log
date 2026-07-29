@@ -112,7 +112,7 @@ export function IdentitySearchBar() {
               >
                 <Body>{id.label}</Body>
                 {home ? (
-                  <Caption tone="tertiary">
+                  <Caption tone="secondary">
                     {home.emoji} {home.label}
                   </Caption>
                 ) : null}

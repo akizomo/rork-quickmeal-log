@@ -289,7 +289,7 @@ export default function GoalEditRoute() {
                             style={[styles.targetInput, { color: theme.colors.content.primary }]}
                             testID="goal-target-input"
                           />
-                          <Caption tone="tertiary">kg</Caption>
+                          <Caption tone="secondary">kg</Caption>
                         </View>
                         <StepperButton
                           label="＋"
@@ -298,11 +298,11 @@ export default function GoalEditRoute() {
                         />
                       </View>
                       {deltaLine ? <Caption tone="secondary">{deltaLine}</Caption> : null}
-                      {etaText ? <Caption tone="tertiary">{etaText}</Caption> : null}
+                      {etaText ? <Caption tone="secondary">{etaText}</Caption> : null}
                       {warnText ? (
-                        <Caption tone="secondary" style={{ color: warnColor }}>
+                        <Body size="sm" tone="secondary" style={{ color: warnColor }}>
                           {warnText}
-                        </Caption>
+                        </Body>
                       ) : null}
                     </View>
                   ) : (
@@ -320,14 +320,14 @@ export default function GoalEditRoute() {
                   <View style={[styles.hr, { backgroundColor: theme.colors.border.subtle }]} />
                   <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8 }}>
                     <Heading size="2xl">{card.targetKcal}</Heading>
-                    <Caption tone="tertiary" style={{ marginBottom: 4 }}>kcal / 日</Caption>
+                    <Caption tone="secondary" style={{ marginBottom: 4 }}>kcal / 日</Caption>
                   </View>
                   <Caption tone="secondary">
                     P {card.proteinG}g · F {card.fatG}g · C {card.carbsG}g
                   </Caption>
                 </>
               ) : (
-                <Body tone="tertiary">目的{direction == null ? '' : '・ペース'}を選ぶとここに表示されます</Body>
+                <Body tone="secondary">目的{direction == null ? '' : '・ペース'}を選ぶとここに表示されます</Body>
               )}
             </Card>
 
@@ -400,10 +400,10 @@ function MetricBlock({ label, value, unit }: { label: string; value: string; uni
   const theme = useTheme();
   return (
     <View style={styles.metricBlock}>
-      <Caption tone="tertiary">{label}</Caption>
+      <Caption tone="secondary">{label}</Caption>
       <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 3 }}>
         <Heading size="xl">{value}</Heading>
-        <Caption tone="tertiary" style={{ marginBottom: 3, color: theme.colors.content.tertiary }}>
+        <Caption tone="secondary" style={{ marginBottom: 3, color: theme.colors.content.tertiary }}>
           {unit}
         </Caption>
       </View>

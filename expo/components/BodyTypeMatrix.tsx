@@ -47,9 +47,12 @@ export function BodyTypeMatrix({
       {/* Column labels (fat axis) */}
       <View style={styles.colHeaderRow}>
         <View style={styles.rowAxisSpacer} />
-        <Text style={[styles.colHeader, { color: t.colors.content.secondary }]}>脂肪{'\n'}少なめ</Text>
-        <Text style={[styles.colHeader, { color: t.colors.content.secondary }]}>脂肪{'\n'}ふつう</Text>
-        <Text style={[styles.colHeader, { color: t.colors.content.secondary }]}>脂肪{'\n'}多め</Text>
+        {['少なめ', 'ふつう', '多め'].map((label) => (
+          <View key={label} style={styles.colHeaderCell}>
+            <Text style={[styles.colHeaderLabel, { color: t.colors.content.secondary }]}>脂肪</Text>
+            <Text style={[styles.colHeaderValue, { color: t.colors.content.primary }]}>{label}</Text>
+          </View>
+        ))}
       </View>
 
       {/* Muscle axis rows, rendered top = 多め, bottom = 少なめ */}
@@ -109,7 +112,9 @@ export function BodyTypeMatrix({
 const styles = StyleSheet.create({
   colHeaderRow: { flexDirection: 'row', marginBottom: 8 },
   rowAxisSpacer: { width: 44 },
-  colHeader: { flex: 1, textAlign: 'center', fontSize: fs.xs, fontWeight: '600', lineHeight: 14 },
+  colHeaderCell: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  colHeaderLabel: { fontSize: fs.xs, fontWeight: '600', textAlign: 'center' },
+  colHeaderValue: { fontSize: fs.xs, fontWeight: '700', textAlign: 'center' },
   row: { flexDirection: 'row', marginBottom: 8 },
   rowAxis: { width: 44, justifyContent: 'center', alignItems: 'center' },
   rowAxisText: { fontSize: fs.xs, fontWeight: '600' },
