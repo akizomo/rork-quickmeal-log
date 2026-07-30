@@ -22,7 +22,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Body, Caption, useTheme } from '@/design-system';
+import { Body, Caption, Label, useTheme } from '@/design-system';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { colors as primitiveColors } from '@/design-system/tokens/primitives/colors';
 import { useAppState } from '@/providers/app-state-provider';
@@ -168,7 +168,7 @@ export default function BarcodLogRoute() {
             バーコードをスキャンするにはカメラへのアクセスが必要です。
           </Body>
           <Pressable style={[styles.btn, { backgroundColor: colors.action.primary.default }]} onPress={requestPermission}>
-            <Body weight="bold" style={{ color: colors.content.onAction }}>カメラを許可する</Body>
+            <Label style={{ color: colors.content.onAction }}>カメラを許可する</Label>
           </Pressable>
         </SafeAreaView>
       </>
@@ -251,7 +251,7 @@ export default function BarcodLogRoute() {
                 style={[styles.btn, { backgroundColor: colors.action.primary.default, marginTop: 24 }]}
                 onPress={handleAdd}
               >
-                <Body weight="bold" style={{ color: colors.content.onAction }}>ログに追加</Body>
+                <Label style={{ color: colors.content.onAction }}>ログに追加</Label>
               </Pressable>
 
               {screen === 'confirm' && (

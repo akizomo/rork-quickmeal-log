@@ -4,7 +4,7 @@ import { Alert, Platform, ScrollView, StyleSheet, Switch, View } from 'react-nat
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { SettingsLinkRow, SettingsListCard, SettingsSectionLabel } from '@/components/SettingsList';
-import { Body, Card, useTheme } from '@/design-system';
+import { Body, Card, Label, useTheme } from '@/design-system';
 import { useAppState } from '@/providers/app-state-provider';
 import { widgetRequestPin } from '@/utils/widget-bridge';
 
@@ -67,7 +67,7 @@ export default function SettingsRoute() {
             <View style={styles.section}>
               <SettingsSectionLabel>データ</SettingsSectionLabel>
               <Card variant="raised" style={{ gap: theme.spacing['2'] }}>
-                <Body weight="bold">データの保存について</Body>
+                <Label>データの保存について</Label>
                 <Body size="sm" tone="secondary">
                   Hachibu はアカウント不要で使えるかわりに、記録したデータはこの端末内にのみ保存されます。アプリを削除したり、機種変更すると食事ログ・体重・体脂肪率などのデータは失われます。
                 </Body>

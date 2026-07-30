@@ -391,7 +391,7 @@ const makeStyles = (t: Theme) => StyleSheet.create({
     paddingHorizontal: 4,
   },
   headerLabel: {
-    fontSize: fs.callout,
+    fontSize: fs.md,
     fontWeight: '700',
     color: t.colors.content.primary,
   },
@@ -424,8 +424,9 @@ const makeStyles = (t: Theme) => StyleSheet.create({
     justifyContent: 'center',
     position: 'relative',
   },
+  // カレンダーグリッド内の日付数字 = 密度の高い添え字なので xs
   cellText: {
-    fontSize: fs.caption1,
+    fontSize: fs.xs,
     color: t.colors.content.primary,
     fontWeight: '600',
     zIndex: 1,
@@ -454,7 +455,7 @@ const makeStyles = (t: Theme) => StyleSheet.create({
     gap: 4,
   },
   summaryTitle: {
-    fontSize: fs.caption1,
+    fontSize: fs.sm,
     color: t.colors.content.secondary,
     fontWeight: '600',
   },
@@ -479,7 +480,7 @@ const makeStyles = (t: Theme) => StyleSheet.create({
   },
   summaryConsume: {
     marginTop: 2,
-    fontSize: fs.caption1,
+    fontSize: fs.sm,
     color: t.colors.content.secondary,
     fontWeight: '600',
   },

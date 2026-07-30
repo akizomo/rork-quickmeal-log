@@ -328,15 +328,16 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     marginTop: 1,
-    fontSize: fs.caption1,
+    fontSize: fs.sm,
   },
   stagePill: {
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: radius.full,
   },
+  // Badge md 相当のジオメトリ (paddingH 12 / radius full) なのでサイズも Badge md に揃える
   stagePillText: {
-    fontSize: fs.caption1,
+    fontSize: fs.sm,
     fontWeight: '700',
   },
   scroll: {

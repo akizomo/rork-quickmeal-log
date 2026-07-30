@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { SettingsDivider, SettingsLinkRow, SettingsListCard, SettingsSectionLabel } from '@/components/SettingsList';
 import { LEGAL_LINKS, TRIAL_DURATION_DAYS } from '@/constants/onboarding';
-import { Body, Caption, Card, useTheme } from '@/design-system';
+import { Body, Caption, Card, Label, useTheme } from '@/design-system';
 import { useAppState } from '@/providers/app-state-provider';
 import { getEffectiveSubscriptionStatus, trialDaysRemaining } from '@/utils/goals';
 
@@ -86,7 +86,7 @@ export default function SubscriptionRoute() {
                       : 'transparent',
                 }}
               >
-                <Body weight="bold">{statusLabel}</Body>
+                <Label>{statusLabel}</Label>
                 <Caption tone="secondary">{statusSub}</Caption>
                 {trialEndLabel ? (
                   <Caption tone="secondary" style={{ marginTop: 4 }}>

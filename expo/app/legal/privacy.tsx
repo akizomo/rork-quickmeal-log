@@ -3,7 +3,7 @@ import React from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Body, Caption, Heading, useTheme } from '@/design-system';
+import { Body, Caption, Heading, Label, useTheme } from '@/design-system';
 
 export default function PrivacyRoute() {
   const theme = useTheme();
@@ -95,7 +95,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function SubSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <View style={styles.subSection}>
-      <Body weight="bold">{title}</Body>
+      <Label>{title}</Label>
       <Body>{children}</Body>
     </View>
   );

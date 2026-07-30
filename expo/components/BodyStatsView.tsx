@@ -553,8 +553,9 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 8,
   },
+  // カードのタイトル = 値(cardCurrent)に付く名前なので Label sm 相当
   cardTitle: {
-    fontSize: fs.caption1,
+    fontSize: fs.sm,
     fontWeight: '600',
   },
   cardCurrent: {
@@ -565,12 +566,13 @@ const styles = StyleSheet.create({
     fontSize: fs.md,
     fontWeight: '600',
   },
+  // cardCurrent(md) と同じスロットに出る空状態表示なのでサイズを揃える
   cardEmpty: {
-    fontSize: fs.callout,
+    fontSize: fs.md,
     fontWeight: '600',
   },
   cardMeta: {
-    fontSize: fs.caption1,
+    fontSize: fs.sm,
     marginTop: 2,
   },
   chartWrap: {
@@ -583,6 +585,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   chartEmpty: {
-    fontSize: fs.caption1,
+    fontSize: fs.sm,
   },
 });

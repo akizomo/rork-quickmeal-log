@@ -400,7 +400,7 @@ const makeStyles = (t: Theme) => StyleSheet.create({
     paddingHorizontal: 4,
   },
   headerLabel: {
-    fontSize: fs.callout,
+    fontSize: fs.md,
     fontWeight: '700',
     color: t.colors.content.primary,
   },
@@ -427,7 +427,7 @@ const makeStyles = (t: Theme) => StyleSheet.create({
     gap: 4,
   },
   summaryTitle: {
-    fontSize: fs.caption1,
+    fontSize: fs.sm,
     color: t.colors.content.secondary,
     fontWeight: '600',
   },
@@ -452,7 +452,7 @@ const makeStyles = (t: Theme) => StyleSheet.create({
   },
   summaryConsume: {
     marginTop: 2,
-    fontSize: fs.caption1,
+    fontSize: fs.sm,
     color: t.colors.content.secondary,
     fontWeight: '600',
   },
