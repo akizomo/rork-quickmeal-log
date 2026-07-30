@@ -22,7 +22,12 @@ import {
   startOfDay,
 } from '@/utils/history';
 
-const CHART_HEIGHT = 170;
+// プロット領域(バー・ラベル)の高さは従来通り固定し、その下に純粋な余白(CHART_BOTTOM_GAP)を足す。
+// (コンテナに paddingBottom だけ足すと border-box 下で Svg 自体が押し縮められてしまうため、
+//  高さの数値自体を増やして描画エリアと余白を明確に分離する。)
+const CHART_CONTENT_HEIGHT = 170;
+const CHART_BOTTOM_GAP = 12;
+const CHART_HEIGHT = CHART_CONTENT_HEIGHT + CHART_BOTTOM_GAP;
 const CHART_PADDING_TOP = 20;
 const CHART_PADDING_BOTTOM = 38;
 
@@ -173,7 +178,7 @@ export function WeeklyStatsView() {
   const barAreaWidth = chartWidth - chartHorizontalPadding * 2;
   const slotWidth = barAreaWidth / barCount;
   const barWidth = slotWidth * 0.55;
-  const chartInnerHeight = CHART_HEIGHT - CHART_PADDING_TOP - CHART_PADDING_BOTTOM;
+  const chartInnerHeight = CHART_CONTENT_HEIGHT - CHART_PADDING_TOP - CHART_PADDING_BOTTOM;
   const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'] as const;
 
   const targetPoints = useMemo(
@@ -256,7 +261,7 @@ export function WeeklyStatsView() {
                 />
                 <SvgText
                   x={centerX}
-                  y={CHART_HEIGHT - 14}
+                  y={CHART_CONTENT_HEIGHT - 14}
                   fontSize={fs.xs}
                   fill={t.colors.content.secondary}
                   textAnchor="middle"
@@ -265,7 +270,7 @@ export function WeeklyStatsView() {
                 </SvgText>
                 <SvgText
                   x={centerX}
-                  y={CHART_HEIGHT - 3}
+                  y={CHART_CONTENT_HEIGHT - 3}
                   fontSize={fs.xs}
                   fontWeight="600"
                   fill={t.colors.content.primary}
@@ -408,7 +413,7 @@ const makeStyles = (t: Theme) => StyleSheet.create({
     backgroundColor: t.colors.surface.raised,
     borderRadius: radius.xl,
     overflow: 'hidden',
-    paddingBottom: t.spacing['3'],
+    padding: 0,
     alignSelf: 'center',
   },
   summaryCard: {
