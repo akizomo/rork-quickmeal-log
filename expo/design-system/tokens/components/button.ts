@@ -89,6 +89,11 @@ export const makeButtonTokens = (sc: SemanticColors): ButtonTokens => ({
       },
     },
   },
+  // fontSize/lineHeight/fontWeight は components/Typography.tsx の Label ロールと同じ
+  // primitive (fontSize.sm/md/lg, fontWeight.semibold) から意図的に揃えている。
+  // Button は状態別の文字色 (pressed/disabled) と numberOfLines を Text に直接持たせる
+  // 必要があるため <Label> は使わず Text を直接組んでいるが、値は Label と同じ意味を持つ。
+  // Label の size ラインナップを変更したらここも見直すこと。
   size: {
     sm: {
       height: 36,

@@ -82,6 +82,9 @@ export function Badge({
         style,
       ]}
     >
+      {/* ロール的には Label (バッジが指す対象の「名前」/状態語)。<Label> を使わないのは、
+          size="sm"時にfontSize.xs (Labelが持たないサイズ) まで詰める必要があり、
+          かつ tone ごとに bold/色 (p.fg) を切り替える必要があるため。 */}
       <Text
         style={{
           fontSize: dims.fontSize,

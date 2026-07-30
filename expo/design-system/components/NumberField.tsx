@@ -72,6 +72,10 @@ export function NumberField({
         style,
       ]}
     >
+      {/* ロール的には Heading (lg〜display) 相当の大型数値表示。size prop が
+          Heading の size union とちょうど一致するのはそのため。<Heading> を使わないのは、
+          編集可能な TextInput であり letterSpacing.tighter や独自 minWidth 等
+          数値入力欄固有のスタイルを直接制御する必要があるため。 */}
       <TextInput
         {...rest}
         value={value}
@@ -93,6 +97,8 @@ export function NumberField({
           inputStyle,
         ]}
       />
+      {/* ロール的には Caption (数値の添え字としての単位)。<Caption> を使わないのは、
+          fontSize.xs固定ではなく compact/hero どちらのサイズかで sm/lg を出し分ける必要があるため。 */}
       {suffix ? (
         <Text
           style={{

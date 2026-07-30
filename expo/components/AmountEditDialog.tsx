@@ -31,7 +31,7 @@ import {
 } from 'react-native';
 
 import { Chip, Dialog, useTheme } from '@/design-system';
-import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
+import { fontSize as fs, letterSpacing as ls } from '@/design-system/tokens/primitives/typography';
 import {
   type AmountEditConfig,
   clampToRange,
@@ -340,16 +340,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     gap: 4,
   },
+  // design-system の NumberField と同じ「大きい数値入力欄」ロール (3xl は NumberField の
+  // size 範囲内)。letterSpacing は NumberField 本体と揃えて tighter に統一。
   valueInput: {
     fontSize: fs['3xl'],
     fontWeight: '700',
-    letterSpacing: -0.5,
+    letterSpacing: ls.tighter,
     textAlign: 'center',
     minWidth: 48,
     paddingVertical: 0,
   },
+  // 3xl の valueInput に添える単位。NumberField の非 compact 時の単位 (lg) に揃える。
   unitText: {
-    fontSize: fs.callout,
+    fontSize: fs.lg,
     fontWeight: '600',
   },
   presetRow: {

@@ -72,6 +72,9 @@ export function MacroChip({
         style,
       ]}
     >
+      {/* ロール的には Label (P/F/C = マクロ種別の「名前」)。<Label> を使わないのは、
+          fontSize.xs (Labelが持たないサイズ) まで詰める場合があり、
+          かつ kind ごとの nutrition palette 色を直接当てる必要があるため。 */}
       <Text
         style={{
           fontSize,
@@ -82,6 +85,7 @@ export function MacroChip({
       >
         {LABEL_BY_KIND[kind]}
       </Text>
+      {/* こちらも同じ理由でロール的には Label (数値そのものがこのチップの「値の名前」)。 */}
       <Text
         style={{
           fontSize,

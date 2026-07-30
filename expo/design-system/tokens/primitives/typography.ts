@@ -8,15 +8,15 @@
  * - lineHeight は数値 (RN: number = px) で保持。letter spacing は px で保持。
  *
  * iOS HIG Dynamic Type (Large/既定) との対応:
- *   xs=Caption2(11) caption1=Caption1(12) sm=Footnote(13) md=Subheadline(15)
- *   callout=Callout(16) lg=Body/Headline(17) xl=Title3(20) 3xl=Title1(28) 4xl=LargeTitle(34)
+ *   xs=Caption2(11) sm=Footnote(13) md=Subheadline(15) lg=Body/Headline(17)
+ *   xl=Title3(20) 3xl=Title1(28) 4xl=LargeTitle(34)
  *   2xl(24) は見出し既定として定着済みのためHIGのTitle2(22)とは意図的に別値。
  *   display(44) はHIGに対応スタイルがない独自のヒーロー用サイズ。
  *
- * 本文域のスケールは 11 / 13 / 15 / 17 の4段に集約する (2026-07-29 決定)。
+ * 本文域のスケールは 11 / 13 / 15 / 17 の4段 (2026-07-29 決定)。かつて存在した
  * caption1(12) と callout(16) は隣接段との差が1pxしかなく、「12と13のどちらか」を
- * 判断する基準を誰も持てないまま画面ごとにドリフトしていたため deprecated とした。
- * Typography コンポーネントの size prop からは選べない。詳細は各定義のコメント参照。
+ * 判断する基準を誰も持てないまま画面ごとにドリフトしていたため、全参照を役割ベースで
+ * 寄せた上で削除した。中間サイズを再び足したくなったら、まず役割が足りているかを疑うこと。
  */
 
 export const fontFamily = {
@@ -39,12 +39,8 @@ export const fontWeight = {
 
 export const fontSize = {
   xs: 11,
-  /** @deprecated 新規コード禁止。添え物なら xs(11)、文章/ラベルなら sm(13) へ寄せる。既存参照は順次移行。 */
-  caption1: 12,
   sm: 13,
   md: 15, // body default
-  /** @deprecated 新規コード禁止。md(15) か lg(17) へ寄せる。既存参照は順次移行。 */
-  callout: 16,
   lg: 17, // iOS body default
   xl: 20,
   '2xl': 24,
@@ -55,12 +51,8 @@ export const fontSize = {
 
 export const lineHeight = {
   xs: 16,
-  /** @deprecated fontSize.caption1 と対。 */
-  caption1: 18,
   sm: 20,
   md: 22,
-  /** @deprecated fontSize.callout と対。 */
-  callout: 23,
   lg: 24,
   xl: 28,
   '2xl': 32,

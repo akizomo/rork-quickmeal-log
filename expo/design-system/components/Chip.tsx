@@ -82,6 +82,9 @@ export function Chip({
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.spacing['1'] }}>
         {leadingIcon ? <Icon name={leadingIcon} size={iconSize} color={textColor} /> : null}
+        {/* ロール的には Label (トグルの「名前」)。<Label> を使わないのは、
+            sm時にfontSize.xs (Labelが持たないサイズ) まで詰める必要があり、
+            かつ selected 状態で色が切り替わるため。 */}
         <Text
           style={{
             fontSize: isSm ? t.typography.fontSize.xs : t.typography.fontSize.sm,

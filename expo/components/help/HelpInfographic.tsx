@@ -17,7 +17,7 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { useTheme } from '@/design-system';
-import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
+import { fontSize as fs, letterSpacing as ls } from '@/design-system/tokens/primitives/typography';
 import {
   type BucketHelpView,
   type PfcTagKey,
@@ -342,6 +342,6 @@ const styles = StyleSheet.create({
   tagText: {
     fontSize: fs.xs,
     fontWeight: '700',
-    letterSpacing: 0.2,
+    letterSpacing: ls.wide,
   },
 });

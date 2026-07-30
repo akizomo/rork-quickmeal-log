@@ -51,7 +51,7 @@ UI の実装・修正を行う際は**必ず以下の順序**で参照するこ�
    - フォントサイズは `fontSize.xs(11)` が最小。9px・10px はシステム外。
    - **タイポグラフィで最初に選ぶのは「サイズ」ではなく「役割」**。役割が決まればサイズはほぼ一意に定まる (2026-07-29整理、WCAG AA実測ベース)。上から順に判定する:
      1. 読ませる文章か → `Body` (size="sm"13px / "md"15px既定 / "lg"17px)。本文・説明文・注釈文は**短くても必ずこれ**。"sm"がiOS Footnote相当
-     2. UI要素の「名前」か → `Label` (size="sm"13px / "md"15px既定、semibold)。トグル名・フォーム項目名・リスト行の主見出し・統計カードの項目名など、文章ではない短い名詞句
+     2. UI要素の「名前」か → `Label` (size="sm"13px / "md"15px既定 / "lg"17px、semibold)。トグル名・フォーム項目名・リスト行の主見出し・統計カードの項目名など、文章ではない短い名詞句。MD3のLabelロールに相当し、`Button`のラベルも概念上は同じロール (Buttonは状態別文字色が要るため実装上はTextを直接組むが、fontSize/fontWeightはLabelと同じprimitiveを意図的に使う)
      3. 後続の複数項目をまとめるグループ見出しか → `Overline` (13px semibold + letterSpacing.wide)。設定画面の「データ」「情報」等
      4. 隣に主要素があって初めて意味を持つ添え物か → `Caption` (11px)。単位・軸ラベル・数値の添え字**のみ**
      - 見出しは `Heading` (lg〜display)。
@@ -59,8 +59,9 @@ UI の実装・修正を行う際は**必ず以下の順序**で参照するこ�
      - `Overline` と `Label size="sm"` は同じ13px/semiboldで差は letterSpacing のみ。**複数要素をまとめているか**で決める (まとめる=Overline / 単一要素の名前=Label)。
      - 「軸ラベル」の"ラベル"は `Label` ロールではない (添え物なので `Caption`)。
      - よくある誤り: 説明文に`Caption`を使う / セクション見出しに`Caption`を使う / ラベルを`Body weight="semibold"`で書く / ラベル用に生の`Text`+独自styleを作る → すべて上記の役割に差し替える
-   - **本文域のフォントサイズスケールは 11 / 13 / 15 / 17 の4段のみ** (2026-07-29決定)。`fontSize.caption1`(12) と `fontSize.callout`(16) は隣接段と1px差で「12と13のどちらか」を判断する基準を持てずドリフトの温床だったため **deprecated**。新規コードで使わない (既存参照は順次移行)。Typography コンポーネントの size prop からも選べない。
+   - **本文域のフォントサイズスケールは 11 / 13 / 15 / 17 の4段のみ** (2026-07-29決定)。かつてあった `fontSize.caption1`(12) と `fontSize.callout`(16) は隣接段と1px差で「12と13のどちらか」を判断する基準を持てずドリフトの温床だったため、全参照を役割ベースで寄せた上で**削除済み**。中間サイズを足したくなったら、まず役割 (Body/Label/Caption) が足りているかを疑うこと。
    - 11pxの`Body`は存在しない (`size="xs"`は2026-07-29に廃止、`Caption`と同値で区別不能だったため)。文章を11pxにしたくなったら文量か階層を疑う。
+   - `fontSize.display`(44px) を超える生の巨大数値 (例: `nutrition-ui.tsx` の `balanceHeroValue` 52px) が既に1箇所存在する。これはトークンへスナップせず「意図的なヒーロー例外」として現場でコメント明記する運用とした。同種の巨大数値が複数箇所に増えたら、その時点で primitive に `hero` 段を追加するかを検討する。
    - tone は `primary`(本文) / `secondary`(補助テキスト全般、AA準拠) の2段でほぼ足りる。`tertiary`は**非テキスト専用**(アイコン・placeholder・区切り線。3:1基準)であり、**テキストの色として使わない** (`content.tertiary`はWCAGの通常文字基準4.5:1を満たさない)。
    - スペースは `spacing` の 4px グリッドを使う。用途別の目安 (実運用パターンから逆算、詳細は `/dev/foundations/spacing`):
      - `0.5(2px)`: ごく僅かな微調整 (Badge sm の paddingV 等)

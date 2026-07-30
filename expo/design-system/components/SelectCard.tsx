@@ -81,6 +81,9 @@ export function SelectCard({
     >
       {leading ? <View style={{ flexShrink: 0 }}>{leading}</View> : null}
       <View style={{ flex: 1, gap: t.spacing['0.5'] }}>
+        {/* ロール的には Label (選択肢の「名前」)。<Label> を使わないのは、
+            fontSize.lg (Labelが持たないサイズ) を使う大型タイル向けの見出しであり、
+            かつ selected 状態で色を切り替える必要があるため。 */}
         <Text
           style={{
             fontSize: t.typography.fontSize.lg,
@@ -93,6 +96,8 @@ export function SelectCard({
         >
           {label}
         </Text>
+        {/* ロール的には Body size="sm" (選択肢を説明する文章)。<Body> を使わないのは、
+            この2行 (label/hint) が同じ gap レイアウトの中で色・weight含め密結合しているため。 */}
         {hint ? (
           <Text
             style={{

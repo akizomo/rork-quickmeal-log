@@ -21,7 +21,7 @@ import {
   getDishTopCategory,
   multiplyMacroSimple,
 } from '@/constants/dish-master';
-import { BottomSheet, Chip as DSChip, Icon, useTheme, type Theme } from '@/design-system';
+import { BottomSheet, Chip as DSChip, Icon, Overline, useTheme, type Theme } from '@/design-system';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { useAppState } from '@/providers/app-state-provider';
 import {
@@ -164,7 +164,7 @@ function ChineseNoodlesBody({
 
   return (
     <>
-      <Text style={styles.sectionLabel}>種類</Text>
+      <Overline style={styles.sectionLabel}>種類</Overline>
       <View style={styles.row}>
         {primaryOptions.map((p) => (
           <Chip
@@ -179,7 +179,7 @@ function ChineseNoodlesBody({
 
       {primary.ramenStyles && ramenStyleKey ? (
         <>
-          <Text style={styles.sectionLabel}>スタイル</Text>
+          <Overline style={styles.sectionLabel}>スタイル</Overline>
           <View style={styles.row}>
             {primary.ramenStyles.map((s) => (
               <Chip
@@ -196,7 +196,7 @@ function ChineseNoodlesBody({
 
       {portionOptions.length > 0 ? (
         <>
-          <Text style={styles.sectionLabel}>量</Text>
+          <Overline style={styles.sectionLabel}>量</Overline>
           <PortionRow options={portionOptions} factor={factor} onChange={setFactor} />
         </>
       ) : null}
@@ -254,7 +254,7 @@ function SushiBody({
 
   return (
     <>
-      <Text style={styles.sectionLabel}>モード</Text>
+      <Overline style={styles.sectionLabel}>モード</Overline>
       <View style={styles.row}>
         {config.modes.map((m) => (
           <Chip
@@ -267,7 +267,7 @@ function SushiBody({
         ))}
       </View>
 
-      <Text style={styles.sectionLabel}>{mode.unitLabel}数</Text>
+      <Overline style={styles.sectionLabel}>{mode.unitLabel}数</Overline>
       <Pressable
         onPress={handleOpenEditor}
         accessibilityRole="button"
@@ -331,7 +331,7 @@ function PizzaBody({
 
   return (
     <>
-      <Text style={styles.sectionLabel}>タイプ</Text>
+      <Overline style={styles.sectionLabel}>タイプ</Overline>
       <View style={styles.row}>
         {config.pizzaTypes.map((t) => (
           <Chip
@@ -344,7 +344,7 @@ function PizzaBody({
         ))}
       </View>
 
-      <Text style={styles.sectionLabel}>切れ数</Text>
+      <Overline style={styles.sectionLabel}>切れ数</Overline>
       <Pressable
         onPress={handleOpenEditor}
         accessibilityRole="button"
@@ -400,7 +400,7 @@ function SetMealBody({
 
   return (
     <>
-      <Text style={styles.sectionLabel}>種類</Text>
+      <Overline style={styles.sectionLabel}>種類</Overline>
       <View style={styles.row}>
         {config.options.map((o) => (
           <Chip
@@ -413,7 +413,7 @@ function SetMealBody({
         ))}
       </View>
 
-      <Text style={styles.sectionLabel}>量</Text>
+      <Overline style={styles.sectionLabel}>量</Overline>
       <PortionRow options={option.portionOptions} factor={factor} onChange={setFactor} />
 
       <InstantPreview subcategoryLabel={option.label} portionLabel={portionLabel} macro={macro} />
@@ -455,7 +455,7 @@ function InstantSaveBody({
 
   return (
     <>
-      <Text style={styles.sectionLabel}>種類</Text>
+      <Overline style={styles.sectionLabel}>種類</Overline>
       <View style={styles.row}>
         {category.subcategories.map((s) => (
           <Chip
@@ -468,7 +468,7 @@ function InstantSaveBody({
         ))}
       </View>
 
-      <Text style={styles.sectionLabel}>量</Text>
+      <Overline style={styles.sectionLabel}>量</Overline>
       <PortionRow options={sub.portionOptions} factor={factor} onChange={setFactor} />
 
       <InstantPreview subcategoryLabel={sub.label} portionLabel={portionLabel} macro={macro} />
@@ -579,13 +579,10 @@ export const DishQuickEntrySheet = memo(function DishQuickEntrySheet() {
 });
 
 const makeStyles = (t: Theme) => StyleSheet.create({
+  // タイポグラフィは Overline が持つ。ここは余白だけ。
   sectionLabel: {
-    fontSize: fs.caption1,
-    fontWeight: '700',
-    color: t.colors.content.secondary,
     marginTop: 16,
     marginBottom: 8,
-    letterSpacing: 0.4,
   },
   row: {
     flexDirection: 'row',
@@ -617,7 +614,7 @@ const makeStyles = (t: Theme) => StyleSheet.create({
     gap: 4,
   },
   previewMeta: {
-    fontSize: fs.caption1,
+    fontSize: fs.sm,
     color: t.colors.content.secondary,
     fontWeight: '600',
   },
@@ -627,7 +624,7 @@ const makeStyles = (t: Theme) => StyleSheet.create({
     color: t.colors.action.primary.default,
   },
   macroLine: {
-    fontSize: fs.caption1,
+    fontSize: fs.sm,
     color: t.colors.content.secondary,
   },
   primaryButton: {

@@ -36,6 +36,7 @@ import {
   Caption,
   Heading,
   Icon,
+  Label,
   NumberField,
   SelectCard,
   useTheme,
@@ -548,7 +549,7 @@ function StepCurrentBody({
                 gap: t.spacing['3'],
               }}
             >
-              <Body weight="semibold">体脂肪率</Body>
+              <Label>体脂肪率</Label>
               <View
                 style={{
                   flexDirection: 'row',
@@ -628,9 +629,9 @@ function StepCurrentBody({
                 )}
               </Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
-                <Body size="sm" tone="link" weight="semibold">
+                <Label size="sm" tone="link">
                   正確な値を入力
-                </Body>
+                </Label>
                 <Icon name="chevronRight" size={14} color={t.colors.action.text.default} />
               </View>
             </Pressable>
@@ -724,9 +725,9 @@ function StepPlan({
           <SummaryRow label="目標体脂肪率" value={`${recommendation.targetBodyFatPct} %`} />
           <View style={{ height: 1, backgroundColor: t.colors.border.subtle }} />
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Body tone="secondary" weight="semibold">
+            <Label tone="secondary">
               1日の目標
-            </Body>
+            </Label>
             <Heading size="xl" tone="link">
               {recommendation.targetKcal} kcal
             </Heading>
@@ -801,9 +802,9 @@ function StepPlan({
               </View>
               <View style={{ flex: 1, gap: t.spacing['0.5'] }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.spacing['2'] }}>
-                  <Body size="lg" weight="semibold" tone={active ? 'link' : 'primary'}>
+                  <Heading size="lg" tone={active ? 'link' : 'primary'}>
                     {opt.label}
-                  </Body>
+                  </Heading>
                   {recommended ? <Badge tone="accent">おすすめ</Badge> : null}
                 </View>
                 <Body size="sm" weight="semibold">
@@ -880,9 +881,9 @@ function StepPreview({
         <SummaryRow label="目標体脂肪率" value={`${recommendation.targetBodyFatPct} %`} />
         <View style={{ height: 1, backgroundColor: t.colors.border.subtle }} />
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Body tone="secondary" weight="semibold">
+          <Label tone="secondary">
             1日の目標
-          </Body>
+          </Label>
           <Heading size="xl" tone="link">
             {recommendation.targetKcal} kcal
           </Heading>
@@ -907,7 +908,7 @@ function StepPreview({
 
       {tips.length ? (
         <Card variant="raised" style={{ gap: t.spacing['2'] }}>
-          <Body weight="semibold">食事のコツ</Body>
+          <Label>食事のコツ</Label>
           {tips.map((tip, i) => (
             <View
               key={i}
@@ -940,9 +941,9 @@ function StepPreview({
 function SummaryRow({ label, value }: { label: string; value: string }) {
   return (
     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-      <Body tone="secondary" weight="semibold">
+      <Label tone="secondary">
         {label}
-      </Body>
+      </Label>
       <Body weight="semibold">{value}</Body>
     </View>
   );
@@ -979,6 +980,10 @@ function PfcRow({
             alignItems: 'center',
           }}
         >
+          {/* ロール的には Label (P/F/C = マクロ種別の「名前」)。design-system の
+              MacroChip と同じ制約 (fontSize.xs は Label が持たないサイズ、macro毎の
+              色を直接当てる必要) のため <Label> は使わない。MacroChip 自体は pill
+              背景+横並びで見た目が異なるため流用せず、静的カード表示として独立実装。 */}
           <Text
             style={{
               fontSize: t.typography.fontSize.xs,

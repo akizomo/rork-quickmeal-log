@@ -18,7 +18,7 @@ import { StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useTheme } from '@/design-system';
 import { colors } from '@/design-system/tokens/primitives/colors';
 import { radius } from '@/design-system/tokens/primitives/radius';
-import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
+import { fontSize as fs, letterSpacing as ls } from '@/design-system/tokens/primitives/typography';
 
 // ---------------------------------------------------------------------------
 // ButtonGridIllustration (Slide 1: コンセプト)
@@ -159,7 +159,7 @@ const gestureStyles = StyleSheet.create({
   gestureLabel: {
     fontSize: fs.xs,
     fontWeight: '600',
-    letterSpacing: 0.5,
+    letterSpacing: ls.wider,
   },
   arrow: {
     fontSize: 22,

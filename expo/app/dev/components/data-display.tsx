@@ -58,6 +58,7 @@ function TypographySection({ t }: { t: Theme }) {
       </View>
       <View style={{ gap: t.spacing['1'] }}>
         <Caption tone="tertiary">Label — UI要素の名前 (文章ではない短い名詞句)</Caption>
+        <Label size="lg">Label lg — Button のラベルと同じ大きさ (稀なケース)</Label>
         <Label size="md">Label md — リスト行の主見出し・トグル名</Label>
         <Label size="sm" tone="secondary">Label sm — フォーム項目名・カード内の項目名</Label>
       </View>
@@ -65,7 +66,7 @@ function TypographySection({ t }: { t: Theme }) {
         <Caption tone="tertiary">Overline / Caption</Caption>
         <Overline>Overline — 後続の複数項目をまとめるグループ見出し</Overline>
         <Caption>Caption — 単位・軸ラベル・数値の添え字専用 (文章には使わない)</Caption>
-        <Body size="sm" tone="link" weight="semibold">→ Text link (sage)</Body>
+        <Label size="sm" tone="link">→ Text link (sage)</Label>
       </View>
       <RoleGuide t={t} />
     </Section>

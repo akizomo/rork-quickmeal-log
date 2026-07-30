@@ -19,9 +19,9 @@ import { HomeDatePager, type HomeDatePagerRef } from '@/components/HomeDatePager
 import { DayLogBottomSheet, type DayLogBottomSheetRef } from '@/components/DayLogBottomSheet';
 import { additionPresets, portionSnapPoints, sizeOptions } from '@/constants/nutrition-data';
 import { ACTIVITY_LEVEL_OPTIONS, TRIAL_DURATION_DAYS } from '@/constants/onboarding';
-import { Badge, Body, BottomSheet, Button, Caption, Dialog, Icon, IconButton, useTheme, type Theme } from '@/design-system';
+import { Badge, Body, BottomSheet, Button, Caption, Dialog, Icon, IconButton, Label, useTheme, type Theme } from '@/design-system';
 import { duration, easing, spring } from '@/design-system/tokens/primitives/motion';
-import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
+import { fontSize as fs, letterSpacing as ls } from '@/design-system/tokens/primitives/typography';
 import { radius } from '@/design-system/tokens/primitives/radius';
 import { elevation } from '@/design-system/tokens/primitives/elevation';
 import { useAppState } from '@/providers/app-state-provider';
@@ -198,7 +198,7 @@ const BalanceModal = memo(function BalanceModal({
 
       {/* HERO (Tier 1): 残り or オーバー */}
           <View style={styles.balanceHero}>
-            <Text style={styles.balanceHeroCaption}>{overshoot ? 'オーバー' : '残り'}</Text>
+            <Label size="sm" tone="secondary">{overshoot ? 'オーバー' : '残り'}</Label>
             <Text style={[styles.balanceHeroValue, overshoot && { color: t.colors.status.danger.default }]}>
               {Math.abs(remaining).toLocaleString()}
             </Text>
@@ -258,17 +258,17 @@ const BalanceModal = memo(function BalanceModal({
               alignItems: 'center',
             }]}>
               <View style={styles.carryoverToggleLeft}>
-                <Text style={{ fontSize: fs.caption1 }}>🍽️</Text>
+                <Text style={{ fontSize: fs.sm }}>🍽️</Text>
                 <Text style={[styles.carryoverToggleLabel, { color: t.colors.action.primary.onContainer }]}>
                   調整中（{carryoverDaysTotal}日間）
                 </Text>
               </View>
               <Pressable onPress={onApplyCarryover} hitSlop={8} accessibilityRole="button" accessibilityLabel="プランを変更する">
-                <Body size="sm" weight="semibold" tone="link">変更</Body>
+                <Label size="sm" tone="link">変更</Label>
               </Pressable>
               <Text style={{ color: t.colors.border.default, marginHorizontal: t.spacing['2'] }}>|</Text>
               <Pressable onPress={onCancelCarryoverPlan} hitSlop={8} accessibilityRole="button" accessibilityLabel="調整をやめる">
-                <Body size="sm" weight="semibold" style={{ color: t.colors.status.danger.default }}>やめる</Body>
+                <Label size="sm" style={{ color: t.colors.status.danger.default }}>やめる</Label>
               </Pressable>
             </View>
           ) : showCarryoverSection ? (
@@ -282,7 +282,7 @@ const BalanceModal = memo(function BalanceModal({
               accessibilityLabel="食事の調整をはじめる"
             >
               <View style={styles.carryoverToggleLeft}>
-                <Text style={{ fontSize: fs.caption1 }}>🍽️</Text>
+                <Text style={{ fontSize: fs.sm }}>🍽️</Text>
                 <Text style={[styles.carryoverToggleLabel, { color: t.colors.content.secondary }]}>
                   昨日の食事、少し多めでした — 調整する
                 </Text>
@@ -509,22 +509,28 @@ function CarryoverDaySheet({
   onCancel?: () => void;
   surplusKcal: number;
   mode?: 'start' | 'edit';
+  initialDays?: number;
 }) {
   const t = useTheme();
   const { profile } = useAppState();
   const maxDays = 14;
   // hard床を割らない最小日数 (ユーザーが下回れないように−ボタンをブロックする境界)
   const hardMinDays = minCarryoverDays(profile.targetCalories, surplusKcal, maxDays);
-  const [days, setDays] = useState(() => Math.min(Math.max(hardMinDays, 7), maxDays));
+  const defaultDays = initialDays != null
+    ? Math.min(Math.max(hardMinDays, initialDays), maxDays)
+    : Math.min(Math.max(hardMinDays, 7), maxDays);
+  const [days, setDays] = useState(() => defaultDays);
   // hard境界で−を押したときだけ一時表示するエラーフラグ
   const [showHardError, setShowHardError] = useState(false);
 
   useEffect(() => {
     if (visible) {
-      setDays(Math.min(Math.max(hardMinDays, 7), maxDays));
+      setDays(initialDays != null
+        ? Math.min(Math.max(hardMinDays, initialDays), maxDays)
+        : Math.min(Math.max(hardMinDays, 7), maxDays));
       setShowHardError(false);
     }
-  }, [visible, hardMinDays, maxDays]);
+  }, [visible, hardMinDays, maxDays, initialDays]);
 
   const perDay = Math.ceil(surplusKcal / days);
   const verdict = classifyCarryoverDeduction(profile.targetCalories, perDay, profile.biologicalBasis);
@@ -570,7 +576,7 @@ function CarryoverDaySheet({
       onClose={onClose}
       title={mode === 'edit' ? '調整プランを変更' : '帳尻調整プランを設定'}
       primaryAction={{
-        label: mode === 'edit' ? `${days}日間に変更` : `${days}日間で調整を開始`,
+        label: mode === 'edit' ? '変更' : '開始',
         onPress: () => { onClose(); onConfirm(days); },
         disabled: verdict === 'hard',
       }}
@@ -583,12 +589,12 @@ function CarryoverDaySheet({
     >
       <View style={{ gap: t.spacing['1'] }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: t.spacing['2'] }}>
-          <Body size="sm" tone="secondary">余剰カロリー</Body>
+          <Label size="sm" tone="secondary">{mode === 'edit' ? '残り調整分' : '余剰カロリー'}</Label>
           <Body size="sm" weight="semibold">+{surplusKcal} kcal</Body>
         </View>
         <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: t.colors.border.subtle }} />
         <View style={{ paddingVertical: t.spacing['4'], alignItems: 'center', gap: t.spacing['2'] }}>
-          <Body size="sm" tone="secondary">分割する日数</Body>
+          <Label size="sm" tone="secondary">分割する日数</Label>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.spacing['6'] }}>
             <Pressable
               onPress={handleDecrement}
@@ -643,7 +649,7 @@ function CarryoverDaySheet({
         </View>
         <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: t.colors.border.subtle }} />
         <Body size="sm" tone="secondary" style={{ paddingTop: t.spacing['2'] }}>
-          明日から{days}日間、毎日の目標から{perDay} kcalを差し引きます。
+          {mode === 'edit' ? '今日' : '明日'}から{days}日間、毎日の目標から{perDay} kcalを差し引きます。
         </Body>
       </View>
     </BottomSheet>
@@ -679,11 +685,11 @@ function CarryoverBanner({
       <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: t.spacing['2'] }}>
         <Text style={{ fontSize: 14, lineHeight: 16 }}>🍽️</Text>
         <View style={{ flex: 1, gap: t.spacing['0.5'] }}>
-          <Body size="md" weight="semibold" tone="primary">
+          <Label tone="primary">
             {isNewPlan
               ? '余剰カロリーを調整する'
               : `調整プラン 実行中 · 残り ${daysRemaining} 日`}
-          </Body>
+          </Label>
           {isNewPlan ? (
             <Body size="sm" tone="secondary">
               {`昨日+${surplusKcal}kcal超過。調整を始めますか？`}
@@ -696,9 +702,9 @@ function CarryoverBanner({
             accessibilityRole="button"
             accessibilityLabel={isNewPlan ? '調整プランを設定する' : '調整プランを変更する'}
           >
-            <Body size="sm" weight="semibold" tone="link">
+            <Label size="sm" tone="link">
               {isNewPlan ? '設定する' : '変更'}
-            </Body>
+            </Label>
           </Pressable>
         </View>
         <IconButton icon="close" size="sm" tone="tertiary" onPress={onDismiss} accessibilityLabel="閉じる" />
@@ -822,7 +828,7 @@ export const StatusCard = memo(function StatusCard({
           <View style={styles.sideLabelRow}>
             {/* 左に同サイズの透明スペーサーを置いてラベルを視覚的に中央寄せ */}
             <View style={styles.sideLabelChevronSpacer} />
-            <Text style={styles.sideLabel}>食事</Text>
+            <Label size="sm" tone="secondary">食事</Label>
             <Icon name="chevronRight" size={12} color={t.colors.content.secondary} />
           </View>
           <Text style={styles.sideValue}>{Math.round(dayMacro.kcal).toLocaleString()}</Text>
@@ -860,7 +866,7 @@ export const StatusCard = memo(function StatusCard({
         >
           <View style={styles.sideLabelRow}>
             <View style={styles.sideLabelChevronSpacer} />
-            <Text style={styles.sideLabel}>消費</Text>
+            <Label size="sm" tone="secondary">消費</Label>
             <Icon name="chevronRight" size={12} color={t.colors.content.secondary} />
           </View>
           <Text style={styles.sideValue}>{effectiveExerciseKcal > 0 ? effectiveExerciseKcal.toLocaleString() : '—'}</Text>
@@ -1547,7 +1553,7 @@ const makeStyles = (t: Theme) => StyleSheet.create({
     justifyContent: 'center',
   },
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  headerDate: { fontSize: fs.callout, fontWeight: '700', color: t.colors.action.primary.default },
+  headerDate: { fontSize: fs.md, fontWeight: '700', color: t.colors.action.primary.default },
   // トライアル残り≤2日で表示するバッジ (右上の小さい丸)
   avatarBadge: {
     position: 'absolute',
@@ -1568,11 +1574,10 @@ const makeStyles = (t: Theme) => StyleSheet.create({
   ringRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   sideColumn: { flex: 1, alignItems: 'center', gap: 2, paddingVertical: 8, borderRadius: radius.md },
   sideColumnPressed: { opacity: 0.6 },
-  sideLabel: { fontSize: fs.xs, fontWeight: '600', color: t.colors.content.secondary, letterSpacing: 0.4 },
   sideLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 2, justifyContent: 'center' },
   /** chevron と同幅の透明スペーサーで Label を視覚的に中央寄せ */
   sideLabelChevronSpacer: { width: 12 + 2 /* chevron size + gap */ },
-  sideValue: { fontSize: fs.lg, fontWeight: '700', color: t.colors.content.primary, letterSpacing: -0.3 },
+  sideValue: { fontSize: fs.lg, fontWeight: '700', color: t.colors.content.primary, letterSpacing: ls.tight },
   sideUnit: { fontSize: fs.xs, fontWeight: '500', color: t.colors.content.secondary },
   balanceCloseButton: {
     alignSelf: 'flex-end',
@@ -1583,13 +1588,10 @@ const makeStyles = (t: Theme) => StyleSheet.create({
     paddingTop: 4,
     paddingBottom: 20,
   },
-  balanceHeroCaption: {
-    fontSize: fs.caption1,
-    fontWeight: '600',
-    color: t.colors.content.secondary,
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-  },
+  // 52px はアプリ最大の文字。display(44px)と同様、既存スケールに収まらない
+  // 意図的なヒーロー例外として扱う (収支の残り/オーバー kcal を大きく見せる用途)。
+  // letterSpacing も display 級の詰めが必要なため tokens の tighter(-0.8) を
+  // さらに超える -1.5 を意図的に採用している。
   balanceHeroValue: {
     fontSize: 52,
     fontWeight: '700',
@@ -1598,12 +1600,13 @@ const makeStyles = (t: Theme) => StyleSheet.create({
     lineHeight: 56,
     marginTop: 4,
   },
+  // 52px の値に添える単位 = Caption 相当
   balanceHeroUnit: {
-    fontSize: fs.caption1,
+    fontSize: fs.xs,
     fontWeight: '500',
     color: t.colors.content.secondary,
     marginTop: -2,
-    letterSpacing: 0.6,
+    letterSpacing: ls.wider,
   },
   /** 進捗バー */
   balanceProgressTrack: {
@@ -1633,11 +1636,11 @@ const makeStyles = (t: Theme) => StyleSheet.create({
   /** Tier 1 emphasis: 最終結果ラベル (text色, bold) */
   balanceMathLabelStrong: { color: t.colors.content.primary, fontWeight: '700', fontSize: fs.md },
   /** Tier 2: 通常値 (text色, medium) */
-  balanceMathValue: { fontSize: fs.md, fontWeight: '500', letterSpacing: -0.2 },
+  balanceMathValue: { fontSize: fs.md, fontWeight: '500', letterSpacing: ls.tight },
   /** Tier 2 emphasis: 中間結果値 (semibold, slightly larger) */
   balanceMathValueMid: { fontSize: fs.md, fontWeight: '700' },
   /** Tier 1 emphasis: 最終結果値 (bold, largest) */
-  balanceMathValueStrong: { fontSize: fs.xl, fontWeight: '700', letterSpacing: -0.5 },
+  balanceMathValueStrong: { fontSize: fs.xl, fontWeight: '700', letterSpacing: ls.tight },
   balanceMathUnit: { fontSize: fs.xs, color: t.colors.content.secondary, fontWeight: '500' },
   /** Tier 3: ベース目標の補足 (運動習慣ラベル) */
   balanceMathSubtitle: {
@@ -1673,17 +1676,17 @@ const makeStyles = (t: Theme) => StyleSheet.create({
   miniBarValue: { fontSize: fs.sm, color: t.colors.content.primary, fontWeight: '600' },
   miniBarValueTarget: { color: t.colors.content.secondary, fontWeight: '600' },
   macroPill: { flexDirection: 'row', gap: 4, paddingHorizontal: 11, paddingVertical: 7, borderRadius: radius.full },
-  macroPillLabel: { fontSize: fs.caption1, color: t.colors.content.secondary, fontWeight: '700' },
-  macroPillValue: { fontSize: fs.caption1, color: t.colors.content.primary, fontWeight: '700' },
+  macroPillLabel: { fontSize: fs.xs, color: t.colors.content.secondary, fontWeight: '700' },
+  macroPillValue: { fontSize: fs.xs, color: t.colors.content.primary, fontWeight: '700' },
   feedbackBubble: { position: 'absolute', top: 340, alignSelf: 'center', backgroundColor: t.colors.action.primary.default, paddingHorizontal: 16, paddingVertical: 12, borderRadius: radius.xl, alignItems: 'center', ...elevation.lg, shadowColor: t.colors.action.primary.default },
-  feedbackText: { color: t.colors.content.onAction, fontSize: fs.callout, fontWeight: '700' },
-  feedbackMacro: { fontSize: fs.caption1, marginTop: 2 },
+  feedbackText: { color: t.colors.content.onAction, fontSize: fs.md, fontWeight: '700' },
+  feedbackMacro: { fontSize: fs.sm, marginTop: 2 },
   // Live preview state (sheet open, before save). Same position as feedbackBubble
   // but cream/sage-pale to read as "tentative". Pointer-events disabled so it
   // doesn't intercept taps on the open sheet.
   undoToast: { position: 'absolute', left: 18, right: 18, bottom: 24, borderRadius: radius.xl, paddingHorizontal: 20, paddingVertical: 15, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   undoTitle: { color: t.colors.content.onAction, fontSize: fs.md, fontWeight: '700' },
-  undoText: { fontSize: fs.caption1, marginTop: 4 },
+  undoText: { fontSize: fs.sm, marginTop: 4 },
   undoAction: { fontSize: fs.md, fontWeight: '700' },
   goalMacroRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
   editorSection: { gap: 12 },
@@ -1697,7 +1700,7 @@ const makeStyles = (t: Theme) => StyleSheet.create({
   previewTitle: { fontSize: fs.sm, color: t.colors.content.secondary },
   previewSummaryText: { fontSize: fs.md, color: t.colors.content.primary, fontWeight: '600', lineHeight: 20 },
   previewSummaryDivider: { color: t.colors.content.secondary, fontWeight: '400' },
-  previewSummarySecondary: { fontSize: fs.caption1, color: t.colors.content.secondary, marginTop: -2 },
+  previewSummarySecondary: { fontSize: fs.sm, color: t.colors.content.secondary, marginTop: -2 },
   previewCalories: { fontSize: fs['3xl'], fontWeight: '700', color: t.colors.action.primary.default },
   categoryRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: t.colors.surface.raised, borderRadius: radius.lg, paddingHorizontal: 16, paddingVertical: 12 },
   categoryRowLabel: { fontSize: fs.sm, color: t.colors.content.secondary, fontWeight: '600' },
@@ -1713,7 +1716,7 @@ const makeStyles = (t: Theme) => StyleSheet.create({
   portionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   portionTitle: { fontSize: fs.md, fontWeight: '700', color: t.colors.content.primary },
   portionNowLine: { fontSize: fs.md, color: t.colors.content.primary, fontWeight: '700', marginTop: 2 },
-  portionNowLineMuted: { color: t.colors.content.secondary, fontWeight: '500', fontSize: fs.caption1 },
+  portionNowLineMuted: { color: t.colors.content.secondary, fontWeight: '500', fontSize: fs.sm },
   sliderWrap: { paddingTop: 12, paddingBottom: 4 },
   sliderTrack: { height: 36, justifyContent: 'center', borderRadius: radius.full },
   sliderFill: { position: 'absolute', left: 0, height: 6, backgroundColor: t.colors.action.text.default, borderRadius: radius.full, top: 15 },
@@ -1722,6 +1725,6 @@ const makeStyles = (t: Theme) => StyleSheet.create({
   sliderThumb: { position: 'absolute', width: 28, height: 28, borderRadius: radius.full, backgroundColor: t.colors.content.onAction, borderWidth: 2, borderColor: t.colors.action.primary.default, top: 4, ...elevation.sm },
   sliderLabelsRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 2 },
   sliderLabelTap: { alignItems: 'center', flex: 1, paddingVertical: 4 },
-  sliderLabelText: { fontSize: fs.caption1, color: t.colors.content.secondary, fontWeight: '600' },
+  sliderLabelText: { fontSize: fs.xs, color: t.colors.content.secondary, fontWeight: '600' },
   sliderLabelTextActive: { color: t.colors.action.primary.default, fontWeight: '700' },
 });

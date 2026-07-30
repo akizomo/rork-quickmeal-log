@@ -1,8 +1,8 @@
 import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { BottomSheet, Chip, IconButton, useTheme, type Theme } from '@/design-system';
-import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
+import { BottomSheet, Chip, IconButton, Label, Overline, useTheme, type Theme } from '@/design-system';
+import { fontSize as fs, letterSpacing as ls } from '@/design-system/tokens/primitives/typography';
 import { radius } from '@/design-system/tokens/primitives/radius';
 import { ACTIVITY_LEVEL_OPTIONS } from '@/constants/onboarding';
 import {
@@ -145,7 +145,7 @@ export const ExerciseSheet = memo(function ExerciseSheet({ visible, onClose, dat
         <View style={styles.content}>
           <View style={styles.summaryCard} testID="exercise-summary-card">
             <View style={styles.summaryHeader}>
-              <Text style={styles.summaryLabel}>{sheetTitle}</Text>
+              <Label size="sm" tone="secondary">{sheetTitle}</Label>
               <Text style={styles.summaryKcal}>
                 {consumedKcal.toLocaleString()}
                 <Text style={styles.summaryKcalUnit}> kcal</Text>
@@ -176,7 +176,7 @@ export const ExerciseSheet = memo(function ExerciseSheet({ visible, onClose, dat
           {/* === 運動記録 (歩数=ヘルスのウォーキングに集約 + 手動ログ) === */}
           {hasHealthActivity || hasWorkouts ? (
             <View style={styles.historyBlock} testID="exercise-history-list">
-              <Text style={styles.sectionLabel}>{dayLabel}の運動</Text>
+              <Overline>{dayLabel}の運動</Overline>
               {hasHealthActivity ? (
                 <View style={styles.historyRow} testID="exercise-health-walking">
                   <Text style={styles.historyEmoji}>{walkingType?.emoji ?? '🚶'}</Text>
@@ -204,7 +204,7 @@ export const ExerciseSheet = memo(function ExerciseSheet({ visible, onClose, dat
 
           {/* === 運動を追加 === */}
           <View style={styles.addBlock}>
-            <Text style={styles.sectionLabel}>運動を追加</Text>
+            <Overline>運動を追加</Overline>
             <View style={styles.typeGrid}>
               {[availableTypes.slice(0, 4), availableTypes.slice(4)].map((row, rowIdx) => (
                 <View key={rowIdx} style={styles.typeRow}>
@@ -330,9 +330,8 @@ const makeStyles = (t: Theme) => StyleSheet.create({
     alignItems: 'baseline',
     justifyContent: 'space-between',
   },
-  summaryLabel: { fontSize: fs.sm, fontWeight: '600', color: t.colors.content.secondary, letterSpacing: 0.4 },
-  summaryKcal: { fontSize: fs['3xl'], fontWeight: '700', color: t.colors.content.primary, letterSpacing: -0.4 },
-  summaryKcalUnit: { fontSize: fs.caption1, fontWeight: '500', color: t.colors.content.secondary },
+  summaryKcal: { fontSize: fs['3xl'], fontWeight: '700', color: t.colors.content.primary, letterSpacing: ls.tight },
+  summaryKcalUnit: { fontSize: fs.xs, fontWeight: '500', color: t.colors.content.secondary },
   ledgerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -341,8 +340,8 @@ const makeStyles = (t: Theme) => StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: t.colors.border.default,
   },
-  ledgerLabel: { fontSize: fs.caption1, fontWeight: '500', color: t.colors.content.secondary, flex: 1 },
-  ledgerValue: { fontSize: fs.caption1, fontWeight: '600', color: t.colors.content.secondary },
+  ledgerLabel: { fontSize: fs.sm, fontWeight: '500', color: t.colors.content.secondary, flex: 1 },
+  ledgerValue: { fontSize: fs.sm, fontWeight: '600', color: t.colors.content.secondary },
   ledgerResultRow: { borderTopWidth: 0, paddingTop: 4 },
   ledgerResultLabel: { fontSize: fs.sm, fontWeight: '700', color: t.colors.content.primary, flex: 1 },
   ledgerResultValue: { fontSize: fs.md, fontWeight: '700', color: t.colors.action.primary.default },
@@ -372,18 +371,11 @@ const makeStyles = (t: Theme) => StyleSheet.create({
   },
   sourceBadgeHealth: { backgroundColor: t.colors.accent.subtle, borderColor: t.colors.accent.subtle },
   sourceBadgeManual: { backgroundColor: 'transparent', borderColor: t.colors.border.default },
-  sourceBadgeText: { fontSize: fs.xs, fontWeight: '600', letterSpacing: 0.2 },
+  sourceBadgeText: { fontSize: fs.xs, fontWeight: '600', letterSpacing: ls.wide },
   sourceBadgeTextHealth: { color: t.colors.accent.default },
   sourceBadgeTextManual: { color: t.colors.content.secondary },
   historyKcal: { fontSize: fs.sm, fontWeight: '700', color: t.colors.action.primary.default },
   addBlock: { gap: 12 },
-  sectionLabel: {
-    fontSize: fs.sm,
-    fontWeight: '700',
-    color: t.colors.content.secondary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-  },
   typeGrid: { gap: 8 },
   typeRow: { flexDirection: 'row', gap: 8 },
   typeEmoji: { fontSize: 22 },

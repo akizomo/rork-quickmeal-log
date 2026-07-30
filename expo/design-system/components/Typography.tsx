@@ -118,15 +118,22 @@ export function Body({
 // ---------- Label ----------
 // UI要素の「名前」専用。トグル名・フォーム項目名・リスト行の見出し・統計カードの項目名など、
 // 文章ではない短い名詞句を担う。semibold 既定なのは、ラベルが周囲の本文/数値から
-// 独立した要素だと一目で分かる必要があるため。
+// 独立した要素だと一目で分かる必要があるため。MD3 の Label ロール (Label Large/Medium/Small)
+// に相当し、Button のラベルも概念上は同じロール。
 //
-//   size="md"(15) 本文と同じ行に並ぶラベル。リスト行の主見出し、トグル名。
+//   size="lg"(17) Button のラベルと同じ大きさ。強調したい単発のUI要素名に使う稀なケース。
+//   size="md"(15) 本文と同じ行に並ぶラベル。リスト行の主見出し、トグル名 (既定)。
 //   size="sm"(13) 一段下がったラベル。フォーム項目名、カード内の項目名。
 //
 // letterSpacing は付けない。字間を広げるのは Overline (グループ見出し) の役割で、
 // ラベルまで広げると「見出しの入れ子」に見えて階層が壊れる。
+//
+// Button (`tokens/components/button.ts`) は状態別の文字色 (pressed/disabled) や
+// numberOfLines を Text に直接持たせる必要があるためこのコンポーネントを描画には使わないが、
+// フォントサイズ/太さは同じ primitive (fontSize.sm/md/lg, fontWeight.semibold) から意図的に
+// 揃えている。**この Label の size ラインナップを変えたら button.ts の size テーブルも見直すこと。**
 export type LabelProps = BaseProps & {
-  size?: Extract<TypographySize, 'sm' | 'md'>;
+  size?: Extract<TypographySize, 'sm' | 'md' | 'lg'>;
 };
 
 export function Label({

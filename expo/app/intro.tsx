@@ -26,7 +26,7 @@ import { INTRO_VERSION, LEGAL_LINKS } from '@/constants/onboarding';
 import { lightTheme, useTheme, type Theme } from '@/design-system';
 import { colors } from '@/design-system/tokens/primitives/colors';
 import { radius } from '@/design-system/tokens/primitives/radius';
-import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
+import { fontSize as fs, letterSpacing as ls } from '@/design-system/tokens/primitives/typography';
 import { useAppState } from '@/providers/app-state-provider';
 
 type SlideMedia =
@@ -340,7 +340,7 @@ const makeStyles = (t: Theme) => StyleSheet.create({
     height: 48,
   },
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  brandText: { fontSize: fs.md, fontWeight: '700', color: t.colors.content.primary, letterSpacing: 0.3 },
+  brandText: { fontSize: fs.md, fontWeight: '700', color: t.colors.content.primary, letterSpacing: ls.wide },
   skipText: { color: t.colors.content.secondary, fontSize: fs.sm, fontWeight: '600' },
   slideList: { flex: 1 },
   slide: { flex: 1, paddingHorizontal: 20, paddingTop: 8 },
@@ -355,7 +355,7 @@ const makeStyles = (t: Theme) => StyleSheet.create({
     marginBottom: 24,
   },
   textBlock: { gap: 8, paddingBottom: 8 },
-  title: { fontSize: fs['2xl'], fontWeight: '700', color: t.colors.content.primary, lineHeight: 32, letterSpacing: 0.2 },
+  title: { fontSize: fs['2xl'], fontWeight: '700', color: t.colors.content.primary, lineHeight: 32, letterSpacing: ls.wide },
   subtitle: { fontSize: fs.sm, lineHeight: 23, color: t.colors.content.secondary },
   footer: { paddingHorizontal: 20, paddingBottom: 12, gap: 16 },
   dots: { flexDirection: 'row', justifyContent: 'center', gap: 8 },
@@ -367,7 +367,7 @@ const makeStyles = (t: Theme) => StyleSheet.create({
     paddingVertical: 15,
     alignItems: 'center',
   },
-  ctaText: { color: t.colors.content.onAction, fontSize: fs.md, fontWeight: '700', letterSpacing: 0.2 },
+  ctaText: { color: t.colors.content.onAction, fontSize: fs.md, fontWeight: '700', letterSpacing: ls.wide },
   legalRow: { flexDirection: 'row', justifyContent: 'center', gap: 8 },
   legalLink: { fontSize: fs.sm, color: t.colors.content.secondary, textDecorationLine: 'underline' },
   legalSep: { fontSize: fs.sm, color: t.colors.content.secondary },
@@ -415,10 +415,10 @@ const makeIllustStyles = (t: Theme) => StyleSheet.create({
     alignItems: 'baseline',
   },
   // カードのヘッダ行 (ラベル+値)。下の sparkAxisText(xs) より一段上に置く。
-  sparkLabel: { fontSize: fs.sm, color: t.colors.content.secondary, letterSpacing: 0.5 },
+  sparkLabel: { fontSize: fs.sm, color: t.colors.content.secondary, letterSpacing: ls.wider },
   sparkDelta: { fontSize: fs.sm, color: t.colors.action.text.default, fontWeight: '600' },
   sparkAxis: { flexDirection: 'row', justifyContent: 'space-between' },
-  sparkAxisText: { fontSize: fs.xs, color: t.colors.content.secondary, letterSpacing: 0.3 },
+  sparkAxisText: { fontSize: fs.xs, color: t.colors.content.secondary, letterSpacing: ls.wide },
   // Card 3
   pfcRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   // P/F/C の1文字ラベル = 添え字なので Caption 相当 (xs)

@@ -96,6 +96,9 @@ function MealLogCardHeader({
           gap: t.spacing['2'],
         }}
       >
+        {/* ロール的には Label (リスト行の主見出し = 食事タイトルという「名前」)。<Label> を
+            使わないのは、Badge/カロリー/削除ボタンと同じ行で flexShrink/numberOfLines を
+            個別制御する複合レイアウトのため。 */}
         <Text
           numberOfLines={1}
           style={{
@@ -121,6 +124,9 @@ function MealLogCardHeader({
           gap: t.spacing['2'],
         }}
       >
+        {/* ロール的には Label (このカードの主要な値の「名前」= カロリー数値)。<Label> を
+            使わないのは、action.primary色でハイライトする必要がありHeader内の
+            他要素と行内でgap/align含め密結合しているため。 */}
         <Text
           style={{
             fontSize: t.typography.fontSize.sm,
@@ -131,6 +137,8 @@ function MealLogCardHeader({
         >
           {Math.round(kcal)} kcal
         </Text>
+        {/* ロール的には Caption (kcalの隣にあって初めて意味を持つ添え物の時刻)。<Caption> を
+            使わないのは、"・"区切り記号を含むレイアウトで周囲のTextと密結合しているため。 */}
         <Text
           style={{
             fontSize: t.typography.fontSize.xs,
@@ -200,6 +208,9 @@ function MealLogCardBody({
         gap: t.spacing['3'],
       }}
     >
+      {/* ロール的には Body size="sm" (量・トッピング等を読ませる説明文)。<Body> を
+          使わないのは、amount/subtitle/addonsの3区間で色・weightが異なる
+          ネストしたTextを1つの numberOfLines={2} ブロックとして組む必要があるため。 */}
       <Text
         numberOfLines={2}
         style={{
