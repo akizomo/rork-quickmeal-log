@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 
-import { Body, Icon, IconButton, useTheme } from '@/design-system';
+import { Body, Icon, IconButton, Label, useTheme } from '@/design-system';
 import { fontSize } from '@/design-system/tokens/primitives/typography';
 import { elevation } from '@/design-system/tokens/primitives/elevation';
 import { duration } from '@/design-system/tokens/primitives/motion';
@@ -24,8 +24,7 @@ import { getIdentitiesInBucket, getBucketDef } from '@/constants/identity';
 import { deriveDefaultTab, FREQUENT_TAB_MIN_LOGS, rankFrequentSelections } from '@/utils/quick-log-history';
 import type { QuickLogTabKey, RankedLogItem } from '@/types/quick-log';
 import { widgetRequestPin } from '@/utils/widget-bridge';
-// MVP では非表示 (PRD v1.5 §4.2 / §13 P0)。P1-C 再有効化時に import コメントを外す。
-// import { IdentitySearchBar } from '@/components/IdentitySearchBar';
+import { SearchSheet } from '@/components/SearchSheet';
 
 export const QUICK_LOG_TOKENS = {
   sectionPaddingHorizontal: 16,
@@ -93,7 +92,7 @@ function WidgetNudgeBanner() {
       <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: t.spacing['2'] }}>
         <Icon name="widget" size={18} color={t.colors.action.primary.default} />
         <View style={{ flex: 1, gap: t.spacing['0.5'] }}>
-          <Body size="md" weight="semibold" tone="primary">ホーム画面から1タップで記録</Body>
+          <Label tone="primary">ホーム画面から1タップで記録</Label>
           <Body size="sm" tone="secondary">アプリを開かずに記録できます</Body>
           <Pressable
             onPress={handleAdd}
@@ -102,7 +101,7 @@ function WidgetNudgeBanner() {
             accessibilityRole="button"
             accessibilityLabel="ウィジェットをホーム画面に追加する"
           >
-            <Body size="sm" weight="semibold" tone="link">追加する</Body>
+            <Label size="sm" tone="link">追加する</Label>
           </Pressable>
         </View>
         <IconButton icon="close" size="sm" tone="tertiary" onPress={handleDismiss} accessibilityLabel="閉じる" />
@@ -438,6 +437,7 @@ function FrequentButton({
 export const QuickLogSection = memo(function QuickLogSection() {
   const { selectedMode, setSelectedMode, settings, quickLog } = useAppState();
   const { width: screenWidth } = useWindowDimensions();
+  const [searchOpen, setSearchOpen] = useState(false);
 
   // history のエントリ数でコールドスタート判定
   const history = settings.quickLogHistory as import('@/types/quick-log').QuickLogHistoryMap | undefined;
@@ -491,9 +491,6 @@ export const QuickLogSection = memo(function QuickLogSection() {
   return (
     <View style={styles.section} testID="quick-log-section">
       <WidgetNudgeBanner />
-      {/* <View style={{ marginBottom: QUICK_LOG_TOKENS.segmentBottomSpacing }}>
-        <IdentitySearchBar />
-      </View> */}
       <View style={styles.segmentRow}>
         <SegmentedControl
           options={segmentOptions}
@@ -502,7 +499,20 @@ export const QuickLogSection = memo(function QuickLogSection() {
           style={{ flex: 1 }}
           testID="mode-tab"
         />
+        <IconButton
+          icon="search"
+          size="md"
+          tone="secondary"
+          onPress={() => setSearchOpen(true)}
+          accessibilityLabel="食品を検索"
+          testID="open-search"
+        />
       </View>
+      <SearchSheet
+        visible={searchOpen}
+        onClose={() => setSearchOpen(false)}
+        onOpen={() => setSearchOpen(true)}
+      />
 
       {selectedTab === 'frequent' ? (
         <FrequentGrid
