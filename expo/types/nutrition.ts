@@ -245,6 +245,12 @@ export interface AppSettings {
    * undefined / null = 未 dismiss。一度 dismiss したら二度と表示しない。
    */
   widgetNudgeDismissedAtISO?: string | null;
+
+  /**
+   * ウィジェット導入プロトタイプ画面 (widget-intro.tsx) を見た時刻 (ISO)。
+   * まだ initial-route には未接続の試作段階のフラグ。
+   */
+  widgetIntroSeenAtISO?: string | null;
 }
 
 export interface QuickCategory {

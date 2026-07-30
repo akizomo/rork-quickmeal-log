@@ -5,7 +5,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle, Path, Polyline } from 'react-native-svg';
 
-import { Body, Button, Card, Caption, Heading, Icon, type IconName, useTheme, type Theme } from '@/design-system';
+import { Body, Button, Card, Caption, Heading, Icon, type IconName, Label, useTheme, type Theme } from '@/design-system';
 import { useAppState } from '@/providers/app-state-provider';
 import { useHealthSyncContext } from '@/providers/health-sync-provider';
 
@@ -119,11 +119,13 @@ export default function HealthConnectRoute() {
               歩数・運動・体重を自動で取り込んで、毎日の入力をすこし軽くします。あとからでも変更できます。
             </Body>
 
-            <HealthSyncIllustration t={t} />
+            <View style={{ flex: 1, justifyContent: 'center' }}>
+              <HealthSyncIllustration t={t} />
+            </View>
 
-            <View style={{ gap: t.spacing['2'], marginTop: 'auto' }}>
+            <View style={{ gap: t.spacing['2'] }}>
               <Card variant="raised" style={{ gap: t.spacing['3'] }}>
-                <Body weight="semibold">取り込むデータ</Body>
+                <Label>取り込むデータ</Label>
                 {DATA_ITEMS.map((item) => (
                   <View key={item.label} style={{ flexDirection: 'row', alignItems: 'center', gap: t.spacing['2'] }}>
                     <Icon name={item.icon} size={18} color={t.colors.content.secondary} />
@@ -133,7 +135,7 @@ export default function HealthConnectRoute() {
               </Card>
               {needsInstall ? (
                 <Card variant="raised" style={{ gap: t.spacing['1'] }}>
-                  <Body weight="semibold">Health Connect が必要です</Body>
+                  <Label>Health Connect が必要です</Label>
                   <Body size="sm" tone="secondary">
                     {healthSync.status === 'provider_update_required'
                       ? 'インストール済みの Health Connect アプリのアップデートが必要です。Play Store で更新してから戻ってきてください。'
