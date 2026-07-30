@@ -23,7 +23,7 @@ import Svg, {
 import { Logo } from '@/components/Logo';
 import { ButtonGridIllustration, GestureDemoIllustration } from '@/components/onboarding-illustrations';
 import { INTRO_VERSION, LEGAL_LINKS } from '@/constants/onboarding';
-import { lightTheme, useTheme, type Theme } from '@/design-system';
+import { Label, lightTheme, useTheme, type Theme } from '@/design-system';
 import { colors } from '@/design-system/tokens/primitives/colors';
 import { radius } from '@/design-system/tokens/primitives/radius';
 import { fontSize as fs, letterSpacing as ls } from '@/design-system/tokens/primitives/typography';
@@ -242,7 +242,7 @@ export default function IntroRoute() {
               accessibilityLabel="紹介をスキップ"
               accessibilityHint="オンボーディングへ進みます"
             >
-              <Text style={styles.skipText}>スキップ</Text>
+              <Label size="sm" tone="link">スキップ</Label>
             </Pressable>
           </View>
 

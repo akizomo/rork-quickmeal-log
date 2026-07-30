@@ -185,7 +185,9 @@ const BalanceModal = memo(function BalanceModal({
   const hasExercise = exerciseAdded > 0;
   const showCarryoverSection = carryoverPlanActive ||
     yesterdayOvershootKcal > Math.round(baseTargetKcal * 0.15);
+  const [cancelDialogVisible, setCancelDialogVisible] = useState(false);
   return (
+    <>
     <Dialog visible={visible} onClose={onClose} testID="balance-modal">
       {/* close ボタン (右上) */}
       <IconButton
@@ -267,7 +269,7 @@ const BalanceModal = memo(function BalanceModal({
                 <Label size="sm" tone="link">変更</Label>
               </Pressable>
               <Text style={{ color: t.colors.border.default, marginHorizontal: t.spacing['2'] }}>|</Text>
-              <Pressable onPress={onCancelCarryoverPlan} hitSlop={8} accessibilityRole="button" accessibilityLabel="調整をやめる">
+              <Pressable onPress={() => setCancelDialogVisible(true)} hitSlop={8} accessibilityRole="button" accessibilityLabel="調整をやめる">
                 <Label size="sm" style={{ color: t.colors.status.danger.default }}>やめる</Label>
               </Pressable>
             </View>
@@ -290,6 +292,24 @@ const BalanceModal = memo(function BalanceModal({
             </Pressable>
           ) : null}
     </Dialog>
+    <Dialog
+      visible={cancelDialogVisible}
+      onClose={() => setCancelDialogVisible(false)}
+      title="調整プランをやめますか？"
+      primaryAction={{
+        label: 'やめる',
+        onPress: () => { setCancelDialogVisible(false); onClose(); onCancelCarryoverPlan(); },
+      }}
+      secondaryAction={{
+        label: '続ける',
+        onPress: () => setCancelDialogVisible(false),
+      }}
+    >
+      <Body size="sm" tone="secondary">
+        残りの調整がキャンセルされ、毎日の目標カロリーが通常に戻ります。
+      </Body>
+    </Dialog>
+    </>
   );
 });
 

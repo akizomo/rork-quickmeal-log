@@ -7,7 +7,7 @@ import type { PurchasesOffering, PurchasesPackage } from 'react-native-purchases
 
 import { TRIAL_DAYS } from '@/constants/iap';
 import { LEGAL_LINKS } from '@/constants/onboarding';
-import { Badge, Icon, useTheme, type Theme } from '@/design-system';
+import { Badge, Body, Icon, Label, useTheme, type Theme } from '@/design-system';
 import { fontSize as fs, lineHeight as lh } from '@/design-system/tokens/primitives/typography';
 import { useAppState } from '@/providers/app-state-provider';
 import { fetchOffering, purchase } from '@/utils/iap';
@@ -194,16 +194,16 @@ export default function PaywallRoute() {
                 accessibilityRole="button"
                 accessibilityLabel="購入を復元"
               >
-                <Text style={styles.secondaryText}>購入を復元</Text>
+                <Label size="sm" tone="link">購入を復元</Label>
               </Pressable>
             </View>
             <View style={styles.legalRow}>
               <Pressable onPress={() => openLegal(LEGAL_LINKS.terms)}>
-                <Text style={styles.legalLink}>利用規約</Text>
+                <Body size="sm" tone="link" style={{ textDecorationLine: 'underline' }}>利用規約</Body>
               </Pressable>
-              <Text style={styles.legalSep}>·</Text>
+              <Body size="sm" tone="secondary">·</Body>
               <Pressable onPress={() => openLegal(LEGAL_LINKS.privacy)}>
-                <Text style={styles.legalLink}>プライバシーポリシー</Text>
+                <Body size="sm" tone="link" style={{ textDecorationLine: 'underline' }}>プライバシーポリシー</Body>
               </Pressable>
             </View>
           </View>

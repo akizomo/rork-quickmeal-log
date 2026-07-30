@@ -14,7 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { SettingsDivider, SettingsLinkRow, SettingsListCard, SettingsSectionLabel } from '@/components/SettingsList';
 import { TRIAL_DURATION_DAYS } from '@/constants/onboarding';
-import { Body, BottomSheet, Caption, Card, Heading, Icon, useTheme } from '@/design-system';
+import { Body, BottomSheet, Caption, Card, Heading, Icon, Label, useTheme } from '@/design-system';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { useHealthSyncContext } from '@/providers/health-sync-provider';
 import type { HealthSyncStatus } from '@/utils/health-sync';
@@ -100,9 +100,9 @@ export default function StatusRoute() {
                   }}
                 >
                   <View style={styles.trialRow}>
-                    <Body weight="bold">
+                    <Label>
                       無料トライアル中{trialDays > 0 ? ` · 残り${trialDays}日` : ''}
-                    </Body>
+                    </Label>
                     <Icon name="chevronRight" size={14} color={theme.colors.content.tertiary} />
                   </View>
                   <Body size="sm" tone="secondary">
@@ -130,7 +130,7 @@ export default function StatusRoute() {
                   accessibilityLabel="体重を記録"
                   accessibilityHint="今日の体重を入力するシートを開きます"
                 >
-                  <Text style={[styles.textButtonLabel, { color: theme.colors.action.primary.default }]}>体重を記録</Text>
+                  <Label size="sm" tone="link">体重を記録</Label>
                 </Pressable>
                 <Pressable
                   style={styles.textButton}
@@ -140,7 +140,7 @@ export default function StatusRoute() {
                   accessibilityLabel="体脂肪率を記録"
                   accessibilityHint="今日の体脂肪率を入力するシートを開きます"
                 >
-                  <Text style={[styles.textButtonLabel, { color: theme.colors.action.primary.default }]}>体脂肪を記録</Text>
+                  <Label size="sm" tone="link">体脂肪を記録</Label>
                 </Pressable>
               </View>
               {healthSync.supported ? (
@@ -193,7 +193,7 @@ export default function StatusRoute() {
             >
               <Card variant="raised" style={{ gap: theme.spacing['3'] }}>
                 <View style={styles.goalHeader}>
-                  <Body weight="bold">目標</Body>
+                  <Label>目標</Label>
                   <View style={styles.changeRow}>
                     <Caption tone="secondary">変更</Caption>
                     <Icon name="chevronRight" size={14} color={theme.colors.content.tertiary} />
@@ -334,9 +334,9 @@ function HealthSyncRow({
       ]}
     >
       <View style={{ flex: 1, gap: 2 }}>
-        <Body weight="bold" tone="primary">
+        <Label tone="primary">
           {label}
-        </Body>
+        </Label>
         {sub ? (
           <Body size="sm" tone="secondary">
             {sub}
