@@ -502,6 +502,7 @@ function CarryoverDaySheet({
   onCancel,
   surplusKcal,
   mode = 'start',
+  initialDays,
 }: {
   visible: boolean;
   onClose: () => void;
@@ -522,6 +523,7 @@ function CarryoverDaySheet({
   const [days, setDays] = useState(() => defaultDays);
   // hard境界で−を押したときだけ一時表示するエラーフラグ
   const [showHardError, setShowHardError] = useState(false);
+  const [cancelDialogVisible, setCancelDialogVisible] = useState(false);
 
   useEffect(() => {
     if (visible) {
@@ -571,6 +573,7 @@ function CarryoverDaySheet({
   const canIncrease = days < maxDays;
 
   return (
+    <>
     <BottomSheet
       visible={visible}
       onClose={onClose}
@@ -582,7 +585,7 @@ function CarryoverDaySheet({
       }}
       secondaryAction={mode === 'edit' && onCancel ? {
         label: 'プランをやめる',
-        onPress: () => { onClose(); onCancel(); },
+        onPress: () => setCancelDialogVisible(true),
         destructive: true,
       } : undefined}
       scrollable={false}
@@ -653,6 +656,24 @@ function CarryoverDaySheet({
         </Body>
       </View>
     </BottomSheet>
+    <Dialog
+      visible={cancelDialogVisible}
+      onClose={() => setCancelDialogVisible(false)}
+      title="調整プランをやめますか？"
+      primaryAction={{
+        label: 'やめる',
+        onPress: () => { setCancelDialogVisible(false); onClose(); onCancel?.(); },
+      }}
+      secondaryAction={{
+        label: '続ける',
+        onPress: () => setCancelDialogVisible(false),
+      }}
+    >
+      <Body size="sm" tone="secondary">
+        残りの調整がキャンセルされ、毎日の目標カロリーが通常に戻ります。
+      </Body>
+    </Dialog>
+    </>
   );
 }
 
@@ -790,6 +811,12 @@ export const StatusCard = memo(function StatusCard({
   const openExerciseSheet = useCallback(() => setExerciseSheetVisible(true), []);
   const closeExerciseSheet = useCallback(() => setExerciseSheetVisible(false), []);
 
+  // edit時: 今日を含む残り日数と、その分の残余負債 (= 残り日数 × 現在の日割り額)
+  const carryoverRemainingDays = carryoverPlanActive
+    ? Math.max(1, (settings.kcalCarryoverDaysTotal ?? 0) - carryoverDayIndex + 1)
+    : 0;
+  const carryoverEditSurplus = (settings.kcalCarryoverDailyAmount ?? 0) * carryoverRemainingDays;
+
   // 画面幅に比例した可変リング径 (120–180 でクランプ)。
   const ringSize = Math.round(Math.min(180, Math.max(120, screenWidth * 0.38)));
   const ringStroke = Math.round(ringSize * 0.11);
@@ -808,10 +835,11 @@ export const StatusCard = memo(function StatusCard({
       <CarryoverDaySheet
         visible={daySheetVisible}
         onClose={() => setDaySheetVisible(false)}
-        onConfirm={(days) => applyCarryover(days)}
+        onConfirm={(days) => applyCarryover(days, carryoverPlanActive ? carryoverEditSurplus : undefined)}
         onCancel={cancelCarryoverPlan}
-        surplusKcal={yesterdayOvershootKcal}
+        surplusKcal={carryoverPlanActive ? carryoverEditSurplus : yesterdayOvershootKcal}
         mode={carryoverPlanActive ? 'edit' : 'start'}
+        initialDays={carryoverPlanActive ? carryoverRemainingDays : undefined}
       />
       {/* 3-column: 食事 | Ring(残り) | 消費 */}
       <View style={styles.ringRow}>

@@ -164,6 +164,8 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     /** Which QuickLogSection tab opened this sheet (for tabUsageCounts tracking). Absent for edits. */
     sourceTab?: QuickLogTabKey;
   }>({ visible: false });
+  /** Called when IdentityLogSheet is dismissed via × / backdrop (not on save). */
+  const identityLogSheetOnDismissRef = useRef<(() => void) | null>(null);
   const [pendingLogIds, setPendingLogIds] = useState<string[]>([]);
   const [feedback, setFeedback] = useState<FeedbackState | null>(null);
   const [livePreview, setLivePreview] = useState<LivePreviewState | null>(null);
@@ -515,7 +517,8 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
   // ----- Identity-first IA (Phase 2+) -----
 
   const openIdentityLogSheet = useCallback(
-    (bucketKey: BucketKey, opts?: { identityId?: string; editingLogId?: string; sourceTab?: QuickLogTabKey }) => {
+    (bucketKey: BucketKey, opts?: { identityId?: string; editingLogId?: string; sourceTab?: QuickLogTabKey; onDismiss?: () => void }) => {
+      identityLogSheetOnDismissRef.current = opts?.onDismiss ?? null;
       setIdentityLogSheet({
         visible: true,
         bucketKey,
@@ -528,8 +531,11 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
   );
 
   const closeIdentityLogSheet = useCallback(() => {
+    const onDismiss = identityLogSheetOnDismissRef.current;
+    identityLogSheetOnDismissRef.current = null;
     setIdentityLogSheet({ visible: false });
     setLivePreview(null); // clear preview when sheet is dismissed without saving
+    onDismiss?.();
   }, []);
 
   /**
@@ -547,6 +553,7 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
    */
   const submitIdentityLog = useCallback(
     async (resolved: ResolveResult, opts?: { editingLogId?: string; wasShortTap?: boolean; sourceTab?: QuickLogTabKey }) => {
+      identityLogSheetOnDismissRef.current = null; // save — onDismiss should not fire
       const editingLogId = opts?.editingLogId ?? identityLogSheet.editingLogId;
       const sourceTab = opts?.sourceTab ?? identityLogSheet.sourceTab;
 
@@ -1543,12 +1550,13 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
   const editorLog = useMemo(() => logs.find((item) => item.id === editorLogId) ?? null, [editorLogId, logs]);
   const editorIsPending = useMemo(() => (editorLogId ? pendingLogIds.includes(editorLogId) : false), [editorLogId, pendingLogIds]);
 
-  // プランを開始する（提案バナーの「調整する」タップ時）。daysOverride で日数を上書き可能。
-  // daysOverride 省略時は「hard床を割らない最小日数」か「7日」の大きい方をデフォルトにする。
-  const applyCarryover = useCallback((daysOverride?: number) => {
-    const safeMin = minCarryoverDays(profile.targetCalories, yesterdayOvershootKcal, 14);
+  // プランを開始/更新する。daysOverride で日数、surplusOverride で余剰額を上書き可能。
+  // edit時は surplusOverride に残余負債 (残り日数 × 現在日割り額) を渡すこと。
+  const applyCarryover = useCallback((daysOverride?: number, surplusOverride?: number) => {
+    const surplus = surplusOverride ?? yesterdayOvershootKcal;
+    const safeMin = minCarryoverDays(profile.targetCalories, surplus, 14);
     const daysTotal = daysOverride ?? Math.min(14, Math.max(safeMin, 7));
-    const dailyAmount = Math.ceil(yesterdayOvershootKcal / daysTotal);
+    const dailyAmount = Math.ceil(surplus / daysTotal);
     const next: AppSettings = {
       ...settings,
       kcalCarryoverStartDate: todayKey,
