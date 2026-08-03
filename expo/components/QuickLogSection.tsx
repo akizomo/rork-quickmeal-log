@@ -435,9 +435,16 @@ function FrequentButton({
 }
 
 export const QuickLogSection = memo(function QuickLogSection() {
-  const { selectedMode, setSelectedMode, settings, quickLog } = useAppState();
+  const { selectedMode, setSelectedMode, settings, quickLog, bumpDiagnostic } = useAppState();
   const { width: screenWidth } = useWindowDimensions();
   const [searchOpen, setSearchOpen] = useState(false);
+
+  // 診断: 検索そのものが使われているか。ユーザー操作での初回オープンのみ数える
+  // (IdentityLogSheet から戻る際の再オープンは onOpen 経由なので含めない)。
+  const handleOpenSearch = useCallback(() => {
+    bumpDiagnostic('searchOpenCount');
+    setSearchOpen(true);
+  }, [bumpDiagnostic]);
 
   // history のエントリ数でコールドスタート判定
   const history = settings.quickLogHistory as import('@/types/quick-log').QuickLogHistoryMap | undefined;
@@ -503,7 +510,7 @@ export const QuickLogSection = memo(function QuickLogSection() {
           icon="search"
           size="md"
           tone="secondary"
-          onPress={() => setSearchOpen(true)}
+          onPress={handleOpenSearch}
           accessibilityLabel="食品を検索"
           testID="open-search"
         />

@@ -51,13 +51,30 @@ type Props = {
 
 export function SearchSheet({ visible, onClose, onOpen }: Props) {
   const t = useTheme();
-  const { openIdentityLogSheet } = useAppState();
+  const { openIdentityLogSheet, recordSearchMissEvent, bumpDiagnostic } = useAppState();
 
   const [query, setQuery] = useState('');
   const [debounced, setDebounced] = useState('');
   const [directInputOpen, setDirectInputOpen] = useState(false);
 
   const inputRef = useRef<TextInput>(null);
+
+  /**
+   * 診断 (KPI計装 Layer 1): 直近で「ヒットしなかった」クエリを保持する。
+   *
+   * 打鍵のたびに記録すると "あ"→"あぼ"→"あぼか" が全部残ってノイズになるため、
+   * ここでは ref に上書きし続け、**ユーザーが諦めた瞬間** (シートを閉じる /
+   * 数値入力へ逃げる / カテゴリヒントへ逃げる) にだけ確定させる。
+   * これは PRD §10.2.1 の `quick_log_unfound_event` の意味論と一致する。
+   */
+  const pendingMissRef = useRef<{ q: string; hadHints: boolean } | null>(null);
+
+  const commitPendingMiss = useCallback(() => {
+    const miss = pendingMissRef.current;
+    if (!miss) return;
+    pendingMissRef.current = null;
+    recordSearchMissEvent(miss.q, miss.hadHints);
+  }, [recordSearchMissEvent]);
 
   // Focus input when sheet opens; clear query when it closes
   useEffect(() => {
@@ -100,11 +117,13 @@ export function SearchSheet({ visible, onClose, onOpen }: Props) {
 
   const handleCategoryHint = useCallback(
     (bucket: BucketKey) => {
+      // 診断: Identity に直接たどり着けずカテゴリへ逃げた = 未発見の確定信号
+      commitPendingMiss();
       Keyboard.dismiss();
       onClose();
       openIdentityLogSheet(bucket, { onDismiss: onOpen });
     },
-    [onClose, onOpen, openIdentityLogSheet]
+    [commitPendingMiss, onClose, onOpen, openIdentityLogSheet]
   );
 
   const handleClear = useCallback(() => {
@@ -114,14 +133,34 @@ export function SearchSheet({ visible, onClose, onOpen }: Props) {
   }, []);
 
   const handleClose = useCallback(() => {
+    // 診断: 見つからないまま閉じた = 未発見の確定信号
+    commitPendingMiss();
     Keyboard.dismiss();
     onClose();
-  }, [onClose]);
+  }, [commitPendingMiss, onClose]);
+
+  const handleOpenDirectInput = useCallback(() => {
+    // 診断: 最終手段へ逃げた = 未発見の確定信号 (DB の穴を最も強く示す)
+    commitPendingMiss();
+    bumpDiagnostic('directInputOpenCount');
+    setDirectInputOpen(true);
+  }, [bumpDiagnostic, commitPendingMiss]);
 
   const isEmpty = debounced.trim().length === 0;
   const hasResults = results.length > 0;
   const hasHints = categoryHints.length > 0;
   const noMatch = !isEmpty && !hasResults && !hasHints;
+
+  // 診断: 直接ヒットが無い状態を pending として保持する (確定は commitPendingMiss)。
+  // ヒットしたら pending を破棄する — 打鍵途中で 0 件だっただけなので信号ではない。
+  useEffect(() => {
+    if (isEmpty) return;
+    if (hasResults) {
+      pendingMissRef.current = null;
+    } else {
+      pendingMissRef.current = { q: debounced, hadHints: hasHints };
+    }
+  }, [debounced, isEmpty, hasResults, hasHints]);
 
   return (
     <>
@@ -234,7 +273,7 @@ export function SearchSheet({ visible, onClose, onOpen }: Props) {
         <View style={{ marginTop: t.spacing['5'], flexDirection: 'row', alignItems: 'center', gap: t.spacing['1'] }}>
           <Body size="sm" tone="secondary">食品が見つかりませんか？</Body>
           <Pressable
-            onPress={() => setDirectInputOpen(true)}
+            onPress={handleOpenDirectInput}
             style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1 })}
             accessibilityRole="button"
             accessibilityLabel="数値で直接入力する"

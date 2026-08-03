@@ -11,6 +11,7 @@ import { getQuickLogCategory, getQuickLogSubcategory } from '@/constants/quick-l
 import type { CustomerInfo } from 'react-native-purchases';
 
 import { AppSettings, BodyFatEntry, DailyActivitySummary, DishDraft, DishQuickEntryPayload, ExerciseLog, FoodLog, IngredientDraft, LogMode, SubscriptionStatus, UserProfile, WeightEntry } from '@/types/nutrition';
+import type { DiagnosticsData } from '@/types/diagnostics';
 import { ENTITLEMENT_ID } from '@/constants/iap';
 import { addCustomerInfoListener, getCustomerInfo, restorePurchases as iapRestore } from '@/utils/iap';
 import { IngredientQuickDraft, QuickLogHistoryMap, QuickLogSelection, QuickLogTabKey } from '@/types/quick-log';
@@ -19,6 +20,7 @@ import { adjustedTargetKcal, calcBaselineActiveKcal, calcExerciseGrossKcal, calc
 import { isSameDay } from '@/utils/history';
 import { castHistoryMap, deriveDefaultTab, rankFrequentSelections, recordDishSelection, recordSelection, recordTabUsage, selectionFromDraft } from '@/utils/quick-log-history';
 import { computeQuickLogMacro } from '@/utils/quick-log-macro';
+import { bumpDiagnosticCounter, castDiagnostics, recordSearchMiss } from '@/utils/diagnostics';
 import { beginSpan } from '@/utils/perf';
 import { widgetUpdateKcal, widgetDrainPendingQueue, widgetUpdateCategories } from '@/utils/widget-bridge';
 import { resolveLog, ResolveInput, ResolveResult } from '@/utils/identity-resolver';
@@ -124,6 +126,7 @@ function migrateSettings(raw: Partial<AppSettings> | undefined): AppSettings {
     quickLogHistory: castHistoryMap(raw?.quickLogHistory),
     tabUsageCounts: raw?.tabUsageCounts ?? { ingredient: 0, dish: 0, frequent: 0 },
     currentDefaultTab: raw?.currentDefaultTab,
+    diagnostics: castDiagnostics(raw?.diagnostics),
   };
 }
 
@@ -884,6 +887,42 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     [bodyFatEntries, logs, persist, profile, settings, weights]
   );
 
+  /**
+   * KPI計装 Layer 1: 診断データを更新する共通経路。
+   * 呼び出しは低頻度 (シート開閉・drain 単位) を前提とするため、
+   * updateSettingsValues と同じ closure ベースのパターンで足りる。
+   * ウィジェット drain のような複数件処理は、呼び出し側で 1 回にまとめること。
+   */
+  const applyDiagnostics = useCallback(
+    (mutate: (current: DiagnosticsData | undefined) => DiagnosticsData) => {
+      const next: AppSettings = { ...settings, diagnostics: mutate(settings.diagnostics) };
+      setSettings(next);
+      persist(profile, logs, next, weights, bodyFatEntries);
+    },
+    [bodyFatEntries, logs, persist, profile, settings, weights]
+  );
+
+  /** 検索してヒットしなかったクエリを記録する (DB拡張順の一次ソース)。 */
+  const recordSearchMissEvent = useCallback(
+    (query: string, hadHints: boolean) => {
+      applyDiagnostics((d) => recordSearchMiss(d, query, hadHints, new Date().toISOString()));
+    },
+    [applyDiagnostics]
+  );
+
+  /** 診断カウンタを加算する。 */
+  const bumpDiagnostic = useCallback(
+    (key: 'searchOpenCount' | 'directInputOpenCount' | 'widgetLogCount', by = 1) => {
+      applyDiagnostics((d) => bumpDiagnosticCounter(d, key, by));
+    },
+    [applyDiagnostics]
+  );
+
+  /** 診断データを初期化する (エクスポート後の手動リセット用)。 */
+  const resetDiagnostics = useCallback(() => {
+    applyDiagnostics(() => castDiagnostics(undefined));
+  }, [applyDiagnostics]);
+
   const markIntroSeen = useCallback(
     (version: number) => {
       const next: AppSettings = { ...settings, introSeenVersion: version };
@@ -1407,6 +1446,8 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
   useEffect(() => { quickLogRef.current = quickLog; }, [quickLog]);
   const quickLogIdentityRef = useRef(quickLogIdentity);
   useEffect(() => { quickLogIdentityRef.current = quickLogIdentity; }, [quickLogIdentity]);
+  const bumpDiagnosticRef = useRef(bumpDiagnostic);
+  useEffect(() => { bumpDiagnosticRef.current = bumpDiagnostic; }, [bumpDiagnostic]);
 
   useEffect(() => {
     const sub = AppState.addEventListener('change', (s) => {
@@ -1422,6 +1463,9 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
             void quickLogRef.current(entry.categoryId, 'ingredient');
           }
         });
+        // 診断: ウィジェット経由の記録件数。drain 単位で1回だけ加算する
+        // (件数ぶん個別に呼ぶと closure が stale になり取りこぼす)。
+        if (entries.length > 0) bumpDiagnosticRef.current('widgetLogCount', entries.length);
       });
     });
     let timer: ReturnType<typeof setTimeout>;
@@ -1679,6 +1723,10 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     updateDishLog,
     updateProfileValues,
     updateSettingsValues,
+    // KPI計装 Layer 1 (docs/ROADMAP.md §3.0)
+    recordSearchMissEvent,
+    bumpDiagnostic,
+    resetDiagnostics,
     yesterdayOvershootKcal,
     showCarryoverBanner,
     showNewPlanBanner,

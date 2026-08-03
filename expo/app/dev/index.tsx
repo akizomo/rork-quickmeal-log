@@ -8,6 +8,7 @@ const ITEMS: NavItem[] = [
   { label: 'Foundations', href: '/dev/foundations', desc: 'Color / Typography / Spacing / Radius / Elevation / Motion' },
   { label: 'Components', href: '/dev/components', desc: 'Buttons / Inputs / Data Display / Overlays' },
   { label: 'Widget Prototype', href: '/dev/widget-prototype', desc: '1×1 / 2×2 / 4×2 / 3×3 — ホーム画面ウィジェット UI 確認' },
+  { label: 'Diagnostics', href: '/dev/diagnostics', desc: 'KPI計装 Layer 1 — 未ヒット検索語 / タブ利用 / ⭐️ランキング・JSONエクスポート' },
 ];
 
 export default function DevHub() {

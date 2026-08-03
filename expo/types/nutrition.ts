@@ -1,3 +1,5 @@
+import type { DiagnosticsData } from '@/types/diagnostics';
+
 export type GoalType = 'balanced' | 'weight_loss' | 'protein_focus';
 export type LogMode = 'ingredient' | 'dish';
 export type MealSlot = 'breakfast' | 'lunch' | 'dinner' | 'snack';
@@ -251,6 +253,14 @@ export interface AppSettings {
    * まだ initial-route には未接続の試作段階のフラグ。
    */
   widgetIntroSeenAtISO?: string | null;
+
+  /**
+   * KPI計装 Layer 1: 端末内に貯める診断データ。
+   * 製品Analytics が未導入のため、`/dev/diagnostics` からエクスポートして
+   * クローズドテストの回答を得る。詳細は docs/ROADMAP.md §3.0。
+   * 読み書きは `utils/diagnostics.ts` の純関数を通す。
+   */
+  diagnostics?: DiagnosticsData;
 }
 
 export interface QuickCategory {
