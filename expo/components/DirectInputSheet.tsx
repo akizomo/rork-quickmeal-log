@@ -83,6 +83,7 @@ export function DirectInputSheet({ visible, onClose }: Props) {
       title="数値で入力"
       primaryAction={{ label: '記録する', onPress: handleSave, disabled: !canSave }}
       secondaryAction={{ label: 'キャンセル', onPress: handleClose }}
+      keyboardAware
       expandToFull={false}
     >
       <View style={{ gap: t.spacing['5'] }}>

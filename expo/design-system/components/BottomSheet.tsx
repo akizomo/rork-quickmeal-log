@@ -40,6 +40,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Animated,
   Easing,
+  Keyboard,
   Modal,
   PanResponder,
   Platform,
@@ -72,6 +73,7 @@ const OPEN_SPRING = spring.enter;
 // M3 Emphasized Accelerate — motion.ts の duration.short / easing.exit と同一。
 const CLOSE_DURATION = duration.short;
 const CLOSE_EASING = Easing.bezier(...easing.exit);
+const KB_EASING = Easing.bezier(...easing.standard);
 const TRANSLATE_OFFSCREEN = 800;      // off-screen distance for drag-released close
 const FALLBACK_SHEET_HEIGHT = 600;    // sheetHeight が onLayout 前のときの暫定値
 
@@ -139,6 +141,13 @@ export type BottomSheetProps = {
   /** Show the drag handle on top. Default: true. */
   showHandle?: boolean;
 
+  /**
+   * When true, the sheet slides up when the software keyboard appears so the
+   * content above the keyboard remains visible. Use for sheets that contain
+   * TextInput fields. Default: false.
+   */
+  keyboardAware?: boolean;
+
   /** Maximum height as ratio of the modal area. Default: 0.92. */
   maxHeightRatio?: number;
   /**
@@ -176,6 +185,7 @@ export function BottomSheet({
   dismissOnBackdropPress = true,
   dragToDismiss = true,
   showHandle = true,
+  keyboardAware = false,
   maxHeightRatio = 0.92,
   expandToFull = false,
   testID,
@@ -204,6 +214,8 @@ export function BottomSheet({
   const openProgress = useRef(new Animated.Value(visible ? 1 : 0)).current;
   // dragY: user drag offset from rest position (positive = downward).
   const dragY = useRef(new Animated.Value(0)).current;
+  // keyboardY: negative when keyboard is visible (moves sheet upward).
+  const keyboardY = useRef(new Animated.Value(0)).current;
 
   // Keep the latest onClose available without re-creating panResponder.
   const onCloseRef = useRef(onClose);
@@ -229,6 +241,35 @@ export function BottomSheet({
     });
   }, [dragY, openProgress]);
 
+  // Keyboard avoidance: slide sheet up when software keyboard appears.
+  useEffect(() => {
+    if (!keyboardAware) return;
+
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
+    const showSub = Keyboard.addListener(showEvent, (e) => {
+      Animated.timing(keyboardY, {
+        toValue: -e.endCoordinates.height,
+        duration: Platform.OS === 'ios' ? e.duration : 200,
+        easing: KB_EASING,
+        useNativeDriver: true,
+      }).start();
+    });
+    const hideSub = Keyboard.addListener(hideEvent, (e) => {
+      Animated.timing(keyboardY, {
+        toValue: 0,
+        duration: Platform.OS === 'ios' ? e.duration : 200,
+        easing: KB_EASING,
+        useNativeDriver: true,
+      }).start();
+    });
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, [keyboardAware, keyboardY]);
+
   // Open / close lifecycle
   useEffect(() => {
     if (visible) {
@@ -241,7 +282,8 @@ export function BottomSheet({
         useNativeDriver: true,
       }).start();
     } else if (mounted) {
-      // External request to close — animate out, then unmount.
+      // External request to close — reset keyboard offset then animate out.
+      keyboardY.setValue(0);
       Animated.timing(openProgress, {
         toValue: 0,
         duration: CLOSE_DURATION,
@@ -256,7 +298,7 @@ export function BottomSheet({
     }
     // mounted is intentionally excluded to avoid re-running on internal mount toggle.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visible, dragY, openProgress]);
+  }, [visible, dragY, keyboardY, openProgress]);
 
   // Drag-to-dismiss (only on handle area)
   const panResponder = useMemo(
@@ -328,7 +370,7 @@ export function BottomSheet({
     inputRange: [0, 1],
     outputRange: [sheetHeight, 0],
   });
-  const sheetTranslateY = Animated.add(baseTranslateY, dragY);
+  const sheetTranslateY = Animated.add(Animated.add(baseTranslateY, dragY), keyboardY);
   const scrimOpacity = openProgress.interpolate({
     inputRange: [0, 1],
     outputRange: [0, 1],

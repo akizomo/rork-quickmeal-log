@@ -129,6 +129,7 @@ export function SearchSheet({ visible, onClose, onOpen }: Props) {
         visible={visible}
         onClose={handleClose}
         title="食品を検索"
+        keyboardAware
         testID="search-sheet"
       >
         {/* 検索バー */}
