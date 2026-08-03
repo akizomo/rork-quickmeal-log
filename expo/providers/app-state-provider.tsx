@@ -17,13 +17,13 @@ import { IngredientQuickDraft, QuickLogHistoryMap, QuickLogSelection, QuickLogTa
 import { buildDishMacro, clampPortion, computeIngredient, createFoodLogFromDish, createFoodLogFromDishQuickEntry, createFoodLogFromIngredient, formatDateKey, generateId, getDefaultModeByTime, getMealSlot, getQuickCategories, getSubType, sumToday } from '@/utils/nutrition';
 import { adjustedTargetKcal, calcBaselineActiveKcal, calcExerciseGrossKcal, calcExerciseNetKcal, EXERCISE_TYPES, minCarryoverDays, stepsToActiveKcal } from '@/utils/goals';
 import { isSameDay } from '@/utils/history';
-import { castHistoryMap, deriveDefaultTab, recordDishSelection, recordSelection, recordTabUsage, selectionFromDraft } from '@/utils/quick-log-history';
+import { castHistoryMap, deriveDefaultTab, rankFrequentSelections, recordDishSelection, recordSelection, recordTabUsage, selectionFromDraft } from '@/utils/quick-log-history';
 import { computeQuickLogMacro } from '@/utils/quick-log-macro';
 import { beginSpan } from '@/utils/perf';
-import { widgetUpdateKcal, widgetDrainPendingQueue } from '@/utils/widget-bridge';
+import { widgetUpdateKcal, widgetDrainPendingQueue, widgetUpdateCategories } from '@/utils/widget-bridge';
 import { resolveLog, ResolveInput, ResolveResult } from '@/utils/identity-resolver';
 import { logDraftToFoodLog } from '@/utils/identity-log-bridge';
-import { getIdentity } from '@/constants/identity';
+import { getBucketDef, getIdentity } from '@/constants/identity';
 import { lookupLegacyIdentity } from '@/constants/identity/migration-map';
 import type { BucketKey } from '@/types/identity';
 void getSubType;
@@ -33,6 +33,12 @@ export const MAX_PAST_LOGGING_DAYS = 7;
 /** Bump when LEGACY_TO_IDENTITY_MAP changes and we want to re-run backfill.
  *  Aligned with docs/IA-identity-spec.md §7.2 (target schema version = 2). */
 const IA_SCHEMA_VERSION = 2;
+
+// ウィジェットカテゴリの fallback kcal（Kotlin defaultCategories と同値）
+const WIDGET_FALLBACK_KCAL: Record<string, number> = {
+  staple: 252, lean_protein: 114, egg: 76, fatty_protein: 235,
+  dairy_soy: 57, veggies: 30, fruit: 86, added_fat: 111, snack_drink: 130,
+};
 
 /**
  * Opportunistic backfill: walk legacy logs and add `identityId` /
@@ -1396,18 +1402,25 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       return prev === next ? prev : next;
     });
   }, []);
-  // quickLog の最新参照を ref で保持して AppState ハンドラに渡す（stale closure 防止）
+  // quickLog / quickLogIdentity の最新参照を ref で保持して AppState ハンドラに渡す（stale closure 防止）
   const quickLogRef = useRef(quickLog);
   useEffect(() => { quickLogRef.current = quickLog; }, [quickLog]);
+  const quickLogIdentityRef = useRef(quickLogIdentity);
+  useEffect(() => { quickLogIdentityRef.current = quickLogIdentity; }, [quickLogIdentity]);
 
   useEffect(() => {
     const sub = AppState.addEventListener('change', (s) => {
       if (s !== 'active') return;
       refreshToday();
-      // ウィジェットから積まれたログを drain して既存フローに流す
+      // ウィジェットから積まれたログを drain して既存フローに流す。
+      // id が Identity ID なら quickLogIdentity、カテゴリキーなら quickLog にルーティング。
       widgetDrainPendingQueue().then((entries) => {
         entries.forEach((entry) => {
-          quickLogRef.current(entry.categoryId, 'ingredient');
+          if (getIdentity(entry.categoryId)) {
+            void quickLogIdentityRef.current(entry.categoryId, 'frequent');
+          } else {
+            void quickLogRef.current(entry.categoryId, 'ingredient');
+          }
         });
       });
     });
@@ -1515,6 +1528,30 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
   useEffect(() => {
     widgetUpdateKcal(todayMacro.kcal, todayAdjustedTargetKcal);
   }, [todayMacro.kcal, todayAdjustedTargetKcal]);
+
+  // ── ウィジェット: ランキングベースのカテゴリボタンを同期 ──────────────────
+  // 記録のたびに quickLogHistory が変わるので、ranked top-9 をウィジェットへプッシュ。
+  // 履歴 0 件の場合は Kotlin 側の defaultCategories をそのまま使う。
+  useEffect(() => {
+    const history = settings.quickLogHistory as QuickLogHistoryMap | undefined;
+    const ranked = rankFrequentSelections(history, { nowISO: new Date().toISOString(), limit: 9 });
+    if (ranked.length === 0) return;
+    const categories = ranked.map((item) => {
+      const bucket = getBucketDef(item.categoryKey as BucketKey);
+      const identity = item.identityId ? getIdentity(item.identityId) : undefined;
+      const kcal = Math.round(identity?.defaultMacro.kcal ?? WIDGET_FALLBACK_KCAL[item.categoryKey] ?? 0);
+      return {
+        id: item.identityId ?? item.categoryKey,
+        icon: bucket?.emoji ?? '🍽️',
+        name: item.label,
+        recent: item.label,
+        sublabel: item.amountLabel,
+        kcal,
+      };
+    });
+    widgetUpdateCategories(categories);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [settings.quickLogHistory]);
 
   /**
    * v1.7+: 運動で kcal 目標が伸びたとき、PFC ターゲットも **現在比率を維持** して
