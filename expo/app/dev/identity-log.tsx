@@ -1,8 +1,9 @@
 /**
  * Dev page — Identity-first IdentityLogSheet 動作確認用 (Phase 3-4 検証).
  *
- * 通常のアプリフローを介さずに QuickLogSection (新 sheet 起動) と
- * IdentitySearchBar を直接マウントして UI 動作を確認できる。
+ * 通常のアプリフローを介さずに QuickLogSection (新 sheet 起動) を
+ * 直接マウントして UI 動作を確認できる。検索は QuickLogSection 内の
+ * SearchSheet から確認する。
  */
 
 import React from 'react';

@@ -909,7 +909,7 @@ Quick Log の入力経路を **9 ボタン × Identity ツリー × 自動学習
 - ✅ **9 ボタン × Identity ツリー** (タブ × 9バケット × 5階層、QUICK_LOG_DESIGN.md 準拠)
 - ✅ **長押しによる階層展開** (Identity → Attribute → Style → Add-on、フォールバックの第1手段)
 - ✅ **Identity 自動学習** (§6.5.1) によるタブ順 / 候補順 / 初期量の最適化
-- 🆕 **Identity 検索バーは非表示** (実装済みコードは温存。`expo/components/IdentitySearchBar.tsx` / `searchIdentities()` / dev route はそのまま残す)
+- ~~🆕 **Identity 検索バーは非表示** (実装済みコードは温存)~~ → **2026-08-03 解消。** P2-S1 は旧 `IdentitySearchBar` の復活ではなく **`SearchSheet` + `DirectInputSheet` の新規実装**として出荷された (commit `0f1a8c2`)。温存対象だった `IdentitySearchBar.tsx` / `searchIdentities()` は後継に置換され参照ゼロになったため削除済
 
 #### P1 — Now (MVP リリース直後 〜 4週間 / 計測と即効施策)
 | 優先度 | 項目 | 価値 | 実装コスト | 備考 |

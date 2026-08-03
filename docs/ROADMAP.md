@@ -350,8 +350,8 @@ Next 期以降は **D7 / D30 リテンション** および **週次アクティ
 
 | ファイル | 状態 | 判断 |
 |---|---|---|
-| `expo/app/barcode-log.tsx` (12KB) + `expo/utils/open-food-facts.ts` | アプリ内から参照ゼロ。ルーティング導線なし | 精度検証して再開 or 削除 |
-| `expo/components/IdentitySearchBar.tsx` | import ゼロ。`SearchSheet` に置換済で孤児化 | 削除が妥当 (dev画面のコメント参照のみ残存) |
+| `expo/app/barcode-log.tsx` (12KB) + `expo/utils/open-food-facts.ts` | アプリ内から参照ゼロ。ルーティング導線なし | **未判断** — 精度検証して再開 or 削除 |
+| ~~`expo/components/IdentitySearchBar.tsx`~~ + ~~`searchIdentities()`~~ | — | **✅ 削除済 (2026-08-03)**。`SearchSheet` + `searchIdentitiesFuzzy()` に置換済で参照ゼロだった。PRD §13.1 P0 / SEARCH_SPEC §F1・§10 の「温存」記述も同時に解消 |
 
 ---
 

@@ -108,23 +108,9 @@ export function isDishBucket(bucket: BucketKey): bucket is DishBucketKey {
   return DISH_BUCKETS.some((b) => b.key === bucket);
 }
 
-/**
- * Multi-entrance search: find Identities that match `query` either by label
- * or by their `searchTags` (and that opt-in to surfacing in `bucket` if given).
- */
-export function searchIdentities(query: string, restrictToBucket?: BucketKey): Identity[] {
-  const q = query.trim().toLowerCase();
-  if (!q) return [];
-  return ALL_IDENTITIES.filter((id) => {
-    if (restrictToBucket && id.primaryHome.bucket !== restrictToBucket) {
-      const surfaceable = id.searchableFrom?.includes(restrictToBucket);
-      if (!surfaceable) return false;
-    }
-    if (id.label.toLowerCase().includes(q)) return true;
-    if (id.searchTags?.some((t) => t.toLowerCase().includes(q))) return true;
-    return false;
-  });
-}
+// `searchIdentities()` は 2026-08-03 に削除。唯一の利用元だった IdentitySearchBar が
+// SearchSheet に置換されたため。検索は `utils/identity-search.ts` の
+// `searchIdentitiesFuzzy()` (正規化 + bigram類似度) を使うこと。
 
 // ---------------------------------------------------------------------------
 // Re-exports

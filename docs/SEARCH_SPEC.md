@@ -58,10 +58,14 @@ MVP 段階の Quick Log は **9 ボタン × Identity ツリー × 自動学習*
 
 ### 3.1 Must Have (Next での確定実装範囲)
 
-#### F1. 検索バー UI 再表示
+#### F1. 検索バー UI 再表示 — ✅ 実装済 (2026-08-03 追記)
+> **実装は本節と異なる形で着地した。** 旧 `IdentitySearchBar` の復活ではなく、`expo/components/SearchSheet.tsx` (+ `DirectInputSheet.tsx`) として新規実装され出荷された (commit `0f1a8c2`)。
+> 検索ロジックも `searchIdentities()` ではなく `expo/utils/identity-search.ts` の `searchIdentitiesFuzzy()` (正規化 + bigram類似度) を使う。
+> 旧 `IdentitySearchBar.tsx` / `searchIdentities()` は参照ゼロとなり削除済。以下は当初仕様として保持する。
+
 - Quick Log 画面上部に検索バーを再配置
 - プレースホルダー: 「食材・料理・ブランド名で検索」
-- 既存実装 (`expo/components/IdentitySearchBar.tsx`) の構造を踏襲
+- ~~既存実装 (`expo/components/IdentitySearchBar.tsx`) の構造を踏襲~~
   - debounce: 200ms
   - 結果表示: 上限 8件 (現行の `MAX_RESULTS` を維持)
   - 選択時挙動: 該当 Identity の primary home バケットで `IdentityLogSheet` を pre-select 状態で開く
@@ -432,10 +436,10 @@ finalScore = matchScore × (1 + userFreqWeight × log(1 + userSelectCount))
 
 ## 10. ロールアウト計画
 
-### Phase 1 (Next 序盤): UI 復活 + 既存検索ロジック
-- IdentitySearchBar コンポーネントを Quick Log 画面に復活配置
-- 既存 `searchIdentities()` のまま投入
-- Analytics イベント (§6.3) を全実装
+### Phase 1 (Next 序盤): UI 復活 + 既存検索ロジック — ✅ 出荷済 (実装は下記の通り差異あり)
+- ~~IdentitySearchBar コンポーネントを Quick Log 画面に復活配置~~ → **`SearchSheet` を新規実装** (commit `0f1a8c2`)
+- ~~既存 `searchIdentities()` のまま投入~~ → **`searchIdentitiesFuzzy()` を新規実装** (正規化 + bigram類似度 = §F2 相当を前倒しで実装)
+- ⚠️ **Analytics イベント (§6.3) は未実装** — 検索の効果測定ができていない (ROADMAP §3.0 「KPI計装 Layer 1」の対象)
 - A/B テスト不要、全ユーザーに直接展開
 
 ### Phase 1.5 (Next 序盤〜中盤): 既存 Identity の searchTags 一括補充 (v0.2 で追加)
