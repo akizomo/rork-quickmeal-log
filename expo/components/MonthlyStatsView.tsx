@@ -193,7 +193,7 @@ export function MonthlyStatsView() {
         <IconButton
           icon="chevronLeft"
           size="md"
-          variant="filled"
+          variant="ghost"
           tone="action"
           onPress={goPrev}
           disabled={!canGoPrev}
@@ -204,7 +204,7 @@ export function MonthlyStatsView() {
         <IconButton
           icon="chevronRight"
           size="md"
-          variant="filled"
+          variant="ghost"
           tone="action"
           onPress={goNext}
           disabled={!canGoNext}
@@ -346,36 +346,38 @@ export function MonthlyStatsView() {
 
       <View style={styles.listSection}>
         <Text style={styles.listTitle}>日別の記録</Text>
-        {monthDailyEntries.map(([key, macro]) => {
-          const date = new Date(key);
-          const hasLog = macro.kcal > 0;
-          const exerciseKcal = monthExerciseMap.get(key) ?? 0;
-          return (
-            <Pressable
-              key={key}
-              style={styles.dayRow}
-              onPress={() => hasLog && onTapDay(key, true, false)}
-              disabled={!hasLog}
-              testID={`month-day-row-${key}`}
-            >
-              <View style={styles.dayRowLeft}>
-                <Text style={styles.dayLabel}>{formatShortDay(date)}</Text>
-                {!hasLog ? <Text style={styles.dayNoLog}>記録なし</Text> : null}
-              </View>
-              {hasLog ? (
-                <View style={styles.dayRowRight}>
-                  <Text style={styles.dayKcal}>{Math.round(macro.kcal)} kcal</Text>
-                  <Text style={styles.dayMacroLine}>
-                    P{Math.round(macro.protein)} F{Math.round(macro.fat)} C{Math.round(macro.carbs)}
-                    {exerciseKcal > 0 ? ` · 消費 ${Math.round(exerciseKcal)}` : ''}
-                  </Text>
+        <View style={styles.listGroup}>
+          {monthDailyEntries.map(([key, macro], idx) => {
+            const date = new Date(key);
+            const hasLog = macro.kcal > 0;
+            const exerciseKcal = monthExerciseMap.get(key) ?? 0;
+            return (
+              <Pressable
+                key={key}
+                style={[styles.dayRow, idx > 0 && styles.dayRowBorder]}
+                onPress={() => hasLog && onTapDay(key, true, false)}
+                disabled={!hasLog}
+                testID={`month-day-row-${key}`}
+              >
+                <View style={styles.dayRowLeft}>
+                  <Text style={styles.dayLabel}>{formatShortDay(date)}</Text>
+                  {!hasLog ? <Text style={styles.dayNoLog}>記録なし</Text> : null}
                 </View>
-              ) : (
-                <Text style={styles.dayDash}>—</Text>
-              )}
-            </Pressable>
-          );
-        })}
+                {hasLog ? (
+                  <View style={styles.dayRowRight}>
+                    <Text style={styles.dayKcal}>{Math.round(macro.kcal)} kcal</Text>
+                    <Text style={styles.dayMacroLine}>
+                      P{Math.round(macro.protein)} F{Math.round(macro.fat)} C{Math.round(macro.carbs)}
+                      {exerciseKcal > 0 ? ` · 消費 ${Math.round(exerciseKcal)}` : ''}
+                    </Text>
+                  </View>
+                ) : (
+                  <Text style={styles.dayDash}>—</Text>
+                )}
+              </Pressable>
+            );
+          })}
+        </View>
       </View>
     </ScrollView>
   );
@@ -494,13 +496,20 @@ const makeStyles = (t: Theme) => StyleSheet.create({
     paddingHorizontal: 4,
     marginBottom: 4,
   },
+  listGroup: {
+    backgroundColor: t.colors.surface.raised,
+    borderRadius: radius.xl,
+    overflow: 'hidden',
+  },
   dayRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: t.colors.surface.raised,
-    borderRadius: radius.md,
     padding: 12,
+  },
+  dayRowBorder: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: t.colors.border.default,
   },
   dayRowLeft: {
     flexDirection: 'row',

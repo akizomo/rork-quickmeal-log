@@ -217,7 +217,7 @@ export function WeeklyStatsView() {
         <IconButton
           icon="chevronLeft"
           size="md"
-          variant="filled"
+          variant="ghost"
           tone="action"
           onPress={goPrev}
           disabled={!canGoPrev}
@@ -228,7 +228,7 @@ export function WeeklyStatsView() {
         <IconButton
           icon="chevronRight"
           size="md"
-          variant="filled"
+          variant="ghost"
           tone="action"
           onPress={goNext}
           disabled={!canGoNext}
@@ -237,7 +237,8 @@ export function WeeklyStatsView() {
         />
       </View>
 
-      <View style={[styles.chartWrap, { width: chartWidth, height: CHART_HEIGHT }]}>
+      {/* チャート + サマリーを1枚のカードに統合 */}
+      <View style={[styles.chartCard, { width: chartWidth }]} testID="week-summary">
         <Svg width={chartWidth} height={CHART_HEIGHT}>
           {dailyEntries.map(([key, macro], i) => {
             const ratio = macro.kcal / maxKcal;
@@ -296,100 +297,105 @@ export function WeeklyStatsView() {
             </React.Fragment>
           ) : null}
         </Svg>
-      </View>
-
-      <View style={styles.summaryCard} testID="week-summary">
-        <View style={styles.summaryRow}>
-          <View style={styles.summaryLeft}>
-            <Text style={styles.summaryTitle}>週平均</Text>
-            <Text style={styles.summaryKcal}>
-              {Math.round(avgMacro.kcal).toLocaleString()}
-              <Text style={styles.summaryKcalTarget}> / {Math.round(targetKcal).toLocaleString()} kcal</Text>
-            </Text>
-            {avgExerciseKcal > 0 ? (
-              <Text style={styles.summaryConsume}>平均消費 {avgExerciseKcal} kcal / 日</Text>
-            ) : null}
-          </View>
-          {ringAvg ? (
-            <CalorieOverflowRing
-              consumedKcal={ringAvg.avgKcal}
-              targetKcal={ringAvg.avgTarget}
-              size={56}
-              strokeWidth={7}
-              centerMode="remaining"
-              showCenterLabel={false}
-              showStatusText={false}
-              animate={false}
-              testID="week-ratio-ring"
-            />
-          ) : null}
-        </View>
 
         <View style={styles.summaryDivider} />
 
-        <View style={styles.pfcRow} testID="week-pfc-row">
-          <MiniProgressBar
-            letter="P"
-            label="タンパク質"
-            current={avgMacro.protein}
-            target={avgPfcTarget.protein}
-            textColor={t.colors.nutrition.protein.text}
-            graphicColor={t.colors.nutrition.protein.graphic}
-            trackColor={t.colors.nutrition.protein.background}
-          />
-          <MiniProgressBar
-            letter="F"
-            label="脂肪"
-            current={avgMacro.fat}
-            target={avgPfcTarget.fat}
-            textColor={t.colors.nutrition.fat.text}
-            graphicColor={t.colors.nutrition.fat.graphic}
-            trackColor={t.colors.nutrition.fat.background}
-          />
-          <MiniProgressBar
-            letter="C"
-            label="炭水化物"
-            current={avgMacro.carbs}
-            target={avgPfcTarget.carbs}
-            textColor={t.colors.nutrition.carbs.text}
-            graphicColor={t.colors.nutrition.carbs.graphic}
-            trackColor={t.colors.nutrition.carbs.background}
-          />
+        <View style={styles.summaryInner}>
+          <View style={styles.summaryRow}>
+            <View style={styles.summaryLeft}>
+              <Text style={styles.summaryTitle}>週平均</Text>
+              <Text style={styles.summaryKcal}>
+                {Math.round(avgMacro.kcal).toLocaleString()}
+                <Text style={styles.summaryKcalTarget}> / {Math.round(targetKcal).toLocaleString()} kcal</Text>
+              </Text>
+              {avgExerciseKcal > 0 ? (
+                <Text style={styles.summaryConsume}>平均消費 {avgExerciseKcal} kcal / 日</Text>
+              ) : null}
+            </View>
+            {ringAvg ? (
+              <CalorieOverflowRing
+                consumedKcal={ringAvg.avgKcal}
+                targetKcal={ringAvg.avgTarget}
+                size={56}
+                strokeWidth={7}
+                centerMode="remaining"
+                showCenterLabel={false}
+                showStatusText={false}
+                animate={false}
+                testID="week-ratio-ring"
+              />
+            ) : null}
+          </View>
+
+          <View style={styles.pfcDivider} />
+
+          <View style={styles.pfcRow} testID="week-pfc-row">
+            <MiniProgressBar
+              letter="P"
+              label="タンパク質"
+              current={avgMacro.protein}
+              target={avgPfcTarget.protein}
+              textColor={t.colors.nutrition.protein.text}
+              graphicColor={t.colors.nutrition.protein.graphic}
+              trackColor={t.colors.nutrition.protein.background}
+            />
+            <MiniProgressBar
+              letter="F"
+              label="脂肪"
+              current={avgMacro.fat}
+              target={avgPfcTarget.fat}
+              textColor={t.colors.nutrition.fat.text}
+              graphicColor={t.colors.nutrition.fat.graphic}
+              trackColor={t.colors.nutrition.fat.background}
+            />
+            <MiniProgressBar
+              letter="C"
+              label="炭水化物"
+              current={avgMacro.carbs}
+              target={avgPfcTarget.carbs}
+              textColor={t.colors.nutrition.carbs.text}
+              graphicColor={t.colors.nutrition.carbs.graphic}
+              trackColor={t.colors.nutrition.carbs.background}
+            />
+          </View>
         </View>
       </View>
 
+      {/* 日別リスト: 個別カードを廃止し、グループ化フラットリストに */}
       <View style={styles.listSection}>
         <Text style={styles.listTitle}>日別の記録</Text>
-        {dailyEntries.map(([key, macro]) => {
-          const date = new Date(key);
-          const hasLog = macro.kcal > 0;
-          const exerciseKcal = dailyExerciseMap.get(key) ?? 0;
-          return (
-            <Pressable
-              key={key}
-              style={styles.dayRow}
-              onPress={() => hasLog && onTapDay(key)}
-              disabled={!hasLog}
-              testID={`week-day-row-${key}`}
-            >
-              <View style={styles.dayRowLeft}>
-                <Text style={styles.dayLabel}>{formatShortDay(date)}</Text>
-                {!hasLog ? <Text style={styles.dayNoLog}>記録なし</Text> : null}
-              </View>
-              {hasLog ? (
-                <View style={styles.dayRowRight}>
-                  <Text style={styles.dayKcal}>{Math.round(macro.kcal)} kcal</Text>
-                  <Text style={styles.dayMacroLine}>
-                    P{Math.round(macro.protein)} F{Math.round(macro.fat)} C{Math.round(macro.carbs)}
-                    {exerciseKcal > 0 ? ` · 消費 ${Math.round(exerciseKcal)}` : ''}
-                  </Text>
+        <View style={[styles.listGroup, { width: chartWidth }]}>
+          {dailyEntries.map(([key, macro], idx) => {
+            const date = new Date(key);
+            const hasLog = macro.kcal > 0;
+            const exerciseKcal = dailyExerciseMap.get(key) ?? 0;
+            return (
+              <Pressable
+                key={key}
+                style={[styles.dayRow, idx > 0 && styles.dayRowBorder]}
+                onPress={() => hasLog && onTapDay(key)}
+                disabled={!hasLog}
+                testID={`week-day-row-${key}`}
+              >
+                <View style={styles.dayRowLeft}>
+                  <Text style={styles.dayLabel}>{formatShortDay(date)}</Text>
+                  {!hasLog ? <Text style={styles.dayNoLog}>記録なし</Text> : null}
                 </View>
-              ) : (
-                <Text style={styles.dayDash}>—</Text>
-              )}
-            </Pressable>
-          );
-        })}
+                {hasLog ? (
+                  <View style={styles.dayRowRight}>
+                    <Text style={styles.dayKcal}>{Math.round(macro.kcal)} kcal</Text>
+                    <Text style={styles.dayMacroLine}>
+                      P{Math.round(macro.protein)} F{Math.round(macro.fat)} C{Math.round(macro.carbs)}
+                      {exerciseKcal > 0 ? ` · 消費 ${Math.round(exerciseKcal)}` : ''}
+                    </Text>
+                  </View>
+                ) : (
+                  <Text style={styles.dayDash}>—</Text>
+                )}
+              </Pressable>
+            );
+          })}
+        </View>
       </View>
     </ScrollView>
   );
@@ -409,16 +415,13 @@ const makeStyles = (t: Theme) => StyleSheet.create({
     fontWeight: '700',
     color: t.colors.content.primary,
   },
-  chartWrap: {
+  chartCard: {
     backgroundColor: t.colors.surface.raised,
     borderRadius: radius.xl,
     overflow: 'hidden',
-    padding: 0,
     alignSelf: 'center',
   },
-  summaryCard: {
-    backgroundColor: t.colors.surface.raised,
-    borderRadius: radius.xl,
+  summaryInner: {
     padding: 16,
   },
   summaryRow: {
@@ -449,6 +452,10 @@ const makeStyles = (t: Theme) => StyleSheet.create({
   summaryDivider: {
     height: StyleSheet.hairlineWidth,
     backgroundColor: t.colors.border.default,
+  },
+  pfcDivider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: t.colors.border.default,
     marginVertical: 16,
   },
   pfcRow: {
@@ -471,13 +478,21 @@ const makeStyles = (t: Theme) => StyleSheet.create({
     paddingHorizontal: 4,
     marginBottom: 4,
   },
+  listGroup: {
+    backgroundColor: t.colors.surface.raised,
+    borderRadius: radius.xl,
+    overflow: 'hidden',
+    alignSelf: 'center',
+  },
   dayRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: t.colors.surface.raised,
-    borderRadius: radius.md,
     padding: 12,
+  },
+  dayRowBorder: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: t.colors.border.default,
   },
   dayRowLeft: {
     flexDirection: 'row',

@@ -102,43 +102,42 @@ function weekRangeOf(t: number): { start: Date; end: Date } {
   return { start, end };
 }
 
-interface ProgressCardProps {
+interface MetricCardHeaderProps {
   title: string;
   unit: string;
   current: number | null;
   target: number | null;
   fractionDigits: number;
+  color: string;
 }
 
-// v1.7 (PRD §6.4.4): 「出発点→現在→目標」の3点進捗バーは撤去。現在値＋目標(=固定アンカー)
-// への残量テキストのみ。推移は下の TrendChart + 目標ラインで表現する。
-function ProgressCard({ title, unit, current, target, fractionDigits }: ProgressCardProps) {
+function MetricCardHeader({ title, unit, current, target, fractionDigits, color }: MetricCardHeaderProps) {
   const t = useTheme();
   const fmt = (v: number) => v.toFixed(fractionDigits);
   const hasGoal = current != null && target != null;
   const remaining = hasGoal ? current! - target! : null;
 
   return (
-    <View style={[styles.card, { backgroundColor: t.colors.surface.raised }]} testID={`body-progress-${title}`}>
-      <Text style={[styles.cardTitle, { color: t.colors.content.secondary }]}>{title}</Text>
-
-      {current != null ? (
-        <Text style={[styles.cardCurrent, { color: t.colors.action.primary.default }]}>
-          {fmt(current)}
-          <Text style={[styles.cardUnit, { color: t.colors.content.secondary }]}> {unit}</Text>
-        </Text>
-      ) : (
-        <Text style={[styles.cardEmpty, { color: t.colors.content.secondary }]}>記録なし</Text>
-      )}
-
+    <View style={styles.cardHeader} testID={`body-progress-${title}`}>
+      <View>
+        <Text style={[styles.cardTitle, { color: t.colors.content.secondary }]}>{title}</Text>
+        {current != null ? (
+          <Text style={[styles.cardCurrent, { color }]}>
+            {fmt(current)}
+            <Text style={[styles.cardUnit, { color: t.colors.content.secondary }]}> {unit}</Text>
+          </Text>
+        ) : (
+          <Text style={[styles.cardEmpty, { color: t.colors.content.secondary }]}>記録なし</Text>
+        )}
+      </View>
       {hasGoal ? (
         <Text style={[styles.cardMeta, { color: t.colors.content.secondary }]}>
           {Math.abs(remaining!) < Math.pow(10, -fractionDigits) / 2
-            ? `目標 ${fmt(target!)} ${unit} に到達`
-            : `目標 ${fmt(target!)} ${unit}（あと ${Math.abs(remaining!).toFixed(fractionDigits)} ${unit}）`}
+            ? `目標に到達`
+            : `あと ${Math.abs(remaining!).toFixed(fractionDigits)} ${unit}`}
         </Text>
       ) : current != null ? (
-        <Text style={[styles.cardMeta, { color: t.colors.content.secondary }]}>目標が未設定です</Text>
+        <Text style={[styles.cardMeta, { color: t.colors.content.secondary }]}>目標未設定</Text>
       ) : null}
     </View>
   );
@@ -176,7 +175,7 @@ function TrendChart({
 
   if (points.length === 0) {
     return (
-      <View style={[styles.chartWrap, { width, height: CHART_HEIGHT, backgroundColor: t.colors.surface.raised }]}>
+      <View style={[styles.chartWrap, { width, height: CHART_HEIGHT }]}>
         <Text style={[styles.chartEmpty, { color: t.colors.content.secondary }]}>{emptyMessage}</Text>
       </View>
     );
@@ -254,7 +253,7 @@ function TrendChart({
 
   return (
     <View
-      style={[styles.chartWrap, { width, height: CHART_HEIGHT, backgroundColor: t.colors.surface.raised }]}
+      style={[styles.chartWrap, { width, height: CHART_HEIGHT }]}
       onStartShouldSetResponder={() => true}
       onMoveShouldSetResponder={() => true}
       onResponderGrant={handleTouch}
@@ -495,14 +494,17 @@ export function BodyStatsView({ period = 'month' }: { period?: BodyPeriod }) {
 
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
-      <View style={styles.group}>
-        <ProgressCard
+      {/* 体重: ヘッダー + グラフを1枚のカードに統合 */}
+      <View style={[styles.metricCard, { width: chartWidth, backgroundColor: t.colors.surface.raised }]}>
+        <MetricCardHeader
           title="体重"
           unit="kg"
           current={weightCurrent}
           target={profile.targetWeightKg}
           fractionDigits={1}
+          color={t.colors.action.text.default}
         />
+        <View style={[styles.cardDivider, { backgroundColor: t.colors.border.default }]} />
         <TrendChart
           width={chartWidth}
           points={weightPoints}
@@ -517,14 +519,17 @@ export function BodyStatsView({ period = 'month' }: { period?: BodyPeriod }) {
         />
       </View>
 
-      <View style={styles.group}>
-        <ProgressCard
+      {/* 体脂肪率: ヘッダー + グラフを1枚のカードに統合 */}
+      <View style={[styles.metricCard, { width: chartWidth, backgroundColor: t.colors.surface.raised }]}>
+        <MetricCardHeader
           title="体脂肪率"
           unit="%"
           current={bfCurrent}
           target={profile.targetBodyFatPct ?? null}
           fractionDigits={1}
+          color={t.colors.accent.default}
         />
+        <View style={[styles.cardDivider, { backgroundColor: t.colors.border.default }]} />
         <TrendChart
           width={chartWidth}
           points={bodyFatPoints}
@@ -547,16 +552,25 @@ export function BodyStatsView({ period = 'month' }: { period?: BodyPeriod }) {
 const styles = StyleSheet.create({
   scroll: { flex: 1 },
   content: { padding: 16, gap: 20, paddingBottom: 60 },
-  group: { gap: 8 },
-  card: {
+  metricCard: {
     borderRadius: 20,
-    padding: 16,
-    gap: 8,
+    overflow: 'visible', // ツールチップ影がカード端で切れないよう visible
+    alignSelf: 'center',
   },
-  // カードのタイトル = 値(cardCurrent)に付く名前なので Label sm 相当
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    padding: 16,
+    paddingBottom: 12,
+  },
+  cardDivider: {
+    height: StyleSheet.hairlineWidth,
+  },
   cardTitle: {
     fontSize: fs.sm,
     fontWeight: '600',
+    marginBottom: 2,
   },
   cardCurrent: {
     fontSize: fs['3xl'],
@@ -566,21 +580,15 @@ const styles = StyleSheet.create({
     fontSize: fs.md,
     fontWeight: '600',
   },
-  // cardCurrent(md) と同じスロットに出る空状態表示なのでサイズを揃える
   cardEmpty: {
     fontSize: fs.md,
     fontWeight: '600',
   },
   cardMeta: {
     fontSize: fs.sm,
-    marginTop: 2,
   },
   chartWrap: {
-    borderRadius: 20,
-    // ツールチップの影 (elevation.md) がカード端で切れないよう visible。
-    // SVG は背景を塗らないため角丸の見た目には影響しない。
     overflow: 'visible',
-    alignSelf: 'center',
     alignItems: 'center',
     justifyContent: 'center',
   },
