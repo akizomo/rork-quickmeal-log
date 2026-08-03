@@ -8,7 +8,10 @@
  * - GestureDemoIllustration: タップ / 長押し の2行を絵文字+矢印+結果カードで提示
  *   (intro Slide 2 / help §1 操作の基本)
  *
- * 両方とも `useWindowDimensions` で screen height に応じて 0.7-1.0 の範囲でscale。
+ * - FrequentTabIllustration: ⭐️タブ + 頻度ランク付きボタン3個で「使うほど上位に来る」を
+ *   視覚化 (help §もっと、あなたに合わせて)
+ *
+ * 3つとも `useWindowDimensions` で screen height に応じて 0.7-1.0 の範囲でscale。
  * intro (slide 高制約あり) / help (scrollable) どちらでも自然なサイズで表示される。
  */
 
@@ -101,6 +104,67 @@ export function GestureDemoIllustration() {
 }
 
 // ---------------------------------------------------------------------------
+// FrequentTabIllustration (help §もっと、あなたに合わせて)
+// ---------------------------------------------------------------------------
+
+type RankButton = { e: string; l: string };
+const RANK_BUTTONS: RankButton[] = [
+  { e: '🍚', l: 'ごはん' },
+  { e: '🍜', l: 'ラーメン' },
+  { e: '🥗', l: 'サラダ' },
+];
+
+// 実際の segmentOptions (QuickLogSection.tsx) と同じ並び・ラベル。
+// ⭐️ タブは末尾に追加され、ラベルは絵文字のみ。
+const TAB_SEGMENTS = ['食材', '一皿料理', '⭐️'];
+const ACTIVE_TAB_INDEX = 2;
+
+export function FrequentTabIllustration() {
+  const t = useTheme();
+  const { height: screenHeight } = useWindowDimensions();
+  const scale = Math.max(0.7, Math.min(1, (screenHeight - 349) / 420));
+  return (
+    <View style={[frequentStyles.wrap, { transform: [{ scale }] }]}>
+      {/* SegmentedControl.tsx のデフォルト配色 (trackColor=ivory400 / pillColor=ivory50) を再現 */}
+      <View style={[frequentStyles.tabTrack, { backgroundColor: colors.ivory[400] }]}>
+        {TAB_SEGMENTS.map((label, i) => (
+          <View key={label} style={frequentStyles.tabSegment}>
+            {i === ACTIVE_TAB_INDEX && (
+              <View style={[frequentStyles.tabPill, { backgroundColor: colors.ivory[50] }]} />
+            )}
+            <Text
+              style={[
+                frequentStyles.tabSegmentText,
+                {
+                  color: i === ACTIVE_TAB_INDEX ? t.colors.action.primary.default : t.colors.content.secondary,
+                  fontWeight: i === ACTIVE_TAB_INDEX ? '700' : '600',
+                },
+              ]}
+            >
+              {label}
+            </Text>
+          </View>
+        ))}
+      </View>
+      <View style={frequentStyles.grid}>
+        {RANK_BUTTONS.map((btn, i) => (
+          <View
+            key={i}
+            style={[frequentStyles.btn, { backgroundColor: t.colors.surface.raised, borderColor: t.colors.border.default }]}
+          >
+            <View style={[frequentStyles.rankBadge, { backgroundColor: t.colors.action.primary.default }]}>
+              <Text style={[frequentStyles.rankBadgeText, { color: t.colors.content.onAction }]}>{i + 1}</Text>
+            </View>
+            <Text style={frequentStyles.btnEmoji}>{btn.e}</Text>
+            <Text style={[frequentStyles.btnLabel, { color: t.colors.content.secondary }]}>{btn.l}</Text>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Styles
 // ---------------------------------------------------------------------------
 
@@ -179,4 +243,62 @@ const gestureStyles = StyleSheet.create({
   resultSub: {
     fontSize: fs.xs,
   },
+});
+
+const frequentStyles = StyleSheet.create({
+  wrap: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 24,
+    gap: 16,
+  },
+  tabTrack: {
+    flexDirection: 'row',
+    width: 220,
+    height: 36,
+    borderRadius: radius.full,
+    padding: 3,
+  },
+  tabSegment: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tabPill: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: radius.full,
+  },
+  tabSegmentText: {
+    fontSize: fs.xs,
+  },
+  grid: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  btn: {
+    width: 70,
+    height: 70,
+    borderWidth: 1,
+    borderRadius: radius.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+  },
+  rankBadge: {
+    position: 'absolute',
+    top: -7,
+    left: -7,
+    width: 20,
+    height: 20,
+    borderRadius: radius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rankBadgeText: {
+    fontSize: fs.xs,
+    fontWeight: '700',
+  },
+  btnEmoji: { fontSize: 28 },
+  btnLabel: { fontSize: fs.xs },
 });

@@ -23,8 +23,8 @@ import { Animated, Easing, LayoutAnimation, PanResponder, Platform, Pressable, S
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { HelpInfographic } from '@/components/help/HelpInfographic';
-import { GestureDemoIllustration } from '@/components/onboarding-illustrations';
-import { Body, Caption, Heading, Icon, useTheme } from '@/design-system';
+import { FrequentTabIllustration, GestureDemoIllustration } from '@/components/onboarding-illustrations';
+import { Body, Heading, Icon, useTheme } from '@/design-system';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { duration, easing } from '@/design-system/tokens/primitives/motion';
 import type { BucketKey } from '@/types/identity';
@@ -280,7 +280,6 @@ function StepContent({ stepKey }: { stepKey: string }) {
             <HelpInfographic bucketKeys={INGREDIENT_BUCKETS} scaleMaxKcal={300} />
           </View>
           <View style={styles.footnotes}>
-            <Footnote>● はタップ時に記録される代表値、バー は日本人がよく食べる食材の幅です。</Footnote>
             <Footnote>「よく食べる」基準: 国民健康・栄養調査 (NHNS) における各バケット内の摂取量シェア上位の食材を採用しています。</Footnote>
             <Footnote>「長押し」表記のボタンは、種類により値が大きく変わるため、毎回明示選択する仕様です。</Footnote>
           </View>
@@ -307,27 +306,19 @@ function StepContent({ stepKey }: { stepKey: string }) {
     case 'future':
       return (
         <View style={styles.stepContent}>
-          <View style={styles.titleRow}>
-            <View style={[styles.badge, { backgroundColor: t.colors.accent.subtle }]}>
-              <Caption style={{ color: t.colors.accent.default, fontWeight: '600' }}>予定</Caption>
-            </View>
-          </View>
           <Body>
-            記録を続けるほど、よく食べる食材と量に合わせて代表値が調整されていきます。
+            記録を続けるほど、あなたがいつも選ぶ食材や料理が、見つけやすくなっていきます。
           </Body>
-          <View style={styles.subsection}>
-            <Body style={styles.h3}>食材</Body>
-            <Body>パンを毎朝食べる方は、「ごはんパン麺」のタップ値がパンに寄ります。</Body>
+          <View style={styles.illustrationWrap}>
+            <FrequentTabIllustration />
           </View>
           <View style={styles.subsection}>
-            <Body style={styles.h3}>量</Body>
-            <Body>大盛り派の方は、ご飯の量も自動で合わせられます。</Body>
+            <Body style={styles.h3}>⭐️ よく使うタブ</Body>
+            <Body>タブを⭐️に切り替えると、使う頻度が高い順に並びます。いつもの組み合わせなら、探さずそのままタップできます。</Body>
           </View>
-          <View style={[styles.calloutBox, { backgroundColor: t.colors.action.primary.container, borderLeftColor: t.colors.action.primary.default }]}>
-            <Body style={{ color: t.colors.action.primary.onContainer }}>
-              今は標準的な日本人の摂取量を基準にしていますが、{'\n'}
-              続けるほど、あなた自身の食習慣に近づきます。
-            </Body>
+          <View style={styles.subsection}>
+            <Body style={styles.h3}>起動時のタブ</Body>
+            <Body>アプリを開いたときに最初に表示されるタブも、よく使うほうへ自動で切り替わっていきます。</Body>
           </View>
         </View>
       );
@@ -478,17 +469,6 @@ const styles = StyleSheet.create({
     fontSize: fs.md,
     fontWeight: '600',
     marginBottom: 4,
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  badge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 99,
-    alignSelf: 'flex-start',
   },
   subsection: {
     marginTop: 8,

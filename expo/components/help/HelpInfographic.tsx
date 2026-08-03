@@ -37,7 +37,7 @@ export function HelpInfographic({ bucketKeys, scaleMaxKcal }: HelpInfographicPro
 
   return (
     <View style={[styles.container, { backgroundColor: t.colors.surface.raised }]}>
-      <PfcLegend />
+      <RangeLegend />
       {views.map((v) => (
         <BucketRow key={v.bucketKey} view={v} scaleMaxKcal={scaleMaxKcal} />
       ))}
@@ -46,26 +46,34 @@ export function HelpInfographic({ bucketKeys, scaleMaxKcal }: HelpInfographicPro
 }
 
 // ---------------------------------------------------------------------------
-// PFC Legend (top-right, P/F/C colored dots)
+// Range legend (top-right, ● 代表値 / ▬ よく食べる範囲)
+//
+// PFC の色分けは各行の PfcTag が文言 (P主体/C多め 等) で明示しているため不要。
+// ● とバーは行内に文言が無く意味が読み取れないため、こちらを凡例にする。
 // ---------------------------------------------------------------------------
 
-function PfcLegend() {
+function RangeLegend() {
   const t = useTheme();
   return (
     <View style={styles.legend}>
-      <LegendItem color={t.colors.nutrition.protein.graphic} label="P" />
-      <LegendItem color={t.colors.nutrition.fat.graphic} label="F" />
-      <LegendItem color={t.colors.nutrition.carbs.graphic} label="C" />
-    </View>
-  );
-}
-
-function LegendItem({ color, label }: { color: string; label: string }) {
-  const t = useTheme();
-  return (
-    <View style={styles.legendItem}>
-      <View style={[styles.legendDot, { backgroundColor: color }]} />
-      <Text style={[styles.legendText, { color: t.colors.content.secondary }]}>{label}</Text>
+      <View style={styles.legendItem}>
+        <View
+          style={[
+            styles.legendDot,
+            { backgroundColor: t.colors.action.primary.default, borderColor: t.colors.surface.raised },
+          ]}
+        />
+        <Text style={[styles.legendText, { color: t.colors.content.secondary }]}>代表値</Text>
+      </View>
+      <View style={styles.legendItem}>
+        <View
+          style={[
+            styles.legendBar,
+            { backgroundColor: t.colors.action.primary.container, borderColor: t.colors.action.primary.default },
+          ]}
+        />
+        <Text style={[styles.legendText, { color: t.colors.content.secondary }]}>よく食べる範囲</Text>
+      </View>
     </View>
   );
 }
@@ -257,9 +265,16 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   legendDot: {
-    width: 12,
-    height: 8,
-    borderRadius: 4,
+    width: 9,
+    height: 9,
+    borderRadius: 4.5,
+    borderWidth: 1.5,
+  },
+  legendBar: {
+    width: 16,
+    height: 5,
+    borderRadius: 3,
+    borderWidth: 1,
   },
   legendText: {
     fontSize: fs.xs,
