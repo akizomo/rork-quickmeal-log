@@ -143,8 +143,10 @@ export function SearchSheet({ visible, onClose, onOpen }: Props) {
     // 診断: 最終手段へ逃げた = 未発見の確定信号 (DB の穴を最も強く示す)
     commitPendingMiss();
     bumpDiagnostic('directInputOpenCount');
+    Keyboard.dismiss();
+    onClose(); // hide search sheet — DirectInputSheet replaces it, not stacks on it
     setDirectInputOpen(true);
-  }, [bumpDiagnostic, commitPendingMiss]);
+  }, [bumpDiagnostic, commitPendingMiss, onClose]);
 
   const isEmpty = debounced.trim().length === 0;
   const hasResults = results.length > 0;
@@ -288,6 +290,7 @@ export function SearchSheet({ visible, onClose, onOpen }: Props) {
       <DirectInputSheet
         visible={directInputOpen}
         onClose={() => setDirectInputOpen(false)}
+        onDismiss={onOpen}
       />
     </>
   );

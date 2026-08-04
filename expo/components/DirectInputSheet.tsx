@@ -15,9 +15,11 @@ import { formatDateKey, generateId, getMealSlot } from '@/utils/nutrition';
 type Props = {
   visible: boolean;
   onClose: () => void;
+  /** Called on cancel only (not after a successful save) — e.g. to re-open search sheet. */
+  onDismiss?: () => void;
 };
 
-export function DirectInputSheet({ visible, onClose }: Props) {
+export function DirectInputSheet({ visible, onClose, onDismiss }: Props) {
   const t = useTheme();
   const { pushLog, loggingDate } = useAppState();
 
@@ -41,7 +43,8 @@ export function DirectInputSheet({ visible, onClose }: Props) {
   const handleClose = useCallback(() => {
     reset();
     onClose();
-  }, [reset, onClose]);
+    onDismiss?.();
+  }, [reset, onClose, onDismiss]);
 
   const handleSave = useCallback(async () => {
     if (!canSave) return;
@@ -84,7 +87,7 @@ export function DirectInputSheet({ visible, onClose }: Props) {
       primaryAction={{ label: '記録する', onPress: handleSave, disabled: !canSave }}
       secondaryAction={{ label: 'キャンセル', onPress: handleClose }}
       keyboardAware
-      expandToFull={false}
+      expandToFull
     >
       <View style={{ gap: t.spacing['5'] }}>
         {/* 名前 */}
