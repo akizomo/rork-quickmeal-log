@@ -213,7 +213,7 @@ export function MonthlyStatsView() {
         />
       </View>
 
-      <View style={[styles.calendarCard, { padding: 12 }]}>
+      <View style={{ padding: 12 }}>
         <View style={styles.weekdayRow}>
           {WEEKDAYS.map((d, i) => (
             <View key={d} style={[styles.weekdayCell, { width: cellSize }]}>
@@ -397,10 +397,6 @@ const makeStyles = (t: Theme) => StyleSheet.create({
     fontWeight: '700',
     color: t.colors.content.primary,
   },
-  calendarCard: {
-    backgroundColor: t.colors.surface.raised,
-    borderRadius: radius.xl,
-  },
   weekdayRow: {
     flexDirection: 'row',
     paddingBottom: 8,
@@ -505,7 +501,8 @@ const makeStyles = (t: Theme) => StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 12,
   },
   dayRowBorder: {
     borderTopWidth: StyleSheet.hairlineWidth,

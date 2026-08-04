@@ -97,7 +97,7 @@ export const Header = memo(function Header({ viewedDate }: { viewedDate?: Date }
         <IconButton
           icon="user"
           size="lg"
-          variant="filled"
+          variant="ghost"
           onPress={() => router.push('/status')}
           testID="avatar-button"
           accessibilityLabel="プロフィール"
@@ -112,7 +112,7 @@ export const Header = memo(function Header({ viewedDate }: { viewedDate?: Date }
         <IconButton
           icon="help"
           size="lg"
-          variant="filled"
+          variant="ghost"
           onPress={() => router.push('/help')}
           testID="help-link"
           accessibilityLabel="使い方を見る"
@@ -120,7 +120,7 @@ export const Header = memo(function Header({ viewedDate }: { viewedDate?: Date }
         <IconButton
           icon="barChart"
           size="lg"
-          variant="filled"
+          variant="ghost"
           onPress={() => router.push('/stats')}
           testID="stats-link"
           accessibilityLabel="実績を見る"

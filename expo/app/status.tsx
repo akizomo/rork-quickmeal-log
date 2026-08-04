@@ -204,9 +204,9 @@ export default function StatusRoute() {
                   <Caption tone="secondary" style={{ marginLeft: 4, marginBottom: 8 }}>kcal / 日</Caption>
                 </View>
                 <View style={styles.pfcRow}>
-                  <PfcCell label="P" value={profile.targetProtein} color={theme.colors.nutrition.protein.text} />
-                  <PfcCell label="F" value={profile.targetFat} color={theme.colors.nutrition.fat.text} />
-                  <PfcCell label="C" value={profile.targetCarbs} color={theme.colors.nutrition.carbs.text} />
+                  <PfcCell label="P" value={profile.targetProtein} color={theme.colors.nutrition.protein.text} background={theme.colors.nutrition.protein.background} />
+                  <PfcCell label="F" value={profile.targetFat} color={theme.colors.nutrition.fat.text} background={theme.colors.nutrition.fat.background} />
+                  <PfcCell label="C" value={profile.targetCarbs} color={theme.colors.nutrition.carbs.text} background={theme.colors.nutrition.carbs.background} />
                 </View>
                 {paceLabel ? (
                   <Caption tone="secondary">
@@ -286,33 +286,13 @@ function HealthSyncRow({
   onLongPress?: () => void;
 }) {
   const theme = useTheme();
-  const { label, sub } = useMemo(() => {
-    if (syncing) return { label: '同期中...', sub: null as string | null };
-    if (status === 'provider_missing') {
-      return {
-        label: 'Health Connect を入手',
-        sub: 'Android 連携には Health Connect アプリが必要です',
-      };
-    }
-    if (status === 'provider_update_required') {
-      return {
-        label: 'Health Connect を更新',
-        sub: 'Play Store で最新版に更新してください',
-      };
-    }
-    if (lastError) {
-      return {
-        label: '同期できませんでした',
-        sub: '設定で権限を確認してください',
-      };
-    }
-    if (status === 'authorized' && lastSyncedAt) {
-      return {
-        label: 'ヘルスデータを同期',
-        sub: `最終同期: ${formatRelativeTime(lastSyncedAt)}`,
-      };
-    }
-    return { label: 'ヘルスデータを同期', sub: null };
+  const label = useMemo(() => {
+    if (syncing) return '同期中…';
+    if (status === 'provider_missing') return 'Health Connect を入手';
+    if (status === 'provider_update_required') return 'Health Connect を更新';
+    if (lastError) return '同期エラー · 権限を確認';
+    if (status === 'authorized' && lastSyncedAt) return `ヘルス同期 · ${formatRelativeTime(lastSyncedAt)}`;
+    return 'ヘルス同期';
   }, [syncing, lastError, status, lastSyncedAt]);
 
   return (
@@ -325,24 +305,18 @@ function HealthSyncRow({
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ disabled: syncing, busy: syncing }}
-      style={({ pressed }) => [
-        styles.healthSyncRow,
-        {
-          backgroundColor: theme.colors.surface.sunken,
-          opacity: pressed && !syncing ? 0.7 : 1,
-        },
-      ]}
+      style={({ pressed }) => ({
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        paddingVertical: 8,
+        borderTopWidth: StyleSheet.hairlineWidth,
+        borderTopColor: theme.colors.border.default,
+        opacity: pressed && !syncing ? 0.7 : 1,
+      })}
     >
-      <View style={{ flex: 1, gap: 2 }}>
-        <Label tone="primary">
-          {label}
-        </Label>
-        {sub ? (
-          <Body size="sm" tone="secondary">
-            {sub}
-          </Body>
-        ) : null}
-      </View>
+      <Body size="sm" tone="secondary">{label}</Body>
       {syncing ? <ActivityIndicator size="small" color={theme.colors.content.tertiary} /> : null}
     </Pressable>
   );
@@ -368,12 +342,11 @@ function HeroMetric({ label, value, target }: { label: string; value: string; ta
   );
 }
 
-function PfcCell({ label, value, color }: { label: string; value: number; color: string }) {
-  const theme = useTheme();
+function PfcCell({ label, value, color, background }: { label: string; value: number; color: string; background: string }) {
   return (
-    <View style={[styles.pfcCell, { backgroundColor: theme.colors.surface.sunken }]}>
+    <View style={[styles.pfcCell, { backgroundColor: background }]}>
       <Text style={[styles.pfcLabel, { color }]}>{label}</Text>
-      <Text style={[styles.pfcValue, { color: theme.colors.content.primary }]}>{value}g</Text>
+      <Text style={[styles.pfcValue, { color }]}>{value}g</Text>
     </View>
   );
 }
@@ -476,14 +449,6 @@ const styles = StyleSheet.create({
   recordButtonRow: { flexDirection: 'row' },
   textButton: { flex: 1, alignItems: 'center', paddingVertical: 8 },
   textButtonLabel: { fontSize: fs.sm, fontWeight: '500' },
-  healthSyncRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    borderRadius: 14,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
   goalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   trialRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   changeRow: { flexDirection: 'row', alignItems: 'center', gap: 2 },

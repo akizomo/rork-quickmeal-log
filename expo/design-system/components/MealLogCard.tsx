@@ -235,10 +235,7 @@ function MealLogCardBody({
         {addons ? (
           <Text
             testID={addonsTestID}
-            style={{
-              color: t.colors.action.text.default,
-              fontWeight: t.typography.fontWeight.semibold as TextStyle['fontWeight'],
-            }}
+            style={{ color: t.colors.content.secondary }}
           >
             {` · ${addons}`}
           </Text>

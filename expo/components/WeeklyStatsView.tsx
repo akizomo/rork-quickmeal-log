@@ -237,127 +237,124 @@ export function WeeklyStatsView() {
         />
       </View>
 
-      {/* チャート + サマリーを1枚のカードに統合 */}
-      <View style={[styles.chartCard, { width: chartWidth }]} testID="week-summary">
-        <Svg width={chartWidth} height={CHART_HEIGHT}>
-          {dailyEntries.map(([key, macro], i) => {
-            const ratio = macro.kcal / maxKcal;
-            const h = Math.max(0, ratio * chartInnerHeight);
-            const slotX = chartHorizontalPadding + i * slotWidth;
-            const centerX = slotX + slotWidth / 2;
-            const x = centerX - barWidth / 2;
-            const y = CHART_PADDING_TOP + (chartInnerHeight - h);
-            const date = new Date(key);
-            const dow = WEEKDAYS[date.getDay()];
-            return (
-              <React.Fragment key={key}>
-                <Rect
-                  x={x}
-                  y={y}
-                  width={barWidth}
-                  height={h}
-                  rx={radius.xs}
-                  fill={barColor(macro.kcal, dayTargets[i])}
-                  opacity={macro.kcal > 0 ? 0.55 : 1}
-                />
-                <SvgText
-                  x={centerX}
-                  y={CHART_CONTENT_HEIGHT - 14}
-                  fontSize={fs.xs}
-                  fill={t.colors.content.secondary}
-                  textAnchor="middle"
-                >
-                  {dow}
-                </SvgText>
-                <SvgText
-                  x={centerX}
-                  y={CHART_CONTENT_HEIGHT - 3}
-                  fontSize={fs.xs}
-                  fontWeight="600"
-                  fill={t.colors.content.primary}
-                  textAnchor="middle"
-                >
-                  {date.getDate()}
-                </SvgText>
-              </React.Fragment>
-            );
-          })}
-          {hasTarget ? (
-            <React.Fragment>
-              <Polyline
-                points={targetPoints.map((p) => `${p.x},${p.y}`).join(' ')}
-                fill="none"
-                stroke={t.colors.content.secondary}
-                strokeDasharray="4 4"
-                strokeWidth={1.5}
+      {/* チャート: 背景なし */}
+      <Svg width={chartWidth} height={CHART_HEIGHT}>
+        {dailyEntries.map(([key, macro], i) => {
+          const ratio = macro.kcal / maxKcal;
+          const h = Math.max(0, ratio * chartInnerHeight);
+          const slotX = chartHorizontalPadding + i * slotWidth;
+          const centerX = slotX + slotWidth / 2;
+          const x = centerX - barWidth / 2;
+          const y = CHART_PADDING_TOP + (chartInnerHeight - h);
+          const date = new Date(key);
+          const dow = WEEKDAYS[date.getDay()];
+          return (
+            <React.Fragment key={key}>
+              <Rect
+                x={x}
+                y={y}
+                width={barWidth}
+                height={h}
+                rx={radius.xs}
+                fill={barColor(macro.kcal, dayTargets[i])}
+                opacity={macro.kcal > 0 ? 0.55 : 1}
               />
-              {targetPoints.map((p, i) => (
-                <Circle key={i} cx={p.x} cy={p.y} r={2.5} fill={t.colors.content.secondary} />
-              ))}
+              <SvgText
+                x={centerX}
+                y={CHART_CONTENT_HEIGHT - 14}
+                fontSize={fs.xs}
+                fill={t.colors.content.secondary}
+                textAnchor="middle"
+              >
+                {dow}
+              </SvgText>
+              <SvgText
+                x={centerX}
+                y={CHART_CONTENT_HEIGHT - 3}
+                fontSize={fs.xs}
+                fontWeight="600"
+                fill={t.colors.content.primary}
+                textAnchor="middle"
+              >
+                {date.getDate()}
+              </SvgText>
             </React.Fragment>
-          ) : null}
-        </Svg>
+          );
+        })}
+        {hasTarget ? (
+          <React.Fragment>
+            <Polyline
+              points={targetPoints.map((p) => `${p.x},${p.y}`).join(' ')}
+              fill="none"
+              stroke={t.colors.content.secondary}
+              strokeDasharray="4 4"
+              strokeWidth={1.5}
+            />
+            {targetPoints.map((p, i) => (
+              <Circle key={i} cx={p.x} cy={p.y} r={2.5} fill={t.colors.content.secondary} />
+            ))}
+          </React.Fragment>
+        ) : null}
+      </Svg>
 
-        <View style={styles.summaryDivider} />
-
-        <View style={styles.summaryInner}>
-          <View style={styles.summaryRow}>
-            <View style={styles.summaryLeft}>
-              <Text style={styles.summaryTitle}>週平均</Text>
-              <Text style={styles.summaryKcal}>
-                {Math.round(avgMacro.kcal).toLocaleString()}
-                <Text style={styles.summaryKcalTarget}> / {Math.round(targetKcal).toLocaleString()} kcal</Text>
-              </Text>
-              {avgExerciseKcal > 0 ? (
-                <Text style={styles.summaryConsume}>平均消費 {avgExerciseKcal} kcal / 日</Text>
-              ) : null}
-            </View>
-            {ringAvg ? (
-              <CalorieOverflowRing
-                consumedKcal={ringAvg.avgKcal}
-                targetKcal={ringAvg.avgTarget}
-                size={56}
-                strokeWidth={7}
-                centerMode="remaining"
-                showCenterLabel={false}
-                showStatusText={false}
-                animate={false}
-                testID="week-ratio-ring"
-              />
+      {/* 週平均サマリー: 独立カード */}
+      <View style={[styles.summaryCard, { width: chartWidth }]} testID="week-summary">
+        <View style={styles.summaryRow}>
+          <View style={styles.summaryLeft}>
+            <Text style={styles.summaryTitle}>週平均</Text>
+            <Text style={styles.summaryKcal}>
+              {Math.round(avgMacro.kcal).toLocaleString()}
+              <Text style={styles.summaryKcalTarget}> / {Math.round(targetKcal).toLocaleString()} kcal</Text>
+            </Text>
+            {avgExerciseKcal > 0 ? (
+              <Text style={styles.summaryConsume}>平均消費 {avgExerciseKcal} kcal / 日</Text>
             ) : null}
           </View>
+          {ringAvg ? (
+            <CalorieOverflowRing
+              consumedKcal={ringAvg.avgKcal}
+              targetKcal={ringAvg.avgTarget}
+              size={56}
+              strokeWidth={7}
+              centerMode="remaining"
+              showCenterLabel={false}
+              showStatusText={false}
+              animate={false}
+              testID="week-ratio-ring"
+            />
+          ) : null}
+        </View>
 
-          <View style={styles.pfcDivider} />
+        <View style={styles.pfcDivider} />
 
-          <View style={styles.pfcRow} testID="week-pfc-row">
-            <MiniProgressBar
-              letter="P"
-              label="タンパク質"
-              current={avgMacro.protein}
-              target={avgPfcTarget.protein}
-              textColor={t.colors.nutrition.protein.text}
-              graphicColor={t.colors.nutrition.protein.graphic}
-              trackColor={t.colors.nutrition.protein.background}
-            />
-            <MiniProgressBar
-              letter="F"
-              label="脂肪"
-              current={avgMacro.fat}
-              target={avgPfcTarget.fat}
-              textColor={t.colors.nutrition.fat.text}
-              graphicColor={t.colors.nutrition.fat.graphic}
-              trackColor={t.colors.nutrition.fat.background}
-            />
-            <MiniProgressBar
-              letter="C"
-              label="炭水化物"
-              current={avgMacro.carbs}
-              target={avgPfcTarget.carbs}
-              textColor={t.colors.nutrition.carbs.text}
-              graphicColor={t.colors.nutrition.carbs.graphic}
-              trackColor={t.colors.nutrition.carbs.background}
-            />
-          </View>
+        <View style={styles.pfcRow} testID="week-pfc-row">
+          <MiniProgressBar
+            letter="P"
+            label="タンパク質"
+            current={avgMacro.protein}
+            target={avgPfcTarget.protein}
+            textColor={t.colors.nutrition.protein.text}
+            graphicColor={t.colors.nutrition.protein.graphic}
+            trackColor={t.colors.nutrition.protein.background}
+          />
+          <MiniProgressBar
+            letter="F"
+            label="脂肪"
+            current={avgMacro.fat}
+            target={avgPfcTarget.fat}
+            textColor={t.colors.nutrition.fat.text}
+            graphicColor={t.colors.nutrition.fat.graphic}
+            trackColor={t.colors.nutrition.fat.background}
+          />
+          <MiniProgressBar
+            letter="C"
+            label="炭水化物"
+            current={avgMacro.carbs}
+            target={avgPfcTarget.carbs}
+            textColor={t.colors.nutrition.carbs.text}
+            graphicColor={t.colors.nutrition.carbs.graphic}
+            trackColor={t.colors.nutrition.carbs.background}
+          />
         </View>
       </View>
 
@@ -415,14 +412,11 @@ const makeStyles = (t: Theme) => StyleSheet.create({
     fontWeight: '700',
     color: t.colors.content.primary,
   },
-  chartCard: {
+  summaryCard: {
     backgroundColor: t.colors.surface.raised,
     borderRadius: radius.xl,
-    overflow: 'hidden',
-    alignSelf: 'center',
-  },
-  summaryInner: {
     padding: 16,
+    alignSelf: 'center',
   },
   summaryRow: {
     flexDirection: 'row',
@@ -448,10 +442,6 @@ const makeStyles = (t: Theme) => StyleSheet.create({
     fontSize: fs.md,
     fontWeight: '600',
     color: t.colors.content.secondary,
-  },
-  summaryDivider: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: t.colors.border.default,
   },
   pfcDivider: {
     height: StyleSheet.hairlineWidth,
@@ -488,7 +478,8 @@ const makeStyles = (t: Theme) => StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 12,
   },
   dayRowBorder: {
     borderTopWidth: StyleSheet.hairlineWidth,
