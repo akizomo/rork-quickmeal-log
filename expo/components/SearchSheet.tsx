@@ -169,6 +169,8 @@ export function SearchSheet({ visible, onClose, onOpen }: Props) {
         onClose={handleClose}
         title="食品を検索"
         keyboardAware
+        expandToFull
+        maxHeightRatio={0.96}
         testID="search-sheet"
       >
         {/* 検索バー */}

@@ -242,11 +242,16 @@ export function BottomSheet({
   }, [dragY, openProgress]);
 
   // Keyboard avoidance: slide sheet up when software keyboard appears.
+  // Android は windowSoftInputMode="resize" (既定) でウィンドウ自体が
+  // キーボード分縮むため、bottom:0 のシートは既に正しい位置に来る。
+  // ここで追加 translateY をかけると二重補正になり、シートが必要以上に
+  // 押し上げられて下端の padding が画面外へ押し出され「0 に見える」原因になる。
+  // そのため JS 側の補正は iOS のみに限定する。
   useEffect(() => {
-    if (!keyboardAware) return;
+    if (!keyboardAware || Platform.OS !== 'ios') return;
 
-    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
-    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const showEvent = 'keyboardWillShow';
+    const hideEvent = 'keyboardWillHide';
 
     const showSub = Keyboard.addListener(showEvent, (e) => {
       Animated.timing(keyboardY, {
