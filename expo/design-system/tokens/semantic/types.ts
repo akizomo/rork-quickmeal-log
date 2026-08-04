@@ -6,11 +6,18 @@
  */
 
 export type SemanticColors = {
+  /**
+   * レイヤー = 色。文脈の切り替え = scrim + 影。
+   *
+   * 同じ文脈の中でレイヤーが上がるほど白に近づく (sunken < default < raised)。
+   * シート/ダイアログは「上のレイヤー」ではなく **新しい文脈** なので、背景色は
+   * default に戻り、ページの上にあることは scrim と elevation が表現する。
+   * これによりシート内のカードも raised を使えて、白の天井にぶつからない。
+   */
   surface: {
-    default: string; // 画面全体の背景
-    raised: string; // カード等、一段持ち上がった面
-    overlay: string; // シート・モーダル・ポップ
-    sunken: string; // 一段凹ませた面
+    sunken: string; // -1: 凹み (入力欄の地・トラック・非選択の塗り)
+    default: string; //  0: 文脈の地 (ページ / シート / ダイアログ)
+    raised: string; // +1: カード
     inverse: string; // 反転面
   };
 

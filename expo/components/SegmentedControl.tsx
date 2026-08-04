@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View, ViewStyle } from 'react-native';
 
 import { spring } from '@/design-system/tokens/primitives/motion';
-import { colors } from '@/design-system/tokens/primitives/colors';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { useTheme } from '@/design-system';
 
@@ -31,8 +30,8 @@ export function SegmentedControl<T extends string = string>({
   options,
   value,
   onChange,
-  trackColor = colors.ivory[400],
-  pillColor = colors.ivory[50],
+  trackColor,
+  pillColor,
   textColor,
   activeTextColor,
   padding = 3,
@@ -43,6 +42,9 @@ export function SegmentedControl<T extends string = string>({
   testID,
 }: Props<T>) {
   const t = useTheme();
+  // トラック(凹み) = surface.sunken(-1)、選択ピル(浮いた面) = surface.raised(+1)。
+  const resolvedTrackColor = trackColor ?? t.colors.surface.sunken;
+  const resolvedPillColor = pillColor ?? t.colors.surface.raised;
   const resolvedTextColor = textColor ?? t.colors.content.secondary;
   const resolvedActiveTextColor = activeTextColor ?? t.colors.action.primary.default;
   const selectedIndex = Math.max(0, options.findIndex((o) => o.key === value));
@@ -79,7 +81,7 @@ export function SegmentedControl<T extends string = string>({
         {
           height,
           borderRadius,
-          backgroundColor: trackColor,
+          backgroundColor: resolvedTrackColor,
           padding,
         },
         style,
@@ -97,7 +99,7 @@ export function SegmentedControl<T extends string = string>({
               width: pillWidth,
               height: height - padding * 2,
               borderRadius: pillRadius,
-              backgroundColor: pillColor,
+              backgroundColor: resolvedPillColor,
               transform: [{ translateX }],
             },
           ]}

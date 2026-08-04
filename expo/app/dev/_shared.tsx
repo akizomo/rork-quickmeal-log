@@ -73,7 +73,7 @@ export function Section({
       </Text>
       <View
         style={{
-          backgroundColor: t.colors.surface.overlay,
+          backgroundColor: t.colors.surface.sunken,
           borderRadius: t.radius['2xl'],
           padding: t.spacing['4'],
           gap: t.spacing['4'],

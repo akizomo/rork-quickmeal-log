@@ -125,12 +125,12 @@ export function FrequentTabIllustration() {
   const scale = Math.max(0.7, Math.min(1, (screenHeight - 349) / 420));
   return (
     <View style={[frequentStyles.wrap, { transform: [{ scale }] }]}>
-      {/* SegmentedControl.tsx のデフォルト配色 (trackColor=ivory400 / pillColor=ivory50) を再現 */}
-      <View style={[frequentStyles.tabTrack, { backgroundColor: colors.ivory[400] }]}>
+      {/* SegmentedControl.tsx のデフォルト配色 (トラック=surface.sunken / ピル=surface.raised) を再現 */}
+      <View style={[frequentStyles.tabTrack, { backgroundColor: t.colors.surface.sunken }]}>
         {TAB_SEGMENTS.map((label, i) => (
           <View key={label} style={frequentStyles.tabSegment}>
             {i === ACTIVE_TAB_INDEX && (
-              <View style={[frequentStyles.tabPill, { backgroundColor: colors.ivory[50] }]} />
+              <View style={[frequentStyles.tabPill, { backgroundColor: t.colors.surface.raised }]} />
             )}
             <Text
               style={[

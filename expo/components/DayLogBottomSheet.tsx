@@ -234,7 +234,7 @@ export const DayLogBottomSheet = memo(
         style={[
           styles.sheet,
           {
-            backgroundColor: t.colors.surface.overlay,
+            backgroundColor: t.colors.surface.sunken,
             shadowColor: t.colors.surface.inverse,
             height: sheetMaxHeight,
             transform: [{ translateY }],

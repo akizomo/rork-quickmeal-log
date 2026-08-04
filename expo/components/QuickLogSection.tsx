@@ -13,7 +13,7 @@ import { Body, Icon, IconButton, Label, useTheme } from '@/design-system';
 import { fontSize } from '@/design-system/tokens/primitives/typography';
 import { elevation } from '@/design-system/tokens/primitives/elevation';
 import { duration } from '@/design-system/tokens/primitives/motion';
-import { colors } from '@/design-system/tokens/primitives/colors';
+import { lightColors } from '@/design-system/tokens/semantic/light';
 import { radius } from '@/design-system/tokens/primitives/radius';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { useAppState } from '@/providers/app-state-provider';
@@ -111,9 +111,10 @@ function WidgetNudgeBanner() {
 }
 
 const QUICK_LOG_COLORS = {
-  // セグメントコントロールの選択中ピルと同じ ivory[50] にして、
-  // 「選択中タブ→ボタン」で一貫した“浮いた白いカード”の見た目にする。
-  buttonBg: colors.ivory[50],
+  // surface.raised と同じ面にして、「選択中タブ→ボタン」で一貫した
+  // “浮いたカード”の見た目にする。このファイルは静的 StyleSheet で
+  // useTheme() を経由しないため、semantic token を直接参照する。
+  buttonBg: lightColors.surface.raised,
 };
 
 // Identity-first IA bucket labels (PRD-aligned ≤6 char names).

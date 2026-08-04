@@ -89,7 +89,7 @@ export const BodyTypeSilhouette = memo(function BodyTypeSilhouette({
   const bodyPath = buildPath(params);
   // active 時は SelectCard/Matrix と同じ DS 意匠 (sage focus + sage container fill) に統一。
   const strokeColor = active ? t.colors.border.focus : t.colors.border.default;
-  const fillColor = active ? t.colors.action.primary.container : t.colors.surface.overlay;
+  const fillColor = active ? t.colors.action.primary.container : t.colors.surface.sunken;
   const headColor = active ? t.colors.border.focus : t.colors.border.subtle;
 
   return (

@@ -16,11 +16,16 @@ import { colors } from '../primitives';
 import type { SemanticColors } from './types';
 
 export const lightColors: SemanticColors = {
+  // レイヤーモデル (2026-07-30整理):
+  //   色      = 同じ文脈内のレイヤー差 (レイヤーが上 = 白に近い)
+  //   scrim+影 = 文脈そのものの切り替え (ページ → シート/ダイアログ)
+  // シートは色を消費せず surface.default に戻るため、白の天井にぶつからない。
+  // ivory を 300 → 200 → 50 と順に使い、輝度が単調増加する階段にしている。
+  // raised は 50 (ほぼ純白の紙) にして、default との分離をはっきり付ける。
   surface: {
-    default: colors.ivory[200],
-    raised: colors.ivory[400],
-    overlay: colors.ivory[300],
-    sunken: colors.ivory[500],
+    sunken: colors.ivory[300],  // -1: 凹み (入力欄の地・トラック・非選択の塗り)
+    default: colors.ivory[200], //  0: 文脈の地 (ページ / シート / ダイアログ)
+    raised: colors.ivory[50],   // +1: カード
     inverse: colors.ivory[900], // 同家系 (warm near-black) でフリップ
   },
 

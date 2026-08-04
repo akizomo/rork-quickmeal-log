@@ -18,9 +18,9 @@ import { lightColors } from '@/design-system/tokens/semantic/light';
 
 export const palette = {
   background: lightColors.surface.default,    // ivory[200]
-  card: lightColors.surface.raised,            // ivory[400]
+  card: lightColors.surface.raised,            // ivory[100] (2026-07-30のレイヤー整理でivory[400]から変更)
   cardStrong: colors.ivory[500],
-  sheet: lightColors.surface.overlay,          // ivory[300]
+  sheet: lightColors.surface.sunken,           // ivory[300] (旧 surface.overlay。2026-07-30にsunkenへ統合、値は不変)
   surface: colors.ivory[100],                  // very light paper
   border: lightColors.border.default,          // ivory[600]
 

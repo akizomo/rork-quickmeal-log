@@ -28,8 +28,10 @@ export const makeCardTokens = (sc: SemanticColors): CardTokens => ({
       border: { width: 0, color: 'transparent' },
       shadow: elevation.none,
     },
+    // flat = レイヤーを上げないカード。周囲の文脈と同じ面に「区画」だけ作る。
+    // raised と違い surface.default (level 0) を使うのはそのため。
     flat: {
-      background: sc.surface.overlay,
+      background: sc.surface.default,
       border: { width: 0, color: 'transparent' },
       shadow: elevation.none,
     },

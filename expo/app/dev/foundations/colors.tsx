@@ -17,11 +17,54 @@ export default function ColorsScreen() {
         style={{ backgroundColor: t.colors.surface.default }}
         contentContainerStyle={{ padding: t.spacing['5'], gap: t.spacing['8'] }}
       >
+        <SurfaceLayers t={t} />
         <PrimitiveColors t={t} />
         <SemanticColors t={t} />
         <NutritionColors t={t} />
       </ScrollView>
     </>
+  );
+}
+
+// ---------- Surface layers ----------
+// レイヤーモデルを入れ子で見せる。上に乗るほど白に近づくことを実物で確認できる。
+function SurfaceLayers({ t }: { t: Theme }) {
+  return (
+    <Section title="Surface — レイヤー" t={t}>
+      <Text style={subLabelStyle(t)}>
+        色 = 同じ文脈内のレイヤー差。文脈の切り替え (ページ→シート) は scrim + 影が担うため、
+        シートは surface.default に戻る。
+      </Text>
+      <View
+        style={{
+          backgroundColor: t.colors.surface.default,
+          padding: t.spacing['4'],
+          borderRadius: t.radius.lg,
+          gap: t.spacing['2'],
+        }}
+      >
+        <Text style={subLabelStyle(t)}>0 — default (文脈の地)</Text>
+        <View
+          style={{
+            backgroundColor: t.colors.surface.raised,
+            padding: t.spacing['4'],
+            borderRadius: t.radius.md,
+            gap: t.spacing['2'],
+          }}
+        >
+          <Text style={subLabelStyle(t)}>+1 — raised (カード)</Text>
+          <View
+            style={{
+              backgroundColor: t.colors.surface.sunken,
+              padding: t.spacing['3'],
+              borderRadius: t.radius.sm,
+            }}
+          >
+            <Text style={subLabelStyle(t)}>−1 — sunken (入力欄の地・トラック)</Text>
+          </View>
+        </View>
+      </View>
+    </Section>
   );
 }
 
