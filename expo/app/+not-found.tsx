@@ -1,8 +1,8 @@
 import { Link, Stack } from 'expo-router';
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
-import { useTheme } from '@/design-system';
+import { Button, useTheme } from '@/design-system';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 
 export default function NotFoundRoute() {
@@ -16,9 +16,7 @@ export default function NotFoundRoute() {
           <Text style={[styles.title, { color: t.colors.content.primary }]}>このページは見つかりませんでした</Text>
           <Text style={[styles.description, { color: t.colors.content.secondary }]}>ホームに戻って、今日の記録を続けてください。</Text>
           <Link href="/" asChild>
-            <Pressable style={[styles.button, { backgroundColor: t.colors.action.primary.default }]} testID="not-found-home-link">
-              <Text style={[styles.buttonText, { color: t.colors.content.onAction }]}>ホームへ戻る</Text>
-            </Pressable>
+            <Button label="ホームへ戻る" style={styles.button} testID="not-found-home-link" />
           </Link>
         </View>
       </View>
@@ -56,12 +54,5 @@ const styles = StyleSheet.create({
   },
   button: {
     marginTop: 8,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 999,
-  },
-  buttonText: {
-    fontSize: fs.md,
-    fontWeight: '700',
   },
 });

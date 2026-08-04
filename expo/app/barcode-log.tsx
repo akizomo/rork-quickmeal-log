@@ -22,7 +22,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Body, Caption, Label, useTheme } from '@/design-system';
+import { Body, Button, Caption, useTheme } from '@/design-system';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { colors as primitiveColors } from '@/design-system/tokens/primitives/colors';
 import { useAppState } from '@/providers/app-state-provider';
@@ -167,9 +167,7 @@ export default function BarcodLogRoute() {
           <Body style={{ textAlign: 'center', marginBottom: 16 }}>
             バーコードをスキャンするにはカメラへのアクセスが必要です。
           </Body>
-          <Pressable style={[styles.btn, { backgroundColor: colors.action.primary.default }]} onPress={requestPermission}>
-            <Label style={{ color: colors.content.onAction }}>カメラを許可する</Label>
-          </Pressable>
+          <Button label="カメラを許可する" onPress={requestPermission} size="lg" fullWidth />
         </SafeAreaView>
       </>
     );
@@ -247,20 +245,17 @@ export default function BarcodLogRoute() {
               <MacroField label="脂質 (g)" value={draft.fat} onChangeText={(v) => setDraft((d) => ({ ...d, fat: v }))} keyboardType="decimal-pad" colors={colors} />
               <MacroField label="炭水化物 (g)" value={draft.carbs} onChangeText={(v) => setDraft((d) => ({ ...d, carbs: v }))} keyboardType="decimal-pad" colors={colors} />
 
-              <Pressable
-                style={[styles.btn, { backgroundColor: colors.action.primary.default, marginTop: 24 }]}
-                onPress={handleAdd}
-              >
-                <Label style={{ color: colors.content.onAction }}>ログに追加</Label>
-              </Pressable>
+              <Button label="ログに追加" onPress={handleAdd} size="lg" fullWidth style={{ marginTop: 24 }} />
 
               {screen === 'confirm' && (
-                <Pressable
-                  style={[styles.btnOutline, { borderColor: colors.content.tertiary, marginTop: 12 }]}
+                <Button
+                  label="もう一度スキャン"
+                  variant="secondary"
                   onPress={() => { scannedRef.current = false; setScreen('scan'); }}
-                >
-                  <Body style={{ color: colors.content.secondary }}>もう一度スキャン</Body>
-                </Pressable>
+                  size="lg"
+                  fullWidth
+                  style={{ marginTop: 12 }}
+                />
               )}
             </ScrollView>
           </SafeAreaView>
@@ -306,8 +301,6 @@ const styles = StyleSheet.create({
   form: { padding: 20, gap: 4, paddingBottom: 40 },
   fieldRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
   input: { flex: 1, borderWidth: 1, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, fontSize: fs.md },
-  btn: { borderRadius: 10, paddingVertical: 16, alignItems: 'center' },
-  btnOutline: { borderRadius: 10, paddingVertical: 16, alignItems: 'center', borderWidth: 1 },
   loadingOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' }, // カメラ映像上の暗幕。palette.scrimはivory系で真っ黒背景と合わないため維持
   scanFrame: { ...StyleSheet.absoluteFillObject, justifyContent: 'center', alignItems: 'center' },
   scanBox: { width: 260, height: 160, borderWidth: 2, borderRadius: 12 },

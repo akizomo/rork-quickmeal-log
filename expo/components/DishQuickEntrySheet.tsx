@@ -21,7 +21,7 @@ import {
   getDishTopCategory,
   multiplyMacroSimple,
 } from '@/constants/dish-master';
-import { BottomSheet, Chip as DSChip, Icon, Overline, useTheme, type Theme } from '@/design-system';
+import { BottomSheet, Button, Chip as DSChip, Icon, Overline, useTheme, type Theme } from '@/design-system';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { useAppState } from '@/providers/app-state-provider';
 import {
@@ -494,9 +494,7 @@ function PrimaryActionButton({ label, onPress }: { label: string; onPress: () =>
   const t = useTheme();
   const styles = useMemo(() => makeStyles(t), [t]);
   return (
-    <Pressable style={styles.primaryButton} onPress={onPress} testID="dqe-submit">
-      <Text style={styles.primaryButtonText}>{label}</Text>
-    </Pressable>
+    <Button label={label} onPress={onPress} size="lg" fullWidth style={styles.primaryButton} testID="dqe-submit" />
   );
 }
 
@@ -629,14 +627,5 @@ const makeStyles = (t: Theme) => StyleSheet.create({
   },
   primaryButton: {
     marginTop: 16,
-    backgroundColor: t.colors.action.primary.default,
-    borderRadius: 999,
-    paddingVertical: 16,
-    alignItems: 'center',
-  },
-  primaryButtonText: {
-    color: t.colors.content.onAction,
-    fontSize: fs.md,
-    fontWeight: '700',
   },
 });

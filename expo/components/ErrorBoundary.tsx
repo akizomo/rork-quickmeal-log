@@ -2,6 +2,7 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { lightTheme } from '@/design-system';
+import { radius } from '@/design-system/tokens/primitives/radius';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 
 interface State {
@@ -64,10 +65,13 @@ const styles = StyleSheet.create({
     fontSize: fs.md,
     lineHeight: 22,
   },
+  // design-system の Button は使わない。ErrorBoundary はクラスコンポーネントかつ
+  // ThemeProvider が壊れていても描画できる必要があるため useTheme() に依存する
+  // コンポーネントを避け、静的な lightTheme のみで自前実装している。
   button: {
     marginTop: 8,
     alignSelf: 'flex-start',
-    borderRadius: 999,
+    borderRadius: radius.full,
     paddingHorizontal: 16,
     paddingVertical: 12,
   },

@@ -8,6 +8,7 @@ import type { PurchasesOffering, PurchasesPackage } from 'react-native-purchases
 import { TRIAL_DAYS } from '@/constants/iap';
 import { LEGAL_LINKS } from '@/constants/onboarding';
 import { Badge, Body, Icon, Label, useTheme, type Theme } from '@/design-system';
+import { radius } from '@/design-system/tokens/primitives/radius';
 import { fontSize as fs, lineHeight as lh } from '@/design-system/tokens/primitives/typography';
 import { useAppState } from '@/providers/app-state-provider';
 import { fetchOffering, purchase } from '@/utils/iap';
@@ -284,7 +285,9 @@ const makeStyles = (t: Theme) => StyleSheet.create({
   priceValue: { fontSize: fs.md, fontWeight: '700', color: t.colors.content.primary },
   priceSub: { fontSize: fs.md, color: t.colors.content.secondary, marginTop: 2 },
   priceHint: { fontSize: fs.sm, lineHeight: lh.sm, color: t.colors.content.secondary },
-  ctaPill: { backgroundColor: t.colors.action.primary.default, borderRadius: 999, paddingVertical: 8, paddingHorizontal: 16 },
+  // 装飾的な選択インジケータ (外側のプラン行 Pressable が本体のonPressを持つため、
+  // ここ自体は Button 化しない)。見た目だけ Button と揃えて radius.full を使う。
+  ctaPill: { backgroundColor: t.colors.action.primary.default, borderRadius: radius.full, paddingVertical: 8, paddingHorizontal: 16 },
   ctaPillText: { color: t.colors.content.onAction, fontSize: fs.sm, fontWeight: '700' },
   footer: { paddingHorizontal: 24, paddingTop: 8, paddingBottom: 16, gap: 12 },
   secondaryRow: { flexDirection: 'row', justifyContent: 'center', gap: 12 },

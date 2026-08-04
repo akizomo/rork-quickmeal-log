@@ -94,13 +94,15 @@ export const makeButtonTokens = (sc: SemanticColors): ButtonTokens => ({
   // Button は状態別の文字色 (pressed/disabled) と numberOfLines を Text に直接持たせる
   // 必要があるため <Label> は使わず Text を直接組んでいるが、値は Label と同じ意味を持つ。
   // Label の size ラインナップを変更したらここも見直すこと。
+  // radius は全サイズ full (pill) に統一 (2026-07-30決定)。ボタンだけ角丸長方形にする
+  // 積極的な理由がなく、アプリ内の自前実装ボタンの大半が既に full 相当だったため揃えた。
   size: {
     sm: {
       height: 36,
       paddingH: spacing['4'],
       fontSize: fontSize.sm,
       lineHeight: lineHeight.sm,
-      radius: radius.md,
+      radius: radius.full,
       gap: spacing['1'],
     },
     md: {
@@ -108,7 +110,7 @@ export const makeButtonTokens = (sc: SemanticColors): ButtonTokens => ({
       paddingH: spacing['5'],
       fontSize: fontSize.md,
       lineHeight: lineHeight.md,
-      radius: radius.lg,
+      radius: radius.full,
       gap: spacing['2'],
     },
     lg: {
@@ -116,7 +118,7 @@ export const makeButtonTokens = (sc: SemanticColors): ButtonTokens => ({
       paddingH: spacing['6'],
       fontSize: fontSize.lg,
       lineHeight: lineHeight.lg,
-      radius: radius.lg,
+      radius: radius.full,
       gap: spacing['2'],
     },
   },
