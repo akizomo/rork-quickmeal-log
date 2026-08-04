@@ -46,7 +46,12 @@ export function HelpInfographic({ bucketKeys, scaleMaxKcal }: HelpInfographicPro
 }
 
 // ---------------------------------------------------------------------------
-// Range legend (top-right, ● 代表値 / ▬ よく食べる範囲)
+// Range legend (top-right, ● 代表値 / ▬ 食材の幅)
+//
+// バーは「1つの食材をどれだけ食べるか」の量の幅ではなく、そのボタンに集約された
+// 複数食材 (例: ごはん/パン/うどん/パスタ/ラーメン麺) それぞれの1人前kcalの、
+// 食材違いによる幅 (modal-sets.ts の min/max)。「よく食べる範囲」だと量の幅に
+// 誤読されるため「食材の幅」とする。
 //
 // PFC の色分けは各行の PfcTag が文言 (P主体/C多め 等) で明示しているため不要。
 // ● とバーは行内に文言が無く意味が読み取れないため、こちらを凡例にする。
@@ -72,7 +77,7 @@ function RangeLegend() {
             { backgroundColor: t.colors.action.primary.container, borderColor: t.colors.action.primary.default },
           ]}
         />
-        <Text style={[styles.legendText, { color: t.colors.content.secondary }]}>よく食べる範囲</Text>
+        <Text style={[styles.legendText, { color: t.colors.content.secondary }]}>食材の幅</Text>
       </View>
     </View>
   );
