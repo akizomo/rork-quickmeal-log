@@ -93,6 +93,7 @@ interface LivePreviewState {
 interface UndoState {
   log: FoodLog;
   expiresAt: number;
+  kind: 'add' | 'delete';
 }
 
 const STORAGE_KEY = 'quiet-nutrition-state-v1';
@@ -360,13 +361,13 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     }, 1200);
   }, []);
 
-  const triggerUndo = useCallback((log: FoodLog) => {
+  const triggerUndo = useCallback((log: FoodLog, kind: 'add' | 'delete') => {
     if (undoTimerRef.current) {
       clearTimeout(undoTimerRef.current);
     }
 
     const expiresAt = Date.now() + 4000;
-    setUndoState({ log, expiresAt });
+    setUndoState({ log, expiresAt, kind });
     undoTimerRef.current = setTimeout(() => {
       setUndoState((current) => (current?.log.id === log.id ? null : current));
     }, 4000);
@@ -383,7 +384,7 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       const nextLogs = [log, ...logs];
       setLogs(nextLogs);
       triggerFeedback(log);
-      triggerUndo(log);
+      triggerUndo(log, 'add');
       persist(profile, nextLogs, settings, weights, bodyFatEntries);
     },
     [bodyFatEntries, logs, persist, profile, settings, triggerFeedback, triggerUndo, weights]
@@ -731,7 +732,7 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
         const target = logs.find((item) => item.id === id);
         if (target) {
           triggerFeedback(target);
-          triggerUndo(target);
+          triggerUndo(target, 'add');
         }
         return prev.filter((p) => p !== id);
       });
@@ -758,8 +759,11 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       return;
     }
 
-    const nextLogs = logs.filter((item) => item.id !== undoState.log.id);
-    console.log('[app-state] Undoing log', undoState.log.id);
+    const nextLogs =
+      undoState.kind === 'delete'
+        ? [undoState.log, ...logs.filter((item) => item.id !== undoState.log.id)]
+        : logs.filter((item) => item.id !== undoState.log.id);
+    console.log('[app-state] Undoing log', undoState.log.id, undoState.kind);
     setLogs(nextLogs);
     setUndoState(null);
     persist(profile, nextLogs, settings, weights, bodyFatEntries);
@@ -772,7 +776,7 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       console.log('[app-state] Deleting log', id);
       setLogs(nextLogs);
       if (target) {
-        triggerUndo(target);
+        triggerUndo(target, 'delete');
       }
       persist(profile, nextLogs, settings, weights, bodyFatEntries);
     },

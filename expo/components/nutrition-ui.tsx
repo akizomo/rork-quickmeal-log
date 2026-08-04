@@ -1112,7 +1112,9 @@ export const UndoToast = memo(function UndoToast() {
       testID="undo-toast"
     >
       <View>
-        <Text style={styles.undoTitle}>{active.log.categoryLabel} を記録しました</Text>
+        <Text style={styles.undoTitle}>
+          {active.kind === 'delete' ? `${active.log.categoryLabel} を削除しました` : `${active.log.categoryLabel} を記録しました`}
+        </Text>
         <Text style={[styles.undoText, { color: t.colors.content.inverseSecondary }]}>必要なら元に戻せます</Text>
       </View>
       <Pressable onPress={undoLastLog} testID="undo-button">

@@ -3,8 +3,8 @@ import React from 'react';
 import { Alert, Platform, ScrollView, StyleSheet, Switch, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { SettingsLinkRow, SettingsListCard, SettingsSectionLabel } from '@/components/SettingsList';
-import { Body, Card, Label, useTheme } from '@/design-system';
+import { SettingsDivider, SettingsLinkRow, SettingsListCard, SettingsSectionLabel } from '@/components/SettingsList';
+import { Body, Label, useTheme } from '@/design-system';
 import { useAppState } from '@/providers/app-state-provider';
 import { widgetRequestPin } from '@/utils/widget-bridge';
 
@@ -66,16 +66,17 @@ export default function SettingsRoute() {
             {/* §データ */}
             <View style={styles.section}>
               <SettingsSectionLabel>データ</SettingsSectionLabel>
-              <Card variant="raised" style={{ gap: theme.spacing['2'] }}>
-                <Label>データの保存について</Label>
-                <Body size="sm" tone="secondary">
-                  Hachibu はアカウント不要で使えるかわりに、記録したデータはこの端末内にのみ保存されます。アプリを削除したり、機種変更すると食事ログ・体重・体脂肪率などのデータは失われます。
-                </Body>
-                <Body size="sm" tone="secondary">
-                  サブスクリプションは Apple ID / Google アカウントに紐付くため、再インストール時に「購入を復元」から再開できます。
-                </Body>
-              </Card>
               <SettingsListCard>
+                <View style={{ paddingVertical: 8, gap: 8 }}>
+                  <Label>データの保存について</Label>
+                  <Body size="sm" tone="secondary">
+                    Hachibu はアカウント不要で使えるかわりに、記録したデータはこの端末内にのみ保存されます。アプリを削除したり、機種変更すると食事ログ・体重・体脂肪率などのデータは失われます。
+                  </Body>
+                  <Body size="sm" tone="secondary">
+                    サブスクリプションは Apple ID / Google アカウントに紐付くため、再インストール時に「購入を復元」から再開できます。
+                  </Body>
+                </View>
+                <SettingsDivider />
                 <SettingsLinkRow
                   label="データをリセット"
                   destructive

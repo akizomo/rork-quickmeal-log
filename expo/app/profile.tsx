@@ -3,12 +3,11 @@ import React, { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { BodyTypeMatrix } from '@/components/BodyTypeMatrix';
 import { ACTIVITY_LEVEL_OPTIONS, BASIS_OPTIONS } from '@/constants/onboarding';
 import { Body, Button, Card, Heading, SelectCard, useTheme } from '@/design-system';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { useAppState } from '@/providers/app-state-provider';
-import { ActivityLevel, BiologicalBasis, BodyType9 } from '@/types/nutrition';
+import { ActivityLevel, BiologicalBasis } from '@/types/nutrition';
 
 export default function ProfileRoute() {
   const router = useRouter();
@@ -16,26 +15,21 @@ export default function ProfileRoute() {
   const { profile, updateProfileValues } = useAppState();
 
   const [heightCm, setHeightCm] = useState<string>(profile.heightCm != null ? String(profile.heightCm) : '');
-  const [weightKg, setWeightKg] = useState<string>(profile.currentWeightKg != null ? String(profile.currentWeightKg) : '');
   const [ageYears, setAgeYears] = useState<string>(profile.ageYears != null ? String(profile.ageYears) : '');
   const [basis, setBasis] = useState<BiologicalBasis | null>(profile.biologicalBasis ?? null);
   const [activityLevel, setActivityLevel] = useState<ActivityLevel | null>(profile.activityLevel ?? null);
-  const [currentBodyType9, setCurrentBodyType9] = useState<BodyType9 | null>(profile.currentBodyType9 ?? null);
 
   const handleSave = useCallback(() => {
     const h = Number(heightCm);
-    const w = Number(weightKg);
     const a = Number(ageYears);
     updateProfileValues({
       heightCm: Number.isFinite(h) && h > 0 ? h : null,
-      currentWeightKg: Number.isFinite(w) && w > 0 ? w : null,
       ageYears: Number.isFinite(a) && a > 0 ? Math.round(a) : null,
       biologicalBasis: basis,
       activityLevel,
-      currentBodyType9,
     });
     router.back();
-  }, [heightCm, weightKg, ageYears, basis, activityLevel, currentBodyType9, updateProfileValues, router]);
+  }, [heightCm, ageYears, basis, activityLevel, updateProfileValues, router]);
 
   const inputStyle = [
     styles.input,
@@ -75,19 +69,6 @@ export default function ProfileRoute() {
                   testID="profile-height"
                 />
                 <Text style={[styles.suffix, { color: theme.colors.content.secondary }]}>cm</Text>
-              </DataRow>
-              <View style={[styles.divider, { backgroundColor: theme.colors.border.subtle }]} />
-              <DataRow label="体重">
-                <TextInput
-                  style={inputStyle}
-                  value={weightKg}
-                  onChangeText={setWeightKg}
-                  keyboardType="decimal-pad"
-                  placeholder="—"
-                  placeholderTextColor={theme.colors.content.tertiary}
-                  testID="profile-weight"
-                />
-                <Text style={[styles.suffix, { color: theme.colors.content.secondary }]}>kg</Text>
               </DataRow>
               <View style={[styles.divider, { backgroundColor: theme.colors.border.subtle }]} />
               <DataRow label="年齢">
@@ -139,20 +120,6 @@ export default function ProfileRoute() {
                   />
                 ))}
               </View>
-            </Card>
-
-            <Card variant="raised" style={{ gap: theme.spacing['3'] }}>
-              <View style={{ gap: theme.spacing['1'] }}>
-                <Heading size="lg">現在の体型</Heading>
-                <Body size="sm" tone="secondary">体脂肪率の推定や目標計算の基準に使います</Body>
-              </View>
-              <BodyTypeMatrix
-                basis={basis ?? 'male_basis'}
-                heightCm={Number.isFinite(Number(heightCm)) ? Number(heightCm) : null}
-                selected={currentBodyType9}
-                onSelect={setCurrentBodyType9}
-                mode="current"
-              />
             </Card>
 
             <Button label="保存" onPress={handleSave} testID="profile-save" />

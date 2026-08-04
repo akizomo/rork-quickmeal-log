@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { deriveTargetCellFromDirection } from '@/constants/body-matrix';
 import { PACE_OPTIONS } from '@/constants/onboarding';
-import { Body, Button, Caption, Card, Heading, Icon, useTheme } from '@/design-system';
+import { Body, Button, Caption, Card, Heading, Icon, Label, MacroChip, Overline, useTheme } from '@/design-system';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { useAppState } from '@/providers/app-state-provider';
 import { BodyType9, GoalDirection, PaceLevel } from '@/types/nutrition';
@@ -251,12 +251,12 @@ export default function GoalEditRoute() {
               {card ? (
                 <>
                   <View style={styles.cardHeaderRow}>
-                    <Caption tone="secondary">
+                    <Label size="sm" tone="secondary">
                       {isManual ? '自分で設定' : showPreview ? '変更後の目標（プレビュー）' : '現在の目標'}
-                    </Caption>
+                    </Label>
                     {isManual ? (
                       <Pressable onPress={exitManual} hitSlop={8} testID="goal-target-auto">
-                        <Caption tone="secondary">おまかせに戻す</Caption>
+                        <Label size="sm" tone="link">おまかせに戻す</Label>
                       </Pressable>
                     ) : (
                       <Pressable
@@ -265,7 +265,7 @@ export default function GoalEditRoute() {
                         testID="goal-target-edit"
                         style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
                       >
-                        <Caption tone="secondary">数値で指定</Caption>
+                        <Label size="sm" tone="link">数値で指定</Label>
                         <Icon name="edit" size={13} color={theme.colors.content.secondary} />
                       </Pressable>
                     )}
@@ -297,8 +297,8 @@ export default function GoalEditRoute() {
                           onPress={() => applyManual((manualTargetKg ?? 0) + 0.5)}
                         />
                       </View>
-                      {deltaLine ? <Caption tone="secondary">{deltaLine}</Caption> : null}
-                      {etaText ? <Caption tone="secondary">{etaText}</Caption> : null}
+                      {deltaLine ? <Body size="sm" tone="secondary">{deltaLine}</Body> : null}
+                      {etaText ? <Body size="sm" tone="secondary">{etaText}</Body> : null}
                       {warnText ? (
                         <Body size="sm" tone="secondary" style={{ color: warnColor }}>
                           {warnText}
@@ -310,7 +310,7 @@ export default function GoalEditRoute() {
                       <MetricBlock label="目標体重" value={card.targetWeightKg.toFixed(1)} unit="kg" />
                       <View style={[styles.divider, { backgroundColor: theme.colors.border.subtle }]} />
                       <MetricBlock
-                        label="目標BF%"
+                        label="目標体脂肪率"
                         value={card.targetBodyFatPct != null ? String(card.targetBodyFatPct) : '—'}
                         unit="%"
                       />
@@ -319,12 +319,14 @@ export default function GoalEditRoute() {
 
                   <View style={[styles.hr, { backgroundColor: theme.colors.border.subtle }]} />
                   <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8 }}>
-                    <Heading size="2xl">{card.targetKcal}</Heading>
-                    <Caption tone="secondary" style={{ marginBottom: 4 }}>kcal / 日</Caption>
+                    <Heading size="3xl">{card.targetKcal}</Heading>
+                    <Caption tone="secondary" style={{ marginBottom: 6 }}>kcal / 日</Caption>
                   </View>
-                  <Caption tone="secondary">
-                    P {card.proteinG}g · F {card.fatG}g · C {card.carbsG}g
-                  </Caption>
+                  <View style={{ flexDirection: 'row', gap: 8 }}>
+                    <MacroChip kind="protein" value={card.proteinG} size="md" />
+                    <MacroChip kind="fat" value={card.fatG} size="md" />
+                    <MacroChip kind="carbs" value={card.carbsG} size="md" />
+                  </View>
                 </>
               ) : (
                 <Body tone="secondary">目的{direction == null ? '' : '・ペース'}を選ぶとここに表示されます</Body>
@@ -334,7 +336,7 @@ export default function GoalEditRoute() {
             {/* DIRECTION — segmented (手動指定中は非表示・目的は自動導出, PRD §6.4.4) */}
             {!isManual ? (
               <View style={{ gap: theme.spacing['2'] }}>
-                <Caption tone="secondary">目的</Caption>
+                <Overline>目的</Overline>
                 <SegmentedRow
                   options={DIRECTION_OPTIONS.map((o) => ({ key: o.key, label: o.label }))}
                   value={direction}
@@ -347,7 +349,7 @@ export default function GoalEditRoute() {
             {/* PACE — segmented (maintain/recomp時は非表示) */}
             {effectiveDirection !== 'maintain' && effectiveDirection !== 'recomp' ? (
               <View style={{ gap: theme.spacing['2'] }}>
-                <Caption tone="secondary">ペース</Caption>
+                <Overline>ペース</Overline>
                 <SegmentedRow
                   options={PACE_OPTIONS.map((o) => ({ key: o.key, label: o.label }))}
                   value={paceLevel}
@@ -400,9 +402,9 @@ function MetricBlock({ label, value, unit }: { label: string; value: string; uni
   const theme = useTheme();
   return (
     <View style={styles.metricBlock}>
-      <Caption tone="secondary">{label}</Caption>
+      <Label size="sm" tone="secondary">{label}</Label>
       <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 3 }}>
-        <Heading size="xl">{value}</Heading>
+        <Heading size="2xl">{value}</Heading>
         <Caption tone="secondary" style={{ marginBottom: 3, color: theme.colors.content.tertiary }}>
           {unit}
         </Caption>

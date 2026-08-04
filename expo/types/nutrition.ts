@@ -261,6 +261,13 @@ export interface AppSettings {
    * 読み書きは `utils/diagnostics.ts` の純関数を通す。
    */
   diagnostics?: DiagnosticsData;
+
+  /**
+   * 週次振り返りバナーを dismiss (または閲覧) 済みの対象週キー (月曜 dateKey)。
+   * その週の recap は二度と表示しない。週が変わると自然に再度表示対象になる
+   * (widgetNudgeDismissedAtISO と異なり永続的な非表示ではない)。
+   */
+  weeklyRecapDismissedWeekKey?: string;
 }
 
 export interface QuickCategory {
