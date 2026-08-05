@@ -2,7 +2,6 @@ import React, { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Svg, { Ellipse, Path } from 'react-native-svg';
 
-import { palette } from '@/constants/theme';
 import { useTheme } from '@/design-system';
 import { BiologicalBasis, BodyStage } from '@/types/nutrition';
 

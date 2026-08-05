@@ -1,7 +1,8 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { lightTheme } from '@/design-system';
+import { ThemeContext } from '@/design-system/theme/ThemeProvider';
+import type { Theme } from '@/design-system';
 import { radius } from '@/design-system/tokens/primitives/radius';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 
@@ -10,6 +11,11 @@ interface State {
 }
 
 export class ErrorBoundary extends React.Component<React.PropsWithChildren, State> {
+  // contextType でテーマを直接取得する。ThemeProvider が壊れていても
+  // createContext のデフォルト値 (lightTheme) にフォールバックするため安全。
+  static contextType = ThemeContext;
+  declare context: Theme;
+
   state: State = { hasError: false };
 
   static getDerivedStateFromError(): State {
@@ -26,13 +32,14 @@ export class ErrorBoundary extends React.Component<React.PropsWithChildren, Stat
 
   render() {
     if (this.state.hasError) {
+      const t = this.context;
       return (
-        <View style={[styles.container, { backgroundColor: lightTheme.colors.surface.default }]} testID="error-boundary">
-          <View style={[styles.card, { backgroundColor: lightTheme.colors.surface.raised }]}>
-            <Text style={[styles.title, { color: lightTheme.colors.content.primary }]}>画面の表示で問題が起きました</Text>
-            <Text style={[styles.text, { color: lightTheme.colors.content.secondary }]}>もう一度開き直してください。</Text>
-            <Pressable onPress={this.handleReset} style={[styles.button, { backgroundColor: lightTheme.colors.action.primary.default }]} testID="error-boundary-reset-button">
-              <Text style={[styles.buttonText, { color: lightTheme.colors.content.onAction }]}>再表示</Text>
+        <View style={[styles.container, { backgroundColor: t.colors.surface.default }]} testID="error-boundary">
+          <View style={[styles.card, { backgroundColor: t.colors.surface.raised }]}>
+            <Text style={[styles.title, { color: t.colors.content.primary }]}>画面の表示で問題が起きました</Text>
+            <Text style={[styles.text, { color: t.colors.content.secondary }]}>もう一度開き直してください。</Text>
+            <Pressable onPress={this.handleReset} style={[styles.button, { backgroundColor: t.colors.action.primary.default }]} testID="error-boundary-reset-button">
+              <Text style={[styles.buttonText, { color: t.colors.content.onAction }]}>再表示</Text>
             </Pressable>
           </View>
         </View>
@@ -65,9 +72,6 @@ const styles = StyleSheet.create({
     fontSize: fs.md,
     lineHeight: 22,
   },
-  // design-system の Button は使わない。ErrorBoundary はクラスコンポーネントかつ
-  // ThemeProvider が壊れていても描画できる必要があるため useTheme() に依存する
-  // コンポーネントを避け、静的な lightTheme のみで自前実装している。
   button: {
     marginTop: 8,
     alignSelf: 'flex-start',

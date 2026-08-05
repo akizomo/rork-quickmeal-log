@@ -13,7 +13,6 @@ import { Body, Icon, IconButton, Label, useTheme } from '@/design-system';
 import { fontSize } from '@/design-system/tokens/primitives/typography';
 import { elevation } from '@/design-system/tokens/primitives/elevation';
 import { duration } from '@/design-system/tokens/primitives/motion';
-import { lightColors } from '@/design-system/tokens/semantic/light';
 import { radius } from '@/design-system/tokens/primitives/radius';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { useAppState } from '@/providers/app-state-provider';
@@ -110,12 +109,6 @@ function WidgetNudgeBanner() {
   );
 }
 
-const QUICK_LOG_COLORS = {
-  // surface.raised と同じ面にして、「選択中タブ→ボタン」で一貫した
-  // “浮いたカード”の見た目にする。このファイルは静的 StyleSheet で
-  // useTheme() を経由しないため、semantic token を直接参照する。
-  buttonBg: lightColors.surface.raised,
-};
 
 // Identity-first IA bucket labels (PRD-aligned ≤6 char names).
 // Mirrors `INGREDIENT_BUCKETS` / `DISH_BUCKETS` from constants/identity/index.ts;
@@ -261,7 +254,7 @@ function QuickLogButton({
         delayLongPress={320}
         accessibilityRole="button"
         accessibilityLabel={`${item.label}を追加。長押しで詳細入力`}
-        style={[styles.button, { height }]}
+        style={[styles.button, { height, backgroundColor: t.colors.surface.raised }]}
         testID={`quick-log-button-${item.key}`}
       >
         <View
@@ -315,6 +308,7 @@ const FrequentGrid = memo(function FrequentGrid({
     setDishQuickEntryKey,
     quickLogIdentity,
   } = useAppState();
+  const t = useTheme();
 
   const rows: (RankedLogItem | null)[][] = [];
   const padded = [...items, ...Array(Math.max(0, FREQUENT_GRID_SLOTS - items.length)).fill(null)];
@@ -339,7 +333,7 @@ const FrequentGrid = memo(function FrequentGrid({
                     colIndex < row.length - 1 ? { marginRight: gridGap } : null,
                   ]}
                 >
-                  <View style={[styles.frequentEmptySlot, { height: buttonHeight }]} />
+                  <View style={[styles.frequentEmptySlot, { height: buttonHeight, backgroundColor: t.colors.surface.sunken, borderColor: t.colors.border.subtle }]} />
                 </View>
               );
             }
@@ -419,7 +413,7 @@ function FrequentButton({
       accessibilityLabel={`${item.label}を追加。長押しで詳細入力`}
       style={({ pressed }) => [
         styles.frequentButton,
-        { minHeight: height },
+        { minHeight: height, backgroundColor: t.colors.surface.raised },
         pressed && styles.frequentButtonPressed,
       ]}
     >
@@ -591,7 +585,6 @@ const styles = StyleSheet.create({
   // ⭐️ グリッド用スタイル
   frequentButton: {
     width: '100%',
-    backgroundColor: QUICK_LOG_COLORS.buttonBg,
     borderRadius: QUICK_LOG_TOKENS.buttonRadius,
     alignItems: 'center',
     justifyContent: 'center',
@@ -613,9 +606,7 @@ const styles = StyleSheet.create({
   frequentEmptySlot: {
     width: '100%',
     borderRadius: QUICK_LOG_TOKENS.buttonRadius,
-    backgroundColor: 'rgba(49,83,71,0.04)',
     borderWidth: 1,
-    borderColor: 'rgba(49,83,71,0.06)',
     borderStyle: 'dashed',
   },
   cell: {
@@ -623,7 +614,6 @@ const styles = StyleSheet.create({
   },
   button: {
     width: '100%',
-    backgroundColor: QUICK_LOG_COLORS.buttonBg,
     borderRadius: QUICK_LOG_TOKENS.buttonRadius,
     alignItems: 'center',
     justifyContent: 'center',

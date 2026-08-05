@@ -102,20 +102,20 @@ export function Badge({
 function resolveBadgePalette(t: Theme, tone: BadgeTone): { bg: string; fg: string } {
   switch (tone) {
     case 'accent':
-      return { bg: t.colors.accent.subtle, fg: t.tokens.colors.ai[700] };
+      return { bg: t.colors.accent.subtle, fg: t.colors.accent.default };
     case 'brand':
       return {
         bg: t.colors.action.primary.container,
         fg: t.colors.action.primary.onContainer,
       };
     case 'success':
-      return { bg: t.tokens.colors.moss[100], fg: t.tokens.colors.moss[700] };
+      return { bg: t.colors.status.success.container, fg: t.colors.status.success.onContainer };
     case 'warning':
-      return { bg: t.tokens.colors.amber[100], fg: t.tokens.colors.amber[700] };
+      return { bg: t.colors.status.warning.container, fg: t.colors.status.warning.onContainer };
     case 'danger':
-      return { bg: t.tokens.colors.clay[100], fg: t.tokens.colors.clay[700] };
+      return { bg: t.colors.status.danger.container, fg: t.colors.status.danger.onContainer };
     case 'info':
-      return { bg: t.tokens.colors.fog[100], fg: t.tokens.colors.fog[700] };
+      return { bg: t.colors.status.info.container, fg: t.colors.status.info.onContainer };
     case 'neutral':
     default:
       return { bg: t.colors.surface.sunken, fg: t.colors.content.secondary };

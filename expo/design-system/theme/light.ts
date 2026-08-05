@@ -45,4 +45,4 @@ export const lightTheme = {
   },
 };
 
-export type Theme = typeof lightTheme;
+export type Theme = typeof lightTheme | typeof import('./dark').darkTheme;

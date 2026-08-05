@@ -23,7 +23,7 @@ import Svg, {
 import { Logo } from '@/components/Logo';
 import { ButtonGridIllustration, GestureDemoIllustration } from '@/components/onboarding-illustrations';
 import { INTRO_VERSION, LEGAL_LINKS } from '@/constants/onboarding';
-import { Label, lightTheme, useTheme, type Theme } from '@/design-system';
+import { Label, useTheme, type Theme } from '@/design-system';
 import { colors } from '@/design-system/tokens/primitives/colors';
 import { radius } from '@/design-system/tokens/primitives/radius';
 import { fontSize as fs, letterSpacing as ls } from '@/design-system/tokens/primitives/typography';
@@ -38,8 +38,6 @@ interface Slide {
   key: string;
   title: string;
   subtitle: string;
-  /** ヒーロー領域の背景色 ('transparent' で親グラデを透かす) */
-  accent: string;
   media: SlideMedia;
 }
 
@@ -48,21 +46,18 @@ const SLIDES: Slide[] = [
     key: 's1',
     title: '9ボタンで、8割いける。',
     subtitle: 'ふだんの食事は、タップひとつで残せる。',
-    accent: colors.ivory[500], // kinari (warm paper)
     media: { kind: 'buttonGrid' },
   },
   {
     key: 's2',
     title: '急ぎはタップ、余裕は長押し。',
     subtitle: 'ちゃんと記録したい日だけ、もう一歩ふみこめる。',
-    accent: colors.sage[100], // sage soft
     media: { kind: 'gestureDemo' },
   },
   {
     key: 's3',
     title: '進みは、ひと目で。',
     subtitle: '目標と今の差が、グラフでそのまま見える。',
-    accent: lightTheme.colors.accent.subtle, // ai (indigo)
     media: { kind: 'progress' },
   },
 ];
@@ -70,14 +65,13 @@ const SLIDES: Slide[] = [
 // ── Intro 専用 進捗イラスト ───────────────────────────────────
 // kcal リング + 体重スパークライン + PFC バー の 3 カード合成。
 // intro 以外で再利用する見込みが無いため、ローカル定義。
-const ILLUST_COLORS = {
-  protein: colors.clay[400], // clay 系
-  fat: colors.ivory[500], // kinari
-  carb: lightTheme.colors.action.text.default,
-} as const;
-
 function IntroProgressIllustration() {
   const t = useTheme();
+  const illustColors = {
+    protein: t.colors.nutrition.protein.graphic,
+    fat: t.colors.nutrition.fat.graphic,
+    carb: t.colors.action.text.default,
+  };
   const illustStyles = useMemo(() => makeIllustStyles(t), [t]);
   const { height: screenHeight } = useWindowDimensions();
   // 画面高さに応じて 0.6〜1.0 の範囲でスケール。
@@ -87,9 +81,9 @@ function IntroProgressIllustration() {
   const scale = Math.max(0.6, Math.min(1, (screenHeight - 349) / 474));
 
   const pfcRows: { l: 'P' | 'F' | 'C'; v: number; c: string }[] = [
-    { l: 'P', v: 0.62, c: ILLUST_COLORS.protein },
-    { l: 'F', v: 0.41, c: ILLUST_COLORS.fat },
-    { l: 'C', v: 0.35, c: ILLUST_COLORS.carb },
+    { l: 'P', v: 0.62, c: illustColors.protein },
+    { l: 'F', v: 0.41, c: illustColors.fat },
+    { l: 'C', v: 0.35, c: illustColors.carb },
   ];
 
   return (
@@ -191,6 +185,11 @@ export default function IntroRoute() {
   const router = useRouter();
   const t = useTheme();
   const styles = useMemo(() => makeStyles(t), [t]);
+  const slideAccentMap = useMemo<Record<string, string>>(() => ({
+    s1: t.colors.surface.raised,           // neutral: light=ivory[50], dark=#2B2620
+    s2: t.colors.action.primary.container, // sage: light=sage[100], dark=sage[900]
+    s3: t.colors.accent.subtle,            // ai: light=ai[100], dark=ai[900]
+  }), [t]);
   const { markIntroSeen } = useAppState();
   const [index, setIndex] = useState<number>(0);
   const [listHeight, setListHeight] = useState<number>(0);
@@ -271,7 +270,7 @@ export default function IntroRoute() {
                 <View
                   style={[
                     styles.heroWrap,
-                    { backgroundColor: item.accent },
+                    { backgroundColor: slideAccentMap[item.key] ?? t.colors.surface.raised },
                   ]}
                 >
                   {item.media.kind === 'buttonGrid' ? (

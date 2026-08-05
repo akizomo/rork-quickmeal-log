@@ -411,8 +411,8 @@ const makeStyles = (t: Theme) => StyleSheet.create({
     color: t.colors.content.secondary,
     fontWeight: '600',
   },
-  sunday: { color: colors.clay[300] },
-  saturday: { color: colors.fog[400] },
+  sunday: { color: t.colors.status.danger.default },
+  saturday: { color: t.colors.status.info.default },
   gridWrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',

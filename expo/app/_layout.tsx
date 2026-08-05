@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import * as ExpoInAppUpdates from 'expo-in-app-updates';
 import { Stack } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import React, { useEffect } from 'react';
 import { Platform } from 'react-native';
@@ -8,7 +9,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { DishQuickEntrySheet } from '@/components/DishQuickEntrySheet';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { IdentityLogSheet } from '@/components/IdentityLogSheet';
-import { ThemeProvider } from '@/design-system';
+import { ThemeProvider, useTheme } from '@/design-system';
 import { AppStateProvider } from '@/providers/app-state-provider';
 import { HealthSyncProvider } from '@/providers/health-sync-provider';
 import { initIap } from '@/utils/iap';
@@ -19,10 +20,14 @@ void SplashScreen.preventAutoHideAsync();
 const queryClient = new QueryClient();
 
 function RootLayoutNav() {
+  const t = useTheme();
   return (
     <Stack
       screenOptions={{
         headerBackTitle: '戻る',
+        headerStyle: { backgroundColor: t.colors.surface.default },
+        headerTintColor: t.colors.content.primary,
+        contentStyle: { backgroundColor: t.colors.surface.default },
       }}
     >
       <Stack.Screen name="index" options={{ headerShown: false }} />
@@ -72,6 +77,7 @@ export default function RootLayout() {
       <GestureHandlerRootView style={{ flex: 1 }}>
         <ErrorBoundary>
           <ThemeProvider>
+            <StatusBar style="auto" />
             <AppStateProvider>
               <HealthSyncProvider>
                 <RootLayoutNav />

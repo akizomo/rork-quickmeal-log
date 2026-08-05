@@ -53,7 +53,7 @@ export function ButtonGridIllustration() {
             style={[
               gridStyles.btn,
               { backgroundColor: t.colors.surface.raised, borderColor: t.colors.border.default },
-              btn.highlight ? [gridStyles.btnHighlight, { borderColor: t.colors.action.primary.default }] : null,
+              btn.highlight ? [gridStyles.btnHighlight, { backgroundColor: t.colors.action.primary.container, borderColor: t.colors.action.primary.default }] : null,
             ]}
           >
             <Text style={gridStyles.btnEmoji}>{btn.e}</Text>
@@ -193,7 +193,6 @@ const gridStyles = StyleSheet.create({
     gap: 4,
   },
   btnHighlight: {
-    backgroundColor: colors.sage[50],
     transform: [{ scale: 1.06 }],
   },
   btnEmoji: { fontSize: 28 },
