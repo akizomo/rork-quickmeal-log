@@ -68,33 +68,33 @@ export const darkColors: SemanticColors = {
   },
 
   status: {
-    success: { default: colors.moss[400],  container: colors.moss[900],  onContainer: colors.moss[200]  },
-    warning: { default: colors.amber[400], container: colors.amber[900], onContainer: colors.amber[200] },
-    danger:  { default: colors.clay[300],  container: colors.clay[900],  onContainer: colors.clay[200]  },
-    info:    { default: colors.fog[400],   container: colors.fog[900],   onContainer: colors.fog[200]   },
+    success: { default: colors.moss[400],  container: colors.moss[800],  onContainer: colors.moss[200]  },
+    warning: { default: colors.amber[400], container: colors.amber[800], onContainer: colors.amber[200] },
+    danger:  { default: colors.clay[300],  container: colors.clay[800],  onContainer: colors.clay[200]  },
+    info:    { default: colors.fog[400],   container: colors.fog[800],   onContainer: colors.fog[200]   },
   },
 
   accent: {
     default: colors.ai[400],  // '#617AC4' — ダーク背景上の藍アクセント
-    subtle:  colors.ai[900],  // '#101840'
+    subtle:  colors.ai[800],  // '#1D2C5E' — [900]は真黒に近いため一段上げ
   },
 
   nutrition: {
-    protein: { text: colors.terracotta[300], graphic: colors.terracotta[400], background: colors.terracotta[900] },
-    fat:     { text: colors.kogecha[300],    graphic: colors.kogecha[400],    background: colors.kogecha[900]    },
-    carbs:   { text: colors.seagrass[300],   graphic: colors.seagrass[400],   background: colors.seagrass[900]   },
+    protein: { text: colors.terracotta[300], graphic: colors.terracotta[400], background: colors.terracotta[800] },
+    fat:     { text: colors.kogecha[300],    graphic: colors.kogecha[400],    background: colors.kogecha[800]    },
+    carbs:   { text: colors.seagrass[300],   graphic: colors.seagrass[400],   background: colors.seagrass[800]   },
 
     calorie: {
-      within:       { text: colors.moss[300],  graphic: colors.moss[400],  background: colors.moss[900]  },
-      mildExceed:   { text: colors.amber[300], graphic: colors.amber[400], background: colors.amber[900] },
-      severeExceed: { text: colors.clay[300],  graphic: colors.clay[400],  background: colors.clay[900]  },
+      within:       { text: colors.moss[300],  graphic: colors.moss[400],  background: colors.moss[800]  },
+      mildExceed:   { text: colors.amber[300], graphic: colors.amber[400], background: colors.amber[800] },
+      severeExceed: { text: colors.clay[300],  graphic: colors.clay[400],  background: colors.clay[800]  },
       track: colors.ivory[700],  // '#8F8A7A' — 空のリング/バー
     },
 
     trend: {
-      improve: { text: colors.moss[300],  graphic: colors.moss[400],  background: colors.moss[900]  },
-      worsen:  { text: colors.amber[300], graphic: colors.amber[400], background: colors.amber[900] },
-      stable:  { text: colors.stone[300], graphic: colors.stone[400], background: colors.stone[800] },
+      improve: { text: colors.moss[300],  graphic: colors.moss[400],  background: colors.moss[800]  },
+      worsen:  { text: colors.amber[300], graphic: colors.amber[400], background: colors.amber[800] },
+      stable:  { text: colors.stone[300], graphic: colors.stone[400], background: colors.stone[700] },
     },
   },
 };
