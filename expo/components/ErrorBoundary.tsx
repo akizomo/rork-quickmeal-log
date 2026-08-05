@@ -14,7 +14,6 @@ export class ErrorBoundary extends React.Component<React.PropsWithChildren, Stat
   // contextType でテーマを直接取得する。ThemeProvider が壊れていても
   // createContext のデフォルト値 (lightTheme) にフォールバックするため安全。
   static contextType = ThemeContext;
-  declare context: Theme;
 
   state: State = { hasError: false };
 
@@ -32,7 +31,7 @@ export class ErrorBoundary extends React.Component<React.PropsWithChildren, Stat
 
   render() {
     if (this.state.hasError) {
-      const t = this.context;
+      const t = this.context as Theme;
       return (
         <View style={[styles.container, { backgroundColor: t.colors.surface.default }]} testID="error-boundary">
           <View style={[styles.card, { backgroundColor: t.colors.surface.raised }]}>

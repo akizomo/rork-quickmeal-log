@@ -30,6 +30,7 @@ import { DishDraft, DishSize, IngredientDraft, Macro, PortionValue } from '@/typ
 import { adjustedTargetKcal, calcBaselineActiveKcal, carryoverSoftFloorKcal, classifyCarryoverDeduction, getAdjustedPfcForDate, getEffectiveSubscriptionStatus, getTdeeExerciseKcalForDate, minCarryoverDays, stepsToActiveKcal, trialDaysRemaining } from '@/utils/goals';
 import { buildDishMacro, clampPortion, computeIngredient, draftFromLog, formatDateKey, formatMacroText, getIngredientSubtypeDef, getIngredientSubtypeDefs, getQuickCategories, getSubtypes, getToppingsForSubtype, summarizeToppings } from '@/utils/nutrition';
 import { formatDayLabel, isSameDay, sumForDate } from '@/utils/history';
+import { computeWeeklyRecap } from '@/utils/weekly-recap';
 
 export function MiniProgressBar({ letter, label, current, target, textColor, graphicColor, trackColor }: {
   letter: string;
@@ -754,6 +755,62 @@ function CarryoverBanner({
   );
 }
 
+/**
+ * 週次リカップの teaser カード。CarryoverBanner と同じスロット・同じ構造。
+ * データ (kcal/PFC等) はここでは出さない — 中身はタップ後のストーリー側に委ねる。
+ * dismiss は「見た」を意味し、週が変わると自然に再度表示対象になる
+ * (weeklyRecapDismissedWeekKey は週次リカップ画面を開いた時点でも更新される)。
+ */
+function WeeklyRecapTeaser() {
+  const t = useTheme();
+  const router = useRouter();
+  const { logs, profile, exerciseLogs, dailyActivities, settings, updateSettingsValues } = useAppState();
+
+  const recap = useMemo(
+    () => computeWeeklyRecap(logs, profile, exerciseLogs, dailyActivities, new Date()),
+    [logs, profile, exerciseLogs, dailyActivities]
+  );
+
+  if (!recap || settings.weeklyRecapDismissedWeekKey === recap.weekKey) return null;
+
+  const dismiss = () => updateSettingsValues({ weeklyRecapDismissedWeekKey: recap.weekKey });
+  const open = () => router.push('/weekly-recap');
+
+  return (
+    <Pressable
+      onPress={open}
+      style={({ pressed }) => [
+        {
+          backgroundColor: t.colors.action.primary.container,
+          borderRadius: t.radius.md,
+          paddingHorizontal: t.spacing['4'],
+          paddingTop: t.spacing['3'],
+          paddingBottom: t.spacing['3'],
+          marginBottom: t.spacing['2'],
+          opacity: pressed ? 0.85 : 1,
+        },
+      ]}
+      accessibilityRole="button"
+      accessibilityLabel="先週の記録を見る"
+    >
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.spacing['2'] }}>
+        <Icon name="barChart" size={16} color={t.colors.action.primary.onContainer} />
+        <Label tone="primary" style={{ flex: 1, color: t.colors.action.primary.onContainer }}>
+          先週の記録ができました
+        </Label>
+        <IconButton
+          icon="close"
+          size="sm"
+          tone="tertiary"
+          onPress={dismiss}
+          accessibilityLabel="閉じる"
+        />
+        <Icon name="chevronRight" size={16} color={t.colors.action.primary.onContainer} />
+      </View>
+    </Pressable>
+  );
+}
+
 export const StatusCard = memo(function StatusCard({
   viewedDate,
   onFoodPress,
@@ -852,6 +909,7 @@ export const StatusCard = memo(function StatusCard({
           onDismiss={dismissCarryoverBanner}
         />
       ) : null}
+      {isToday ? <WeeklyRecapTeaser /> : null}
       <CarryoverDaySheet
         visible={daySheetVisible}
         onClose={() => setDaySheetVisible(false)}

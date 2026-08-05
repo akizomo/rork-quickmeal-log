@@ -25,6 +25,7 @@ const BUCKET_STAPLE: Identity[] = [
     label: 'ごはん',
     primaryHome: { tab: 'ingredient', bucket: 'staple' },
     defaultMacro: { kcal: 234, protein: 3.8, fat: 0.5, carbs: 56 },
+    nutritionNote: 'ごはんは、脳や体を動かすエネルギー源になる糖質が主成分です。',
     amount: {
       unit: 'g',
       default: 150, step: 10,
@@ -310,6 +311,7 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
     label: '鶏むね・ささみ',
     primaryHome: { tab: 'ingredient', bucket: 'lean_protein' },
     defaultMacro: { kcal: 105, protein: 23, fat: 1.5, carbs: 0 },
+    nutritionNote: '鶏むねは、たんぱく質を多く含み、脂質は控えめな食材です。',
     amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '100', value: 100 }, { label: '150', value: 150 }, { label: '200', value: 200 }] },
     attributes: [
       { key: 'no_skin', label: '皮なし', isDefault: true },
@@ -487,6 +489,7 @@ const BUCKET_EGG: Identity[] = [
     label: '卵',
     primaryHome: { tab: 'ingredient', bucket: 'egg' },
     defaultMacro: { kcal: 75, protein: 6.2, fat: 5.2, carbs: 0.2 },
+    nutritionNote: '卵は、体に必要な必須アミノ酸をすべて含む数少ない食品のひとつです。',
     amount: { unit: 'piece', default: 1 },
     attributes: [
       { key: 'whole', label: '全卵', isDefault: true },
@@ -553,6 +556,7 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
     label: '牛・豚 (普通脂)',
     primaryHome: { tab: 'ingredient', bucket: 'fatty_protein' },
     defaultMacro: { kcal: 230, protein: 17.5, fat: 16.5, carbs: 0 },
+    nutritionNote: '牛肉や豚肉には、体内に吸収されやすい形の鉄分(ヘム鉄)が含まれます。',
     amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '100', value: 100 }, { label: '150', value: 150 }, { label: '200', value: 200 }] },
     attributes: [
       { key: 'beef', label: '牛（ロース・もも等）', isDefault: true },
@@ -604,6 +608,7 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
     primaryHome: { tab: 'ingredient', bucket: 'fatty_protein' },
     quickTapDisabled: true, // Attribute 鮭/サバ/ぶり/さんま/いわし/うなぎ: kcal 130-290, F 9-24
     defaultMacro: { kcal: 200, protein: 20, fat: 12, carbs: 0 },
+    nutritionNote: '鮭などの脂がのった魚には、不飽和脂肪酸が含まれます。',
     amount: { unit: 'g', default: 80, step: 10, chips: [{ label: '1切', value: 80 }, { label: '100', value: 100 }, { label: '2切', value: 160 }] },
     attributes: [
       { key: 'salmon', label: '鮭', isDefault: true },
@@ -705,6 +710,7 @@ const BUCKET_DAIRY_SOY: Identity[] = [
     label: 'ヨーグルト',
     primaryHome: { tab: 'ingredient', bucket: 'dairy_soy' },
     defaultMacro: { kcal: 62, protein: 3.6, fat: 3, carbs: 4.9 },
+    nutritionNote: 'ヨーグルトは、乳酸菌を含む発酵食品です。',
     // 飲むヨーグルトは Attribute=drink で吸収するため chip 削除 (単位齟齬解消)
     amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '小', value: 80 }, { label: '1パック', value: 100 }, { label: '大', value: 150 }] },
     attributes: [
@@ -761,6 +767,7 @@ const BUCKET_DAIRY_SOY: Identity[] = [
     label: '豆腐',
     primaryHome: { tab: 'ingredient', bucket: 'dairy_soy' },
     defaultMacro: { kcal: 83, protein: 7.5, fat: 4.5, carbs: 3 },
+    nutritionNote: '豆腐は、大豆由来のたんぱく質と、骨や歯の材料になるカルシウムを含みます。',
     amount: { unit: 'piece', default: 0.5, unitLabel: '丁', chips: [{ label: '半丁', value: 0.5 }, { label: '1丁', value: 1 }] },
     attributes: [
       { key: 'silken', label: '絹', isDefault: true },
@@ -789,6 +796,7 @@ const BUCKET_DAIRY_SOY: Identity[] = [
     label: '納豆',
     primaryHome: { tab: 'ingredient', bucket: 'dairy_soy' },
     defaultMacro: { kcal: 80, protein: 6.6, fat: 4, carbs: 5 },
+    nutritionNote: '納豆は、大豆を発酵させてつくる、たんぱく質を含む食品です。',
     amount: { unit: 'piece', default: 1, unitLabel: 'パック' },
     asAddon: {
       unit: 'piece',
@@ -859,6 +867,7 @@ const BUCKET_VEGGIES: Identity[] = [
     primaryHome: { tab: 'ingredient', bucket: 'veggies' },
     // ブロッコリー基準 (生 100g): kcal 35, P 4.3, F 0.4, C 5
     defaultMacro: { kcal: 35, protein: 4.3, fat: 0.4, carbs: 5 },
+    nutritionNote: 'ブロッコリーは、たんぱく質とビタミンCを含む野菜です。',
     amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '小', value: 50 }, { label: '普通', value: 100 }, { label: '大', value: 150 }] },
     attributes: [
       { key: 'broccoli', label: 'ブロッコリー', isDefault: true },
@@ -957,6 +966,7 @@ const BUCKET_FRUIT: Identity[] = [
     label: 'バナナ',
     primaryHome: { tab: 'ingredient', bucket: 'fruit' },
     defaultMacro: { kcal: 86, protein: 1.1, fat: 0.2, carbs: 22 },
+    nutritionNote: 'バナナは、体内の水分バランスに関わるミネラルのひとつ、カリウムを含みます。',
     amount: { unit: 'piece', default: 1 },
     asAddon: {
       unit: 'g',

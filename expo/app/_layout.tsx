@@ -33,6 +33,7 @@ function RootLayoutNav() {
       <Stack.Screen name="index" options={{ headerShown: false }} />
       <Stack.Screen name="intro" options={{ headerShown: false }} />
       <Stack.Screen name="paywall" options={{ headerShown: false, presentation: 'modal' }} />
+      <Stack.Screen name="weekly-recap" options={{ headerShown: false, presentation: 'modal' }} />
       <Stack.Screen name="onboarding" options={{ headerShown: false, gestureEnabled: false }} />
       <Stack.Screen name="status" options={{ title: 'ステータス' }} />
       <Stack.Screen name="stats" options={{ title: '実績' }} />

@@ -30,7 +30,7 @@ import { Icon, type IconName } from './Icon';
 
 export type IconButtonSize = 'sm' | 'md' | 'lg';
 export type IconButtonVariant = 'ghost' | 'filled';
-export type IconButtonTone = 'secondary' | 'tertiary' | 'danger' | 'action';
+export type IconButtonTone = 'secondary' | 'tertiary' | 'danger' | 'action' | 'inverse';
 
 const SIZE_MAP: Record<IconButtonSize, { box: number; icon: number }> = {
   sm: { box: 28, icon: 14 },
@@ -80,7 +80,9 @@ export function IconButton({
         ? t.colors.status.danger.default
         : tone === 'action'
           ? t.colors.action.text.default
-          : t.colors.content.secondary;
+          : tone === 'inverse'
+            ? t.colors.content.inverse
+            : t.colors.content.secondary;
 
   return (
     <Pressable
