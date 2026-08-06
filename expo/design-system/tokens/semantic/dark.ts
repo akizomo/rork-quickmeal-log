@@ -37,17 +37,22 @@ export const darkColors: SemanticColors = {
   },
 
   action: {
+    // primary/secondary の default・pressed は Button の「塗り面」として使われる。
+    // 旧sage[400]/ivory[700]は「ダーク背景上の文字色」として選ばれた値で、白文字を
+    // 乗せるボタン背景に転用すると中間グレーの罠でAAが成立しなかった (2.19:1 / 3.22:1)。
+    // 2026-08-05、文字が乗る面として十分暗い段まで下げてAA(4.5:1)を確保した。
+    // action.text (リンク色) は文字色としての用途のままなのでsage[400]を維持している。
     primary: {
-      default:     colors.sage[400],  // '#9AB594' — ダーク背景上で認識できる明るい sage
-      pressed:     colors.sage[300],  // '#B9C9B1'
-      disabled:    colors.sage[800],  // '#355E52' — 彩度を落として "無効感"
+      default:     colors.sage[700],  // '#54736C' — onAction(白)比 5.10:1
+      pressed:     colors.sage[900],  // '#264F44' — 押下でさらに暗く、9.04:1
+      disabled:    colors.sage[800],  // '#355E52' — disabledはAA対象外 (WCAG 1.4.3)
       container:   colors.sage[900],  // '#264F44' — sage コンテナ (selected 背景)
       onContainer: colors.sage[200],  // '#C9D8C2' — dark container 上の明色テキスト
     },
     secondary: {
-      default:  colors.ivory[700],  // '#8F8A7A' — ダーク背景上で視認できる中間グレー
-      pressed:  colors.stone[600],  // '#6E776E'
-      disabled: colors.ivory[800],  // '#403A2E'
+      default:  colors.ivory[800],  // '#403A2E' — content.primary(白)比 10.52:1
+      pressed:  colors.ivory[900],  // '#1D1913' — 押下でさらに暗く、16.32:1
+      disabled: colors.ivory[700],  // '#8F8A7A' — disabledはAA対象外 (WCAG 1.4.3)
     },
     ghost: {
       default:  colors.transparent,
