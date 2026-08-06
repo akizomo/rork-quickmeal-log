@@ -16,7 +16,6 @@ import { MealLogCard, useTheme } from '@/design-system';
 import { spring } from '@/design-system/tokens/primitives/motion';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { radius } from '@/design-system/tokens/primitives/radius';
-import { elevation } from '@/design-system/tokens/primitives/elevation';
 import { useAppState } from '@/providers/app-state-provider';
 import { FoodLog } from '@/types/nutrition';
 import { formatShortDay, isSameDay, logsForDate, sumForDate } from '@/utils/history';
@@ -234,8 +233,10 @@ export const DayLogBottomSheet = memo(
         style={[
           styles.sheet,
           {
-            backgroundColor: t.colors.surface.default,
+            ...t.elevation.xl,
+            shadowOffset: { width: 0, height: -6 },
             shadowColor: t.colors.surface.inverse,
+            backgroundColor: t.colors.surface.default,
             height: sheetMaxHeight,
             transform: [{ translateY }],
           },
@@ -299,8 +300,6 @@ const styles = StyleSheet.create({
     bottom: 0,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
-    ...elevation.xl,
-    shadowOffset: { width: 0, height: -6 },
   },
   handleArea: {
     paddingTop: 8,

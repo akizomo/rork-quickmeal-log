@@ -6,7 +6,7 @@ import {
   colors,
   spacing,
   radius,
-  elevation,
+  elevationDark,
   fontFamily,
   fontWeight,
   fontSize,
@@ -23,7 +23,7 @@ export const darkTheme = {
   colors: darkColors,
   spacing,
   radius,
-  elevation,
+  elevation: elevationDark,
   typography: {
     fontFamily,
     fontWeight,

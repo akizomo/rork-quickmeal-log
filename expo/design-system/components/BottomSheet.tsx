@@ -460,6 +460,9 @@ export function BottomSheet({
           style={[
             styles.sheet,
             {
+              ...t.elevation.xl,
+              // シートは画面下端から立ち上がるので、影は上方向に出す
+              shadowOffset: { width: 0, height: -2 },
               backgroundColor: t.colors.surface.default,
               borderTopLeftRadius: SHEET_RADIUS,
               borderTopRightRadius: SHEET_RADIUS,
@@ -579,12 +582,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    // M3 elevation 3 相当
-    shadowColor: '#000',
-    shadowOpacity: 0.15,
-    shadowRadius: 20,
-    shadowOffset: { width: 0, height: -2 },
-    elevation: 16,
   },
   handleArea: {
     alignItems: 'center',
