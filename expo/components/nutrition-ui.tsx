@@ -755,11 +755,30 @@ function CarryoverBanner({
   );
 }
 
+// 水玉の装飾。コーナーに近いほど大きく、内側 (テキスト側) に向かって縮む。
+// 1粒だけ薄く抜くのは Logo マーク自身の「20%不透明の8番目のドット」へのオマージュ。
+const RECAP_TEASER_DOTS: { cx: number; cy: number; r: number; opacity: number }[] = [
+  { cx: 12, cy: 8, r: 4, opacity: 0.16 },
+  { cx: 46, cy: 10, r: 6, opacity: 0.2 },
+  { cx: 82, cy: 8, r: 8, opacity: 0.24 },
+  { cx: 120, cy: 10, r: 10, opacity: 0.26 },
+  { cx: 158, cy: 10, r: 13, opacity: 0.28 },
+  { cx: 30, cy: 44, r: 5, opacity: 0.14 },
+  { cx: 66, cy: 46, r: 7, opacity: 0.09 },
+  { cx: 104, cy: 44, r: 9, opacity: 0.25 },
+  { cx: 142, cy: 46, r: 12, opacity: 0.27 },
+  { cx: 12, cy: 80, r: 4, opacity: 0.14 },
+  { cx: 46, cy: 82, r: 6, opacity: 0.18 },
+  { cx: 82, cy: 80, r: 8, opacity: 0.22 },
+  { cx: 120, cy: 82, r: 10, opacity: 0.25 },
+  { cx: 158, cy: 82, r: 13, opacity: 0.27 },
+];
+
 /**
- * 週次リカップの teaser カード。CarryoverBanner と同じスロット・同じ構造。
+ * 週次振り返り (旧称「週次リカップ」) の teaser カード。CarryoverBanner と同じスロット・同じ構造。
  * データ (kcal/PFC等) はここでは出さない — 中身はタップ後のストーリー側に委ねる。
  * dismiss は「見た」を意味し、週が変わると自然に再度表示対象になる
- * (weeklyRecapDismissedWeekKey は週次リカップ画面を開いた時点でも更新される)。
+ * (weeklyRecapDismissedWeekKey は振り返り画面を開いた時点でも更新される)。
  */
 function WeeklyRecapTeaser() {
   const t = useTheme();
@@ -781,23 +800,38 @@ function WeeklyRecapTeaser() {
       onPress={open}
       style={({ pressed }) => [
         {
-          backgroundColor: t.colors.action.primary.container,
+          backgroundColor: t.colors.surface.raised,
           borderRadius: t.radius.md,
           paddingHorizontal: t.spacing['4'],
           paddingTop: t.spacing['3'],
           paddingBottom: t.spacing['3'],
           marginBottom: t.spacing['2'],
+          overflow: 'hidden',
           opacity: pressed ? 0.85 : 1,
         },
       ]}
       accessibilityRole="button"
-      accessibilityLabel="先週の記録を見る"
+      accessibilityLabel="先週の振り返りを見る"
     >
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.spacing['2'] }}>
-        <Icon name="barChart" size={16} color={t.colors.action.primary.onContainer} />
-        <Label tone="primary" style={{ flex: 1, color: t.colors.action.primary.onContainer }}>
-          先週の記録ができました
-        </Label>
+      <View pointerEvents="none" style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: 170 }}>
+        <Svg width="100%" height="100%" viewBox="0 0 170 100" preserveAspectRatio="xMaxYMid slice">
+          {RECAP_TEASER_DOTS.map((d) => (
+            <Circle
+              key={`${d.cx}-${d.cy}`}
+              cx={d.cx}
+              cy={d.cy}
+              r={d.r}
+              fill={t.tokens.colors.sage[800]}
+              opacity={d.opacity}
+            />
+          ))}
+        </Svg>
+      </View>
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <View style={{ flex: 1 }}>
+          <Label tone="primary">先週の振り返り</Label>
+          <Caption tone="secondary">{recap.weekRangeLabel}</Caption>
+        </View>
         <IconButton
           icon="close"
           size="sm"
@@ -805,7 +839,7 @@ function WeeklyRecapTeaser() {
           onPress={dismiss}
           accessibilityLabel="閉じる"
         />
-        <Icon name="chevronRight" size={16} color={t.colors.action.primary.onContainer} />
+        <Icon name="chevronRight" size={16} color={t.colors.content.tertiary} />
       </View>
     </Pressable>
   );

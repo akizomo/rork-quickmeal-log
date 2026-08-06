@@ -1,24 +1,33 @@
 /**
- * 週次リカップ — 全画面ストーリー形式。直近の完了週 (月〜日) の食事記録を振り返る。
+ * 週次振り返り — 全画面ストーリー形式。直近の完了週 (月〜日) の食事記録を振り返る。
+ * (旧称「週次リカップ」。プロジェクトの正式用語 docs/ROADMAP.md に合わせて統一 2026-08-06)
  *
- * デザインは design_handoff_weekly_recap (2026-08-05) のトーンを踏襲しつつ、
- * コンテンツは utils/weekly-recap.ts の実データに合わせて調整している:
- *   - カロリーのヒーロー数字は「目標との差」ではなく「週合計」(ユーザー要望)
+ * デザインは design_handoff_weekly_recap (2026-08-05) の構成・トーンを踏襲しつつ、
+ * コンテンツは中立トーン (PRD §9.1) の観点で調整している:
+ *   - カロリーのヒーロー数字は「1日あたりの平均」のみ。目標との差分・週合計はどちらも
+ *     ヒーローに据えない (差分を大きく見せるのは評価的で中立トーンに反する。比較は
+ *     カード4のPFCインサイト1箇所に集約する) 2026-08-06
+ *   - 各カードの説明キャプション (「点線は目標」等) は、見れば分かることの言葉での
+ *     反復だったため削除。リード文は全カード「〜のは」で統一し、見出し→数字の
+ *     ストーリー的なリズムを揃えた
  *   - 食材候補は「この週の記録」ではなく「履歴優先+全カタログ補完」(macroBoost 参照)
  * トークン対応:
  *   - light カード = surface.default 等の意味トークン (システムダークモードに自動追従)
  *   - deep カード  = sage-800/900 固定 (テーマに依存しないブランド演出色)
  *   - Lato は未バンドルのためシステムフォント + fontWeight:'300' で近似
- *   - ヒーロー数字 (46〜104px) は fontSize.display(44px) を超える意図的な例外
+ *   - ヒーロー数字 (40〜88px) は fontSize.display(44px) を超える意図的な例外
  */
 import { Stack, useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, Pressable, StyleSheet, View } from 'react-native';
-import Svg, { Line, Rect, Text as SvgText } from 'react-native-svg';
+import Svg, { Circle, Polyline, Rect, Text as SvgText } from 'react-native-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Body, Caption, IconButton, Overline, useTheme, type Theme } from '@/design-system';
+import { Body, Caption, Icon, IconButton, MacroChip, Overline, useTheme, type Theme } from '@/design-system';
+import { Logo } from '@/components/Logo';
 import { duration, easing } from '@/design-system/tokens/primitives/motion';
+import { radius } from '@/design-system/tokens/primitives/radius';
+import { getBucketDef, getIdentity } from '@/constants/identity';
 import { useAppState } from '@/providers/app-state-provider';
 import {
   computeWeeklyRecap,
@@ -26,10 +35,10 @@ import {
   type WeeklyRecap,
 } from '@/utils/weekly-recap';
 
-const MACRO_LABEL: Record<MacroAxis, { jp: string; en: string }> = {
-  protein: { jp: 'たんぱく質', en: 'Protein' },
-  fat: { jp: '脂質', en: 'Fat' },
-  carbs: { jp: '炭水化物', en: 'Carbs' },
+const MACRO_LABEL: Record<MacroAxis, { jp: string }> = {
+  protein: { jp: 'たんぱく質' },
+  fat: { jp: '脂質' },
+  carbs: { jp: '炭水化物' },
 };
 
 type CardBg = 'light' | 'deep';
@@ -58,7 +67,8 @@ export default function WeeklyRecapScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recap?.weekKey]);
 
-  const cards = useMemo<Card[]>(() => (recap ? buildCards(recap) : []), [recap]);
+  const styles = useMemo(() => makeStyles(t), [t]);
+  const cards = useMemo<Card[]>(() => (recap ? buildCards(recap, styles) : []), [recap, styles]);
   const [index, setIndex] = useState(0);
   const fade = useRef(new Animated.Value(0)).current;
 
@@ -94,37 +104,44 @@ export default function WeeklyRecapScreen() {
       <Stack.Screen options={{ headerShown: false }} />
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
         <View style={styles.chrome} pointerEvents="box-none">
-          <View style={styles.ticks}>
-            {cards.map((_, i) => (
-              <View
-                key={i}
-                style={[
-                  styles.tick,
-                  { backgroundColor: chromeColor, opacity: i <= index ? 0.95 : 0.22 },
-                ]}
-              />
-            ))}
+          <View style={styles.chromeRow}>
+            <View style={styles.chromeMain}>
+              <View style={styles.ticks}>
+                {cards.map((_, i) => (
+                  <View
+                    key={i}
+                    style={[
+                      styles.tick,
+                      { backgroundColor: chromeColor, opacity: i <= index ? 0.95 : 0.22 },
+                    ]}
+                  />
+                ))}
+              </View>
+              <Caption style={[styles.weekLabel, { color: chromeColor }]}>
+                {recap.weekRangeLabel}
+              </Caption>
+            </View>
+            <IconButton
+              icon="close"
+              size="md"
+              onPress={close}
+              accessibilityLabel="閉じる"
+              style={{ opacity: 0.6 }}
+              tone={current.bg === 'deep' ? 'inverse' : 'secondary'}
+            />
           </View>
-          <Caption
-            style={[styles.weekLabel, { color: chromeColor }]}
-          >
-            {recap.weekRangeLabel}
-          </Caption>
         </View>
-
-        <IconButton
-          icon="close"
-          size="md"
-          onPress={close}
-          accessibilityLabel="閉じる"
-          style={[styles.closeBtn, { opacity: 0.6 }]}
-          tone={current.bg === 'deep' ? 'inverse' : 'secondary'}
-        />
 
         <View style={styles.zones} pointerEvents="box-none">
           <Pressable style={styles.zonePrev} onPress={goPrev} accessibilityRole="button" accessibilityLabel="前へ" />
           <Pressable style={styles.zoneNext} onPress={goNext} accessibilityRole="button" accessibilityLabel="次へ" />
         </View>
+
+        {current.bg === 'deep' ? (
+          <View style={styles.logoWatermark} pointerEvents="none">
+            <Logo size={300} color={t.tokens.colors.ivory[50]} />
+          </View>
+        ) : null}
 
         <Animated.View
           style={[
@@ -146,7 +163,7 @@ export default function WeeklyRecapScreen() {
   );
 }
 
-function buildCards(recap: WeeklyRecap): Card[] {
+function buildCards(recap: WeeklyRecap, styles: Styles): Card[] {
   const cards: Card[] = [];
 
   // 1. 表紙 (deep) — 統計なし
@@ -160,12 +177,13 @@ function buildCards(recap: WeeklyRecap): Card[] {
           weight="regular"
           style={{
             color: t.tokens.colors.ivory[50],
-            fontSize: 30,
-            lineHeight: 42,
+            fontSize: 48,
+            lineHeight: 56,
+            letterSpacing: -1,
             fontWeight: '300',
           }}
         >
-          先週の{'\n'}ごはんの{'\n'}ぐあい
+          先週の{'\n'}ごはんを{'\n'}ふりかえる
         </Body>
         <Body size="sm" style={{ color: t.tokens.colors.ivory[100], opacity: 0.8, marginTop: t.spacing['6'] }}>
           {recap.weekRangeLabel}
@@ -184,69 +202,61 @@ function buildCards(recap: WeeklyRecap): Card[] {
     render: (t) => (
       <>
         <Overline tone="secondary">01 — 記録日数</Overline>
-        <View style={styles.spacer} />
-        <View style={styles.heroRow}>
-          <Body style={heroTextStyle(t, 88)}>{recap.daysLogged}</Body>
-          <Body style={[heroUnitStyle(t), { marginLeft: t.spacing['2'] }]}>／7日</Body>
+        <View style={{ marginTop: t.spacing['6'] }}>
+          <Body size="lg" style={{ lineHeight: 26 }}>先週、記録が残っていたのは</Body>
+          <View style={[styles.heroRow, { marginTop: t.spacing['5'] }]}>
+            <Body style={heroTextStyle(t, 88)}>{recap.daysLogged}</Body>
+            <Body style={[heroUnitStyle(t), { marginLeft: t.spacing['2'] }]}>／7日</Body>
+          </View>
         </View>
-        <View style={[styles.dotsRow, { marginTop: t.spacing['8'] }]}>
-          {recap.days.map((d) => (
-            <View
-              key={d.dateKey}
-              style={[
-                styles.dot,
-                d.logged
-                  ? { backgroundColor: t.colors.action.primary.default }
-                  : { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: t.colors.border.default, borderStyle: 'dashed' },
-              ]}
-            />
-          ))}
+        <View style={[styles.spacer, { justifyContent: 'center' }]}>
+          <View style={styles.dotsRow}>
+            {recap.days.map((d) => (
+              <View
+                key={d.dateKey}
+                style={[
+                  styles.dot,
+                  d.logged
+                    ? { backgroundColor: t.colors.action.primary.default }
+                    : { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: t.colors.border.default, borderStyle: 'dashed' },
+                ]}
+              >
+                {d.logged ? <Icon name="check" size={12} color={t.colors.content.onAction} /> : null}
+              </View>
+            ))}
+          </View>
+          <View style={[styles.dotsRow, { marginTop: t.spacing['2'] }]}>
+            {recap.days.map((d) => (
+              <Caption key={d.dateKey} style={styles.dotLabel}>{d.weekdayLabel}</Caption>
+            ))}
+          </View>
         </View>
-        <View style={styles.dotsRow}>
-          {recap.days.map((d) => (
-            <Caption key={d.dateKey} style={styles.dotLabel}>{d.weekdayLabel}</Caption>
-          ))}
-        </View>
-        <Body size="sm" tone="secondary" style={{ marginTop: t.spacing['6'], lineHeight: 24 }}>
-          記録が残っていた日を数えました。{'\n'}空いている日は、空いたままにしてあります。
-        </Body>
-        <View style={styles.spacer} />
       </>
     ),
   });
 
-  // 3. カロリー (light) — ヒーロー数字は「週合計」
+  // 3. カロリー (light) — ヒーロー数字は「1日あたりの平均」のみ。目標との差を強調しない
+  // (差分を大きく見せるのは中立トーンに反するため不採用。比較はカード4のPFCインサイトに任せる)
   cards.push({
     bg: 'light',
     render: (t) => (
       <>
         <Overline tone="secondary">02 — カロリー</Overline>
-        <View style={{ marginTop: t.spacing['5'] }}>
-          <Body size="sm" tone="secondary">先週、記録した食事の合計は</Body>
-          <View style={[styles.heroRow, { marginTop: t.spacing['1'] }]}>
-            <Body style={heroTextStyle(t, 60)}>{recap.totalKcal.toLocaleString('ja-JP')}</Body>
+        <View style={{ marginTop: t.spacing['6'] }}>
+          <Body size="lg" style={{ lineHeight: 26 }}>先週、1日あたり食べていたのは</Body>
+          <View style={[styles.heroRow, { marginTop: t.spacing['5'] }]}>
+            <Body style={heroTextStyle(t, 60)}>{recap.avgKcal.toLocaleString('ja-JP')}</Body>
             <Body style={[heroUnitStyle(t), { marginLeft: t.spacing['2'] }]}>kcal</Body>
           </View>
+          {recap.avgTargetKcal > 0 ? (
+            <Body size="sm" tone="secondary" style={{ marginTop: t.spacing['2'] }}>
+              目標 {recap.avgTargetKcal.toLocaleString('ja-JP')}kcal
+            </Body>
+          ) : null}
         </View>
-        <Body
-          size="sm"
-          tone="secondary"
-          style={{
-            marginTop: t.spacing['5'],
-            paddingTop: t.spacing['4'],
-            borderTopWidth: 1,
-            borderTopColor: t.colors.border.default,
-          }}
-        >
-          平均 {recap.avgKcal.toLocaleString('ja-JP')}kcal　／　目標 {recap.avgTargetKcal.toLocaleString('ja-JP')}kcal
-        </Body>
-        <View style={{ marginTop: t.spacing['6'] }}>
+        <View style={[styles.spacer, { justifyContent: 'center' }]}>
           <DailyKcalChart recap={recap} t={t} />
         </View>
-        <Caption style={{ marginTop: t.spacing['2'] }}>
-          点線は目標。枠だけの棒は、記録のなかった日です。
-        </Caption>
-        <View style={styles.spacer} />
       </>
     ),
   });
@@ -262,7 +272,7 @@ function buildCards(recap: WeeklyRecap): Card[] {
         const nutri = t.colors.nutrition[insight.axis];
         return (
           <>
-            <Overline tone="secondary">03 — {label.en}</Overline>
+            <Overline tone="secondary">03 — {label.jp}</Overline>
             <Body size="lg" style={{ marginTop: t.spacing['6'], lineHeight: 26 }}>
               目標との差がいちばん大きかったのは
             </Body>
@@ -287,14 +297,12 @@ function buildCards(recap: WeeklyRecap): Card[] {
                 目標より {insight.direction === 'less' ? '少なめ' : '多め'}
               </Body>
             </View>
-            <View style={{ marginTop: t.spacing['8'], gap: t.spacing['4'] }}>
-              <MacroBar label="1日の平均" value={insight.avgActual} max={max} color={nutri.graphic} t={t} />
-              <MacroBar label="1日の目標" value={insight.avgTarget} max={max} color={t.colors.border.default} t={t} muted />
+            <View style={[styles.spacer, { justifyContent: 'center' }]}>
+              <View style={{ gap: t.spacing['4'] }}>
+                <MacroBar label="1日の平均" value={insight.avgActual} max={max} color={nutri.graphic} t={t} styles={styles} />
+                <MacroBar label="1日の目標" value={insight.avgTarget} max={max} color={t.colors.border.default} t={t} styles={styles} muted />
+              </View>
             </View>
-            <View style={styles.spacer} />
-            <Caption>
-              P・F・Cのうち、目標との開きが最も大きかった1つだけを表示しています。
-            </Caption>
           </>
         );
       },
@@ -313,22 +321,30 @@ function buildCards(recap: WeeklyRecap): Card[] {
           <Body size="lg" style={{ marginTop: t.spacing['6'], lineHeight: 26 }}>
             {label.jp}を増やしたいときは
           </Body>
-          <View style={{ marginTop: t.spacing['6'], gap: t.spacing['2'] }}>
-            {boost.candidates.map((c) => (
-              <View
-                key={c.identityId}
-                style={[styles.chip, { backgroundColor: t.colors.action.primary.container, borderColor: t.colors.action.primary.default + '55' }]}
-              >
-                <Body weight="medium" style={{ color: t.colors.action.primary.onContainer }}>
-                  {c.label}
-                </Body>
-              </View>
-            ))}
+          <View style={[styles.spacer, { justifyContent: 'center' }]}>
+            <View style={{ gap: t.spacing['3'] }}>
+              {boost.candidates.map((c) => {
+                const identity = getIdentity(c.identityId);
+                const bucket = identity ? getBucketDef(identity.primaryHome.bucket) : undefined;
+                const axisGrams = identity?.defaultMacro[boost.axis] ?? 0;
+                return (
+                  <View
+                    key={c.identityId}
+                    style={[styles.candidateCard, { backgroundColor: t.colors.surface.raised }]}
+                  >
+                    <Body style={{ fontSize: 20 }}>{bucket?.emoji ?? '🍽️'}</Body>
+                    <Body weight="medium" style={{ flex: 1, color: t.colors.content.primary }}>
+                      {c.label}
+                    </Body>
+                    <MacroChip kind={boost.axis} value={axisGrams} size="sm" />
+                  </View>
+                );
+              })}
+            </View>
           </View>
-          <View style={styles.spacer} />
           {boost.note ? (
             <View style={{ borderTopWidth: 1, borderTopColor: t.colors.border.default, paddingTop: t.spacing['4'] }}>
-              <Overline tone="tertiary" style={{ fontSize: 10 }}>Note · {boost.note.identityLabel}</Overline>
+              <Overline tone="tertiary">豆知識 · {boost.note.identityLabel}</Overline>
               <Body size="sm" tone="secondary" style={{ marginTop: t.spacing['2'], lineHeight: 22 }}>
                 {boost.note.note}
               </Body>
@@ -349,18 +365,19 @@ function buildCards(recap: WeeklyRecap): Card[] {
         <Body
           style={{
             color: t.tokens.colors.ivory[50],
-            fontSize: 26,
-            lineHeight: 42,
+            fontSize: 36,
+            lineHeight: 48,
+            letterSpacing: -0.5,
             fontWeight: '300',
           }}
         >
-          今週も、{'\n'}ざっくりで、いい。
+          ざっくりが、{'\n'}続くコツ。
         </Body>
         <Body size="sm" style={{ color: t.tokens.colors.ivory[100], opacity: 0.75, marginTop: t.spacing['5'] }}>
-          来週のリカップは、次の月曜に。
+          来週の振り返りは、次の月曜に。
         </Body>
         <View style={styles.spacer} />
-        <OutroButton t={t} />
+        <OutroButton t={t} styles={styles} />
       </>
     ),
   });
@@ -368,7 +385,7 @@ function buildCards(recap: WeeklyRecap): Card[] {
   return cards;
 }
 
-function OutroButton({ t }: { t: Theme }) {
+function OutroButton({ t, styles }: { t: Theme; styles: Styles }) {
   const router = useRouter();
   return (
     <Pressable
@@ -380,7 +397,8 @@ function OutroButton({ t }: { t: Theme }) {
         styles.outroBtn,
         {
           borderColor: t.colors.border.inverse,
-          backgroundColor: pressed ? 'rgba(251,248,242,0.1)' : 'transparent',
+          // ivory[100] を10%不透明度で。トークン値+αサフィックスで raw rgba を避ける。
+          backgroundColor: pressed ? `${t.tokens.colors.ivory[100]}1A` : 'transparent',
         },
       ]}
       accessibilityRole="button"
@@ -397,6 +415,7 @@ function MacroBar({
   max,
   color,
   t,
+  styles,
   muted,
 }: {
   label: string;
@@ -404,6 +423,7 @@ function MacroBar({
   max: number;
   color: string;
   t: Theme;
+  styles: Styles;
   muted?: boolean;
 }) {
   const pct = Math.max(4, Math.round((value / max) * 100));
@@ -422,6 +442,13 @@ function MacroBar({
   );
 }
 
+/**
+ * WeeklyStatsView (components/WeeklyStatsView.tsx) と同じ描画ルールを踏襲:
+ *   - バー幅 = スロット幅 × 0.55、角丸 radius.xs
+ *   - 色は kcal/当日目標比 の3段階 (within/mildExceed/severeExceed、nutrition.calorie.*)
+ *   - 目標線は日ごとの値を結ぶ Polyline (運動による当日拡大を反映)、破線+点
+ *   - 未記録日はバー無し (h=0)、ラベルのみ残す — 「0kcal」に見せない
+ */
 function DailyKcalChart({ recap, t }: { recap: WeeklyRecap; t: Theme }) {
   const W = 320;
   const H = 150;
@@ -430,63 +457,66 @@ function DailyKcalChart({ recap, t }: { recap: WeeklyRecap; t: Theme }) {
   const pad = 4;
   const inner = H - PT - PB;
   const slot = (W - pad * 2) / 7;
-  const bw = slot * 0.46;
-  const target = recap.days[0]?.targetKcal || recap.avgTargetKcal || 1;
-  const maxVal = Math.max(target, ...recap.days.map((d) => d.kcal)) * 1.1 || 1;
-  const ty = PT + inner * (1 - target / maxVal);
+  const bw = slot * 0.55;
+  const maxVal = Math.max(1, ...recap.days.map((d) => d.targetKcal), ...recap.days.map((d) => d.kcal)) * 1.1;
+
+  const barColor = (kcal: number, dayTarget: number) => {
+    if (kcal <= 0) return t.colors.nutrition.calorie.track;
+    if (dayTarget <= 0) return t.colors.nutrition.calorie.within.graphic;
+    const ratio = kcal / dayTarget;
+    if (ratio <= 1.1) return t.colors.nutrition.calorie.within.graphic;
+    if (ratio <= 1.3) return t.colors.nutrition.calorie.mildExceed.graphic;
+    return t.colors.nutrition.calorie.severeExceed.graphic;
+  };
+
+  const hasTarget = recap.days.some((d) => d.targetKcal > 0);
+  const targetPoints = recap.days.map((d, i) => ({
+    x: pad + i * slot + slot / 2,
+    y: PT + inner * (1 - d.targetKcal / maxVal),
+  }));
 
   return (
     <Svg width="100%" height={H} viewBox={`0 0 ${W} ${H}`}>
-      {target > 0 ? (
-        <>
-          <Line x1={pad} x2={W - pad} y1={ty} y2={ty} stroke={t.colors.content.tertiary} strokeDasharray="3 5" strokeWidth={1} opacity={0.6} />
-          <SvgText x={W - pad} y={ty - 6} fontSize={10} fill={t.colors.content.tertiary} textAnchor="end">
-            目標 {target.toLocaleString('ja-JP')}
-          </SvgText>
-        </>
-      ) : null}
       {recap.days.map((d, i) => {
         const cx = pad + i * slot + slot / 2;
         const x = cx - bw / 2;
-        if (!d.logged) {
-          const h = 22;
-          const y = PT + inner - h;
-          return (
+        const h = Math.max(0, (d.kcal / maxVal) * inner);
+        const y = PT + inner - h;
+        const dateNum = new Date(d.dateKey + 'T00:00:00').getDate();
+        return (
+          <React.Fragment key={d.dateKey}>
             <Rect
-              key={d.dateKey}
               x={x}
               y={y}
               width={bw}
               height={h}
-              rx={4}
-              fill="none"
-              stroke={t.colors.border.default}
-              strokeWidth={1.5}
-              strokeDasharray="3 3"
+              rx={radius.xs}
+              fill={barColor(d.kcal, d.targetKcal)}
+              opacity={d.kcal > 0 ? 0.55 : 1}
             />
-          );
-        }
-        const h = Math.max(5, (d.kcal / maxVal) * inner);
-        const y = PT + inner - h;
-        return (
-          <Rect key={d.dateKey} x={x} y={y} width={bw} height={h} rx={4} fill={t.colors.action.primary.default} opacity={0.9} />
+            <SvgText x={cx} y={H - 16} fontSize={10} fill={t.colors.content.secondary} textAnchor="middle">
+              {d.weekdayLabel}
+            </SvgText>
+            <SvgText x={cx} y={H - 5} fontSize={10} fontWeight="600" fill={t.colors.content.primary} textAnchor="middle">
+              {dateNum}
+            </SvgText>
+          </React.Fragment>
         );
       })}
-      {recap.days.map((d, i) => {
-        const cx = pad + i * slot + slot / 2;
-        return (
-          <SvgText
-            key={d.dateKey}
-            x={cx}
-            y={H - 10}
-            fontSize={11}
-            fill={d.logged ? t.colors.content.tertiary : t.colors.content.disabled}
-            textAnchor="middle"
-          >
-            {d.weekdayLabel}
-          </SvgText>
-        );
-      })}
+      {hasTarget ? (
+        <>
+          <Polyline
+            points={targetPoints.map((p) => `${p.x},${p.y}`).join(' ')}
+            fill="none"
+            stroke={t.colors.content.secondary}
+            strokeDasharray="4 4"
+            strokeWidth={1.5}
+          />
+          {targetPoints.map((p, i) => (
+            <Circle key={i} cx={p.x} cy={p.y} r={2.5} fill={t.colors.content.secondary} />
+          ))}
+        </>
+      ) : null}
     </Svg>
   );
 }
@@ -504,27 +534,40 @@ function heroUnitStyle(t: Theme) {
   return { fontSize: 18, fontWeight: '300' as const, color: t.colors.content.secondary };
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1 },
-  safe: { flex: 1 },
-  chrome: { position: 'absolute', top: 0, left: 0, right: 0, paddingHorizontal: 20, paddingTop: 8, zIndex: 30 },
-  ticks: { flexDirection: 'row', gap: 4 },
-  tick: { flex: 1, height: 2.5, borderRadius: 2 },
-  weekLabel: { marginTop: 12, letterSpacing: 1.2, textTransform: 'uppercase', opacity: 0.6, fontSize: 10 },
-  closeBtn: { position: 'absolute', top: 4, right: 12, zIndex: 35 },
-  zones: { ...StyleSheet.absoluteFillObject, flexDirection: 'row', zIndex: 25 },
-  zonePrev: { width: '35%', height: '100%' },
-  zoneNext: { width: '65%', height: '100%' },
-  cardBody: { flex: 1, paddingHorizontal: 24, paddingTop: 64, paddingBottom: 32, zIndex: 20 },
-  spacer: { flex: 1 },
-  heroRow: { flexDirection: 'row', alignItems: 'flex-end' },
-  dotsRow: { flexDirection: 'row', gap: 12 },
-  dot: { width: 20, height: 20, borderRadius: 10 },
-  dotLabel: { width: 20, textAlign: 'center', marginTop: 6 },
-  pill: { alignSelf: 'flex-start', borderRadius: 999, paddingVertical: 8, paddingHorizontal: 16 },
-  track: { height: 10, borderRadius: 999, overflow: 'hidden' },
-  trackFill: { height: '100%', borderRadius: 999 },
-  barCaptionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
-  chip: { borderRadius: 16, borderWidth: 1, paddingVertical: 14, paddingHorizontal: 18 },
-  outroBtn: { borderWidth: 1, borderRadius: 999, paddingVertical: 15, alignItems: 'center' },
-});
+function makeStyles(t: Theme) {
+  return StyleSheet.create({
+    root: { flex: 1 },
+    safe: { flex: 1 },
+    chrome: { position: 'absolute', top: 0, left: 0, right: 0, paddingHorizontal: t.spacing['5'], paddingTop: t.spacing['2'], zIndex: 30 },
+    chromeRow: { flexDirection: 'row', alignItems: 'center', gap: t.spacing['2'] },
+    chromeMain: { flex: 1 },
+    ticks: { flexDirection: 'row', gap: t.spacing['1'] },
+    tick: { flex: 1, height: 2.5, borderRadius: radius.full },
+    weekLabel: { marginTop: t.spacing['3'], letterSpacing: 1.2, textTransform: 'uppercase', opacity: 0.6, fontSize: t.typography.fontSize.xs },
+    zones: { ...StyleSheet.absoluteFillObject, flexDirection: 'row', zIndex: 25 },
+    // ロゴ (3×3ドット・8割の主張) を deep カードの背景に薄く配置。表紙/アウトロ限定。
+    logoWatermark: { position: 'absolute', bottom: -10, right: -30, opacity: 0.07, zIndex: 5 },
+    zonePrev: { width: '35%', height: '100%' },
+    zoneNext: { width: '65%', height: '100%' },
+    cardBody: { flex: 1, paddingHorizontal: t.spacing['6'], paddingTop: t.spacing['16'], paddingBottom: t.spacing['8'], zIndex: 20 },
+    spacer: { flex: 1 },
+    heroRow: { flexDirection: 'row', alignItems: 'flex-end' },
+    dotsRow: { flexDirection: 'row', justifyContent: 'space-between' },
+    dot: { width: 20, height: 20, borderRadius: radius.full, alignItems: 'center', justifyContent: 'center' },
+    dotLabel: { width: 20, textAlign: 'center', marginTop: t.spacing['2'] },
+    pill: { alignSelf: 'flex-start', borderRadius: radius.full, paddingVertical: t.spacing['2'], paddingHorizontal: t.spacing['4'] },
+    track: { height: 10, borderRadius: radius.full, overflow: 'hidden' },
+    trackFill: { height: '100%', borderRadius: radius.full },
+    barCaptionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
+    candidateCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: t.spacing['3'],
+      borderRadius: radius.lg,
+      paddingVertical: t.spacing['4'],
+      paddingHorizontal: t.spacing['4'],
+    },
+    outroBtn: { borderWidth: 1, borderRadius: radius.full, paddingVertical: t.spacing['4'], alignItems: 'center' },
+  });
+}
+type Styles = ReturnType<typeof makeStyles>;

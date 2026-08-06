@@ -339,7 +339,9 @@ const makeStyles = (t: Theme) => StyleSheet.create({
     height: 48,
   },
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  brandText: { fontSize: fs.md, fontWeight: '700', color: t.colors.content.primary, letterSpacing: ls.wide },
+  // ロゴタイプ専用フォント (Lato Light)。本文スケール(fs.*)より一段大きくしないと
+  // Light ウェイトは Bold 比で視覚的に小さく・薄く見えるため fontSize は個別指定。
+  brandText: { fontFamily: 'Lato_300Light', fontSize: 19, fontWeight: '300', color: t.colors.content.primary, letterSpacing: ls.wide },
   skipText: { color: t.colors.content.secondary, fontSize: fs.sm, fontWeight: '600' },
   slideList: { flex: 1 },
   slide: { flex: 1, paddingHorizontal: 20, paddingTop: 8 },

@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useFonts, Lato_300Light } from '@expo-google-fonts/lato';
 import * as ExpoInAppUpdates from 'expo-in-app-updates';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -52,11 +53,12 @@ function RootLayoutNav() {
 }
 
 export default function RootLayout() {
+  // ロゴタイプ「Hachibu」専用 (app/intro.tsx の brandText)。アプリ全体のUIフォントは
+  // 引き続きシステムフォント任せ (design-system の fontFamily トークンは未バンドル)。
+  const [fontsLoaded, fontError] = useFonts({ Lato_300Light });
+
   useEffect(() => {
     initSentry(); // Crash reporting (no-op if DSN not configured)
-    SplashScreen.hideAsync().catch((error) => {
-      console.log('[root-layout] Failed to hide splash screen', error);
-    });
     initIap().catch((error) => {
       console.log('[root-layout] Failed to init IAP', error);
     });
@@ -72,6 +74,15 @@ export default function RootLayout() {
         });
     }
   }, []);
+
+  useEffect(() => {
+    if (!fontsLoaded && !fontError) return;
+    SplashScreen.hideAsync().catch((error) => {
+      console.log('[root-layout] Failed to hide splash screen', error);
+    });
+  }, [fontsLoaded, fontError]);
+
+  if (!fontsLoaded && !fontError) return null;
 
   return (
     <QueryClientProvider client={queryClient}>

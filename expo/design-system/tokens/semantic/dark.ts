@@ -93,9 +93,9 @@ export const darkColors: SemanticColors = {
     carbs:   { text: colors.seagrass[300],   graphic: colors.seagrass[400],   background: colors.seagrass[800]   },
 
     calorie: {
-      within:       { text: colors.moss[300],  graphic: colors.moss[400],  background: colors.moss[800]  },
-      mildExceed:   { text: colors.amber[300], graphic: colors.amber[400], background: colors.amber[800] },
-      severeExceed: { text: colors.clay[300],  graphic: colors.clay[400],  background: colors.clay[800]  },
+      within:       { text: colors.moss[300],  graphic: colors.moss[300],  background: colors.moss[800]  },
+      mildExceed:   { text: colors.amber[300], graphic: colors.amber[300], background: colors.amber[800] },
+      severeExceed: { text: colors.clay[300],  graphic: colors.clay[300],  background: colors.clay[800]  },
       track: colors.ivory[700],  // '#8F8A7A' — 空のリング/バー
     },
 
