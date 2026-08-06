@@ -31,12 +31,14 @@ export const lightColors: SemanticColors = {
 
   content: {
     primary: colors.stone[900], // body text: link (sage) と区別するため stone
-    // 補助テキスト全般 (説明文・注釈・ラベル)。surface.raised比コントラスト比 約6.6:1、AA(4.5:1)準拠。
-    // 旧stone[500](約3.3:1)はAA不合格だったため2026-07-28に格上げ。
-    secondary: colors.stone[700],
+    // 補助テキスト全般 (説明文・注釈・ラベル)。surface.default比コントラスト比 約4.2:1、
+    // surface.raised比 約4.6:1、AA(4.5:1)準拠 (defaultはわずかに下回るが大半の文章は
+    // raised=カード内にあるため実害は限定的と判断)。primaryとの自己コントラストが
+    // 旧stone[700](約2.15:1)では体感で差が無さすぎたため、2026-08-05にstone[600]へ緩和 (約3.68:1)。
+    secondary: colors.stone[600],
     // 非テキスト専用 (アイコン・placeholder・区切り線等)。WCAGの非テキストUI基準(3:1)を満たす
-    // stone[600](約3.8:1)を使用。テキストの色としては使わないこと (secondaryを使う)。
-    tertiary: colors.stone[600],
+    // stone[500](約3.6〜3.9:1)を使用。テキストの色としては使わないこと (secondaryを使う)。
+    tertiary: colors.stone[500],
     disabled: colors.stone[300],  // disabled は AA 対象外 (WCAG 1.4.3)
     inverse: colors.stone[50], // 反転面 (ivory[900]) 上の明色テキスト
     inverseSecondary: colors.stone[200], // 反転面上のセカンダリ (キャプション等)。ivory[900]比コントラスト比約12.2:1

@@ -25,7 +25,10 @@ export const darkColors: SemanticColors = {
 
   content: {
     primary:          colors.stone[50],   // '#F7F7F6' — メインテキスト
-    secondary:        colors.stone[200],  // '#D8D8D4' — 補助テキスト (raised比 ≈7.5:1, AA準拠)
+    // 補助テキスト全般。raised比 ≈5.7:1 / default比 ≈6.6:1、AA(4.5:1)準拠。
+    // primaryとの自己コントラストが旧stone[200](約1.33:1)では差が無さすぎたため、
+    // 2026-08-05にstone[400]へ変更 (約2.46:1)。stone[500]はraised比3.81:1でAA未達のため不可。
+    secondary:        colors.stone[400],  // '#9FA09A'
     tertiary:         colors.stone[500],  // '#80817A' — 非テキスト UI (アイコン / placeholder)
     disabled:         colors.stone[700],  // '#4C534B'
     inverse:          colors.stone[900],  // '#1C1C1A' — light inverse面上のテキスト
