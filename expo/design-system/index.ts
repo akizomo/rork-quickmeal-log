@@ -6,7 +6,7 @@
  */
 
 // Theme (hooks / provider)
-export { ThemeProvider, useTheme, lightTheme } from './theme';
+export { ThemeProvider, useTheme, lightTheme, darkTheme } from './theme';
 export type { Theme } from './theme';
 
 // Components

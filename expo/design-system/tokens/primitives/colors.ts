@@ -45,7 +45,11 @@ export const colors = {
   // 850/950 は 900 を動かさずに梯子を通すための追加段。旧 dark sunken は
   // '#0E0C08' (L*3.4) と落ち込みすぎて「ただの黒」に見えていたため作り直した。
   //
-  // 700/800 は surface ではなく中間トーン専用 (disabled 塗り・inverse border 等)。
+  // 700/800 は中間トーン専用 (disabled 塗り・inverse border 等)。旧値は
+  // legacy palette からの寄せ集めで、600(L*85.5)→700(L*57.5)→800(L*24.7)と
+  // 前後に対して1桁違うジャンプがあり、色相もH87.4°→96.5°→87.4°とジグザグ
+  // していた (2026-08-06 に発覚)。600と825を固定アンカーに、L*・色相・彩度
+  // (Lab の L*/hue/C*) を3等分で同時補間し、単調ランプに作り直した。
   ivory: {
     50: '#FFFDF7',
     100: '#FBF8F2', // legacy: palette.surface
@@ -54,8 +58,8 @@ export const colors = {
     400: '#EFE9DD', // legacy: palette.card
     500: '#E2DCCF', // legacy: palette.cardStrong
     600: '#DDD5C7', // legacy: palette.border
-    700: '#8F8A7A', // mid-dark warm gray
-    800: '#403A2E', // dark warm brown — dark border.default (L*24.7)
+    700: '#9E978B', // L*62.7 (600→825を3等分)
+    800: '#645E53', // L*40.1 (600→825を3等分) — dark border.default
     825: '#2F2A21', // dark border.subtle   (L*17.3)
     850: '#242019', // dark surface.raised  (L*12.5)
     900: '#1D1913', // dark surface.default (L* 9.0) — warm near-black
