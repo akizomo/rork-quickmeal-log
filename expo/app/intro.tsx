@@ -44,7 +44,7 @@ interface Slide {
 const SLIDES: Slide[] = [
   {
     key: 's1',
-    title: '9ボタンで、8割いける。',
+    title: '9ボタンで、ざっくり記録。',
     subtitle: 'ふだんの食事は、タップひとつで残せる。',
     media: { kind: 'buttonGrid' },
   },
