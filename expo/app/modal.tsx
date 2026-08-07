@@ -13,7 +13,7 @@ export default function AboutModalRoute() {
       <Dialog
         visible
         onClose={() => router.back()}
-        primaryAction={{ label: '閉じる', onPress: () => router.back() }}
+        primaryAction={{ label: 'とじる', onPress: () => router.back() }}
         testID="about-modal"
       >
         <Overline tone="link" style={styles.eyebrow}>Hachibu</Overline>

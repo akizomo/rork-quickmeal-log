@@ -206,9 +206,7 @@ export const CalorieOverflowRing = memo(function CalorieOverflowRing(props: Calo
     }
     const over = consumedInt - targetInt;
     if (over <= 0) {
-      return over === 0
-        ? '目標達成'
-        : `あと ${Math.abs(over).toLocaleString()} kcal`;
+      return `あと ${Math.abs(over).toLocaleString()} kcal`;
     }
     const overRatio = over / safeTarget;
     // tolerance 以内はソフトな表示のみ、超えたら「多め」

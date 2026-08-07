@@ -311,14 +311,6 @@ export function sumToday(logs: FoodLog[], dateKey: string): Macro {
     .reduce((acc, item) => addMacro(acc, item.macro), createEmptyMacro());
 }
 
-export function getGoalMessage(total: Macro, profile: UserProfile): string {
-  const ratio = profile.targetCalories > 0 ? total.kcal / profile.targetCalories : 0;
-  if (ratio < 0.3) return '静かに積み上げる日。まずは一皿から。';
-  if (ratio < 0.7) return 'いい流れです。無理なく整っています。';
-  if (ratio < 1) return '今日はかなり安定。あと少しで目標です。';
-  return '目標達成。あとは気持ちよく整えるだけ。';
-}
-
 export type DailyTimeSlot = 'morning' | 'midday' | 'evening' | 'late' | 'overnight';
 export type DailyPaceState = 'behind' | 'on_track' | 'ahead';
 export type DailyPfcState = 'balanced' | 'protein_low' | 'fat_high' | 'carb_high' | 'mixed_skew';

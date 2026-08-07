@@ -51,7 +51,7 @@ const SLIDES: Slide[] = [
   {
     key: 's2',
     title: '急ぎはタップ、余裕は長押し。',
-    subtitle: 'ちゃんと記録したい日だけ、もう一歩ふみこめる。',
+    subtitle: 'くわしく残したい日は、もう一歩ふみこめる。',
     media: { kind: 'gestureDemo' },
   },
   {

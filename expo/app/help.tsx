@@ -183,7 +183,7 @@ export default function HelpRoute() {
                 ]}
               >
                 <Body style={{ color: t.colors.content.onAction }}>
-                  {isLast ? '閉じる' : '次へ'}
+                  {isLast ? 'とじる' : '次へ'}
                 </Body>
               </Pressable>
             </View>
@@ -263,7 +263,7 @@ function StepContent({ stepKey }: { stepKey: string }) {
           <View style={[styles.calloutBox, { backgroundColor: t.colors.action.primary.container, borderLeftColor: t.colors.action.primary.default }]}>
             <Body style={{ color: t.colors.action.primary.onContainer }}>
               ふだんの食事はタップで足ります。{'\n'}
-              違うものを食べた日や、しっかり記録したい日だけ長押しを。
+              違うものを食べた日や、くわしく残したい日だけ長押しを。
             </Body>
           </View>
         </View>

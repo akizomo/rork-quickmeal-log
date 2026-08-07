@@ -411,9 +411,9 @@ function OutroButton({ t, styles }: { t: Theme; styles: Styles }) {
         },
       ]}
       accessibilityRole="button"
-      accessibilityLabel="閉じる"
+      accessibilityLabel="とじる"
     >
-      <Body style={{ color: t.tokens.colors.ivory[100] }}>閉じる</Body>
+      <Body style={{ color: t.tokens.colors.ivory[100] }}>とじる</Body>
     </Pressable>
   );
 }
