@@ -112,7 +112,7 @@ export const lightColors: SemanticColors = {
       within:       { text: colors.moss[600],  graphic: colors.moss[400],  background: colors.moss[100]  }, // 予算内
       mildExceed:   { text: colors.amber[600], graphic: colors.amber[400], background: colors.amber[100] }, // 軽度超過
       severeExceed: { text: colors.clay[600],  graphic: colors.clay[400],  background: colors.clay[100]  }, // 大幅超過
-      track:        colors.ivory[500],  // 空のリング/バー
+      track:        colors.ivory[300],  // 空のリング/バー (凹み = surface.sunkenと同じ段、2026-08-06)
     },
 
     // 体重・進捗トレンド — status と意味が重なるため hue 共有。同じく text=600/graphic=400/background=100。

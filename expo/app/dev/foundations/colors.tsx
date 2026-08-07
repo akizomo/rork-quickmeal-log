@@ -160,7 +160,10 @@ function PrimitiveColors({ t }: { t: Theme }) {
   const hues = Object.entries(tokens.colors).filter(
     ([, v]) => typeof v === 'object',
   ) as [string, Record<string, string>][];
-  const shades = ['50', '100', '200', '300', '400', '500', '600', '700', '800', '900'];
+  // shade は固定配列ではなく実スケールから導出する。ivory の 850/950 のような
+  // 追加段を入れてもここが自動で追随するようにしておく。
+  const shadesOf = (scale: Record<string, string>) =>
+    Object.keys(scale).sort((a, b) => Number(a) - Number(b));
 
   return (
     <Section title="Primitive — Colors (hue-only)" t={t}>
@@ -168,7 +171,7 @@ function PrimitiveColors({ t }: { t: Theme }) {
         <View key={hueName} style={{ gap: t.spacing['2'] }}>
           <Text style={labelStyle(t)}>{hueName}</Text>
           <View style={{ flexDirection: 'row', borderRadius: t.radius.md, overflow: 'hidden' }}>
-            {shades.map((s) => (
+            {shadesOf(scale).map((s) => (
               <View key={s} style={{ flex: 1 }}>
                 <View
                   style={{

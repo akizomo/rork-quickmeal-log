@@ -32,7 +32,20 @@ export const colors = {
   // Ivory — 温かみのあるオフホワイト〜warm near-black。
   //   ライト側: 紙のような surface
   //   ダーク側: warm dark surface (dark mode の surface.default 用)
-  // 50-600 は legacy palette と互換性を保つ。700-900 は dark mode 用に拡張。
+  // 50-600 は legacy palette と互換性を保つ。700-950 は dark mode 用に拡張。
+  // 番号が上がるほど暗い**絶対**スケール (テーマ相対ではない)。
+  //
+  // surface スタックは「層が上がるほど明るい」で light/dark 共通。
+  // light は明るい端に 300 → 200 → 50、dark は暗い端に 950 → 900 → 850 と、
+  // それぞれ密な梯子を作る (2026-08-06、ΔL* を実測して鏡像化):
+  //     light  sunken  300 L*94.2 / default 200 L*95.9 / raised  50 L*99.3
+  //     dark   sunken  950 L* 7.0 / default 900 L* 9.0 / raised 850 L*12.5
+  //   段差はどちらも default 基準で sunken -1.7 / raised +3.4 L*。
+  //   結果、層間コントラスト比も light 1.089/1.043 に対し dark 1.079/1.039 と一致する。
+  // 850/950 は 900 を動かさずに梯子を通すための追加段。旧 dark sunken は
+  // '#0E0C08' (L*3.4) と落ち込みすぎて「ただの黒」に見えていたため作り直した。
+  //
+  // 700/800 は surface ではなく中間トーン専用 (disabled 塗り・inverse border 等)。
   ivory: {
     50: '#FFFDF7',
     100: '#FBF8F2', // legacy: palette.surface
@@ -42,8 +55,11 @@ export const colors = {
     500: '#E2DCCF', // legacy: palette.cardStrong
     600: '#DDD5C7', // legacy: palette.border
     700: '#8F8A7A', // mid-dark warm gray
-    800: '#403A2E', // dark warm brown
-    900: '#1D1913', // warm near-black (dark mode surface.default)
+    800: '#403A2E', // dark warm brown — dark border.default (L*24.7)
+    825: '#2F2A21', // dark border.subtle   (L*17.3)
+    850: '#242019', // dark surface.raised  (L*12.5)
+    900: '#1D1913', // dark surface.default (L* 9.0) — warm near-black
+    950: '#191510', // dark surface.sunken  (L* 7.0)
   },
 
   // Stone — 青みのないニュートラルグレー。

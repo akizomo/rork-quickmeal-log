@@ -1,26 +1,22 @@
 /**
  * Semantic tokens (Dark theme) — light.ts と同じ構造、値だけダーク用に反転。
  *
- * ivory スケール上の方向性:
- *   surface.sunken  < surface.default < surface.raised
- *   (暗い)                                        (明るい — 相対的)
- *
- * ivory[900] = '#1D1913' を surface.default に指定 (colors.ts コメント参照)。
- * raised は ivory[900] より少し明るいカスタム値。sunken はさらに暗いカスタム値。
+ * 「層が上がるほど明るい」は light/dark 共通のルール。反転するのは *どちらの端から
+ * 梯子を積むか* であって、方向そのものではない。light は明るい端に 300→200→50、
+ * dark は暗い端に 950→900→850 と積む。段差 (ΔL*) は両テーマで一致させてあり、
+ * 層間コントラスト比も light 1.089/1.043 : dark 1.079/1.039 と揃う
+ * (実測根拠は colors.ts の ivory コメント参照)。
  */
 
 import { colors } from '../primitives';
 import type { SemanticColors } from './types';
 
-const DARK_SURFACE_SUNKEN = '#0E0C08'; // ほぼ黒 (入力欄 / トラック)
-const DARK_SURFACE_RAISED = '#2B2620'; // カード面 (ivory[900] より微かに明るい)
-
 export const darkColors: SemanticColors = {
   surface: {
-    sunken:  DARK_SURFACE_SUNKEN,
-    default: colors.ivory[900],  // '#1D1913' — ページ / シート / ダイアログ
-    raised:  DARK_SURFACE_RAISED,
-    inverse: colors.ivory[50],   // ほぼ白 (反転面)
+    sunken:  colors.ivory[950], // -1: 凹み (入力欄の地・トラック・非選択の塗り)
+    default: colors.ivory[900], //  0: 文脈の地 (ページ / シート / ダイアログ)
+    raised:  colors.ivory[850], // +1: カード
+    inverse: colors.ivory[50],  // 同家系 (ほぼ白) でフリップ
   },
 
   content: {
@@ -68,8 +64,11 @@ export const darkColors: SemanticColors = {
   },
 
   border: {
-    default: '#3A3329',           // 区切り線 (DARK_SURFACE_RAISED より少し暗い)
-    subtle:  '#252018',           // ほぼ見えない境界
+    // light は border が面より「暗い」側 (ivory[600]/[500])、dark は「明るい」側に置く。
+    // 旧値は '#3A3329' / '#252018' の直書きで、subtle は raised より暗く
+    // カード上で境界として機能していなかった (2026-08-06 に ivory ランプへ移設)。
+    default: colors.ivory[800],   // 区切り線     (raised比 1.44 / light の 1.43 と一致)
+    subtle:  colors.ivory[825],   // 控えめな境界 (default面比 1.23 / light と同値)
     strong:  colors.stone[600],   // '#6E776E'
     focus:   colors.sage[400],    // '#9AB594' — focus ring
     inverse: colors.ivory[300],   // '#F3EEE4' — light inverse面上のボーダー
@@ -96,7 +95,7 @@ export const darkColors: SemanticColors = {
       within:       { text: colors.moss[300],  graphic: colors.moss[300],  background: colors.moss[800]  },
       mildExceed:   { text: colors.amber[300], graphic: colors.amber[300], background: colors.amber[800] },
       severeExceed: { text: colors.clay[300],  graphic: colors.clay[300],  background: colors.clay[800]  },
-      track: colors.ivory[700],  // '#8F8A7A' — 空のリング/バー
+      track: colors.ivory[950],  // 空のリング/バー (凹み = surface.sunken と同じ段)
     },
 
     trend: {
