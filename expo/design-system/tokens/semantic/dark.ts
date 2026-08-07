@@ -32,19 +32,21 @@ export const darkColors: SemanticColors = {
     disabled:         colors.stone[700],  // '#4C534B'
     inverse:          colors.stone[900],  // '#1C1C1A' — light inverse面上のテキスト
     inverseSecondary: colors.stone[700],  // '#4C534B'
-    onAction:         colors.ivory[50],   // '#FFFDF7' — sage action面上のテキスト
+    // Material 3 のダークテーマ慣習 (tonal palette 反転): primary buttonは
+    // 明るいトーン+暗い文字にする (Google製品等で広く採用、2026-08-07指摘)。
+    // 旧実装は「ライトのbg方向を保ったまま暗くして白文字のAAを確保する」
+    // 対症療法で、中間暗さのsageに白文字という沈んだ配色になっていた。
+    onAction:         colors.stone[900],  // '#1C1C1A' — sage action面(明るいトーン)上の濃色テキスト
   },
 
   action: {
-    // primary/secondary の default・pressed は Button の「塗り面」として使われる。
-    // 旧sage[400]/ivory[700]は「ダーク背景上の文字色」として選ばれた値で、白文字を
-    // 乗せるボタン背景に転用すると中間グレーの罠でAAが成立しなかった (2.19:1 / 3.22:1)。
-    // 2026-08-05、文字が乗る面として十分暗い段まで下げてAA(4.5:1)を確保した。
-    // action.text (リンク色) は文字色としての用途のままなのでsage[400]を維持している。
+    // primary の default/pressed はダークでは明るいsageトーン+濃色文字 (M3方向)。
+    // container/onContainer は「選択状態の控えめな面」という別ロールなので、
+    // 引き続き暗いトーンのまま (M3でもcontainerはprimaryと逆方向に振れる)。
     primary: {
-      default:     colors.sage[700],  // '#54736C' — onAction(白)比 5.10:1
-      pressed:     colors.sage[900],  // '#264F44' — 押下でさらに暗く、9.04:1
-      disabled:    colors.sage[800],  // '#355E52' — disabledはAA対象外 (WCAG 1.4.3)
+      default:     colors.sage[400],  // '#9AB594' — onAction(濃色)比 7.65:1
+      pressed:     colors.sage[500],  // '#82A280' — 押下でさらに暗く、6.04:1
+      disabled:    colors.sage[200],  // '#C9D8C2' — disabledはAA対象外 (WCAG 1.4.3)、明方向に統一
       container:   colors.sage[900],  // '#264F44' — sage コンテナ (selected 背景)
       onContainer: colors.sage[200],  // '#C9D8C2' — dark container 上の明色テキスト
     },

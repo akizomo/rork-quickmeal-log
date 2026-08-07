@@ -11,7 +11,6 @@ import {
 
 import { Body, Icon, IconButton, Label, useTheme } from '@/design-system';
 import { fontSize } from '@/design-system/tokens/primitives/typography';
-import { elevation } from '@/design-system/tokens/primitives/elevation';
 import { duration } from '@/design-system/tokens/primitives/motion';
 import { radius } from '@/design-system/tokens/primitives/radius';
 import { SegmentedControl } from '@/components/SegmentedControl';
@@ -254,7 +253,7 @@ function QuickLogButton({
         delayLongPress={320}
         accessibilityRole="button"
         accessibilityLabel={`${item.label}を追加。長押しで詳細入力`}
-        style={[styles.button, { height, backgroundColor: t.colors.surface.raised }]}
+        style={[styles.button, { ...t.elevation.xs, height, backgroundColor: t.colors.surface.raised }]}
         testID={`quick-log-button-${item.key}`}
       >
         <View
@@ -413,7 +412,7 @@ function FrequentButton({
       accessibilityLabel={`${item.label}を追加。長押しで詳細入力`}
       style={({ pressed }) => [
         styles.frequentButton,
-        { minHeight: height, backgroundColor: t.colors.surface.raised },
+        { ...t.elevation.xs, minHeight: height, backgroundColor: t.colors.surface.raised },
         pressed && styles.frequentButtonPressed,
       ]}
     >
@@ -590,7 +589,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 4,
     gap: 2,
-    ...elevation.xs,
   },
   frequentButtonPressed: {
     opacity: 0.7,
@@ -617,7 +615,6 @@ const styles = StyleSheet.create({
     borderRadius: QUICK_LOG_TOKENS.buttonRadius,
     alignItems: 'center',
     justifyContent: 'center',
-    ...elevation.xs,
   },
   iconContainer: {
     alignItems: 'center',

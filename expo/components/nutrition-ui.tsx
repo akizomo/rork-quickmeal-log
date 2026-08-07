@@ -23,7 +23,6 @@ import { Badge, Body, BottomSheet, Button, Caption, Dialog, Icon, IconButton, La
 import { duration, easing, spring } from '@/design-system/tokens/primitives/motion';
 import { fontSize as fs, letterSpacing as ls } from '@/design-system/tokens/primitives/typography';
 import { radius } from '@/design-system/tokens/primitives/radius';
-import { elevation } from '@/design-system/tokens/primitives/elevation';
 import { useAppState } from '@/providers/app-state-provider';
 import { useHealthSyncContext } from '@/providers/health-sync-provider';
 import { DishDraft, DishSize, IngredientDraft, Macro, PortionValue } from '@/types/nutrition';
@@ -1142,7 +1141,10 @@ export const FloatingFeedback = memo(function FloatingFeedback() {
       pointerEvents="none"
     >
       <Text style={labelStyle}>{label}</Text>
-      <Text style={[macroStyle, { color: t.colors.content.inverseSecondary }]}>{formatMacroText(macro)}</Text>
+      {/* 背景は action.primary(sage)地なので、surface.inverse専用のcontent.inverseSecondaryは
+          文脈違い (light では CR5.1で偶然成立していたが dark は CR1.5でほぼ見えなかった、
+          2026-08-07指摘)。sage地の白文字(content.onAction)を弱めた形で正しく表現する。 */}
+      <Text style={[macroStyle, { color: t.colors.content.onAction, opacity: 0.75 }]}>{formatMacroText(macro)}</Text>
     </Animated.View>
   );
 });
@@ -1820,14 +1822,18 @@ const makeStyles = (t: Theme) => StyleSheet.create({
   macroPill: { flexDirection: 'row', gap: 4, paddingHorizontal: 11, paddingVertical: 7, borderRadius: radius.full },
   macroPillLabel: { fontSize: fs.xs, color: t.colors.content.secondary, fontWeight: '700' },
   macroPillValue: { fontSize: fs.xs, color: t.colors.content.primary, fontWeight: '700' },
-  feedbackBubble: { position: 'absolute', top: 340, alignSelf: 'center', backgroundColor: t.colors.action.primary.default, paddingHorizontal: 16, paddingVertical: 12, borderRadius: radius.xl, alignItems: 'center', ...elevation.lg, shadowColor: t.colors.action.primary.default },
+  feedbackBubble: { position: 'absolute', top: 340, alignSelf: 'center', backgroundColor: t.colors.action.primary.default, paddingHorizontal: 16, paddingVertical: 12, borderRadius: radius.xl, alignItems: 'center', ...t.elevation.lg, shadowColor: t.colors.action.primary.default },
   feedbackText: { color: t.colors.content.onAction, fontSize: fs.md, fontWeight: '700' },
   feedbackMacro: { fontSize: fs.sm, marginTop: 2 },
   // Live preview state (sheet open, before save). Same position as feedbackBubble
   // but cream/sage-pale to read as "tentative". Pointer-events disabled so it
   // doesn't intercept taps on the open sheet.
   undoToast: { position: 'absolute', left: 18, right: 18, bottom: 24, borderRadius: radius.xl, paddingHorizontal: 20, paddingVertical: 15, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  undoTitle: { color: t.colors.content.onAction, fontSize: fs.md, fontWeight: '700' },
+  // 背景は surface.inverse (light=黒/dark=白反転)。content.onAction は
+  // action.primary(sage)面上専用の白文字トークンで、dark ではsurface.inverse
+  // (白)と同化して消えていたバグ (2026-08-07指摘)。反転面用の content.inverse
+  // (light=白文字/dark=黒文字、常にsurface.inverseと逆側になる) が正しい。
+  undoTitle: { color: t.colors.content.inverse, fontSize: fs.md, fontWeight: '700' },
   undoText: { fontSize: fs.sm, marginTop: 4 },
   undoAction: { fontSize: fs.md, fontWeight: '700' },
   goalMacroRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
@@ -1864,7 +1870,7 @@ const makeStyles = (t: Theme) => StyleSheet.create({
   sliderFill: { position: 'absolute', left: 0, height: 6, backgroundColor: t.colors.action.text.default, borderRadius: radius.full, top: 15 },
   sliderTick: { position: 'absolute', width: 6, height: 6, borderRadius: radius.full, backgroundColor: t.colors.surface.sunken, top: 15 },
   sliderTickActive: { backgroundColor: t.colors.action.primary.default },
-  sliderThumb: { position: 'absolute', width: 28, height: 28, borderRadius: radius.full, backgroundColor: t.colors.content.onAction, borderWidth: 2, borderColor: t.colors.action.primary.default, top: 4, ...elevation.sm },
+  sliderThumb: { position: 'absolute', width: 28, height: 28, borderRadius: radius.full, backgroundColor: t.colors.content.onAction, borderWidth: 2, borderColor: t.colors.action.primary.default, top: 4, ...t.elevation.sm },
   sliderLabelsRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 2 },
   sliderLabelTap: { alignItems: 'center', flex: 1, paddingVertical: 4 },
   sliderLabelText: { fontSize: fs.xs, color: t.colors.content.secondary, fontWeight: '600' },

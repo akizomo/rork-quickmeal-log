@@ -197,8 +197,8 @@ export function Dialog({
         {/* Dialog Card */}
         <Animated.View
           style={[
-            styles.card,
             {
+              ...t.elevation.xl,
               width: dialogWidth,
               backgroundColor: t.colors.surface.default,
               borderRadius: DIALOG_RADIUS,
@@ -306,13 +306,6 @@ const styles = StyleSheet.create({
   scrimTint: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: `rgba(0,0,0,${SCRIM_TINT_OPACITY})`,
-  },
-  card: {
-    shadowColor: '#000',
-    shadowOpacity: 0.18,
-    shadowRadius: 24,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 16,
   },
   header: {
     flexDirection: 'row',

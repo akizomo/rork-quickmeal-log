@@ -137,7 +137,7 @@ export default function PaywallRoute() {
             {/* PRICING */}
             {loading ? (
               <View style={styles.loadingBox}>
-                <ActivityIndicator color={t.colors.action.primary.default} />
+                <ActivityIndicator color={t.colors.action.text.default} />
                 <Text style={styles.priceSub}>プランを読み込み中…</Text>
               </View>
             ) : !offering ? (
@@ -256,7 +256,7 @@ function PlanCard({
         <Text style={styles.priceSub}>{product.priceString}</Text>
       </View>
       {isPurchasing ? (
-        <ActivityIndicator color={t.colors.action.primary.default} />
+        <ActivityIndicator color={t.colors.action.text.default} />
       ) : (
         <View style={styles.ctaPill}>
           <Text style={styles.ctaPillText}>選ぶ</Text>

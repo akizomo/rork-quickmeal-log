@@ -182,7 +182,8 @@ export const DayLogBottomSheet = memo(
 
           let chosen: SnapStage = stage;
           if (velocity > 0.9) {
-            chosen = stage === 'full' ? 'half' : 'peek';
+            // full からの素早い下スワイプは half を経由せず一気に peek (閉じる) へ。
+            chosen = 'peek';
           } else if (velocity < -0.9) {
             chosen = stage === 'peek' ? 'half' : 'full';
           } else {
@@ -225,7 +226,10 @@ export const DayLogBottomSheet = memo(
     <>
       <Animated.View
         pointerEvents={stage === 'full' ? 'auto' : 'none'}
-        style={[styles.backdrop, { backgroundColor: t.colors.surface.inverse, opacity: overlayOpacity }]}
+        // scrim(暗幕)は常に黒固定 (Dialog.tsx/BottomSheet.tsx と同じ規約)。
+        // surface.inverse を使うとdarkテーマでほぼ白(ivory[50])に反転し、
+        // シートを開くと逆に背景が明転するバグだった (2026-08-07指摘)。
+        style={[styles.backdrop, { backgroundColor: '#000', opacity: overlayOpacity }]}
       >
         <Pressable style={StyleSheet.absoluteFill} onPress={() => animateTo('half')} />
       </Animated.View>
@@ -234,8 +238,11 @@ export const DayLogBottomSheet = memo(
           styles.sheet,
           {
             ...t.elevation.xl,
+            // シートは画面下端から立ち上がるので、影は上方向に出す (t.elevation.xlの
+            // shadowColorは既にテーマ対応済みなので上書きしない。旧実装は
+            // surface.inverse で上書きしており、darkでは意図せず正しく見えていただけの
+            // 偶然の一致だった)。
             shadowOffset: { width: 0, height: -6 },
-            shadowColor: t.colors.surface.inverse,
             backgroundColor: t.colors.surface.default,
             height: sheetMaxHeight,
             transform: [{ translateY }],
@@ -260,7 +267,7 @@ export const DayLogBottomSheet = memo(
               testID="sheet-stage-toggle"
             >
               <Text style={[styles.stagePillText, { color: t.colors.action.text.default }]}>
-                {stage === 'peek' ? '開く' : stage === 'half' ? '全画面' : '閉じる'}
+                {stage === 'peek' ? 'ひらく' : stage === 'half' ? '全画面' : 'とじる'}
               </Text>
             </Pressable>
           </View>

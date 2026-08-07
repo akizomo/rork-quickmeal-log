@@ -3,7 +3,6 @@ import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Polyline } from 'react-native-svg';
 
 import { useTheme } from '@/design-system';
-import { colors } from '@/design-system/tokens/primitives/colors';
 import { duration, easing } from '@/design-system/tokens/primitives/motion';
 import { fontSize, fontWeight, letterSpacing } from '@/design-system/tokens/primitives/typography';
 
@@ -96,7 +95,9 @@ export const CalorieOverflowRing = memo(function CalorieOverflowRing(props: Calo
     trackColor = t.colors.nutrition.calorie.track,
     progressColor = t.colors.nutrition.calorie.within.graphic,
     achievedCheckColor = progressColor,
-    toleranceColor = colors.moss[600],
+    // 旧 colors.moss[600] は light の within.text とたまたま同値だっただけの固定値で、
+    // dark では moss[300] に切り替わらず暗すぎて見えにくかった (2026-08-07指摘)。
+    toleranceColor = t.colors.nutrition.calorie.within.text,
     overflowColor = t.colors.nutrition.calorie.severeExceed.graphic,
     centerTextColor = t.colors.content.primary,
     subTextColor = t.colors.content.secondary,

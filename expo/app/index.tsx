@@ -31,7 +31,7 @@ export default function HomeRoute() {
   if (isHydrating) {
     return (
       <View style={[styles.loading, { backgroundColor: t.colors.surface.default }]}>
-        <ActivityIndicator color={t.colors.action.primary.default} />
+        <ActivityIndicator color={t.colors.action.text.default} />
       </View>
     );
   }

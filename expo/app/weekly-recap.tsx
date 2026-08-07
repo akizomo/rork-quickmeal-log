@@ -405,7 +405,11 @@ function OutroButton({ t, styles }: { t: Theme; styles: Styles }) {
       style={({ pressed }) => [
         styles.outroBtn,
         {
-          borderColor: t.colors.border.inverse,
+          // このボタンは常に固定の sage[800] 背景 (deep カード、テーマ非依存) の上にある。
+          // border.inverse はテーマ相対 (light⇔dark反転) なため、light テーマだと
+          // ivory[800](暗色)になりsage800と同化してほぼ見えなかった (CR1.54、2026-08-07指摘)。
+          // 同じカードの他要素と同様、固定の ivory[100] を直接使う。
+          borderColor: t.tokens.colors.ivory[100],
           // ivory[100] を10%不透明度で。トークン値+αサフィックスで raw rgba を避ける。
           backgroundColor: pressed ? `${t.tokens.colors.ivory[100]}1A` : 'transparent',
         },
