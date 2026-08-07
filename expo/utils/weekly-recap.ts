@@ -30,6 +30,12 @@ const AXIS_KCAL_PER_GRAM: Record<MacroAxis, number> = { protein: 4, fat: 9, carb
  */
 const AXIS_DENSITY_THRESHOLD: Record<MacroAxis, number> = { protein: 0.25, fat: 0.35, carbs: 0.45 };
 
+/**
+ * 軸ごとの「低◯◯食材」判定閾値 (direction='more' の代替案提示に使う)。
+ * 例: fat 0.20 = カロリーの20%未満が脂質由来なら低脂質の代替候補とみなす。
+ */
+const AXIS_LOW_DENSITY_THRESHOLD: Record<MacroAxis, number> = { protein: 0.10, fat: 0.20, carbs: 0.25 };
+
 /** macroBoost で提示する候補の最大数。 */
 const MAX_BOOST_CANDIDATES = 3;
 
@@ -51,10 +57,11 @@ export interface WeeklyMacroBoostCandidate {
 
 export interface WeeklyMacroBoost {
   axis: MacroAxis;
+  /** 'less' = その軸を増やせる高密度候補、'more' = その軸が少ない低密度代替候補。 */
+  direction: 'less' | 'more';
   /**
-   * その軸の密度が高い Identity を最大 MAX_BOOST_CANDIDATES 件。
-   * 記録履歴にあるもの (頻度順) を優先し、足りない分は未経験でも全カタログから補う。
-   * 履歴限定にすると「最も必要な人ほど候補が出ない」逆説が生じるため、意図的に両方使う。
+   * その軸の密度が高い (less) / 低い (more) Identity を最大 MAX_BOOST_CANDIDATES 件。
+   * 'less' は記録履歴優先 + 全カタログ補完。'more' は記録履歴のみ (カタログ補完なし)。
    */
   candidates: WeeklyMacroBoostCandidate[];
   /**
@@ -104,12 +111,10 @@ export interface WeeklyRecap {
    */
   macroInsight: WeeklyMacroInsight | null;
   /**
-   * 観点C (目標接続型・less方向のみ) + 観点A (組成事実、observation.note に従属)。
-   * macroInsight.direction が 'less' のときだけ、全履歴からその軸の密度が高い
-   * Identity を提示する。'more' のときは何も言わない
-   * (「減らすには」は制限フレーミングになるため意図的に非対称)。
-   * 豆知識 (note) は単独スライドにせず、必ずこのアドバイスに従属して現れる —
-   * 「なぜこの食材が候補か」の文脈を提供するため (唐突な組成事実を避ける)。
+   * 観点C + 観点A (組成事実、observation.note に従属)。
+   * direction='less': 全履歴からその軸の密度が高い Identity を提示 (+ カタログ補完)。
+   * direction='more': 食事記録履歴からその軸の密度が低い代替候補を提示 (カタログ補完なし)。
+   * 豆知識 (note) は less 方向のみ添付。
    */
   macroBoost: WeeklyMacroBoost | null;
 }
@@ -184,20 +189,18 @@ function densityFor(axis: MacroAxis, macro: { kcal: number; protein: number; fat
 }
 
 /**
- * 観点C: macroInsight が direction='less' のときだけ、その軸の密度が高い Identity を提示する。
- * 記録履歴にあるもの (頻度順、自分のレパートリー＝すぐ実行できる) を優先し、
- * 足りない分は未経験でも全カタログから補う (密度降順)。
- * 履歴限定だと「その軸が最も足りていない人ほど、履歴にも無く候補が出ない」逆説が生じるため、
- * 両方を組み合わせるのが意図的な設計 (2026-08-03)。
- * 最有力候補に nutritionNote があれば、観点A (組成事実) を「なぜこの候補か」の
- * 裏付けとして note に添える (単独スライドにはしない)。
+ * 観点C: macroInsight の direction に応じて食材候補を提示する。
+ * - 'less': その軸の密度が高い Identity (記録履歴優先 + 全カタログ補完)。
+ *   最有力候補に nutritionNote があれば観点A として note に添える。
+ * - 'more': その軸の密度が低い代替候補 (記録履歴のみ。カタログ補完はしない)。
+ *   note は 'more' では添付しない。
  */
 function computeMacroBoost(
   allLogs: FoodLog[],
   insight: WeeklyMacroInsight | null,
 ): WeeklyMacroBoost | null {
-  if (!insight || insight.direction !== 'less') return null;
-  const axis = insight.axis;
+  if (!insight) return null;
+  const { axis, direction } = insight;
 
   const freq = new Map<string, number>();
   for (const log of allLogs) {
@@ -205,42 +208,57 @@ function computeMacroBoost(
     freq.set(log.identityId, (freq.get(log.identityId) ?? 0) + 1);
   }
 
-  const fromHistory: WeeklyMacroBoostCandidate[] = [...freq.entries()]
+  if (direction === 'less') {
+    const fromHistory: WeeklyMacroBoostCandidate[] = [...freq.entries()]
+      .map(([identityId, count]): { identityId: string; label: string; count: number } | null => {
+        const identity = getIdentity(identityId);
+        if (!identity || densityFor(axis, identity.defaultMacro) < AXIS_DENSITY_THRESHOLD[axis]) return null;
+        return { identityId, label: identity.label, count };
+      })
+      .filter((c): c is { identityId: string; label: string; count: number } => c !== null)
+      .sort((a, b) => b.count - a.count)
+      .map(({ identityId, label }) => ({ identityId, label, fromHistory: true }));
+
+    let candidates = fromHistory.slice(0, MAX_BOOST_CANDIDATES);
+
+    if (candidates.length < MAX_BOOST_CANDIDATES) {
+      const seenIds = new Set(candidates.map((c) => c.identityId));
+      const fallback = ALL_IDENTITIES
+        .filter((identity) => !seenIds.has(identity.id) && densityFor(axis, identity.defaultMacro) >= AXIS_DENSITY_THRESHOLD[axis])
+        .sort((a, b) => densityFor(axis, b.defaultMacro) - densityFor(axis, a.defaultMacro))
+        .slice(0, MAX_BOOST_CANDIDATES - candidates.length)
+        .map((identity): WeeklyMacroBoostCandidate => ({ identityId: identity.id, label: identity.label, fromHistory: false }));
+      candidates = [...candidates, ...fallback];
+    }
+
+    if (candidates.length === 0) return null;
+
+    let note: WeeklyFoodFact | null = null;
+    for (const c of candidates) {
+      const identity = getIdentity(c.identityId);
+      if (identity?.nutritionNote) {
+        note = { identityId: identity.id, identityLabel: identity.label, note: identity.nutritionNote };
+        break;
+      }
+    }
+    return { axis, direction, candidates, note };
+  }
+
+  // direction === 'more': 低密度食材を記録履歴から提示 (カタログ補完なし)
+  const candidates: WeeklyMacroBoostCandidate[] = [...freq.entries()]
     .map(([identityId, count]): { identityId: string; label: string; count: number } | null => {
       const identity = getIdentity(identityId);
-      if (!identity || densityFor(axis, identity.defaultMacro) < AXIS_DENSITY_THRESHOLD[axis]) return null;
+      if (!identity || densityFor(axis, identity.defaultMacro) >= AXIS_LOW_DENSITY_THRESHOLD[axis]) return null;
       return { identityId, label: identity.label, count };
     })
     .filter((c): c is { identityId: string; label: string; count: number } => c !== null)
     .sort((a, b) => b.count - a.count)
+    .slice(0, MAX_BOOST_CANDIDATES)
     .map(({ identityId, label }) => ({ identityId, label, fromHistory: true }));
-
-  let candidates = fromHistory.slice(0, MAX_BOOST_CANDIDATES);
-
-  if (candidates.length < MAX_BOOST_CANDIDATES) {
-    const seenIds = new Set(candidates.map((c) => c.identityId));
-    const fallback = ALL_IDENTITIES
-      .filter((identity) => !seenIds.has(identity.id) && densityFor(axis, identity.defaultMacro) >= AXIS_DENSITY_THRESHOLD[axis])
-      .sort((a, b) => densityFor(axis, b.defaultMacro) - densityFor(axis, a.defaultMacro))
-      .slice(0, MAX_BOOST_CANDIDATES - candidates.length)
-      .map((identity): WeeklyMacroBoostCandidate => ({ identityId: identity.id, label: identity.label, fromHistory: false }));
-    candidates = [...candidates, ...fallback];
-  }
 
   if (candidates.length === 0) return null;
 
-  // candidates は履歴優先の並び。この中の誰かに nutritionNote があれば添える
-  // (nutritionNote は現状ホワイトリストが少ないため、1位限定だと機能しにくい)。
-  let note: WeeklyFoodFact | null = null;
-  for (const c of candidates) {
-    const identity = getIdentity(c.identityId);
-    if (identity?.nutritionNote) {
-      note = { identityId: identity.id, identityLabel: identity.label, note: identity.nutritionNote };
-      break;
-    }
-  }
-
-  return { axis, candidates, note };
+  return { axis, direction, candidates, note: null };
 }
 
 /**

@@ -18,6 +18,7 @@
  *   - ヒーロー数字 (40〜88px) は fontSize.display(44px) を超える意図的な例外
  */
 import { Stack, useRouter } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, Pressable, StyleSheet, View } from 'react-native';
 import Svg, { Circle, Polyline, Rect, Text as SvgText } from 'react-native-svg';
@@ -102,6 +103,7 @@ export default function WeeklyRecapScreen() {
   return (
     <View style={[styles.root, { backgroundColor: bgColor }]}>
       <Stack.Screen options={{ headerShown: false }} />
+      <StatusBar style={current.bg === 'deep' ? 'light' : 'dark'} />
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
         <View style={styles.chrome} pointerEvents="box-none">
           <View style={styles.chromeRow}>
@@ -134,7 +136,11 @@ export default function WeeklyRecapScreen() {
 
         <View style={styles.zones} pointerEvents="box-none">
           <Pressable style={styles.zonePrev} onPress={goPrev} accessibilityRole="button" accessibilityLabel="前へ" />
-          <Pressable style={styles.zoneNext} onPress={goNext} accessibilityRole="button" accessibilityLabel="次へ" />
+          {index < cards.length - 1 ? (
+            <Pressable style={styles.zoneNext} onPress={goNext} accessibilityRole="button" accessibilityLabel="次へ" />
+          ) : (
+            <View style={styles.zoneNext} pointerEvents="none" />
+          )}
         </View>
 
         {current.bg === 'deep' ? (
@@ -221,7 +227,7 @@ function buildCards(recap: WeeklyRecap, styles: Styles): Card[] {
                     : { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: t.colors.border.default, borderStyle: 'dashed' },
                 ]}
               >
-                {d.logged ? <Icon name="check" size={12} color={t.colors.content.onAction} /> : null}
+                {d.logged ? <Icon name="check" size={16} color={t.colors.content.onAction} /> : null}
               </View>
             ))}
           </View>
@@ -309,7 +315,7 @@ function buildCards(recap: WeeklyRecap, styles: Styles): Card[] {
     });
   }
 
-  // 5. アドバイス+豆知識 (light, 条件あり: direction='less' のときだけ)
+  // 5. アドバイス+豆知識 (light, 条件あり: direction='less' = 増やす候補 / 'more' = 代替案)
   if (recap.macroBoost) {
     const boost = recap.macroBoost;
     const label = MACRO_LABEL[boost.axis];
@@ -319,7 +325,9 @@ function buildCards(recap: WeeklyRecap, styles: Styles): Card[] {
         <>
           <Overline tone="secondary">04 — アドバイス</Overline>
           <Body size="lg" style={{ marginTop: t.spacing['6'], lineHeight: 26 }}>
-            {label.jp}を増やしたいときは
+            {boost.direction === 'less'
+              ? `${label.jp}を増やしたいときは`
+              : `${label.jp}が少なめの選択肢なら`}
           </Body>
           <View style={[styles.spacer, { justifyContent: 'center' }]}>
             <View style={{ gap: t.spacing['3'] }}>
@@ -402,9 +410,9 @@ function OutroButton({ t, styles }: { t: Theme; styles: Styles }) {
         },
       ]}
       accessibilityRole="button"
-      accessibilityLabel="ホームに戻る"
+      accessibilityLabel="閉じる"
     >
-      <Body style={{ color: t.tokens.colors.ivory[100] }}>ホームに戻る</Body>
+      <Body style={{ color: t.tokens.colors.ivory[100] }}>閉じる</Body>
     </Pressable>
   );
 }
@@ -553,8 +561,8 @@ function makeStyles(t: Theme) {
     spacer: { flex: 1 },
     heroRow: { flexDirection: 'row', alignItems: 'flex-end' },
     dotsRow: { flexDirection: 'row', justifyContent: 'space-between' },
-    dot: { width: 20, height: 20, borderRadius: radius.full, alignItems: 'center', justifyContent: 'center' },
-    dotLabel: { width: 20, textAlign: 'center', marginTop: t.spacing['2'] },
+    dot: { width: 28, height: 28, borderRadius: radius.full, alignItems: 'center', justifyContent: 'center' },
+    dotLabel: { width: 28, textAlign: 'center', marginTop: t.spacing['2'] },
     pill: { alignSelf: 'flex-start', borderRadius: radius.full, paddingVertical: t.spacing['2'], paddingHorizontal: t.spacing['4'] },
     track: { height: 10, borderRadius: radius.full, overflow: 'hidden' },
     trackFill: { height: '100%', borderRadius: radius.full },
