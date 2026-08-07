@@ -110,7 +110,7 @@ primitive の色相 (hue) ごとに担う役割を固定し、semantic 層が必
 
 | レイヤー | トークン | primitive | 相対輝度 | 用途 |
 |---|---|---|---|---|
-| **−1** | `surface.sunken` | ivory[300] `#F3EEE4` | 0.858 | 凹み。入力欄の地・トラック・非選択の塗り |
+| **−1** | `surface.sunken` | ivory[300] `#E5E0D7` | 0.749 | 凹み。入力欄の地・トラック・非選択の塗り |
 | **0** | `surface.default` | ivory[200] `#F6F3EC` | 0.898 | 文脈の地。**ページ / シート / ダイアログすべて** |
 | **+1** | `surface.raised` | ivory[50] `#FFFDF7` | 0.982 | カード |
 

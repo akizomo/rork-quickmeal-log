@@ -10,8 +10,8 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { DishQuickEntrySheet } from '@/components/DishQuickEntrySheet';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { IdentityLogSheet } from '@/components/IdentityLogSheet';
-import { ThemeProvider, useTheme } from '@/design-system';
-import { AppStateProvider } from '@/providers/app-state-provider';
+import { ThemeProvider, darkTheme, lightTheme, useTheme } from '@/design-system';
+import { AppStateProvider, useAppState } from '@/providers/app-state-provider';
 import { HealthSyncProvider } from '@/providers/health-sync-provider';
 import { initIap } from '@/utils/iap';
 import { initSentry } from '@/utils/sentry';
@@ -19,6 +19,18 @@ import { initSentry } from '@/utils/sentry';
 void SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
+
+/**
+ * settings.themePreference ('system'/'light'/'dark') を design-system の
+ * ThemeProvider に橋渡しする。'system' (未設定含む) は theme prop を渡さず
+ * ThemeProvider 自身の useColorScheme 検知に任せる。
+ */
+function ThemedApp({ children }: { children: React.ReactNode }) {
+  const { settings } = useAppState();
+  const pref = settings.themePreference ?? 'system';
+  const forcedTheme = pref === 'light' ? lightTheme : pref === 'dark' ? darkTheme : undefined;
+  return <ThemeProvider theme={forcedTheme}>{children}</ThemeProvider>;
+}
 
 function RootLayoutNav() {
   const t = useTheme();
@@ -88,16 +100,16 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <ErrorBoundary>
-          <ThemeProvider>
-            <StatusBar style="auto" />
-            <AppStateProvider>
+          <AppStateProvider>
+            <ThemedApp>
+              <StatusBar style="auto" />
               <HealthSyncProvider>
                 <RootLayoutNav />
                 <DishQuickEntrySheet />
                 <IdentityLogSheet />
               </HealthSyncProvider>
-            </AppStateProvider>
-          </ThemeProvider>
+            </ThemedApp>
+          </AppStateProvider>
         </ErrorBoundary>
       </GestureHandlerRootView>
     </QueryClientProvider>

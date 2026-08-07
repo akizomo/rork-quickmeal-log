@@ -46,7 +46,7 @@ export function SegmentedControl<T extends string = string>({
   const resolvedTrackColor = trackColor ?? t.colors.surface.sunken;
   const resolvedPillColor = pillColor ?? t.colors.surface.raised;
   const resolvedTextColor = textColor ?? t.colors.content.secondary;
-  const resolvedActiveTextColor = activeTextColor ?? t.colors.action.primary.default;
+  const resolvedActiveTextColor = activeTextColor ?? t.colors.action.text.default;
   const selectedIndex = Math.max(0, options.findIndex((o) => o.key === value));
   const pillAnim = useRef(new Animated.Value(selectedIndex)).current;
   const [containerWidth, setContainerWidth] = useState(0);

@@ -81,7 +81,7 @@ export function GestureDemoIllustration() {
           <Text style={gestureStyles.gesture}>👆</Text>
           <Text style={[gestureStyles.gestureLabel, { color: t.colors.content.secondary }]}>タップ</Text>
         </View>
-        <Text style={[gestureStyles.arrow, { color: t.colors.action.primary.default }]}>→</Text>
+        <Text style={[gestureStyles.arrow, { color: t.colors.action.text.default }]}>→</Text>
         <View style={[gestureStyles.result, { backgroundColor: t.colors.surface.raised, borderColor: t.colors.border.default }]}>
           <Text style={[gestureStyles.resultTitle, { color: t.colors.content.primary }]}>ご飯1杯 234 kcal</Text>
           <Text style={[gestureStyles.resultSub, { color: t.colors.content.secondary }]}>代表値で即記録</Text>
@@ -93,7 +93,7 @@ export function GestureDemoIllustration() {
           <Text style={gestureStyles.gesture}>✋</Text>
           <Text style={[gestureStyles.gestureLabel, { color: t.colors.content.secondary }]}>長押し</Text>
         </View>
-        <Text style={[gestureStyles.arrow, { color: t.colors.action.primary.default }]}>→</Text>
+        <Text style={[gestureStyles.arrow, { color: t.colors.action.text.default }]}>→</Text>
         <View style={[gestureStyles.result, { backgroundColor: t.colors.surface.raised, borderColor: t.colors.border.default }]}>
           <Text style={[gestureStyles.resultTitle, { color: t.colors.content.primary }]}>種類・量を選択</Text>
           <Text style={[gestureStyles.resultSub, { color: t.colors.content.secondary }]}>パン / 麺 / 大盛 …</Text>
@@ -136,7 +136,7 @@ export function FrequentTabIllustration() {
               style={[
                 frequentStyles.tabSegmentText,
                 {
-                  color: i === ACTIVE_TAB_INDEX ? t.colors.action.primary.default : t.colors.content.secondary,
+                  color: i === ACTIVE_TAB_INDEX ? t.colors.action.text.default : t.colors.content.secondary,
                   fontWeight: i === ACTIVE_TAB_INDEX ? '700' : '600',
                 },
               ]}

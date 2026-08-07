@@ -20,7 +20,10 @@ export const darkColors: SemanticColors = {
   },
 
   content: {
-    primary:          colors.stone[50],   // '#F7F7F6' — メインテキスト
+    // light の content.primary(stone[900] L*10.2)は黒から10.2離した柔らかい黒。
+    // 旧stone[50](L*97.2)は白から2.8しか離れておらずほぼ純白だった (2026-08-07指摘)。
+    // stone[100]/[200]を実機比較し、200の方が白すぎず落ち着いて見えたため採用。
+    primary:          colors.stone[200],  // '#D8D8D4' — メインテキスト
     // 補助テキスト全般。raised比 ≈5.7:1 / default比 ≈6.6:1、AA(4.5:1)準拠。
     // primaryとの自己コントラストが旧stone[200](約1.33:1)では差が無さすぎたため、
     // 2026-08-05にstone[400]へ変更 (約2.46:1)。stone[500]はraised比3.81:1でAA未達のため不可。

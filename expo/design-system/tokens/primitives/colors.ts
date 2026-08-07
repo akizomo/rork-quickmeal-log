@@ -37,13 +37,17 @@ export const colors = {
   //
   // surface スタックは「層が上がるほど明るい」で light/dark 共通。
   // light は明るい端に 300 → 200 → 50、dark は暗い端に 950 → 900 → 850 と、
-  // それぞれ密な梯子を作る (2026-08-06、ΔL* を実測して鏡像化):
-  //     light  sunken  300 L*94.2 / default 200 L*95.9 / raised  50 L*99.3
-  //     dark   sunken  950 L* 7.0 / default 900 L* 9.0 / raised 850 L*12.5
-  //   段差はどちらも default 基準で sunken -1.7 / raised +3.4 L*。
-  //   結果、層間コントラスト比も light 1.089/1.043 に対し dark 1.079/1.039 と一致する。
-  // 850/950 は 900 を動かさずに梯子を通すための追加段。旧 dark sunken は
-  // '#0E0C08' (L*3.4) と落ち込みすぎて「ただの黒」に見えていたため作り直した。
+  // それぞれ密な梯子を作る (2026-08-06、ΔL* を実測して鏡像化)。
+  // 850/950 は 900 を動かさずに梯子を通すための追加段。
+  //
+  // sunken (300/950) は「凹み」の自己コントラストが弱すぎる問題があった:
+  //   旧 light 300 '#F3EEE4' は default(200) 比 CR1.04、
+  //   旧 dark  950 '#191510' は default(900) 比 CR1.04 で、単体ではほぼ
+  //   視認できなかった (2026-08-06 指摘)。light は CR1.19 まで暗くした
+  //   値に、dark も同じ CR1.19 になる値に作り直した。dark は輝度が非線形
+  //   なため CR1.19 を満たすには L*0.4 (ほぼ純黒) まで暗くする必要があった —
+  //   これは「黒すぎて嫌」ではなく「コントラストとして正しい」ので許容する。
+  //   (raised(850)比のCRも1.12→1.28まで自然に強化された)
   //
   // 700/800 は中間トーン専用 (disabled 塗り・inverse border 等)。旧値は
   // legacy palette からの寄せ集めで、600(L*85.5)→700(L*57.5)→800(L*24.7)と
@@ -54,7 +58,7 @@ export const colors = {
     50: '#FFFDF7',
     100: '#FBF8F2', // legacy: palette.surface
     200: '#F6F3EC', // legacy: palette.background
-    300: '#F3EEE4', // legacy: palette.sheet
+    300: '#E5E0D7', // sunken用 (旧'#F3EEE4'はdefault比CR1.04で自己コントラストが弱すぎたため2026-08-06に強化、CR1.19)
     400: '#EFE9DD', // legacy: palette.card
     500: '#E2DCCF', // legacy: palette.cardStrong
     600: '#DDD5C7', // legacy: palette.border
@@ -63,7 +67,7 @@ export const colors = {
     825: '#2F2A21', // dark border.subtle   (L*17.3)
     850: '#242019', // dark surface.raised  (L*12.5)
     900: '#1D1913', // dark surface.default (L* 9.0) — warm near-black
-    950: '#191510', // dark surface.sunken  (L* 7.0)
+    950: '#080000', // dark surface.sunken (L*0.4、旧'#191510'はdefault比CR1.04で弱すぎたため2026-08-06に強化、CR1.19)
   },
 
   // Stone — 青みのないニュートラルグレー。

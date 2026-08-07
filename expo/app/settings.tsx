@@ -4,9 +4,15 @@ import { Alert, Platform, ScrollView, StyleSheet, Switch, View } from 'react-nat
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { SettingsDivider, SettingsLinkRow, SettingsListCard, SettingsSectionLabel } from '@/components/SettingsList';
-import { Body, Label, useTheme } from '@/design-system';
+import { Body, Icon, Label, useTheme } from '@/design-system';
 import { useAppState } from '@/providers/app-state-provider';
 import { widgetRequestPin } from '@/utils/widget-bridge';
+
+const THEME_OPTIONS: { key: 'system' | 'light' | 'dark'; label: string }[] = [
+  { key: 'system', label: '端末に合わせる' },
+  { key: 'light', label: 'ライト' },
+  { key: 'dark', label: 'ダーク' },
+];
 
 export default function SettingsRoute() {
   const router = useRouter();
@@ -44,6 +50,30 @@ export default function SettingsRoute() {
       <View style={[styles.page, { backgroundColor: theme.colors.surface.default }]}>
         <SafeAreaView edges={['bottom']} style={{ flex: 1 }}>
           <ScrollView contentContainerStyle={styles.scroll} testID="settings-screen">
+
+            {/* §テーマ */}
+            <View style={styles.section}>
+              <SettingsSectionLabel>テーマ</SettingsSectionLabel>
+              <SettingsListCard>
+                {THEME_OPTIONS.map((option, i) => {
+                  const selected = (settings.themePreference ?? 'system') === option.key;
+                  return (
+                    <React.Fragment key={option.key}>
+                      {i > 0 ? <SettingsDivider /> : null}
+                      <SettingsLinkRow
+                        label={option.label}
+                        showChevron={false}
+                        onPress={() => updateSettingsValues({ themePreference: option.key })}
+                        trailing={
+                          selected ? <Icon name="check" size={18} color={theme.colors.action.text.default} /> : null
+                        }
+                        testID={`settings-theme-option-${option.key}`}
+                      />
+                    </React.Fragment>
+                  );
+                })}
+              </SettingsListCard>
+            </View>
 
             {/* §ハプティクス */}
             <View style={styles.section}>

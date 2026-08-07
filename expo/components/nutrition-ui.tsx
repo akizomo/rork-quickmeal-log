@@ -454,7 +454,7 @@ function WeeklyRingsRow({
         // 今日 = ラベルをprimary色に（閲覧中かどうかに関わらず常時）、それ以外はneutral。
         // 閲覧中の日 = リング下にドット。ドット色は今日ならprimary、それ以外はsecondary。
         // 太さは状態に関わらず一定（統一した方が見やすいためバリエーションを廃止）。
-        const labelColor = isToday ? t.colors.action.primary.default : t.colors.content.secondary;
+        const labelColor = isToday ? t.colors.action.text.default : t.colors.content.secondary;
         const dotColor = isToday ? t.colors.action.primary.default : t.colors.content.secondary;
         const fontSize = 11;
 
@@ -1695,7 +1695,7 @@ const makeStyles = (t: Theme) => StyleSheet.create({
     justifyContent: 'center',
   },
   headerRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  headerDate: { fontSize: fs.md, fontWeight: '700', color: t.colors.action.primary.default },
+  headerDate: { fontSize: fs.md, fontWeight: '700', color: t.colors.action.text.default },
   // トライアル残り≤2日で表示するバッジ (右上の小さい丸)
   avatarBadge: {
     position: 'absolute',
@@ -1843,7 +1843,7 @@ const makeStyles = (t: Theme) => StyleSheet.create({
   previewSummaryText: { fontSize: fs.md, color: t.colors.content.primary, fontWeight: '600', lineHeight: 20 },
   previewSummaryDivider: { color: t.colors.content.secondary, fontWeight: '400' },
   previewSummarySecondary: { fontSize: fs.sm, color: t.colors.content.secondary, marginTop: -2 },
-  previewCalories: { fontSize: fs['3xl'], fontWeight: '700', color: t.colors.action.primary.default },
+  previewCalories: { fontSize: fs['3xl'], fontWeight: '700', color: t.colors.action.text.default },
   categoryRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: t.colors.surface.raised, borderRadius: radius.lg, paddingHorizontal: 16, paddingVertical: 12 },
   categoryRowLabel: { fontSize: fs.sm, color: t.colors.content.secondary, fontWeight: '600' },
   categoryRowValue: { flexDirection: 'row', alignItems: 'center', gap: 8 },
@@ -1868,5 +1868,5 @@ const makeStyles = (t: Theme) => StyleSheet.create({
   sliderLabelsRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 2 },
   sliderLabelTap: { alignItems: 'center', flex: 1, paddingVertical: 4 },
   sliderLabelText: { fontSize: fs.xs, color: t.colors.content.secondary, fontWeight: '600' },
-  sliderLabelTextActive: { color: t.colors.action.primary.default, fontWeight: '700' },
+  sliderLabelTextActive: { color: t.colors.action.text.default, fontWeight: '700' },
 });

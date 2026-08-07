@@ -178,6 +178,8 @@ export interface AppSettings {
     evening: LogMode;
   };
   hapticsEnabled: boolean;
+  /** 'system'(既定) はOSのカラースキームに追従。未設定時も'system'として扱う。 */
+  themePreference?: 'system' | 'light' | 'dark';
   introSeenVersion?: number;
   onboardingCompleted?: boolean;
   onboardingStep?: number;

@@ -88,7 +88,7 @@ export default function StatsScreen() {
                 value={mealsTab}
                 onChange={setMealsTab}
                 textColor={theme.colors.content.secondary}
-                activeTextColor={theme.colors.action.primary.default}
+                activeTextColor={theme.colors.action.text.default}
                 padding={5}
                 height={40}
                 fontSize={fs.sm}
@@ -104,7 +104,7 @@ export default function StatsScreen() {
                 value={bodyPeriod}
                 onChange={setBodyPeriod}
                 textColor={theme.colors.content.secondary}
-                activeTextColor={theme.colors.action.primary.default}
+                activeTextColor={theme.colors.action.text.default}
                 padding={5}
                 height={40}
                 fontSize={fs.sm}

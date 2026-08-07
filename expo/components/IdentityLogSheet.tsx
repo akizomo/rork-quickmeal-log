@@ -725,7 +725,7 @@ function FooterPreview({ macro }: { macro: Macro | null }) {
         style={{
           fontSize: t.typography.fontSize.lg,
           fontWeight: '700',
-          color: ready ? t.colors.action.primary.default : t.colors.content.tertiary,
+          color: ready ? t.colors.action.text.default : t.colors.content.tertiary,
         }}
         testID="ils-preview-kcal"
       >

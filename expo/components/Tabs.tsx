@@ -128,7 +128,7 @@ export function Tabs<T extends string = string>({
               testID={`${testID ?? 'tabs'}-${item.key}`}
             >
               <Text
-                style={[styles.label, { color: active ? t.colors.action.primary.default : t.colors.content.secondary }]}
+                style={[styles.label, { color: active ? t.colors.action.text.default : t.colors.content.secondary }]}
                 onLayout={handleLabelLayout(index)}
               >
                 {item.label}

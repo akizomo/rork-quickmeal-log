@@ -434,7 +434,7 @@ const makeStyles = (t: Theme) => StyleSheet.create({
     opacity: 0.5,
   },
   cellTextToday: {
-    color: t.colors.action.primary.default,
+    color: t.colors.action.text.default,
     fontWeight: '800',
   },
   summaryCard: {
@@ -460,7 +460,7 @@ const makeStyles = (t: Theme) => StyleSheet.create({
   summaryKcal: {
     fontSize: fs['2xl'],
     fontWeight: '700',
-    color: t.colors.action.primary.default,
+    color: t.colors.action.text.default,
   },
   summaryKcalTarget: {
     fontSize: fs.md,
@@ -528,7 +528,7 @@ const makeStyles = (t: Theme) => StyleSheet.create({
   dayKcal: {
     fontSize: fs.md,
     fontWeight: '700',
-    color: t.colors.action.primary.default,
+    color: t.colors.action.text.default,
   },
   dayMacroLine: {
     fontSize: fs.xs,

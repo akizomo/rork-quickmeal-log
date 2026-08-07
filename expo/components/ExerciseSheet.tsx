@@ -344,7 +344,7 @@ const makeStyles = (t: Theme) => StyleSheet.create({
   ledgerValue: { fontSize: fs.sm, fontWeight: '600', color: t.colors.content.secondary },
   ledgerResultRow: { borderTopWidth: 0, paddingTop: 4 },
   ledgerResultLabel: { fontSize: fs.sm, fontWeight: '700', color: t.colors.content.primary, flex: 1 },
-  ledgerResultValue: { fontSize: fs.md, fontWeight: '700', color: t.colors.action.primary.default },
+  ledgerResultValue: { fontSize: fs.md, fontWeight: '700', color: t.colors.action.text.default },
   ledgerResultZero: { color: t.colors.content.secondary },
   historyBlock: { gap: 8 },
   historyRow: {
@@ -374,7 +374,7 @@ const makeStyles = (t: Theme) => StyleSheet.create({
   sourceBadgeText: { fontSize: fs.xs, fontWeight: '600', letterSpacing: ls.wide },
   sourceBadgeTextHealth: { color: t.colors.accent.default },
   sourceBadgeTextManual: { color: t.colors.content.secondary },
-  historyKcal: { fontSize: fs.sm, fontWeight: '700', color: t.colors.action.primary.default },
+  historyKcal: { fontSize: fs.sm, fontWeight: '700', color: t.colors.action.text.default },
   addBlock: { gap: 12 },
   typeGrid: { gap: 8 },
   typeRow: { flexDirection: 'row', gap: 8 },
@@ -388,5 +388,5 @@ const makeStyles = (t: Theme) => StyleSheet.create({
   },
   previewRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   previewLabel: { fontSize: fs.md, fontWeight: '600', color: t.colors.content.primary },
-  previewKcal: { fontSize: fs.xl, fontWeight: '700', color: t.colors.action.primary.default },
+  previewKcal: { fontSize: fs.xl, fontWeight: '700', color: t.colors.action.text.default },
 });

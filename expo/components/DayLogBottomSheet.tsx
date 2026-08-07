@@ -259,7 +259,7 @@ export const DayLogBottomSheet = memo(
               style={[styles.stagePill, { backgroundColor: t.colors.surface.raised }]}
               testID="sheet-stage-toggle"
             >
-              <Text style={[styles.stagePillText, { color: t.colors.action.primary.default }]}>
+              <Text style={[styles.stagePillText, { color: t.colors.action.text.default }]}>
                 {stage === 'peek' ? '開く' : stage === 'half' ? '全画面' : '閉じる'}
               </Text>
             </Pressable>
