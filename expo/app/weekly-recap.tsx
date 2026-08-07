@@ -22,7 +22,7 @@ import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, Pressable, StyleSheet, View } from 'react-native';
 import Svg, { Circle, Polyline, Rect, Text as SvgText } from 'react-native-svg';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Body, Caption, Icon, IconButton, MacroChip, Overline, useTheme, type Theme } from '@/design-system';
 import { Logo } from '@/components/Logo';
@@ -53,6 +53,7 @@ const M3_EASE = Easing.bezier(...easing.enter);
 export default function WeeklyRecapScreen() {
   const t = useTheme();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { logs, profile, exerciseLogs, dailyActivities, settings, updateSettingsValues } = useAppState();
 
   const recap = useMemo(
@@ -105,7 +106,7 @@ export default function WeeklyRecapScreen() {
       <Stack.Screen options={{ headerShown: false }} />
       <StatusBar style={current.bg === 'deep' ? 'light' : 'dark'} />
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-        <View style={styles.chrome} pointerEvents="box-none">
+        <View style={[styles.chrome, { top: insets.top }]} pointerEvents="box-none">
           <View style={styles.chromeRow}>
             <View style={styles.chromeMain}>
               <View style={styles.ticks}>
