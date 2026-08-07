@@ -44,20 +44,20 @@ interface Slide {
 const SLIDES: Slide[] = [
   {
     key: 's1',
-    title: '9ボタンで、ざっくり記録。',
-    subtitle: 'ふだんの食事は、タップひとつで残せる。',
+    title: '9ボタンで、ざっくり記録',
+    subtitle: 'ふだんの食事は、タップひとつで残せる',
     media: { kind: 'buttonGrid' },
   },
   {
     key: 's2',
-    title: '急ぎはタップ、余裕は長押し。',
-    subtitle: 'くわしく残したい日は、もう一歩ふみこめる。',
+    title: '急ぎはタップ、余裕は長押し',
+    subtitle: 'くわしく残したい日は、もう一歩ふみこめる',
     media: { kind: 'gestureDemo' },
   },
   {
     key: 's3',
-    title: '進みは、ひと目で。',
-    subtitle: '目標と今の差が、グラフでそのまま見える。',
+    title: '進みは、ひと目で',
+    subtitle: '目標と今の差が、グラフでそのまま見える',
     media: { kind: 'progress' },
   },
 ];

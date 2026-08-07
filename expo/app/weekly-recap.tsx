@@ -380,10 +380,10 @@ function buildCards(recap: WeeklyRecap, styles: Styles): Card[] {
             fontWeight: '300',
           }}
         >
-          ざっくりが、{'\n'}続くコツ。
+          ざっくりが、{'\n'}続くコツ
         </Body>
         <Body size="sm" style={{ color: t.tokens.colors.ivory[100], opacity: 0.75, marginTop: t.spacing['5'] }}>
-          来週の振り返りは、次の月曜に。
+          来週の振り返りは、次の月曜に
         </Body>
         <View style={styles.spacer} />
         <OutroButton t={t} styles={styles} />
