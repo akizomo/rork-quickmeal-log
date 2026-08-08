@@ -16,7 +16,6 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BodyTypeMatrix } from '@/components/BodyTypeMatrix';
-import { BodyTypeSilhouette } from '@/components/BodyTypeSilhouette';
 import {
   bodyType9ToStage,
   deriveTargetCellFromDirection,
@@ -37,9 +36,11 @@ import {
   Heading,
   Icon,
   Label,
+  MacroCard,
   NumberField,
   SelectCard,
   useTheme,
+  type IconName,
   type Theme,
 } from '@/design-system';
 import { useAppState } from '@/providers/app-state-provider';
@@ -58,6 +59,13 @@ import { computePlanOutcome, recommendGoal, type GoalRecommendation } from '@/ut
 // 5=current-body, 6=direction, 7=plan, 8=preview
 const TOTAL_STEPS = 9;
 const ACCESSORY_ID = 'onboarding-next';
+
+// ペースの強さを段階的に示す signal-bar アイコン (1〜3本)。
+const PACE_ICON: Record<PaceLevel, IconName> = {
+  gentle: 'levelLow',
+  standard: 'levelMid',
+  strong: 'levelHigh',
+};
 
 type Step = number;
 
@@ -337,7 +345,6 @@ export default function OnboardingRoute() {
 
               {step === 7 ? (
                 <StepPlan
-                  basis={basis ?? 'male_basis'}
                   direction={direction}
                   currentBodyType9={currentBodyType9}
                   currentWeightKg={Number(weightKg) || null}
@@ -676,7 +683,6 @@ function StepDirection({
 }
 
 function StepPlan({
-  basis,
   direction,
   currentBodyType9,
   currentWeightKg,
@@ -685,7 +691,6 @@ function StepPlan({
   onPace,
   recommendation,
 }: {
-  basis: BiologicalBasis;
   direction: GoalDirection | null;
   currentBodyType9: BodyType9 | null;
   currentWeightKg: number | null;
@@ -757,9 +762,6 @@ function StepPlan({
     );
   }
 
-  const targetCell = deriveTargetCellFromDirection(currentBodyType9, direction);
-  const targetStageForSilhouette = bodyType9ToStage(targetCell);
-
   return (
     <View style={stepWrap}>
       <Heading size="2xl">3ヶ月後、どう変わりたい？</Heading>
@@ -767,12 +769,13 @@ function StepPlan({
       <View style={cardColBottom}>
         {PACE_OPTIONS.map((opt) => {
           const active = paceLevel === opt.key;
+          const paceIcon = PACE_ICON[opt.key];
           const outcome = computePlanOutcome(currentWeightKg, currentBodyFatPct, opt.key, direction);
           const deltaSign = outcome.totalKgDelta >= 0 ? '+' : '-';
           const absDelta = Math.abs(outcome.totalKgDelta).toFixed(1);
           const monthlyAbs = Math.abs(outcome.monthlyKgDelta).toFixed(1);
           const bfDelta =
-            currentBodyFatPct != null ? `BF ${Math.round(currentBodyFatPct)}→${outcome.finalBodyFatPct}%` : null;
+            currentBodyFatPct != null ? `体脂肪率 ${Math.round(currentBodyFatPct)}→${outcome.finalBodyFatPct}%` : null;
           const reachHint = outcome.reachesTargetCell ? '体型が変わるペース' : '変化は小さめ';
           const recommended = opt.key === 'standard';
 
@@ -798,7 +801,11 @@ function StepPlan({
               })}
             >
               <View style={{ width: 56, alignItems: 'center', justifyContent: 'center' }}>
-                <BodyTypeSilhouette basis={basis} stage={targetStageForSilhouette} active={active} size={44} />
+                <Icon
+                  name={paceIcon}
+                  size={28}
+                  color={active ? t.colors.action.primary.default : t.colors.content.tertiary}
+                />
               </View>
               <View style={{ flex: 1, gap: t.spacing['0.5'] }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.spacing['2'] }}>
@@ -960,42 +967,11 @@ function PfcRow({
   fat: number;
   carbs: number;
 }) {
-  // 静的に目標値を見せるだけなので背景はニュートラル (surface.sunken)。
-  // macro の識別は P/F/C ラベルの色だけで担う。
-  const cells: { label: 'P' | 'F' | 'C'; value: number; labelColor: string }[] = [
-    { label: 'P', value: protein, labelColor: t.colors.nutrition.protein.text },
-    { label: 'F', value: fat,     labelColor: t.colors.nutrition.fat.text },
-    { label: 'C', value: carbs,   labelColor: t.colors.nutrition.carbs.text },
-  ];
   return (
     <View style={{ flexDirection: 'row', gap: t.spacing['2'] }}>
-      {cells.map((c) => (
-        <View
-          key={c.label}
-          style={{
-            flex: 1,
-            backgroundColor: t.colors.surface.sunken,
-            borderRadius: t.radius.md,
-            paddingVertical: t.spacing['2'],
-            alignItems: 'center',
-          }}
-        >
-          {/* ロール的には Label (P/F/C = マクロ種別の「名前」)。design-system の
-              MacroChip と同じ制約 (fontSize.xs は Label が持たないサイズ、macro毎の
-              色を直接当てる必要) のため <Label> は使わない。MacroChip 自体は pill
-              背景+横並びで見た目が異なるため流用せず、静的カード表示として独立実装。 */}
-          <Text
-            style={{
-              fontSize: t.typography.fontSize.xs,
-              fontWeight: t.typography.fontWeight.bold as TextStyle['fontWeight'],
-              color: c.labelColor,
-            }}
-          >
-            {c.label}
-          </Text>
-          <Body weight="semibold">{c.value}g</Body>
-        </View>
-      ))}
+      <MacroCard kind="protein" value={protein} />
+      <MacroCard kind="fat" value={fat} />
+      <MacroCard kind="carbs" value={carbs} />
     </View>
   );
 }

@@ -22,6 +22,8 @@ export { Dialog } from './Dialog';
 export type { DialogProps, DialogAction } from './Dialog';
 export { MacroChip } from './MacroChip';
 export type { MacroChipProps, MacroChipKind, MacroChipSize } from './MacroChip';
+export { MacroCard } from './MacroCard';
+export type { MacroCardProps } from './MacroCard';
 export { MealLogCard } from './MealLogCard';
 export type {
   MealLogCardProps,

@@ -27,6 +27,7 @@ export {
   BottomSheet,
   Dialog,
   MacroChip,
+  MacroCard,
   MealLogCard,
 } from './components';
 export type {
@@ -57,6 +58,7 @@ export type {
   MacroChipProps,
   MacroChipKind,
   MacroChipSize,
+  MacroCardProps,
   MealLogCardProps,
   MealLogCardHeaderProps,
   MealLogCardBodyProps,

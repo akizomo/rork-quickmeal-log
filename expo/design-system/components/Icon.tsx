@@ -40,6 +40,9 @@ const ICON_GLYPH = {
   exercise: 'fitness-center',
   widget: 'widgets',
   lightbulb: 'lightbulb-outline',
+  levelLow: 'signal-cellular-alt-1-bar',
+  levelMid: 'signal-cellular-alt-2-bar',
+  levelHigh: 'signal-cellular-alt',
 } as const satisfies Record<string, React.ComponentProps<typeof MaterialIcons>['name']>;
 
 export type IconName = keyof typeof ICON_GLYPH;

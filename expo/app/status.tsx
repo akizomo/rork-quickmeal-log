@@ -14,7 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { SettingsDivider, SettingsLinkRow, SettingsListCard, SettingsSectionLabel } from '@/components/SettingsList';
 import { TRIAL_DURATION_DAYS } from '@/constants/onboarding';
-import { Body, BottomSheet, Caption, Card, Heading, Icon, Label, useTheme } from '@/design-system';
+import { Body, BottomSheet, Caption, Card, Heading, Icon, Label, MacroCard, useTheme } from '@/design-system';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { useHealthSyncContext } from '@/providers/health-sync-provider';
 import type { HealthSyncStatus } from '@/utils/health-sync';
@@ -204,9 +204,9 @@ export default function StatusRoute() {
                   <Caption tone="secondary" style={{ marginLeft: 4, marginBottom: 8 }}>kcal / 日</Caption>
                 </View>
                 <View style={styles.pfcRow}>
-                  <PfcCell label="P" value={profile.targetProtein} color={theme.colors.nutrition.protein.text} background={theme.colors.nutrition.protein.background} />
-                  <PfcCell label="F" value={profile.targetFat} color={theme.colors.nutrition.fat.text} background={theme.colors.nutrition.fat.background} />
-                  <PfcCell label="C" value={profile.targetCarbs} color={theme.colors.nutrition.carbs.text} background={theme.colors.nutrition.carbs.background} />
+                  <MacroCard kind="protein" value={profile.targetProtein} />
+                  <MacroCard kind="fat" value={profile.targetFat} />
+                  <MacroCard kind="carbs" value={profile.targetCarbs} />
                 </View>
                 {paceLabel ? (
                   <Caption tone="secondary">
@@ -342,15 +342,6 @@ function HeroMetric({ label, value, target }: { label: string; value: string; ta
   );
 }
 
-function PfcCell({ label, value, color, background }: { label: string; value: number; color: string; background: string }) {
-  return (
-    <View style={[styles.pfcCell, { backgroundColor: background }]}>
-      <Text style={[styles.pfcLabel, { color }]}>{label}</Text>
-      <Text style={[styles.pfcValue, { color }]}>{value}g</Text>
-    </View>
-  );
-}
-
 function BodyFatSheet({
   visible,
   onClose,
@@ -454,9 +445,6 @@ const styles = StyleSheet.create({
   changeRow: { flexDirection: 'row', alignItems: 'center', gap: 2 },
   kcalRow: { flexDirection: 'row', alignItems: 'flex-end' },
   pfcRow: { flexDirection: 'row', gap: 8 },
-  pfcCell: { flex: 1, borderRadius: 12, paddingVertical: 8, alignItems: 'center' },
-  pfcLabel: { fontSize: fs.xs, fontWeight: '700' },
-  pfcValue: { fontSize: fs.md, fontWeight: '700', marginTop: 2 },
   section: { gap: 8 },
   weightInputWrap: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 16 },
   weightInput: { flex: 1, fontSize: fs['3xl'], fontWeight: '700' },

@@ -87,7 +87,9 @@ export const darkColors: SemanticColors = {
   },
 
   accent: {
-    default: colors.ai[400],  // '#617AC4' — ダーク背景上の藍アクセント
+    // ai[400] on ai[800] (Badge tone="accent" の組み合わせ) は3.23:1でAA(4.5)未達だったため、
+    // 2026-08-07にai[300]へ強化 (4.74:1)。
+    default: colors.ai[300],  // '#8498D8' — ダーク背景上の藍アクセント
     subtle:  colors.ai[800],  // '#1D2C5E' — [900]は真黒に近いため一段上げ
   },
 
@@ -103,10 +105,12 @@ export const darkColors: SemanticColors = {
       track: colors.ivory[950],  // 空のリング/バー (凹み = surface.sunken と同じ段)
     },
 
+    // stable(stone[300] on stone[700])は4.30:1でAA未達だったため、
+    // 2026-08-07にtextをstone[200]へ強化 (5.55:1)。
     trend: {
       improve: { text: colors.moss[300],  graphic: colors.moss[400],  background: colors.moss[800]  },
       worsen:  { text: colors.amber[300], graphic: colors.amber[400], background: colors.amber[800] },
-      stable:  { text: colors.stone[300], graphic: colors.stone[400], background: colors.stone[700] },
+      stable:  { text: colors.stone[200], graphic: colors.stone[400], background: colors.stone[700] },
     },
   },
 };

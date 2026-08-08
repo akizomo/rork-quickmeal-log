@@ -108,18 +108,22 @@ export const lightColors: SemanticColors = {
 
     // カロリー予算 (3段階) — status の意味と重なる "アラート" 系なので
     // moss/amber/clay を再利用してOK。PFC macros と同じく text=600/graphic=400/background=100。
+    // mildExceed のみ amber[600]がbackground比4.41:1でAA(4.5)未達だったため、
+    // 2026-08-07にtextをamber[700]へ強化 (6.91:1)。
     calorie: {
       within:       { text: colors.moss[600],  graphic: colors.moss[400],  background: colors.moss[100]  }, // 予算内
-      mildExceed:   { text: colors.amber[600], graphic: colors.amber[400], background: colors.amber[100] }, // 軽度超過
+      mildExceed:   { text: colors.amber[700], graphic: colors.amber[400], background: colors.amber[100] }, // 軽度超過
       severeExceed: { text: colors.clay[600],  graphic: colors.clay[400],  background: colors.clay[100]  }, // 大幅超過
       track:        colors.ivory[300],  // 空のリング/バー (凹み = surface.sunkenと同じ段、2026-08-06)
     },
 
     // 体重・進捗トレンド — status と意味が重なるため hue 共有。同じく text=600/graphic=400/background=100。
+    // worsen(amber[600])はcalorie.mildExceedと同じ理由でamber[700]へ強化 (2026-08-07)。
+    // stable(stone[600] on stone[100])も3.92:1でAA未達だったため stone[700] (6.71:1) へ強化。
     trend: {
       improve: { text: colors.moss[600],  graphic: colors.moss[400],  background: colors.moss[100]  }, // 改善
-      worsen:  { text: colors.amber[600], graphic: colors.amber[400], background: colors.amber[100] }, // 悪化 (danger ではなく warning 感)
-      stable:  { text: colors.stone[600], graphic: colors.stone[400], background: colors.stone[100] }, // 維持 (ニュートラル)
+      worsen:  { text: colors.amber[700], graphic: colors.amber[400], background: colors.amber[100] }, // 悪化 (danger ではなく warning 感)
+      stable:  { text: colors.stone[700], graphic: colors.stone[400], background: colors.stone[100] }, // 維持 (ニュートラル)
     },
   },
 };
