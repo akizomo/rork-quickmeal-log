@@ -223,6 +223,11 @@ export function BottomSheet({
     onCloseRef.current = onClose;
   }, [onClose]);
 
+  // ScrollViewの縦スクロール量を保持する。コンテンツ領域も下スワイプで
+  // 閉じられるようにするが、それは一番上までスクロール済みの時だけ。
+  // そうでなければ下方向のドラッグは通常のスクロールとして扱う。
+  const contentScrollY = useRef(0);
+
   /**
    * Request close: animate sheet down + scrim out, then call onClose().
    * Idempotent — multiple invocations during animation are coalesced.
@@ -305,60 +310,89 @@ export function BottomSheet({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible, dragY, keyboardY, openProgress]);
 
-  // Drag-to-dismiss (only on handle area)
+  // Shared drag handling — used by both panResponder (handle/header/footer,
+  // always active) and contentPanResponder (scrollable content, only active
+  // once scrolled to top so it doesn't fight the ScrollView).
+  const handleDragMove = useCallback(
+    (_: unknown, g: { dy: number }) => {
+      // Rubber-band when dragging upward.
+      const y = g.dy >= 0 ? g.dy : g.dy / 4;
+      dragY.setValue(y);
+    },
+    [dragY]
+  );
+  const handleDragRelease = useCallback(
+    (_: unknown, g: { dy: number; vy: number }) => {
+      const shouldClose = g.dy > DISMISS_TRANSLATE || g.vy > DISMISS_VELOCITY;
+      if (shouldClose) {
+        // Continue downward with current velocity, then call onClose
+        Animated.parallel([
+          Animated.spring(dragY, {
+            toValue: TRANSLATE_OFFSCREEN,
+            velocity: g.vy * 1000,
+            tension: 90,
+            friction: 14,
+            useNativeDriver: true,
+          }),
+          Animated.timing(openProgress, {
+            toValue: 0,
+            duration: CLOSE_DURATION,
+            easing: CLOSE_EASING,
+            useNativeDriver: true,
+          }),
+        ]).start(({ finished }) => {
+          if (finished) {
+            dragY.setValue(0);
+            onCloseRef.current();
+          }
+        });
+      } else {
+        Animated.spring(dragY, {
+          toValue: 0,
+          tension: 90,
+          friction: 12,
+          useNativeDriver: true,
+        }).start();
+      }
+    },
+    [dragY, openProgress]
+  );
+  const handleDragTerminate = useCallback(() => {
+    Animated.spring(dragY, {
+      toValue: 0,
+      tension: 90,
+      friction: 12,
+      useNativeDriver: true,
+    }).start();
+  }, [dragY]);
+
+  // Drag-to-dismiss on the handle/header/footer — these have no competing
+  // vertical gesture, so any downward drag can claim the responder.
   const panResponder = useMemo(
     () =>
       PanResponder.create({
         onStartShouldSetPanResponder: () => dragToDismiss,
         onMoveShouldSetPanResponder: (_, g) => dragToDismiss && Math.abs(g.dy) > 4,
-        onPanResponderMove: (_, g) => {
-          // Rubber-band when dragging upward.
-          const y = g.dy >= 0 ? g.dy : g.dy / 4;
-          dragY.setValue(y);
-        },
-        onPanResponderRelease: (_, g) => {
-          const shouldClose = g.dy > DISMISS_TRANSLATE || g.vy > DISMISS_VELOCITY;
-          if (shouldClose) {
-            // Continue downward with current velocity, then call onClose
-            Animated.parallel([
-              Animated.spring(dragY, {
-                toValue: TRANSLATE_OFFSCREEN,
-                velocity: g.vy * 1000,
-                tension: 90,
-                friction: 14,
-                useNativeDriver: true,
-              }),
-              Animated.timing(openProgress, {
-                toValue: 0,
-                duration: CLOSE_DURATION,
-                easing: CLOSE_EASING,
-                useNativeDriver: true,
-              }),
-            ]).start(({ finished }) => {
-              if (finished) {
-                dragY.setValue(0);
-                onCloseRef.current();
-              }
-            });
-          } else {
-            Animated.spring(dragY, {
-              toValue: 0,
-              tension: 90,
-              friction: 12,
-              useNativeDriver: true,
-            }).start();
-          }
-        },
-        onPanResponderTerminate: () => {
-          Animated.spring(dragY, {
-            toValue: 0,
-            tension: 90,
-            friction: 12,
-            useNativeDriver: true,
-          }).start();
-        },
+        onPanResponderMove: handleDragMove,
+        onPanResponderRelease: handleDragRelease,
+        onPanResponderTerminate: handleDragTerminate,
       }),
-    [dragToDismiss, dragY, openProgress]
+    [dragToDismiss, handleDragMove, handleDragRelease, handleDragTerminate]
+  );
+
+  // Drag-to-dismiss on the scrollable content area — only claims the
+  // gesture once the list is already scrolled to the top and the drag is
+  // downward, so it doesn't block normal scrolling.
+  const contentPanResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onMoveShouldSetPanResponderCapture: (_, g) =>
+          dragToDismiss && g.dy > 6 && contentScrollY.current <= 0,
+        onPanResponderMove: handleDragMove,
+        onPanResponderRelease: handleDragRelease,
+        onPanResponderTerminate: handleDragTerminate,
+      }),
+    [dragToDismiss, handleDragMove, handleDragRelease, handleDragTerminate]
   );
 
   // Backdrop press — declared before any early return to satisfy rules-of-hooks.
@@ -499,17 +533,27 @@ export function BottomSheet({
             </View>
           ) : null}
 
-          {/* Header */}
+          {/* Header — also carries the pan responder so full-screen sheets
+              (where the handle sits far from most touches) can still be
+              swiped closed from the header area. */}
           {cached.title || cached.headerRight !== undefined ? (
-            <View style={[styles.header, { paddingHorizontal: t.spacing['5'] }]}>
+            <View
+              {...(dragToDismiss ? panResponder.panHandlers : {})}
+              style={[styles.header, { paddingHorizontal: t.spacing['5'] }]}
+            >
               {cached.title ? <Heading size="lg">{cached.title}</Heading> : <View />}
               {renderHeaderRight()}
             </View>
           ) : null}
 
-          {/* Content */}
+          {/* Content — dismiss-swipe reaches here too, so a thumb resting
+              near the bottom of a full-screen sheet can close it without
+              hunting for the handle/header. On the ScrollView this only
+              claims the gesture once already scrolled to the top, so it
+              doesn't fight normal scrolling. */}
           {scrollable ? (
             <ScrollView
+              {...(dragToDismiss ? contentPanResponder.panHandlers : {})}
               contentContainerStyle={[
                 {
                   paddingHorizontal: t.spacing['5'],
@@ -518,6 +562,10 @@ export function BottomSheet({
                 },
                 contentStyle,
               ]}
+              onScroll={(e) => {
+                contentScrollY.current = e.nativeEvent.contentOffset.y;
+              }}
+              scrollEventThrottle={16}
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
             >
@@ -525,6 +573,7 @@ export function BottomSheet({
             </ScrollView>
           ) : (
             <View
+              {...(dragToDismiss ? panResponder.panHandlers : {})}
               style={[
                 {
                   paddingHorizontal: t.spacing['5'],
@@ -538,9 +587,11 @@ export function BottomSheet({
             </View>
           )}
 
-          {/* Footer (横並び・右が primary) */}
+          {/* Footer (横並び・右が primary) — also swipeable so the bottom
+              edge of the sheet, where a thumb naturally rests, closes it. */}
           {hasFooter ? (
             <View
+              {...(dragToDismiss ? panResponder.panHandlers : {})}
               style={[
                 styles.actions,
                 {
