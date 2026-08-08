@@ -263,7 +263,10 @@ export const DayLogBottomSheet = memo(
             </View>
             <Pressable
               onPress={handleHandlePress}
-              style={[styles.stagePill, { backgroundColor: t.colors.surface.raised }]}
+              // 主要CTAではない開閉トグルなのでテキストボタンにする (2026-08-07指摘)。
+              // 塗り面(surface.raised/action.primary.container等)は目立ちすぎたり
+              // シートと同化したりを繰り返したため、そもそも塗らない方針にした。
+              style={styles.stagePill}
               testID="sheet-stage-toggle"
             >
               <Text style={[styles.stagePillText, { color: t.colors.action.text.default }]}>

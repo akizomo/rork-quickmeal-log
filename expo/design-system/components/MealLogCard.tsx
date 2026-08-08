@@ -132,7 +132,7 @@ function MealLogCardHeader({
             fontSize: t.typography.fontSize.sm,
             lineHeight: t.typography.lineHeight.sm,
             fontWeight: t.typography.fontWeight.bold as TextStyle['fontWeight'],
-            color: t.colors.action.text.default,
+            color: t.colors.content.primary,
           }}
         >
           {Math.round(kcal)} kcal

@@ -43,6 +43,7 @@ import {
   type IconName,
   type Theme,
 } from '@/design-system';
+import { colors } from '@/design-system/tokens/primitives/colors';
 import { useAppState } from '@/providers/app-state-provider';
 import {
   ActivityLevel,
@@ -733,7 +734,7 @@ function StepPlan({
             <Label tone="secondary">
               1日の目標
             </Label>
-            <Heading size="xl" tone="link">
+            <Heading size="xl">
               {recommendation.targetKcal} kcal
             </Heading>
           </View>
@@ -891,7 +892,7 @@ function StepPreview({
           <Label tone="secondary">
             1日の目標
           </Label>
-          <Heading size="xl" tone="link">
+          <Heading size="xl">
             {recommendation.targetKcal} kcal
           </Heading>
         </View>
@@ -927,12 +928,19 @@ function StepPreview({
                   height: 20,
                   borderRadius: 10,
                   marginTop: 1,
-                  backgroundColor: t.colors.action.primary.default,
+                  // アクション色(action.primary)はインタラクティブ要素専用。
+                  // このチェックマークは「達成/良い」を示す状態表示なので
+                  // status.successを使う (2026-08-07指摘)。
+                  backgroundColor: t.colors.status.success.default,
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
               >
-                <Icon name="check" size={12} color={t.colors.content.onAction} />
+                {/* status.success.defaultはtheme間でmoss[400]/[500]と中間トーンで
+                    固定的ではないため、content.onAction(action.primary専用に調整
+                    済み)は流用しない。固定の濃色アイコンで両テーマとも十分な
+                    コントラストを確保する。 */}
+                <Icon name="check" size={12} color={colors.stone[900]} />
               </View>
               <Body size="sm" style={{ flex: 1 }}>
                 {tip}

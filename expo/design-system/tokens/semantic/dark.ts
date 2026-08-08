@@ -47,7 +47,7 @@ export const darkColors: SemanticColors = {
       default:     colors.sage[400],  // '#9AB594' — onAction(濃色)比 7.65:1
       pressed:     colors.sage[500],  // '#82A280' — 押下でさらに暗く、6.04:1
       disabled:    colors.sage[200],  // '#C9D8C2' — disabledはAA対象外 (WCAG 1.4.3)、明方向に統一
-      container:   colors.sage[900],  // '#264F44' — sage コンテナ (selected 背景)
+      container:   colors.sage[950],  // '#022E24' — 薄い色付け (light containerと同程度のCR、2026-08-07)
       onContainer: colors.sage[200],  // '#C9D8C2' — dark container 上の明色テキスト
     },
     secondary: {
@@ -103,9 +103,9 @@ export const darkColors: SemanticColors = {
     // (within.graphic)が完全に同色になり2本のアークが区別できなかった
     // (2026-08-07指摘)。
     calorie: {
-      within:       { text: colors.moss[300],  graphic: colors.moss[400],  background: colors.moss[800]  },
-      mildExceed:   { text: colors.amber[300], graphic: colors.amber[400], background: colors.amber[800] },
-      severeExceed: { text: colors.clay[300],  graphic: colors.clay[400],  background: colors.clay[800]  },
+      within:       { text: colors.moss[300],  graphic: colors.moss[400],  background: colors.moss[800],  onGraphic: colors.stone[900] },
+      mildExceed:   { text: colors.amber[300], graphic: colors.amber[400], background: colors.amber[800], onGraphic: colors.stone[900] },
+      severeExceed: { text: colors.clay[300],  graphic: colors.clay[400],  background: colors.clay[800],  onGraphic: colors.stone[900] },
       track: colors.ivory[950],  // 空のリング/バー (凹み = surface.sunken と同じ段)
     },
 

@@ -110,10 +110,12 @@ export const lightColors: SemanticColors = {
     // moss/amber/clay を再利用してOK。PFC macros と同じく text=600/graphic=400/background=100。
     // mildExceed のみ amber[600]がbackground比4.41:1でAA(4.5)未達だったため、
     // 2026-08-07にtextをamber[700]へ強化 (6.91:1)。
+    // onGraphic: graphicはtheme非依存の固定トーン(400番)なので、その上に乗る文字も
+    // 固定色にする(light/darkとも同じstone[900])。カレンダードット等で使用。
     calorie: {
-      within:       { text: colors.moss[600],  graphic: colors.moss[400],  background: colors.moss[100]  }, // 予算内
-      mildExceed:   { text: colors.amber[700], graphic: colors.amber[400], background: colors.amber[100] }, // 軽度超過
-      severeExceed: { text: colors.clay[600],  graphic: colors.clay[400],  background: colors.clay[100]  }, // 大幅超過
+      within:       { text: colors.moss[600],  graphic: colors.moss[400],  background: colors.moss[100],  onGraphic: colors.stone[900] }, // 予算内
+      mildExceed:   { text: colors.amber[700], graphic: colors.amber[400], background: colors.amber[100], onGraphic: colors.stone[900] }, // 軽度超過
+      severeExceed: { text: colors.clay[600],  graphic: colors.clay[400],  background: colors.clay[100],  onGraphic: colors.stone[900] }, // 大幅超過
       track:        colors.ivory[300],  // 空のリング/バー (凹み = surface.sunkenと同じ段、2026-08-06)
     },
 

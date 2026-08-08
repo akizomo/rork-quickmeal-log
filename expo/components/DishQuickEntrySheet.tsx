@@ -619,7 +619,7 @@ const makeStyles = (t: Theme) => StyleSheet.create({
   previewKcal: {
     fontSize: fs['2xl'],
     fontWeight: '700',
-    color: t.colors.action.text.default,
+    color: t.colors.content.primary,
   },
   macroLine: {
     fontSize: fs.sm,

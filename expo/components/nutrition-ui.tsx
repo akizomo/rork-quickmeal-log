@@ -336,12 +336,8 @@ function BalanceMathRow({
   const styles = useMemo(() => makeStyles(t), [t]);
   const isStrong = emphasis === 'strong';
   const isMid = emphasis === 'mid';
-  const valueColor =
-    tone === 'alert'
-      ? t.colors.status.danger.default
-      : tone === 'positive'
-        ? t.colors.action.text.default
-        : t.colors.content.primary;
+  // カロリー数値はニュートラルに統一 (2026-08-07指摘)。alertのみ状態色を残す。
+  const valueColor = tone === 'alert' ? t.colors.status.danger.default : t.colors.content.primary;
   return (
     <View style={[styles.balanceMathRow, isStrong && styles.balanceMathRowStrong]}>
       <Text
@@ -1851,7 +1847,7 @@ const makeStyles = (t: Theme) => StyleSheet.create({
   previewSummaryText: { fontSize: fs.md, color: t.colors.content.primary, fontWeight: '600', lineHeight: 20 },
   previewSummaryDivider: { color: t.colors.content.secondary, fontWeight: '400' },
   previewSummarySecondary: { fontSize: fs.sm, color: t.colors.content.secondary, marginTop: -2 },
-  previewCalories: { fontSize: fs['3xl'], fontWeight: '700', color: t.colors.action.text.default },
+  previewCalories: { fontSize: fs['3xl'], fontWeight: '700', color: t.colors.content.primary },
   categoryRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: t.colors.surface.raised, borderRadius: radius.lg, paddingHorizontal: 16, paddingVertical: 12 },
   categoryRowLabel: { fontSize: fs.sm, color: t.colors.content.secondary, fontWeight: '600' },
   categoryRowValue: { flexDirection: 'row', alignItems: 'center', gap: 8 },

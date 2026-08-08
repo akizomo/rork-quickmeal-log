@@ -109,9 +109,12 @@ export type SemanticColors = {
 
     // カロリー予算ゲージ (3段階) — 各状態も text/graphic/background の3用途で分離する。
     calorie: {
-      within:       { text: string; graphic: string; background: string }; // 予算内 (健康的)
-      mildExceed:   { text: string; graphic: string; background: string }; // 軽度超過 (注意)
-      severeExceed: { text: string; graphic: string; background: string }; // 大幅超過 (警告)
+      // onGraphic = graphic色の塗り(カレンダードット等)の上に直接文字を置く場合の色。
+      // graphicはtheme非依存の固定トーン(400番)なので、onGraphicも同じくtheme非依存の
+      // 固定色にする(light/dark両方で同じ値)。
+      within:       { text: string; graphic: string; background: string; onGraphic: string }; // 予算内 (健康的)
+      mildExceed:   { text: string; graphic: string; background: string; onGraphic: string }; // 軽度超過 (注意)
+      severeExceed: { text: string; graphic: string; background: string; onGraphic: string }; // 大幅超過 (警告)
       track:        string; // 空のリング/バー (単一値。3用途の対象外)
     };
 

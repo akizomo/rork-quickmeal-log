@@ -26,7 +26,13 @@ export const colors = {
     600: '#6D8D76', // legacy: palette.sageStrong
     700: '#54736C',
     800: '#355E52', // legacy: palette.sageDeep
-    900: '#264F44', // legacy: palette.text
+    900: '#264F44', // legacy: palette.text — light の pressed/onContainer 用に留める
+    // sage[900](L*30.5)は他色相の900(L*4〜10.5)と比べて突出して明るく、
+    // dark action.primary.container に転用すると通常ボタン並みに目立ちすぎた
+    // (2026-08-07指摘)。light の container(sage[100]) が背景比CR1.11〜1.21の
+    // 「薄い色付け」に留まっているのに合わせ、同程度のCR(1.18)になる専用の
+    // 深い段を追加。sage[900]自体はlight側の役割を壊さないよう変更しない。
+    950: '#022E24',
   },
 
   // Ivory — 温かみのあるオフホワイト〜warm near-black。

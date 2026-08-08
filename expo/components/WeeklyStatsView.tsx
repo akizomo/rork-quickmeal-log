@@ -435,7 +435,7 @@ const makeStyles = (t: Theme) => StyleSheet.create({
   summaryKcal: {
     fontSize: fs['2xl'],
     fontWeight: '700',
-    color: t.colors.action.text.default,
+    color: t.colors.content.primary,
   },
   summaryKcalTarget: {
     fontSize: fs.md,
@@ -504,7 +504,7 @@ const makeStyles = (t: Theme) => StyleSheet.create({
   dayKcal: {
     fontSize: fs.md,
     fontWeight: '700',
-    color: t.colors.action.text.default,
+    color: t.colors.content.primary,
   },
   dayMacroLine: {
     fontSize: fs.xs,

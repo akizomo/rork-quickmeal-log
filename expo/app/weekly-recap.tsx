@@ -25,6 +25,7 @@ import Svg, { Circle, Polyline, Rect, Text as SvgText } from 'react-native-svg';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Body, Caption, Icon, IconButton, MacroChip, Overline, useTheme, type Theme } from '@/design-system';
+import { colors } from '@/design-system/tokens/primitives/colors';
 import { Logo } from '@/components/Logo';
 import { duration, easing } from '@/design-system/tokens/primitives/motion';
 import { radius } from '@/design-system/tokens/primitives/radius';
@@ -224,11 +225,13 @@ function buildCards(recap: WeeklyRecap, styles: Styles): Card[] {
                 style={[
                   styles.dot,
                   d.logged
-                    ? { backgroundColor: t.colors.action.primary.default }
+                    // アクション色は本来インタラクティブ要素専用。「記録した日」は
+                    // 状態表示なのでstatus.successを使う (2026-08-07指摘)。
+                    ? { backgroundColor: t.colors.status.success.default }
                     : { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: t.colors.border.default, borderStyle: 'dashed' },
                 ]}
               >
-                {d.logged ? <Icon name="check" size={16} color={t.colors.content.onAction} /> : null}
+                {d.logged ? <Icon name="check" size={16} color={colors.stone[900]} /> : null}
               </View>
             ))}
           </View>

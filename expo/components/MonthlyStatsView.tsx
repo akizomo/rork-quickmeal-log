@@ -235,16 +235,20 @@ export function MonthlyStatsView() {
             const ratio = maxKcal > 0 ? Math.min(kcal / maxKcal, 1.4) : 0;
             const r = kcal > 0 ? Math.max(minR + 2, ratio * maxR) : minR;
             const dayTarget = monthAdjustedTargetMap.get(cell.dateKey) ?? targetKcal;
-            const color = (() => {
-              if (kcal === 0) return 'transparent';
-              if (dayTarget === 0) return t.colors.nutrition.calorie.within.graphic;
-              const overall = kcal / dayTarget;
-              // 〜110%: 予算内 (moss)、110〜130%: 軽度超過 (amber)、130%超: 大幅超過 (clay)
-              // 不足はサイズで表現し、色はカロリー予算カラーに統一する。
-              if (overall <= 1.1) return t.colors.nutrition.calorie.within.graphic;
-              if (overall <= 1.3) return t.colors.nutrition.calorie.mildExceed.graphic;
-              return t.colors.nutrition.calorie.severeExceed.graphic;
-            })();
+            // 日付の数字はドットの上に直接乗るため、graphic色に対応するonGraphic
+            // (theme非依存の固定濃色) を使う。content.primaryはページ背景用の色で、
+            // ドット色(moss/amber/clay系の固定400番)との組み合わせは想定しておらず
+            // コントラストが不足していた (dark: CR1.7〜3.2、2026-08-07指摘)。
+            const tier =
+              kcal === 0 || dayTarget === 0
+                ? 'within'
+                : kcal / dayTarget <= 1.1
+                  ? 'within'
+                  : kcal / dayTarget <= 1.3
+                    ? 'mildExceed'
+                    : 'severeExceed';
+            const color = kcal === 0 ? 'transparent' : t.colors.nutrition.calorie[tier].graphic;
+            const onGraphicColor = t.colors.nutrition.calorie[tier].onGraphic;
             const dim = !cell.inMonth || future;
             return (
               <Pressable
@@ -276,6 +280,7 @@ export function MonthlyStatsView() {
                     styles.cellText,
                     dim ? styles.cellTextDim : null,
                     isSameDay(cell.date, today) ? styles.cellTextToday : null,
+                    kcal > 0 ? { color: onGraphicColor, opacity: 1 } : null,
                   ]}
                 >
                   {cell.date.getDate()}
@@ -462,7 +467,7 @@ const makeStyles = (t: Theme) => StyleSheet.create({
   summaryKcal: {
     fontSize: fs['2xl'],
     fontWeight: '700',
-    color: t.colors.action.text.default,
+    color: t.colors.content.primary,
   },
   summaryKcalTarget: {
     fontSize: fs.md,
@@ -530,7 +535,7 @@ const makeStyles = (t: Theme) => StyleSheet.create({
   dayKcal: {
     fontSize: fs.md,
     fontWeight: '700',
-    color: t.colors.action.text.default,
+    color: t.colors.content.primary,
   },
   dayMacroLine: {
     fontSize: fs.xs,
