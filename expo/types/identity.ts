@@ -34,6 +34,7 @@ export type IngredientBucketKey =
   | 'snack_drink';  // おやつ甘飲
 
 export type DishBucketKey =
+  // ── JP (locale: 'ja') ──────────────────────────────────────────
   | 'rice_dish'         // どんぶり
   | 'curry'             // カレー
   | 'chinese_noodles'   // ラーメン中華麺
@@ -42,7 +43,17 @@ export type DishBucketKey =
   | 'sushi'             // 寿司
   | 'sandwich'          // サンドバーガー
   | 'pizza'             // ピザ
-  | 'misc_dish';        // おかず・単品
+  | 'misc_dish'         // おかず・単品
+  // ── US (locale: 'en-US') — Phase 2 data (docs/US-food-db-design.md §3) ──
+  | 'burger_sandwich'   // Burgers & Sandwiches
+  | 'pizza_pasta'       // Pizza & Pasta
+  | 'chicken'           // Chicken
+  | 'mexican'           // Mexican & Tex-Mex
+  | 'american_plate'    // American Plates
+  | 'soup_stew'         // Soups, Stews & Chili
+  | 'bowl_salad'        // Bowls & Salads
+  | 'asian_takeout'     // Asian Takeout
+  | 'breakfast';        // Breakfast
 
 export type BucketKey = IngredientBucketKey | DishBucketKey;
 
@@ -59,6 +70,12 @@ export interface BucketDef {
    * default to be representative (e.g., 寿司: plate vs piece vs ちらし vs 巻).
    */
   quickTapDisabled?: boolean;
+  /**
+   * ロケール限定バケット。undefined = 全ロケールで表示。
+   * buildRegistry が active locale とマッチするバケットのみを返す。
+   * ingredient バケットはロケール共通なので通常 undefined。
+   */
+  locale?: import('@/types/locale').AppLocale;
 }
 
 // ---------------------------------------------------------------------------
@@ -215,7 +232,15 @@ export interface AmountSpec {
   min?: number;
   /** Upper bound for direct edit. Derived from last chip × 4 when omitted. */
   max?: number;
-  /** Step granularity for stepper / TextInput. Falls back to 1 when omitted (= integers). */
+  /**
+   * +/- ステッパーの刻み。省略時は 1 (% は 10)。
+   *
+   * **キーボードで打てる刻みとは別物。** 入力グリッドは単位から決まり、常に
+   * これと同じかより細かい (数え物 0.25 / % 1 / g・ml は step と一致)。
+   * つまり「1個ずつ上下するが 1.5個 は打てる」が既定の挙動。
+   * 数え物でこれを明示すると段階制 (1未満0.5刻み / 1以上1刻み) をやめ、
+   * 全域をこの刻みで統一する。詳細は utils/amount-edit.ts。
+   */
   step?: number;
   /** P2 future: brand/chain-store presets. */
   brandChips?: BrandChip[];

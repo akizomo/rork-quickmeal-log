@@ -356,8 +356,10 @@ export function IdentityLogSheet() {
         step: altAmountSpec.step,
       }
     : effectiveAmount;
+  // alt 単位の表示値。整数に丸めると 1.5個 (=45g) が 2個 と表示されて保存値と
+  // 食い違うため、入力グリッド (数え物は 0.25) まで残して丸める。
   const displayAmountValue = isAltMode && altAmountSpec
-    ? Math.round(amountValue / altAmountSpec.gramsPerUnit)
+    ? Math.round((amountValue / altAmountSpec.gramsPerUnit) * 4) / 4
     : amountValue;
 
   const handleSelectAmountChip = useCallback((value: number) => {

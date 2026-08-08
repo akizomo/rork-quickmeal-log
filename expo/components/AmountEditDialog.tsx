@@ -67,8 +67,13 @@ export type AmountEditDialogProps = {
 // ---------------------------------------------------------------------------
 
 /** Format a number for display, trimming unnecessary trailing zeros. */
-function formatValue(value: number, decimals: 0 | 1): string {
-  return decimals === 1 ? value.toFixed(1).replace(/\.0$/, '') : String(Math.round(value));
+function formatValue(value: number, decimals: 0 | 1 | 2): string {
+  if (decimals === 0) return String(Math.round(value));
+  // 1 → "1", 1.5 → "1.5", 0.25 → "0.25" (小数側の余分な 0 のみ落とす)
+  return value
+    .toFixed(decimals)
+    .replace(/(\.\d*?)0+$/, '$1')
+    .replace(/\.$/, '');
 }
 
 // ---------------------------------------------------------------------------
@@ -245,7 +250,7 @@ export function AmountEditDialog({
             value={rawInput}
             onChangeText={handleChangeText}
             onBlur={handleInputBlur}
-            keyboardType={config.decimals === 1 ? 'decimal-pad' : 'number-pad'}
+            keyboardType={config.decimals > 0 ? 'decimal-pad' : 'number-pad'}
             returnKeyType="done"
             onSubmitEditing={() => commitAndClose(draft)}
             accessibilityLabel={`量を入力。${config.min}から${config.max}${config.unitLabel}の範囲`}

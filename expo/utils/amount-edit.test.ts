@@ -20,6 +20,7 @@ import {
   buildSushiAmountEditConfig,
   buildPizzaAmountEditConfig,
   buildIdentityAmountEditConfig,
+  stepperStepAt,
   type AmountEditConfig,
 } from './amount-edit';
 
@@ -250,18 +251,66 @@ describe('incrementBy', () => {
     expect(incrementBy(2, halfConfig)).toBeCloseTo(2.5);
   });
 
-  it('non-snapped input (2.3, step=0.5): snaps up then steps → 2.5', () => {
-    // snap(2.3) = 2.5, then +0.5 = 3, but we snap first
-    // actually snap(2.3) = 2.5, then clamp(2.5 + 0.5) = 3
-    // depends on implementation: snap THEN add step
-    const result = incrementBy(2.3, halfConfig);
-    // snap(2.3) → 2.5, then +0.5 → 3.0, or snap first and return 2.5?
-    // Plan says: snap-up before stepping. So result should be 3.0 (snap then add)
-    expect(result).toBeCloseTo(3.0);
+  it('non-snapped input (2.3, step=0.5): 直上の格子点 → 2.5', () => {
+    // 「snap してから +step」だと 2.5 を飛ばして 3.0 に行ってしまう。
+    // +/- は「一段上/下の有効値へ移る」意味なので 2.5 が正しい。
+    expect(incrementBy(2.3, halfConfig)).toBeCloseTo(2.5);
   });
 
   it('at max with step=0.5: stays at max', () => {
     expect(incrementBy(10, halfConfig)).toBeCloseTo(10);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// stepperTiers (段階制の +/- 刻み)
+// ---------------------------------------------------------------------------
+
+describe('stepperTiers', () => {
+  // 数え物の既定: 1未満は 0.5 刻み / 1以上は 1 刻み。入力グリッドは 0.25。
+  const countConfig: AmountEditConfig = {
+    min: 0.25,
+    max: 8,
+    step: 0.25,
+    stepperTiers: [
+      { upTo: 1, step: 0.5 },
+      { upTo: Infinity, step: 1 },
+    ],
+    decimals: 2,
+    unitLabel: '個',
+    presets: [0.5, 1, 2],
+    defaultValue: 1,
+  };
+
+  it('1個以上は 1 刻みで上がる', () => {
+    expect(incrementBy(1, countConfig)).toBeCloseTo(2);
+    expect(incrementBy(2, countConfig)).toBeCloseTo(3);
+  });
+
+  it('1個未満は 0.5 刻みで上がる', () => {
+    expect(incrementBy(0.5, countConfig)).toBeCloseTo(1);
+  });
+
+  it('1個から下げると 0.5個 に降りる (0 に落ちない)', () => {
+    expect(decrementBy(1, countConfig)).toBeCloseTo(0.5);
+  });
+
+  it('2個から下げると 1個', () => {
+    expect(decrementBy(2, countConfig)).toBeCloseTo(1);
+  });
+
+  it('チップ由来の 1.5個 から +/- は 2個 / 1個 (飛ばさない)', () => {
+    expect(incrementBy(1.5, countConfig)).toBeCloseTo(2);
+    expect(decrementBy(1.5, countConfig)).toBeCloseTo(1);
+  });
+
+  it('入力された 0.25個 は有効、+ で 0.5個 に乗る', () => {
+    expect(isValidAmount(0.25, countConfig)).toBe(true);
+    expect(incrementBy(0.25, countConfig)).toBeCloseTo(0.5);
+  });
+
+  it('0.3個 のような格子外は無効 (完了ボタンを塞ぐ)', () => {
+    expect(isValidAmount(0.3, countConfig)).toBe(false);
   });
 });
 
@@ -559,7 +608,10 @@ describe('buildIdentityAmountEditConfig', () => {
       ],
     };
     const config = buildIdentityAmountEditConfig(spec);
-    expect(config.step).toBe(10);
+    // % の入力グリッドは常に 1 (67%/133% のような非10刻みチップが実在する)。
+    // spec.step=10 は +/- の刻みとして stepperTiers に入る。
+    expect(config.step).toBe(1);
+    expect(stepperStepAt(100, config)).toBe(10);
     expect(config.decimals).toBe(0);
     expect(config.min).toBe(10);
     expect(config.max).toBe(400);
@@ -569,6 +621,66 @@ describe('buildIdentityAmountEditConfig', () => {
     for (const p of config.presets) {
       expect(isValidAmount(p, config)).toBe(true);
     }
+  });
+
+  it('percent: 10刻みでないチップ (67%/133%) も有効なまま扱える', () => {
+    const spec = {
+      unit: 'percent' as const,
+      default: 100,
+      chips: [
+        { label: '小', value: 67 },
+        { label: '1本', value: 100 },
+        { label: '大', value: 133 },
+      ],
+    };
+    const config = buildIdentityAmountEditConfig(spec);
+    for (const p of config.presets) {
+      expect(isValidAmount(p, config)).toBe(true);
+      expect(snapToStep(p, config)).toBe(p);
+    }
+    // +/- は 10 刻みのまま。67% から + は直上の 70%
+    expect(incrementBy(67, config)).toBe(70);
+    expect(decrementBy(67, config)).toBe(60);
+  });
+
+  // -------------------------------------------------------------------------
+  // count units (個/切/切れ/皿)
+  // -------------------------------------------------------------------------
+
+  it('piece: 入力グリッドは 0.25、+/- は段階制', () => {
+    const spec = { unit: 'piece' as const, default: 1 };
+    const config = buildIdentityAmountEditConfig(spec);
+    expect(config.step).toBe(0.25);
+    expect(config.min).toBe(0.25);
+    expect(config.decimals).toBe(2);
+    expect(stepperStepAt(0.5, config)).toBe(0.5);
+    expect(stepperStepAt(3, config)).toBe(1);
+    // チップの無い食材 (卵など) でも半分に降りられる
+    expect(decrementBy(1, config)).toBeCloseTo(0.5);
+  });
+
+  it('piece: 半分チップが丸められずそのまま有効', () => {
+    const spec = {
+      unit: 'piece' as const,
+      default: 0.5,
+      unitLabel: '丁',
+      chips: [
+        { label: '半丁', value: 0.5 },
+        { label: '1丁', value: 1 },
+      ],
+    };
+    const config = buildIdentityAmountEditConfig(spec);
+    expect(isValidAmount(0.5, config)).toBe(true);
+    expect(snapToStep(0.5, config)).toBe(0.5);
+    expect(isValidAmount(config.defaultValue, config)).toBe(true);
+  });
+
+  it('piece: spec.step が明示されていれば段階制を使わずその刻みで統一する', () => {
+    const spec = { unit: 'piece' as const, default: 1, unitLabel: '枚', step: 0.5 };
+    const config = buildIdentityAmountEditConfig(spec);
+    expect(stepperStepAt(0.5, config)).toBe(0.5);
+    expect(stepperStepAt(3, config)).toBe(0.5);
+    expect(incrementBy(1, config)).toBeCloseTo(1.5);
   });
 
   it('percent: snapToStep(30) with step=10 stays at 30', () => {
