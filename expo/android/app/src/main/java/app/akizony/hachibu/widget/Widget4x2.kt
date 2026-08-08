@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.glance.*
 import app.akizony.hachibu.R
 import androidx.glance.GlanceId
@@ -36,7 +37,13 @@ class Widget4x2Glance : GlanceAppWidget() {
         val widgetH    = LocalSize.current.height
         val ringColDp  = (widgetH.value - 16f).coerceAtLeast(64f)
         val ringPx     = (ringColDp * density).toInt()
-        val ringBmp    = KcalRingHelper.createRingBitmap(ringPx, consumed, target, showLabel = true)
+        val ringBmp    = KcalRingHelper.createRingBitmap(
+            ringPx, consumed, target, showLabel = true,
+            trackColor    = ContextCompat.getColor(context, R.color.widget_btn_surface),
+            progressColor = ContextCompat.getColor(context, R.color.widget_accent),
+            textPrimary   = ContextCompat.getColor(context, R.color.widget_text_primary),
+            textSecondary = ContextCompat.getColor(context, R.color.widget_text_secondary)
+        )
 
         Box(
             modifier = GlanceModifier

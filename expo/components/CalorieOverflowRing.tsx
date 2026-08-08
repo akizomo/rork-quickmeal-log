@@ -95,8 +95,11 @@ export const CalorieOverflowRing = memo(function CalorieOverflowRing(props: Calo
     trackColor = t.colors.nutrition.calorie.track,
     progressColor = t.colors.nutrition.calorie.within.graphic,
     achievedCheckColor = progressColor,
-    // 旧 colors.moss[600] は light の within.text とたまたま同値だっただけの固定値で、
-    // dark では moss[300] に切り替わらず暗すぎて見えにくかった (2026-08-07指摘)。
+    // 目標を超えて許容バンド(toleranceFraction)内にいる区間の色。リングは
+    // Weekly/MonthlyStatsViewの3段階(amberに色相を切り替える)とは設計が違い、
+    // 色相はwithin(moss)のまま濃淡だけ変える2段階システム (progressはgraphic、
+    // toleranceはtext)。旧実装のcolors.moss[600]固定値がdarkで機能しなかった
+    // ため一度mildExceedへ変えたが、色相を変えない元の設計に戻す (2026-08-07)。
     toleranceColor = t.colors.nutrition.calorie.within.text,
     overflowColor = t.colors.nutrition.calorie.severeExceed.graphic,
     centerTextColor = t.colors.content.primary,

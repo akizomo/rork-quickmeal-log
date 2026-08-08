@@ -447,6 +447,8 @@ function WeeklyRingsRow({
         const secondLap = ratio > 1 ? Math.min(ratio - 1, 1) : 0;
         const isPastTolerance = ratio > 1 + TOLERANCE;
         const progressColor = t.colors.nutrition.calorie.within.graphic;
+        // CalorieOverflowRing.tsxと同じ2段階システム (色相はwithinのまま濃淡だけ
+        // 変える)。amberへの色相切り替えはWeekly/MonthlyStatsView側の設計。
         const toleranceColor = t.colors.nutrition.calorie.within.text;
         const overflowColor = t.colors.nutrition.calorie.severeExceed.graphic;
 

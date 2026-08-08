@@ -257,7 +257,6 @@ export function WeeklyStatsView() {
                 height={h}
                 rx={radius.xs}
                 fill={barColor(macro.kcal, dayTargets[i])}
-                opacity={macro.kcal > 0 ? 0.55 : 1}
               />
               <SvgText
                 x={centerX}

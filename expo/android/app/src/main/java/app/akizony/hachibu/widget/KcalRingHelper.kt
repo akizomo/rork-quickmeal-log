@@ -8,12 +8,23 @@ object KcalRingHelper {
      * カロリーリングを Bitmap に描画して返す。
      * @param sizePx  出力 Bitmap のピクセルサイズ（正方形）
      * @param showLabel true = 中央に「のこり / 数値 / kcal」を描画
+     * 呼び出し側は @color/widget_* リソース (values/ + values-night/) を
+     * ContextCompat.getColor() で解決して渡すこと。システムの colorScheme に
+     * 自動追従させるため。
+     * @param trackColor リング未達部分の色 (@color/widget_btn_surface)
+     * @param progressColor リング進捗部分の色 (@color/widget_accent)
+     * @param textPrimary 中央の数値の色 (@color/widget_text_primary)
+     * @param textSecondary 「のこり」「kcal」ラベルの色 (@color/widget_text_secondary)
      */
     fun createRingBitmap(
         sizePx: Int,
         consumed: Int,
         target: Int,
-        showLabel: Boolean = true
+        showLabel: Boolean = true,
+        trackColor: Int,
+        progressColor: Int,
+        textPrimary: Int,
+        textSecondary: Int
     ): Bitmap {
         val bmp = Bitmap.createBitmap(sizePx, sizePx, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bmp)
@@ -26,7 +37,7 @@ object KcalRingHelper {
 
         // Track
         canvas.drawCircle(cx, cy, radius, Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color      = Color.argb(40, 255, 255, 255)
+            color      = trackColor
             style      = Paint.Style.STROKE
             strokeWidth = strokeW
         })
@@ -38,7 +49,7 @@ object KcalRingHelper {
                 RectF(margin, margin, sizePx - margin, sizePx - margin),
                 -90f, 360f * progress, false,
                 Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                    color       = Color.parseColor("#82A280") // sage[500]
+                    color       = progressColor
                     style       = Paint.Style.STROKE
                     strokeWidth = strokeW
                     strokeCap   = Paint.Cap.ROUND
@@ -50,19 +61,16 @@ object KcalRingHelper {
             val remaining = (target - consumed).coerceAtLeast(0)
             val valText   = remaining.toString()
 
-            val secondary = Color.argb(140, 240, 244, 239)
-            val primary   = Color.parseColor("#F0F4EF")
-
             val labelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                color = secondary; textAlign = Paint.Align.CENTER
+                color = textSecondary; textAlign = Paint.Align.CENTER
                 textSize = sizePx * 0.10f; typeface = Typeface.DEFAULT_BOLD
             }
             val valuePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                color = primary; textAlign = Paint.Align.CENTER
+                color = textPrimary; textAlign = Paint.Align.CENTER
                 textSize = sizePx * 0.24f; typeface = Typeface.DEFAULT_BOLD
             }
             val unitPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                color = secondary; textAlign = Paint.Align.CENTER
+                color = textSecondary; textAlign = Paint.Align.CENTER
                 textSize = sizePx * 0.09f
             }
 

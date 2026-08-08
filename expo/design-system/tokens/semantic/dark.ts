@@ -98,10 +98,14 @@ export const darkColors: SemanticColors = {
     fat:     { text: colors.kogecha[300],    graphic: colors.kogecha[400],    background: colors.kogecha[800]    },
     carbs:   { text: colors.seagrass[300],   graphic: colors.seagrass[400],   background: colors.seagrass[800]   },
 
+    // PFC(protein/fat/carbs)と同じtext=300/graphic=400の2トーン制。旧実装は
+    // text===graphicで、リングのtoleranceColor(within.text)とprogressColor
+    // (within.graphic)が完全に同色になり2本のアークが区別できなかった
+    // (2026-08-07指摘)。
     calorie: {
-      within:       { text: colors.moss[300],  graphic: colors.moss[300],  background: colors.moss[800]  },
-      mildExceed:   { text: colors.amber[300], graphic: colors.amber[300], background: colors.amber[800] },
-      severeExceed: { text: colors.clay[300],  graphic: colors.clay[300],  background: colors.clay[800]  },
+      within:       { text: colors.moss[300],  graphic: colors.moss[400],  background: colors.moss[800]  },
+      mildExceed:   { text: colors.amber[300], graphic: colors.amber[400], background: colors.amber[800] },
+      severeExceed: { text: colors.clay[300],  graphic: colors.clay[400],  background: colors.clay[800]  },
       track: colors.ivory[950],  // 空のリング/バー (凹み = surface.sunken と同じ段)
     },
 

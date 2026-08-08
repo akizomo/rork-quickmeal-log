@@ -3,6 +3,7 @@ package app.akizony.hachibu.widget
 import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.glance.*
 import app.akizony.hachibu.R
 import androidx.glance.GlanceId
@@ -32,7 +33,13 @@ class Widget2x2RingGlance : GlanceAppWidget() {
         // ウィジェット内側の最小辺を正方形リングに使う (padding 8dp × 2)
         val ringDp   = (minOf(size.width.value, size.height.value) - 16f).coerceAtLeast(48f)
         val ringPx   = (ringDp * density).toInt()
-        val ringBmp  = KcalRingHelper.createRingBitmap(ringPx, consumed, target, showLabel = true)
+        val ringBmp  = KcalRingHelper.createRingBitmap(
+            ringPx, consumed, target, showLabel = true,
+            trackColor    = ContextCompat.getColor(context, R.color.widget_btn_surface),
+            progressColor = ContextCompat.getColor(context, R.color.widget_accent),
+            textPrimary   = ContextCompat.getColor(context, R.color.widget_text_primary),
+            textSecondary = ContextCompat.getColor(context, R.color.widget_text_secondary)
+        )
 
         Box(
             modifier = GlanceModifier

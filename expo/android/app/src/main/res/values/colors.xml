@@ -4,32 +4,33 @@
   <color name="colorPrimary">#023c69</color>
   <color name="colorPrimaryDark">#355E52</color>
 
-  <!-- ── ウィジェット カラートークン ──────────────────────────────────────────
-       DS の primitive → semantic の対応をここで宣言し、
-       drawable / layout から @color/widget_* で参照する。
-       Kotlin 側の Color() リテラルもこの命名規則と揃える。      -->
+  <!-- ── ウィジェット カラートークン (Light) ─────────────────────────────────
+       DS の primitive → semantic (light) の対応をここで宣言し、
+       drawable / layout / Kotlin から @color/widget_* で参照する。
+       システムが dark mode の場合は values-night/colors.xml が自動的に
+       優先されるため、Kotlin 側は Configuration を意識しなくてよい。      -->
 
-  <!-- surface.inverse = ivory[900] — ウィジェット背景 (dark) -->
-  <color name="widget_surface_inverse">#FF1D1913</color>
+  <!-- surface.raised = ivory[50] — ウィジェット背景 (カード的な単体面) -->
+  <color name="widget_surface_inverse">#FFFFFDF7</color>
 
-  <!-- content.inverse = near-ivory[50] sage-tint — 暗面上のメインテキスト -->
-  <color name="widget_text_primary">#FFF0F4EF</color>
+  <!-- content.primary = stone[900] — メインテキスト -->
+  <color name="widget_text_primary">#FF1C1C1A</color>
 
-  <!-- content.inverseSecondary = 55% widget_text_primary — サブテキスト -->
-  <color name="widget_text_secondary">#8CF0F4EF</color>
+  <!-- content.secondary = stone[600] — サブテキスト -->
+  <color name="widget_text_secondary">#FF6E776E</color>
 
-  <!-- action.primary.default (dark 面) = sage[500] — アクセント / リング -->
-  <color name="widget_accent">#FF82A280</color>
+  <!-- action.text.default (light 面) = sage[700] — アクセント / リング進捗 -->
+  <color name="widget_accent">#FF54736C</color>
 
-  <!-- undo ラベル = amber トーン (UndoToast と同色) -->
-  <color name="widget_undo">#FFE9C28F</color>
+  <!-- action.primary.onContainer = sage[900] — 選択状態(container)上の文字。✓・取り消すに使用 -->
+  <color name="widget_undo">#FF264F44</color>
 
-  <!-- ボタン背景 = white 8% — 暗面上の raised surface -->
-  <color name="widget_btn_surface">#14FFFFFF</color>
+  <!-- surface.sunken = ivory[300] — 非選択ボタンの地・リングのtrack -->
+  <color name="widget_btn_surface">#FFE5E0D7</color>
 
-  <!-- 記録済みボタン背景 = sage[500] 22% tint -->
-  <color name="widget_btn_logged">#3882A280</color>
+  <!-- action.primary.container = sage[100] — 記録済みボタンの背景 -->
+  <color name="widget_btn_logged">#FFE1EADD</color>
 
-  <!-- セパレータ/区切り線 = white 10% — 4×2 のリング列とボタン列の間の線 -->
-  <color name="widget_divider">#1AFFFFFF</color>
+  <!-- border.subtle = ivory[500] — 4×2 のリング列とボタン列の間の線 -->
+  <color name="widget_divider">#FFE2DCCF</color>
 </resources>

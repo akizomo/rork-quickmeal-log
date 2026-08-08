@@ -1,1 +1,29 @@
-<resources/>
+<resources>
+  <!-- ── ウィジェット カラートークン (Dark) ──────────────────────────────────
+       DS の primitive → semantic (dark) の対応。values/colors.xml (light) と
+       同名リソースをここで上書きし、システムが dark mode の場合に自動適用される。 -->
+
+  <!-- surface.raised = ivory[850] — ウィジェット背景 (カード的な単体面) -->
+  <color name="widget_surface_inverse">#FF242019</color>
+
+  <!-- content.primary = stone[200] — メインテキスト -->
+  <color name="widget_text_primary">#FFD8D8D4</color>
+
+  <!-- content.secondary = stone[400] — サブテキスト -->
+  <color name="widget_text_secondary">#FF9FA09A</color>
+
+  <!-- action.text.default (dark 面) = sage[400] — アクセント / リング進捗 -->
+  <color name="widget_accent">#FF9AB594</color>
+
+  <!-- action.primary.onContainer = sage[200] — 選択状態(container)上の文字。✓・取り消すに使用 -->
+  <color name="widget_undo">#FFC9D8C2</color>
+
+  <!-- surface.sunken = ivory[950] — 非選択ボタンの地・リングのtrack -->
+  <color name="widget_btn_surface">#FF080000</color>
+
+  <!-- action.primary.container = sage[900] — 記録済みボタンの背景 -->
+  <color name="widget_btn_logged">#FF264F44</color>
+
+  <!-- border.subtle = ivory[825] — 4×2 のリング列とボタン列の間の線 -->
+  <color name="widget_divider">#FF2F2A21</color>
+</resources>

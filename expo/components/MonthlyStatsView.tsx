@@ -265,7 +265,9 @@ export function MonthlyStatsView() {
                       height: r * 2,
                       borderRadius: r,
                       backgroundColor: color,
-                      opacity: cell.inMonth ? 0.55 : 0.25,
+                      // 月内セルは token の色をそのまま (以前は0.55で二重に減光していた)。
+                      // 月外(前後月のグレーアウト表示)だけ引き続き薄くする。
+                      opacity: cell.inMonth ? 1 : 0.25,
                     }}
                   />
                 ) : null}

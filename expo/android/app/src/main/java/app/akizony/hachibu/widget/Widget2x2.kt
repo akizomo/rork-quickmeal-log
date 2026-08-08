@@ -68,12 +68,14 @@ class Widget2x2Receiver : GlanceAppWidgetReceiver() {
 }
 
 // ── 共有: カテゴリボタン ──────────────────────────────────────────────────────
-// Colors: @color/widget_* トークン参照 (colors.xml で DS primitive → semantic を宣言)
+// Colors: @color/widget_* トークン参照。values/colors.xml (light) と
+// values-night/colors.xml (dark) で同名リソースを定義し、システムの colorScheme に
+// 自動追従する (アプリ本体の light/dark 切替と同期)。
 
-private val COLOR_ACCENT    = ColorProvider(R.color.widget_accent)      // sage[500]
 private val COLOR_PRIMARY   = ColorProvider(R.color.widget_text_primary)
 private val COLOR_SECONDARY = ColorProvider(R.color.widget_text_secondary)
-private val COLOR_UNDO      = ColorProvider(R.color.widget_undo)
+// action.primary.onContainer — 記録済み(container)背景上の文字。✓・取り消す共通
+private val COLOR_ON_CONTAINER = ColorProvider(R.color.widget_undo)
 private val COLOR_BTN_BG    = ColorProvider(R.color.widget_btn_surface)
 
 @Composable
@@ -107,15 +109,15 @@ internal fun CategoryButtonGlance(
                     Text(
                         "✓",
                         style = TextStyle(
-                            color      = COLOR_ACCENT,
+                            color      = COLOR_ON_CONTAINER,
                             fontSize   = 20.sp,         // fontSize.xl
                             fontWeight = FontWeight.Bold
                         )
                     )
-                    // 取り消す: UndoToast と同ラベル・同色
+                    // 取り消す
                     Text(
                         "取り消す",
-                        style = TextStyle(color = COLOR_UNDO, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        style = TextStyle(color = COLOR_ON_CONTAINER, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                     )
                 }
             }
