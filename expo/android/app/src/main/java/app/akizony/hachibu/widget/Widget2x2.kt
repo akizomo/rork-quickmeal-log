@@ -147,12 +147,14 @@ internal fun CategoryButtonGlance(
                 ) {
                     // emoji: xl(20sp)
                     Text(cat.icon, style = TextStyle(fontSize = 20.sp))
-                    // カテゴリ名: UI要素の名前 = Label役割 → Label sm(13sp)
+                    // カテゴリ名: UI要素の名前 = Label役割だが、2×2の最小セルでは
+                    // 13spだと「肉魚(低脂)」等の長い名称がmaxLines=1で崩れるため
+                    // widget固有の例外として11spを維持 (2026-08-08指摘)
                     Text(
                         cat.name,
                         style    = TextStyle(
                             color      = COLOR_PRIMARY,
-                            fontSize   = 13.sp,         // fontSize.sm (Label)
+                            fontSize   = 11.sp,
                             fontWeight = FontWeight.Bold
                         ),
                         maxLines = 1
