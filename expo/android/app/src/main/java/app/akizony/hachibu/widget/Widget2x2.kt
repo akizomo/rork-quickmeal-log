@@ -114,10 +114,10 @@ internal fun CategoryButtonGlance(
                             fontWeight = FontWeight.Bold
                         )
                     )
-                    // 取り消す
+                    // 取り消す: UI操作名 = Label役割 → Label sm(13sp)
                     Text(
                         "取り消す",
-                        style = TextStyle(color = COLOR_ON_CONTAINER, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        style = TextStyle(color = COLOR_ON_CONTAINER, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                     )
                 }
             }
@@ -147,20 +147,20 @@ internal fun CategoryButtonGlance(
                 ) {
                     // emoji: xl(20sp)
                     Text(cat.icon, style = TextStyle(fontSize = 20.sp))
-                    // カテゴリ名: xs(11sp) bold
+                    // カテゴリ名: UI要素の名前 = Label役割 → Label sm(13sp)
                     Text(
                         cat.name,
                         style    = TextStyle(
                             color      = COLOR_PRIMARY,
-                            fontSize   = 11.sp,         // fontSize.xs
+                            fontSize   = 13.sp,         // fontSize.sm (Label)
                             fontWeight = FontWeight.Bold
                         ),
                         maxLines = 1
                     )
-                    // サブラベル: xs(11sp) secondary
+                    // サブラベル: cat.nameの添え物 = Caption役割 → xs(11sp、最小)
                     Text(
                         "${cat.recent}·${cat.sublabel}",
-                        style    = TextStyle(color = COLOR_SECONDARY, fontSize = 11.sp), // fontSize.xs
+                        style    = TextStyle(color = COLOR_SECONDARY, fontSize = 11.sp), // fontSize.xs (Caption)
                         maxLines = 1
                     )
                 }

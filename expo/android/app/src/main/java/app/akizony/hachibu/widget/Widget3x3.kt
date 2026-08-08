@@ -87,11 +87,12 @@ class Widget3x3Glance : GlanceAppWidget() {
                                 )
                             )
                         }
+                        // ステータス文言 = Label役割 → Label sm(13sp)
                         Text(
                             "あと $remaining kcal",
                             style = TextStyle(
                                 color      = ColorProvider(R.color.widget_accent),
-                                fontSize   = 11.sp,
+                                fontSize   = 13.sp,
                                 fontWeight = FontWeight.Bold
                             )
                         )
