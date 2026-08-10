@@ -35,6 +35,7 @@ import {
   Caption,
   Heading,
   Icon,
+  IconButton,
   Label,
   MacroCard,
   NumberField,
@@ -223,21 +224,13 @@ export default function OnboardingRoute() {
               gap: t.spacing['3'],
             }}
           >
-            <Pressable
+            <IconButton
+              icon="chevronLeft"
+              variant="ghost"
               onPress={goBack}
+              accessibilityLabel="戻る"
               testID="onboarding-back"
-              hitSlop={8}
-              style={({ pressed }) => ({
-                width: 36,
-                height: 36,
-                borderRadius: t.radius.full,
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: pressed ? t.colors.surface.sunken : t.colors.surface.raised,
-              })}
-            >
-              <Icon name="chevronLeft" size={20} color={t.colors.content.primary} />
-            </Pressable>
+            />
             <View
               style={{
                 flex: 1,
