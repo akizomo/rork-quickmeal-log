@@ -220,16 +220,37 @@ export function IdentityLogSheet() {
     const initialId = identityLogSheet.identityId ?? identitiesInBucket[0]?.id;
     if (!initialId) return;
     const identity = getIdentity(initialId);
-    const initAttrKey = defaultAttributeKey(identity);
+    // Search results can pre-select a specific Attribute/Style (e.g. ポテトサラダ
+    // = side_creamy + potato_salad) — honor it if present and valid, otherwise fall
+    // back to the Identity's own default.
+    const requestedAttrKey =
+      identityLogSheet.attributeKey &&
+      identity?.attributes?.some((a) => a.key === identityLogSheet.attributeKey)
+        ? identityLogSheet.attributeKey
+        : undefined;
+    const requestedStyleKey =
+      identityLogSheet.styleKey &&
+      identity?.styles?.some((s) => s.key === identityLogSheet.styleKey)
+        ? identityLogSheet.styleKey
+        : undefined;
+    const initAttrKey = requestedAttrKey ?? defaultAttributeKey(identity);
     setOriginIdentityId(initialId);
     setAttributeKey(initAttrKey);
-    setStyleKey(defaultStyleKey(identity));
+    setStyleKey(requestedStyleKey ?? defaultStyleKey(identity));
     setAmountValue(
       identity ? getEffectiveAmountSpec(identity, initAttrKey).default : 1,
     );
     setAmountModeAlt(false);
     setAddons([]);
-  }, [visible, bucketKey, identityLogSheet.identityId, identitiesInBucket, editingLog]);
+  }, [
+    visible,
+    bucketKey,
+    identityLogSheet.identityId,
+    identityLogSheet.attributeKey,
+    identityLogSheet.styleKey,
+    identitiesInBucket,
+    editingLog,
+  ]);
 
   const origin = originIdentityId ? getIdentity(originIdentityId) : undefined;
 

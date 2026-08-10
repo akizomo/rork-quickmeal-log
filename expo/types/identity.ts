@@ -157,6 +157,12 @@ export interface AttributeOption {
    * すぎない (gramsPerUnit で相互変換する)。
    */
   altAmount?: AltAmountSpec;
+  /**
+   * 検索キーワード (SEARCH_SPEC v0.4 §F2-0)。この種類のラベルが漢字表記の場合、
+   * ひらがな読みを収録する (例: 唐揚げ(むね) → ['からあげ'])。
+   * 省略時は label のみが検索対象になる。
+   */
+  searchTags?: string[];
 }
 
 export interface AltAmountSpec {
@@ -181,6 +187,8 @@ export interface StyleOption {
    * Style-driven migration. Example: potato + 揚げ → misc_dish/fries.
    */
   migration?: MigrationTarget;
+  /** 検索キーワード。AttributeOption.searchTags と同じ意図 (SEARCH_SPEC v0.4 §F2-0)。 */
+  searchTags?: string[];
 }
 
 // ---------------------------------------------------------------------------

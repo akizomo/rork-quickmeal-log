@@ -19,6 +19,7 @@ const BUCKET_RICE_DISH: Identity[] = [
   {
     id: 'gyudon_class',
     label: '牛丼系',
+    searchTags: ['ぎゅうどん', 'どんぶり'],
     primaryHome: { tab: 'dish', bucket: 'rice_dish' },
     defaultMacro: { kcal: 660, protein: 25, fat: 18, carbs: 88 },
     referenceDescription: 'ご飯200g + 主菜80g (1人前)',
@@ -33,14 +34,14 @@ const BUCKET_RICE_DISH: Identity[] = [
       ],
     },
     attributes: [
-      { key: 'gyudon', label: '牛丼', isDefault: true },
+      { key: 'gyudon', label: '牛丼', isDefault: true, searchTags: ['ぎゅうどん'] },
       // 親子丼は卵が主菜のため egg を hidden（二重計上を避ける）
-      { key: 'oyakodon', label: '親子丼', factor: { kcal: 0.94, protein: 1.12, fat: 0.82, carbs: 0.93 }, hiddenAddonIds: ['egg'] },
+      { key: 'oyakodon', label: '親子丼', factor: { kcal: 0.94, protein: 1.12, fat: 0.82, carbs: 0.93 }, hiddenAddonIds: ['egg'], searchTags: ['おやこどん'] },
       // ねぎとろ丼は海鮮系 → rayu/kimchi は合わない
       { key: 'negitoro', label: 'ねぎとろ丼', factor: { kcal: 0.91, protein: 1, fat: 0.67, carbs: 0.97 }, defaultAddonIds: [] },
       // 中華丼は五目あんかけ → rayu は可・kimchi/egg は不自然
-      { key: 'chuka', label: '中華丼', factor: { kcal: 0.91, protein: 0.88, fat: 0.89, carbs: 0.97 }, defaultAddonIds: ['rayu'] },
-      { key: 'mabo', label: '麻婆丼', factor: { kcal: 0.98, protein: 1, fat: 1.22, carbs: 0.93 } },
+      { key: 'chuka', label: '中華丼', factor: { kcal: 0.91, protein: 0.88, fat: 0.89, carbs: 0.97 }, defaultAddonIds: ['rayu'], searchTags: ['ちゅうかどん'] },
+      { key: 'mabo', label: '麻婆丼', factor: { kcal: 0.98, protein: 1, fat: 1.22, carbs: 0.93 }, searchTags: ['まーぼーどん'] },
     ],
     // cheese は親子丼/中華丼/麻婆丼に合わないので default から外し allowed のみに
     defaultAddonIds: ['egg', 'kimchi_top', 'rayu'],
@@ -49,6 +50,7 @@ const BUCKET_RICE_DISH: Identity[] = [
   {
     id: 'kaisendon',
     label: '海鮮丼',
+    searchTags: ['かいせんどん'],
     primaryHome: { tab: 'dish', bucket: 'rice_dish' },
     defaultMacro: { kcal: 580, protein: 28, fat: 10, carbs: 88 },
     referenceDescription: 'ご飯200g + 海鮮ネタ80g',
@@ -72,6 +74,7 @@ const BUCKET_RICE_DISH: Identity[] = [
   {
     id: 'katsudon_tendon',
     label: 'カツ丼・天丼',
+    searchTags: ['かつどん', 'てんどん'],
     primaryHome: { tab: 'dish', bucket: 'rice_dish' },
     defaultMacro: { kcal: 850, protein: 27, fat: 29, carbs: 109 },
     referenceDescription: 'ご飯200g + カツ/天ぷら + 卵',
@@ -120,6 +123,7 @@ const BUCKET_CURRY: Identity[] = [
   {
     id: 'curry_class',
     label: 'カレー・シチュー系',
+    searchTags: ['カレー', 'シチュー', 'カレーライス'],
     primaryHome: { tab: 'dish', bucket: 'curry' },
     defaultMacro: { kcal: 720, protein: 21, fat: 23, carbs: 100 },
     referenceDescription: 'ご飯200g + ルー・具',
@@ -229,6 +233,7 @@ const BUCKET_CHINESE_NOODLES: Identity[] = [
   {
     id: 'ramen_jiro',
     label: '二郎系',
+    searchTags: ['じろうけい', 'じろう'],
     primaryHome: { tab: 'dish', bucket: 'chinese_noodles' },
     defaultMacro: { kcal: 1500, protein: 55, fat: 75, carbs: 150 },
     referenceDescription: '麺300g + 大量野菜+豚 (1人前=小)',
@@ -238,6 +243,7 @@ const BUCKET_CHINESE_NOODLES: Identity[] = [
   {
     id: 'tsukemen',
     label: 'つけ麺・まぜそば',
+    searchTags: ['つけめん'],
     primaryHome: { tab: 'dish', bucket: 'chinese_noodles' },
     defaultMacro: { kcal: 925, protein: 32, fat: 33, carbs: 121 },
     referenceDescription: '麺200g + つけ汁',
@@ -251,6 +257,7 @@ const BUCKET_CHINESE_NOODLES: Identity[] = [
   {
     id: 'tantanmen',
     label: '担々麺',
+    searchTags: ['たんたんめん'],
     primaryHome: { tab: 'dish', bucket: 'chinese_noodles' },
     defaultMacro: { kcal: 780, protein: 25, fat: 30, carbs: 90 },
     referenceDescription: '麺150g + 担々スープ',
@@ -261,6 +268,7 @@ const BUCKET_CHINESE_NOODLES: Identity[] = [
   {
     id: 'fried_noodles',
     label: '焼そば',
+    searchTags: ['やきそば'],
     primaryHome: { tab: 'dish', bucket: 'chinese_noodles' },
     defaultMacro: { kcal: 820, protein: 24, fat: 30, carbs: 112 },
     referenceDescription: '麺150g + 具炒め+ソース',
@@ -271,6 +279,7 @@ const BUCKET_CHINESE_NOODLES: Identity[] = [
   {
     id: 'cold_noodles',
     label: '冷やし中華・冷麺',
+    searchTags: ['ひやしちゅうか', 'れいめん'],
     primaryHome: { tab: 'dish', bucket: 'chinese_noodles' },
     defaultMacro: { kcal: 660, protein: 23, fat: 13, carbs: 106 },
     referenceDescription: '麺150g + 具+冷スープ',
@@ -327,6 +336,7 @@ const BUCKET_JAPANESE_NOODLES: Identity[] = [
   {
     id: 'tempura_noodle',
     label: '天ぷら麺',
+    searchTags: ['てんぷら', 'てんそば', 'てんぷらうどん'],
     primaryHome: { tab: 'dish', bucket: 'japanese_noodles' },
     defaultMacro: { kcal: 665, protein: 22, fat: 17, carbs: 98 },
     referenceDescription: '麺250g + 天ぷら2-3個',
@@ -340,6 +350,7 @@ const BUCKET_JAPANESE_NOODLES: Identity[] = [
   {
     id: 'yaki_udon',
     label: '焼うどん',
+    searchTags: ['やきうどん'],
     primaryHome: { tab: 'dish', bucket: 'japanese_noodles' },
     defaultMacro: { kcal: 560, protein: 18, fat: 16, carbs: 86 },
     referenceDescription: '麺250g + 具炒め',
@@ -365,6 +376,7 @@ const BUCKET_PASTA: Identity[] = [
   {
     id: 'pasta_tomato',
     label: 'トマト系パスタ',
+    searchTags: ['トマトパスタ', 'アラビアータ'],
     primaryHome: { tab: 'dish', bucket: 'pasta' },
     defaultMacro: { kcal: 680, protein: 22, fat: 19, carbs: 102 },
     referenceDescription: '麺250g (茹で) + トマトソース・基本具',
@@ -375,6 +387,7 @@ const BUCKET_PASTA: Identity[] = [
   {
     id: 'pasta_oil',
     label: 'オイル系パスタ',
+    searchTags: ['ペペロンチーノ'],
     primaryHome: { tab: 'dish', bucket: 'pasta' },
     defaultMacro: { kcal: 700, protein: 20, fat: 28, carbs: 88 },
     referenceDescription: '麺250g + オイル+ガーリック・少量具',
@@ -385,6 +398,7 @@ const BUCKET_PASTA: Identity[] = [
   {
     id: 'pasta_cream',
     label: 'クリーム系パスタ',
+    searchTags: ['カルボナーラ', 'クリームパスタ'],
     primaryHome: { tab: 'dish', bucket: 'pasta' },
     defaultMacro: { kcal: 780, protein: 24, fat: 36, carbs: 86 },
     referenceDescription: '麺250g + クリームソース・チーズ',
@@ -394,6 +408,7 @@ const BUCKET_PASTA: Identity[] = [
   {
     id: 'pasta_meat',
     label: 'ミート系パスタ',
+    searchTags: ['ミートソース', 'ボロネーゼ'],
     primaryHome: { tab: 'dish', bucket: 'pasta' },
     defaultMacro: { kcal: 690, protein: 26, fat: 22, carbs: 96 },
     referenceDescription: '麺250g + ミートソース',
@@ -403,6 +418,7 @@ const BUCKET_PASTA: Identity[] = [
   {
     id: 'pasta_japanese',
     label: '和風パスタ',
+    searchTags: ['わふうぱすた', 'たらこぱすた', 'めんたいこぱすた'],
     primaryHome: { tab: 'dish', bucket: 'pasta' },
     defaultMacro: { kcal: 620, protein: 20, fat: 20, carbs: 88 },
     referenceDescription: '麺250g + 醤油・和風具',
@@ -420,6 +436,7 @@ const BUCKET_SUSHI: Identity[] = [
   {
     id: 'sushi_plate',
     label: '回転寿司 (皿)',
+    searchTags: ['かいてんずし', 'すし', 'おすし'],
     primaryHome: { tab: 'dish', bucket: 'sushi' },
     defaultMacro: { kcal: 1040, protein: 56, fat: 32, carbs: 131 }, // 8皿分合計 (1皿=130kcal)
     referenceDescription: '1皿=2貫 (シャリ40g+ネタ20g/皿)',
@@ -428,6 +445,7 @@ const BUCKET_SUSHI: Identity[] = [
   {
     id: 'sushi_piece',
     label: 'セット寿司 (貫)',
+    searchTags: ['せっとずし', 'にぎり'],
     primaryHome: { tab: 'dish', bucket: 'sushi' },
     defaultMacro: { kcal: 650, protein: 35, fat: 20, carbs: 82 }, // 10貫分合計 (1貫=65kcal)
     referenceDescription: '1貫=シャリ20g+ネタ10g',
@@ -436,6 +454,7 @@ const BUCKET_SUSHI: Identity[] = [
   {
     id: 'chirashi',
     label: 'ちらし寿司',
+    searchTags: ['ちらしずし'],
     primaryHome: { tab: 'dish', bucket: 'sushi' },
     defaultMacro: { kcal: 600, protein: 28, fat: 14, carbs: 90 },
     referenceDescription: 'ご飯200g + 海鮮5切+錦糸卵',
@@ -444,17 +463,19 @@ const BUCKET_SUSHI: Identity[] = [
   {
     id: 'maki',
     label: '巻き・いなり・手巻き',
+    searchTags: ['まきずし', 'てまきずし', 'いなりずし'],
     primaryHome: { tab: 'dish', bucket: 'sushi' },
     defaultMacro: { kcal: 180, protein: 5, fat: 2, carbs: 38 },
     referenceDescription: '細巻=米80g+具/本',
     amount: { unit: 'piece', default: 1, unitLabel: '本' }, // 基準: 細巻=1本=180kcal
     attributes: [
-      { key: 'maki_thin', label: '細巻', isDefault: true },
+      { key: 'maki_thin', label: '細巻', isDefault: true, searchTags: ['ほそまき'] },
       // 太巻きは「切」単位で売られる。factor は細巻1本に対する1切分の比率。
       // chips で「6切」「8切」を用意し、購入単位に合わせやすくする。
       {
         key: 'maki_thick',
         label: '太巻き',
+        searchTags: ['ふとまき'],
         factor: { kcal: 0.44, carbs: 0.42 },
         amount: { unit: 'piece', default: 1, unitLabel: '切', chips: [{ label: '3切', value: 3 }, { label: '6切', value: 6 }, { label: '8切', value: 8 }] },
       },
@@ -536,6 +557,7 @@ const BUCKET_SANDWICH: Identity[] = [
   {
     id: 'hot_dog_pita',
     label: 'ホットドッグ系',
+    searchTags: ['ほっとどっぐ'],
     primaryHome: { tab: 'dish', bucket: 'sandwich' },
     defaultMacro: { kcal: 375, protein: 15, fat: 15, carbs: 40 },
     referenceDescription: 'パン1個 + 具',
@@ -558,6 +580,7 @@ const BUCKET_PIZZA: Identity[] = [
   {
     id: 'pizza_simple',
     label: 'マルゲリータ系',
+    searchTags: ['ピザ', 'マルゲリータ'],
     primaryHome: { tab: 'dish', bucket: 'pizza' },
     defaultMacro: { kcal: 210, protein: 9, fat: 7, carbs: 26 }, // 2切=210kcal
     referenceDescription: '1切=生地30g+トマトソース+モッツァレラ',
@@ -571,6 +594,7 @@ const BUCKET_PIZZA: Identity[] = [
   {
     id: 'pizza_meat',
     label: '肉系ピザ',
+    searchTags: ['にくピザ', 'ペパロニ'],
     primaryHome: { tab: 'dish', bucket: 'pizza' },
     defaultMacro: { kcal: 350, protein: 16, fat: 16, carbs: 36 }, // 2切=350kcal
     referenceDescription: '1切=生地30g+ソース+チーズ+肉具',
@@ -586,6 +610,7 @@ const BUCKET_PIZZA: Identity[] = [
   {
     id: 'pizza_cheese',
     label: 'チーズ系ピザ',
+    searchTags: ['ちーずピザ', 'クアトロフォルマッジ'],
     primaryHome: { tab: 'dish', bucket: 'pizza' },
     defaultMacro: { kcal: 440, protein: 22, fat: 24, carbs: 34 }, // 2切=440kcal
     referenceDescription: '1切=生地30g+チーズ多め',
@@ -600,6 +625,7 @@ const BUCKET_PIZZA: Identity[] = [
   {
     id: 'pizza_seafood',
     label: 'シーフード系ピザ',
+    searchTags: ['しーふーどピザ'],
     primaryHome: { tab: 'dish', bucket: 'pizza' },
     defaultMacro: { kcal: 300, protein: 16, fat: 12, carbs: 34 }, // 2切=300kcal
     referenceDescription: '1切=生地30g+ソース+海鮮',
@@ -627,6 +653,7 @@ const BUCKET_MISC_DISH: Identity[] = [
   {
     id: 'teishoku',
     label: '定食',
+    searchTags: ['ていしょく'],
     primaryHome: { tab: 'dish', bucket: 'misc_dish' },
     quickTapDisabled: true, // Attribute 焼魚/焼肉/唐揚げ/トンカツ/生姜焼き/ハンバーグ: kcal 700-1003, F 18-40
     defaultMacro: { kcal: 850, protein: 32, fat: 30, carbs: 108 },
@@ -641,11 +668,11 @@ const BUCKET_MISC_DISH: Identity[] = [
       ],
     },
     attributes: [
-      { key: 'yakizakana', label: '焼魚定食', isDefault: true, factor: { kcal: 0.82, protein: 1.0, fat: 0.6, carbs: 0.91 } },
-      { key: 'yakiniku', label: '焼肉定食', factor: { kcal: 1.06, protein: 1.09, fat: 1.07 } },
-      { key: 'karaage', label: '唐揚げ定食', factor: { kcal: 1.05, protein: 1.06, fat: 1.13, carbs: 0.97 } },
-      { key: 'tonkatsu', label: 'トンカツ定食', factor: { kcal: 1.18, protein: 1.09, fat: 1.33, carbs: 1.02 } },
-      { key: 'shogayaki', label: '生姜焼き定食', factor: { kcal: 0.96, protein: 1.06, fat: 0.90, carbs: 0.96 } },
+      { key: 'yakizakana', label: '焼魚定食', isDefault: true, factor: { kcal: 0.82, protein: 1.0, fat: 0.6, carbs: 0.91 }, searchTags: ['やきざかな'] },
+      { key: 'yakiniku', label: '焼肉定食', factor: { kcal: 1.06, protein: 1.09, fat: 1.07 }, searchTags: ['やきにく'] },
+      { key: 'karaage', label: '唐揚げ定食', factor: { kcal: 1.05, protein: 1.06, fat: 1.13, carbs: 0.97 }, searchTags: ['からあげ'] },
+      { key: 'tonkatsu', label: 'トンカツ定食', factor: { kcal: 1.18, protein: 1.09, fat: 1.33, carbs: 1.02 }, searchTags: ['とんかつ'] },
+      { key: 'shogayaki', label: '生姜焼き定食', factor: { kcal: 0.96, protein: 1.06, fat: 0.90, carbs: 0.96 }, searchTags: ['しょうがやき'] },
       { key: 'hamburg', label: 'ハンバーグ定食', factor: { kcal: 1.0, protein: 1.0, fat: 1.07, carbs: 0.91 } },
     ],
     allowedAddonIds: ['gohan_omori'],
@@ -653,6 +680,7 @@ const BUCKET_MISC_DISH: Identity[] = [
   {
     id: 'bento',
     label: '弁当',
+    searchTags: ['べんとう'],
     primaryHome: { tab: 'dish', bucket: 'misc_dish' },
     defaultMacro: { kcal: 700, protein: 23, fat: 20, carbs: 98 },
     referenceDescription: 'ご飯+主菜+副菜 (お弁当箱1食)',
@@ -667,19 +695,20 @@ const BUCKET_MISC_DISH: Identity[] = [
     },
     // 主菜タイプで Attribute 分け (旧 コンビニ/手作り/幕の内/駅弁 はPFC収束しないので廃止)
     attributes: [
-      { key: 'noriben', label: 'のり弁', isDefault: true, factor: { kcal: 0.79, protein: 0.61, fat: 0.6, carbs: 0.94 } }, // ~550kcal
-      { key: 'sake', label: '鮭弁', factor: { kcal: 0.93, protein: 0.96, fat: 0.85, carbs: 0.96 } }, // ~650
-      { key: 'karaage', label: '唐揚げ弁当', factor: { kcal: 1.21, protein: 1.22, fat: 1.4, carbs: 1.0 } }, // ~850
+      { key: 'noriben', label: 'のり弁', isDefault: true, factor: { kcal: 0.79, protein: 0.61, fat: 0.6, carbs: 0.94 }, searchTags: ['のりべん'] }, // ~550kcal
+      { key: 'sake', label: '鮭弁', factor: { kcal: 0.93, protein: 0.96, fat: 0.85, carbs: 0.96 }, searchTags: ['さけべん', 'しゃけべん'] }, // ~650
+      { key: 'karaage', label: '唐揚げ弁当', factor: { kcal: 1.21, protein: 1.22, fat: 1.4, carbs: 1.0 }, searchTags: ['からあげべんとう'] }, // ~850
       { key: 'tonkatsu', label: 'とんかつ弁当', factor: { kcal: 1.29, protein: 1.13, fat: 1.5, carbs: 1.07 } }, // ~900
-      { key: 'yakiniku', label: '焼肉弁当', factor: { kcal: 1.21, protein: 1.3, fat: 1.4, carbs: 0.92 } }, // ~850
-      { key: 'chuka', label: '中華弁当', factor: { kcal: 1.07, protein: 1.04, fat: 1.0, carbs: 1.04 } }, // ~750
-      { key: 'makunouchi', label: '幕の内弁当', factor: { kcal: 1.0, protein: 1.04, fat: 1.0, carbs: 0.98 } }, // ~700 (balance)
+      { key: 'yakiniku', label: '焼肉弁当', factor: { kcal: 1.21, protein: 1.3, fat: 1.4, carbs: 0.92 }, searchTags: ['やきにくべんとう'] }, // ~850
+      { key: 'chuka', label: '中華弁当', factor: { kcal: 1.07, protein: 1.04, fat: 1.0, carbs: 1.04 }, searchTags: ['ちゅうかべんとう'] }, // ~750
+      { key: 'makunouchi', label: '幕の内弁当', factor: { kcal: 1.0, protein: 1.04, fat: 1.0, carbs: 0.98 }, searchTags: ['まくのうち'] }, // ~700 (balance)
       { key: 'salad_bowl', label: 'サラダボウル系', factor: { kcal: 0.64, protein: 1.04, fat: 0.85, carbs: 0.46 } }, // ~450 (高P低C)
     ],
   },
   {
     id: 'fried_main',
     label: '揚げもの単品',
+    searchTags: ['からあげ', 'あげもの'],
     primaryHome: { tab: 'dish', bucket: 'misc_dish' },
     quickTapDisabled: true, // Attribute 唐揚げ/とんかつ/エビフライ/コロッケ/フライドポテト: kcal 200-500, F 12-30
     defaultMacro: { kcal: 350, protein: 18, fat: 20, carbs: 18 },
@@ -696,6 +725,7 @@ const BUCKET_MISC_DISH: Identity[] = [
         key: 'karaage_momo',
         label: '唐揚げ(もも)',
         isDefault: true,
+        searchTags: ['からあげ'],
         factor: { kcal: 0.857, protein: 1.111, fat: 0.95, carbs: 0.556 }, // ≒300kcal/P20/F19/C10 per 100g
         defaultAddonIds: ['lemon_squeeze', 'mayo'],
         amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '100', value: 100 }, { label: '150', value: 150 }, { label: '200', value: 200 }] },
@@ -705,6 +735,7 @@ const BUCKET_MISC_DISH: Identity[] = [
       {
         key: 'karaage_mune',
         label: '唐揚げ(むね)',
+        searchTags: ['からあげ'],
         factor: { kcal: 0.629, protein: 1.444, fat: 0.4, carbs: 0.5 }, // ≒220kcal/P26/F8/C9 per 100g
         defaultAddonIds: ['lemon_squeeze', 'mayo'],
         amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '100', value: 100 }, { label: '150', value: 150 }, { label: '200', value: 200 }] },
@@ -714,9 +745,9 @@ const BUCKET_MISC_DISH: Identity[] = [
       { key: 'tonkatsu_hire', label: 'ヒレかつ', factor: { kcal: 1.1, protein: 1.45, fat: 0.7, carbs: 1.0 }, defaultAddonIds: ['sauce', 'mayo'] },
       { key: 'menchi', label: 'メンチカツ', factor: { kcal: 0.8, protein: 0.5, fat: 0.85 }, defaultAddonIds: ['sauce', 'mayo'] },
       { key: 'ebi_fry', label: 'エビフライ', factor: { kcal: 0.8, protein: 0.83, fat: 0.75 }, defaultAddonIds: ['tartar', 'lemon_squeeze'] },
-      { key: 'fish_fry', label: '魚介揚げ', factor: { kcal: 0.8, protein: 0.83, fat: 0.75 }, defaultAddonIds: ['tartar', 'lemon_squeeze'] },
+      { key: 'fish_fry', label: '魚介揚げ', searchTags: ['ぎょかいあげ'], factor: { kcal: 0.8, protein: 0.83, fat: 0.75 }, defaultAddonIds: ['tartar', 'lemon_squeeze'] },
       { key: 'korokke', label: 'コロッケ', factor: { kcal: 0.57, protein: 0.22, fat: 0.6 }, defaultAddonIds: ['sauce'] },
-      { key: 'tempura', label: '天ぷら盛', factor: { kcal: 0.8, protein: 0.28, fat: 0.9, carbs: 1.22 }, defaultAddonIds: ['lemon_squeeze'] },
+      { key: 'tempura', label: '天ぷら盛', searchTags: ['てんぷら'], factor: { kcal: 0.8, protein: 0.28, fat: 0.9, carbs: 1.22 }, defaultAddonIds: ['lemon_squeeze'] },
       {
         key: 'fries',
         label: 'フライドポテト',
@@ -733,6 +764,7 @@ const BUCKET_MISC_DISH: Identity[] = [
   {
     id: 'yakitori',
     label: '焼鳥・串もの',
+    searchTags: ['やきとり', 'くしもの', 'くしやき'],
     primaryHome: { tab: 'dish', bucket: 'misc_dish' },
     defaultMacro: { kcal: 350, protein: 32, fat: 16, carbs: 8 }, // 5本=350kcal
     referenceDescription: '1本=鶏もも30g+タレ',
@@ -753,28 +785,31 @@ const BUCKET_MISC_DISH: Identity[] = [
   {
     id: 'tenshin',
     label: '中華点心',
+    searchTags: ['ちゅうかてんしん', 'ぎょうざ'],
     primaryHome: { tab: 'dish', bucket: 'misc_dish' },
     defaultMacro: { kcal: 250, protein: 10, fat: 10, carbs: 28 },
     referenceDescription: '餃子=5個 / 春巻=1本≒140kcal / 小籠包=5個',
     amount: { unit: 'piece', default: 5 },
     attributes: [
-      { key: 'gyoza', label: '餃子(焼き)', isDefault: true },
-      { key: 'gyoza_water', label: '水餃子', factor: { kcal: 0.82, fat: 0.58 } },
+      { key: 'gyoza', label: '餃子(焼き)', isDefault: true, searchTags: ['ぎょうざ', 'やきぎょうざ'] },
+      { key: 'gyoza_water', label: '水餃子', factor: { kcal: 0.82, fat: 0.58 }, searchTags: ['すいぎょうざ'] },
       { key: 'shumai', label: 'シューマイ', factor: { kcal: 0.88, fat: 0.83 } },
       // 春巻きは1本が大きい。2本デフォルトに設定 (factor は5個換算済み → 2本で280kcal≒1本140kcal)。
       {
         key: 'harumaki',
         label: '春巻',
+        searchTags: ['はるまき'],
         factor: { kcal: 1.12, fat: 1.17 },
         amount: { unit: 'piece', default: 2, unitLabel: '本', chips: [{ label: '1本', value: 1 }, { label: '2本', value: 2 }, { label: '3本', value: 3 }] },
       },
-      { key: 'xiaolongbao', label: '小籠包', factor: { kcal: 1.0, fat: 0.75, carbs: 1.14 } },
+      { key: 'xiaolongbao', label: '小籠包', factor: { kcal: 1.0, fat: 0.75, carbs: 1.14 }, searchTags: ['しょうろんぽう'] },
     ],
     defaultAddonIds: ['rayu'],
   },
   {
     id: 'chuka_okazu',
     label: '中華おかず',
+    searchTags: ['ちゅうかおかず'],
     primaryHome: { tab: 'dish', bucket: 'misc_dish' },
     // 中華の主菜おかず (炒め・麻婆・あん・揚げ) を1バケットに集約。種類でPFCが
     // 大きく変わるため即記録は無効化。数値は「公式PFC比 (文科省食品成分DB 八訂) ×
@@ -786,16 +821,16 @@ const BUCKET_MISC_DISH: Identity[] = [
     referenceDescription: '主菜のみ (ご飯なし)。100% = 外食1人前',
     amount: { unit: 'percent', default: 100, chips: [{ label: '軽め', value: 70 }, { label: '1人前', value: 100 }, { label: 'しっかり', value: 150 }] },
     attributes: [
-      { key: 'mapo_tofu', label: '麻婆豆腐', isDefault: true },
-      { key: 'mapo_nasu', label: '麻婆茄子', factor: { kcal: 0.895, protein: 0.556, fat: 0.974, carbs: 1.045 } }, // ≒485kcal/P15/F37/C23
+      { key: 'mapo_tofu', label: '麻婆豆腐', isDefault: true, searchTags: ['まーぼーどうふ', 'まぼどうふ'] },
+      { key: 'mapo_nasu', label: '麻婆茄子', searchTags: ['まーぼーなす', 'まぼなす'], factor: { kcal: 0.895, protein: 0.556, fat: 0.974, carbs: 1.045 } }, // ≒485kcal/P15/F37/C23
       // 炒め物系 (旧 stir_fry_meat を統合)。レバニラ=日高屋482kcal 基準。
       { key: 'reba_nira', label: 'レバニラ', factor: { kcal: 0.889, protein: 0.889, fat: 0.782, carbs: 1.591 } }, // ≒482kcal/P24/F30/C35
-      { key: 'pork_vegetable', label: '豚肉野菜炒め', factor: { kcal: 0.952, protein: 0.667, fat: 1.079, carbs: 0.818 } }, // ≒516kcal/P18/F41/C18
-      { key: 'twice_cooked_pork', label: '回鍋肉', factor: { kcal: 0.738, protein: 0.519, fat: 0.842, carbs: 0.636 } }, // ≒400kcal/P14/F32/C14
-      { key: 'chinjao', label: '青椒肉絲', factor: { kcal: 0.823, protein: 0.852, fat: 0.789, carbs: 0.955 } }, // ≒446kcal/P23/F30/C21
-      { key: 'happosai', label: '八宝菜', factor: { kcal: 0.627, protein: 0.667, fat: 0.553, carbs: 0.864 } }, // ≒340kcal/P18/F21/C19
-      { key: 'yurinchi', label: '油淋鶏', factor: { kcal: 1.087, protein: 1.222, fat: 1.079, carbs: 1.0 } }, // ≒589kcal/P33/F41/C22
-      { key: 'subuta', label: '酢豚', factor: { kcal: 1.194, protein: 1.111, fat: 0.816, carbs: 2.818 } }, // ≒647kcal/P30/F31/C62 (甘酢でC高)
+      { key: 'pork_vegetable', label: '豚肉野菜炒め', searchTags: ['やさいいため'], factor: { kcal: 0.952, protein: 0.667, fat: 1.079, carbs: 0.818 } }, // ≒516kcal/P18/F41/C18
+      { key: 'twice_cooked_pork', label: '回鍋肉', searchTags: ['ほいこーろー'], factor: { kcal: 0.738, protein: 0.519, fat: 0.842, carbs: 0.636 } }, // ≒400kcal/P14/F32/C14
+      { key: 'chinjao', label: '青椒肉絲', searchTags: ['ちんじゃおろーすー'], factor: { kcal: 0.823, protein: 0.852, fat: 0.789, carbs: 0.955 } }, // ≒446kcal/P23/F30/C21
+      { key: 'happosai', label: '八宝菜', searchTags: ['はっぽうさい'], factor: { kcal: 0.627, protein: 0.667, fat: 0.553, carbs: 0.864 } }, // ≒340kcal/P18/F21/C19
+      { key: 'yurinchi', label: '油淋鶏', searchTags: ['ゆーりんちー'], factor: { kcal: 1.087, protein: 1.222, fat: 1.079, carbs: 1.0 } }, // ≒589kcal/P33/F41/C22
+      { key: 'subuta', label: '酢豚', searchTags: ['すぶた'], factor: { kcal: 1.194, protein: 1.111, fat: 0.816, carbs: 2.818 } }, // ≒647kcal/P30/F31/C62 (甘酢でC高)
       { key: 'ebi_chili', label: 'エビチリ', factor: { kcal: 1.103, protein: 1.185, fat: 0.789, carbs: 2.273 } }, // ≒598kcal/P32/F30/C50
       { key: 'ebi_mayo', label: 'エビマヨ', factor: { kcal: 1.122, protein: 0.926, fat: 1.158, carbs: 1.273 } }, // ≒608kcal/P25/F44/C28 (マヨでF高)
     ],
@@ -804,6 +839,7 @@ const BUCKET_MISC_DISH: Identity[] = [
   {
     id: 'nabe',
     label: '鍋もの',
+    searchTags: ['なべもの', 'なべ'],
     primaryHome: { tab: 'dish', bucket: 'misc_dish' },
     // こってり系(すき焼き/しゃぶしゃぶ)とあっさり系(寄せ鍋/水炊き/豆乳鍋)を統合。
     // 基準はすき焼き (旧 nabe_heavy)。おでんは具のばらつきが大きすぎるため除外
@@ -813,17 +849,18 @@ const BUCKET_MISC_DISH: Identity[] = [
     referenceDescription: '肉150g+野菜+つゆ (1人前)',
     amount: { unit: 'percent', default: 100, chips: [{ label: '軽め', value: 70 }, { label: '1人前', value: 100 }, { label: 'しっかり', value: 150 }] },
     attributes: [
-      { key: 'sukiyaki', label: 'すき焼き', isDefault: true },
+      { key: 'sukiyaki', label: 'すき焼き', isDefault: true, searchTags: ['すきやき'] },
       { key: 'shabu', label: 'しゃぶしゃぶ', factor: { kcal: 0.93, fat: 0.86 } },
       // 旧 nabe_light (寄せ鍋=450kcal 基準) を新基準(700kcal)に対する factor に換算。
-      { key: 'yose', label: '寄せ鍋', factor: { kcal: 0.643, protein: 0.848, fat: 0.4, carbs: 1.024 } },
-      { key: 'mizutaki', label: '水炊き', factor: { kcal: 0.611, protein: 0.848, fat: 0.4, carbs: 1.024 } },
-      { key: 'tonyu_nabe', label: '豆乳鍋', factor: { kcal: 0.675, protein: 0.848, fat: 0.4, carbs: 1.024 } },
+      { key: 'yose', label: '寄せ鍋', searchTags: ['よせなべ'], factor: { kcal: 0.643, protein: 0.848, fat: 0.4, carbs: 1.024 } },
+      { key: 'mizutaki', label: '水炊き', searchTags: ['みずたき'], factor: { kcal: 0.611, protein: 0.848, fat: 0.4, carbs: 1.024 } },
+      { key: 'tonyu_nabe', label: '豆乳鍋', searchTags: ['とうにゅうなべ'], factor: { kcal: 0.675, protein: 0.848, fat: 0.4, carbs: 1.024 } },
     ],
   },
   {
     id: 'sashimi',
     label: '刺身盛り',
+    searchTags: ['さしみ', 'おさしみ'],
     primaryHome: { tab: 'dish', bucket: 'misc_dish' },
     quickTapDisabled: true, // Attribute 魚種で kcal/F が大きく振れる
     defaultMacro: { kcal: 250, protein: 30, fat: 8, carbs: 4 }, // 5切=250kcal
@@ -835,7 +872,7 @@ const BUCKET_MISC_DISH: Identity[] = [
       { key: 'maguro_chu', label: 'まぐろ中トロ', factor: { kcal: 1.6, fat: 4.0 } },
       { key: 'salmon', label: 'サーモン', factor: { kcal: 1.5, fat: 3.0 } },
       { key: 'buri_hamachi', label: 'ハマチ・ぶり', factor: { kcal: 1.4, fat: 2.5 } },
-      { key: 'white_fish', label: '白身魚', factor: { kcal: 0.7, fat: 0.3 } },
+      { key: 'white_fish', label: '白身魚', searchTags: ['しろみざかな'], factor: { kcal: 0.7, fat: 0.3 } },
       { key: 'ika_tako', label: 'イカ・タコ', factor: { kcal: 0.6, fat: 0.2 } },
     ],
   },
@@ -851,6 +888,7 @@ const BUCKET_MISC_DISH: Identity[] = [
   {
     id: 'okonomi',
     label: '粉もの',
+    searchTags: ['こなもの', 'おこのみやき', 'たこやき'],
     primaryHome: { tab: 'dish', bucket: 'misc_dish' },
     quickTapDisabled: true, // Attribute お好み焼き/広島/もんじゃ/たこ焼き: kcal 420-852
     defaultMacro: { kcal: 580, protein: 20, fat: 24, carbs: 70 },
@@ -858,13 +896,14 @@ const BUCKET_MISC_DISH: Identity[] = [
     amount: { unit: 'piece', default: 1, unitLabel: '枚', step: 0.5, chips: [{ label: '半分', value: 0.5 }, { label: '1枚', value: 1 }, { label: '2枚', value: 2 }] },
     attributes: [
       // お好み焼き・広島: sauce/mayo/削り節が定番。卵は具に入ることが多いが追加もあり。
-      { key: 'okonomiyaki', label: 'お好み焼き', isDefault: true },
-      { key: 'hiroshima', label: '広島お好み焼き', factor: { kcal: 1.47, protein: 1.6, fat: 1.33, carbs: 1.54 } },
+      { key: 'okonomiyaki', label: 'お好み焼き', isDefault: true, searchTags: ['おこのみやき'] },
+      { key: 'hiroshima', label: '広島お好み焼き', searchTags: ['ひろしまおこのみやき'], factor: { kcal: 1.47, protein: 1.6, fat: 1.33, carbs: 1.54 } },
       { key: 'monjayaki', label: 'もんじゃ', factor: { kcal: 0.72, protein: 0.9, fat: 0.63, carbs: 0.74 } },
       // たこ焼きは sauce(ソース)が定番。mayo は任意、cheese/卵は一般的でない。
       {
         key: 'takoyaki',
         label: 'たこ焼き',
+        searchTags: ['たこやき'],
         factor: { kcal: 0.72, protein: 0.6, fat: 0.75, carbs: 0.71 },
         defaultAddonIds: ['sauce'],
         allowedAddonIds: ['sauce', 'mayo', 'katsuobushi'],
@@ -877,6 +916,7 @@ const BUCKET_MISC_DISH: Identity[] = [
   {
     id: 'soup',
     label: '汁物・スープ',
+    searchTags: ['しるもの', 'みそしる'],
     primaryHome: { tab: 'dish', bucket: 'misc_dish' },
     // 和風(味噌汁/豚汁)と洋風(コンソメ/クリーム)を統合。基準は味噌汁(具薄)。
     quickTapDisabled: true,
@@ -884,12 +924,13 @@ const BUCKET_MISC_DISH: Identity[] = [
     referenceDescription: '1杯=200ml相当',
     amount: { unit: 'piece', default: 1, unitLabel: '杯', chips: [{ label: '1杯', value: 1 }, { label: '大', value: 2 }] },
     attributes: [
-      { key: 'miso_light', label: '味噌汁・お吸い物', isDefault: true },
-      { key: 'miso_rich', label: '味噌汁(具沢山)', factor: { kcal: 2.0, protein: 2.0, fat: 3.0, carbs: 2.0 } },
-      { key: 'tonjiru', label: '豚汁・けんちん汁', factor: { kcal: 4.125, protein: 3.2, fat: 8.0, carbs: 3.75 } },
+      { key: 'miso_light', label: '味噌汁・お吸い物', isDefault: true, searchTags: ['みそしる', 'おすいもの'] },
+      { key: 'miso_rich', label: '味噌汁(具沢山)', factor: { kcal: 2.0, protein: 2.0, fat: 3.0, carbs: 2.0 }, searchTags: ['みそしる'] },
+      { key: 'tonjiru', label: '豚汁・けんちん汁', factor: { kcal: 4.125, protein: 3.2, fat: 8.0, carbs: 3.75 }, searchTags: ['とんじる', 'ぶたじる', 'けんちんじる'] },
       {
         key: 'western',
         label: '洋風スープ',
+        searchTags: ['ようふうすーぷ'],
         factor: { kcal: 1.25, protein: 0.8, fat: 1.4, carbs: 2.0 },
         defaultAddonIds: ['cheese', 'crouton'],
         allowedAddonIds: ['cheese', 'crouton', 'corn_top'],

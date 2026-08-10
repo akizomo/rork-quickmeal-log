@@ -169,6 +169,10 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     visible: boolean;
     bucketKey?: BucketKey;
     identityId?: string;
+    /** Pre-select this Attribute when opening on identityId (e.g. search result for a specific 種類). */
+    attributeKey?: string;
+    /** Pre-select this Style when opening on identityId. */
+    styleKey?: string;
     /** When set, the sheet edits this existing FoodLog instead of creating new. */
     editingLogId?: string;
     /** Which QuickLogSection tab opened this sheet (for tabUsageCounts tracking). Absent for edits. */
@@ -527,12 +531,24 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
   // ----- Identity-first IA (Phase 2+) -----
 
   const openIdentityLogSheet = useCallback(
-    (bucketKey: BucketKey, opts?: { identityId?: string; editingLogId?: string; sourceTab?: QuickLogTabKey; onDismiss?: () => void }) => {
+    (
+      bucketKey: BucketKey,
+      opts?: {
+        identityId?: string;
+        attributeKey?: string;
+        styleKey?: string;
+        editingLogId?: string;
+        sourceTab?: QuickLogTabKey;
+        onDismiss?: () => void;
+      }
+    ) => {
       identityLogSheetOnDismissRef.current = opts?.onDismiss ?? null;
       setIdentityLogSheet({
         visible: true,
         bucketKey,
         identityId: opts?.identityId,
+        attributeKey: opts?.attributeKey,
+        styleKey: opts?.styleKey,
         editingLogId: opts?.editingLogId,
         sourceTab: opts?.sourceTab,
       });

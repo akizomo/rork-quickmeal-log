@@ -33,14 +33,15 @@ import { DirectInputSheet } from '@/components/DirectInputSheet';
 import { getBucketDef } from '@/constants/identity';
 import { useAppState } from '@/providers/app-state-provider';
 import {
+  describeSearchEntry,
   getCategoryHints,
-  searchIdentitiesFuzzy,
-  type IdentitySearchResult,
+  searchEntriesFuzzy,
+  type SearchEntry,
+  type SearchEntryResult,
 } from '@/utils/identity-search';
-import type { BucketKey, Identity } from '@/types/identity';
+import type { BucketKey } from '@/types/identity';
 
 const DEBOUNCE_MS = 180;
-const MAX_RESULTS = 8;
 
 type Props = {
   visible: boolean;
@@ -48,6 +49,43 @@ type Props = {
   /** Called to re-open this sheet (e.g. after IdentityLogSheet dismiss). */
   onOpen: () => void;
 };
+
+function resultKey(result: SearchEntryResult): string {
+  const { identity, attribute, style } = result.entry;
+  return `${identity.id}:${attribute?.key ?? ''}:${style?.key ?? ''}`;
+}
+
+function SearchResultRow({
+  result,
+  onPress,
+}: {
+  result: SearchEntryResult;
+  onPress: (entry: SearchEntry) => void;
+}) {
+  const t = useTheme();
+  const { label, identityLabel, bucketEmoji, bucketLabel } = describeSearchEntry(result.entry);
+  return (
+    <Pressable
+      onPress={() => onPress(result.entry)}
+      style={({ pressed }) => [
+        styles.resultRow,
+        {
+          paddingVertical: t.spacing['3'],
+          paddingHorizontal: t.spacing['2'],
+          borderRadius: t.radius.sm,
+          backgroundColor: pressed ? t.colors.surface.raised : 'transparent',
+        },
+      ]}
+      testID={`search-result-${resultKey(result)}`}
+    >
+      <Body>{label}</Body>
+      <Caption tone="secondary">
+        {identityLabel ? `${identityLabel} · ` : ''}
+        {bucketEmoji ? `${bucketEmoji} ${bucketLabel}` : ''}
+      </Caption>
+    </Pressable>
+  );
+}
 
 export function SearchSheet({ visible, onClose, onOpen }: Props) {
   const t = useTheme();
@@ -93,22 +131,27 @@ export function SearchSheet({ visible, onClose, onOpen }: Props) {
     return () => clearTimeout(id);
   }, [query]);
 
-  const results = useMemo<IdentitySearchResult[]>(() => {
-    if (debounced.trim().length === 0) return [];
-    return searchIdentitiesFuzzy(debounced).slice(0, MAX_RESULTS);
+  const { confidentResults, maybeResults } = useMemo(() => {
+    if (debounced.trim().length === 0) return { confidentResults: [] as SearchEntryResult[], maybeResults: [] as SearchEntryResult[] };
+    const { confident, maybe } = searchEntriesFuzzy(debounced);
+    return { confidentResults: confident, maybeResults: maybe };
   }, [debounced]);
 
+  // 層4: 確信度に関わらず常に計算・表示する (SEARCH_SPEC v0.4 §F5) —
+  // 誤ヒットがカテゴリへの逃げ道を塞ぐ構造を解消するため、0件時限定にしない。
   const categoryHints = useMemo<BucketKey[]>(() => {
-    if (debounced.trim().length === 0 || results.length > 0) return [];
+    if (debounced.trim().length === 0) return [];
     return getCategoryHints(debounced);
-  }, [debounced, results.length]);
+  }, [debounced]);
 
   const handleSelect = useCallback(
-    (identity: Identity) => {
+    (entry: SearchEntry) => {
       Keyboard.dismiss();
       onClose(); // hide search sheet
-      openIdentityLogSheet(identity.primaryHome.bucket, {
-        identityId: identity.id,
+      openIdentityLogSheet(entry.identity.primaryHome.bucket, {
+        identityId: entry.identity.id,
+        attributeKey: entry.attribute?.key,
+        styleKey: entry.style?.key,
         onDismiss: onOpen, // re-open search sheet if user cancels
       });
     },
@@ -149,20 +192,23 @@ export function SearchSheet({ visible, onClose, onOpen }: Props) {
   }, [bumpDiagnostic, commitPendingMiss, onClose]);
 
   const isEmpty = debounced.trim().length === 0;
-  const hasResults = results.length > 0;
+  const hasConfident = confidentResults.length > 0;
+  const hasMaybe = maybeResults.length > 0;
   const hasHints = categoryHints.length > 0;
-  const noMatch = !isEmpty && !hasResults && !hasHints;
+  const noMatch = !isEmpty && !hasConfident && !hasMaybe && !hasHints;
 
-  // 診断: 直接ヒットが無い状態を pending として保持する (確定は commitPendingMiss)。
-  // ヒットしたら pending を破棄する — 打鍵途中で 0 件だっただけなので信号ではない。
+  // 診断 (SEARCH_SPEC v0.4 §F5): 層1 (confident) のヒット有無だけで miss を判定する。
+  // 層2 (もしかして) でしか着地しなかったクエリも miss として記録する — これが
+  // §5.4.7 の辞書育成ループの入力になる。旧実装は「何かヒットしたか」で判定して
+  // いたため、bigram の誤ヒットが miss を握り潰していた。
   useEffect(() => {
     if (isEmpty) return;
-    if (hasResults) {
+    if (hasConfident) {
       pendingMissRef.current = null;
     } else {
       pendingMissRef.current = { q: debounced, hadHints: hasHints };
     }
-  }, [debounced, isEmpty, hasResults, hasHints]);
+  }, [debounced, isEmpty, hasConfident, hasHints]);
 
   return (
     <>
@@ -214,39 +260,28 @@ export function SearchSheet({ visible, onClose, onOpen }: Props) {
         </View>
 
 
-        {/* 検索結果 */}
-        {hasResults ? (
-          <View style={styles.resultList}>
-            {results.map(({ identity }) => {
-              const bucket = getBucketDef(identity.primaryHome.bucket);
-              return (
-                <Pressable
-                  key={identity.id}
-                  onPress={() => handleSelect(identity)}
-                  style={({ pressed }) => [
-                    styles.resultRow,
-                    {
-                      paddingVertical: t.spacing['3'],
-                      paddingHorizontal: t.spacing['2'],
-                      borderRadius: t.radius.sm,
-                      backgroundColor: pressed ? t.colors.surface.raised : 'transparent',
-                    },
-                  ]}
-                  testID={`search-result-${identity.id}`}
-                >
-                  <Body>{identity.label}</Body>
-                  {bucket ? (
-                    <Caption tone="secondary">
-                      {bucket.emoji} {bucket.label}
-                    </Caption>
-                  ) : null}
-                </Pressable>
-              );
-            })}
+        {/* 検索結果 (層1: confident) */}
+        {hasConfident ? (
+          <View style={[styles.resultList, { marginBottom: hasMaybe || hasHints ? t.spacing['4'] : 0 }]}>
+            {confidentResults.map((result) => (
+              <SearchResultRow key={resultKey(result)} result={result} onPress={handleSelect} />
+            ))}
           </View>
         ) : null}
 
-        {/* カテゴリヒント (0件フォールバック) */}
+        {/* もしかして (層2: bigram類似度のみのファジー一致) */}
+        {hasMaybe ? (
+          <View style={{ gap: t.spacing['2'], marginBottom: hasHints ? t.spacing['4'] : 0 }}>
+            <Overline tone="secondary">もしかして</Overline>
+            <View style={styles.resultList}>
+              {maybeResults.map((result) => (
+                <SearchResultRow key={resultKey(result)} result={result} onPress={handleSelect} />
+              ))}
+            </View>
+          </View>
+        ) : null}
+
+        {/* このカテゴリかも (層4: 常時表示フォールバック) */}
         {hasHints ? (
           <View style={{ gap: t.spacing['3'] }}>
             <Overline tone="secondary">このカテゴリかも</Overline>

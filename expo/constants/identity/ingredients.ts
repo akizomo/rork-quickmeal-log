@@ -99,6 +99,7 @@ const BUCKET_STAPLE: Identity[] = [
   {
     id: 'okayu',
     label: 'おかゆ・雑炊',
+    searchTags: ['おかゆ', 'ぞうすい', 'かゆ'],
     primaryHome: { tab: 'ingredient', bucket: 'staple' },
     defaultMacro: { kcal: 140, protein: 2.4, fat: 0.3, carbs: 33 },
     nutritionNotes: [
@@ -233,6 +234,7 @@ const BUCKET_STAPLE: Identity[] = [
   {
     id: 'potato',
     label: 'じゃがいも・里芋',
+    searchTags: ['さといも', 'ポテト'],
     primaryHome: { tab: 'ingredient', bucket: 'staple' },
     defaultMacro: { kcal: 76, protein: 1.9, fat: 0.1, carbs: 17 },
     nutritionNotes: [
@@ -280,6 +282,7 @@ const BUCKET_STAPLE: Identity[] = [
   {
     id: 'noodle_udon',
     label: 'うどん・蕎麦',
+    searchTags: ['そば'],
     primaryHome: { tab: 'ingredient', bucket: 'staple' },
     defaultMacro: { kcal: 210, protein: 5.2, fat: 0.8, carbs: 43 }, // 茹でうどん 200g
     amount: {
@@ -298,6 +301,7 @@ const BUCKET_STAPLE: Identity[] = [
   {
     id: 'noodle_pasta',
     label: 'パスタ麺',
+    searchTags: ['パスタ', 'スパゲティ', 'すぱげてぃ'],
     primaryHome: { tab: 'ingredient', bucket: 'staple' },
     defaultMacro: { kcal: 284, protein: 10.2, fat: 1.4, carbs: 59 }, // 乾燥パスタ 80g
     amount: {
@@ -317,6 +321,7 @@ const BUCKET_STAPLE: Identity[] = [
   {
     id: 'noodle_ramen',
     label: '中華麺',
+    searchTags: ['ちゅうかめん', 'ラーメン', 'らーめん'],
     primaryHome: { tab: 'ingredient', bucket: 'staple' },
     defaultMacro: { kcal: 203, protein: 6.4, fat: 0.6, carbs: 42 }, // 茹で中華麺 120g
     amount: {
@@ -338,6 +343,7 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
   {
     id: 'chicken_lean',
     label: '鶏むね・ささみ',
+    searchTags: ['とりむね', 'むねにく', 'ささみ', 'とりささみ'],
     primaryHome: { tab: 'ingredient', bucket: 'lean_protein' },
     defaultMacro: { kcal: 105, protein: 23, fat: 1.5, carbs: 0 },
     nutritionNotes: [
@@ -382,6 +388,7 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
   {
     id: 'white_fish',
     label: '白身魚・赤身魚',
+    searchTags: ['しろみざかな', 'あかみざかな', 'たら', 'かれい', 'まぐろ'],
     primaryHome: { tab: 'ingredient', bucket: 'lean_protein' },
     // v1.2: default 80g→100g 化 (modal-set 1食量を chicken_lean/red_meat と揃える)
     // base = タラ・カレイ・ヒラメ等の白身魚。マグロ赤身は attribute で分岐。
@@ -413,6 +420,7 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
   {
     id: 'seafood_lean',
     label: 'イカ・タコ・エビ・貝',
+    searchTags: ['いか', 'たこ', 'えび', 'かい'],
     primaryHome: { tab: 'ingredient', bucket: 'lean_protein' },
     // v1.2: default 80g→100g 化 (modal-set 1食量を chicken_lean/red_meat と揃える)
     defaultMacro: { kcal: 88, protein: 17.5, fat: 0.8, carbs: 1 },
@@ -436,6 +444,7 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
   {
     id: 'red_meat',
     label: '赤身肉 (牛・豚)',
+    searchTags: ['あかみにく', 'ぎゅうにく', 'ぶたにく', 'ももにく'],
     primaryHome: { tab: 'ingredient', bucket: 'lean_protein' },
     // v1.2: Attribute 部位分岐追加。default は もも・ヒレ (純赤身、modal-set median 寄り)。
     // 旧 default 135/21/5 (牛もも基準) → 新 130/22/4 (牛豚もも・ヒレ平均)。
@@ -458,6 +467,7 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
   {
     id: 'canned_lean_fish',
     label: 'ツナ缶',
+    searchTags: ['つな', 'つなかん', 'ツナ'],
     primaryHome: { tab: 'ingredient', bucket: 'lean_protein' },
     defaultMacro: { kcal: 50, protein: 11, fat: 0.5, carbs: 0.1 },
     nutritionNotes: [
@@ -534,6 +544,7 @@ const BUCKET_EGG: Identity[] = [
   {
     id: 'egg',
     label: '卵',
+    searchTags: ['たまご', 'ゆでたまご', 'たまごやき', 'めだまやき'],
     primaryHome: { tab: 'ingredient', bucket: 'egg' },
     defaultMacro: { kcal: 75, protein: 6.2, fat: 5.2, carbs: 0.2 },
     nutritionNotes: [
@@ -573,6 +584,7 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
   {
     id: 'chicken_thigh',
     label: '鶏もも・手羽',
+    searchTags: ['とりもも', 'ももにく', 'てば', 'てばさき'],
     primaryHome: { tab: 'ingredient', bucket: 'fatty_protein' },
     defaultMacro: { kcal: 200, protein: 17, fat: 14, carbs: 0 },
     nutritionNotes: [
@@ -606,6 +618,7 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
   {
     id: 'beef_pork',
     label: '牛・豚 (普通脂)',
+    searchTags: ['ぎゅうにく', 'ぶたにく', 'とんかつ', 'めんちかつ'],
     primaryHome: { tab: 'ingredient', bucket: 'fatty_protein' },
     defaultMacro: { kcal: 230, protein: 17.5, fat: 16.5, carbs: 0 },
     nutritionNotes: [
@@ -645,6 +658,7 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
   {
     id: 'beef_pork_fatty',
     label: '牛・豚 (高脂)',
+    searchTags: ['ばらにく', 'さーろいん', 'ほるもん'],
     primaryHome: { tab: 'ingredient', bucket: 'fatty_protein' },
     quickTapDisabled: true, // Attribute バラ/サーロイン/ホルモン/タン: kcal 220-470, F 17-46
     defaultMacro: { kcal: 380, protein: 16, fat: 35, carbs: 0 },
@@ -660,6 +674,7 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
   {
     id: 'fatty_fish',
     label: '脂魚',
+    searchTags: ['あぶらざかな', 'さけ', 'しゃけ', 'さば', 'さんま', 'ぶり', 'いわし', 'うなぎ'],
     primaryHome: { tab: 'ingredient', bucket: 'fatty_protein' },
     quickTapDisabled: true, // Attribute 鮭/サバ/ぶり/さんま/いわし/うなぎ: kcal 130-290, F 9-24
     defaultMacro: { kcal: 200, protein: 20, fat: 12, carbs: 0 },
@@ -757,6 +772,7 @@ const BUCKET_DAIRY_SOY: Identity[] = [
   {
     id: 'milk',
     label: '牛乳',
+    searchTags: ['ぎゅうにゅう', 'ミルク'],
     primaryHome: { tab: 'ingredient', bucket: 'dairy_soy' },
     defaultMacro: { kcal: 134, protein: 6.6, fat: 7.6, carbs: 9.6 },
     nutritionNotes: [
@@ -820,6 +836,7 @@ const BUCKET_DAIRY_SOY: Identity[] = [
   {
     id: 'cheese_low_fat',
     label: 'チーズ (低脂)',
+    searchTags: ['かってーじちーず', 'ていしつちーず'],
     primaryHome: { tab: 'ingredient', bucket: 'dairy_soy' },
     referenceDescription: 'カッテージチーズなど低脂質チーズが基準',
     defaultMacro: { kcal: 32, protein: 4, fat: 1.4, carbs: 1 },
@@ -828,6 +845,7 @@ const BUCKET_DAIRY_SOY: Identity[] = [
   {
     id: 'soy_milk',
     label: '豆乳',
+    searchTags: ['とうにゅう'],
     primaryHome: { tab: 'ingredient', bucket: 'dairy_soy' },
     defaultMacro: { kcal: 92, protein: 7.2, fat: 4, carbs: 6.2 },
     nutritionNotes: [
@@ -844,6 +862,7 @@ const BUCKET_DAIRY_SOY: Identity[] = [
   {
     id: 'tofu',
     label: '豆腐',
+    searchTags: ['とうふ', 'ひややっこ', 'やっこ'],
     primaryHome: { tab: 'ingredient', bucket: 'dairy_soy' },
     defaultMacro: { kcal: 83, protein: 7.5, fat: 4.5, carbs: 3 },
     nutritionNotes: [
@@ -875,6 +894,7 @@ const BUCKET_DAIRY_SOY: Identity[] = [
   {
     id: 'natto',
     label: '納豆',
+    searchTags: ['なっとう'],
     primaryHome: { tab: 'ingredient', bucket: 'dairy_soy' },
     defaultMacro: { kcal: 80, protein: 6.6, fat: 4, carbs: 5 },
     nutritionNotes: [
@@ -892,6 +912,7 @@ const BUCKET_DAIRY_SOY: Identity[] = [
   {
     id: 'edamame_soy',
     label: '大豆・枝豆',
+    searchTags: ['だいず', 'えだまめ'],
     primaryHome: { tab: 'ingredient', bucket: 'dairy_soy' },
     defaultMacro: { kcal: 65, protein: 6, fat: 3, carbs: 4 },
     nutritionNotes: [
@@ -914,6 +935,7 @@ const BUCKET_VEGGIES: Identity[] = [
   {
     id: 'salad_raw',
     label: 'サラダ・生野菜',
+    searchTags: ['なまやさい', 'シーザーサラダ', 'グリーンサラダ'],
     primaryHome: { tab: 'ingredient', bucket: 'veggies' },
     defaultMacro: { kcal: 25, protein: 1.4, fat: 0.3, carbs: 5 },
     nutritionNotes: [
@@ -929,6 +951,7 @@ const BUCKET_VEGGIES: Identity[] = [
   {
     id: 'veg_cooked',
     label: '温野菜',
+    searchTags: ['おんやさい', 'にたやさい'],
     primaryHome: { tab: 'ingredient', bucket: 'veggies' },
     // 一般野菜の代表値 (葉物・根菜・きのこ等)。
     // ブロッコリー類など高タンパク野菜は veg_dense へ。
@@ -958,6 +981,7 @@ const BUCKET_VEGGIES: Identity[] = [
   {
     id: 'veg_dense',
     label: '高タンパク野菜',
+    searchTags: ['こうたんぱくやさい', 'たかたんぱくやさい'],
     primaryHome: { tab: 'ingredient', bucket: 'veggies' },
     // ブロッコリー基準 (生 100g): kcal 35, P 4.3, F 0.4, C 5
     defaultMacro: { kcal: 35, protein: 4.3, fat: 0.4, carbs: 5 },
@@ -970,8 +994,8 @@ const BUCKET_VEGGIES: Identity[] = [
       { key: 'broccoli', label: 'ブロッコリー', isDefault: true },
       { key: 'cauliflower', label: 'カリフラワー', factor: { kcal: 0.71, protein: 0.70, fat: 0.25, carbs: 1.0 } },
       { key: 'asparagus', label: 'アスパラガス', factor: { kcal: 0.63, protein: 0.60, fat: 0.50, carbs: 0.74 } },
-      { key: 'brussels_sprouts', label: '芽キャベツ', factor: { kcal: 1.43, protein: 1.14, fat: 0.50, carbs: 1.80 } },
-      { key: 'spinach', label: 'ほうれん草', factor: { kcal: 0.57, protein: 0.67, fat: 0.75, carbs: 0.62 } },
+      { key: 'brussels_sprouts', label: '芽キャベツ', factor: { kcal: 1.43, protein: 1.14, fat: 0.50, carbs: 1.80 }, searchTags: ['めきゃべつ'] },
+      { key: 'spinach', label: 'ほうれん草', factor: { kcal: 0.57, protein: 0.67, fat: 0.75, carbs: 0.62 }, searchTags: ['ほうれんそう'] },
     ],
     styles: [
       { key: 'steamed', label: '蒸し・茹で', isDefault: true },
@@ -1008,6 +1032,7 @@ const BUCKET_VEGGIES: Identity[] = [
   {
     id: 'side_seasoned',
     label: '煮物・和え物',
+    searchTags: ['にもの', 'あえもの', 'きんぴらごぼう', 'ひじきに', 'ちくぜんに'],
     primaryHome: { tab: 'ingredient', bucket: 'veggies' },
     defaultMacro: { kcal: 55, protein: 1.7, fat: 2.5, carbs: 6.5 },
     amount: { unit: 'g', default: 50, step: 10, chips: [{ label: '小鉢', value: 50 }, { label: '1皿', value: 100 }] },
@@ -1015,6 +1040,7 @@ const BUCKET_VEGGIES: Identity[] = [
   {
     id: 'side_creamy',
     label: 'クリーミー系',
+    searchTags: ['ぽてさら'],
     primaryHome: { tab: 'ingredient', bucket: 'veggies' },
     defaultMacro: { kcal: 130, protein: 1.5, fat: 8, carbs: 12 },
     amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '小', value: 50 }, { label: '100', value: 100 }] },
@@ -1027,13 +1053,14 @@ const BUCKET_VEGGIES: Identity[] = [
   {
     id: 'pickles',
     label: '漬物',
+    searchTags: ['つけもの'],
     primaryHome: { tab: 'ingredient', bucket: 'veggies' },
     defaultMacro: { kcal: 14, protein: 0.5, fat: 0.1, carbs: 2 },
     amount: { unit: 'g', default: 30, chips: [{ label: '少', value: 15 }, { label: '小皿', value: 30 }] },
     attributes: [
       { key: 'kimchi', label: 'キムチ', isDefault: true },
-      { key: 'asazuke', label: '浅漬け', factor: { kcal: 0.86 } },
-      { key: 'ume', label: '梅干し', factor: { kcal: 0.21, carbs: 0.3 } },
+      { key: 'asazuke', label: '浅漬け', factor: { kcal: 0.86 }, searchTags: ['あさづけ'] },
+      { key: 'ume', label: '梅干し', factor: { kcal: 0.21, carbs: 0.3 }, searchTags: ['うめぼし'] },
     ],
     asAddon: {
       unit: 'g',
@@ -1045,6 +1072,7 @@ const BUCKET_VEGGIES: Identity[] = [
   {
     id: 'veggie_soup',
     label: '野菜スープ',
+    searchTags: ['やさいすーぷ', 'こんそめ'],
     primaryHome: { tab: 'ingredient', bucket: 'veggies' },
     // コンソメ系薄口スープ基準 (野菜 100g + スープ 200ml 程度)。ミネストローネは misc_dish の soup_western へ。
     defaultMacro: { kcal: 35, protein: 1.5, fat: 0.5, carbs: 6 },
@@ -1084,6 +1112,7 @@ const BUCKET_FRUIT: Identity[] = [
   {
     id: 'apple_pear',
     label: 'りんご・梨',
+    searchTags: ['なし'],
     primaryHome: { tab: 'ingredient', bucket: 'fruit' },
     defaultMacro: { kcal: 135, protein: 0.5, fat: 0.5, carbs: 35 },
     nutritionNotes: [
@@ -1100,6 +1129,7 @@ const BUCKET_FRUIT: Identity[] = [
   {
     id: 'citrus',
     label: '柑橘',
+    searchTags: ['かんきつ', 'みかん', 'オレンジ'],
     primaryHome: { tab: 'ingredient', bucket: 'fruit' },
     defaultMacro: { kcal: 50, protein: 0.8, fat: 0.1, carbs: 13 },
     nutritionNotes: [
@@ -1185,6 +1215,7 @@ const BUCKET_ADDED_FAT: Identity[] = [
   {
     id: 'butter_cream',
     label: 'バター・生クリーム',
+    searchTags: ['なまくりーむ'],
     primaryHome: { tab: 'ingredient', bucket: 'added_fat' },
     defaultMacro: { kcal: 75, protein: 0.1, fat: 8.1, carbs: 0 },
     amount: { unit: 'g', default: 10, step: 5, chips: [{ label: '5', value: 5 }, { label: '10', value: 10 }, { label: '大さじ', value: 15 }] },
@@ -1342,6 +1373,7 @@ const BUCKET_SNACK_DRINK: Identity[] = [
   {
     id: 'cookie',
     label: 'クッキー・焼菓子',
+    searchTags: ['やきがし', 'びすけっと', 'まふぃん'],
     primaryHome: { tab: 'ingredient', bucket: 'snack_drink' },
     defaultMacro: { kcal: 130, protein: 1.8, fat: 5.5, carbs: 17 },
     referenceDescription: 'クッキー・ビスケット・マフィン等。1枚≈10g',
@@ -1350,6 +1382,7 @@ const BUCKET_SNACK_DRINK: Identity[] = [
   {
     id: 'snack',
     label: 'スナック菓子',
+    searchTags: ['すなっくがし', 'ポテチ', 'ぽてち'],
     primaryHome: { tab: 'ingredient', bucket: 'snack_drink' },
     defaultMacro: { kcal: 320, protein: 4, fat: 18, carbs: 36 },
     referenceDescription: 'ポテチ・コーンスナック等。1袋(ポテチ普通サイズ)≈60g',
@@ -1388,6 +1421,7 @@ const BUCKET_SNACK_DRINK: Identity[] = [
   {
     id: 'sweet_bread',
     label: '菓子パン',
+    searchTags: ['かしぱん', 'めろんぱん', 'あんぱん'],
     primaryHome: { tab: 'ingredient', bucket: 'snack_drink' },
     defaultMacro: { kcal: 305, protein: 6, fat: 8, carbs: 51 },
     amount: { unit: 'piece', default: 1, chips: [{ label: '半分', value: 0.5 }, { label: '1個', value: 1 }] },
