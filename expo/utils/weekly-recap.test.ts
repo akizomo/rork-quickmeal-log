@@ -7,6 +7,8 @@
 
 import { computeWeeklyRecap } from './weekly-recap';
 import type { FoodLog, UserProfile } from '@/types/nutrition';
+import { getIdentity } from '@/constants/identity';
+import { formatDateKey } from '@/utils/nutrition';
 
 // 基準日: 2026-08-03 (月) を「今週」とする。
 // → 直近の完了週は 2026-07-27 (月) 〜 2026-08-02 (日)。
@@ -240,31 +242,70 @@ describe('computeWeeklyRecap — macroBoost.note (観点A は観点Cに従属)',
       identityId: 'chicken_lean',
       identityLabel: '鶏むね・ささみ',
     });
-    expect(result?.macroBoost?.note?.note).toContain('鶏むね');
+    expect(result?.macroBoost?.note?.note.text).toContain('鶏むね');
+    // 出典は UI に出す前提なので必ず伴う (§10.14 追補-1)
+    expect(result?.macroBoost?.note?.note.source.label).toBeTruthy();
   });
 
+  // ノート未設定の食材として dish Identity を使う。ingredient 側は順次ノートが埋まるため、
+  // 「ノートが無い」ことを ingredient に依存させるとコンテンツ追加のたびに壊れる。
   it('最有力候補に nutritionNote が無くても、候補内の次点に有れば拾う (候補は3件までまとめて「アドバイス」なので)', () => {
     const logs = [
       makeLog('2026-07-27', 2000, { protein: 60, fat: 50, carbs: 200 }), // protein less
-      makeLog('2026-06-01', 300, {}, 'chicken_thigh'), // nutritionNote 無し・最頻出
-      makeLog('2026-06-02', 300, {}, 'chicken_thigh'),
-      makeLog('2026-06-03', 300, {}, 'chicken_thigh'),
-      makeLog('2026-06-04', 300, {}, 'egg'), // nutritionNote 有り・2番手
+      makeLog('2026-06-01', 300, {}, 'yakitori'), // nutritionNotes 無し・最頻出
+      makeLog('2026-06-02', 300, {}, 'yakitori'),
+      makeLog('2026-06-03', 300, {}, 'yakitori'),
+      makeLog('2026-06-04', 300, {}, 'egg'), // nutritionNotes 有り・2番手
     ];
     const result = computeWeeklyRecap(logs, makeProfile(2000), [], undefined, NOW);
-    expect(result?.macroBoost?.candidates[0].identityId).toBe('chicken_thigh');
+    expect(result?.macroBoost?.candidates[0].identityId).toBe('yakitori');
     expect(result?.macroBoost?.note?.identityId).toBe('egg');
   });
 
   it('候補の誰も nutritionNote を持たなければ note は null', () => {
+    // candidates は最大3件で、埋まらないとカタログから補完されるため上位密度の dish 3件で占める
     const logs = [
       makeLog('2026-07-27', 2000, { protein: 60, fat: 50, carbs: 200 }), // protein less
-      makeLog('2026-06-01', 300, {}, 'chicken_thigh'), // nutritionNote 無し
-      makeLog('2026-06-02', 300, {}, 'chicken_thigh'),
+      makeLog('2026-06-01', 300, {}, 'yakitori'),
+      makeLog('2026-06-02', 300, {}, 'yakitori'),
+      makeLog('2026-06-03', 300, {}, 'meat_solo'),
+      makeLog('2026-06-04', 300, {}, 'sashimi'),
     ];
     const result = computeWeeklyRecap(logs, makeProfile(2000), [], undefined, NOW);
-    expect(result?.macroBoost?.candidates[0].identityId).toBe('chicken_thigh');
+    expect(result?.macroBoost?.candidates[0].identityId).toBe('yakitori');
     expect(result?.macroBoost?.note).toBeNull();
+  });
+
+  it('同じ週なら何度計算しても同じノートを返す (リカップは週内で不変)', () => {
+    const logs = [
+      makeLog('2026-07-27', 2000, { protein: 60, fat: 50, carbs: 200 }),
+      makeLog('2026-06-01', 300, {}, 'beef_pork'), // 複数ノートを持つ食材
+      makeLog('2026-06-02', 300, {}, 'beef_pork'),
+    ];
+    const a = computeWeeklyRecap(logs, makeProfile(2000), [], undefined, NOW);
+    const b = computeWeeklyRecap(logs, makeProfile(2000), [], undefined, NOW);
+    expect(a?.macroBoost?.note?.note.text).toBe(b?.macroBoost?.note?.note.text);
+  });
+
+  it('週が変われば複数ノートのうち別のものが出うる (再会するたび違う角度)', () => {
+    const identity = getIdentity('beef_pork');
+    expect(identity?.nutritionNotes?.length ?? 0).toBeGreaterThan(1);
+
+    // 26週分を回して、出てくるノートが1種類に固定されていないことを確かめる
+    const seen = new Set<string>();
+    for (let w = 0; w < 26; w++) {
+      const now = new Date(NOW.getTime() + w * 7 * 24 * 60 * 60 * 1000);
+      const weekStart = formatDateKey(new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000));
+      const logs = [
+        makeLog(weekStart, 2000, { protein: 60, fat: 50, carbs: 200 }),
+        makeLog('2026-06-01', 300, {}, 'beef_pork'),
+        makeLog('2026-06-02', 300, {}, 'beef_pork'),
+      ];
+      const r = computeWeeklyRecap(logs, makeProfile(2000), [], undefined, now);
+      const text = r?.macroBoost?.note?.note.text;
+      if (text) seen.add(text);
+    }
+    expect(seen.size).toBeGreaterThan(1);
   });
 
   it('macroBoost 自体が無ければ note も無い (アドバイスに従属するため単独では出ない)', () => {

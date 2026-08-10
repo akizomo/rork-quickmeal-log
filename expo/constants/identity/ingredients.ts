@@ -13,7 +13,22 @@
  *     `addons.ts` and from cross-bucket Identity references (Identity流用).
  */
 
-import { Identity } from '@/types/identity';
+import { Identity, NutritionNoteSource } from '@/types/identity';
+
+// 豆知識の出典 (§10.14 追補-1: UI に表示する前提で持つ)。
+// 採用階層は公的機関・大学の公衆衛生機関・系統的レビューまで (§10.14 追補-3)。
+
+/** 栄養素の「働き」の記述元。国が定型文を定めているためオーバークレームにならない。 */
+const SRC_CAA: NutritionNoteSource = {
+  label: '消費者庁 食品表示基準（栄養機能食品）',
+  url: 'https://www.caa.go.jp/policies/policy/food_labeling/foods_with_nutrient_function_claims',
+};
+
+/** 組成・含有量の記述元。 */
+const SRC_SEIBUN: NutritionNoteSource = {
+  label: '文部科学省 日本食品標準成分表',
+  url: 'https://www.mext.go.jp/a_menu/syokuhinseibun/',
+};
 
 // ---------------------------------------------------------------------------
 // Bucket 1: ごはんパン麺 (staple) — 13 Identity
@@ -25,7 +40,9 @@ const BUCKET_STAPLE: Identity[] = [
     label: 'ごはん',
     primaryHome: { tab: 'ingredient', bucket: 'staple' },
     defaultMacro: { kcal: 234, protein: 3.8, fat: 0.5, carbs: 56 },
-    nutritionNote: 'ごはんは、脳や体を動かすエネルギー源になる糖質が主成分です。',
+    nutritionNotes: [
+      { text: 'ごはんは、脳や体を動かすエネルギー源になる糖質が主成分です。', source: SRC_SEIBUN },
+    ],
     amount: {
       unit: 'g',
       default: 150, step: 10,
@@ -84,6 +101,9 @@ const BUCKET_STAPLE: Identity[] = [
     label: 'おかゆ・雑炊',
     primaryHome: { tab: 'ingredient', bucket: 'staple' },
     defaultMacro: { kcal: 140, protein: 2.4, fat: 0.3, carbs: 33 },
+    nutritionNotes: [
+      { text: 'おかゆは水分が多い分、同じ一杯でもごはんより糖質は控えめになります。', source: SRC_SEIBUN },
+    ],
     amount: {
       unit: 'g',
       default: 200, step: 10,
@@ -189,6 +209,9 @@ const BUCKET_STAPLE: Identity[] = [
     // 基準: 切り餅プレーン 1個≒50g (117kcal/P2/F0.3/C25)。
     // 種類で餅/団子を選び、団子のトッピング(みたらし・あんこ等)は addon で足す。
     defaultMacro: { kcal: 117, protein: 2, fat: 0.3, carbs: 25 },
+    nutritionNotes: [
+      { text: '餅は水分が少ない分、同じ重さのごはんよりエネルギーが高くなります。見た目の量より多めに入ります。', source: SRC_SEIBUN },
+    ],
     referenceDescription: '切り餅1個≒50g / 団子は串1本(3個)が目安。たれ・あんこはトッピングで追加',
     amount: { unit: 'piece', default: 1 },
     attributes: [
@@ -212,6 +235,9 @@ const BUCKET_STAPLE: Identity[] = [
     label: 'じゃがいも・里芋',
     primaryHome: { tab: 'ingredient', bucket: 'staple' },
     defaultMacro: { kcal: 76, protein: 1.9, fat: 0.1, carbs: 17 },
+    nutritionNotes: [
+      { text: 'じゃがいもや里芋に含まれるビタミンCは、皮膚や粘膜の健康維持を助けるとともに、抗酸化作用を持つ栄養素です。', source: SRC_CAA },
+    ],
     amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '小', value: 70 }, { label: '1個', value: 100 }, { label: '大', value: 180 }] },
     styles: [
       { key: 'plain', label: '蒸し・茹で', isDefault: true },
@@ -235,6 +261,9 @@ const BUCKET_STAPLE: Identity[] = [
     label: 'さつまいも',
     primaryHome: { tab: 'ingredient', bucket: 'staple' },
     defaultMacro: { kcal: 130, protein: 1.2, fat: 0.2, carbs: 32 },
+    nutritionNotes: [
+      { text: 'さつまいもの食物繊維は、便通に関わる成分です。いも類のなかでも多く含みます。', source: SRC_SEIBUN },
+    ],
     amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '小', value: 70 }, { label: '100', value: 100 }, { label: '大', value: 200 }] },
     styles: [
       { key: 'plain', label: '蒸し・茹で', isDefault: true },
@@ -311,7 +340,9 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
     label: '鶏むね・ささみ',
     primaryHome: { tab: 'ingredient', bucket: 'lean_protein' },
     defaultMacro: { kcal: 105, protein: 23, fat: 1.5, carbs: 0 },
-    nutritionNote: '鶏むねは、たんぱく質を多く含み、脂質は控えめな食材です。',
+    nutritionNotes: [
+      { text: '鶏むねは、筋肉や臓器の材料になるたんぱく質を多く含み、脂質は控えめな食材です。', source: SRC_SEIBUN },
+    ],
     amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '100', value: 100 }, { label: '150', value: 150 }, { label: '200', value: 200 }] },
     attributes: [
       { key: 'no_skin', label: '皮なし', isDefault: true },
@@ -355,6 +386,9 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
     // v1.2: default 80g→100g 化 (modal-set 1食量を chicken_lean/red_meat と揃える)
     // base = タラ・カレイ・ヒラメ等の白身魚。マグロ赤身は attribute で分岐。
     defaultMacro: { kcal: 75, protein: 16, fat: 0.7, carbs: 0 },
+    nutritionNotes: [
+      { text: '赤身の魚は、泳ぎ続けるために酸素をたくわえる色素たんぱく質を多く持ち、そのぶん赤血球をつくるのに必要な鉄も多く含みます。', source: SRC_SEIBUN },
+    ],
     amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '1切', value: 80 }, { label: '1食', value: 100 }, { label: '2切', value: 160 }] },
     attributes: [
       { key: 'white', label: '白身魚（タラ・カレイ等）', isDefault: true },
@@ -406,6 +440,9 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
     // v1.2: Attribute 部位分岐追加。default は もも・ヒレ (純赤身、modal-set median 寄り)。
     // 旧 default 135/21/5 (牛もも基準) → 新 130/22/4 (牛豚もも・ヒレ平均)。
     defaultMacro: { kcal: 130, protein: 22, fat: 4, carbs: 0 },
+    nutritionNotes: [
+      { text: '赤身肉に含まれる鉄は、赤血球をつくるのに必要な栄養素です。', source: SRC_CAA },
+    ],
     amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '100', value: 100 }, { label: '150', value: 150 }, { label: '200', value: 200 }] },
     attributes: [
       { key: 'momo_hire', label: 'もも・ヒレ', isDefault: true },
@@ -423,6 +460,9 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
     label: 'ツナ缶',
     primaryHome: { tab: 'ingredient', bucket: 'lean_protein' },
     defaultMacro: { kcal: 50, protein: 11, fat: 0.5, carbs: 0.1 },
+    nutritionNotes: [
+      { text: 'ツナ缶は、油漬けか水煮かで脂質が大きく変わります。同じ「ツナ」でも選ぶ缶で結果が変わります。', source: SRC_SEIBUN },
+    ],
     amount: { unit: 'piece', default: 1, unitLabel: '缶', chips: [{ label: '半缶', value: 0.5 }, { label: '1缶', value: 1 }, { label: '2缶', value: 2 }] },
     attributes: [
       { key: 'water', label: '水煮', isDefault: true },
@@ -466,6 +506,9 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
     label: 'ジャーキー類',
     primaryHome: { tab: 'ingredient', bucket: 'lean_protein' },
     defaultMacro: { kcal: 85, protein: 15, fat: 2, carbs: 3.5 },
+    nutritionNotes: [
+      { text: 'ジャーキーは水分を抜いてある分、同じ重さでも筋肉の材料になるたんぱく質と塩分がどちらも濃くなります。量が少なく見えても両方とりすぎやすい食品です。', source: SRC_SEIBUN },
+    ],
     amount: { unit: 'g', default: 30, step: 10, chips: [{ label: '20', value: 20 }, { label: '30', value: 30 }, { label: '50', value: 50 }] },
     searchTags: ['ビーフジャーキー', 'さきいか', 'あたりめ'],
   },
@@ -475,6 +518,10 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
     // 脂質3.5g/100gは同バケットのred_meat(赤身肉, F4g/100g)より低く、fatty_proteinではなくlean_protein相当
     primaryHome: { tab: 'ingredient', bucket: 'lean_protein' },
     defaultMacro: { kcal: 130, protein: 20, fat: 3.5, carbs: 2.5 },
+    nutritionNotes: [
+      { text: 'レバーは、赤血球をつくる鉄と、夜間の視力の維持に関わるビタミンAが際立って多い食材です。少量でも量的な影響が大きくなります。', source: SRC_SEIBUN },
+      { text: 'レバーに多いビタミンAは、夜間の視力の維持を助けるとともに、皮膚や粘膜の健康維持を助ける栄養素です。', source: SRC_CAA },
+    ],
     amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '100', value: 100 }, { label: '150', value: 150 }] },
   },
 ];
@@ -489,7 +536,9 @@ const BUCKET_EGG: Identity[] = [
     label: '卵',
     primaryHome: { tab: 'ingredient', bucket: 'egg' },
     defaultMacro: { kcal: 75, protein: 6.2, fat: 5.2, carbs: 0.2 },
-    nutritionNote: '卵は、体に必要な必須アミノ酸をすべて含む数少ない食品のひとつです。',
+    nutritionNotes: [
+      { text: '卵は、体に必要な必須アミノ酸をすべて含む数少ない食品のひとつです。', source: SRC_SEIBUN },
+    ],
     amount: { unit: 'piece', default: 1 },
     attributes: [
       { key: 'whole', label: '全卵', isDefault: true },
@@ -526,6 +575,9 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
     label: '鶏もも・手羽',
     primaryHome: { tab: 'ingredient', bucket: 'fatty_protein' },
     defaultMacro: { kcal: 200, protein: 17, fat: 14, carbs: 0 },
+    nutritionNotes: [
+      { text: '鶏の脂質は皮に集まっています。皮を外すと脂質は大きく下がり、むね肉に近い組成になります。', source: SRC_SEIBUN },
+    ],
     amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '100', value: 100 }, { label: '150', value: 150 }, { label: '1枚', value: 250 }] },
     attributes: [
       { key: 'with_skin', label: '皮あり', isDefault: true },
@@ -556,7 +608,10 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
     label: '牛・豚 (普通脂)',
     primaryHome: { tab: 'ingredient', bucket: 'fatty_protein' },
     defaultMacro: { kcal: 230, protein: 17.5, fat: 16.5, carbs: 0 },
-    nutritionNote: '牛肉や豚肉には、体内に吸収されやすい形の鉄分(ヘム鉄)が含まれます。',
+    nutritionNotes: [
+      { text: '牛肉や豚肉の鉄(ヘム鉄)は、野菜や大豆の鉄(非ヘム鉄)より吸収されやすい形をしています。組み合わせを気にせず、そのままとれるのが特徴です。', source: SRC_SEIBUN },
+      { text: '牛肉や豚肉に含まれる鉄は、赤血球をつくるのに必要な栄養素です。', source: SRC_CAA },
+    ],
     amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '100', value: 100 }, { label: '150', value: 150 }, { label: '200', value: 200 }] },
     attributes: [
       { key: 'beef', label: '牛（ロース・もも等）', isDefault: true },
@@ -608,7 +663,10 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
     primaryHome: { tab: 'ingredient', bucket: 'fatty_protein' },
     quickTapDisabled: true, // Attribute 鮭/サバ/ぶり/さんま/いわし/うなぎ: kcal 130-290, F 9-24
     defaultMacro: { kcal: 200, protein: 20, fat: 12, carbs: 0 },
-    nutritionNote: '鮭などの脂がのった魚には、不飽和脂肪酸が含まれます。',
+    nutritionNotes: [
+      { text: '鮭などの脂がのった魚に含まれる不飽和脂肪酸は、常温でも固まりにくく、肉の脂(飽和脂肪酸)とは性質が違います。', source: SRC_SEIBUN },
+      { text: '脂がのった魚に多いn-3系脂肪酸は、皮膚の健康維持を助ける栄養素です。', source: SRC_CAA },
+    ],
     amount: { unit: 'g', default: 80, step: 10, chips: [{ label: '1切', value: 80 }, { label: '100', value: 100 }, { label: '2切', value: 160 }] },
     attributes: [
       { key: 'salmon', label: '鮭', isDefault: true },
@@ -628,6 +686,10 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
     label: '缶詰魚 (脂魚)',
     primaryHome: { tab: 'ingredient', bucket: 'fatty_protein' },
     defaultMacro: { kcal: 280, protein: 28, fat: 16, carbs: 0.5 },
+    nutritionNotes: [
+      { text: '魚の缶詰は加圧加熱で骨まで柔らかくなるため、骨ごと食べられます。生の切り身では残す部分がそのままとれます。', source: SRC_SEIBUN },
+      { text: '骨ごと食べられる魚の缶詰でとれるカルシウムは、骨や歯の形成に必要な栄養素です。', source: SRC_CAA },
+    ],
     referenceDescription: 'さば缶・いわし缶など。コンビニ個食サイズ(100〜150g)が目安。190g大缶は量を調整',
     amount: { unit: 'piece', default: 1, chips: [{ label: '半缶', value: 0.5 }, { label: '1缶', value: 1 }] },
     attributes: [
@@ -643,6 +705,9 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
     label: 'ハム',
     primaryHome: { tab: 'ingredient', bucket: 'fatty_protein' },
     defaultMacro: { kcal: 40, protein: 5, fat: 2.5, carbs: 1 },
+    nutritionNotes: [
+      { text: 'ハムやベーコンなどの加工肉には、保存と味つけのために塩分が加えられています。', source: SRC_SEIBUN },
+    ],
     amount: { unit: 'piece', default: 2, unitLabel: '枚', chips: [{ label: '2枚', value: 2 }, { label: '4枚', value: 4 }] },
     asAddon: {
       unit: 'piece',
@@ -656,6 +721,9 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
     label: 'ベーコン・ソーセージ',
     primaryHome: { tab: 'ingredient', bucket: 'fatty_protein' },
     defaultMacro: { kcal: 100, protein: 5, fat: 9, carbs: 0.5 },
+    nutritionNotes: [
+      { text: 'ベーコンやソーセージは脂身ごと加工されるため、脂質と塩分をあわせて含みます。', source: SRC_SEIBUN },
+    ],
     amount: { unit: 'piece', default: 2, unitLabel: '枚', chips: [{ label: '2枚', value: 2 }, { label: '1パック', value: 5 }] },
     attributes: [
       { key: 'bacon', label: 'ベーコン', isDefault: true },
@@ -691,6 +759,9 @@ const BUCKET_DAIRY_SOY: Identity[] = [
     label: '牛乳',
     primaryHome: { tab: 'ingredient', bucket: 'dairy_soy' },
     defaultMacro: { kcal: 134, protein: 6.6, fat: 7.6, carbs: 9.6 },
+    nutritionNotes: [
+      { text: '牛乳に多く含まれるカルシウムは、骨や歯の形成に必要な栄養素です。', source: SRC_CAA },
+    ],
     amount: { unit: 'ml', default: 200, step: 10, chips: [{ label: 'コップ', value: 100 }, { label: '200', value: 200 }, { label: '500', value: 500 }] },
     attributes: [
       { key: 'plain', label: '普通', isDefault: true },
@@ -710,7 +781,9 @@ const BUCKET_DAIRY_SOY: Identity[] = [
     label: 'ヨーグルト',
     primaryHome: { tab: 'ingredient', bucket: 'dairy_soy' },
     defaultMacro: { kcal: 62, protein: 3.6, fat: 3, carbs: 4.9 },
-    nutritionNote: 'ヨーグルトは、乳酸菌を含む発酵食品です。',
+    nutritionNotes: [
+      { text: 'ヨーグルトは、乳酸菌が乳を発酵させ乳酸に変えることで固まる食品です。', source: SRC_SEIBUN },
+    ],
     // 飲むヨーグルトは Attribute=drink で吸収するため chip 削除 (単位齟齬解消)
     amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '小', value: 80 }, { label: '1パック', value: 100 }, { label: '大', value: 150 }] },
     attributes: [
@@ -727,6 +800,9 @@ const BUCKET_DAIRY_SOY: Identity[] = [
     label: 'チーズ',
     primaryHome: { tab: 'ingredient', bucket: 'dairy_soy' },
     defaultMacro: { kcal: 80, protein: 5, fat: 6, carbs: 1 },
+    nutritionNotes: [
+      { text: 'チーズは牛乳を凝縮してつくるため、少量でも骨や歯の形成に必要なカルシウムがとれます。', source: SRC_SEIBUN },
+    ],
     amount: { unit: 'g', default: 20, chips: [{ label: 'スライス1枚', value: 18 }, { label: '30', value: 30 }, { label: '50', value: 50 }] }, // スライス1枚=18g (実測値。step整合を優先せず精度維持)
     attributes: [
       { key: 'slice', label: 'スライス・6P', isDefault: true },
@@ -754,6 +830,9 @@ const BUCKET_DAIRY_SOY: Identity[] = [
     label: '豆乳',
     primaryHome: { tab: 'ingredient', bucket: 'dairy_soy' },
     defaultMacro: { kcal: 92, protein: 7.2, fat: 4, carbs: 6.2 },
+    nutritionNotes: [
+      { text: '豆乳は大豆由来のたんぱく質を含みますが、骨や歯の形成に必要なカルシウムは牛乳ほど多くありません。牛乳の代わりに使うときは、カルシウムが添加された製品かどうかが分かれ目になります。', source: SRC_SEIBUN },
+    ],
     amount: { unit: 'ml', default: 200, step: 10, chips: [{ label: 'コップ', value: 100 }, { label: '200', value: 200 }] },
     attributes: [
       { key: 'plain', label: '無調整', isDefault: true },
@@ -767,7 +846,9 @@ const BUCKET_DAIRY_SOY: Identity[] = [
     label: '豆腐',
     primaryHome: { tab: 'ingredient', bucket: 'dairy_soy' },
     defaultMacro: { kcal: 83, protein: 7.5, fat: 4.5, carbs: 3 },
-    nutritionNote: '豆腐は、大豆由来のたんぱく質と、骨や歯の材料になるカルシウムを含みます。',
+    nutritionNotes: [
+      { text: '豆腐は、大豆由来の筋肉や臓器の材料になるたんぱく質と、骨や歯の材料になるカルシウムを含みます。', source: SRC_SEIBUN },
+    ],
     amount: { unit: 'piece', default: 0.5, unitLabel: '丁', chips: [{ label: '半丁', value: 0.5 }, { label: '1丁', value: 1 }] },
     attributes: [
       { key: 'silken', label: '絹', isDefault: true },
@@ -796,7 +877,10 @@ const BUCKET_DAIRY_SOY: Identity[] = [
     label: '納豆',
     primaryHome: { tab: 'ingredient', bucket: 'dairy_soy' },
     defaultMacro: { kcal: 80, protein: 6.6, fat: 4, carbs: 5 },
-    nutritionNote: '納豆は、大豆を発酵させてつくる、たんぱく質を含む食品です。',
+    nutritionNotes: [
+      { text: '納豆は、大豆にはほとんど無いビタミンKを、納豆菌が発酵させる過程でつくり出す食品です。', source: SRC_SEIBUN },
+      { text: '納豆に多いビタミンKは、正常な血液凝固と骨の健康維持に関わる栄養素です。', source: SRC_CAA },
+    ],
     amount: { unit: 'piece', default: 1, unitLabel: 'パック' },
     asAddon: {
       unit: 'piece',
@@ -810,6 +894,10 @@ const BUCKET_DAIRY_SOY: Identity[] = [
     label: '大豆・枝豆',
     primaryHome: { tab: 'ingredient', bucket: 'dairy_soy' },
     defaultMacro: { kcal: 65, protein: 6, fat: 3, carbs: 4 },
+    nutritionNotes: [
+      { text: '大豆や枝豆に含まれる鉄は、赤血球をつくるのに必要な栄養素です。', source: SRC_CAA },
+      { text: '大豆の鉄は植物性で、肉や魚の鉄より吸収されにくい形です。ビタミンCを含むものと組み合わせると吸収が高まります。', source: SRC_SEIBUN },
+    ],
     amount: { unit: 'g', default: 50, step: 10, chips: [{ label: '小皿', value: 50 }, { label: '100', value: 100 }] },
     attributes: [
       { key: 'edamame', label: '枝豆', isDefault: true },
@@ -828,6 +916,9 @@ const BUCKET_VEGGIES: Identity[] = [
     label: 'サラダ・生野菜',
     primaryHome: { tab: 'ingredient', bucket: 'veggies' },
     defaultMacro: { kcal: 25, protein: 1.4, fat: 0.3, carbs: 5 },
+    nutritionNotes: [
+      { text: 'にんじんなど色の濃い野菜のβ-カロテンは脂溶性で、油と一緒だと吸収されやすくなります。ドレッシングをかけるのは理にかなっています。', source: SRC_SEIBUN },
+    ],
     amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '小', value: 50 }, { label: '普通', value: 100 }, { label: '大', value: 150 }] },
     defaultAddonIds: ['avocado', 'canned_lean_fish', 'nuts', 'dressing', 'salad_chicken', 'crouton'],
     allowedAddonIds: [
@@ -843,6 +934,9 @@ const BUCKET_VEGGIES: Identity[] = [
     // ブロッコリー類など高タンパク野菜は veg_dense へ。
     referenceDescription: '葉物・根菜・きのこ等の一般野菜。ブロッコリー類は「高タンパク野菜」へ',
     defaultMacro: { kcal: 35, protein: 1.5, fat: 0.3, carbs: 7 },
+    nutritionNotes: [
+      { text: '野菜は加熱するとかさが減り、生のままより多くの量を食べやすくなります。', source: SRC_SEIBUN },
+    ],
     amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '小', value: 50 }, { label: '普通', value: 100 }, { label: '大', value: 150 }] },
     styles: [
       { key: 'steamed', label: '蒸し・茹で', isDefault: true },
@@ -867,7 +961,10 @@ const BUCKET_VEGGIES: Identity[] = [
     primaryHome: { tab: 'ingredient', bucket: 'veggies' },
     // ブロッコリー基準 (生 100g): kcal 35, P 4.3, F 0.4, C 5
     defaultMacro: { kcal: 35, protein: 4.3, fat: 0.4, carbs: 5 },
-    nutritionNote: 'ブロッコリーは、たんぱく質とビタミンCを含む野菜です。',
+    nutritionNotes: [
+      { text: 'ブロッコリーは、野菜には珍しく、筋肉や臓器の材料になるたんぱく質を含む野菜です。', source: SRC_SEIBUN },
+      { text: 'ブロッコリーに多いビタミンCは、皮膚や粘膜の健康維持を助けるとともに、抗酸化作用を持つ栄養素です。', source: SRC_CAA },
+    ],
     amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '小', value: 50 }, { label: '普通', value: 100 }, { label: '大', value: 150 }] },
     attributes: [
       { key: 'broccoli', label: 'ブロッコリー', isDefault: true },
@@ -890,6 +987,9 @@ const BUCKET_VEGGIES: Identity[] = [
     // 茹でとうもろこし1本 (可食部120g目安)。日本食品標準成分表ベース (100gあたり
     // kcal 99/P3.5/F1.7/C18.6)。温野菜(35kcal/100g)より糖質が高く別項目にする。
     defaultMacro: { kcal: 118, protein: 4.2, fat: 2, carbs: 22 },
+    nutritionNotes: [
+      { text: 'とうもろこしは野菜のなかでは糖質が多く、主食に近い組成です。ごはんやパンと重ねると糖質が積み上がります。', source: SRC_SEIBUN },
+    ],
     referenceDescription: '1本(可食部)=120g目安',
     amount: { unit: 'piece', default: 1, unitLabel: '本', chips: [{ label: '半分', value: 0.5 }, { label: '1本', value: 1 }, { label: '2本', value: 2 }] },
     attributes: [
@@ -948,6 +1048,9 @@ const BUCKET_VEGGIES: Identity[] = [
     primaryHome: { tab: 'ingredient', bucket: 'veggies' },
     // コンソメ系薄口スープ基準 (野菜 100g + スープ 200ml 程度)。ミネストローネは misc_dish の soup_western へ。
     defaultMacro: { kcal: 35, protein: 1.5, fat: 0.5, carbs: 6 },
+    nutritionNotes: [
+      { text: '水に溶けるタイプのビタミンは煮汁のほうに出ていきます。汁ごと食べる料理なら、溶け出した分も一緒にとれます。', source: SRC_SEIBUN },
+    ],
     amount: { unit: 'ml', default: 200, step: 10, chips: [{ label: '小', value: 150 }, { label: '普通', value: 200 }, { label: '大', value: 300 }] },
   },
   // v1.2: 汁物 4 Identity (miso_soup / tonjiru / soup_western / soup_creamy) は
@@ -966,7 +1069,10 @@ const BUCKET_FRUIT: Identity[] = [
     label: 'バナナ',
     primaryHome: { tab: 'ingredient', bucket: 'fruit' },
     defaultMacro: { kcal: 86, protein: 1.1, fat: 0.2, carbs: 22 },
-    nutritionNote: 'バナナは、体内の水分バランスに関わるミネラルのひとつ、カリウムを含みます。',
+    nutritionNotes: [
+      { text: 'バナナは、体内の水分バランスに関わるミネラルのひとつ、カリウムを含みます。', source: SRC_SEIBUN },
+      { text: 'バナナに含まれるカリウムは、正常な血圧の維持に必要な栄養素です。', source: SRC_CAA },
+    ],
     amount: { unit: 'piece', default: 1 },
     asAddon: {
       unit: 'g',
@@ -980,6 +1086,9 @@ const BUCKET_FRUIT: Identity[] = [
     label: 'りんご・梨',
     primaryHome: { tab: 'ingredient', bucket: 'fruit' },
     defaultMacro: { kcal: 135, protein: 0.5, fat: 0.5, carbs: 35 },
+    nutritionNotes: [
+      { text: 'りんごや梨の食物繊維は、便通に関わる成分です。皮の近くに多く含まれるため、皮ごと食べるかどうかで量が変わります。', source: SRC_SEIBUN },
+    ],
     amount: { unit: 'piece', default: 1 },
     asAddon: {
       unit: 'g',
@@ -993,6 +1102,9 @@ const BUCKET_FRUIT: Identity[] = [
     label: '柑橘',
     primaryHome: { tab: 'ingredient', bucket: 'fruit' },
     defaultMacro: { kcal: 50, protein: 0.8, fat: 0.1, carbs: 13 },
+    nutritionNotes: [
+      { text: '柑橘に多いビタミンCは水に溶けるタイプで、体にためておけません。まとめてではなく、日々こまめにとりたい栄養素です。', source: SRC_CAA },
+    ],
     amount: { unit: 'piece', default: 1 },
   },
   {
@@ -1000,6 +1112,9 @@ const BUCKET_FRUIT: Identity[] = [
     label: 'いちご',
     primaryHome: { tab: 'ingredient', bucket: 'fruit' },
     defaultMacro: { kcal: 44, protein: 1.2, fat: 0.1, carbs: 11 }, // 10粒分
+    nutritionNotes: [
+      { text: 'いちごに多いビタミンCは、皮膚や粘膜の健康維持を助けるとともに、抗酸化作用を持つ栄養素です。', source: SRC_CAA },
+    ],
     amount: {
       unit: 'piece',
       unitLabel: '粒',
@@ -1050,6 +1165,9 @@ const BUCKET_ADDED_FAT: Identity[] = [
     label: 'オイル',
     primaryHome: { tab: 'ingredient', bucket: 'added_fat' },
     defaultMacro: { kcal: 110, protein: 0, fat: 12, carbs: 0 },
+    nutritionNotes: [
+      { text: '油は少ない量でもエネルギーが大きく、小さじ1杯の差がそのまま効いてきます。', source: SRC_SEIBUN },
+    ],
     amount: { unit: 'ml', default: 15, step: 5, chips: [{ label: '小さじ', value: 5 }, { label: '大さじ', value: 15 }] },
     attributes: [
       { key: 'olive', label: 'オリーブ', isDefault: true },
@@ -1087,6 +1205,9 @@ const BUCKET_ADDED_FAT: Identity[] = [
     label: 'マヨネーズ',
     primaryHome: { tab: 'ingredient', bucket: 'added_fat' },
     defaultMacro: { kcal: 80, protein: 0.2, fat: 8.8, carbs: 0.5 },
+    nutritionNotes: [
+      { text: 'マヨネーズは、エネルギーのほとんどが油由来です。', source: SRC_SEIBUN },
+    ],
     amount: { unit: 'ml', default: 12, chips: [{ label: '小さじ', value: 5 }, { label: '大さじ', value: 12 }] }, // 大さじ=12ml (マヨの実測値。step整合を優先せず精度維持)
     asAddon: {
       unit: 'ml',
@@ -1117,6 +1238,9 @@ const BUCKET_ADDED_FAT: Identity[] = [
     label: 'アボカド',
     primaryHome: { tab: 'ingredient', bucket: 'added_fat' },
     defaultMacro: { kcal: 90, protein: 1, fat: 9, carbs: 0.5 },
+    nutritionNotes: [
+      { text: 'アボカドは果物ですが、糖質ではなく脂質が主成分という珍しい存在です。', source: SRC_SEIBUN },
+    ],
     amount: { unit: 'piece', default: 0.5, chips: [{ label: '1/4個', value: 0.25 }, { label: '半個', value: 0.5 }, { label: '1個', value: 1 }] },
     asAddon: {
       unit: 'g',
@@ -1134,6 +1258,10 @@ const BUCKET_ADDED_FAT: Identity[] = [
     label: 'ナッツ',
     primaryHome: { tab: 'ingredient', bucket: 'added_fat' },
     defaultMacro: { kcal: 180, protein: 6, fat: 15, carbs: 5 },
+    nutritionNotes: [
+      { text: 'ナッツの脂質は不飽和脂肪酸が中心で、常温でも固まりにくく、肉の脂(飽和脂肪酸)とは性質が違います。', source: SRC_SEIBUN },
+      { text: 'ナッツに含まれるビタミンEは、抗酸化作用により、体内の脂質を酸化から守り細胞の健康維持を助ける栄養素です。', source: SRC_CAA },
+    ],
     amount: { unit: 'g', default: 30, step: 5, chips: [{ label: '一掴み', value: 15 }, { label: '30', value: 30 }, { label: '50', value: 50 }] },
     attributes: [
       { key: 'plain', label: '素焼', isDefault: true },
@@ -1162,6 +1290,9 @@ const BUCKET_SNACK_DRINK: Identity[] = [
     primaryHome: { tab: 'ingredient', bucket: 'snack_drink' },
     // 基準は板チョコ (明治ミルクチョコ等) 1枚=50g。
     defaultMacro: { kcal: 138, protein: 1.7, fat: 8.3, carbs: 14 },
+    nutritionNotes: [
+      { text: 'チョコはカカオ分が高いほど砂糖が減り、脂質の割合が増えます。カカオ分が高い＝低エネルギーとは限りません。', source: SRC_SEIBUN },
+    ],
     referenceDescription: '板チョコ1枚(明治ミルクチョコ等)で約50g。1かけ≈5g',
     amount: { unit: 'g', default: 25, chips: [{ label: '2〜3かけ', value: 15 }, { label: '板半分', value: 25 }, { label: '板1枚', value: 50 }] },
     attributes: [
@@ -1174,6 +1305,9 @@ const BUCKET_SNACK_DRINK: Identity[] = [
     label: '和菓子・米菓',
     primaryHome: { tab: 'ingredient', bucket: 'snack_drink' },
     defaultMacro: { kcal: 145, protein: 2.4, fat: 0.2, carbs: 33 },
+    nutritionNotes: [
+      { text: '和菓子は洋菓子と比べて油脂の使用が少なく、糖質が中心です。同じ甘いものでも脂質の入り方が違います。', source: SRC_SEIBUN },
+    ],
     amount: { unit: 'piece', default: 1, chips: [{ label: '小', value: 0.5 }, { label: '1個', value: 1 }, { label: '大', value: 1.5 }] },
     searchTags: ['大福', 'どら焼き', '羊羹', 'せんべい', '大学いも', '焼き芋'],
   },
@@ -1228,6 +1362,9 @@ const BUCKET_SNACK_DRINK: Identity[] = [
     // 市販袋ポップコーン塩・バターしょうゆ基準 (マイクポップコーン等):
     // kcal 510 / P 8.5 / F 27 / C 56 per 100g (1袋50g = 255 / 4.3 / 13.5 / 28)
     defaultMacro: { kcal: 255, protein: 4.3, fat: 13.5, carbs: 28 },
+    nutritionNotes: [
+      { text: 'ポップコーンは、とうもろこしをそのまま弾けさせた全粒の穀物です。', source: SRC_SEIBUN },
+    ],
     referenceDescription: '市販袋ポップコーン1袋≈50g。映画館 S≈70g / M≈120g / L≈180g',
     amount: {
       unit: 'g',
@@ -1260,6 +1397,9 @@ const BUCKET_SNACK_DRINK: Identity[] = [
     label: 'ドライフルーツ',
     primaryHome: { tab: 'ingredient', bucket: 'snack_drink' },
     defaultMacro: { kcal: 90, protein: 1, fat: 0.2, carbs: 22 },
+    nutritionNotes: [
+      { text: 'ドライフルーツは水分が抜けている分、同じ重さの生の果物より糖質が濃くなります。少量でも生の果物ひとつ分に届きます。', source: SRC_SEIBUN },
+    ],
     referenceDescription: 'レーズン・ドライマンゴー等。ひとつかみ≈30g',
     amount: { unit: 'g', default: 30, step: 10, chips: [{ label: 'ひとつかみ', value: 30 }, { label: '小袋', value: 50 }] },
     searchableFrom: ['fruit'],

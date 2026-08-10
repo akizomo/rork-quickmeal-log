@@ -358,8 +358,12 @@ function buildCards(recap: WeeklyRecap, styles: Styles): Card[] {
             <View style={{ borderTopWidth: 1, borderTopColor: t.colors.border.default, paddingTop: t.spacing['4'] }}>
               <Overline tone="tertiary">豆知識 · {boost.note.identityLabel}</Overline>
               <Body size="sm" tone="secondary" style={{ marginTop: t.spacing['2'], lineHeight: 22 }}>
-                {boost.note.note}
+                {boost.note.note.text}
               </Body>
+              {/* 出典表示は必須 (§10.14 追補-1)。栄養素の働きまで書ける条件が「出典を持ち UI に出すこと」。 */}
+              <Caption tone="tertiary" style={{ marginTop: t.spacing['2'] }}>
+                出典: {boost.note.note.source.label}
+              </Caption>
             </View>
           ) : null}
         </>

@@ -15,6 +15,7 @@ import { addDays, formatWeekRangeLabel, getDailyMacros, getWeekRange, startOfDay
 import { formatDateKey } from '@/utils/nutrition';
 import { adjustedTargetKcal } from '@/utils/goals';
 import { ALL_IDENTITIES, getIdentity } from '@/constants/identity';
+import type { NutritionNote } from '@/types/identity';
 
 const WEEKDAY_JP_MON_FIRST = ['月', '火', '水', '木', '金', '土', '日'];
 
@@ -39,13 +40,30 @@ const AXIS_LOW_DENSITY_THRESHOLD: Record<MacroAxis, number> = { protein: 0.10, f
 /** macroBoost で提示する候補の最大数。 */
 const MAX_BOOST_CANDIDATES = 3;
 
+/**
+ * 1食材が複数の豆知識を持つとき、どれを出すかを weekKey から決定的に選ぶ。
+ *
+ * 週次リカップは同じ週なら何度開いても同じ内容であるべきなので乱数は使わない。
+ * weekKey と identityId を混ぜてハッシュするため、食材ごとに別の周期で回る
+ * (同じ週に複数食材が揃って1番目のノートを出す、といった偏りを避ける)。
+ */
+function pickNutritionNote(notes: NutritionNote[], identityId: string, weekKey: string): NutritionNote | null {
+  if (notes.length === 0) return null;
+  const seed = `${weekKey}:${identityId}`;
+  let hash = 0;
+  for (let i = 0; i < seed.length; i++) {
+    hash = (hash * 31 + seed.charCodeAt(i)) | 0;
+  }
+  return notes[Math.abs(hash) % notes.length] ?? null;
+}
+
 export type MacroAxis = 'protein' | 'fat' | 'carbs';
 
 export interface WeeklyFoodFact {
   identityId: string;
   identityLabel: string;
-  /** Identity.nutritionNote の文言。組成的な役割の記述までで、効能・機序は断定しない (§10.7-3)。 */
-  note: string;
+  /** Identity.nutritionNotes から週ごとに選ばれた1件。出典は UI に表示する (§10.14 追補-1)。 */
+  note: NutritionNote;
 }
 
 export interface WeeklyMacroBoostCandidate {
@@ -168,7 +186,7 @@ export function computeWeeklyRecap(
     ? computeMacroInsight(loggedDays, profile, targetForKey, base)
     : null;
 
-  const macroBoost = computeMacroBoost(logs, macroInsight);
+  const macroBoost = computeMacroBoost(logs, macroInsight, weekKey);
 
   return {
     weekKey,
@@ -198,6 +216,7 @@ function densityFor(axis: MacroAxis, macro: { kcal: number; protein: number; fat
 function computeMacroBoost(
   allLogs: FoodLog[],
   insight: WeeklyMacroInsight | null,
+  weekKey: string,
 ): WeeklyMacroBoost | null {
   if (!insight) return null;
   const { axis, direction } = insight;
@@ -236,8 +255,11 @@ function computeMacroBoost(
     let note: WeeklyFoodFact | null = null;
     for (const c of candidates) {
       const identity = getIdentity(c.identityId);
-      if (identity?.nutritionNote) {
-        note = { identityId: identity.id, identityLabel: identity.label, note: identity.nutritionNote };
+      const picked = identity?.nutritionNotes
+        ? pickNutritionNote(identity.nutritionNotes, identity.id, weekKey)
+        : null;
+      if (identity && picked) {
+        note = { identityId: identity.id, identityLabel: identity.label, note: picked };
         break;
       }
     }
