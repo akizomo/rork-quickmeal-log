@@ -17,6 +17,8 @@
  */
 
 import { ALL_IDENTITIES, getBucketDef } from '@/constants/identity';
+import { DISH_VOCABULARY } from '@/constants/identity/dish-vocabulary';
+import { HEAD_NOUNS, type HeadNounTarget } from '@/constants/identity/head-nouns';
 import { normalize, romajiVariant } from '@/utils/identity-normalize';
 import type { AttributeOption, BucketKey, Identity, StyleOption } from '@/types/identity';
 
@@ -70,7 +72,10 @@ function scoreAgainst(q: string, target: string): { score: number; method: Match
   if (!target) return null;
   if (target === q) return { score: 4, method: 'exact' };
   if (target.startsWith(q)) return { score: 3, method: 'prefix' };
-  if (target.includes(q)) return { score: 2, method: 'substring' };
+  // 「途中一致」は q が短いと無関係語への誤爆が起きる (例: 「フォー」→「ふぉ」
+  // (2文字) が「クアトロ・フォルマッジ」に部分一致してしまう)。3文字未満は
+  // 部分一致の対象外とし、bigram (もしかして) 側に委ねる。
+  if (q.length >= 3 && target.includes(q)) return { score: 2, method: 'substring' };
   const sim = bigramSimilarity(q, target);
   if (sim >= 0.4) return { score: 1 + sim, method: 'bigram' }; // 1.0 ~ 2.0
   return null;
@@ -196,6 +201,86 @@ export function searchEntriesFuzzy(query: string): SearchEntriesResult {
 }
 
 // ---------------------------------------------------------------------------
+// 層2/3: 主辞辞書・料理名辞書 (SEARCH_SPEC v0.4 §5.4.5 / §5.4.6)
+// ---------------------------------------------------------------------------
+
+export interface VocabularyMatch {
+  bucket: BucketKey;
+  /** 特定 Identity まで絞れる場合のみ (主辞辞書の一部エントリ)。 */
+  identity?: string;
+  source: 'dish_vocabulary' | 'head_noun';
+}
+
+/** DISH_VOCABULARY のキーを正規化してインデックス化 (起動時1回)。 */
+const DISH_VOCABULARY_INDEX: Array<{ key: string; bucket: BucketKey }> = Object.entries(
+  DISH_VOCABULARY
+).map(([key, bucket]) => ({ key: normalize(key), bucket }));
+
+/**
+ * 層3: 料理名辞書との照合。主辞を持たない単一語 (グラタン/ケバブ等) を拾う。
+ * bigram は使わない — 層3は「知っている語」への確定的な着地であるべきで、
+ * 層2 (bigramベースの「もしかして」) と役割が混ざらないようにする。
+ */
+function matchDishVocabulary(queryVariants: string[]): BucketKey | null {
+  let best: { score: number; method: MatchMethod; bucket: BucketKey } | null = null;
+  for (const { key, bucket } of DISH_VOCABULARY_INDEX) {
+    for (const q of queryVariants) {
+      const m = scoreAgainst(q, key);
+      if (!m || m.method === 'bigram') continue;
+      if (!best || m.score > best.score) {
+        best = { ...m, bucket };
+      }
+    }
+  }
+  return best?.bucket ?? null;
+}
+
+/** HEAD_NOUNS の heads を正規化してインデックス化 (起動時1回)。手書きの表記ゆれ
+ * (長音符の有無など) が normalize() の挙動と食い違うのを防ぐ。 */
+const HEAD_NOUNS_INDEX: Array<{ head: string; targets: HeadNounTarget[] }> = HEAD_NOUNS.flatMap(
+  (entry) => entry.heads.map((head) => ({ head: normalize(head), targets: entry.targets }))
+);
+
+/**
+ * 層2: 主辞辞書との照合 (SEARCH_SPEC §5.2.2)。
+ * クエリが登録済み主辞で終わり、かつ残りが1文字以上ある場合のみマッチとする —
+ * 文字列の単純な末尾一致は形態素境界を越えた誤爆を招く (グラタン→牛タン等)。
+ */
+function matchHeadNouns(queryVariants: string[]): HeadNounTarget[] {
+  const seen = new Set<string>();
+  const out: HeadNounTarget[] = [];
+  for (const { head, targets } of HEAD_NOUNS_INDEX) {
+    const hit = queryVariants.some((q) => q.length > head.length && q.endsWith(head));
+    if (!hit) continue;
+    for (const target of targets) {
+      const key = `${target.bucket}:${target.identity ?? ''}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(target);
+      if (out.length >= 4) return out;
+    }
+  }
+  return out;
+}
+
+/**
+ * 層2/3 まとめて照合する。層3 (料理名辞書) を優先する — 「たい焼き」のように
+ * 単一語として辞書に確定登録されている方が、末尾主辞 (「焼き」) だけから推測
+ * するより具体的で信頼できるため。
+ */
+export function getVocabularyMatches(query: string): VocabularyMatch[] {
+  const qBase = normalize(query);
+  if (!qBase) return [];
+  const qRomaji = romajiVariant(query);
+  const queryVariants = qRomaji !== qBase ? [qBase, qRomaji] : [qBase];
+
+  const dishHit = matchDishVocabulary(queryVariants);
+  if (dishHit) return [{ bucket: dishHit, source: 'dish_vocabulary' }];
+
+  return matchHeadNouns(queryVariants).map((t) => ({ ...t, source: 'head_noun' as const }));
+}
+
+// ---------------------------------------------------------------------------
 // 層4フォールバック: カテゴリヒントチップ
 // ---------------------------------------------------------------------------
 
@@ -203,28 +288,9 @@ export function searchEntriesFuzzy(query: string): SearchEntriesResult {
  * クエリに含まれるキーワードから「このカテゴリだと思われる」バケット候補を
  * 最大4件返す。層1〜3のヒット有無に関わらず常に計算し、検索シート側で常時
  * 表示する (SEARCH_SPEC v0.4 §F5: 誤ヒットがカテゴリへの逃げ道を塞ぐ構造の解消)。
+ *
+ * データソースは DISH_VOCABULARY (旧 CATEGORY_KEYWORD_MAP を統合・置換、§5.4.6)。
  */
-const CATEGORY_KEYWORD_MAP: Array<{ keywords: string[]; bucket: BucketKey }> = [
-  { keywords: ['ごはん', 'ライス', 'パン', '麺', 'うどん', 'そば', 'パスタ', 'ラーメン', '丼', 'どんぶり', 'お米', '米', 'ご飯', 'シリアル', 'オートミール'], bucket: 'staple' },
-  { keywords: ['鶏', '豚', '牛', '魚', 'ささみ', 'むね', 'もも', 'サーモン', 'マグロ', 'ツナ', 'えび', 'タコ', 'イカ', 'タラ'], bucket: 'lean_protein' },
-  { keywords: ['卵', 'たまご', 'エッグ', 'オムレツ', '目玉焼き', '茹で卵'], bucket: 'egg' },
-  { keywords: ['揚げ', 'から揚げ', '豚バラ', 'サーロイン', 'ベーコン', 'ソーセージ', 'サバ', 'サンマ', 'イワシ'], bucket: 'fatty_protein' },
-  { keywords: ['牛乳', 'ミルク', 'ヨーグルト', 'チーズ', '豆腐', '豆乳', '納豆', '枝豆', 'プロテイン'], bucket: 'dairy_soy' },
-  { keywords: ['野菜', 'サラダ', 'レタス', 'トマト', 'きゅうり', 'ほうれん草', 'ブロッコリー', '汁', '味噌汁', 'スープ', 'きのこ', '煮'], bucket: 'veggies' },
-  { keywords: ['果物', 'フルーツ', 'りんご', 'バナナ', 'みかん', 'いちご', 'ぶどう', 'メロン'], bucket: 'fruit' },
-  { keywords: ['油', 'バター', 'マヨネーズ', 'ドレッシング', 'オリーブ', '調味', '醤油', 'みりん'], bucket: 'added_fat' },
-  { keywords: ['お菓子', 'スナック', 'チョコ', 'ケーキ', 'アイス', 'ジュース', 'コーラ', 'ビール', 'お酒', 'アルコール', 'コーヒー', '甘い'], bucket: 'snack_drink' },
-  { keywords: ['どんぶり', '丼', '親子丼', '牛丼', 'カツ丼'], bucket: 'rice_dish' },
-  { keywords: ['カレー'], bucket: 'curry' },
-  { keywords: ['ラーメン', '中華', 'つけ麺', '担々麺', '餃子', '炒飯', 'チャーハン'], bucket: 'chinese_noodles' },
-  { keywords: ['うどん', 'そば', 'そうめん', '蕎麦'], bucket: 'japanese_noodles' },
-  { keywords: ['パスタ', 'スパゲティ', 'ペペロンチーノ', 'ボロネーゼ'], bucket: 'pasta' },
-  { keywords: ['寿司', 'すし', '刺身', '海鮮'], bucket: 'sushi' },
-  { keywords: ['サンド', 'バーガー', 'ハンバーガー', 'ホットドッグ', 'サブウェイ'], bucket: 'sandwich' },
-  { keywords: ['ピザ', 'ピッツァ'], bucket: 'pizza' },
-  { keywords: ['定食', '唐揚げ', '弁当', 'おかず', 'コンビニ', '焼き魚', '揚げ物', 'カツ'], bucket: 'misc_dish' },
-];
-
 export function getCategoryHints(query: string): BucketKey[] {
   const qBase = normalize(query);
   if (!qBase) return [];
@@ -234,14 +300,11 @@ export function getCategoryHints(query: string): BucketKey[] {
   const seen = new Set<BucketKey>();
   const hits: BucketKey[] = [];
 
-  for (const { keywords, bucket } of CATEGORY_KEYWORD_MAP) {
+  for (const { key, bucket } of DISH_VOCABULARY_INDEX) {
     if (seen.has(bucket)) continue;
-    const match = keywords.some((kw) => {
-      const kwNorm = normalize(kw);
-      return queryVariants.some(
-        (q) => q.includes(kwNorm) || kwNorm.includes(q) || bigramSimilarity(q, kwNorm) >= 0.4
-      );
-    });
+    const match = queryVariants.some(
+      (q) => q.includes(key) || key.includes(q) || bigramSimilarity(q, key) >= 0.4
+    );
     if (match) {
       seen.add(bucket);
       hits.push(bucket);

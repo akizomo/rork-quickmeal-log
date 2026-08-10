@@ -30,14 +30,16 @@ import {
   useTheme,
 } from '@/design-system';
 import { DirectInputSheet } from '@/components/DirectInputSheet';
-import { getBucketDef } from '@/constants/identity';
+import { getBucketDef, getIdentity } from '@/constants/identity';
 import { useAppState } from '@/providers/app-state-provider';
 import {
   describeSearchEntry,
   getCategoryHints,
+  getVocabularyMatches,
   searchEntriesFuzzy,
   type SearchEntry,
   type SearchEntryResult,
+  type VocabularyMatch,
 } from '@/utils/identity-search';
 import type { BucketKey } from '@/types/identity';
 
@@ -137,12 +139,24 @@ export function SearchSheet({ visible, onClose, onOpen }: Props) {
     return { confidentResults: confident, maybeResults: maybe };
   }, [debounced]);
 
+  // 層2/3: 主辞辞書・料理名辞書によるバケット/Identity推測 (SEARCH_SPEC v0.4
+  // §5.4.5 / §5.4.6)。DB に文字列として存在しない語 (グラタン/ハムカツ等) を
+  // 「もしかして」に着地させる。
+  const vocabularyMatches = useMemo<VocabularyMatch[]>(() => {
+    if (debounced.trim().length === 0) return [];
+    return getVocabularyMatches(debounced);
+  }, [debounced]);
+
   // 層4: 確信度に関わらず常に計算・表示する (SEARCH_SPEC v0.4 §F5) —
   // 誤ヒットがカテゴリへの逃げ道を塞ぐ構造を解消するため、0件時限定にしない。
+  // 層2/3 (もしかして) に既出のバケットは層4で重複表示しない (両者とも
+  // DISH_VOCABULARY を参照するため、同じ語で両方が一致すると同じチップが
+  // 二度出てしまう)。
   const categoryHints = useMemo<BucketKey[]>(() => {
     if (debounced.trim().length === 0) return [];
-    return getCategoryHints(debounced);
-  }, [debounced]);
+    const vocabBuckets = new Set(vocabularyMatches.map((m) => m.bucket));
+    return getCategoryHints(debounced).filter((b) => !vocabBuckets.has(b));
+  }, [debounced, vocabularyMatches]);
 
   const handleSelect = useCallback(
     (entry: SearchEntry) => {
@@ -165,6 +179,18 @@ export function SearchSheet({ visible, onClose, onOpen }: Props) {
       Keyboard.dismiss();
       onClose();
       openIdentityLogSheet(bucket, { onDismiss: onOpen });
+    },
+    [commitPendingMiss, onClose, onOpen, openIdentityLogSheet]
+  );
+
+  const handleVocabularyMatch = useCallback(
+    (match: VocabularyMatch) => {
+      // 診断: 主辞辞書/料理名辞書 (層2/3) 止まり = DB に文字列として存在しない
+      // ことを示す確定信号。カテゴリヒント選択と同じ意味論で扱う。
+      commitPendingMiss();
+      Keyboard.dismiss();
+      onClose();
+      openIdentityLogSheet(match.bucket, { identityId: match.identity, onDismiss: onOpen });
     },
     [commitPendingMiss, onClose, onOpen, openIdentityLogSheet]
   );
@@ -193,7 +219,7 @@ export function SearchSheet({ visible, onClose, onOpen }: Props) {
 
   const isEmpty = debounced.trim().length === 0;
   const hasConfident = confidentResults.length > 0;
-  const hasMaybe = maybeResults.length > 0;
+  const hasMaybe = maybeResults.length > 0 || vocabularyMatches.length > 0;
   const hasHints = categoryHints.length > 0;
   const noMatch = !isEmpty && !hasConfident && !hasMaybe && !hasHints;
 
@@ -269,15 +295,34 @@ export function SearchSheet({ visible, onClose, onOpen }: Props) {
           </View>
         ) : null}
 
-        {/* もしかして (層2: bigram類似度のみのファジー一致) */}
+        {/* もしかして (層2/3: 主辞辞書・料理名辞書 + bigram類似度のファジー一致) */}
         {hasMaybe ? (
           <View style={{ gap: t.spacing['2'], marginBottom: hasHints ? t.spacing['4'] : 0 }}>
             <Overline tone="secondary">もしかして</Overline>
-            <View style={styles.resultList}>
-              {maybeResults.map((result) => (
-                <SearchResultRow key={resultKey(result)} result={result} onPress={handleSelect} />
-              ))}
-            </View>
+            {vocabularyMatches.length > 0 ? (
+              <View style={styles.hintChips}>
+                {vocabularyMatches.map((match, i) => {
+                  const identity = match.identity ? getIdentity(match.identity) : undefined;
+                  const bucket = getBucketDef(match.bucket);
+                  if (!bucket) return null;
+                  const label = identity ? identity.label : `${bucket.emoji} ${bucket.label}`;
+                  return (
+                    <Chip
+                      key={`${match.bucket}-${match.identity ?? i}`}
+                      label={label}
+                      onPress={() => handleVocabularyMatch(match)}
+                    />
+                  );
+                })}
+              </View>
+            ) : null}
+            {maybeResults.length > 0 ? (
+              <View style={styles.resultList}>
+                {maybeResults.map((result) => (
+                  <SearchResultRow key={resultKey(result)} result={result} onPress={handleSelect} />
+                ))}
+              </View>
+            ) : null}
           </View>
         ) : null}
 
