@@ -437,7 +437,7 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
       unit: 'g',
       unitAmount: 35,
       addedMacro: { kcal: 25, protein: 5.5, fat: 0.3, carbs: 0.05 },
-      defaultLabel: 'ツナ追加',
+      defaultLabel: 'ツナ',
     },
     defaultAddonIds: ['mayo'], // ツナマヨ定番
     allowedAddonIds: ['mayo'],
@@ -507,7 +507,7 @@ const BUCKET_EGG: Identity[] = [
       unit: 'piece',
       unitAmount: 1,
       addedMacro: { kcal: 75, protein: 6.2, fat: 5.2, carbs: 0.3 },
-      defaultLabel: '卵を追加',
+      defaultLabel: '卵',
     },
   },
 ];
@@ -648,7 +648,7 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
       unit: 'piece',
       unitAmount: 2,
       addedMacro: { kcal: 40, protein: 5, fat: 2.5, carbs: 1 },
-      defaultLabel: 'ハム追加',
+      defaultLabel: 'ハム',
     },
   },
   {
@@ -666,7 +666,7 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
       unit: 'piece',
       unitAmount: 1,
       addedMacro: { kcal: 40, protein: 2, fat: 3.5, carbs: 0.2 },
-      defaultLabel: 'ベーコン追加',
+      defaultLabel: 'ベーコン',
     },
   },
   {
@@ -700,7 +700,7 @@ const BUCKET_DAIRY_SOY: Identity[] = [
       unit: 'ml',
       unitAmount: 50,
       addedMacro: { kcal: 30, protein: 1.6, fat: 1.9, carbs: 2.4 },
-      defaultLabel: 'ミルク追加',
+      defaultLabel: 'ミルク',
     },
     defaultAddonIds: ['honey'], // ホットミルク+はちみつ
     allowedAddonIds: ['honey', 'granola_top'],
@@ -738,7 +738,7 @@ const BUCKET_DAIRY_SOY: Identity[] = [
       unit: 'g',
       unitAmount: 20,
       addedMacro: { kcal: 80, protein: 5, fat: 6, carbs: 1 },
-      defaultLabel: 'チーズ追加',
+      defaultLabel: 'チーズ',
     },
   },
   {
@@ -802,7 +802,7 @@ const BUCKET_DAIRY_SOY: Identity[] = [
       unit: 'piece',
       unitAmount: 1,
       addedMacro: { kcal: 80, protein: 6.6, fat: 4, carbs: 5 },
-      defaultLabel: '納豆を追加',
+      defaultLabel: '納豆',
     },
   },
   {
@@ -939,7 +939,7 @@ const BUCKET_VEGGIES: Identity[] = [
       unit: 'g',
       unitAmount: 30,
       addedMacro: { kcal: 14, protein: 0.5, fat: 0.1, carbs: 2 },
-      defaultLabel: 'キムチを追加',
+      defaultLabel: 'キムチ',
     },
   },
   {
@@ -972,7 +972,7 @@ const BUCKET_FRUIT: Identity[] = [
       unit: 'g',
       unitAmount: 50,
       addedMacro: { kcal: 45, protein: 0.5, fat: 0.1, carbs: 11 },
-      defaultLabel: 'バナナ追加',
+      defaultLabel: 'バナナ',
     },
   },
   {
@@ -985,7 +985,7 @@ const BUCKET_FRUIT: Identity[] = [
       unit: 'g',
       unitAmount: 50,
       addedMacro: { kcal: 27, protein: 0.1, fat: 0.1, carbs: 7 },
-      defaultLabel: 'りんご追加',
+      defaultLabel: 'りんご',
     },
   },
   {
@@ -1026,7 +1026,7 @@ const BUCKET_FRUIT: Identity[] = [
       unit: 'g',
       unitAmount: 50,
       addedMacro: { kcal: 25, protein: 0.4, fat: 0.2, carbs: 6 },
-      defaultLabel: 'ベリー追加',
+      defaultLabel: 'ベリー',
     },
   },
   {
@@ -1061,7 +1061,7 @@ const BUCKET_ADDED_FAT: Identity[] = [
       unit: 'ml',
       unitAmount: 15,
       addedMacro: { kcal: 110, protein: 0, fat: 12, carbs: 0 },
-      defaultLabel: '油を追加',
+      defaultLabel: '油',
     },
   },
   {
@@ -1079,7 +1079,7 @@ const BUCKET_ADDED_FAT: Identity[] = [
       unit: 'g',
       unitAmount: 10,
       addedMacro: { kcal: 75, protein: 0.1, fat: 8.1, carbs: 0 },
-      defaultLabel: 'バター追加',
+      defaultLabel: 'バター',
     },
   },
   {
@@ -1092,7 +1092,7 @@ const BUCKET_ADDED_FAT: Identity[] = [
       unit: 'ml',
       unitAmount: 12,
       addedMacro: { kcal: 80, protein: 0.2, fat: 8.8, carbs: 0.5 },
-      defaultLabel: 'マヨを追加',
+      defaultLabel: 'マヨ',
     },
   },
   {
@@ -1109,7 +1109,7 @@ const BUCKET_ADDED_FAT: Identity[] = [
       unit: 'ml',
       unitAmount: 15,
       addedMacro: { kcal: 60, protein: 0.1, fat: 5, carbs: 2 },
-      defaultLabel: 'ドレッシング追加',
+      defaultLabel: 'ドレッシング',
     },
   },
   {
@@ -1122,7 +1122,7 @@ const BUCKET_ADDED_FAT: Identity[] = [
       unit: 'g',
       unitAmount: 50,
       addedMacro: { kcal: 90, protein: 1, fat: 9, carbs: 0.5 },
-      defaultLabel: 'アボカド追加',
+      defaultLabel: 'アボカド',
     },
     searchableFrom: ['fruit'],
     searchTags: ['アボカド'],
@@ -1144,7 +1144,7 @@ const BUCKET_ADDED_FAT: Identity[] = [
       unit: 'g',
       unitAmount: 15,
       addedMacro: { kcal: 90, protein: 3, fat: 8, carbs: 2 },
-      defaultLabel: 'ナッツ追加',
+      defaultLabel: 'ナッツ',
     },
     searchableFrom: ['snack_drink'],
     searchTags: ['ナッツ', 'アーモンド', 'カシュー', 'ピーナッツ', 'くるみ', 'ミックスナッツ'],
