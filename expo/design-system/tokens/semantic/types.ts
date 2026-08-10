@@ -62,10 +62,32 @@ export type SemanticColors = {
     };
   };
 
+  /**
+   * border は「装飾の線」と「操作可能要素の輪郭」で要求が違う。
+   *
+   * default / subtle / strong は **区切り線・面の縁** (装飾) 用で、面と同じ
+   * ivory 家系から取っているため背景比 3:1 は原理的に出ない。WCAG 1.4.11 は
+   * 装飾的な区切り線に 3:1 を要求しないので、これは仕様どおり。
+   *
+   * 一方 Chip / SelectCard / 選択タイルのように **枠が「ここが操作できる範囲だ」を
+   * 伝えている** 要素は 1.4.11 の対象になる。そちらは interactive / selected を使う
+   * (stone 家系 = 描画物の家系から取り、dark は背景比 3:1 を満たす)。
+   *
+   * ただし light の interactive は例外: 近白背景で 3:1 に必要な濃さ (stone[500]) が
+   * 視覚的に重すぎたため、意図的に stone[300] (1.82:1、1.4.11 未達) に留めている
+   * (light.ts のコメント参照、2026-08-09)。dark は同じ問題が出ないため 3:1 適合のまま。
+   *
+   * 「区切り線か、操作対象の輪郭か」で選ぶこと。見た目の濃さで選ばない。
+   */
   border: {
     default: string;
     subtle: string;
     strong: string;
+    /** 操作可能要素の非選択枠。dark は背景比 3:1 以上、light は意図的な例外 (light.ts 参照) */
+    interactive: string;
+    /** 操作可能要素の選択中の枠。interactive との明度差で状態を伝える */
+    selected: string;
+    /** テキスト選択ハイライト / フォーカスリング。選択状態の枠には selected を使う */
     focus: string;
     inverse: string;
   };

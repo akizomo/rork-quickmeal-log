@@ -223,7 +223,13 @@ export const CalorieOverflowRing = memo(function CalorieOverflowRing(props: Calo
   return (
     <View
       style={[styles.container, { width: size, height: size }]}
-      accessibilityLabel={accessibilityLabel ?? `${formatKcal(safeConsumed)} of ${formatKcal(safeTarget)} kilocalories`}
+      accessible
+      accessibilityRole="image"
+      // 既定ラベルが英語 ("of ... kilocalories") のままで、日本語 VoiceOver が
+      // 英語読みしていた (2026-08-09修正)。
+      accessibilityLabel={
+        accessibilityLabel ?? `目標${formatKcal(safeTarget)}kcalのうち${formatKcal(safeConsumed)}kcal`
+      }
       testID={testID ?? 'calorie-overflow-ring'}
     >
       <Svg width={size} height={size}>

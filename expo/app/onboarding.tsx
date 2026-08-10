@@ -569,7 +569,7 @@ function StepCurrentBody({
                   paddingVertical: t.spacing['2'],
                   minWidth: 120,
                   borderWidth: 1,
-                  borderColor: t.colors.border.subtle,
+                  borderColor: t.colors.border.interactive,
                 }}
               >
                 <TextInput
@@ -602,7 +602,7 @@ function StepCurrentBody({
                 backgroundColor: pressed ? t.colors.surface.sunken : t.colors.surface.raised,
                 borderRadius: t.radius.md,
                 borderWidth: 1,
-                borderColor: t.colors.border.subtle,
+                borderColor: t.colors.border.interactive,
                 paddingVertical: t.spacing['3'],
                 paddingHorizontal: t.spacing['3'],
               })}
@@ -793,7 +793,7 @@ function StepPlan({
                 paddingVertical: t.spacing['4'],
                 borderRadius: t.radius.lg,
                 borderWidth: 2,
-                borderColor: active ? t.colors.border.focus : t.colors.border.subtle,
+                borderColor: active ? t.colors.border.selected : t.colors.border.interactive,
                 backgroundColor: active
                   ? t.colors.action.primary.container
                   : pressed

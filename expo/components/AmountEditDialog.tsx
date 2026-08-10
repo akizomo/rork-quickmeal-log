@@ -226,7 +226,7 @@ export function AmountEditDialog({
             styles.stepperBtn,
             {
               backgroundColor: t.colors.surface.raised,
-              borderColor: t.colors.border.subtle,
+              borderColor: t.colors.border.interactive,
               opacity: atMin ? 0.35 : pressed ? 0.65 : 1,
             },
           ]}
@@ -273,7 +273,7 @@ export function AmountEditDialog({
             styles.stepperBtn,
             {
               backgroundColor: t.colors.surface.raised,
-              borderColor: t.colors.border.subtle,
+              borderColor: t.colors.border.interactive,
               opacity: atMax ? 0.35 : pressed ? 0.65 : 1,
             },
           ]}

@@ -255,7 +255,7 @@ const BalanceModal = memo(function BalanceModal({
           {showCarryoverSection && carryoverPlanActive ? (
             <View style={[styles.carryoverToggle, {
               backgroundColor: t.colors.action.primary.container,
-              borderColor: t.colors.border.focus,
+              borderColor: t.colors.border.selected,
               flexDirection: 'row',
               alignItems: 'center',
             }]}>
@@ -278,7 +278,7 @@ const BalanceModal = memo(function BalanceModal({
               onPress={onApplyCarryover}
               style={[styles.carryoverToggle, {
                 backgroundColor: t.colors.surface.sunken,
-                borderColor: t.colors.border.subtle,
+                borderColor: t.colors.border.interactive,
               }]}
               accessibilityRole="button"
               accessibilityLabel="食事の調整をはじめる"

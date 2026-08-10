@@ -155,6 +155,8 @@ interface TrendChartProps {
   grain: Grain;
   /** 点が無いときの文言 (履歴あり=期間外 / 履歴なし で出し分け) */
   emptyMessage: string;
+  /** 指標名 ("体重" 等)。スクリーンリーダー向けの代替テキスト生成に使う */
+  title: string;
 }
 
 function TrendChart({
@@ -166,6 +168,7 @@ function TrendChart({
   fractionDigits,
   grain,
   emptyMessage,
+  title,
 }: TrendChartProps) {
   const t = useTheme();
   // タップ/ドラッグで選択中の記録値インデックス (null=未選択)
@@ -175,7 +178,11 @@ function TrendChart({
 
   if (points.length === 0) {
     return (
-      <View style={[styles.chartWrap, { width, height: CHART_HEIGHT }]}>
+      <View
+        style={[styles.chartWrap, { width, height: CHART_HEIGHT }]}
+        accessible
+        accessibilityLabel={`${title}の推移グラフ。${emptyMessage}`}
+      >
         <Text style={[styles.chartEmpty, { color: t.colors.content.secondary }]}>{emptyMessage}</Text>
       </View>
     );
@@ -251,6 +258,29 @@ function TrendChart({
   const tipAbove = pointY - tipSize.h - TIP_GAP >= 0;
   const tipTop = tipAbove ? pointY - tipSize.h - TIP_GAP : pointY + TIP_GAP;
 
+  // --- スクリーンリーダー向けの代替テキスト (2026-08-09追加) ---
+  // SVG の中の <SvgText> は軸ラベルの断片としてバラバラに読み上げられてしまうため、
+  // ラッパーを単一の要素にまとめ、短い説明 (label) と長い説明 (hint) の2層で渡す。
+  // ドラッグで点を選ぶ操作は VoiceOver では使えなくなるが、その代わりに
+  // 「いつからいつまで、いくつからいくつへ、どれだけ変化したか」を一度に得られる。
+  const firstPoint = points[0];
+  const deltaValue = lastPoint.value - firstPoint.value;
+  const deltaText =
+    points.length < 2
+      ? ''
+      : `、${Math.abs(deltaValue) < Math.pow(10, -fractionDigits) / 2
+          ? '変化なし'
+          : `${deltaValue > 0 ? 'プラス' : 'マイナス'}${fmt(Math.abs(deltaValue))}${unit}`}`;
+  const targetText =
+    target != null
+      ? `。目標${fmt(target)}${unit}、残り${fmt(Math.abs(lastPoint.value - target))}${unit}`
+      : '';
+  const chartSummary =
+    points.length < 2
+      ? `${xLabel(firstPoint.t)}に${fmt(firstPoint.value)}${unit}の記録が1件${targetText}`
+      : `${xLabel(firstPoint.t)}から${xLabel(lastPoint.t)}まで${points.length}件。` +
+        `${fmt(firstPoint.value)}${unit}から${fmt(lastPoint.value)}${unit}へ${deltaText}${targetText}`;
+
   return (
     <View
       style={[styles.chartWrap, { width, height: CHART_HEIGHT }]}
@@ -258,6 +288,10 @@ function TrendChart({
       onMoveShouldSetResponder={() => true}
       onResponderGrant={handleTouch}
       onResponderMove={handleTouch}
+      accessible
+      accessibilityRole="image"
+      accessibilityLabel={`${title}の推移グラフ`}
+      accessibilityHint={chartSummary}
     >
       <Svg width={width} height={CHART_HEIGHT}>
         {targetY != null ? (
@@ -507,6 +541,7 @@ export function BodyStatsView({ period = 'month' }: { period?: BodyPeriod }) {
         <View style={[styles.cardDivider, { backgroundColor: t.colors.border.default }]} />
         <TrendChart
           width={chartWidth}
+          title="体重"
           points={weightPoints}
           target={profile.targetWeightKg}
           color={t.colors.action.text.default}
@@ -532,6 +567,7 @@ export function BodyStatsView({ period = 'month' }: { period?: BodyPeriod }) {
         <View style={[styles.cardDivider, { backgroundColor: t.colors.border.default }]} />
         <TrendChart
           width={chartWidth}
+          title="体脂肪率"
           points={bodyFatPoints}
           target={profile.targetBodyFatPct ?? null}
           color={t.colors.accent.default}

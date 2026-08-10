@@ -75,10 +75,30 @@ export const lightColors: SemanticColors = {
   },
 
   border: {
+    // --- 装飾の線 (区切り線・面の縁)。ivory 家系のため背景比は 1.1〜2.6:1 ---
     default: colors.ivory[600],
     subtle: colors.ivory[500],
     strong: colors.stone[400], // 高コントラスト needs は stone
-    focus: colors.sage[700], // ブランドの focus ring / 選択枠
+
+    // --- 操作可能要素の輪郭 (2026-08-09追加) ---
+    // 旧実装は Chip / SelectCard / 選択タイルの非選択枠に border.subtle
+    // (raised比 1.34:1) を使っており、装飾の線と同じトークンを共有していた。
+    // WCAG 1.4.11 (3:1) を満たすには stone[500] (raised 3.87) が必要だが、
+    // 近白背景に対してこの濃さは視覚的に重く、アプリのフラットな意匠と衝突する
+    // (2026-08-09指摘)。stone[400] (2.59:1) でもまだ濃いと判断され、実機比較の上で
+    // stone[300] (raised比1.82:1) を採用。WCAG 1.4.11 は満たさない意図的な例外。
+    // 実害は限定的と判断: ラベルテキストは4.5:1で合格しており、輪郭は補助的な
+    // 情報。将来 UI 意匠を見直す際 (例: 枠でなく塗りで境界を示す) に再検討する。
+    interactive: colors.stone[300], // raised 1.82 / default 1.67 / sunken 1.41 (WCAG 1.4.11 未達・意図的、体感優先)
+    // 選択中の枠。interactive との自己コントラスト 2.34:1 で「濃くなった」ことが
+    // 色相ではなく明度で分かるようにしてある (第一/第二色覚でも判別可)。
+    // sage[700] では interactive 比 1.32:1 しか出ず、選択が実質「緑かどうか」だけの
+    // 差になるため、一段深い sage[900] を使う。
+    selected: colors.sage[900], // raised 9.04
+
+    // テキスト選択ハイライト / フォーカスリング専用。選択枠には selected を使うこと
+    // (sage[900] は選択ハイライトには重すぎる)。
+    focus: colors.sage[700],
     inverse: colors.ivory[800], // 反転面上の border は同家系
   },
 

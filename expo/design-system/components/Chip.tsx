@@ -68,8 +68,8 @@ export function Chip({
           borderRadius: t.radius.full,
           borderWidth: 1,
           borderColor: selected
-            ? t.colors.border.focus
-            : t.colors.border.subtle,
+            ? t.colors.border.selected
+            : t.colors.border.interactive,
           backgroundColor: selected
             ? t.colors.action.primary.container
             : pressed

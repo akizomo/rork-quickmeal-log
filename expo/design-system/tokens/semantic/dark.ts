@@ -75,7 +75,19 @@ export const darkColors: SemanticColors = {
     default: colors.ivory[800],   // 区切り線     (raised比 1.44 / light の 1.43 と一致)
     subtle:  colors.ivory[825],   // 控えめな境界 (default面比 1.23 / light と同値)
     strong:  colors.stone[600],   // '#6E776E'
-    focus:   colors.sage[400],    // '#9AB594' — focus ring
+
+    // 操作可能要素の輪郭 (2026-08-09追加)。light 側は近白背景に対して stone[500]
+    // (3:1達成に必要な最小の濃さ) が視覚的に重すぎたため意図的に stone[400] へ
+    // 下げ 1.4.11 を満たさない例外にしたが (light.ts 参照)、dark は近黒背景に対する
+    // stone[500] が同じ問題を起こさなかったため、こちらは 3:1 適合のまま維持する
+    // (raised 4.12 / default 4.45 / sunken 5.28)。
+    interactive: colors.stone[500], // '#80817A'
+    // 選択枠は dark では「明るい側へ」振る (面が暗いので明度差の付け方が逆になる)。
+    // sage[400] だと interactive 比 1.76:1 で light (2.34) より弱かったため、
+    // 明度差を light と揃うところまで上げた sage[300] を採用 (2.26:1)。
+    selected: colors.sage[300],   // '#B9C9B1' — raised 9.30
+
+    focus:   colors.sage[400],    // '#9AB594' — テキスト選択 / focus ring
     inverse: colors.ivory[300],   // '#F3EEE4' — light inverse面上のボーダー
   },
 

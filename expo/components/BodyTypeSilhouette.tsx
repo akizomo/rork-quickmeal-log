@@ -86,10 +86,13 @@ export const BodyTypeSilhouette = memo(function BodyTypeSilhouette({
   const t = useTheme();
   const params = basis === 'male_basis' ? MALE_STAGES[stage] : FEMALE_STAGES[stage];
   const bodyPath = buildPath(params);
-  // active 時は SelectCard/Matrix と同じ DS 意匠 (sage focus + sage container fill) に統一。
-  const strokeColor = active ? t.colors.border.focus : t.colors.border.default;
+  // 体型の違いは **輪郭の形** で伝わるので、3:1 を満たす必要があるのは fill ではなく
+  // stroke。旧実装は stroke に border.default (カード面比 1.43:1) を使っており、
+  // 9分類マトリクスの比較対象そのものがほぼ見えていなかった (2026-08-09修正)。
+  // fill は形の判別に必須ではないため、淡いままにして地の軽さを保つ。
+  const strokeColor = active ? t.colors.border.selected : t.colors.border.interactive;
   const fillColor = active ? t.colors.action.primary.container : t.colors.surface.sunken;
-  const headColor = active ? t.colors.border.focus : t.colors.border.subtle;
+  const headColor = strokeColor;
 
   return (
     <View style={{ width: size, height: size * 1.7 }} testID={testID}>

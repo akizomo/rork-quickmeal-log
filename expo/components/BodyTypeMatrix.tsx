@@ -26,6 +26,10 @@ interface Props {
   mode?: 'current' | 'target';
 }
 
+const AXIS_LABELS: Record<BodyAxisLevel, string> = { 0: '少なめ', 1: 'ふつう', 2: '多め' };
+const fatLabel = (level: BodyAxisLevel) => AXIS_LABELS[level];
+const muscleLabel = (level: BodyAxisLevel) => AXIS_LABELS[level];
+
 export function BodyTypeMatrix({
   basis,
   heightCm,
@@ -39,7 +43,7 @@ export function BodyTypeMatrix({
   // 選択 state は SelectCard と同じ DS 意匠 (sage container + focus 枠) に統一。
   const activeCellStyle = {
     backgroundColor: t.colors.action.primary.container,
-    borderColor: t.colors.border.focus,
+    borderColor: t.colors.border.selected,
   };
 
   return (
@@ -47,10 +51,10 @@ export function BodyTypeMatrix({
       {/* Column labels (fat axis) */}
       <View style={styles.colHeaderRow}>
         <View style={styles.rowAxisSpacer} />
-        {['少なめ', 'ふつう', '多め'].map((label) => (
-          <View key={label} style={styles.colHeaderCell}>
+        {([0, 1, 2] as BodyAxisLevel[]).map((level) => (
+          <View key={level} style={styles.colHeaderCell}>
             <Text style={[styles.colHeaderLabel, { color: t.colors.content.secondary }]}>脂肪</Text>
-            <Text style={[styles.colHeaderValue, { color: t.colors.content.primary }]}>{label}</Text>
+            <Text style={[styles.colHeaderValue, { color: t.colors.content.primary }]}>{fatLabel(level)}</Text>
           </View>
         ))}
       </View>
@@ -63,7 +67,7 @@ export function BodyTypeMatrix({
             <View style={styles.rowAxis}>
               <Text style={[styles.rowAxisText, { color: t.colors.content.secondary }]}>筋量</Text>
               <Text style={[styles.rowAxisValue, { color: t.colors.content.primary }]}>
-                {muscle === 0 ? '少なめ' : muscle === 1 ? 'ふつう' : '多め'}
+                {muscleLabel(muscle)}
               </Text>
             </View>
             {[0, 1, 2].map((f) => {
@@ -81,11 +85,22 @@ export function BodyTypeMatrix({
                 <Pressable
                   key={`${muscle}-${fat}`}
                   onPress={() => onSelect(cell)}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: isSelected }}
+                  // 行/列の軸ラベルは別の View に分かれているため、スクリーンリーダーには
+                  // セルが「9分類のどこか」として伝わらない。各セルに軸の値を畳み込む。
+                  accessibilityLabel={[
+                    `筋量${muscleLabel(muscle)}、脂肪${fatLabel(fat)}`,
+                    mode === 'target' ? `体重${weightText}、体脂肪率${bfText}` : `体脂肪率${bfText}`,
+                    isCurrent ? '現在のからだ' : null,
+                  ]
+                    .filter(Boolean)
+                    .join('。')}
                   style={[
                     styles.cell,
                     { backgroundColor: t.colors.surface.raised },
                     isSelected ? activeCellStyle : null,
-                    isCurrent && !isSelected ? { borderColor: t.colors.border.default } : null,
+                    isCurrent && !isSelected ? { borderColor: t.colors.border.interactive } : null,
                   ]}
                   testID={`body-matrix-cell-${muscle}-${fat}`}
                 >

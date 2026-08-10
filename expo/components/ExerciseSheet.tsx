@@ -218,7 +218,7 @@ export const ExerciseSheet = memo(function ExerciseSheet({ visible, onClose, dat
                           aspectRatio: 1,
                           borderRadius: radius.lg,
                           borderWidth: 1,
-                          borderColor: active ? t.colors.border.focus : t.colors.border.subtle,
+                          borderColor: active ? t.colors.border.selected : t.colors.border.interactive,
                           backgroundColor: active
                             ? t.colors.action.primary.container
                             : pressed

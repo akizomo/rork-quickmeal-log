@@ -31,6 +31,8 @@ const CHART_HEIGHT = CHART_CONTENT_HEIGHT + CHART_BOTTOM_GAP;
 const CHART_PADDING_TOP = 20;
 const CHART_PADDING_BOTTOM = 38;
 
+const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'] as const;
+
 export function WeeklyStatsView() {
   const { logs, profile, settings, exerciseLogs, dailyActivities } = useAppState();
   const t = useTheme();
@@ -179,7 +181,6 @@ export function WeeklyStatsView() {
   const slotWidth = barAreaWidth / barCount;
   const barWidth = slotWidth * 0.55;
   const chartInnerHeight = CHART_CONTENT_HEIGHT - CHART_PADDING_TOP - CHART_PADDING_BOTTOM;
-  const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'] as const;
 
   const targetPoints = useMemo(
     () =>
@@ -211,6 +212,25 @@ export function WeeklyStatsView() {
     [router]
   );
 
+  // 棒の高さ・色は視覚のみの情報。SVG 内の <SvgText> は曜日と日付の断片としてしか
+  // 読み上げられないため、チャート全体を1要素にまとめて要約を渡す (2026-08-09追加)。
+  const chartSummary = useMemo(() => {
+    const logged = dailyEntries.filter(([, macro]) => macro.kcal > 0);
+    if (logged.length === 0) return 'この週の記録はありません';
+    const total = logged.reduce((sum, [, macro]) => sum + macro.kcal, 0);
+    const avg = Math.round(total / logged.length);
+    const exceeded = dailyEntries.filter(
+      ([, macro], i) => macro.kcal > 0 && dayTargets[i] > 0 && macro.kcal / dayTargets[i] > 1.1
+    ).length;
+    const days = dailyEntries
+      .map(([key, macro]) => {
+        const dow = WEEKDAYS[new Date(key).getDay()];
+        return macro.kcal > 0 ? `${dow}${Math.round(macro.kcal).toLocaleString()}` : `${dow}記録なし`;
+      })
+      .join('、');
+    return `記録${logged.length}日、平均${avg.toLocaleString()}kcal、目安超えは${exceeded}日。${days}`;
+  }, [dailyEntries, dayTargets]);
+
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
       <View style={styles.headerRow} testID="week-header">
@@ -238,6 +258,7 @@ export function WeeklyStatsView() {
       </View>
 
       {/* チャート: 背景なし */}
+      <View accessible accessibilityRole="image" accessibilityLabel="この週のカロリーグラフ" accessibilityHint={chartSummary}>
       <Svg width={chartWidth} height={CHART_HEIGHT}>
         {dailyEntries.map(([key, macro], i) => {
           const ratio = macro.kcal / maxKcal;
@@ -295,6 +316,7 @@ export function WeeklyStatsView() {
           </React.Fragment>
         ) : null}
       </Svg>
+      </View>
 
       {/* 週平均サマリー: 独立カード */}
       <View style={[styles.summaryCard, { width: chartWidth }]} testID="week-summary">

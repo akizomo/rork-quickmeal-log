@@ -64,9 +64,9 @@ export function SelectCard({
           paddingVertical: t.spacing['4'],
           borderRadius: t.radius.lg,
           borderWidth: 2,
-          // default は薄い outline (タイル形状の認識だけ担う)。
-          // selected 時はブランド色で注目を集める。
-          borderColor: selected ? t.colors.border.focus : t.colors.border.subtle,
+          // 枠が「ここが押せる範囲」を伝えているので装飾線ではなく interactive を使う
+          // (背景比 3:1 / WCAG 1.4.11)。selected はさらに濃くして明度差で状態を出す。
+          borderColor: selected ? t.colors.border.selected : t.colors.border.interactive,
           // 選択時は action.primary.container (薄いブランド色) で
           // 「アクション済み」であることを色でも明示する。
           backgroundColor: selected

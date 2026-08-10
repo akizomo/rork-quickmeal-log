@@ -250,11 +250,33 @@ export function MonthlyStatsView() {
             const color = kcal === 0 ? 'transparent' : t.colors.nutrition.calorie[tier].graphic;
             const onGraphicColor = t.colors.nutrition.calorie[tier].onGraphic;
             const dim = !cell.inMonth || future;
+            // ドットの色 (予算内/軽度超過/大幅超過) は視覚だけの情報なので、
+            // スクリーンリーダー向けに同じ判定を言葉で持たせる。半径は kcal に単調で
+            // 目安になるが「どこが超過ラインか」は大きさからは読めないため、
+            // 晴眼者にとっても tier の言語化が唯一の閾値の手がかりになる。
+            const tierLabel =
+              kcal === 0
+                ? null
+                : tier === 'within'
+                  ? '目安の範囲内'
+                  : tier === 'mildExceed'
+                    ? 'やや多め'
+                    : '大きく超過';
+            const month = cell.date.getMonth() + 1;
+            const day = cell.date.getDate();
+            const cellA11yLabel = future
+              ? `${month}月${day}日`
+              : kcal === 0
+                ? `${month}月${day}日、記録なし`
+                : `${month}月${day}日、${Math.round(kcal).toLocaleString()}kcal、${tierLabel}`;
             return (
               <Pressable
                 key={cell.dateKey}
                 onPress={() => onTapDay(cell.dateKey, kcal > 0, future)}
                 disabled={isFutureOrEmpty || !cell.inMonth}
+                accessibilityRole="button"
+                accessibilityLabel={cellA11yLabel}
+                accessibilityState={{ disabled: isFutureOrEmpty || !cell.inMonth }}
                 style={[styles.cell, { width: cellSize, height: cellSize }]}
                 testID={`month-cell-${cell.dateKey}`}
               >

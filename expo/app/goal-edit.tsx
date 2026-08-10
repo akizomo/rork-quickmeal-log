@@ -389,7 +389,7 @@ function StepperButton({
         styles.stepperBtn,
         {
           backgroundColor: pressed ? theme.colors.surface.sunken : theme.colors.surface.raised,
-          borderColor: theme.colors.border.subtle,
+          borderColor: theme.colors.border.interactive,
         },
       ]}
     >
@@ -429,7 +429,7 @@ function SegmentedRow({
     <View
       style={[
         styles.segmented,
-        { backgroundColor: theme.colors.surface.sunken, borderColor: theme.colors.border.subtle },
+        { backgroundColor: theme.colors.surface.sunken, borderColor: theme.colors.border.interactive },
       ]}
     >
       {options.map((opt) => {
