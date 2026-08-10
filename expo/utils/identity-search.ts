@@ -21,6 +21,7 @@ import { DISH_VOCABULARY } from '@/constants/identity/dish-vocabulary';
 import { HEAD_NOUNS, type HeadNounTarget } from '@/constants/identity/head-nouns';
 import { normalize, romajiVariant } from '@/utils/identity-normalize';
 import type { AttributeOption, BucketKey, Identity, StyleOption } from '@/types/identity';
+import type { QuickLogHistoryMap } from '@/types/quick-log';
 
 export interface SearchEntry {
   identity: Identity;
@@ -149,11 +150,67 @@ function capPerIdentity(results: SearchEntryResult[], cap: number): SearchEntryR
   return out;
 }
 
+// ---------------------------------------------------------------------------
+// ランキング: ユーザー選択頻度 (SEARCH_SPEC v0.4 §5.3, 検索の層内順位づけ)
+// ---------------------------------------------------------------------------
+
+/**
+ * finalScore = matchScore × (1 + userFreqWeight × log(1 + userSelectCount))
+ *
+ * §5.3 の式のうち global 項は割愛している — この app はローカル専用でユーザー
+ * 横断の集計 (Analytics バックエンド) を持たないため、globalSelectCount を
+ * 埋めるデータ源が存在しない。捏造するより明示的に省略する方が誠実と判断した。
+ *
+ * 頻度はスコアの「並び順」にのみ影響させ、層 (confident/maybe) の判定には
+ * 使わない — bigram一致 (層2) が選択頻度だけで層1相当に格上げされると、
+ * 「確信度で分離する」という設計原則 (§F5) が崩れるため。
+ */
+const USER_FREQ_WEIGHT = 0.5;
+
+function frequencyMultiplier(userSelectCount: number): number {
+  return 1 + USER_FREQ_WEIGHT * Math.log(1 + userSelectCount);
+}
+
+/** SearchEntry を一意に識別するキー (Identity + Attribute + Style)。 */
+function entryFrequencyKey(entry: SearchEntry): string {
+  return `${entry.identity.id}|${entry.attribute?.key ?? ''}|${entry.style?.key ?? ''}`;
+}
+
+/**
+ * quickLogHistory (⭐️タブ/自動学習と共有するユーザー選択履歴) から
+ * (Identity, Attribute, Style) 単位の選択回数を集計する。
+ * `QuickLogSelection.subcategoryKey` は Identity-first IA 由来のエントリでは
+ * 常に record Identity の id と一致する (identity-log-bridge.ts の
+ * `subTypeKey: recordIdentity.id` を参照)。
+ */
+function buildUserFrequencyMap(history: QuickLogHistoryMap | undefined): Map<string, number> {
+  const map = new Map<string, number>();
+  if (!history) return map;
+  for (const list of Object.values(history)) {
+    for (const sel of list) {
+      const key = `${sel.subcategoryKey}|${sel.attrKey ?? ''}|${sel.styleKey ?? ''}`;
+      map.set(key, (map.get(key) ?? 0) + 1);
+    }
+  }
+  return map;
+}
+
+export interface SearchOptions {
+  /**
+   * ⭐️タブ/自動学習と共有するユーザー選択履歴 (settings.quickLogHistory)。
+   * 渡すと同一マッチ層内でユーザーの選択頻度に応じて並び替える (§5.3 P4)。
+   * 省略時はマッチスコアのみで並ぶ (頻度学習なし)。
+   */
+  history?: QuickLogHistoryMap;
+}
+
 /**
  * ファジー検索。confident (層1) / maybe (層2「もしかして」) に分けて返す。
- * それぞれスコア降順・ラベル昇順、同一 Identity 上限 PER_IDENTITY_CAP 件で絞り込み済み。
+ * それぞれ finalScore 降順・ラベル昇順、同一 Identity 上限 PER_IDENTITY_CAP 件で
+ * 絞り込み済み。finalScore = matchScore × 頻度倍率 (§5.3) — 層の判定自体は
+ * マッチスコアの時点で確定しており、頻度は同じ層の中の並び順にのみ影響する。
  */
-export function searchEntriesFuzzy(query: string): SearchEntriesResult {
+export function searchEntriesFuzzy(query: string, opts?: SearchOptions): SearchEntriesResult {
   const qBase = normalize(query);
   if (!qBase) return { confident: [], maybe: [] };
   const qRomaji = romajiVariant(query);
@@ -187,9 +244,12 @@ export function searchEntriesFuzzy(query: string): SearchEntriesResult {
     });
   }
 
+  const freqMap = buildUserFrequencyMap(opts?.history);
+  const finalScore = (r: SearchEntryResult) =>
+    r.score * frequencyMultiplier(freqMap.get(entryFrequencyKey(r.entry)) ?? 0);
   const label = (r: SearchEntryResult) =>
     r.entry.attribute?.label ?? r.entry.style?.label ?? r.entry.identity.label;
-  results.sort((a, b) => b.score - a.score || label(a).localeCompare(label(b), 'ja'));
+  results.sort((a, b) => finalScore(b) - finalScore(a) || label(a).localeCompare(label(b), 'ja'));
 
   const confident = results.filter((r) => r.tier === 'confident');
   const maybe = results.filter((r) => r.tier === 'maybe');

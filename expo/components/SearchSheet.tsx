@@ -42,6 +42,7 @@ import {
   type VocabularyMatch,
 } from '@/utils/identity-search';
 import type { BucketKey } from '@/types/identity';
+import type { QuickLogHistoryMap } from '@/types/quick-log';
 
 const DEBOUNCE_MS = 180;
 
@@ -91,7 +92,7 @@ function SearchResultRow({
 
 export function SearchSheet({ visible, onClose, onOpen }: Props) {
   const t = useTheme();
-  const { openIdentityLogSheet, recordSearchMissEvent, bumpDiagnostic } = useAppState();
+  const { openIdentityLogSheet, recordSearchMissEvent, bumpDiagnostic, settings } = useAppState();
 
   const [query, setQuery] = useState('');
   const [debounced, setDebounced] = useState('');
@@ -133,11 +134,15 @@ export function SearchSheet({ visible, onClose, onOpen }: Props) {
     return () => clearTimeout(id);
   }, [query]);
 
+  // 層内ランキング (SEARCH_SPEC v0.4 §5.3 P4): 同じ確信度の中でユーザーの選択
+  // 頻度が高いものを優先する。history は ⭐️タブ/自動学習と同じ quickLogHistory。
   const { confidentResults, maybeResults } = useMemo(() => {
     if (debounced.trim().length === 0) return { confidentResults: [] as SearchEntryResult[], maybeResults: [] as SearchEntryResult[] };
-    const { confident, maybe } = searchEntriesFuzzy(debounced);
+    const { confident, maybe } = searchEntriesFuzzy(debounced, {
+      history: settings.quickLogHistory as QuickLogHistoryMap | undefined,
+    });
     return { confidentResults: confident, maybeResults: maybe };
-  }, [debounced]);
+  }, [debounced, settings.quickLogHistory]);
 
   // 層2/3: 主辞辞書・料理名辞書によるバケット/Identity推測 (SEARCH_SPEC v0.4
   // §5.4.5 / §5.4.6)。DB に文字列として存在しない語 (グラタン/ハムカツ等) を
