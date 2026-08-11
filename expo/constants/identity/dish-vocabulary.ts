@@ -141,4 +141,142 @@ export const DISH_VOCABULARY: Record<string, BucketKey> = {
   'ピッツァ': 'pizza',
   'コンビニ': 'misc_dish',
   '焼き魚': 'misc_dish',
+
+  // ── 拡充 (2026-08-11, デスクリサーチベース。§5.4.6 目安200〜300語に対応) ──
+  // 主辞辞書 (head-nouns.ts) で拾える語尾 (焼き/揚げ/丼/汁/鍋/カツ/ライス/麺/
+  // うどん/そば/煮/和え/漬け/たまご/にく/魚/とうふ/ちーず 等) を持つ語はここでは
+  // 登録しない (二重管理を避ける)。単一語として登録が必須なものに絞る。
+
+  // 西洋料理
+  'むさか': 'misc_dish',
+  'こんふぃ': 'fatty_protein',
+  'てりーぬ': 'misc_dish',
+  'きっしゅ': 'egg',
+  'ふりったーた': 'egg',
+  'かるつぉーね': 'pizza',
+  'ふぉかっちゃ': 'staple',
+  'ちゃばた': 'staple',
+  'ぶりおっしゅ': 'staple',
+  'くろっくむっしゅ': 'sandwich',
+  'くろっくまだむ': 'sandwich',
+  'たるたるすてーき': 'fatty_protein',
+  'かるぱっちょ': 'misc_dish',
+  'せびーちぇ': 'misc_dish',
+  'ぱて': 'fatty_protein',
+  'りえっと': 'fatty_protein',
+  'むにえる': 'lean_protein',
+  'あくあぱっつぁ': 'lean_protein',
+  'ぶいやべーす': 'misc_dish',
+  'ぱんなこった': 'snack_drink',
+  'くれーむぶりゅれ': 'snack_drink',
+  'ぷろふぃっとろーる': 'snack_drink',
+  'じぇらーと': 'snack_drink',
+  'しゃーべっと': 'snack_drink',
+  'そるべ': 'snack_drink',
+  'びーふうぇりんとん': 'misc_dish',
+
+  // 中東・地中海
+  'ふむす': 'veggies',
+  'ふぁらふぇる': 'veggies',
+  'たぶれ': 'veggies',
+  'しゃわるま': 'fatty_protein',
+  'ばくらば': 'snack_drink',
+
+  // 東南アジア・南アジア
+  'かおまんがい': 'rice_dish',
+  'かおぱっと': 'rice_dish',
+  'とむやむくん': 'misc_dish',
+  'そむたむ': 'veggies',
+  'らくさ': 'chinese_noodles',
+  'ばいんせお': 'misc_dish',
+  'さて': 'fatty_protein',
+  'みーごれん': 'chinese_noodles',
+  'ろてぃ': 'staple',
+  'どーさ': 'staple',
+  'さもさ': 'misc_dish',
+  'ぱこら': 'veggies',
+
+  // 韓国
+  'さむぎょぷさる': 'fatty_protein',
+  'ぷるこぎ': 'fatty_protein',
+  'とっぽぎ': 'snack_drink',
+  'きむぱぷ': 'rice_dish',
+  'ほっとく': 'snack_drink',
+  'すんどぅぶ': 'misc_dish',
+  'けらんちむ': 'egg',
+  'さむげたん': 'misc_dish',
+
+  // 中華
+  'ぱいこーめん': 'chinese_noodles',
+  'じゃーじゃーめん': 'chinese_noodles',
+  'ざーさい': 'veggies',
+  'ぴーたん': 'egg',
+  'ちゃーしゅー': 'fatty_protein',
+  'ゆーてぃあお': 'staple',
+
+  // 朝食・パン
+  'ぱんけーき': 'snack_drink',
+  'ふれんちとーすと': 'snack_drink',
+  'みゅーずり': 'staple',
+  'べーぐるさんど': 'sandwich',
+  'えっぐべねでぃくと': 'egg',
+  'すくらんぶるえっぐ': 'egg',
+  'はっしゅどぽてと': 'staple',
+
+  // 飲み物 (加糖・乳飲料等。無糖茶・水はPRD方針によりログ対象外のため未収録)
+  'れもねーど': 'snack_drink',
+  'すむーじー': 'snack_drink',
+  'えなじーどりんく': 'snack_drink',
+  'さわー': 'snack_drink',
+  'ちゅーはい': 'snack_drink',
+  'はいぼーる': 'snack_drink',
+  'かくてる': 'snack_drink',
+  'わいん': 'snack_drink',
+  'にほんしゅ': 'snack_drink',
+  'しょうちゅう': 'snack_drink',
+
+  // 肉料理
+  'ろーすとちきん': 'fatty_protein',
+  'ぐりるちきん': 'lean_protein',
+  'ちきんすてーき': 'lean_protein',
+  'らむちょっぷ': 'fatty_protein',
+  'すぺありぶ': 'fatty_protein',
+  'ぷるどぽーく': 'fatty_protein',
+  'こんびーふ': 'fatty_protein',
+
+  // 野菜・サラダ
+  'こぶさらだ': 'veggies',
+  'おひたし': 'veggies',
+  'なます': 'veggies',
+  'ぴくるす': 'veggies',
+
+  // 和菓子・スイーツ
+  'あんみつ': 'snack_drink',
+  'みつまめ': 'snack_drink',
+  'ぜんざい': 'snack_drink',
+  'くずもち': 'snack_drink',
+  'こんぺいとう': 'snack_drink',
+
+  // 主食・粉もの
+  'ぴらふ': 'rice_dish',
+  'けちゃっぷらいす': 'rice_dish',
+  'たきこみごはん': 'rice_dish',
+  'えきべん': 'rice_dish',
+  'おにぎらず': 'staple',
+  'にょっき': 'pasta',
+  'らびおり': 'pasta',
+  'ぱすたさらだ': 'pasta',
+
+  // 寿司
+  'ばってら': 'sushi',
+  'おしずし': 'sushi',
+  'ぐんかん': 'sushi',
+  'なれずし': 'sushi',
+
+  // サンド・バーガー
+  'くらぶはうすさんど': 'sandwich',
+  'てりやきばーがー': 'sandwich',
+  'ふぃっしゅばーがー': 'sandwich',
+  'けさでぃーや': 'sandwich',
+  'ぐりるどちーず': 'sandwich',
 };
