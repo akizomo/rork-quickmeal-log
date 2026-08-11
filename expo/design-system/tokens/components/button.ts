@@ -44,11 +44,11 @@ export const makeButtonTokens = (sc: SemanticColors): ButtonTokens => ({
       },
       label: {
         default: sc.content.onAction,
-        // content.disabled(stone300)はsage200と同程度の明度でほぼ判別不能。
-        // ただしブランド色(sage800)にすると彩度が高く「アクティブに見える」ため、
-        // 無彩色のcontent.secondary(stone500)で読める程度のコントラストを保ちつつ
-        // 「無効化されている感 (desaturated)」を出す。
-        disabled: sc.content.secondary,
+        // disabled背景 (variantごとに明暗が違う) に対して個別調整した
+        // action.*.onDisabled を使う。content.secondaryはページ上の補助テキスト
+        // 用に設計された色で、ボタン自身のdisabled背景との組み合わせは
+        // 保証されていなかった (2026-08-07指摘、dark primaryではCR1.77だった)。
+        disabled: sc.action.primary.onDisabled,
       },
       border: {
         default: sc.action.primary.default,
@@ -63,9 +63,7 @@ export const makeButtonTokens = (sc: SemanticColors): ButtonTokens => ({
       },
       label: {
         default: sc.content.primary,
-        // content.disabled(stone300)はivory系disabled背景とのコントラストが低すぎるため、
-        // content.secondary(stone500)に上げて視認性を確保しつつ薄さは維持する。
-        disabled: sc.content.secondary,
+        disabled: sc.action.secondary.onDisabled,
       },
       border: {
         default: sc.border.default,
@@ -80,8 +78,7 @@ export const makeButtonTokens = (sc: SemanticColors): ButtonTokens => ({
       },
       label: {
         default: sc.content.primary,
-        // secondaryと同じ理由でcontent.secondary(stone500)に統一。
-        disabled: sc.content.secondary,
+        disabled: sc.action.ghost.onDisabled,
       },
       border: {
         default: 'transparent',

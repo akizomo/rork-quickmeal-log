@@ -36,6 +36,10 @@ export type SemanticColors = {
       default: string;
       pressed: string;
       disabled: string;
+      // disabled背景の上に乗せる文字色。content.secondary(ページ上の補助テキスト
+      // 用に設計された色)を流用すると、disabled背景の明暗によっては
+      // コントラストが成立しない (2026-08-07指摘、dark ではCR1.77だった)。
+      onDisabled: string;
       // Material の primary-container パターン。
       // selected state の背景や chip active など、filled ではないが
       // ブランドに紐づく「選択された・アクティブな」面に使う。
@@ -46,11 +50,13 @@ export type SemanticColors = {
       default: string;
       pressed: string;
       disabled: string;
+      onDisabled: string;
     };
     ghost: {
       default: string; // 通常は transparent
       pressed: string;
       disabled: string;
+      onDisabled: string;
     };
     // Text button / inline link 用。body text (content.primary) と
     // 区別できるよう、必ずブランド色 (sage) を使う。

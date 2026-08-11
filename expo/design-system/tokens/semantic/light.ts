@@ -50,6 +50,7 @@ export const lightColors: SemanticColors = {
       default: colors.sage[800], // AA compliant contrast vs ivory text
       pressed: colors.sage[900],
       disabled: colors.sage[200],
+      onDisabled: colors.stone[600], // disabled背景(sage200)比 CR3.11
       container: colors.sage[100], // 選択状態・chip active の背景
       onContainer: colors.sage[900], // container 面上の濃い brand text
     },
@@ -57,11 +58,13 @@ export const lightColors: SemanticColors = {
       default: colors.ivory[500],
       pressed: colors.ivory[600],
       disabled: colors.ivory[300],
+      onDisabled: colors.stone[600], // disabled背景(ivory300)比 CR4.01
     },
     ghost: {
       default: colors.transparent,
       pressed: colors.ivory[400],
       disabled: colors.transparent,
+      onDisabled: colors.stone[600], // 背景transparent、ページ地の上の文字
     },
     // Text button / inline link。常にブランド色で body text と区別する。
     text: {

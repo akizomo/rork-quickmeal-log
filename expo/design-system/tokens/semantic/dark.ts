@@ -47,6 +47,9 @@ export const darkColors: SemanticColors = {
       default:     colors.sage[400],  // '#9AB594' — onAction(濃色)比 7.65:1
       pressed:     colors.sage[500],  // '#82A280' — 押下でさらに暗く、6.04:1
       disabled:    colors.sage[200],  // '#C9D8C2' — disabledはAA対象外 (WCAG 1.4.3)、明方向に統一
+      // disabled背景(sage200、明るい)の上の文字。content.secondary(stone400)
+      // はCR1.77でほぼ見えなかった (2026-08-07指摘)。stone700でCR5.32。
+      onDisabled:  colors.stone[700],  // '#4C534B'
       container:   colors.sage[950],  // '#022E24' — 薄い色付け (light containerと同程度のCR、2026-08-07)
       onContainer: colors.sage[200],  // '#C9D8C2' — dark container 上の明色テキスト
     },
@@ -54,11 +57,16 @@ export const darkColors: SemanticColors = {
       default:  colors.ivory[800],  // '#403A2E' — content.primary(白)比 10.52:1
       pressed:  colors.ivory[900],  // '#1D1913' — 押下でさらに暗く、16.32:1
       disabled: colors.ivory[700],  // '#8F8A7A' — disabledはAA対象外 (WCAG 1.4.3)
+      // disabled背景(ivory700、中間トーン)の上の文字。content.secondary(stone400)
+      // はCR1.31でほぼ見えなかった。stone900でCR4.95。
+      onDisabled: colors.stone[900],  // '#1C1C1A'
     },
     ghost: {
       default:  colors.transparent,
       pressed:  colors.ivory[800],  // '#403A2E'
       disabled: colors.transparent,
+      // 背景がtransparentなので実質ページ地の上の文字。content.secondaryのままでOK。
+      onDisabled: colors.stone[400],  // '#9FA09A'
     },
     text: {
       default:   colors.sage[400],  // '#9AB594' — ダーク背景上のリンク色
