@@ -51,6 +51,11 @@ function bigrams(s: string): Set<string> {
   return set;
 }
 
+/**
+ * 非対称な類似度 (クエリ側の bigram 数でのみ割る)。短いクエリのスコアが
+ * 不当に高くなる欠点があるが、層4 (このカテゴリかも、§F5a) は「何も出さない
+ * よりは緩く出す」が設計意図の最終フォールバックなので、ここでは維持する。
+ */
 function bigramSimilarity(q: string, target: string): number {
   if (q.length < 2 || target.length < 2) return 0;
   const qSet = bigrams(q);
@@ -58,6 +63,21 @@ function bigramSimilarity(q: string, target: string): number {
   let matches = 0;
   qSet.forEach((b) => { if (tSet.has(b)) matches++; });
   return matches / qSet.size;
+}
+
+/**
+ * Dice係数 (対称)。SearchEntry の層2「もしかして」専用 (§5.2.1)。
+ * 非対称版は短いクエリが長い無関係な語に埋没して部分一致してしまう
+ * (フォー→クアトロ・フォルマッジ等、§1.4 原因③) ため、層2 は分母を
+ * 両方の bigram 数の和にして緩和する。
+ */
+function diceSimilarity(q: string, target: string): number {
+  if (q.length < 2 || target.length < 2) return 0;
+  const qSet = bigrams(q);
+  const tSet = bigrams(target);
+  let matches = 0;
+  qSet.forEach((b) => { if (tSet.has(b)) matches++; });
+  return (2 * matches) / (qSet.size + tSet.size);
 }
 
 type MatchMethod = 'exact' | 'prefix' | 'substring' | 'bigram';
@@ -77,8 +97,15 @@ function scoreAgainst(q: string, target: string): { score: number; method: Match
   // (2文字) が「クアトロ・フォルマッジ」に部分一致してしまう)。3文字未満は
   // 部分一致の対象外とし、bigram (もしかして) 側に委ねる。
   if (q.length >= 3 && target.includes(q)) return { score: 2, method: 'substring' };
-  const sim = bigramSimilarity(q, target);
-  if (sim >= 0.4) return { score: 1 + sim, method: 'bigram' }; // 1.0 ~ 2.0
+  // 対称な Dice係数を使う (§5.2.1)。非対称版は「スコーン→とうもろこし」のような
+  // 無関係語が層2「もしかして」に紛れ込む主因だった。
+  // target が短い (bigram が1個しかない) と、その1個が一致しただけで Dice が
+  // 不当に高くなる (例: 「グラタン」→「タン」、「たい焼き」→「焼き」)。
+  // target 側にも substring と同じ最小3文字を課して同種の誤爆を防ぐ。
+  if (target.length >= 3) {
+    const sim = diceSimilarity(q, target);
+    if (sim >= 0.4) return { score: 1 + sim, method: 'bigram' }; // 1.0 ~ 2.0
+  }
   return null;
 }
 
