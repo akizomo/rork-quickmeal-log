@@ -5,17 +5,18 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { deriveTargetCellFromDirection } from '@/constants/body-matrix';
 import { PACE_OPTIONS } from '@/constants/onboarding';
-import { Body, Button, Caption, Card, Heading, Icon, Label, MacroChip, Overline, useTheme } from '@/design-system';
+import { Body, Button, Caption, Card, Heading, Icon, Label, MacroCard, Overline, useTheme } from '@/design-system';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { useAppState } from '@/providers/app-state-provider';
 import { BodyType9, GoalDirection, PaceLevel } from '@/types/nutrition';
 import {
-  BMI_UNDERWEIGHT,
   bmiFromWeight,
+  classifyTargetBodyFat,
   classifyTargetWeight,
   deriveDirectionFromWeights,
   estimateMonthsToTarget,
   formatGoalDuration,
+  projectBodyFatAtWeight,
   recommendGoal,
 } from '@/utils/goals';
 
@@ -36,6 +37,9 @@ export default function GoalEditRoute() {
   // v1.7 (PRD §6.4.4): 目標体重の手動指定 (null = おまかせ)。
   const [manualTargetKg, setManualTargetKg] = useState<number | null>(null);
   const [targetText, setTargetText] = useState('');
+  // 目標体脂肪率の手動指定 (null = 目標体重から推定)。手動指定モード内でのみ編集できる。
+  const [manualTargetBfPct, setManualTargetBfPct] = useState<number | null>(null);
+  const [bfText, setBfText] = useState('');
 
   const currentBodyType9 = profile.currentBodyType9 ?? null;
   const currentWeightKg = profile.currentWeightKg;
@@ -70,21 +74,36 @@ export default function GoalEditRoute() {
       targetStage: profile.targetBodyStage,
     });
     if (!base) return null;
+    if (!isManual) return base;
     // 手動指定: 行き先(アンカー)だけ上書き。kcal/PFC は現在体重×ペースのまま (安全, PRD §6.4.4)。
-    return isManual ? { ...base, targetWeightKg: manualTargetKg! } : base;
-  }, [effectiveDirection, paceLevel, derivedTarget, profile, isManual, manualTargetKg]);
+    // 体脂肪率は「その目標体重に到達した時の推定値」に置き換える。base の BF% は
+    // 3ヶ月予測の体重に対応する値なので、手動体重と組にすると矛盾するため
+    // (手入力があればそれを最優先)。
+    const projected = projectBodyFatAtWeight(
+      profile.currentWeightKg,
+      profile.currentBodyFatPct ?? null,
+      manualTargetKg
+    );
+    return {
+      ...base,
+      targetWeightKg: manualTargetKg!,
+      targetBodyFatPct: manualTargetBfPct ?? projected ?? base.targetBodyFatPct,
+    };
+  }, [effectiveDirection, paceLevel, derivedTarget, profile, isManual, manualTargetKg, manualTargetBfPct]);
 
-  // 手動指定の健康判定・ETA (PRD §6.4.4)。
-  const guardVerdict = isManual ? classifyTargetWeight(manualTargetKg, profile.heightCm) : 'ok';
-  const etaMonths =
-    isManual && currentWeightKg != null && paceLevel &&
-    (effectiveDirection === 'lose' || effectiveDirection === 'gain')
-      ? estimateMonthsToTarget(currentWeightKg, manualTargetKg!, paceLevel, effectiveDirection)
-      : null;
-
+  // 健康判定は「自分で決めた」時だけ行う。おまかせ (アプリ側の推奨値) に対して
+  // BMI/BF% の是非を指摘するのは、ユーザーが選んでいない数値への評価になり
+  // VOICE.md の「静か・非評価的」なトーンに反するため。
+  const guardVerdict = isManual
+    ? classifyTargetWeight(preview?.targetWeightKg ?? null, profile.heightCm, effectiveDirection)
+    : 'ok';
+  const bfVerdict = isManual
+    ? classifyTargetBodyFat(preview?.targetBodyFatPct ?? null, profile.biologicalBasis ?? null, effectiveDirection)
+    : 'ok';
   // v1.7 (PRD §6.4.4): 目的/ペース/手動目標が実際に変わった時だけ再コミット (ドリフト防止)。
   const hasChanges =
     (isManual && profile.targetWeightKg !== manualTargetKg) ||
+    (isManual && preview != null && (profile.targetBodyFatPct ?? null) !== preview.targetBodyFatPct) ||
     effectiveDirection !== (profile.goalDirection ?? null) ||
     (paceLevel ?? null) !== (profile.paceLevel ?? null);
 
@@ -110,6 +129,12 @@ export default function GoalEditRoute() {
         }
       : null;
 
+  const etaMonths =
+    currentWeightKg != null && paceLevel && card?.targetWeightKg != null &&
+    (effectiveDirection === 'lose' || effectiveDirection === 'gain')
+      ? estimateMonthsToTarget(currentWeightKg, card.targetWeightKg, paceLevel, effectiveDirection)
+      : null;
+
   const enterManual = useCallback(() => {
     const seed = profile.targetWeightKg ?? profile.currentWeightKg ?? 60;
     const v = Math.round(seed * 10) / 10;
@@ -120,6 +145,25 @@ export default function GoalEditRoute() {
   const exitManual = useCallback(() => {
     setManualTargetKg(null);
     setTargetText('');
+    setManualTargetBfPct(null);
+    setBfText('');
+  }, []);
+
+  const applyManualBf = useCallback((v: number) => {
+    const clamped = Math.min(60, Math.max(1, Math.round(v)));
+    setManualTargetBfPct(clamped);
+    setBfText(String(clamped));
+  }, []);
+
+  const onChangeBfText = useCallback((t: string) => {
+    setBfText(t);
+    if (t.trim() === '') {
+      // 空欄 = 目標体重からの推定に戻す。
+      setManualTargetBfPct(null);
+      return;
+    }
+    const n = parseFloat(t);
+    if (Number.isFinite(n)) setManualTargetBfPct(Math.round(n));
   }, []);
 
   const applyManual = useCallback((v: number) => {
@@ -137,10 +181,11 @@ export default function GoalEditRoute() {
   // 新しいアンカーを確定して保存。
   const commit = useCallback(() => {
     if (!preview || !effectiveDirection) return;
-    const needsPace = effectiveDirection !== 'maintain' && effectiveDirection !== 'recomp';
     updateProfileValues({
       goalDirection: effectiveDirection,
-      paceLevel: needsPace ? paceLevel : null,
+      // 維持/リコンプでもペースは保持する。null 化すると減量へ戻した時に
+      // 選び直しになるため (表示側は goalDirection を見て出し分けている)。
+      paceLevel,
       targetBodyType9: derivedTarget,
       targetCalories: preview.targetKcal,
       targetProtein: preview.proteinG,
@@ -156,7 +201,7 @@ export default function GoalEditRoute() {
     if (!effectiveDirection) return;
     const needsPace = effectiveDirection !== 'maintain' && effectiveDirection !== 'recomp';
     if (needsPace && !paceLevel) return;
-    if (guardVerdict === 'hard') return;
+    if (guardVerdict === 'hard' || bfVerdict === 'hard') return;
     if (!hasChanges) {
       router.back();
       return;
@@ -194,43 +239,63 @@ export default function GoalEditRoute() {
       return;
     }
     commit();
-  }, [effectiveDirection, direction, paceLevel, guardVerdict, hasChanges, isManual, profile, commit, router]);
+  }, [effectiveDirection, direction, paceLevel, guardVerdict, bfVerdict, hasChanges, isManual, profile, commit, router]);
 
   const noNeedPace = effectiveDirection === 'maintain' || effectiveDirection === 'recomp';
+  // hasChanges は含めない。変更が無い時も「保存」で閉じられるようにする
+  // (含めると handleSave の !hasChanges 分岐が到達不能になり、ボタンが
+  //  理由なく灰色に見える)。
   const canSave =
     effectiveDirection != null &&
     (noNeedPace || paceLevel != null) &&
     preview != null &&
-    hasChanges &&
-    guardVerdict !== 'hard';
+    guardVerdict !== 'hard' &&
+    bfVerdict !== 'hard';
 
-  // 手動指定カードの派生テキスト (PRD §6.4.4 文言表)。
-  const deltaKg = isManual && currentWeightKg != null ? manualTargetKg! - currentWeightKg : null;
+  // 現在→目標の差分 (1行に集約)。おまかせ・自分で決める・変更前の3状態すべてで
+  // 同じ情報を出す — 手動時だけ出す理由はなく非対称だったため揃えた。
+  const deltaKg =
+    currentWeightKg != null && card?.targetWeightKg != null ? card.targetWeightKg - currentWeightKg : null;
   const deltaLine =
     deltaKg == null
       ? null
       : Math.abs(deltaKg) < 0.05
         ? '現在の体重を維持します'
-        : `現在 ${currentWeightKg!.toFixed(1)} → 目標 ${manualTargetKg!.toFixed(1)}（${
-            deltaKg < 0 ? '−' : '＋'
-          }${Math.abs(deltaKg).toFixed(1)} kg）`;
-  const paceLabel = paceLevel ? PACE_OPTIONS.find((p) => p.key === paceLevel)?.label ?? null : null;
-  const etaText =
-    etaMonths != null && paceLabel ? `${paceLabel}ペースで${formatGoalDuration(etaMonths)}の見込み` : null;
+        : `${deltaKg < 0 ? '−' : '＋'}${Math.abs(deltaKg).toFixed(1)} kg${
+            etaMonths != null ? `・${formatGoalDuration(etaMonths)}の見込み` : ''
+          }`;
+  // 体重の警告 (自分で決めた時のみ; 方向依存で「行き過ぎ」側しか出ない)。
+  const previewTargetKg = preview?.targetWeightKg ?? null;
   let warnText: string | null = null;
   let warnColor = theme.colors.status.warning.default;
-  if (isManual && manualTargetKg != null && profile.heightCm) {
-    const bmi = Math.round(bmiFromWeight(manualTargetKg, profile.heightCm) * 10) / 10;
+  if (showPreview && previewTargetKg != null && profile.heightCm) {
+    const bmi = Math.round(bmiFromWeight(previewTargetKg, profile.heightCm) * 10) / 10;
     if (guardVerdict === 'hard') {
       warnText = '健康的な目安を大きく下回るため、この値では設定できません';
       warnColor = theme.colors.status.danger.default;
     } else if (guardVerdict === 'soft') {
-      warnText =
-        bmi < BMI_UNDERWEIGHT
-          ? `標準的な体重の目安より低めです（BMI ${bmi}）`
-          : `標準的な体重の目安より高めです（BMI ${bmi}）`;
+      warnText = `標準的な体重の目安から外れています（BMI ${bmi}）`;
     }
   }
+
+  // 体脂肪率の警告。
+  let bfWarnText: string | null = null;
+  let bfWarnColor = theme.colors.status.warning.default;
+  if (showPreview) {
+    if (bfVerdict === 'hard') {
+      bfWarnText = '体を保つのに必要な水準を下回るため、この値では設定できません';
+      bfWarnColor = theme.colors.status.danger.default;
+    } else if (bfVerdict === 'soft-low') {
+      bfWarnText = 'アスリート並みの水準です。維持には専門的な管理が必要になります';
+    } else if (bfVerdict === 'soft-high') {
+      bfWarnText = '標準的な目安より高めです';
+    }
+  }
+
+  // 体脂肪率の入力欄に出す既定値 (手入力が無いときの推定)。
+  const projectedBfPct = isManual
+    ? projectBodyFatAtWeight(currentWeightKg, profile.currentBodyFatPct ?? null, manualTargetKg)
+    : null;
 
   return (
     <>
@@ -251,9 +316,7 @@ export default function GoalEditRoute() {
               {card ? (
                 <>
                   <View style={styles.cardHeaderRow}>
-                    <Label size="sm" tone="secondary">
-                      {isManual ? '自分で設定' : showPreview ? '変更後の目標（プレビュー）' : '現在の目標'}
-                    </Label>
+                    <Label size="sm" tone="secondary">目標</Label>
                     {isManual ? (
                       <Pressable onPress={exitManual} hitSlop={8} testID="goal-target-auto">
                         <Label size="sm" tone="link">おまかせに戻す</Label>
@@ -265,7 +328,7 @@ export default function GoalEditRoute() {
                         testID="goal-target-edit"
                         style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
                       >
-                        <Label size="sm" tone="link">数値で指定</Label>
+                        <Label size="sm" tone="link">自分で決める</Label>
                         <Icon name="edit" size={13} color={theme.colors.content.secondary} />
                       </Pressable>
                     )}
@@ -273,47 +336,66 @@ export default function GoalEditRoute() {
 
                   {isManual ? (
                     <View style={{ gap: 4 }}>
-                      <View style={styles.stepperRow}>
-                        <StepperButton
-                          label="−"
-                          accessibilityLabel="0.5kg 減らす"
-                          onPress={() => applyManual((manualTargetKg ?? 0) - 0.5)}
+                      <View style={styles.metricsRow}>
+                        <EditableMetricBlock
+                          label="体重"
+                          value={targetText}
+                          onChangeText={onChangeTargetText}
+                          onBlur={() => applyManual(manualTargetKg ?? profile.currentWeightKg ?? 60)}
+                          unit="kg"
+                          testID="goal-target-input"
+                          accessibilityLabel="目標体重"
                         />
-                        <View style={styles.targetInputWrap}>
-                          <TextInput
-                            value={targetText}
-                            onChangeText={onChangeTargetText}
-                            onBlur={() => applyManual(manualTargetKg ?? profile.currentWeightKg ?? 60)}
-                            keyboardType="decimal-pad"
-                            selectTextOnFocus
-                            style={[styles.targetInput, { color: theme.colors.content.primary }]}
-                            testID="goal-target-input"
-                          />
-                          <Caption tone="secondary">kg</Caption>
-                        </View>
-                        <StepperButton
-                          label="＋"
-                          accessibilityLabel="0.5kg 増やす"
-                          onPress={() => applyManual((manualTargetKg ?? 0) + 0.5)}
+                        <View style={[styles.divider, { backgroundColor: theme.colors.border.subtle }]} />
+                        <EditableMetricBlock
+                          label="体脂肪率"
+                          // 未入力時は推定値をそのまま value として見せる (placeholder にしない)。
+                          // 推定値は「これから決める空欄」ではなく「使ってよい妥当な値」なので、
+                          // disabled に見える薄い placeholder 色にしたくない。
+                          value={bfText !== '' ? bfText : projectedBfPct != null ? String(projectedBfPct) : ''}
+                          onChangeText={onChangeBfText}
+                          onBlur={() => {
+                            if (manualTargetBfPct != null) applyManualBf(manualTargetBfPct);
+                          }}
+                          unit="%"
+                          testID="goal-bf-input"
+                          accessibilityLabel="目標体脂肪率"
                         />
                       </View>
                       {deltaLine ? <Body size="sm" tone="secondary">{deltaLine}</Body> : null}
-                      {etaText ? <Body size="sm" tone="secondary">{etaText}</Body> : null}
                       {warnText ? (
                         <Body size="sm" tone="secondary" style={{ color: warnColor }}>
                           {warnText}
                         </Body>
                       ) : null}
+                      {bfWarnText ? (
+                        <Body size="sm" tone="secondary" style={{ color: bfWarnColor }}>
+                          {bfWarnText}
+                        </Body>
+                      ) : null}
                     </View>
                   ) : (
-                    <View style={styles.metricsRow}>
-                      <MetricBlock label="目標体重" value={card.targetWeightKg.toFixed(1)} unit="kg" />
-                      <View style={[styles.divider, { backgroundColor: theme.colors.border.subtle }]} />
-                      <MetricBlock
-                        label="目標体脂肪率"
-                        value={card.targetBodyFatPct != null ? String(card.targetBodyFatPct) : '—'}
-                        unit="%"
-                      />
+                    <View style={{ gap: 4 }}>
+                      <View style={styles.metricsRow}>
+                        <MetricBlock label="体重" value={card.targetWeightKg.toFixed(1)} unit="kg" />
+                        <View style={[styles.divider, { backgroundColor: theme.colors.border.subtle }]} />
+                        <MetricBlock
+                          label="体脂肪率"
+                          value={card.targetBodyFatPct != null ? String(card.targetBodyFatPct) : '—'}
+                          unit="%"
+                        />
+                      </View>
+                      {deltaLine ? <Body size="sm" tone="secondary">{deltaLine}</Body> : null}
+                      {warnText ? (
+                        <Body size="sm" tone="secondary" style={{ color: warnColor }}>
+                          {warnText}
+                        </Body>
+                      ) : null}
+                      {bfWarnText ? (
+                        <Body size="sm" tone="secondary" style={{ color: bfWarnColor }}>
+                          {bfWarnText}
+                        </Body>
+                      ) : null}
                     </View>
                   )}
 
@@ -323,9 +405,9 @@ export default function GoalEditRoute() {
                     <Caption tone="secondary" style={{ marginBottom: 6 }}>kcal / 日</Caption>
                   </View>
                   <View style={{ flexDirection: 'row', gap: 8 }}>
-                    <MacroChip kind="protein" value={card.proteinG} size="md" />
-                    <MacroChip kind="fat" value={card.fatG} size="md" />
-                    <MacroChip kind="carbs" value={card.carbsG} size="md" />
+                    <MacroCard kind="protein" value={card.proteinG} />
+                    <MacroCard kind="fat" value={card.fatG} />
+                    <MacroCard kind="carbs" value={card.carbsG} />
                   </View>
                 </>
               ) : (
@@ -369,42 +451,76 @@ export default function GoalEditRoute() {
   );
 }
 
-function StepperButton({
-  label,
-  accessibilityLabel,
-  onPress,
-}: {
-  label: string;
-  accessibilityLabel: string;
-  onPress: () => void;
-}) {
-  const theme = useTheme();
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel}
-      hitSlop={6}
-      style={({ pressed }) => [
-        styles.stepperBtn,
-        {
-          backgroundColor: pressed ? theme.colors.surface.sunken : theme.colors.surface.raised,
-          borderColor: theme.colors.border.interactive,
-        },
-      ]}
-    >
-      <Text style={{ fontSize: theme.typography.fontSize['2xl'], fontWeight: '600', color: theme.colors.content.primary }}>{label}</Text>
-    </Pressable>
-  );
-}
-
 function MetricBlock({ label, value, unit }: { label: string; value: string; unit: string }) {
   const theme = useTheme();
   return (
     <View style={styles.metricBlock}>
       <Label size="sm" tone="secondary">{label}</Label>
-      <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 3 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 3 }}>
         <Heading size="2xl">{value}</Heading>
+        <Caption tone="secondary" style={{ color: theme.colors.content.tertiary }}>
+          {unit}
+        </Caption>
+      </View>
+    </View>
+  );
+}
+
+/**
+ * 「おまかせ」時の MetricBlock と同じ見た目 (ラベル + 大きい数値 + 単位) を保ったまま、
+ * 数値部分だけがそのまま TextInput になる編集可能版。stepper ボタンは持たない —
+ * 数値をタップして直接書き換える形にすることで、おまかせ⇄自分で決めるの
+ * 切り替えで画面のレイアウトが変わらないようにしている。
+ */
+function EditableMetricBlock({
+  label,
+  value,
+  onChangeText,
+  onBlur,
+  unit,
+  testID,
+  accessibilityLabel,
+}: {
+  label: string;
+  value: string;
+  onChangeText: (t: string) => void;
+  onBlur: () => void;
+  unit: string;
+  testID: string;
+  accessibilityLabel: string;
+}) {
+  const theme = useTheme();
+  const [focused, setFocused] = useState(false);
+  return (
+    <View style={styles.metricBlock}>
+      <Label size="sm" tone="secondary">{label}</Label>
+      {/* アプリ全体の入力欄と同じ sunken ピル (status.tsx の体重/体脂肪シートと同じ表現)。
+          この画面だけ独自の下線スタイルにしない。 */}
+      <View
+        style={[
+          styles.metricInputWrap,
+          {
+            backgroundColor: theme.colors.surface.sunken,
+            borderRadius: theme.radius.sm,
+            borderWidth: focused ? 1.5 : 0,
+            borderColor: theme.colors.border.focus,
+          },
+        ]}
+      >
+        <TextInput
+          value={value}
+          onChangeText={onChangeText}
+          onFocus={() => setFocused(true)}
+          onBlur={() => {
+            setFocused(false);
+            onBlur();
+          }}
+          keyboardType="decimal-pad"
+          selectTextOnFocus
+          style={[styles.metricInput, { color: theme.colors.content.primary }]}
+          testID={testID}
+          accessibilityLabel={accessibilityLabel}
+        />
         <Caption tone="secondary" style={{ marginBottom: 3, color: theme.colors.content.tertiary }}>
           {unit}
         </Caption>
@@ -426,12 +542,7 @@ function SegmentedRow({
 }) {
   const theme = useTheme();
   return (
-    <View
-      style={[
-        styles.segmented,
-        { backgroundColor: theme.colors.surface.sunken, borderColor: theme.colors.border.interactive },
-      ]}
-    >
+    <View style={[styles.segmented, { backgroundColor: theme.colors.surface.sunken }]}>
       {options.map((opt) => {
         const active = value === opt.key;
         return (
@@ -473,19 +584,24 @@ const styles = StyleSheet.create({
   cardHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   metricsRow: { flexDirection: 'row', alignItems: 'center' },
   metricBlock: { flex: 1, gap: 2 },
-  stepperRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
-  stepperBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    borderWidth: StyleSheet.hairlineWidth,
-    alignItems: 'center',
-    justifyContent: 'center',
+  // RN-Web の TextInput は既定で親の幅いっぱいに伸びる。固定幅にしないと
+  // 単位ラベルがブロック右端まで押し出される。
+  metricInputWrap: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 3,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
   },
-  targetInputWrap: { flex: 1, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', gap: 4 },
-  targetInput: { fontSize: fs['3xl'], fontWeight: '700', minWidth: 96, textAlign: 'center', padding: 0 },
+  metricInput: {
+    fontSize: fs['2xl'],
+    fontWeight: '700',
+    padding: 0,
+    width: 64,
+  },
   divider: { width: StyleSheet.hairlineWidth, height: 40, marginHorizontal: 8 },
   hr: { height: StyleSheet.hairlineWidth, marginVertical: 2 },
-  segmented: { flexDirection: 'row', borderRadius: 12, borderWidth: StyleSheet.hairlineWidth, padding: 4 },
+  segmented: { flexDirection: 'row', borderRadius: 12, padding: 4 },
   segment: { flex: 1, paddingVertical: 12, alignItems: 'center', borderRadius: 8 },
 });

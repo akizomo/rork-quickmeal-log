@@ -13,7 +13,7 @@ import Svg, { Circle, Line, Polyline, Text as SvgText } from 'react-native-svg';
 import { useTheme } from '@/design-system';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { useAppState } from '@/providers/app-state-provider';
-import type { BodyFatEntry, WeightEntry } from '@/types/nutrition';
+import type { BodyFatEntry, GoalDirection, WeightEntry } from '@/types/nutrition';
 import { formatMonthLabel, formatShortDay, formatWeekRangeLabel } from '@/utils/history';
 
 const CHART_HEIGHT = 158;
@@ -109,13 +109,39 @@ interface MetricCardHeaderProps {
   target: number | null;
   fractionDigits: number;
   color: string;
+  /** 目標に対して現在値が上下どちら側にあるべきか。到達判定の向きに使う。 */
+  direction: GoalDirection | null;
 }
 
-function MetricCardHeader({ title, unit, current, target, fractionDigits, color }: MetricCardHeaderProps) {
+function MetricCardHeader({
+  title,
+  unit,
+  current,
+  target,
+  fractionDigits,
+  color,
+  direction,
+}: MetricCardHeaderProps) {
   const t = useTheme();
   const fmt = (v: number) => v.toFixed(fractionDigits);
   const hasGoal = current != null && target != null;
   const remaining = hasGoal ? current! - target! : null;
+  const epsilon = Math.pow(10, -fractionDigits) / 2;
+
+  // 目標を通り越した場合も「到達」。符号を捨てて絶対値だけ見ると、
+  // 目標より下回った減量ユーザーに「あと N kg」と増量を促す表示になってしまう。
+  let goalLabel: string | null = null;
+  if (hasGoal) {
+    if (Math.abs(remaining!) < epsilon) {
+      goalLabel = '目標に到達';
+    } else if (direction === 'lose' && remaining! < 0) {
+      goalLabel = '目標に到達';
+    } else if (direction === 'gain' && remaining! > 0) {
+      goalLabel = '目標に到達';
+    } else {
+      goalLabel = `あと ${Math.abs(remaining!).toFixed(fractionDigits)} ${unit}`;
+    }
+  }
 
   return (
     <View style={styles.cardHeader} testID={`body-progress-${title}`}>
@@ -130,12 +156,8 @@ function MetricCardHeader({ title, unit, current, target, fractionDigits, color 
           <Text style={[styles.cardEmpty, { color: t.colors.content.secondary }]}>記録なし</Text>
         )}
       </View>
-      {hasGoal ? (
-        <Text style={[styles.cardMeta, { color: t.colors.content.secondary }]}>
-          {Math.abs(remaining!) < Math.pow(10, -fractionDigits) / 2
-            ? `目標に到達`
-            : `あと ${Math.abs(remaining!).toFixed(fractionDigits)} ${unit}`}
-        </Text>
+      {goalLabel ? (
+        <Text style={[styles.cardMeta, { color: t.colors.content.secondary }]}>{goalLabel}</Text>
       ) : current != null ? (
         <Text style={[styles.cardMeta, { color: t.colors.content.secondary }]}>目標未設定</Text>
       ) : null}
@@ -526,6 +548,9 @@ export function BodyStatsView({ period = 'month' }: { period?: BodyPeriod }) {
     profile.currentBodyFatPct ??
     (bodyFatSeries.length > 0 ? bodyFatSeries[bodyFatSeries.length - 1].value : null);
 
+  const bfGoalDirection: GoalDirection | null =
+    profile.goalDirection === 'recomp' ? 'lose' : profile.goalDirection ?? null;
+
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
       {/* 体重: ヘッダー + グラフを1枚のカードに統合 */}
@@ -537,6 +562,7 @@ export function BodyStatsView({ period = 'month' }: { period?: BodyPeriod }) {
           target={profile.targetWeightKg}
           fractionDigits={1}
           color={t.colors.action.text.default}
+          direction={profile.goalDirection ?? null}
         />
         <View style={[styles.cardDivider, { backgroundColor: t.colors.border.default }]} />
         <TrendChart
@@ -563,6 +589,8 @@ export function BodyStatsView({ period = 'month' }: { period?: BodyPeriod }) {
           target={profile.targetBodyFatPct ?? null}
           fractionDigits={1}
           color={t.colors.accent.default}
+          // リコンプは体重こそ変わらないが体脂肪率は下げる方向なので lose 扱い。
+          direction={bfGoalDirection}
         />
         <View style={[styles.cardDivider, { backgroundColor: t.colors.border.default }]} />
         <TrendChart

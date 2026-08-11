@@ -214,22 +214,115 @@ export function healthyWeightRange(
   };
 }
 
+/**
+ * 目標体脂肪率の健康判定しきい値 (basis別)。
+ *   hard  = 必須脂肪 (essential fat) を下回る水準。ACE/ACSM の体組成分類で
+ *           男性 2–5% / 女性 10–13% が必須脂肪とされ、ここを目標に据えさせない。
+ *   soft  = アスリート域より下 / 肥満域より上。いずれも「設定は可能だが事実を伝える」帯。
+ *           上限は ACE の obesity 境界 (男性 25% / 女性 32%)。
+ */
+export const BF_HARD_FLOOR_PCT: Record<BiologicalBasis, number> = {
+  male_basis: 5,
+  female_basis: 13,
+};
+export const BF_SOFT_FLOOR_PCT: Record<BiologicalBasis, number> = {
+  male_basis: 10,
+  female_basis: 18,
+};
+export const BF_SOFT_CEILING_PCT: Record<BiologicalBasis, number> = {
+  male_basis: 25,
+  female_basis: 32,
+};
+
+export type TargetBodyFatVerdict = 'ok' | 'soft-low' | 'soft-high' | 'hard';
+
+/**
+ * 目標体脂肪率の健康判定。basis 不明時は 'ok' (判定スキップ) —
+ * `classifyTargetWeight` が heightCm 不明時に判定を飛ばすのと同じ方針。
+ *
+ * **進行方向でしきい値を非対称にする**: 減量方向 (lose/recomp) では
+ * 下限のみ、増量方向 (gain) では上限のみを見る。例えば体脂肪率30%の人が
+ * 「25%を目指す」という改善方向の目標に対し、上限(25%)超過を理由に
+ * 警告するのは "改善しようとしている人を咎める" ことになり不適切なため。
+ * maintain / 方向未確定時は判定しない (現在の体組成そのものへの評価になるため)。
+ */
+export function classifyTargetBodyFat(
+  bodyFatPct: number | null,
+  basis: BiologicalBasis | null | undefined,
+  direction: GoalDirection | null | undefined
+): TargetBodyFatVerdict {
+  if (bodyFatPct == null || !Number.isFinite(bodyFatPct) || !basis) return 'ok';
+  if (direction === 'lose' || direction === 'recomp') {
+    if (bodyFatPct < BF_HARD_FLOOR_PCT[basis]) return 'hard';
+    if (bodyFatPct < BF_SOFT_FLOOR_PCT[basis]) return 'soft-low';
+    return 'ok';
+  }
+  if (direction === 'gain') {
+    if (bodyFatPct > BF_SOFT_CEILING_PCT[basis]) return 'soft-high';
+    return 'ok';
+  }
+  return 'ok';
+}
+
+/**
+ * 「その目標体重に到達したとき体脂肪率はどのくらいか」の推定。
+ *
+ * `computePlanOutcome` と同じ脂肪先行モデル (減量は減った分の75%が脂肪、
+ * 増量は増えた分の30%が脂肪) を、3ヶ月という固定期間ではなく
+ * **現在体重→目標体重の実際の差** に適用する。
+ *
+ * これにより手動指定した目標体重と目標体脂肪率が必ず整合する
+ * (従来は体重だけ上書きされ、BF% が別の体重の予測値のまま残っていた)。
+ * 現在の体脂肪率が不明な場合は推定できないため null。
+ */
+export function projectBodyFatAtWeight(
+  currentWeightKg: number | null,
+  currentBodyFatPct: number | null,
+  targetWeightKg: number | null
+): number | null {
+  if (!currentWeightKg || currentWeightKg <= 0) return null;
+  if (!targetWeightKg || targetWeightKg <= 0) return null;
+  if (currentBodyFatPct == null || currentBodyFatPct <= 0) return null;
+
+  const deltaKg = targetWeightKg - currentWeightKg;
+  const fatMassCurrent = currentWeightKg * (currentBodyFatPct / 100);
+  // 減量は脂肪が先に落ち、増量は筋肉主導。computePlanOutcome と同じ係数。
+  const fatShare = deltaKg < 0 ? 0.75 : 0.3;
+  const fatMassAfter = Math.max(0, fatMassCurrent + deltaKg * fatShare);
+  const pct = (fatMassAfter / targetWeightKg) * 100;
+  if (!Number.isFinite(pct)) return null;
+  return Math.round(Math.max(0, pct));
+}
+
 export type TargetWeightVerdict = 'ok' | 'soft' | 'hard';
 
 /**
  * 目標体重の健康判定 (PRD §6.4.4)。
  *   <17.5 → 'hard' (保存不可) / <18.5 or >25 → 'soft' (警告・保存可) / それ以外 'ok'。
  *   heightCm 不明時は 'ok' (判定スキップ)。
+ *
+ * **進行方向でしきい値を非対称にする** (classifyTargetBodyFat と同じ理由)。
+ * 減量方向は下限のみ、増量方向は上限のみを見る — BMI30の人が「BMI27を目指す」
+ * という改善方向の目標を、上限超過を理由に警告しないため。
+ * maintain / 方向未確定時は判定しない。
  */
 export function classifyTargetWeight(
   weightKg: number | null,
-  heightCm: number | null
+  heightCm: number | null,
+  direction: GoalDirection | null | undefined
 ): TargetWeightVerdict {
   if (!weightKg || weightKg <= 0 || !heightCm || heightCm <= 0) return 'ok';
   // round to 2 decimals so float noise at exact thresholds (e.g. 72.25kg/170cm = BMI 25) is deterministic
   const bmi = Math.round(bmiFromWeight(weightKg, heightCm) * 100) / 100;
-  if (bmi < BMI_HARD_FLOOR) return 'hard';
-  if (bmi < BMI_UNDERWEIGHT || bmi > BMI_OVERWEIGHT) return 'soft';
+  if (direction === 'lose') {
+    if (bmi < BMI_HARD_FLOOR) return 'hard';
+    if (bmi < BMI_UNDERWEIGHT) return 'soft';
+    return 'ok';
+  }
+  if (direction === 'gain') {
+    if (bmi > BMI_OVERWEIGHT) return 'soft';
+    return 'ok';
+  }
   return 'ok';
 }
 

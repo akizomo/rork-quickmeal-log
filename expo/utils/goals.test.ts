@@ -11,12 +11,14 @@ import {
   bmiFromWeight,
   carryoverSoftFloorKcal,
   classifyCarryoverDeduction,
+  classifyTargetBodyFat,
   classifyTargetWeight,
   deriveDirectionFromWeights,
   estimateMonthsToTarget,
   formatGoalDuration,
   healthyWeightRange,
   minCarryoverDays,
+  projectBodyFatAtWeight,
   weightForBmi,
 } from './goals';
 
@@ -52,34 +54,44 @@ describe('healthyWeightRange', () => {
 describe('classifyTargetWeight', () => {
   const H = 170; // 170cm: 17.5→50.6, 18.5→53.5, 25→72.3 kg
 
-  it('ok inside the normal band (BMI 18.5–25)', () => {
-    expect(classifyTargetWeight(64, H)).toBe('ok'); // BMI ~22.1
-    expect(classifyTargetWeight(weightForBmi(22, H), H)).toBe('ok');
+  it('ok inside the normal band (BMI 18.5–25) regardless of direction', () => {
+    expect(classifyTargetWeight(64, H, 'lose')).toBe('ok'); // BMI ~22.1
+    expect(classifyTargetWeight(weightForBmi(22, H), H, 'gain')).toBe('ok');
   });
 
-  it('soft just below 18.5 but at/above 17.5', () => {
-    expect(classifyTargetWeight(52, H)).toBe('soft'); // BMI ~17.99
+  it('lose direction only checks the floor — overshoot above 25 is not flagged', () => {
+    // 改善方向 (減量) で「まだ標準体重より重い」ことを理由に警告しない。
+    expect(classifyTargetWeight(75, H, 'lose')).toBe('ok'); // BMI ~25.95, still lose direction
+    expect(classifyTargetWeight(52, H, 'lose')).toBe('soft'); // BMI ~17.99, undershoot
+    expect(classifyTargetWeight(49, H, 'lose')).toBe('hard'); // BMI ~16.96
   });
 
-  it('soft above 25 (JASSO overweight, not the legacy 27)', () => {
-    expect(classifyTargetWeight(75, H)).toBe('soft'); // BMI ~25.95
+  it('gain direction only checks the ceiling — undershoot below 18.5 is not flagged', () => {
+    expect(classifyTargetWeight(52, H, 'gain')).toBe('ok'); // BMI ~17.99, still gain direction
+    expect(classifyTargetWeight(75, H, 'gain')).toBe('soft'); // BMI ~25.95, overshoot
+    expect(classifyTargetWeight(49, H, 'gain')).toBe('ok'); // gain has no hard ceiling
   });
 
-  it('hard below 17.5 (ED clinical referral line)', () => {
-    expect(classifyTargetWeight(49, H)).toBe('hard'); // BMI ~16.96
+  it('maintain/recomp/unknown direction skips judgement entirely', () => {
+    expect(classifyTargetWeight(49, H, 'maintain')).toBe('ok');
+    expect(classifyTargetWeight(49, H, 'recomp')).toBe('ok');
+    expect(classifyTargetWeight(49, H, null)).toBe('ok');
   });
 
-  it('boundary semantics: 17.5 floor is inclusive-soft, 25 ceiling is inclusive-ok', () => {
+  it('boundary semantics: 17.5 floor is inclusive-soft (lose direction)', () => {
     // pass raw (unrounded) weights so the threshold logic is tested, not weightForBmi rounding
-    expect(classifyTargetWeight(50.575, H)).toBe('soft'); // BMI exactly 17.5 → not hard
-    expect(classifyTargetWeight(50.5, H)).toBe('hard'); // BMI ~17.47 → hard
-    expect(classifyTargetWeight(72.25, H)).toBe('ok'); // BMI exactly 25.0 → ok
-    expect(classifyTargetWeight(72.5, H)).toBe('soft'); // BMI ~25.09 → soft
+    expect(classifyTargetWeight(50.575, H, 'lose')).toBe('soft'); // BMI exactly 17.5 → not hard
+    expect(classifyTargetWeight(50.5, H, 'lose')).toBe('hard'); // BMI ~17.47 → hard
+  });
+
+  it('boundary semantics: 25 ceiling is inclusive-ok (gain direction)', () => {
+    expect(classifyTargetWeight(72.25, H, 'gain')).toBe('ok'); // BMI exactly 25.0 → ok
+    expect(classifyTargetWeight(72.5, H, 'gain')).toBe('soft'); // BMI ~25.09 → soft
   });
 
   it('skips judgement (ok) when height or weight is unknown', () => {
-    expect(classifyTargetWeight(40, null)).toBe('ok');
-    expect(classifyTargetWeight(null, H)).toBe('ok');
+    expect(classifyTargetWeight(40, null, 'lose')).toBe('ok');
+    expect(classifyTargetWeight(null, H, 'lose')).toBe('ok');
   });
 });
 
@@ -207,5 +219,77 @@ describe('minCarryoverDays', () => {
   it('returns 1 for degenerate inputs', () => {
     expect(minCarryoverDays(0, 600, MAX)).toBe(1);
     expect(minCarryoverDays(2000, 0, MAX)).toBe(1);
+  });
+});
+
+describe('classifyTargetBodyFat', () => {
+  it('lose/recomp: flags below-essential-fat targets as hard', () => {
+    expect(classifyTargetBodyFat(4, 'male_basis', 'lose')).toBe('hard');
+    expect(classifyTargetBodyFat(12, 'female_basis', 'recomp')).toBe('hard');
+  });
+
+  it('lose/recomp: flags athlete-range targets as soft-low', () => {
+    expect(classifyTargetBodyFat(8, 'male_basis', 'lose')).toBe('soft-low');
+    expect(classifyTargetBodyFat(15, 'female_basis', 'recomp')).toBe('soft-low');
+  });
+
+  it('lose direction never flags the ceiling — improvement from obesity is not scolded', () => {
+    // 30%から25%を目指す、という改善方向の目標に上限超過の警告は出さない。
+    expect(classifyTargetBodyFat(26, 'male_basis', 'lose')).toBe('ok');
+    expect(classifyTargetBodyFat(33, 'female_basis', 'lose')).toBe('ok');
+  });
+
+  it('gain: flags above-obesity-threshold targets as soft-high', () => {
+    expect(classifyTargetBodyFat(26, 'male_basis', 'gain')).toBe('soft-high');
+    expect(classifyTargetBodyFat(33, 'female_basis', 'gain')).toBe('soft-high');
+  });
+
+  it('gain direction never flags the floor', () => {
+    expect(classifyTargetBodyFat(4, 'male_basis', 'gain')).toBe('ok');
+  });
+
+  it('maintain/unknown direction skips judgement entirely', () => {
+    expect(classifyTargetBodyFat(4, 'male_basis', 'maintain')).toBe('ok');
+    expect(classifyTargetBodyFat(4, 'male_basis', null)).toBe('ok');
+  });
+
+  it('accepts mid-range targets', () => {
+    expect(classifyTargetBodyFat(18, 'male_basis', 'lose')).toBe('ok');
+    expect(classifyTargetBodyFat(25, 'female_basis', 'gain')).toBe('ok');
+  });
+
+  it('skips judgement when basis or value is unknown', () => {
+    expect(classifyTargetBodyFat(3, null, 'lose')).toBe('ok');
+    expect(classifyTargetBodyFat(null, 'male_basis', 'lose')).toBe('ok');
+  });
+});
+
+describe('projectBodyFatAtWeight', () => {
+  it('drops BF% when losing weight (fat-first)', () => {
+    // 80kg @ 25% = 20kg fat. -10kg のうち 75% (7.5kg) が脂肪 → 12.5kg / 70kg = 17.9%
+    expect(projectBodyFatAtWeight(80, 25, 70)).toBe(18);
+  });
+
+  it('rises only mildly when gaining weight (muscle-led)', () => {
+    // 60kg @ 20% = 12kg fat. +5kg のうち 30% (1.5kg) が脂肪 → 13.5kg / 65kg = 20.8%
+    expect(projectBodyFatAtWeight(60, 20, 65)).toBe(21);
+  });
+
+  it('is unchanged when the target equals the current weight', () => {
+    expect(projectBodyFatAtWeight(70, 22, 70)).toBe(22);
+  });
+
+  it('stays consistent with the target weight it was given', () => {
+    // 目標体重と必ず組で整合すること — これが手動指定時の不整合バグの回帰テスト。
+    const bf = projectBodyFatAtWeight(80, 25, 55);
+    expect(bf).not.toBeNull();
+    expect(bf!).toBeGreaterThanOrEqual(0);
+    expect(bf!).toBeLessThan(25);
+  });
+
+  it('returns null when current BF% is unknown', () => {
+    expect(projectBodyFatAtWeight(80, null, 70)).toBeNull();
+    expect(projectBodyFatAtWeight(null, 25, 70)).toBeNull();
+    expect(projectBodyFatAtWeight(80, 25, null)).toBeNull();
   });
 });
