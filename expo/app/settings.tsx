@@ -3,7 +3,7 @@ import React from 'react';
 import { Alert, Platform, ScrollView, StyleSheet, Switch, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { SettingsDivider, SettingsLinkRow, SettingsListCard, SettingsSectionLabel } from '@/components/SettingsList';
+import { SettingsDivider, SettingsLinkRow, SettingsListCard, SettingsSectionLabel } from '@/design-system';
 import { Body, Icon, Label, useTheme } from '@/design-system';
 import { useAppState } from '@/providers/app-state-provider';
 import { widgetRequestPin } from '@/utils/widget-bridge';

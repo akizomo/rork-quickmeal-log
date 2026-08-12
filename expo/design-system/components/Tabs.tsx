@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 
 import { useTheme } from '@/design-system';
+import { duration, easing } from '@/design-system/tokens/primitives/motion';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 
 /**
@@ -20,11 +21,9 @@ import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
  * アニメーション仕様 (M3):
  *  - インジケーター幅 = ラベル幅
  *  - インジケーターはラベル中央下に配置
- *  - Easing: emphasized — cubic-bezier(0.2, 0, 0, 1.0)、300ms
+ *  - Easing: easing.standard (M3 Emphasized)、duration.medium (300ms)
  */
 
-const M3_EMPHASIZED = Easing.bezier(0.2, 0, 0, 1.0);
-const INDICATOR_DURATION = 300;
 const INDICATOR_HEIGHT = 3;
 
 interface TabItem<T extends string = string> {
@@ -49,7 +48,6 @@ export function Tabs<T extends string = string>({
 }: Props<T>) {
   const t = useTheme();
   const [containerWidth, setContainerWidth] = useState(0);
-  // 各ラベルの幅を記録
   const [labelWidths, setLabelWidths] = useState<number[]>(() => items.map(() => 0));
 
   const tabWidth = containerWidth > 0 ? containerWidth / items.length : 0;
@@ -60,11 +58,9 @@ export function Tabs<T extends string = string>({
   const indicatorX = useRef(new Animated.Value(0)).current;
   const indicatorW = useRef(new Animated.Value(0)).current;
 
-  // インジケーターの目標 X = タブ中央 - ラベル幅/2
   const getTargetX = (index: number, lw: number) =>
     index * tabWidth + tabWidth / 2 - lw / 2;
 
-  // activeIndex or labelWidths or tabWidth が変わったらアニメーション
   useEffect(() => {
     const lw = labelWidths[activeIndex] ?? 0;
     if (tabWidth <= 0 || lw <= 0) return;
@@ -73,20 +69,19 @@ export function Tabs<T extends string = string>({
     // "moved to native" クラッシュを起こすため、両方 JS ドライバに統一する。
     Animated.timing(indicatorX, {
       toValue: getTargetX(activeIndex, lw),
-      duration: INDICATOR_DURATION,
-      easing: M3_EMPHASIZED,
+      duration: duration.medium,
+      easing: Easing.bezier(...easing.standard),
       useNativeDriver: false,
     }).start();
 
     Animated.timing(indicatorW, {
       toValue: lw,
-      duration: INDICATOR_DURATION,
-      easing: M3_EMPHASIZED,
+      duration: duration.medium,
+      easing: Easing.bezier(...easing.standard),
       useNativeDriver: false,
     }).start();
   }, [activeIndex, labelWidths, tabWidth]);
 
-  // コンテナ幅が初めて確定したらスナップ（アニメなし）
   const initialized = useRef(false);
   useEffect(() => {
     if (tabWidth <= 0) return;
@@ -149,6 +144,8 @@ export function Tabs<T extends string = string>({
     </View>
   );
 }
+
+export type TabsProps<T extends string = string> = Props<T>;
 
 const styles = StyleSheet.create({
   container: {

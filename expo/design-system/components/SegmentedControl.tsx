@@ -137,6 +137,8 @@ export function SegmentedControl<T extends string = string>({
   );
 }
 
+export type SegmentedControlProps<T extends string = string> = Props<T>;
+
 const styles = StyleSheet.create({
   wrap: {
     flexDirection: 'row',

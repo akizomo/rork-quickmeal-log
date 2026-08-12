@@ -13,6 +13,7 @@ export type { Theme } from './theme';
 export {
   Button,
   Icon,
+  ICON_NAMES,
   IconButton,
   Card,
   Heading,
@@ -29,6 +30,12 @@ export {
   MacroChip,
   MacroCard,
   MealLogCard,
+  SegmentedControl,
+  Tabs,
+  SettingsSectionLabel,
+  SettingsListCard,
+  SettingsLinkRow,
+  SettingsDivider,
 } from './components';
 export type {
   ButtonProps,
@@ -62,6 +69,8 @@ export type {
   MealLogCardProps,
   MealLogCardHeaderProps,
   MealLogCardBodyProps,
+  SegmentedControlProps,
+  TabsProps,
 } from './components';
 
 // Tokens (エスケープハッチ — 原則 useTheme 経由で取得する)

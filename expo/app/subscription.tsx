@@ -3,7 +3,7 @@ import React from 'react';
 import { Alert, Linking, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { SettingsDivider, SettingsLinkRow, SettingsListCard, SettingsSectionLabel } from '@/components/SettingsList';
+import { SettingsDivider, SettingsLinkRow, SettingsListCard, SettingsSectionLabel } from '@/design-system';
 import { LEGAL_LINKS, TRIAL_DURATION_DAYS } from '@/constants/onboarding';
 import { Body, Caption, Card, Label, useTheme } from '@/design-system';
 import { useAppState } from '@/providers/app-state-provider';

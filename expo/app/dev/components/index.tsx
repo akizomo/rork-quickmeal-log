@@ -9,10 +9,13 @@ import { useTheme } from '@/design-system';
 import { NavList, type NavItem } from '../_shared';
 
 const ITEMS: NavItem[] = [
-  { label: 'Buttons', href: '/dev/components/buttons', desc: 'Button / IconButton' },
+  { label: 'Buttons', href: '/dev/components/buttons', desc: 'Button / IconButton / Icon' },
   { label: 'Inputs', href: '/dev/components/inputs', desc: 'NumberField / SelectCard / Chip' },
-  { label: 'Data Display', href: '/dev/components/data-display', desc: 'Typography / Card / Badge' },
+  { label: 'Data Display', href: '/dev/components/data-display', desc: 'Typography / Card / Badge / MacroChip / MacroCard / MealLogCard' },
   { label: 'Overlays', href: '/dev/components/overlays', desc: 'Dialog / BottomSheet' },
+  { label: 'Navigation', href: '/dev/components/navigation', desc: 'SegmentedControl / Tabs' },
+  { label: 'SettingsList', href: '/dev/components/settings-list', desc: 'SettingsSectionLabel / SettingsListCard / SettingsLinkRow / SettingsDivider' },
+  { label: 'Statistics', href: '/dev/components/statistics', desc: 'CalorieOverflowRing' },
 ];
 
 export default function ComponentsHub() {

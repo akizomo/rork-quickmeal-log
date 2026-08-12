@@ -82,9 +82,6 @@ export function SettingsDivider() {
 
 const styles = StyleSheet.create({
   sectionLabel: {
-    // ラベル→カード間の余白は呼び出し側の `section: { gap: 8 }` が単独で担う。
-    // ここでも paddingBottom を足すと二重取りになり間延びするため、横方向の
-    // カード整列調整(paddingHorizontal)だけ残す。
     paddingHorizontal: 4,
   },
   listCard: {

@@ -7,7 +7,7 @@ import { colors } from '@/design-system/tokens/primitives/colors';
 import { radius } from '@/design-system/tokens/primitives/radius';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { CalorieOverflowRing } from '@/components/CalorieOverflowRing';
-import { MiniProgressBar } from '@/components/nutrition-ui';
+import { MiniProgressBar } from '@/components/MiniProgressBar';
 import { useAppState } from '@/providers/app-state-provider';
 import { adjustedTargetKcal, getTdeeExerciseKcalForDate } from '@/utils/goals';
 import { formatDateKey } from '@/utils/nutrition';

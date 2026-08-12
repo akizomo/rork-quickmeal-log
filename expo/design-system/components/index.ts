@@ -1,6 +1,6 @@
 export { Button } from './Button';
 export type { ButtonProps } from './Button';
-export { Icon } from './Icon';
+export { Icon, ICON_NAMES } from './Icon';
 export type { IconProps, IconName } from './Icon';
 export { IconButton } from './IconButton';
 export type { IconButtonProps, IconButtonSize, IconButtonVariant, IconButtonTone } from './IconButton';
@@ -30,3 +30,8 @@ export type {
   MealLogCardHeaderProps,
   MealLogCardBodyProps,
 } from './MealLogCard';
+export { SegmentedControl } from './SegmentedControl';
+export type { SegmentedControlProps } from './SegmentedControl';
+export { Tabs } from './Tabs';
+export type { TabsProps } from './Tabs';
+export { SettingsSectionLabel, SettingsListCard, SettingsLinkRow, SettingsDivider } from './SettingsList';

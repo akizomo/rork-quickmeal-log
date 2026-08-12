@@ -13,7 +13,7 @@ import { Body, Icon, IconButton, Label, useTheme } from '@/design-system';
 import { fontSize } from '@/design-system/tokens/primitives/typography';
 import { duration } from '@/design-system/tokens/primitives/motion';
 import { radius } from '@/design-system/tokens/primitives/radius';
-import { SegmentedControl } from '@/components/SegmentedControl';
+import { SegmentedControl } from '@/design-system';
 import { useAppState } from '@/providers/app-state-provider';
 import { QuickCategory } from '@/types/nutrition';
 import { getQuickCategories } from '@/utils/nutrition';

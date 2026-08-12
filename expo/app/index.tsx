@@ -2,7 +2,7 @@ import { Stack, useRouter } from 'expo-router';
 import React, { useEffect, useRef } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
-import { HomeScreen } from '@/components/nutrition-ui';
+import { HomeScreen } from '@/components/HomeScreen';
 import { useTheme } from '@/design-system';
 import { useAppState } from '@/providers/app-state-provider';
 import { decideInitialRoute } from '@/utils/initial-route';

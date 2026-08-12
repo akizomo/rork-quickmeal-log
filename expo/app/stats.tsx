@@ -5,8 +5,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BodyStatsView, type BodyPeriod } from '@/components/BodyStatsView';
 import { MonthlyStatsView } from '@/components/MonthlyStatsView';
-import { SegmentedControl } from '@/components/SegmentedControl';
-import { Tabs } from '@/components/Tabs';
+import { SegmentedControl } from '@/design-system';
+import { Tabs } from '@/design-system';
 import { WeeklyStatsView } from '@/components/WeeklyStatsView';
 import { useTheme } from '@/design-system';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';

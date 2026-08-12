@@ -25,7 +25,7 @@ import { formatDateKey } from '@/utils/nutrition';
 import { PEEK_HEIGHT_PX } from '@/components/DayLogBottomSheet';
 import { getQuickLogButtonHeight, QUICK_LOG_TOKENS, QuickLogSection, WIDGET_NUDGE_HEIGHT } from '@/components/QuickLogSection';
 import { FREQUENT_TAB_MIN_LOGS } from '@/utils/quick-log-history';
-import { StatusCard } from '@/components/nutrition-ui';
+import { StatusCard } from '@/components/StatusCard';
 
 // QuickLog と BottomSheet peek の間のギャップ (左右パディングと揃える)
 const QUICKLOG_BOTTOM_GAP = 16;
