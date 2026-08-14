@@ -23,14 +23,14 @@ gh run watch  # 進捗を確認
 
 ```bash
 cd expo
-npx --yes eas-cli@latest build --profile production --platform android --non-interactive
+npx eas-cli@18.12.2 build --profile production --platform android --non-interactive
 ```
 
 ### iOS production (ローカル CLI)
 
 ```bash
 cd expo
-npx --yes eas-cli@latest build --profile production --platform ios --non-interactive
+npx eas-cli@18.12.2 build --profile production --platform ios --non-interactive
 ```
 
 ---
@@ -87,16 +87,18 @@ cd expo
 npm install --legacy-peer-deps
 
 # ビルド実行
-npx --yes eas-cli@latest build --profile production --platform android --non-interactive
+npx eas-cli@18.12.2 build --profile production --platform android --non-interactive
 ```
+
+> **注意**: `@latest` は v21.8.0 以降でプロジェクト設定の検出ロジックが変わり、`extra.eas.projectId` を読めず "EAS project not configured" で失敗する。バージョンを固定して使うこと。
 
 **ログイン確認**:
 ```bash
-npx --yes eas-cli@latest whoami
+npx eas-cli@18.12.2 whoami
 # 期待される出力: akizony / akizomo.foot628@gmail.com
 ```
 
-未ログインの場合: `npx --yes eas-cli@latest login` で対話的にログイン。
+未ログインの場合: `npx eas-cli@18.12.2 login` で対話的にログイン。
 
 ---
 

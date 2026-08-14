@@ -2,6 +2,7 @@ import { Stack } from 'expo-router';
 import React, { useCallback, useRef, useState } from 'react';
 import { Animated, Easing, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useT } from '@/hooks/useT';
 
 import { BodyStatsView, type BodyPeriod } from '@/components/BodyStatsView';
 import { MonthlyStatsView } from '@/components/MonthlyStatsView';
@@ -15,23 +16,6 @@ import { duration, easing } from '@/design-system/tokens/primitives/motion';
 type TopTab = 'meals' | 'body';
 type MealsTab = 'week' | 'month';
 
-const TOP_TAB_ITEMS = [
-  { key: 'meals' as const, label: '食事' },
-  { key: 'body' as const, label: 'からだ' },
-];
-
-const MEALS_SEGMENT_OPTIONS = [
-  { key: 'week' as const, label: '週' },
-  { key: 'month' as const, label: '月' },
-];
-
-// 食事と同じ規則: タブ名=表示期間。点の粒度(日/週/月)は期間から自動決定し帯にしない。
-const BODY_SEGMENT_OPTIONS = [
-  { key: 'week' as const, label: '週' },
-  { key: 'month' as const, label: '月' },
-  { key: 'year' as const, label: '年' },
-];
-
 // M3 fade through: 100ms out → swap → 200ms(duration.short) in
 const FADE_OUT_DURATION = 100;
 const FADE_IN_DURATION = duration.short;
@@ -39,10 +23,25 @@ const M3_EMPHASIZED = Easing.bezier(...easing.standard);
 
 export default function StatsScreen() {
   const theme = useTheme();
+  const t = useT();
   const [topTab, setTopTab] = useState<TopTab>('meals');
   const [mealsTab, setMealsTab] = useState<MealsTab>('week');
   const [bodyPeriod, setBodyPeriod] = useState<BodyPeriod>('month');
   const contentOpacity = useRef(new Animated.Value(1)).current;
+
+  const TOP_TAB_ITEMS = [
+    { key: 'meals' as const, label: t('stats.tabs.meals') },
+    { key: 'body' as const, label: t('stats.tabs.body') },
+  ];
+  const MEALS_SEGMENT_OPTIONS = [
+    { key: 'week' as const, label: t('stats.periods.week') },
+    { key: 'month' as const, label: t('stats.periods.month') },
+  ];
+  const BODY_SEGMENT_OPTIONS = [
+    { key: 'week' as const, label: t('stats.periods.week') },
+    { key: 'month' as const, label: t('stats.periods.month') },
+    { key: 'year' as const, label: t('stats.periods.year') },
+  ];
 
   const handleTopTabChange = useCallback((tab: TopTab) => {
     Animated.timing(contentOpacity, {
@@ -65,7 +64,7 @@ export default function StatsScreen() {
     <View style={[styles.root, { backgroundColor: theme.colors.surface.default }]}>
       <Stack.Screen
         options={{
-          title: '実績',
+          title: t('stats.title'),
           headerStyle: { backgroundColor: theme.colors.surface.default },
           headerTintColor: theme.colors.content.primary,
           headerShadowVisible: false,

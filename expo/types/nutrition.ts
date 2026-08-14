@@ -270,6 +270,12 @@ export interface AppSettings {
    * (widgetNudgeDismissedAtISO と異なり永続的な非表示ではない)。
    */
   weeklyRecapDismissedWeekKey?: string;
+
+  /**
+   * UI 表示言語。未設定時は 'ja' にフォールバック。
+   * i18next の lng と同期して管理する (useLocale フック参照)。
+   */
+  locale?: 'ja' | 'en-US';
 }
 
 export interface QuickCategory {

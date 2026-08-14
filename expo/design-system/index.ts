@@ -13,7 +13,6 @@ export type { Theme } from './theme';
 export {
   Button,
   Icon,
-  ICON_NAMES,
   IconButton,
   Card,
   Heading,

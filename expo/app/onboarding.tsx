@@ -1,6 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useT } from '@/hooks/useT';
 import {
   InputAccessoryView,
   KeyboardAvoidingView,
@@ -75,6 +76,7 @@ export default function OnboardingRoute() {
   const router = useRouter();
   const { profile, settings, updateProfileValues, setOnboardingStep, completeOnboarding } = useAppState();
   const t = useTheme();
+  const tr = useT();
 
   const [step, setStep] = useState<Step>(() => Math.min(settings.onboardingStep ?? 0, TOTAL_STEPS - 1));
 
@@ -228,7 +230,7 @@ export default function OnboardingRoute() {
               icon="chevronLeft"
               variant="ghost"
               onPress={goBack}
-              accessibilityLabel="戻る"
+              accessibilityLabel={tr('onboarding.nav.back')}
               testID="onboarding-back"
             />
             <View
@@ -268,8 +270,8 @@ export default function OnboardingRoute() {
 
               {step === 1 ? (
                 <StepNumber
-                  title="身長を教えてください"
-                  subtitle="必要カロリー計算に使います"
+                  title={tr('onboarding.height.title')}
+                  subtitle={tr('onboarding.height.subtitle')}
                   value={heightCm}
                   onChange={setHeightCm}
                   suffix="cm"
@@ -282,8 +284,8 @@ export default function OnboardingRoute() {
 
               {step === 2 ? (
                 <StepNumber
-                  title="現在の体重は？"
-                  subtitle="必要カロリー・タンパク質量の基準になります"
+                  title={tr('onboarding.weight.title')}
+                  subtitle={tr('onboarding.weight.subtitle')}
                   value={weightKg}
                   onChange={setWeightKg}
                   suffix="kg"
@@ -296,11 +298,11 @@ export default function OnboardingRoute() {
 
               {step === 3 ? (
                 <StepNumber
-                  title="年齢を教えてください"
-                  subtitle="基礎代謝の計算に使います"
+                  title={tr('onboarding.age.title')}
+                  subtitle={tr('onboarding.age.subtitle')}
                   value={ageYears}
                   onChange={setAgeYears}
-                  suffix="歳"
+                  suffix={tr('onboarding.age.suffix')}
                   keyboardType="number-pad"
                   testID="onboarding-age"
                   inputAccessoryViewID={Platform.OS === 'ios' ? ACCESSORY_ID : undefined}
@@ -364,7 +366,7 @@ export default function OnboardingRoute() {
               }}
             >
               <Button
-                label={step === TOTAL_STEPS - 1 ? 'はじめる' : '次へ'}
+                label={step === TOTAL_STEPS - 1 ? tr('onboarding.nav.start') : tr('onboarding.nav.next')}
                 variant="primary"
                 size="lg"
                 fullWidth
@@ -411,15 +413,17 @@ const stepWrap = { gap: 16, flex: 1 } as const;
 const cardColBottom = { gap: 12, marginTop: 'auto' as const };
 
 function StepBasis({ basis, onBasis }: { basis: BiologicalBasis | null; onBasis: (v: BiologicalBasis) => void }) {
+  const t = useT();
   return (
     <View style={stepWrap}>
-      <Heading size="2xl">身体の基準を教えてください</Heading>
-      <Body tone="secondary">体脂肪率やカロリー目安の計算に使います</Body>
+      <Heading size="2xl">{t('onboarding.basis.title')}</Heading>
+      <Body tone="secondary">{t('onboarding.basis.subtitle')}</Body>
       <View style={cardColBottom}>
         {BASIS_OPTIONS.map((opt) => (
           <SelectCard
             key={opt.key}
-            label={opt.label}
+            label={t(`onboarding.basis.${opt.key}.label`)}
+            hint={t(`onboarding.basis.${opt.key}.hint`)}
             selected={basis === opt.key}
             onPress={() => onBasis(opt.key)}
             testID={`onboarding-basis-${opt.key}`}
@@ -477,6 +481,8 @@ function StepNumber({
   );
 }
 
+const ACTIVITY_I18N_KEYS = ['Sedentary', 'LightlyActive', 'ModeratelyActive', 'VeryActive'] as const;
+
 function StepActivity({
   activityLevel,
   onActivity,
@@ -484,19 +490,18 @@ function StepActivity({
   activityLevel: ActivityLevel | null;
   onActivity: (lv: ActivityLevel) => void;
 }) {
+  const t = useT();
   return (
     <View style={stepWrap}>
-      <Heading size="2xl">普段の生活はどんな感じ？</Heading>
-      <Body tone="secondary">仕事や日常の動きから 1日の代謝を見積もります</Body>
-      <Body size="sm" tone="secondary">
-        運動は別途記録すれば自動で目標に加算されます。ここでは普段の生活パターンだけ選んでください。
-      </Body>
+      <Heading size="2xl">{t('onboarding.activity.title')}</Heading>
+      <Body tone="secondary">{t('onboarding.activity.subtitle')}</Body>
+      <Body size="sm" tone="secondary">{t('onboarding.activity.note')}</Body>
       <View style={cardColBottom}>
-        {ACTIVITY_LEVEL_OPTIONS.map((opt) => (
+        {ACTIVITY_LEVEL_OPTIONS.map((opt, i) => (
           <SelectCard
             key={opt.level}
-            label={opt.label}
-            hint={opt.hint}
+            label={t(`onboarding.activity.${ACTIVITY_I18N_KEYS[i]}.label`)}
+            hint={t(`onboarding.activity.${ACTIVITY_I18N_KEYS[i]}.hint`)}
             selected={activityLevel === opt.level}
             onPress={() => onActivity(opt.level)}
             testID={`onboarding-activity-${opt.level}`}

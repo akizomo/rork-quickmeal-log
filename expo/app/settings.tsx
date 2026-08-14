@@ -2,31 +2,40 @@ import { Stack, useRouter } from 'expo-router';
 import React from 'react';
 import { Alert, Platform, ScrollView, StyleSheet, Switch, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useT } from '@/hooks/useT';
 
 import { SettingsDivider, SettingsLinkRow, SettingsListCard, SettingsSectionLabel } from '@/design-system';
 import { Body, Icon, Label, useTheme } from '@/design-system';
 import { useAppState } from '@/providers/app-state-provider';
+import { useLocale } from '@/hooks/useLocale';
 import { widgetRequestPin } from '@/utils/widget-bridge';
 
-const THEME_OPTIONS: { key: 'system' | 'light' | 'dark'; label: string }[] = [
-  { key: 'system', label: '端末に合わせる' },
-  { key: 'light', label: 'ライト' },
-  { key: 'dark', label: 'ダーク' },
+const THEME_OPTION_KEYS: ('system' | 'light' | 'dark')[] = ['system', 'light', 'dark'];
+const LOCALE_OPTIONS: { key: 'ja' | 'en-US'; label: string }[] = [
+  { key: 'ja', label: '日本語' },
+  { key: 'en-US', label: 'English (US)' },
 ];
 
 export default function SettingsRoute() {
   const router = useRouter();
   const theme = useTheme();
+  const t = useT();
   const { settings, updateSettingsValues, resetOnboarding } = useAppState();
+  const { locale, setLocale } = useLocale();
+
+  const THEME_OPTIONS = THEME_OPTION_KEYS.map((key) => ({
+    key,
+    label: t(`settings.theme.${key}`),
+  }));
 
   const confirmReset = () => {
     Alert.alert(
-      'データをリセット',
-      'プロフィール・目標・体重・体脂肪・食事ログなど、この端末に保存されているすべてのデータが消去されます。よろしいですか？',
+      t('settings.data.resetTitle'),
+      t('settings.data.resetMessage'),
       [
-        { text: 'キャンセル', style: 'cancel' },
+        { text: t('settings.data.resetCancel'), style: 'cancel' },
         {
-          text: 'リセットする',
+          text: t('settings.data.resetConfirm'),
           style: 'destructive',
           onPress: () => {
             resetOnboarding();
@@ -41,7 +50,7 @@ export default function SettingsRoute() {
     <>
       <Stack.Screen
         options={{
-          title: '設定',
+          title: t('nav.settings'),
           headerStyle: { backgroundColor: theme.colors.surface.default },
           headerTintColor: theme.colors.content.primary,
           headerShadowVisible: false,
@@ -53,7 +62,7 @@ export default function SettingsRoute() {
 
             {/* §テーマ */}
             <View style={styles.section}>
-              <SettingsSectionLabel>テーマ</SettingsSectionLabel>
+              <SettingsSectionLabel>{t('settings.theme.title')}</SettingsSectionLabel>
               <SettingsListCard>
                 {THEME_OPTIONS.map((option, i) => {
                   const selected = (settings.themePreference ?? 'system') === option.key;
@@ -75,12 +84,36 @@ export default function SettingsRoute() {
               </SettingsListCard>
             </View>
 
+            {/* §言語 / Language */}
+            <View style={styles.section}>
+              <SettingsSectionLabel>{`${t('settings.language.title')} / Language`}</SettingsSectionLabel>
+              <SettingsListCard>
+                {LOCALE_OPTIONS.map((option, i) => {
+                  const selected = locale === option.key;
+                  return (
+                    <React.Fragment key={option.key}>
+                      {i > 0 ? <SettingsDivider /> : null}
+                      <SettingsLinkRow
+                        label={option.label}
+                        showChevron={false}
+                        onPress={() => setLocale(option.key)}
+                        trailing={
+                          selected ? <Icon name="check" size={18} color={theme.colors.action.text.default} /> : null
+                        }
+                        testID={`settings-locale-option-${option.key}`}
+                      />
+                    </React.Fragment>
+                  );
+                })}
+              </SettingsListCard>
+            </View>
+
             {/* §ハプティクス */}
             <View style={styles.section}>
-              <SettingsSectionLabel>ハプティクス</SettingsSectionLabel>
+              <SettingsSectionLabel>{t('settings.haptics.title')}</SettingsSectionLabel>
               <SettingsListCard>
                 <SettingsLinkRow
-                  label="ハプティクス"
+                  label={t('settings.haptics.label')}
                   showChevron={false}
                   trailing={
                     <Switch
@@ -95,20 +128,16 @@ export default function SettingsRoute() {
 
             {/* §データ */}
             <View style={styles.section}>
-              <SettingsSectionLabel>データ</SettingsSectionLabel>
+              <SettingsSectionLabel>{t('settings.data.title')}</SettingsSectionLabel>
               <SettingsListCard>
                 <View style={{ paddingVertical: 8, gap: 8 }}>
-                  <Label>データの保存について</Label>
-                  <Body size="sm" tone="secondary">
-                    Hachibu はアカウント不要で使えるかわりに、記録したデータはこの端末内にのみ保存されます。アプリを削除したり、機種変更すると食事ログ・体重・体脂肪率などのデータは失われます。
-                  </Body>
-                  <Body size="sm" tone="secondary">
-                    サブスクリプションは Apple ID / Google アカウントに紐付くため、再インストール時に「購入を復元」から再開できます。
-                  </Body>
+                  <Label>{t('settings.data.aboutLabel')}</Label>
+                  <Body size="sm" tone="secondary">{t('settings.data.body1')}</Body>
+                  <Body size="sm" tone="secondary">{t('settings.data.body2')}</Body>
                 </View>
                 <SettingsDivider />
                 <SettingsLinkRow
-                  label="データをリセット"
+                  label={t('settings.data.resetLabel')}
                   destructive
                   showChevron={false}
                   onPress={confirmReset}
@@ -120,10 +149,10 @@ export default function SettingsRoute() {
             {/* §ウィジェット (Android のみ) */}
             {Platform.OS === 'android' && (
               <View style={styles.section}>
-                <SettingsSectionLabel>ウィジェット</SettingsSectionLabel>
+                <SettingsSectionLabel>{t('settings.widget.title')}</SettingsSectionLabel>
                 <SettingsListCard>
                   <SettingsLinkRow
-                    label="ホーム画面ウィジェットを追加"
+                    label={t('settings.widget.addLabel')}
                     showChevron={false}
                     onPress={() => { void widgetRequestPin(); }}
                   />
@@ -133,10 +162,10 @@ export default function SettingsRoute() {
 
             {/* §情報 */}
             <View style={styles.section}>
-              <SettingsSectionLabel>情報</SettingsSectionLabel>
+              <SettingsSectionLabel>{t('settings.info.title')}</SettingsSectionLabel>
               <SettingsListCard>
                 <SettingsLinkRow
-                  label="アプリについて"
+                  label={t('settings.info.aboutApp')}
                   onPress={() => router.push('/about')}
                   testID="settings-link-about"
                 />

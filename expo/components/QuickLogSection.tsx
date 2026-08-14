@@ -8,6 +8,7 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
+import { useT } from '@/hooks/useT';
 
 import { Body, Icon, IconButton, Label, useTheme } from '@/design-system';
 import { fontSize } from '@/design-system/tokens/primitives/typography';
@@ -15,10 +16,9 @@ import { duration } from '@/design-system/tokens/primitives/motion';
 import { radius } from '@/design-system/tokens/primitives/radius';
 import { SegmentedControl } from '@/design-system';
 import { useAppState } from '@/providers/app-state-provider';
-import { QuickCategory } from '@/types/nutrition';
-import { getQuickCategories } from '@/utils/nutrition';
-import type { BucketKey } from '@/types/identity';
-import { getIdentitiesInBucket, getBucketDef } from '@/constants/identity';
+import { useLocale } from '@/hooks/useLocale';
+import type { BucketDef, BucketKey } from '@/types/identity';
+import { buildRegistry } from '@/constants/identity';
 import { deriveDefaultTab, FREQUENT_TAB_MIN_LOGS, rankFrequentSelections } from '@/utils/quick-log-history';
 import type { QuickLogTabKey, RankedLogItem } from '@/types/quick-log';
 import { widgetRequestPin } from '@/utils/widget-bridge';
@@ -51,6 +51,7 @@ export const WIDGET_NUDGE_HEIGHT = 84;
 
 function WidgetNudgeBanner() {
   const t = useTheme();
+  const tr = useT();
   const { settings, updateSettingsValues } = useAppState();
 
   const history = settings.quickLogHistory as Record<string, unknown[]> | undefined;
@@ -90,54 +91,23 @@ function WidgetNudgeBanner() {
       <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: t.spacing['2'] }}>
         <Icon name="widget" size={18} color={t.colors.action.primary.default} />
         <View style={{ flex: 1, gap: t.spacing['0.5'] }}>
-          <Label tone="primary">ホーム画面から1タップで記録</Label>
-          <Body size="sm" tone="secondary">アプリを開かずに記録できます</Body>
+          <Label tone="primary">{tr('quicklog.widget.title')}</Label>
+          <Body size="sm" tone="secondary">{tr('quicklog.widget.body')}</Body>
           <Pressable
             onPress={handleAdd}
             hitSlop={8}
             style={({ pressed }) => ({ alignSelf: 'flex-start', opacity: pressed ? 0.5 : 1, marginTop: t.spacing['0.5'] })}
             accessibilityRole="button"
-            accessibilityLabel="ウィジェットをホーム画面に追加する"
+            accessibilityLabel={tr('quicklog.widget.title')}
           >
-            <Label size="sm" tone="link">追加する</Label>
+            <Label size="sm" tone="link">{tr('quicklog.widget.add')}</Label>
           </Pressable>
         </View>
-        <IconButton icon="close" size="sm" tone="tertiary" onPress={handleDismiss} accessibilityLabel="閉じる" />
+        <IconButton icon="close" size="sm" tone="tertiary" onPress={handleDismiss} accessibilityLabel={tr('common.close')} />
       </View>
     </View>
   );
 }
-
-
-// Identity-first IA bucket labels (PRD-aligned ≤6 char names).
-// Mirrors `INGREDIENT_BUCKETS` / `DISH_BUCKETS` from constants/identity/index.ts;
-// kept inline here so the home grid stays decoupled from full registry imports.
-// v1.2 (2026-05): veggies「野菜・汁物」→「野菜」、misc_dish「定食・単品」→「定食・単品・汁」 同期。
-//                 legacy `set_meal` キーは削除 (現行 IA に存在しない)。
-const INGREDIENT_SHORT_LABEL: Record<string, string> = {
-  staple: 'ごはんパン麺',
-  lean_protein: '肉魚(低脂)',
-  egg: '卵',
-  fatty_protein: '脂あり肉魚',
-  dairy_soy: '乳・大豆',
-  veggies: '野菜',
-  fruit: '果物',
-  added_fat: '油・調味',
-  snack_drink: 'おやつ甘飲',
-};
-
-const DISH_SHORT_LABEL: Record<string, string> = {
-  rice_dish: 'どんぶり',
-  curry: 'カレー',
-  chinese_noodles: 'ラーメン',
-  japanese_noodles: 'うどん蕎麦',
-  pasta: 'パスタ',
-  sushi: '寿司',
-  sandwich: 'サンドバーガー',
-  pizza: 'ピザ',
-  misc_dish: '定食・単品・汁',
-  set_meal: '定食・単品・汁',
-};
 
 export function getQuickLogButtonHeight(screenWidth: number): number {
   if (screenWidth <= 360) return QUICK_LOG_TOKENS.buttonHeightCompact;
@@ -152,17 +122,14 @@ function getIconSize(screenWidth: number): number {
 }
 
 function getLabelFontSize(screenWidth: number): number {
-  // Identity-first labels can run up to 7 chars (e.g. サンドバーガー /
-  // ラーメン中華麺), so the base size is one step smaller than before to keep
-  // numberOfLines: 1 honored on narrow screens.
+  // Identity-first labels can run up to 7 chars, so base size is one step
+  // smaller than before to keep numberOfLines: 1 honored on narrow screens.
   if (screenWidth <= 360) return 9;
   if (screenWidth <= 414) return 10;
   return 11;
 }
 
 function getIconContainerSize(screenWidth: number): number {
-  // 背景円を廃止したため、絵文字サイズ (getIconSize) に近い 4px グリッドの
-  // 値までコンテナ自体を縮小して、無駄な空白を作らない。
   if (screenWidth <= 360) return 20;
   if (screenWidth <= 414) return 20;
   return 24;
@@ -176,20 +143,23 @@ function QuickLogButton({
   iconContainerSize,
   labelFontSize,
 }: {
-  item: QuickCategory;
+  item: BucketDef;
   mode: 'ingredient' | 'dish';
   height: number;
   iconSize: number;
   iconContainerSize: number;
   labelFontSize: number;
 }) {
-  const { openDraftEditor, openIdentityLogSheet, quickLogIdentity } = useAppState();
+  const { openIdentityLogSheet, quickLogIdentity } = useAppState();
   const t = useTheme();
+  const tr = useT();
+  const { locale } = useLocale();
   const scale = useRef(new Animated.Value(1)).current;
 
-  const shortLabel = mode === 'ingredient'
-    ? INGREDIENT_SHORT_LABEL[item.key] ?? item.label
-    : DISH_SHORT_LABEL[item.key] ?? item.label;
+  const registry = useMemo(() => buildRegistry(locale), [locale]);
+  const bucketKey = item.key;
+  const bucketIdentities = registry.byBucket[bucketKey] ?? [];
+  const hasIdentities = bucketIdentities.length > 0;
 
   const handlePressIn = () => {
     Animated.timing(scale, {
@@ -207,24 +177,10 @@ function QuickLogButton({
     }).start();
   };
 
-  // Most legacy `QuickCategory.key` values align 1-to-1 with the new
-  // Identity-first BucketKey set. The one renamed bucket — legacy `set_meal`
-  // is now `misc_dish` (定食・単品) — needs a small translation so the new
-  // sheet can resolve it.
-  const LEGACY_TO_NEW_BUCKET: Record<string, BucketKey> = { set_meal: 'misc_dish' };
-  const bucketKey = (LEGACY_TO_NEW_BUCKET[item.key] ?? item.key) as BucketKey;
-  const hasNewBucket = getIdentitiesInBucket(bucketKey).length > 0;
-
   const handlePress = () => {
-    // Per PRD §6.5 / IA spec: tap = instant record at default amount on the
-    // bucket's representative Identity (first chip in the bucket).
-    // Exception: if the bucket OR its first Identity has quickTapDisabled
-    // (overly wide Attribute / Identity diversity), open the detail sheet
-    // so the user picks consciously.
-    if (hasNewBucket) {
-      const bucketDef = getBucketDef(bucketKey);
-      const first = getIdentitiesInBucket(bucketKey)[0];
-      if (bucketDef?.quickTapDisabled || first?.quickTapDisabled) {
+    if (hasIdentities) {
+      const first = bucketIdentities[0];
+      if (item.quickTapDisabled || first?.quickTapDisabled) {
         openIdentityLogSheet(bucketKey, { sourceTab: mode });
         return;
       }
@@ -233,13 +189,8 @@ function QuickLogButton({
   };
 
   const handleLongPress = () => {
-    // Long-press = open detail sheet so the user can pick an Identity / adjust
-    // Attribute, Style, amount, and add-ons.
-    if (hasNewBucket) {
+    if (hasIdentities) {
       openIdentityLogSheet(bucketKey, { sourceTab: mode });
-    } else if (mode === 'dish') {
-      // Fallback to legacy dish editor for buckets not yet in the new IA.
-      void openDraftEditor(item.key);
     }
   };
 
@@ -252,7 +203,7 @@ function QuickLogButton({
         onLongPress={handleLongPress}
         delayLongPress={320}
         accessibilityRole="button"
-        accessibilityLabel={`${item.label}を追加。長押しで詳細入力`}
+        accessibilityLabel={tr('quicklog.a11y.addItem', { label: item.label })}
         style={[styles.button, { ...t.elevation.xs, height, backgroundColor: t.colors.surface.raised }]}
         testID={`quick-log-button-${item.key}`}
       >
@@ -271,17 +222,13 @@ function QuickLogButton({
           </Text>
         </View>
         <Text style={[styles.label, { fontSize: labelFontSize, color: t.colors.content.primary }]} numberOfLines={1}>
-          {shortLabel}
+          {item.label}
         </Text>
       </Pressable>
     </Animated.View>
   );
 }
 
-const QUICK_LOG_SEGMENT_BASE = [
-  { key: 'ingredient' as const, label: '食材' },
-  { key: 'dish' as const, label: '一皿料理' },
-];
 const FREQUENT_TAB_OPTION = { key: 'frequent' as const, label: '⭐️' };
 
 const FREQUENT_GRID_SLOTS = 9;
@@ -337,8 +284,6 @@ const FrequentGrid = memo(function FrequentGrid({
               );
             }
 
-            // A: 短押し — Identity 由来なら同じ Identity を default amount で再現。
-            // それ以外は legacy draft があれば正確な subcategory/amount、なければ category default。
             const handleLog = () => {
               if (item.identityId) {
                 void quickLogIdentity(item.identityId, 'frequent');
@@ -349,16 +294,14 @@ const FrequentGrid = memo(function FrequentGrid({
               }
             };
 
-            // B: 長押し — Identity 由来は該当 Identity を初期選択した状態で詳細シートを開く。
-            // legacy dish は DishQuickEntrySheet にフォールバック。
             const handleLongPress = () => {
               if (item.identityId) {
-                openIdentityLogSheet(item.categoryKey as import('@/types/identity').BucketKey, {
+                openIdentityLogSheet(item.categoryKey as BucketKey, {
                   identityId: item.identityId,
                   sourceTab: 'frequent',
                 });
               } else if (item.mode === 'ingredient') {
-                openIdentityLogSheet(item.categoryKey as import('@/types/identity').BucketKey, { sourceTab: 'frequent' });
+                openIdentityLogSheet(item.categoryKey as BucketKey, { sourceTab: 'frequent' });
               } else {
                 setDishQuickEntryKey(item.categoryKey);
               }
@@ -409,7 +352,7 @@ function FrequentButton({
       onLongPress={onLongPress}
       delayLongPress={320}
       accessibilityRole="button"
-      accessibilityLabel={`${item.label}を追加。長押しで詳細入力`}
+      accessibilityLabel={item.label}
       style={({ pressed }) => [
         styles.frequentButton,
         { ...t.elevation.xs, minHeight: height, backgroundColor: t.colors.surface.raised },
@@ -430,17 +373,16 @@ function FrequentButton({
 
 export const QuickLogSection = memo(function QuickLogSection() {
   const { selectedMode, setSelectedMode, settings, quickLog, bumpDiagnostic } = useAppState();
+  const tr = useT();
+  const { locale } = useLocale();
   const { width: screenWidth } = useWindowDimensions();
   const [searchOpen, setSearchOpen] = useState(false);
 
-  // 診断: 検索そのものが使われているか。ユーザー操作での初回オープンのみ数える
-  // (IdentityLogSheet から戻る際の再オープンは onOpen 経由なので含めない)。
   const handleOpenSearch = useCallback(() => {
     bumpDiagnostic('searchOpenCount');
     setSearchOpen(true);
   }, [bumpDiagnostic]);
 
-  // history のエントリ数でコールドスタート判定
   const history = settings.quickLogHistory as import('@/types/quick-log').QuickLogHistoryMap | undefined;
   const totalHistoryEntries = useMemo(() => {
     if (!history) return 0;
@@ -448,24 +390,23 @@ export const QuickLogSection = memo(function QuickLogSection() {
   }, [history]);
   const showFrequentTab = totalHistoryEntries >= FREQUENT_TAB_MIN_LOGS;
 
-  // デフォルトタブを実際のタブ使用実績 (tabUsageCounts) から導出（初回マウント時のみ）。
-  // ⭐️タブが新たに出現しただけでは切り替えない — ユーザーが実際にどのタブを
-  // 使って記録しているかに基づいてデフォルトを決める (ヒステリシス付き)。
   const [selectedTab, setSelectedTab] = useState<QuickLogTabKey>(() =>
     deriveDefaultTab(history, settings.tabUsageCounts, settings.currentDefaultTab)
   );
 
-  // タブ変更: ingredient/dish は selectedMode も連動させる
   const handleTabChange = useCallback((tab: QuickLogTabKey) => {
     setSelectedTab(tab);
     if (tab === 'ingredient' || tab === 'dish') setSelectedMode(tab);
   }, [setSelectedMode]);
 
-  const segmentOptions = useMemo(() =>
-    showFrequentTab ? [...QUICK_LOG_SEGMENT_BASE, FREQUENT_TAB_OPTION] : QUICK_LOG_SEGMENT_BASE,
-  [showFrequentTab]);
+  const segmentOptions = useMemo(() => {
+    const base = [
+      { key: 'ingredient' as const, label: tr('quicklog.tabs.ingredient') },
+      { key: 'dish' as const, label: tr('quicklog.tabs.dish') },
+    ];
+    return showFrequentTab ? [...base, FREQUENT_TAB_OPTION] : base;
+  }, [showFrequentTab, tr]);
 
-  // ⭐️ ランキング（タブが 'frequent' の時のみ計算）
   const rankedItems = useMemo(() => {
     if (selectedTab !== 'frequent' || !history) return [];
     return rankFrequentSelections(history, {
@@ -474,9 +415,11 @@ export const QuickLogSection = memo(function QuickLogSection() {
     });
   }, [selectedTab, history]);
 
-  // 通常グリッド用
   const effectiveMode = selectedTab === 'frequent' ? selectedMode : selectedTab;
-  const categories = useMemo(() => getQuickCategories(effectiveMode), [effectiveMode]);
+  const categories = useMemo(
+    () => buildRegistry(locale).buckets.filter((b: BucketDef) => b.tab === effectiveMode),
+    [locale, effectiveMode],
+  );
 
   const { gridGap, gridColumns } = QUICK_LOG_TOKENS;
   const buttonHeight = getQuickLogButtonHeight(screenWidth);
@@ -484,7 +427,7 @@ export const QuickLogSection = memo(function QuickLogSection() {
   const iconContainerSize = getIconContainerSize(screenWidth);
   const labelFontSize = getLabelFontSize(screenWidth);
 
-  const rows: QuickCategory[][] = [];
+  const rows: BucketDef[][] = [];
   for (let i = 0; i < categories.length; i += gridColumns) {
     rows.push(categories.slice(i, i + gridColumns));
   }
@@ -505,7 +448,7 @@ export const QuickLogSection = memo(function QuickLogSection() {
           size="md"
           tone="secondary"
           onPress={handleOpenSearch}
-          accessibilityLabel="食品を検索"
+          accessibilityLabel={tr('quicklog.a11y.search')}
           testID="open-search"
         />
       </View>
@@ -581,7 +524,6 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
   },
-  // ⭐️ グリッド用スタイル
   frequentButton: {
     width: '100%',
     borderRadius: QUICK_LOG_TOKENS.buttonRadius,

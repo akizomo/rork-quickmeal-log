@@ -1,0 +1,212 @@
+{
+  "nav": {
+    "back": "Back",
+    "about": "About",
+    "goalEdit": "Edit Goals",
+    "help": "How to Use Hachibu",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "profile": "Profile",
+    "settings": "Settings",
+    "stats": "Progress",
+    "status": "Status",
+    "subscription": "Subscription",
+    "notFound": "Not Found"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "done": "Done",
+    "close": "Close",
+    "back": "Back",
+    "delete": "Delete",
+    "edit": "Edit",
+    "ok": "OK",
+    "retry": "Retry",
+    "loading": "Loading",
+    "error": "An error occurred",
+    "confirm": "Confirm",
+    "add": "Add",
+    "remove": "Remove",
+    "recommended": "Recommended",
+    "needsInput": "Please complete the previous step."
+  },
+  "settings": {
+    "theme": {
+      "title": "Theme",
+      "system": "System",
+      "light": "Light",
+      "dark": "Dark"
+    },
+    "language": {
+      "title": "Language"
+    },
+    "haptics": {
+      "title": "Haptics",
+      "label": "Haptics"
+    },
+    "data": {
+      "title": "Data",
+      "aboutLabel": "About Your Data",
+      "body1": "Hachibu works without an account — your data is stored only on this device. Deleting the app or switching phones will erase your meal logs, weight, and body fat records.",
+      "body2": "Subscriptions are tied to your Apple ID / Google Account. You can restore a previous purchase from the Subscription screen after reinstalling.",
+      "resetLabel": "Reset Data",
+      "resetTitle": "Reset Data",
+      "resetMessage": "All data stored on this device — including your profile, goals, weight, body fat, and meal logs — will be permanently deleted. Continue?",
+      "resetCancel": "Cancel",
+      "resetConfirm": "Reset"
+    },
+    "widget": {
+      "title": "Widget",
+      "addLabel": "Add Home Screen Widget"
+    },
+    "info": {
+      "title": "Info",
+      "aboutApp": "About Hachibu"
+    }
+  },
+  "home": {
+    "today": "Today",
+    "weekDays": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+    "a11y": {
+      "profile": "Profile",
+      "help": "How to Use",
+      "stats": "View Progress",
+      "dayRecord": "View record for {{day}}"
+    }
+  },
+  "quicklog": {
+    "tabs": {
+      "ingredient": "Ingredients",
+      "dish": "Dishes"
+    },
+    "widget": {
+      "title": "Log in one tap from your home screen",
+      "body": "No need to open the app",
+      "add": "Add widget"
+    },
+    "a11y": {
+      "search": "Search food",
+      "addItem": "Add {{label}}. Long-press for details."
+    }
+  },
+  "stats": {
+    "title": "Progress",
+    "tabs": {
+      "meals": "Meals",
+      "body": "Body"
+    },
+    "periods": {
+      "week": "Week",
+      "month": "Month",
+      "year": "Year",
+      "all": "All"
+    }
+  },
+  "onboarding": {
+    "nav": {
+      "back": "Back",
+      "next": "Next",
+      "start": "Get Started"
+    },
+    "basis": {
+      "title": "Biological Reference",
+      "subtitle": "Used to estimate body fat % and calorie targets",
+      "male_basis": {
+        "label": "Male Reference",
+        "hint": "Body fat target: 10–19%"
+      },
+      "female_basis": {
+        "label": "Female Reference",
+        "hint": "Body fat target: 20–29%"
+      }
+    },
+    "height": {
+      "title": "What's your height?",
+      "subtitle": "Used to calculate your calorie needs"
+    },
+    "weight": {
+      "title": "Current weight?",
+      "subtitle": "Sets the baseline for calories and protein goals"
+    },
+    "age": {
+      "title": "How old are you?",
+      "subtitle": "Used to estimate your metabolic rate",
+      "suffix": "yrs"
+    },
+    "activity": {
+      "title": "What's your daily routine like?",
+      "subtitle": "Estimates daily metabolism from work and daily movement",
+      "note": "Exercise logged separately is automatically added to your daily goal. Select only your everyday lifestyle pattern here.",
+      "Sedentary": { "label": "Desk / Remote Work", "hint": "Mostly sitting — WFH, office, computer work" },
+      "LightlyActive": { "label": "On Your Feet", "hint": "Retail, teaching, commuting on foot" },
+      "ModeratelyActive": { "label": "Active Job", "hint": "Nursing, sales, delivery — lots of walking" },
+      "VeryActive": { "label": "Physical Labor", "hint": "Construction, agriculture, heavy manual work" }
+    },
+    "currentBody": {
+      "title": "Which looks closest to you now?",
+      "subtitle": "Choose the body type that best matches on two axes: fat and muscle. Selecting one auto-fills your estimated body fat %.",
+      "bodyFatLabel": "Body fat %",
+      "enterExact": "Enter exact value",
+      "approxNote": "(estimate)"
+    },
+    "direction": {
+      "title": "How do you want to change?",
+      "subtitle": "Used to suggest a plan. You can change this anytime.",
+      "lose": { "label": "Lose fat", "hint": "Reduce weight and body fat %" },
+      "maintain": { "label": "Maintain", "hint": "Keep your current build" },
+      "recomp": { "label": "Recomposition", "hint": "Same weight — swap fat for muscle" },
+      "gain": { "label": "Gain", "hint": "Increase weight and muscle" }
+    },
+    "plan": {
+      "title": "3-Month Goal",
+      "subtitle": "This sets your daily kcal and PFC targets.",
+      "maintainTitle": "Maintenance Plan",
+      "maintainNote": "No pace needed — here's your maintenance target.",
+      "noData": "Please complete the previous step.",
+      "targetWeight": "Target weight",
+      "targetBodyFat": "Target body fat",
+      "dailyGoal": "Daily goal",
+      "pace": "Pace",
+      "gentle": { "label": "Gradual", "hint": "Sustainable — easy to stick with" },
+      "standard": { "label": "Moderate", "hint": "Balanced pace and results" },
+      "strong": { "label": "Aggressive", "hint": "Focused, short-term change" },
+      "changeIn3mo": "3 months: {{sign}}{{abs}}kg",
+      "monthlyRate": "(~{{sign}}{{monthly}}kg/mo)",
+      "bfChange": "Body fat: {{from}}→{{to}}%",
+      "reachHint_yes": "On track for target body type",
+      "reachHint_no": "Modest change"
+    },
+    "preview": {
+      "title": "Your Goal",
+      "subtitle": "You can always adjust this from My Status.",
+      "targetWeight": "Target weight",
+      "targetBodyFat": "Target body fat",
+      "dailyGoal": "Daily goal",
+      "paceLabel": "Pace: {{pace}}",
+      "tips": "Meal tips"
+    },
+    "tips": {
+      "lose": [
+        "Prioritize protein — protect your muscle",
+        "Load up on veggies and fiber for satiety",
+        "Manage carbs as your main lever"
+      ],
+      "maintain": [
+        "Eat balanced — avoid extremes",
+        "Spread protein consistently across meals",
+        "Avoid both overeating and under-eating"
+      ],
+      "gain": [
+        "Don't skimp on calories — eat enough",
+        "Get plenty of both protein and carbs",
+        "More frequent meals can help"
+      ],
+      "recomp": [
+        "Protein first — every meal, every day",
+        "Stay near maintenance calories",
+        "Change is gradual — track shape more than weight"
+      ]
+    }
+  }
+}

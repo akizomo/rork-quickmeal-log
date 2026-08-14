@@ -3,6 +3,7 @@ import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from '
 import Svg, { Circle, Text as SvgText } from 'react-native-svg';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useT } from '@/hooks/useT';
 
 import { DayLogBottomSheet, type DayLogBottomSheetRef } from '@/components/DayLogBottomSheet';
 import { FloatingFeedback } from '@/components/FloatingFeedback';
@@ -26,6 +27,7 @@ const TOLERANCE = 0.15;
 const Header = memo(function Header({ viewedDate }: { viewedDate?: Date }) {
   const router = useRouter();
   const t = useTheme();
+  const tr = useT();
   const styles = useMemo(() => makeStyles(t), [t]);
   const { settings } = useAppState();
   const avatarScale = useRef(new Animated.Value(0.88)).current;
@@ -39,8 +41,8 @@ const Header = memo(function Header({ viewedDate }: { viewedDate?: Date }) {
   }, [avatarScale]);
 
   const dateLabel = useMemo(
-    () => (viewedDate ? formatDayLabel(viewedDate) : '今日'),
-    [viewedDate]
+    () => (viewedDate ? formatDayLabel(viewedDate) : tr('home.today')),
+    [viewedDate, tr]
   );
 
   const showTrialBadge = useMemo(() => {
@@ -58,7 +60,7 @@ const Header = memo(function Header({ viewedDate }: { viewedDate?: Date }) {
           variant="ghost"
           onPress={() => router.push('/status')}
           testID="avatar-button"
-          accessibilityLabel="プロフィール"
+          accessibilityLabel={tr('home.a11y.profile')}
         >
           {showTrialBadge ? <View style={styles.avatarBadge} testID="avatar-trial-badge" /> : null}
         </IconButton>
@@ -73,7 +75,7 @@ const Header = memo(function Header({ viewedDate }: { viewedDate?: Date }) {
           variant="ghost"
           onPress={() => router.push('/help')}
           testID="help-link"
-          accessibilityLabel="使い方を見る"
+          accessibilityLabel={tr('home.a11y.help')}
         />
         <IconButton
           icon="barChart"
@@ -81,7 +83,7 @@ const Header = memo(function Header({ viewedDate }: { viewedDate?: Date }) {
           variant="ghost"
           onPress={() => router.push('/stats')}
           testID="stats-link"
-          accessibilityLabel="実績を見る"
+          accessibilityLabel={tr('home.a11y.stats')}
         />
       </View>
     </View>
@@ -110,7 +112,9 @@ function WeeklyRingsRow({
   onDayPress?: (dateKey: string) => void;
 }) {
   const t = useTheme();
+  const tr = useT();
   const styles = useMemo(() => makeStyles(t), [t]);
+  const weekDayLabels = tr('home.weekDays', { returnObjects: true }) as string[];
 
   const weekDays = useMemo(() => {
     const dow = today.getDay();
@@ -176,7 +180,7 @@ function WeeklyRingsRow({
             style={({ pressed }) => [styles.weeklyRingItem, pressed && tappable && { opacity: 0.6 }]}
             onPress={tappable ? () => onDayPress?.(dk) : undefined}
             accessibilityRole={tappable ? 'button' : undefined}
-            accessibilityLabel={tappable ? `${WEEK_DAYS_JA[i]}曜日の記録を見る` : undefined}
+            accessibilityLabel={tappable ? tr('home.a11y.dayRecord', { day: weekDayLabels[i] }) : undefined}
           >
             <Svg width={size} height={size}>
               {/* track */}
@@ -214,7 +218,7 @@ function WeeklyRingsRow({
                 fontFamily='PlusJakartaSans_400Regular, "Plus Jakarta Sans", -apple-system, sans-serif'
                 fill={labelColor}
               >
-                {WEEK_DAYS_JA[i]}
+                {weekDayLabels[i]}
               </SvgText>
             </Svg>
             <View style={styles.weeklyRingDot}>

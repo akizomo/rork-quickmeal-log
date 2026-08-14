@@ -1,0 +1,212 @@
+{
+  "nav": {
+    "back": "戻る",
+    "about": "アプリについて",
+    "goalEdit": "目標を変更",
+    "help": "Hachibu の使い方",
+    "privacy": "プライバシーポリシー",
+    "terms": "利用規約",
+    "profile": "プロフィール",
+    "settings": "設定",
+    "stats": "実績",
+    "status": "ステータス",
+    "subscription": "サブスクリプション",
+    "notFound": "ページが見つかりません"
+  },
+  "common": {
+    "save": "保存",
+    "cancel": "キャンセル",
+    "done": "完了",
+    "close": "閉じる",
+    "back": "戻る",
+    "delete": "削除",
+    "edit": "編集",
+    "ok": "OK",
+    "retry": "再試行",
+    "loading": "読み込み中",
+    "error": "エラーが発生しました",
+    "confirm": "確認",
+    "add": "追加",
+    "remove": "削除",
+    "recommended": "おすすめ",
+    "needsInput": "前のステップの入力が必要です。"
+  },
+  "settings": {
+    "theme": {
+      "title": "テーマ",
+      "system": "端末に合わせる",
+      "light": "ライト",
+      "dark": "ダーク"
+    },
+    "language": {
+      "title": "言語"
+    },
+    "haptics": {
+      "title": "ハプティクス",
+      "label": "ハプティクス"
+    },
+    "data": {
+      "title": "データ",
+      "aboutLabel": "データの保存について",
+      "body1": "Hachibu はアカウント不要で使えるかわりに、記録したデータはこの端末内にのみ保存されます。アプリを削除したり、機種変更すると食事ログ・体重・体脂肪率などのデータは失われます。",
+      "body2": "サブスクリプションは Apple ID / Google アカウントに紐付くため、再インストール時に「購入を復元」から再開できます。",
+      "resetLabel": "データをリセット",
+      "resetTitle": "データをリセット",
+      "resetMessage": "プロフィール・目標・体重・体脂肪・食事ログなど、この端末に保存されているすべてのデータが消去されます。よろしいですか？",
+      "resetCancel": "キャンセル",
+      "resetConfirm": "リセットする"
+    },
+    "widget": {
+      "title": "ウィジェット",
+      "addLabel": "ホーム画面ウィジェットを追加"
+    },
+    "info": {
+      "title": "情報",
+      "aboutApp": "アプリについて"
+    }
+  },
+  "home": {
+    "today": "今日",
+    "weekDays": ["月", "火", "水", "木", "金", "土", "日"],
+    "a11y": {
+      "profile": "プロフィール",
+      "help": "使い方を見る",
+      "stats": "実績を見る",
+      "dayRecord": "{{day}}曜日の記録を見る"
+    }
+  },
+  "quicklog": {
+    "tabs": {
+      "ingredient": "食材",
+      "dish": "一皿料理"
+    },
+    "widget": {
+      "title": "ホーム画面から1タップで記録",
+      "body": "アプリを開かずに記録できます",
+      "add": "追加する"
+    },
+    "a11y": {
+      "search": "食品を検索",
+      "addItem": "{{label}}を追加。長押しで詳細入力"
+    }
+  },
+  "stats": {
+    "title": "実績",
+    "tabs": {
+      "meals": "食事",
+      "body": "からだ"
+    },
+    "periods": {
+      "week": "週",
+      "month": "月",
+      "year": "年",
+      "all": "全期間"
+    }
+  },
+  "onboarding": {
+    "nav": {
+      "back": "戻る",
+      "next": "次へ",
+      "start": "はじめる"
+    },
+    "basis": {
+      "title": "身体の基準を教えてください",
+      "subtitle": "体脂肪率やカロリー目安の計算に使います",
+      "male_basis": {
+        "label": "男性基準",
+        "hint": "体脂肪率の目安 10〜19%"
+      },
+      "female_basis": {
+        "label": "女性基準",
+        "hint": "体脂肪率の目安 20〜29%"
+      }
+    },
+    "height": {
+      "title": "身長を教えてください",
+      "subtitle": "必要カロリー計算に使います"
+    },
+    "weight": {
+      "title": "現在の体重は？",
+      "subtitle": "必要カロリー・タンパク質量の基準になります"
+    },
+    "age": {
+      "title": "年齢を教えてください",
+      "subtitle": "基礎代謝の計算に使います",
+      "suffix": "歳"
+    },
+    "activity": {
+      "title": "普段の生活はどんな感じ？",
+      "subtitle": "仕事や日常の動きから 1日の代謝を見積もります",
+      "note": "運動は別途記録すれば自動で目標に加算されます。ここでは普段の生活パターンだけ選んでください。",
+      "Sedentary": { "label": "デスクワーク中心", "hint": "1日の大半が座り（在宅勤務・PC作業）" },
+      "LightlyActive": { "label": "立ち仕事・歩きがある", "hint": "接客・教員・通勤で歩くなど" },
+      "ModeratelyActive": { "label": "動き回る仕事", "hint": "看護・営業・配達など歩き回る" },
+      "VeryActive": { "label": "体力仕事", "hint": "建築・農業・運送など重労働" }
+    },
+    "currentBody": {
+      "title": "今の自分に近いのは？",
+      "subtitle": "脂肪と筋量の2軸で、いちばん近い体格を選んでください。選ぶと体脂肪率の目安が自動で入ります。",
+      "bodyFatLabel": "体脂肪率",
+      "enterExact": "正確な値を入力",
+      "approxNote": "（目安）"
+    },
+    "direction": {
+      "title": "どう変わりたいですか？",
+      "subtitle": "プランの提案に使います。あとから変更できます。",
+      "lose": { "label": "減らしたい", "hint": "体重・体脂肪率を落とす" },
+      "maintain": { "label": "維持したい", "hint": "今の体格をキープ" },
+      "recomp": { "label": "引き締めたい", "hint": "体重はそのまま、脂肪を筋量に置き換える" },
+      "gain": { "label": "増やしたい", "hint": "体重・筋量を増やす" }
+    },
+    "plan": {
+      "title": "3ヶ月後、どう変わりたい？",
+      "subtitle": "選んだプランで kcal・PFC が決まります。",
+      "maintainTitle": "今の体格をキープするプラン",
+      "maintainNote": "ペース指定は不要です。現在の体格を維持する目安はこちらです。",
+      "noData": "前のステップの入力が必要です。",
+      "targetWeight": "目標体重",
+      "targetBodyFat": "目標体脂肪率",
+      "dailyGoal": "1日の目標",
+      "pace": "ペース",
+      "gentle": { "label": "ゆるやか", "hint": "無理なく続けたい人に" },
+      "standard": { "label": "標準", "hint": "バランスよく結果を出したい" },
+      "strong": { "label": "しっかり", "hint": "短期集中で変えたい" },
+      "changeIn3mo": "3ヶ月で {{sign}}{{abs}}kg",
+      "monthlyRate": "（月{{sign}}{{monthly}}kg目安）",
+      "bfChange": "体脂肪率 {{from}}→{{to}}%",
+      "reachHint_yes": "体型が変わるペース",
+      "reachHint_no": "変化は小さめ"
+    },
+    "preview": {
+      "title": "この目標で進めます",
+      "subtitle": "あとで My Status からいつでも変更できます。",
+      "targetWeight": "目標体重",
+      "targetBodyFat": "目標体脂肪率",
+      "dailyGoal": "1日の目標",
+      "paceLabel": "ペース: {{pace}}",
+      "tips": "食事のコツ"
+    },
+    "tips": {
+      "lose": [
+        "タンパク質を多めに — 筋量を守るため",
+        "野菜・食物繊維で満腹感を保つ",
+        "炭水化物はコントロールする目安で"
+      ],
+      "maintain": [
+        "バランスよく、偏らないように",
+        "タンパク質は毎食コンスタントに",
+        "食べすぎ・食べなさすぎどちらも避ける"
+      ],
+      "gain": [
+        "カロリー不足に注意、しっかり食べる",
+        "タンパク質も炭水化物もしっかり",
+        "食事回数を増やすのも有効"
+      ],
+      "recomp": [
+        "タンパク質を最優先に — 毎食しっかり摂る",
+        "カロリーは維持カロリーを目安に",
+        "変化はゆっくり。体重より体型の変化を見る"
+      ]
+    }
+  }
+}

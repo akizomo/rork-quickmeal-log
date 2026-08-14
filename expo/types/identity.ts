@@ -60,20 +60,21 @@ export type BucketKey = IngredientBucketKey | DishBucketKey;
 export interface BucketDef {
   key: BucketKey;
   tab: IdentityTab;
-  label: string;       // UI display name (≤6 chars)
-  shortLabel: string;  // Compact short label for buttons (≤4 chars)
+  label: string;       // UI display name (JP label, or English when returned from buildRegistry('en-US'))
+  shortLabel: string;  // Compact short label
+  /** English display name. Used by buildRegistry('en-US') to override label on ingredient buckets. */
+  labelEn?: string;
+  /** English compact label. Used with labelEn. */
+  shortLabelEn?: string;
   emoji: string;
   /**
    * If true, tapping the bucket button does NOT instant-record. Instead, the
    * detail sheet opens so the user picks an Identity first.
-   * Used for buckets whose Identity diversity is too wide for any single
-   * default to be representative (e.g., 寿司: plate vs piece vs ちらし vs 巻).
    */
   quickTapDisabled?: boolean;
   /**
    * ロケール限定バケット。undefined = 全ロケールで表示。
    * buildRegistry が active locale とマッチするバケットのみを返す。
-   * ingredient バケットはロケール共通なので通常 undefined。
    */
   locale?: import('@/types/locale').AppLocale;
 }

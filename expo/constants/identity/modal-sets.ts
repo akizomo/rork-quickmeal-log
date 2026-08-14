@@ -54,6 +54,17 @@ export const MODAL_SETS: Record<BucketKey, string[]> = {
   sandwich: ['cold_sand', 'burger'],
   pizza: ['pizza_simple', 'pizza_meat', 'pizza_cheese'], // bucket quickTapDisabled
   misc_dish: ['teishoku', 'bento', 'fried_main', 'sashimi', 'nabe'], // bucket quickTapDisabled
+
+  // ---- US dish (Phase 2 — identities not yet available) ----
+  burger_sandwich: [],
+  pizza_pasta:     [],
+  chicken:         [],
+  mexican:         [],
+  american_plate:  [],
+  soup_stew:       [],
+  bowl_salad:      [],
+  asian_takeout:   [],
+  breakfast:       [],
 };
 
 // ---------------------------------------------------------------------------
