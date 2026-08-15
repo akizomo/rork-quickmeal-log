@@ -3,11 +3,13 @@
  *
  * Spec: docs/IA-identity-spec.md
  *
- * Phase 1 (this file): pure data + lookup helpers.
- * Phase 2 will plug these into resolvers, components, and migration logic.
+ * Phase 2: JP + US data merged. Global lookups (GLOBAL_BY_ID, resolveAddonRef)
+ * cover all locales for past-log resolution; buildRegistry(locale) returns
+ * locale-filtered buckets/byBucket for input UI.
  */
 
 import {
+  Addon,
   BucketDef,
   BucketKey,
   DishBucketKey,
@@ -19,8 +21,11 @@ import type { AppLocale } from '@/types/locale';
 
 import { DISH_IDENTITIES, DISH_IDENTITIES_BY_BUCKET } from './dishes';
 import { INGREDIENT_IDENTITIES, INGREDIENT_IDENTITIES_BY_BUCKET } from './ingredients';
-import { PURE_ADDONS, PURE_ADDONS_BY_ID, resolveAddonRef, IDENTITY_ADDON_REFS } from './addons';
+import { PURE_ADDONS, PURE_ADDONS_BY_ID, IDENTITY_ADDON_REFS } from './addons';
 import { ALL_MIGRATION_RULES, findMigration, STYLE_MIGRATIONS, ATTRIBUTE_MIGRATIONS } from './migration-rules';
+import { US_INGREDIENT_IDENTITIES, US_INGREDIENT_IDENTITIES_BY_BUCKET } from './us/ingredients';
+import { US_DISH_IDENTITIES, US_DISH_IDENTITIES_BY_BUCKET } from './us/dishes';
+import { US_PURE_ADDONS_BY_ID, US_IDENTITY_ADDON_REFS } from './us/addons';
 
 // ---------------------------------------------------------------------------
 // Bucket definitions (UI labels & emoji)
@@ -84,14 +89,29 @@ const BY_BUCKET: Record<BucketKey, Identity[]> = {
 } as Record<BucketKey, Identity[]>;
 
 // ---------------------------------------------------------------------------
+// Global lookups — span all locales for past-log resolution
+// ---------------------------------------------------------------------------
+
+const US_BY_ID: Record<string, Identity> = [...US_INGREDIENT_IDENTITIES, ...US_DISH_IDENTITIES].reduce(
+  (acc, id) => { acc[id.id] = id; return acc; },
+  {} as Record<string, Identity>
+);
+
+/** Resolves any Identity ID regardless of locale — use for log history lookups. */
+const GLOBAL_BY_ID: Record<string, Identity> = { ...BY_ID, ...US_BY_ID };
+
+const GLOBAL_PURE_ADDONS_BY_ID: Record<string, Addon> = { ...PURE_ADDONS_BY_ID, ...US_PURE_ADDONS_BY_ID };
+const GLOBAL_IDENTITY_ADDON_REFS: string[] = [...IDENTITY_ADDON_REFS, ...US_IDENTITY_ADDON_REFS];
+
+// ---------------------------------------------------------------------------
 // Public registry
 // ---------------------------------------------------------------------------
 
 export const IDENTITY_REGISTRY: IdentityRegistry = {
-  byId: BY_ID,
+  byId: GLOBAL_BY_ID,
   byBucket: BY_BUCKET,
   buckets: ALL_BUCKETS,
-  addons: PURE_ADDONS_BY_ID,
+  addons: GLOBAL_PURE_ADDONS_BY_ID,
 };
 
 // ---------------------------------------------------------------------------
@@ -99,27 +119,26 @@ export const IDENTITY_REGISTRY: IdentityRegistry = {
 // ---------------------------------------------------------------------------
 
 /**
- * Returns a locale-filtered registry. For `en-US`:
- * - Ingredient bucket labels are swapped to English (labelEn / shortLabelEn).
- * - Dish buckets are US_DISH_BUCKETS (Phase 2 identities — empty until data ships).
- * For `ja` (default): identical to IDENTITY_REGISTRY.
+ * Returns a locale-filtered registry.
+ * - `ja` (default): JP ingredient + JP dish buckets.
+ * - `en-US`: English-labelled ingredient + US dish buckets with full US identity data.
+ *
+ * `byId` always spans all locales so past log entries resolve regardless of current locale.
  */
 export function buildRegistry(locale: AppLocale = 'ja'): IdentityRegistry {
   if (locale === 'en-US') {
     const ingredientBuckets: BucketDef[] = INGREDIENT_BUCKETS.map((b) =>
       b.labelEn ? { ...b, label: b.labelEn, shortLabel: b.shortLabelEn ?? b.shortLabel } : b
     );
-    // US dish identities not yet available (Phase 2). Provide empty arrays.
-    const emptyUsDishByBucket = US_DISH_BUCKETS.reduce(
-      (acc, b) => { acc[b.key] = []; return acc; },
-      {} as Partial<Record<BucketKey, Identity[]>>
-    );
-    const byBucket = { ...BY_BUCKET, ...emptyUsDishByBucket } as Record<BucketKey, Identity[]>;
+    const byBucket = {
+      ...US_INGREDIENT_IDENTITIES_BY_BUCKET,
+      ...US_DISH_IDENTITIES_BY_BUCKET,
+    } as Record<BucketKey, Identity[]>;
     return {
-      byId: BY_ID,
+      byId: GLOBAL_BY_ID,
       byBucket,
       buckets: [...ingredientBuckets, ...US_DISH_BUCKETS],
-      addons: PURE_ADDONS_BY_ID,
+      addons: GLOBAL_PURE_ADDONS_BY_ID,
     };
   }
 
@@ -134,8 +153,9 @@ export function buildRegistry(locale: AppLocale = 'ja'): IdentityRegistry {
 // Lookup helpers
 // ---------------------------------------------------------------------------
 
+/** Resolves any Identity ID across all locales (JP + US). */
 export function getIdentity(id: string): Identity | undefined {
-  return BY_ID[id];
+  return GLOBAL_BY_ID[id];
 }
 
 export function getIdentitiesInBucket(bucket: BucketKey): Identity[] {
@@ -159,6 +179,23 @@ export function isDishBucket(bucket: BucketKey): bucket is DishBucketKey {
 // `searchIdentitiesFuzzy()` (正規化 + bigram類似度) を使うこと。
 
 // ---------------------------------------------------------------------------
+// Addon resolver — locale-agnostic, covers JP + US
+// ---------------------------------------------------------------------------
+
+/**
+ * Resolves an addon reference ID to its addon data or identity ref.
+ * Covers both JP and US addon pools — use this instead of the JP-only
+ * resolveAddonRef from addons.ts.
+ */
+export function resolveAddonRef(
+  id: string,
+): { type: 'addon'; data: Addon } | { type: 'identity'; identityId: string } | undefined {
+  if (GLOBAL_PURE_ADDONS_BY_ID[id]) return { type: 'addon', data: GLOBAL_PURE_ADDONS_BY_ID[id] };
+  if (GLOBAL_IDENTITY_ADDON_REFS.includes(id)) return { type: 'identity', identityId: id };
+  return undefined;
+}
+
+// ---------------------------------------------------------------------------
 // Re-exports
 // ---------------------------------------------------------------------------
 
@@ -170,7 +207,7 @@ export {
   PURE_ADDONS,
   PURE_ADDONS_BY_ID,
   IDENTITY_ADDON_REFS,
-  resolveAddonRef,
+  // resolveAddonRef: defined above as global (JP + US)
   ALL_MIGRATION_RULES,
   STYLE_MIGRATIONS,
   ATTRIBUTE_MIGRATIONS,

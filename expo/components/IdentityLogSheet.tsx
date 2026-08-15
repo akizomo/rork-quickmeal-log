@@ -22,9 +22,10 @@ import {
 import { AmountEditDialog } from '@/components/AmountEditDialog';
 import { buildIdentityAmountEditConfig } from '@/utils/amount-edit';
 import { useAppState } from '@/providers/app-state-provider';
+import { useLocale } from '@/hooks/useLocale';
 import {
+  buildRegistry,
   getBucketDef,
-  getIdentitiesInBucket,
   getIdentity,
   resolveAddonRef,
 } from '@/constants/identity';
@@ -130,6 +131,7 @@ function HorizontalChipRow({ children }: { children: React.ReactNode }) {
 
 export function IdentityLogSheet() {
   const t = useTheme();
+  const { locale } = useLocale();
   const {
     identityLogSheet,
     openIdentityLogSheet,
@@ -143,9 +145,10 @@ export function IdentityLogSheet() {
   const visible = identityLogSheet.visible;
   const bucketKey = identityLogSheet.bucketKey;
   const bucket = bucketKey ? getBucketDef(bucketKey) : undefined;
+  const registry = useMemo(() => buildRegistry(locale), [locale]);
   const identitiesInBucket = useMemo(
-    () => (bucketKey ? getIdentitiesInBucket(bucketKey) : []),
-    [bucketKey]
+    () => (bucketKey ? registry.byBucket[bucketKey] ?? [] : []),
+    [bucketKey, registry]
   );
 
   const [originIdentityId, setOriginIdentityId] = useState<string | undefined>(
