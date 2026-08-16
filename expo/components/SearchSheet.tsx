@@ -32,6 +32,7 @@ import {
 import { DirectInputSheet } from '@/components/DirectInputSheet';
 import { getBucketDef, getIdentity } from '@/constants/identity';
 import { useAppState } from '@/providers/app-state-provider';
+import { useLocale } from '@/hooks/useLocale';
 import {
   describeSearchEntry,
   getCategoryHints,
@@ -93,6 +94,7 @@ function SearchResultRow({
 export function SearchSheet({ visible, onClose, onOpen }: Props) {
   const t = useTheme();
   const { openIdentityLogSheet, recordSearchMissEvent, bumpDiagnostic, settings } = useAppState();
+  const { locale } = useLocale();
 
   const [query, setQuery] = useState('');
   const [debounced, setDebounced] = useState('');
@@ -140,6 +142,7 @@ export function SearchSheet({ visible, onClose, onOpen }: Props) {
     if (debounced.trim().length === 0) return { confidentResults: [] as SearchEntryResult[], maybeResults: [] as SearchEntryResult[] };
     const { confident, maybe } = searchEntriesFuzzy(debounced, {
       history: settings.quickLogHistory as QuickLogHistoryMap | undefined,
+      locale,
     });
     return { confidentResults: confident, maybeResults: maybe };
   }, [debounced, settings.quickLogHistory]);
@@ -149,8 +152,8 @@ export function SearchSheet({ visible, onClose, onOpen }: Props) {
   // 「もしかして」に着地させる。
   const vocabularyMatches = useMemo<VocabularyMatch[]>(() => {
     if (debounced.trim().length === 0) return [];
-    return getVocabularyMatches(debounced);
-  }, [debounced]);
+    return getVocabularyMatches(debounced, locale);
+  }, [debounced, locale]);
 
   // 層4: 確信度に関わらず常に計算・表示する (SEARCH_SPEC v0.4 §F5) —
   // 誤ヒットがカテゴリへの逃げ道を塞ぐ構造を解消するため、0件時限定にしない。
@@ -160,8 +163,8 @@ export function SearchSheet({ visible, onClose, onOpen }: Props) {
   const categoryHints = useMemo<BucketKey[]>(() => {
     if (debounced.trim().length === 0) return [];
     const vocabBuckets = new Set(vocabularyMatches.map((m) => m.bucket));
-    return getCategoryHints(debounced).filter((b) => !vocabBuckets.has(b));
-  }, [debounced, vocabularyMatches]);
+    return getCategoryHints(debounced, locale).filter((b) => !vocabBuckets.has(b));
+  }, [debounced, locale, vocabularyMatches]);
 
   const handleSelect = useCallback(
     (entry: SearchEntry) => {

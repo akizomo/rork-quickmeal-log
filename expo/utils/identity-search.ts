@@ -16,11 +16,12 @@
  * 理由は identity-normalize.ts のコメント参照)。
  */
 
-import { ALL_IDENTITIES, getBucketDef } from '@/constants/identity';
+import { ALL_IDENTITIES, ALL_US_IDENTITIES, getBucketDef } from '@/constants/identity';
 import { DISH_VOCABULARY } from '@/constants/identity/dish-vocabulary';
 import { HEAD_NOUNS, type HeadNounTarget } from '@/constants/identity/head-nouns';
 import { normalize, romajiVariant } from '@/utils/identity-normalize';
 import type { AttributeOption, BucketKey, Identity, StyleOption } from '@/types/identity';
+import type { AppLocale } from '@/types/locale';
 import type { QuickLogHistoryMap } from '@/types/quick-log';
 
 export interface SearchEntry {
@@ -110,31 +111,30 @@ function scoreAgainst(q: string, target: string): { score: number; method: Match
 }
 
 // ---------------------------------------------------------------------------
-// インデックス構築 (起動時1回)
+// インデックス構築 (起動時1回 × ロケール数)
 // ---------------------------------------------------------------------------
 
 /**
  * 文脈依存ラベル (SEARCH_SPEC §F2-0): 「普通」等、単独では意味をなさない
  * Attribute ラベル。3つ以上の Identity に同一ラベルで出現するものを修飾語と
  * みなし、単独では検索対象にしない (Identity名との複合形でのみ拾う)。
+ * ロケール別に構築して JP/US の語彙が干渉しないようにする。
  */
-const GENERIC_ATTRIBUTE_LABELS: Set<string> = (() => {
+function buildGenericAttributeLabels(identities: Identity[]): Set<string> {
   const counts = new Map<string, number>();
-  for (const identity of ALL_IDENTITIES) {
+  for (const identity of identities) {
     for (const attr of identity.attributes ?? []) {
       counts.set(attr.label, (counts.get(attr.label) ?? 0) + 1);
     }
   }
   const generic = new Set<string>();
-  counts.forEach((n, label) => {
-    if (n >= 3) generic.add(label);
-  });
+  counts.forEach((n, label) => { if (n >= 3) generic.add(label); });
   return generic;
-})();
+}
 
-function buildSearchIndex(): SearchEntry[] {
+function buildSearchIndex(identities: Identity[], genericLabels: Set<string>): SearchEntry[] {
   const entries: SearchEntry[] = [];
-  for (const identity of ALL_IDENTITIES) {
+  for (const identity of identities) {
     entries.push({ identity });
     for (const attribute of identity.attributes ?? []) {
       entries.push({ identity, attribute });
@@ -144,15 +144,19 @@ function buildSearchIndex(): SearchEntry[] {
     }
   }
   return entries;
+  void genericLabels; // used in targetsFor below
 }
 
-const SEARCH_INDEX: SearchEntry[] = buildSearchIndex();
+const JP_GENERIC_LABELS = buildGenericAttributeLabels(ALL_IDENTITIES);
+const JP_SEARCH_INDEX: SearchEntry[] = buildSearchIndex(ALL_IDENTITIES, JP_GENERIC_LABELS);
+const US_GENERIC_LABELS = buildGenericAttributeLabels(ALL_US_IDENTITIES);
+const US_SEARCH_INDEX: SearchEntry[] = buildSearchIndex(ALL_US_IDENTITIES, US_GENERIC_LABELS);
 
 /** エントリごとの検索対象文字列 (正規化済み)。 */
-function targetsFor(entry: SearchEntry): string[] {
+function targetsFor(entry: SearchEntry, genericLabels: Set<string>): string[] {
   if (entry.attribute) {
     const tags = (entry.attribute.searchTags ?? []).map(normalize);
-    if (GENERIC_ATTRIBUTE_LABELS.has(entry.attribute.label)) {
+    if (genericLabels.has(entry.attribute.label)) {
       return [normalize(`${entry.identity.label}${entry.attribute.label}`), ...tags];
     }
     return [normalize(entry.attribute.label), ...tags];
@@ -229,6 +233,8 @@ export interface SearchOptions {
    * 省略時はマッチスコアのみで並ぶ (頻度学習なし)。
    */
   history?: QuickLogHistoryMap;
+  /** 検索対象を切り替えるロケール。'en-US' の場合 US Identity セットを使う。デフォルト 'ja'。 */
+  locale?: AppLocale;
 }
 
 /**
@@ -245,10 +251,15 @@ export function searchEntriesFuzzy(query: string, opts?: SearchOptions): SearchE
   // (二重採点で bigram スコアが不当に底上げされるのを防ぐ)。
   const queryVariants = qRomaji !== qBase ? [qBase, qRomaji] : [qBase];
 
+  const isUS = opts?.locale === 'en-US';
+  const searchIndex = isUS ? US_SEARCH_INDEX : JP_SEARCH_INDEX;
+  const genericLabels = isUS ? US_GENERIC_LABELS : JP_GENERIC_LABELS;
+  const sortLocale = isUS ? 'en' : 'ja';
+
   const results: SearchEntryResult[] = [];
 
-  for (const entry of SEARCH_INDEX) {
-    const targets = targetsFor(entry);
+  for (const entry of searchIndex) {
+    const targets = targetsFor(entry, genericLabels);
     let best: { score: number; method: MatchMethod } | null = null;
     for (const q of queryVariants) {
       for (const target of targets) {
@@ -276,7 +287,7 @@ export function searchEntriesFuzzy(query: string, opts?: SearchOptions): SearchE
     r.score * frequencyMultiplier(freqMap.get(entryFrequencyKey(r.entry)) ?? 0);
   const label = (r: SearchEntryResult) =>
     r.entry.attribute?.label ?? r.entry.style?.label ?? r.entry.identity.label;
-  results.sort((a, b) => finalScore(b) - finalScore(a) || label(a).localeCompare(label(b), 'ja'));
+  results.sort((a, b) => finalScore(b) - finalScore(a) || label(a).localeCompare(label(b), sortLocale));
 
   const confident = results.filter((r) => r.tier === 'confident');
   const maybe = results.filter((r) => r.tier === 'maybe');
@@ -355,7 +366,9 @@ function matchHeadNouns(queryVariants: string[]): HeadNounTarget[] {
  * 単一語として辞書に確定登録されている方が、末尾主辞 (「焼き」) だけから推測
  * するより具体的で信頼できるため。
  */
-export function getVocabularyMatches(query: string): VocabularyMatch[] {
+export function getVocabularyMatches(query: string, locale?: AppLocale): VocabularyMatch[] {
+  // 主辞辞書・料理名辞書は JP 専用。en-US は英語の Identity ラベルで直接マッチするため不要。
+  if (locale === 'en-US') return [];
   const qBase = normalize(query);
   if (!qBase) return [];
   const qRomaji = romajiVariant(query);
@@ -378,7 +391,9 @@ export function getVocabularyMatches(query: string): VocabularyMatch[] {
  *
  * データソースは DISH_VOCABULARY (旧 CATEGORY_KEYWORD_MAP を統合・置換、§5.4.6)。
  */
-export function getCategoryHints(query: string): BucketKey[] {
+export function getCategoryHints(query: string, locale?: AppLocale): BucketKey[] {
+  // カテゴリヒントは JP 料理名辞書ベース。en-US は将来 US dish vocabulary で対応予定。
+  if (locale === 'en-US') return [];
   const qBase = normalize(query);
   if (!qBase) return [];
   const qRomaji = romajiVariant(query);

@@ -73,7 +73,10 @@ export const ALL_BUCKETS: BucketDef[] = [...INGREDIENT_BUCKETS, ...DISH_BUCKETS,
 // Aggregated identity list
 // ---------------------------------------------------------------------------
 
+/** JP identities only — for JP locale search index. */
 export const ALL_IDENTITIES: Identity[] = [...INGREDIENT_IDENTITIES, ...DISH_IDENTITIES];
+/** US identities only — for en-US locale search index. */
+export const ALL_US_IDENTITIES: Identity[] = [...US_INGREDIENT_IDENTITIES, ...US_DISH_IDENTITIES];
 
 const BY_ID: Record<string, Identity> = ALL_IDENTITIES.reduce(
   (acc, id) => {
