@@ -67,6 +67,21 @@
     "cta": "ウィジェットを追加",
     "skip": "あとで"
   },
+  "healthConnect": {
+    "title": "ヘルスデータと連携しますか？",
+    "subtitle": "歩数・運動・体重を自動で取り込んで、毎日の入力をすこし軽くします。あとからでも変更できます。",
+    "dataLabel": "取り込むデータ",
+    "dataItems": ["体重 / 体脂肪率", "歩数 / 消費カロリー", "運動セッション"],
+    "providerRequired": "Health Connect が必要です",
+    "providerUpdateMsg": "インストール済みの Health Connect アプリのアップデートが必要です。Play Store で更新してから戻ってきてください。",
+    "providerInstallMsg": "Android では Google の Health Connect アプリ経由でデータを取り込みます。Play Store からインストールして戻ってきてください。",
+    "unsupported": "このプラットフォームではヘルスデータ連携は利用できません。",
+    "skip": "あとで",
+    "ctaConnect": "連携する",
+    "ctaStart": "はじめる",
+    "ctaUpdate": "Play Store で更新",
+    "ctaInstall": "Health Connect を入手"
+  },
   "profile": {
     "basicData": "基礎データ",
     "height": "身長",

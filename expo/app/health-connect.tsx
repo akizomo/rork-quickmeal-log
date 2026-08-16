@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle, Path, Polyline } from 'react-native-svg';
 
 import { Body, Button, Card, Caption, Heading, Icon, type IconName, Label, useTheme, type Theme } from '@/design-system';
+import { useT } from '@/hooks/useT';
 import { useAppState } from '@/providers/app-state-provider';
 import { useHealthSyncContext } from '@/providers/health-sync-provider';
 
@@ -39,11 +40,7 @@ function HealthSyncIllustration({ t }: { t: Theme }) {
   );
 }
 
-const DATA_ITEMS: { icon: IconName; label: string }[] = [
-  { icon: 'balance', label: '体重 / 体脂肪率' },
-  { icon: 'steps', label: '歩数 / 消費カロリー' },
-  { icon: 'exercise', label: '運動セッション' },
-];
+const DATA_ICONS: IconName[] = ['balance', 'steps', 'exercise'];
 
 /**
  * ペイウォール突破後に表示するヘルス連携誘導画面。
@@ -58,9 +55,11 @@ const DATA_ITEMS: { icon: IconName; label: string }[] = [
 export default function HealthConnectRoute() {
   const router = useRouter();
   const t = useTheme();
+  const tr = useT();
   const { markHealthConnectSeen } = useAppState();
   const healthSync = useHealthSyncContext();
   const [busy, setBusy] = useState<boolean>(false);
+  const dataItems = tr('healthConnect.dataItems', { returnObjects: true }) as string[];
 
   const goHome = useCallback(() => {
     markHealthConnectSeen();
@@ -114,10 +113,8 @@ export default function HealthConnectRoute() {
             }}
             keyboardShouldPersistTaps="handled"
           >
-            <Heading size="2xl">ヘルスデータと連携しますか？</Heading>
-            <Body tone="secondary">
-              歩数・運動・体重を自動で取り込んで、毎日の入力をすこし軽くします。あとからでも変更できます。
-            </Body>
+            <Heading size="2xl">{tr('healthConnect.title')}</Heading>
+            <Body tone="secondary">{tr('healthConnect.subtitle')}</Body>
 
             <View style={{ flex: 1, justifyContent: 'center' }}>
               <HealthSyncIllustration t={t} />
@@ -125,27 +122,27 @@ export default function HealthConnectRoute() {
 
             <View style={{ gap: t.spacing['2'] }}>
               <Card variant="raised" style={{ gap: t.spacing['3'] }}>
-                <Label>取り込むデータ</Label>
-                {DATA_ITEMS.map((item) => (
-                  <View key={item.label} style={{ flexDirection: 'row', alignItems: 'center', gap: t.spacing['2'] }}>
-                    <Icon name={item.icon} size={18} color={t.colors.content.secondary} />
-                    <Body size="sm" tone="secondary">{item.label}</Body>
+                <Label>{tr('healthConnect.dataLabel')}</Label>
+                {DATA_ICONS.map((icon, i) => (
+                  <View key={icon} style={{ flexDirection: 'row', alignItems: 'center', gap: t.spacing['2'] }}>
+                    <Icon name={icon} size={18} color={t.colors.content.secondary} />
+                    <Body size="sm" tone="secondary">{dataItems[i] ?? ''}</Body>
                   </View>
                 ))}
               </Card>
               {needsInstall ? (
                 <Card variant="raised" style={{ gap: t.spacing['1'] }}>
-                  <Label>Health Connect が必要です</Label>
+                  <Label>{tr('healthConnect.providerRequired')}</Label>
                   <Body size="sm" tone="secondary">
                     {healthSync.status === 'provider_update_required'
-                      ? 'インストール済みの Health Connect アプリのアップデートが必要です。Play Store で更新してから戻ってきてください。'
-                      : 'Android では Google の Health Connect アプリ経由でデータを取り込みます。Play Store からインストールして戻ってきてください。'}
+                      ? tr('healthConnect.providerUpdateMsg')
+                      : tr('healthConnect.providerInstallMsg')}
                   </Body>
                 </Card>
               ) : null}
               {!healthSync.supported ? (
                 <Body size="sm" tone="secondary" align="center" testID="health-connect-unsupported">
-                  このプラットフォームではヘルスデータ連携は利用できません。
+                  {tr('healthConnect.unsupported')}
                 </Body>
               ) : null}
               {__DEV__ ? (
@@ -172,12 +169,12 @@ export default function HealthConnectRoute() {
                 disabled={busy}
                 style={{ alignSelf: 'center', paddingVertical: t.spacing['1'] }}
               >
-                <Caption tone="link">あとで</Caption>
+                <Caption tone="link">{tr('healthConnect.skip')}</Caption>
               </Pressable>
             ) : null}
             {needsInstall ? (
               <Button
-                label={healthSync.status === 'provider_update_required' ? 'Play Store で更新' : 'Health Connect を入手'}
+                label={healthSync.status === 'provider_update_required' ? tr('healthConnect.ctaUpdate') : tr('healthConnect.ctaInstall')}
                 variant="primary"
                 size="lg"
                 fullWidth
@@ -187,7 +184,7 @@ export default function HealthConnectRoute() {
               />
             ) : (
               <Button
-                label={healthSync.supported ? '連携する' : 'はじめる'}
+                label={healthSync.supported ? tr('healthConnect.ctaConnect') : tr('healthConnect.ctaStart')}
                 variant="primary"
                 size="lg"
                 fullWidth

@@ -67,6 +67,21 @@
     "cta": "Add Widget",
     "skip": "Later"
   },
+  "healthConnect": {
+    "title": "Connect to Health Data?",
+    "subtitle": "Automatically sync steps, workouts, and weight to lighten your daily logging. You can change this anytime.",
+    "dataLabel": "Data we'll sync",
+    "dataItems": ["Weight / Body Fat", "Steps / Calories Burned", "Workout Sessions"],
+    "providerRequired": "Health Connect Required",
+    "providerUpdateMsg": "Your Health Connect app needs an update. Update it from the Play Store, then come back.",
+    "providerInstallMsg": "On Android, data syncs via Google's Health Connect app. Install it from the Play Store, then come back.",
+    "unsupported": "Health data sync is not available on this platform.",
+    "skip": "Later",
+    "ctaConnect": "Connect",
+    "ctaStart": "Get Started",
+    "ctaUpdate": "Update on Play Store",
+    "ctaInstall": "Get Health Connect"
+  },
   "profile": {
     "basicData": "Basic Info",
     "height": "Height",
