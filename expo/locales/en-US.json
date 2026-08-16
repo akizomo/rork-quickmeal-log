@@ -392,6 +392,7 @@
     "preview": {
       "title": "Your Goal",
       "subtitle": "You can always adjust this from My Status.",
+      "threeMonthLabel": "3-month goal",
       "targetWeight": "Target weight",
       "targetBodyFat": "Target body fat",
       "dailyGoal": "Daily goal",

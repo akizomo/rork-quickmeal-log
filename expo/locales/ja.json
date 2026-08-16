@@ -392,6 +392,7 @@
     "preview": {
       "title": "この目標で進めます",
       "subtitle": "あとで My Status からいつでも変更できます。",
+      "threeMonthLabel": "3ヶ月の目標",
       "targetWeight": "目標体重",
       "targetBodyFat": "目標体脂肪率",
       "dailyGoal": "1日の目標",

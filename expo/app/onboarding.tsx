@@ -40,6 +40,7 @@ import {
   Label,
   MacroCard,
   NumberField,
+  Overline,
   SelectCard,
   useTheme,
   type IconName,
@@ -856,6 +857,7 @@ function StepPreview({
       <Body tone="secondary">{t('onboarding.preview.subtitle')}</Body>
 
       <Card variant="raised" style={{ gap: theme.spacing['3'] }}>
+        <Overline>{t('onboarding.preview.threeMonthLabel')}</Overline>
         <SummaryRow label={t('onboarding.preview.targetWeight')} value={`${recommendation.targetWeightKg.toFixed(1)} kg`} />
         <SummaryRow label={t('onboarding.preview.targetBodyFat')} value={`${recommendation.targetBodyFatPct} %`} />
         <View style={{ height: 1, backgroundColor: theme.colors.border.subtle }} />
