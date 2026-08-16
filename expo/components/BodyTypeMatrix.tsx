@@ -12,6 +12,7 @@ import {
 } from '@/constants/body-matrix';
 import { useTheme } from '@/design-system';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
+import { useT } from '@/hooks/useT';
 import { BiologicalBasis, BodyAxisLevel, BodyType9 } from '@/types/nutrition';
 
 interface Props {
@@ -26,10 +27,6 @@ interface Props {
   mode?: 'current' | 'target';
 }
 
-const AXIS_LABELS: Record<BodyAxisLevel, string> = { 0: '少なめ', 1: 'ふつう', 2: '多め' };
-const fatLabel = (level: BodyAxisLevel) => AXIS_LABELS[level];
-const muscleLabel = (level: BodyAxisLevel) => AXIS_LABELS[level];
-
 export function BodyTypeMatrix({
   basis,
   heightCm,
@@ -39,6 +36,14 @@ export function BodyTypeMatrix({
   mode = 'target',
 }: Props) {
   const t = useTheme();
+  const tr = useT();
+  const axisLevel: Record<BodyAxisLevel, string> = {
+    0: tr('onboarding.currentBody.matrix.low'),
+    1: tr('onboarding.currentBody.matrix.mid'),
+    2: tr('onboarding.currentBody.matrix.high'),
+  };
+  const fatLabel = (level: BodyAxisLevel) => axisLevel[level];
+  const muscleLabel = (level: BodyAxisLevel) => axisLevel[level];
   const matrix = getMatrix(basis);
   // 選択 state は SelectCard と同じ DS 意匠 (sage container + focus 枠) に統一。
   const activeCellStyle = {
@@ -53,7 +58,7 @@ export function BodyTypeMatrix({
         <View style={styles.rowAxisSpacer} />
         {([0, 1, 2] as BodyAxisLevel[]).map((level) => (
           <View key={level} style={styles.colHeaderCell}>
-            <Text style={[styles.colHeaderLabel, { color: t.colors.content.secondary }]}>脂肪</Text>
+            <Text style={[styles.colHeaderLabel, { color: t.colors.content.secondary }]}>{tr('onboarding.currentBody.matrix.fatAxis')}</Text>
             <Text style={[styles.colHeaderValue, { color: t.colors.content.primary }]}>{fatLabel(level)}</Text>
           </View>
         ))}
@@ -65,7 +70,7 @@ export function BodyTypeMatrix({
         return (
           <View key={muscle} style={styles.row}>
             <View style={styles.rowAxis}>
-              <Text style={[styles.rowAxisText, { color: t.colors.content.secondary }]}>筋量</Text>
+              <Text style={[styles.rowAxisText, { color: t.colors.content.secondary }]}>{tr('onboarding.currentBody.matrix.muscleAxis')}</Text>
               <Text style={[styles.rowAxisValue, { color: t.colors.content.primary }]}>
                 {muscleLabel(muscle)}
               </Text>
@@ -80,7 +85,7 @@ export function BodyTypeMatrix({
               const weightText = heightCm
                 ? formatWeightRange(getCellReferenceWeightRange(basis, cell, heightCm))
                 : '--';
-              const bfText = formatBodyFatRange(ref);
+              const bfText = formatBodyFatRange(ref, fat);
               return (
                 <Pressable
                   key={`${muscle}-${fat}`}
@@ -90,9 +95,11 @@ export function BodyTypeMatrix({
                   // 行/列の軸ラベルは別の View に分かれているため、スクリーンリーダーには
                   // セルが「9分類のどこか」として伝わらない。各セルに軸の値を畳み込む。
                   accessibilityLabel={[
-                    `筋量${muscleLabel(muscle)}、脂肪${fatLabel(fat)}`,
-                    mode === 'target' ? `体重${weightText}、体脂肪率${bfText}` : `体脂肪率${bfText}`,
-                    isCurrent ? '現在のからだ' : null,
+                    tr('onboarding.currentBody.matrix.a11yMuscleFat', { muscle: muscleLabel(muscle), fat: fatLabel(fat) }),
+                    mode === 'target'
+                      ? tr('onboarding.currentBody.matrix.a11yWeightBf', { weight: weightText, bf: bfText })
+                      : tr('onboarding.currentBody.matrix.a11yBf', { bf: bfText }),
+                    isCurrent ? tr('onboarding.currentBody.matrix.a11yCurrent') : null,
                   ]
                     .filter(Boolean)
                     .join('。')}
@@ -104,7 +111,7 @@ export function BodyTypeMatrix({
                   ]}
                   testID={`body-matrix-cell-${muscle}-${fat}`}
                 >
-                  {isCurrent ? <Text style={[styles.currentDot, { color: t.colors.action.text.default }]}>●今</Text> : null}
+                  {isCurrent ? <Text style={[styles.currentDot, { color: t.colors.action.text.default }]}>●{tr('onboarding.currentBody.matrix.currentMark')}</Text> : null}
                   <BodyTypeSilhouette basis={basis} stage={stage} active={isSelected} size={42} />
                   {mode === 'target' ? (
                     <>

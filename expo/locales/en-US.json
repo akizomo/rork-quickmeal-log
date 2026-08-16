@@ -331,8 +331,8 @@
     },
     "activity": {
       "title": "What's your daily routine like?",
-      "subtitle": "Estimates daily metabolism from work and daily movement",
-      "note": "Exercise logged separately is automatically added to your daily goal. Select only your everyday lifestyle pattern here.",
+      "subtitle": "Logged exercise adds on top. Just pick your everyday lifestyle.",
+      "note": "",
       "Sedentary": { "label": "Desk / Remote Work", "hint": "Mostly sitting — WFH, office, computer work" },
       "LightlyActive": { "label": "On Your Feet", "hint": "Retail, teaching, commuting on foot" },
       "ModeratelyActive": { "label": "Active Job", "hint": "Nursing, sales, delivery — lots of walking" },
@@ -343,7 +343,19 @@
       "subtitle": "Choose the body type that best matches on two axes: fat and muscle. Selecting one auto-fills your estimated body fat %.",
       "bodyFatLabel": "Body fat %",
       "enterExact": "Enter exact value",
-      "approxNote": "(estimate)"
+      "approxNote": "(estimate)",
+      "matrix": {
+        "fatAxis": "Fat",
+        "muscleAxis": "Muscle",
+        "low": "Low",
+        "mid": "Mid",
+        "high": "High",
+        "currentMark": "Now",
+        "a11yMuscleFat": "Muscle {{muscle}}, Fat {{fat}}",
+        "a11yBf": "Body fat {{bf}}",
+        "a11yWeightBf": "Weight {{weight}}, Body fat {{bf}}",
+        "a11yCurrent": "Your current body"
+      }
     },
     "direction": {
       "title": "How do you want to change?",

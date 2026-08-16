@@ -331,8 +331,8 @@
     },
     "activity": {
       "title": "普段の生活はどんな感じ？",
-      "subtitle": "仕事や日常の動きから 1日の代謝を見積もります",
-      "note": "運動は別途記録すれば自動で目標に加算されます。ここでは普段の生活パターンだけ選んでください。",
+      "subtitle": "運動は別で加算されます。普段の生活パターンだけ選んでください。",
+      "note": "",
       "Sedentary": { "label": "デスクワーク中心", "hint": "1日の大半が座り（在宅勤務・PC作業）" },
       "LightlyActive": { "label": "立ち仕事・歩きがある", "hint": "接客・教員・通勤で歩くなど" },
       "ModeratelyActive": { "label": "動き回る仕事", "hint": "看護・営業・配達など歩き回る" },
@@ -343,7 +343,19 @@
       "subtitle": "脂肪と筋量の2軸で、いちばん近い体格を選んでください。選ぶと体脂肪率の目安が自動で入ります。",
       "bodyFatLabel": "体脂肪率",
       "enterExact": "正確な値を入力",
-      "approxNote": "（目安）"
+      "approxNote": "（目安）",
+      "matrix": {
+        "fatAxis": "脂肪",
+        "muscleAxis": "筋量",
+        "low": "少なめ",
+        "mid": "ふつう",
+        "high": "多め",
+        "currentMark": "今",
+        "a11yMuscleFat": "筋量{{muscle}}、脂肪{{fat}}",
+        "a11yBf": "体脂肪率{{bf}}",
+        "a11yWeightBf": "体重{{weight}}、体脂肪率{{bf}}",
+        "a11yCurrent": "現在のからだ"
+      }
     },
     "direction": {
       "title": "どう変わりたいですか？",

@@ -105,8 +105,9 @@ export function formatWeightRange(range: { min: number; max: number }): string {
   return `${range.min}–${range.max}kg`;
 }
 
-export function formatBodyFatRange(ref: BodyMatrixCellRef): string {
+export function formatBodyFatRange(ref: BodyMatrixCellRef, fatLevel?: BodyAxisLevel): string {
   if (ref.bodyFatMax == null) return `${ref.bodyFatMin}%+`;
+  if (fatLevel === 0) return `≤${ref.bodyFatMax}%`;
   if (ref.bodyFatMin === ref.bodyFatMax) return `${ref.bodyFatMin}%`;
   return `${ref.bodyFatMin}–${ref.bodyFatMax}%`;
 }

@@ -495,7 +495,7 @@ function StepActivity({
     <View style={stepWrap}>
       <Heading size="2xl">{t('onboarding.activity.title')}</Heading>
       <Body tone="secondary">{t('onboarding.activity.subtitle')}</Body>
-      <Body size="sm" tone="secondary">{t('onboarding.activity.note')}</Body>
+      {!!t('onboarding.activity.note') && <Body size="sm" tone="secondary">{t('onboarding.activity.note')}</Body>}
       <View style={cardColBottom}>
         {ACTIVITY_LEVEL_OPTIONS.map((opt, i) => (
           <SelectCard
