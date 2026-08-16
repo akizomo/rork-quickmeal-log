@@ -529,14 +529,13 @@ function StepCurrentBody({
   onSelect: (cell: BodyType9) => void;
   onBodyFatChange: (v: string) => void;
 }) {
-  const t = useTheme();
+  const theme = useTheme();
+  const t = useT();
   const [bfEditOpen, setBfEditOpen] = useState<boolean>(bodyFatEdited);
   return (
     <View style={stepWrap}>
-      <Heading size="2xl">今の自分に近いのは？</Heading>
-      <Body tone="secondary">
-        脂肪と筋量の2軸で、いちばん近い体格を選んでください。選ぶと体脂肪率の目安が自動で入ります。
-      </Body>
+      <Heading size="2xl">{t('onboarding.currentBody.title')}</Heading>
+      <Body tone="secondary">{t('onboarding.currentBody.subtitle')}</Body>
       <BodyTypeMatrix
         basis={basis}
         heightCm={heightCm}
@@ -545,37 +544,37 @@ function StepCurrentBody({
         mode="current"
       />
       {selected ? (
-        <View style={{ marginTop: t.spacing['3'] }}>
+        <View style={{ marginTop: theme.spacing['3'] }}>
           {bfEditOpen ? (
             <View
               style={{
                 flexDirection: 'row',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                gap: t.spacing['3'],
+                gap: theme.spacing['3'],
               }}
             >
-              <Label>体脂肪率</Label>
+              <Label>{t('onboarding.currentBody.bodyFatLabel')}</Label>
               <View
                 style={{
                   flexDirection: 'row',
                   alignItems: 'center',
-                  gap: t.spacing['1'],
-                  backgroundColor: t.colors.surface.raised,
-                  borderRadius: t.radius.md,
-                  paddingHorizontal: t.spacing['3'],
-                  paddingVertical: t.spacing['2'],
+                  gap: theme.spacing['1'],
+                  backgroundColor: theme.colors.surface.raised,
+                  borderRadius: theme.radius.md,
+                  paddingHorizontal: theme.spacing['3'],
+                  paddingVertical: theme.spacing['2'],
                   minWidth: 120,
                   borderWidth: 1,
-                  borderColor: t.colors.border.interactive,
+                  borderColor: theme.colors.border.interactive,
                 }}
               >
                 <TextInput
                   style={{
                     flex: 1,
-                    fontSize: t.typography.fontSize.lg,
-                    color: t.colors.content.primary,
-                    fontWeight: t.typography.fontWeight.semibold as TextStyle['fontWeight'],
+                    fontSize: theme.typography.fontSize.lg,
+                    color: theme.colors.content.primary,
+                    fontWeight: theme.typography.fontWeight.semibold as TextStyle['fontWeight'],
                     textAlign: 'right',
                   }}
                   value={bodyFatPct}
@@ -597,27 +596,27 @@ function StepCurrentBody({
                 flexDirection: 'row',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                backgroundColor: pressed ? t.colors.surface.sunken : t.colors.surface.raised,
-                borderRadius: t.radius.md,
+                backgroundColor: pressed ? theme.colors.surface.sunken : theme.colors.surface.raised,
+                borderRadius: theme.radius.md,
                 borderWidth: 1,
-                borderColor: t.colors.border.interactive,
-                paddingVertical: t.spacing['3'],
-                paddingHorizontal: t.spacing['3'],
+                borderColor: theme.colors.border.interactive,
+                paddingVertical: theme.spacing['3'],
+                paddingHorizontal: theme.spacing['3'],
               })}
             >
               <Text
                 style={{
-                  fontSize: t.typography.fontSize.sm,
-                  color: t.colors.content.primary,
-                  fontWeight: t.typography.fontWeight.semibold as TextStyle['fontWeight'],
+                  fontSize: theme.typography.fontSize.sm,
+                  color: theme.colors.content.primary,
+                  fontWeight: theme.typography.fontWeight.semibold as TextStyle['fontWeight'],
                 }}
               >
-                体脂肪率:{' '}
+                {t('onboarding.currentBody.bodyFatLabel')}:{' '}
                 <Text
                   style={{
-                    fontSize: t.typography.fontSize.lg,
-                    fontWeight: t.typography.fontWeight.bold as TextStyle['fontWeight'],
-                    color: t.colors.action.primary.onContainer,
+                    fontSize: theme.typography.fontSize.lg,
+                    fontWeight: theme.typography.fontWeight.bold as TextStyle['fontWeight'],
+                    color: theme.colors.action.primary.onContainer,
                   }}
                 >
                   {bodyFatPct || '--'}%
@@ -625,20 +624,20 @@ function StepCurrentBody({
                 {bodyFatEdited ? null : (
                   <Text
                     style={{
-                      fontSize: t.typography.fontSize.xs,
-                      color: t.colors.content.tertiary,
-                      fontWeight: t.typography.fontWeight.medium as TextStyle['fontWeight'],
+                      fontSize: theme.typography.fontSize.xs,
+                      color: theme.colors.content.tertiary,
+                      fontWeight: theme.typography.fontWeight.medium as TextStyle['fontWeight'],
                     }}
                   >
-                    （目安）
+                    {t('onboarding.currentBody.approxNote')}
                   </Text>
                 )}
               </Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
                 <Label size="sm" tone="link">
-                  正確な値を入力
+                  {t('onboarding.currentBody.enterExact')}
                 </Label>
-                <Icon name="chevronRight" size={14} color={t.colors.action.text.default} />
+                <Icon name="chevronRight" size={14} color={theme.colors.action.text.default} />
               </View>
             </Pressable>
           )}
@@ -655,25 +654,21 @@ function StepDirection({
   direction: GoalDirection | null;
   onDirection: (d: GoalDirection) => void;
 }) {
-  const opts: { key: GoalDirection; label: string; hint: string }[] = [
-    { key: 'lose', label: '減らしたい', hint: '体重・体脂肪率を落とす' },
-    { key: 'maintain', label: '維持したい', hint: '今の体格をキープ' },
-    { key: 'recomp', label: '引き締めたい', hint: '体重はそのまま、脂肪を筋量に置き換える' },
-    { key: 'gain', label: '増やしたい', hint: '体重・筋量を増やす' },
-  ];
+  const t = useT();
+  const DIRECTION_KEYS: GoalDirection[] = ['lose', 'maintain', 'recomp', 'gain'];
   return (
     <View style={stepWrap}>
-      <Heading size="2xl">どう変わりたいですか？</Heading>
-      <Body tone="secondary">プランの提案に使います。あとから変更できます。</Body>
+      <Heading size="2xl">{t('onboarding.direction.title')}</Heading>
+      <Body tone="secondary">{t('onboarding.direction.subtitle')}</Body>
       <View style={cardColBottom}>
-        {opts.map((opt) => (
+        {DIRECTION_KEYS.map((key) => (
           <SelectCard
-            key={opt.key}
-            label={opt.label}
-            hint={opt.hint}
-            selected={direction === opt.key}
-            onPress={() => onDirection(opt.key)}
-            testID={`onboarding-direction-${opt.key}`}
+            key={key}
+            label={t(`onboarding.direction.${key}.label`)}
+            hint={t(`onboarding.direction.${key}.hint`)}
+            selected={direction === key}
+            onPress={() => onDirection(key)}
+            testID={`onboarding-direction-${key}`}
           />
         ))}
       </View>
@@ -698,13 +693,14 @@ function StepPlan({
   onPace: (p: PaceLevel) => void;
   recommendation: GoalRecommendation | null;
 }) {
-  const t = useTheme();
+  const theme = useTheme();
+  const t = useT();
 
   if (!direction) {
     return (
       <View style={stepWrap}>
-        <Heading size="2xl">プラン</Heading>
-        <Body tone="secondary">前のステップで目的を選んでください。</Body>
+        <Heading size="2xl">{t('onboarding.plan.maintainTitle')}</Heading>
+        <Body tone="secondary">{t('common.needsInput')}</Body>
       </View>
     );
   }
@@ -713,37 +709,31 @@ function StepPlan({
     if (!recommendation) {
       return (
         <View style={stepWrap}>
-          <Heading size="2xl">今の体格をキープするプラン</Heading>
-          <Body tone="secondary">前のステップの入力が必要です。</Body>
+          <Heading size="2xl">{t('onboarding.plan.maintainTitle')}</Heading>
+          <Body tone="secondary">{t('onboarding.plan.noData')}</Body>
         </View>
       );
     }
     return (
       <View style={stepWrap}>
-        <Heading size="2xl">今の体格をキープするプラン</Heading>
-        <Body tone="secondary">
-          ペース指定は不要です。現在の体格を維持する目安はこちらです。
-        </Body>
-        <Card variant="raised" style={{ gap: t.spacing['3'] }}>
-          <SummaryRow label="目標体重" value={`${recommendation.targetWeightKg.toFixed(1)} kg`} />
-          <SummaryRow label="目標体脂肪率" value={`${recommendation.targetBodyFatPct} %`} />
-          <View style={{ height: 1, backgroundColor: t.colors.border.subtle }} />
+        <Heading size="2xl">{t('onboarding.plan.maintainTitle')}</Heading>
+        <Body tone="secondary">{t('onboarding.plan.maintainNote')}</Body>
+        <Card variant="raised" style={{ gap: theme.spacing['3'] }}>
+          <SummaryRow label={t('onboarding.plan.targetWeight')} value={`${recommendation.targetWeightKg.toFixed(1)} kg`} />
+          <SummaryRow label={t('onboarding.plan.targetBodyFat')} value={`${recommendation.targetBodyFatPct} %`} />
+          <View style={{ height: 1, backgroundColor: theme.colors.border.subtle }} />
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Label tone="secondary">
-              1日の目標
-            </Label>
-            <Heading size="xl">
-              {recommendation.targetKcal} kcal
-            </Heading>
+            <Label tone="secondary">{t('onboarding.plan.dailyGoal')}</Label>
+            <Heading size="xl">{recommendation.targetKcal} kcal</Heading>
           </View>
           <PfcRow
-            t={t}
+            t={theme}
             protein={recommendation.proteinG}
             fat={recommendation.fatG}
             carbs={recommendation.carbsG}
           />
           {recommendation.note ? (
-            <Body size="sm" weight="semibold" style={{ color: t.colors.status.warning.default }}>
+            <Body size="sm" weight="semibold" style={{ color: theme.colors.status.warning.default }}>
               {recommendation.note}
             </Body>
           ) : null}
@@ -755,16 +745,16 @@ function StepPlan({
   if (!currentBodyType9 || !currentWeightKg) {
     return (
       <View style={stepWrap}>
-        <Heading size="2xl">プラン</Heading>
-        <Body tone="secondary">前のステップの入力が必要です。</Body>
+        <Heading size="2xl">{t('onboarding.plan.title')}</Heading>
+        <Body tone="secondary">{t('onboarding.plan.noData')}</Body>
       </View>
     );
   }
 
   return (
     <View style={stepWrap}>
-      <Heading size="2xl">3ヶ月後、どう変わりたい？</Heading>
-      <Body tone="secondary">選んだプランで kcal・PFC が決まります。</Body>
+      <Heading size="2xl">{t('onboarding.plan.title')}</Heading>
+      <Body tone="secondary">{t('onboarding.plan.subtitle')}</Body>
       <View style={cardColBottom}>
         {PACE_OPTIONS.map((opt) => {
           const active = paceLevel === opt.key;
@@ -774,8 +764,12 @@ function StepPlan({
           const absDelta = Math.abs(outcome.totalKgDelta).toFixed(1);
           const monthlyAbs = Math.abs(outcome.monthlyKgDelta).toFixed(1);
           const bfDelta =
-            currentBodyFatPct != null ? `体脂肪率 ${Math.round(currentBodyFatPct)}→${outcome.finalBodyFatPct}%` : null;
-          const reachHint = outcome.reachesTargetCell ? '体型が変わるペース' : '変化は小さめ';
+            currentBodyFatPct != null
+              ? t('onboarding.plan.bfChange', { from: Math.round(currentBodyFatPct), to: outcome.finalBodyFatPct })
+              : null;
+          const reachHint = outcome.reachesTargetCell
+            ? t('onboarding.plan.reachHint_yes')
+            : t('onboarding.plan.reachHint_no');
           const recommended = opt.key === 'standard';
 
           return (
@@ -786,37 +780,36 @@ function StepPlan({
               style={({ pressed }) => ({
                 flexDirection: 'row',
                 alignItems: 'center',
-                gap: t.spacing['3'],
-                paddingHorizontal: t.spacing['4'],
-                paddingVertical: t.spacing['4'],
-                borderRadius: t.radius.lg,
+                gap: theme.spacing['3'],
+                paddingHorizontal: theme.spacing['4'],
+                paddingVertical: theme.spacing['4'],
+                borderRadius: theme.radius.lg,
                 borderWidth: 2,
-                borderColor: active ? t.colors.border.selected : t.colors.border.interactive,
+                borderColor: active ? theme.colors.border.selected : theme.colors.border.interactive,
                 backgroundColor: active
-                  ? t.colors.action.primary.container
+                  ? theme.colors.action.primary.container
                   : pressed
-                    ? t.colors.surface.sunken
-                    : t.colors.surface.raised,
+                    ? theme.colors.surface.sunken
+                    : theme.colors.surface.raised,
               })}
             >
               <View style={{ width: 56, alignItems: 'center', justifyContent: 'center' }}>
                 <Icon
                   name={paceIcon}
                   size={28}
-                  color={active ? t.colors.action.primary.default : t.colors.content.tertiary}
+                  color={active ? theme.colors.action.primary.default : theme.colors.content.tertiary}
                 />
               </View>
-              <View style={{ flex: 1, gap: t.spacing['0.5'] }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.spacing['2'] }}>
+              <View style={{ flex: 1, gap: theme.spacing['0.5'] }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: theme.spacing['2'] }}>
                   <Heading size="lg" tone={active ? 'link' : 'primary'}>
-                    {opt.label}
+                    {t(`onboarding.plan.${opt.key}.label`)}
                   </Heading>
-                  {recommended ? <Badge tone="accent">おすすめ</Badge> : null}
+                  {recommended ? <Badge tone="accent">{t('common.recommended')}</Badge> : null}
                 </View>
                 <Body size="sm" weight="semibold">
-                  3ヶ月で {deltaSign}
-                  {absDelta}kg（月{deltaSign}
-                  {monthlyAbs}kg目安）
+                  {t('onboarding.plan.changeIn3mo', { sign: deltaSign, abs: absDelta })}
+                  {t('onboarding.plan.monthlyRate', { sign: deltaSign, monthly: monthlyAbs })}
                 </Body>
                 {bfDelta ? (
                   <Caption tone="secondary" weight="semibold">
@@ -833,28 +826,6 @@ function StepPlan({
   );
 }
 
-const MEAL_TIPS_BY_DIRECTION: Record<GoalDirection, string[]> = {
-  lose: [
-    'タンパク質を多めに — 筋量を守るため',
-    '野菜・食物繊維で満腹感を保つ',
-    '炭水化物はコントロールする目安で',
-  ],
-  maintain: [
-    'バランスよく、偏らないように',
-    'タンパク質は毎食コンスタントに',
-    '食べすぎ・食べなさすぎどちらも避ける',
-  ],
-  gain: [
-    'カロリー不足に注意、しっかり食べる',
-    'タンパク質も炭水化物もしっかり',
-    '食事回数を増やすのも有効',
-  ],
-  recomp: [
-    'タンパク質を最優先に — 毎食しっかり摂る',
-    'カロリーは維持カロリーを目安に',
-    '変化はゆっくり。体重より体型の変化を見る',
-  ],
-};
 
 function StepPreview({
   recommendation,
@@ -865,60 +836,58 @@ function StepPreview({
   direction: GoalDirection | null;
   paceLevel: PaceLevel | null;
 }) {
-  const t = useTheme();
+  const theme = useTheme();
+  const t = useT();
+  const tipsByDir = t('onboarding.tips', { returnObjects: true }) as Record<GoalDirection, string[]>;
   if (!recommendation) {
     return (
       <View style={stepWrap}>
-        <Heading size="2xl">おすすめの目標</Heading>
-        <Body tone="secondary">前のステップの入力が必要です。</Body>
+        <Heading size="2xl">{t('onboarding.preview.title')}</Heading>
+        <Body tone="secondary">{t('common.needsInput')}</Body>
       </View>
     );
   }
-  const tips = direction ? MEAL_TIPS_BY_DIRECTION[direction] : [];
-  const paceLabel = paceLevel ? PACE_OPTIONS.find((p) => p.key === paceLevel)?.label ?? null : null;
+  const tips = direction ? (tipsByDir[direction] ?? []) : [];
+  const paceLabel = paceLevel ? t(`onboarding.plan.${paceLevel}.label`) : null;
 
   return (
     <View style={stepWrap}>
-      <Heading size="2xl">この目標で進めます</Heading>
-      <Body tone="secondary">あとで My Status からいつでも変更できます。</Body>
+      <Heading size="2xl">{t('onboarding.preview.title')}</Heading>
+      <Body tone="secondary">{t('onboarding.preview.subtitle')}</Body>
 
-      <Card variant="raised" style={{ gap: t.spacing['3'] }}>
-        <SummaryRow label="目標体重" value={`${recommendation.targetWeightKg.toFixed(1)} kg`} />
-        <SummaryRow label="目標体脂肪率" value={`${recommendation.targetBodyFatPct} %`} />
-        <View style={{ height: 1, backgroundColor: t.colors.border.subtle }} />
+      <Card variant="raised" style={{ gap: theme.spacing['3'] }}>
+        <SummaryRow label={t('onboarding.preview.targetWeight')} value={`${recommendation.targetWeightKg.toFixed(1)} kg`} />
+        <SummaryRow label={t('onboarding.preview.targetBodyFat')} value={`${recommendation.targetBodyFatPct} %`} />
+        <View style={{ height: 1, backgroundColor: theme.colors.border.subtle }} />
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Label tone="secondary">
-            1日の目標
-          </Label>
-          <Heading size="xl">
-            {recommendation.targetKcal} kcal
-          </Heading>
+          <Label tone="secondary">{t('onboarding.preview.dailyGoal')}</Label>
+          <Heading size="xl">{recommendation.targetKcal} kcal</Heading>
         </View>
         <PfcRow
-          t={t}
+          t={theme}
           protein={recommendation.proteinG}
           fat={recommendation.fatG}
           carbs={recommendation.carbsG}
         />
         {paceLabel ? (
           <Body size="sm" tone="link" weight="semibold">
-            ペース: {paceLabel}
+            {t('onboarding.preview.paceLabel', { pace: paceLabel })}
           </Body>
         ) : null}
         {recommendation.note ? (
-          <Body size="sm" weight="semibold" style={{ color: t.colors.status.warning.default }}>
+          <Body size="sm" weight="semibold" style={{ color: theme.colors.status.warning.default }}>
             {recommendation.note}
           </Body>
         ) : null}
       </Card>
 
       {tips.length ? (
-        <Card variant="raised" style={{ gap: t.spacing['2'] }}>
-          <Label>食事のコツ</Label>
+        <Card variant="raised" style={{ gap: theme.spacing['2'] }}>
+          <Label>{t('onboarding.preview.tips')}</Label>
           {tips.map((tip, i) => (
             <View
               key={i}
-              style={{ flexDirection: 'row', gap: t.spacing['2'], alignItems: 'flex-start' }}
+              style={{ flexDirection: 'row', gap: theme.spacing['2'], alignItems: 'flex-start' }}
             >
               <View
                 style={{
@@ -929,7 +898,7 @@ function StepPreview({
                   // アクション色(action.primary)はインタラクティブ要素専用。
                   // このチェックマークは「達成/良い」を示す状態表示なので
                   // status.successを使う (2026-08-07指摘)。
-                  backgroundColor: t.colors.status.success.default,
+                  backgroundColor: theme.colors.status.success.default,
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}

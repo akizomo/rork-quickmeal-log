@@ -8,6 +8,7 @@ import { PACE_OPTIONS } from '@/constants/onboarding';
 import { Body, Button, Caption, Card, Heading, Icon, Label, MacroCard, Overline, useTheme } from '@/design-system';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { useAppState } from '@/providers/app-state-provider';
+import { useT } from '@/hooks/useT';
 import { BodyType9, GoalDirection, PaceLevel } from '@/types/nutrition';
 import {
   bmiFromWeight,
@@ -15,22 +16,22 @@ import {
   classifyTargetWeight,
   deriveDirectionFromWeights,
   estimateMonthsToTarget,
-  formatGoalDuration,
   projectBodyFatAtWeight,
   recommendGoal,
 } from '@/utils/goals';
 
-const DIRECTION_OPTIONS: { key: GoalDirection; label: string }[] = [
-  { key: 'lose', label: '減らす' },
-  { key: 'maintain', label: '維持' },
-  { key: 'recomp', label: '引き締め' },
-  { key: 'gain', label: '増やす' },
-];
-
 export default function GoalEditRoute() {
   const router = useRouter();
   const theme = useTheme();
+  const t = useT();
   const { profile, updateProfileValues } = useAppState();
+
+  const DIRECTION_OPTIONS: { key: GoalDirection; label: string }[] = [
+    { key: 'lose', label: t('goalEdit.direction.lose') },
+    { key: 'maintain', label: t('goalEdit.direction.maintain') },
+    { key: 'recomp', label: t('goalEdit.direction.recomp') },
+    { key: 'gain', label: t('goalEdit.direction.gain') },
+  ];
 
   const [direction, setDirection] = useState<GoalDirection | null>(profile.goalDirection ?? null);
   const [paceLevel, setPaceLevel] = useState<PaceLevel | null>(profile.paceLevel ?? null);
@@ -254,16 +255,21 @@ export default function GoalEditRoute() {
 
   // 現在→目標の差分 (1行に集約)。おまかせ・自分で決める・変更前の3状態すべてで
   // 同じ情報を出す — 手動時だけ出す理由はなく非対称だったため揃えた。
+  const formatDuration = useCallback((months: number): string => {
+    if (months >= 12) return t('goalEdit.duration.overYear');
+    if (months < 1) return t('goalEdit.duration.weeks', { n: Math.max(1, Math.round(months * 4.345)) });
+    return t('goalEdit.duration.months', { n: Math.round(months * 2) / 2 });
+  }, [t]);
+
   const deltaKg =
     currentWeightKg != null && card?.targetWeightKg != null ? card.targetWeightKg - currentWeightKg : null;
   const deltaLine =
     deltaKg == null
       ? null
       : Math.abs(deltaKg) < 0.05
-        ? '現在の体重を維持します'
-        : `${deltaKg < 0 ? '−' : '＋'}${Math.abs(deltaKg).toFixed(1)} kg${
-            etaMonths != null ? `・${formatGoalDuration(etaMonths)}の見込み` : ''
-          }`;
+        ? t('goalEdit.delta.maintain')
+        : t('goalEdit.delta.change', { sign: deltaKg < 0 ? '−' : '＋', abs: Math.abs(deltaKg).toFixed(1) }) +
+          (etaMonths != null ? t('goalEdit.delta.eta', { duration: formatDuration(etaMonths) }) : '');
   // 体重の警告 (自分で決めた時のみ; 方向依存で「行き過ぎ」側しか出ない)。
   const previewTargetKg = preview?.targetWeightKg ?? null;
   let warnText: string | null = null;
@@ -271,10 +277,10 @@ export default function GoalEditRoute() {
   if (showPreview && previewTargetKg != null && profile.heightCm) {
     const bmi = Math.round(bmiFromWeight(previewTargetKg, profile.heightCm) * 10) / 10;
     if (guardVerdict === 'hard') {
-      warnText = '健康的な目安を大きく下回るため、この値では設定できません';
+      warnText = t('goalEdit.warn.weightHard');
       warnColor = theme.colors.status.danger.default;
     } else if (guardVerdict === 'soft') {
-      warnText = `標準的な体重の目安から外れています（BMI ${bmi}）`;
+      warnText = t('goalEdit.warn.weightSoft', { bmi });
     }
   }
 
@@ -283,12 +289,12 @@ export default function GoalEditRoute() {
   let bfWarnColor = theme.colors.status.warning.default;
   if (showPreview) {
     if (bfVerdict === 'hard') {
-      bfWarnText = '体を保つのに必要な水準を下回るため、この値では設定できません';
+      bfWarnText = t('goalEdit.warn.bfHard');
       bfWarnColor = theme.colors.status.danger.default;
     } else if (bfVerdict === 'soft-low') {
-      bfWarnText = 'アスリート並みの水準です。維持には専門的な管理が必要になります';
+      bfWarnText = t('goalEdit.warn.bfSoftLow');
     } else if (bfVerdict === 'soft-high') {
-      bfWarnText = '標準的な目安より高めです';
+      bfWarnText = t('goalEdit.warn.bfSoftHigh');
     }
   }
 

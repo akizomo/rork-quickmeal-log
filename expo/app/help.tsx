@@ -25,6 +25,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { HelpInfographic } from '@/components/help/HelpInfographic';
 import { FrequentTabIllustration, GestureDemoIllustration } from '@/components/onboarding-illustrations';
 import { Body, Heading, Icon, useTheme } from '@/design-system';
+import { useT } from '@/hooks/useT';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { duration, easing } from '@/design-system/tokens/primitives/motion';
 import type { BucketKey } from '@/types/identity';
@@ -66,9 +67,12 @@ const MD3_ACCELERATE = Easing.bezier(0.3, 0, 0.8, 0.15);   // screen exit
 
 export default function HelpRoute() {
   const [step, setStep] = useState(0);
-  const t = useTheme();
+  const theme = useTheme();
+  const tr = useT();
   const router = useRouter();
-  const isLast = step === STEPS.length - 1;
+  const stepTitles: string[] = tr('help.steps', { returnObjects: true }) ?? [];
+  const steps = STEP_KEYS.map((key, i) => ({ key, title: stepTitles[i] ?? key }));
+  const isLast = step === steps.length - 1;
   const fadeAnim    = useRef(new Animated.Value(1)).current;
   const slideAnim   = useRef(new Animated.Value(0)).current;
   const stepRef     = useRef(step);
@@ -80,7 +84,7 @@ export default function HelpRoute() {
       onMoveShouldSetPanResponder: (_, { dx, dy }) =>
         Math.abs(dx) > Math.abs(dy) * 1.5 && Math.abs(dx) > 12,
       onPanResponderRelease: (_, { dx }) => {
-        if (dx < -50 && stepRef.current < STEPS.length - 1) {
+        if (dx < -50 && stepRef.current < STEP_KEYS.length - 1) {
           goTo(stepRef.current + 1);
         } else if (dx > 50 && stepRef.current > 0) {
           goTo(stepRef.current - 1);
@@ -137,13 +141,13 @@ export default function HelpRoute() {
     <>
       <Stack.Screen
         options={{
-          title: 'Hachibu の使い方',
-          headerStyle: { backgroundColor: t.colors.surface.default },
-          headerTintColor: t.colors.content.primary,
+          title: tr('nav.help'),
+          headerStyle: { backgroundColor: theme.colors.surface.default },
+          headerTintColor: theme.colors.content.primary,
           headerShadowVisible: false,
         }}
       />
-      <View style={[styles.page, { backgroundColor: t.colors.surface.default }]}>
+      <View style={[styles.page, { backgroundColor: theme.colors.surface.default }]}>
         <SafeAreaView edges={['bottom']} style={{ flex: 1 }}>
           {/* ステップコンテンツ (スワイプで切替) */}
           <Animated.View
@@ -154,14 +158,14 @@ export default function HelpRoute() {
               contentContainerStyle={styles.scroll}
               testID="help-screen"
             >
-              <Heading style={styles.h2}>{STEPS[step].title}</Heading>
-              <StepContent stepKey={STEPS[step].key} />
+              <Heading style={styles.h2}>{steps[step].title}</Heading>
+              <StepContent stepKey={steps[step].key} />
               <View style={{ height: 24 }} />
             </ScrollView>
           </Animated.View>
 
           {/* ナビゲーション (固定フッター) */}
-          <View style={[styles.navBar, { borderTopColor: t.colors.border.subtle, backgroundColor: t.colors.surface.default }]}>
+          <View style={[styles.navBar, { borderTopColor: theme.colors.border.subtle, backgroundColor: theme.colors.surface.default }]}>
             <View style={styles.navButtons}>
               <Pressable
                 onPress={() => goTo(step - 1)}
@@ -169,27 +173,27 @@ export default function HelpRoute() {
                 style={[
                   styles.navBtn,
                   styles.navBtnSecondary,
-                  { borderColor: t.colors.border.default, opacity: step === 0 ? 0.3 : 1 },
+                  { borderColor: theme.colors.border.default, opacity: step === 0 ? 0.3 : 1 },
                 ]}
               >
-                <Body style={{ color: t.colors.content.secondary }}>前へ</Body>
+                <Body style={{ color: theme.colors.content.secondary }}>{tr('help.nav.prev')}</Body>
               </Pressable>
               <Pressable
                 onPress={isLast ? () => router.back() : () => goTo(step + 1)}
                 style={[
                   styles.navBtn,
                   styles.navBtnPrimary,
-                  { backgroundColor: t.colors.action.primary.default },
+                  { backgroundColor: theme.colors.action.primary.default },
                 ]}
               >
-                <Body style={{ color: t.colors.content.onAction }}>
-                  {isLast ? 'とじる' : '次へ'}
+                <Body style={{ color: theme.colors.content.onAction }}>
+                  {isLast ? tr('help.nav.close') : tr('help.nav.next')}
                 </Body>
               </Pressable>
             </View>
 
             {/* ドットインジケーター (フッター下部) */}
-            <StepIndicator total={STEPS.length} current={step} />
+            <StepIndicator total={steps.length} current={step} />
           </View>
         </SafeAreaView>
       </View>
@@ -201,13 +205,7 @@ export default function HelpRoute() {
 // Sub-components
 // ---------------------------------------------------------------------------
 
-const STEPS: { title: string; key: string }[] = [
-  { title: '操作の基本',             key: 'gestures'     },
-  { title: '食材ボタンの中身',       key: 'ingredients'  },
-  { title: '料理ボタンの中身',       key: 'dishes'       },
-  { title: 'もっと、あなたに合わせて', key: 'future'      },
-  { title: 'よくある質問',           key: 'faq'          },
-];
+const STEP_KEYS = ['gestures', 'ingredients', 'dishes', 'future', 'faq'] as const;
 
 function StepIndicator({ total, current }: { total: number; current: number }) {
   const t = useTheme();

@@ -24,6 +24,7 @@ import { Logo } from '@/components/Logo';
 import { ButtonGridIllustration, GestureDemoIllustration } from '@/components/onboarding-illustrations';
 import { INTRO_VERSION, LEGAL_LINKS } from '@/constants/onboarding';
 import { Label, useTheme, type Theme } from '@/design-system';
+import { useT } from '@/hooks/useT';
 import { colors } from '@/design-system/tokens/primitives/colors';
 import { radius } from '@/design-system/tokens/primitives/radius';
 import { fontSize as fs, letterSpacing as ls } from '@/design-system/tokens/primitives/typography';
@@ -41,25 +42,10 @@ interface Slide {
   media: SlideMedia;
 }
 
-const SLIDES: Slide[] = [
-  {
-    key: 's1',
-    title: '9ボタンで、ざっくり記録',
-    subtitle: 'ふだんの食事は、タップひとつで残せる。',
-    media: { kind: 'buttonGrid' },
-  },
-  {
-    key: 's2',
-    title: '急ぎはタップ、余裕は長押し',
-    subtitle: 'くわしく残したい日は、もう一歩ふみこめる。',
-    media: { kind: 'gestureDemo' },
-  },
-  {
-    key: 's3',
-    title: '進みは、ひと目で',
-    subtitle: '目標と今の差が、グラフでそのまま見える。',
-    media: { kind: 'progress' },
-  },
+const SLIDE_META: { key: string; media: SlideMedia }[] = [
+  { key: 's1', media: { kind: 'buttonGrid' } },
+  { key: 's2', media: { kind: 'gestureDemo' } },
+  { key: 's3', media: { kind: 'progress' } },
 ];
 
 // ── Intro 専用 進捗イラスト ───────────────────────────────────
@@ -67,6 +53,8 @@ const SLIDES: Slide[] = [
 // intro 以外で再利用する見込みが無いため、ローカル定義。
 function IntroProgressIllustration() {
   const t = useTheme();
+  const tr = useT();
+  const axisLabels: string[] = tr('intro.progress.axis', { returnObjects: true }) ?? ['', '', ''];
   const illustColors = {
     protein: t.colors.nutrition.protein.graphic,
     fat: t.colors.nutrition.fat.graphic,
@@ -123,8 +111,8 @@ function IntroProgressIllustration() {
       {/* Card 2 — 体重トレンド */}
       <View style={[illustStyles.card, illustStyles.cardSpark]}>
         <View style={illustStyles.sparkHeader}>
-          <Text style={illustStyles.sparkLabel}>体重 ・ 12週</Text>
-          <Text style={illustStyles.sparkDelta}>-2.3kg</Text>
+          <Text style={illustStyles.sparkLabel}>{tr('intro.progress.label')}</Text>
+          <Text style={illustStyles.sparkDelta}>{tr('intro.progress.delta')}</Text>
         </View>
         <Svg
           width="100%"
@@ -153,9 +141,9 @@ function IntroProgressIllustration() {
           <Circle cx={220} cy={46} r={3.5} fill={t.colors.action.primary.default} />
         </Svg>
         <View style={illustStyles.sparkAxis}>
-          <Text style={illustStyles.sparkAxisText}>1月</Text>
-          <Text style={illustStyles.sparkAxisText}>3月</Text>
-          <Text style={illustStyles.sparkAxisText}>目標</Text>
+          {axisLabels.map((label, i) => (
+            <Text key={i} style={illustStyles.sparkAxisText}>{label}</Text>
+          ))}
         </View>
       </View>
 
@@ -184,12 +172,19 @@ function IntroProgressIllustration() {
 export default function IntroRoute() {
   const router = useRouter();
   const t = useTheme();
+  const tr = useT();
   const styles = useMemo(() => makeStyles(t), [t]);
   const slideAccentMap = useMemo<Record<string, string>>(() => ({
     s1: t.colors.surface.raised,           // neutral: light=ivory[50], dark=#2B2620
     s2: t.colors.action.primary.container, // sage: light=sage[100], dark=sage[900]
     s3: t.colors.accent.subtle,            // ai: light=ai[100], dark=ai[900]
   }), [t]);
+  const slideTexts: { title: string; subtitle: string }[] = tr('intro.slides', { returnObjects: true }) ?? [];
+  const slides: Slide[] = SLIDE_META.map((meta, i) => ({
+    ...meta,
+    title: slideTexts[i]?.title ?? meta.key,
+    subtitle: slideTexts[i]?.subtitle ?? '',
+  }));
   const { markIntroSeen } = useAppState();
   const [index, setIndex] = useState<number>(0);
   const [listHeight, setListHeight] = useState<number>(0);
@@ -204,13 +199,13 @@ export default function IntroRoute() {
   }).current;
 
   const goNext = useCallback(() => {
-    if (index < SLIDES.length - 1) {
+    if (index < slides.length - 1) {
       listRef.current?.scrollToIndex({ index: index + 1, animated: true });
       return;
     }
     markIntroSeen(INTRO_VERSION);
     router.replace('/onboarding');
-  }, [index, markIntroSeen, router]);
+  }, [index, slides.length, markIntroSeen, router]);
 
   const skip = useCallback(() => {
     markIntroSeen(INTRO_VERSION);
@@ -238,17 +233,17 @@ export default function IntroRoute() {
               testID="intro-skip"
               hitSlop={8}
               accessibilityRole="button"
-              accessibilityLabel="紹介をスキップ"
-              accessibilityHint="オンボーディングへ進みます"
+              accessibilityLabel={tr('intro.a11y.skip')}
+              accessibilityHint={tr('intro.a11y.skipHint')}
             >
-              <Label size="sm" tone="link">スキップ</Label>
+              <Label size="sm" tone="link">{tr('intro.skip')}</Label>
             </Pressable>
           </View>
 
           {/* SLIDES */}
           <FlatList
             ref={listRef}
-            data={SLIDES}
+            data={slides}
             keyExtractor={(item) => item.key}
             horizontal
             pagingEnabled
@@ -294,7 +289,7 @@ export default function IntroRoute() {
           {/* FOOTER */}
           <View style={styles.footer}>
             <View style={styles.dots}>
-              {SLIDES.map((_, i) => (
+              {slides.map((_, i) => (
                 <View key={i} style={[styles.dot, i === index ? styles.dotActive : null]} />
               ))}
             </View>
@@ -303,19 +298,19 @@ export default function IntroRoute() {
               onPress={goNext}
               testID="intro-cta"
               accessibilityRole="button"
-              accessibilityLabel={index < SLIDES.length - 1 ? '次のスライドへ' : 'はじめる'}
+              accessibilityLabel={index < slides.length - 1 ? tr('intro.a11y.next') : tr('intro.start')}
             >
               <Text style={styles.ctaText}>
-                {index < SLIDES.length - 1 ? '次へ' : 'はじめる'}
+                {index < slides.length - 1 ? tr('intro.next') : tr('intro.start')}
               </Text>
             </Pressable>
             <View style={styles.legalRow}>
               <Pressable onPress={() => openLegal(LEGAL_LINKS.terms)}>
-                <Text style={styles.legalLink}>利用規約</Text>
+                <Text style={styles.legalLink}>{tr('nav.terms')}</Text>
               </Pressable>
               <Text style={styles.legalSep}>·</Text>
               <Pressable onPress={() => openLegal(LEGAL_LINKS.privacy)}>
-                <Text style={styles.legalLink}>プライバシーポリシー</Text>
+                <Text style={styles.legalLink}>{tr('nav.privacy')}</Text>
               </Pressable>
             </View>
           </View>

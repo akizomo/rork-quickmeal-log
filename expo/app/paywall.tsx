@@ -12,6 +12,7 @@ import { colors } from '@/design-system/tokens/primitives/colors';
 import { radius } from '@/design-system/tokens/primitives/radius';
 import { fontSize as fs, lineHeight as lh } from '@/design-system/tokens/primitives/typography';
 import { useAppState } from '@/providers/app-state-provider';
+import { useT } from '@/hooks/useT';
 import { fetchOffering, purchase } from '@/utils/iap';
 import {
   cancelTrialExpiryNotification,
@@ -19,18 +20,13 @@ import {
   scheduleTrialExpiryNotification,
 } from '@/utils/trial-notifications';
 
-const BENEFITS = [
-  '食材・一皿料理の両方を最短で記録',
-  'P/F/C と目標カロリーの日次フィードバック',
-  '体重と体脂肪率の静かな変化を追う',
-  'あなた向けに最適化されたQuick Log',
-];
-
 export default function PaywallRoute() {
   const router = useRouter();
   const t = useTheme();
+  const tr = useT();
   const styles = useMemo(() => makeStyles(t), [t]);
   const { restorePurchase, markPaywallSeen, completePurchase, settings, updateSettingsValues } = useAppState();
+  const benefits: string[] = tr('paywall.benefits', { returnObjects: true }) ?? [];
 
   const [offering, setOffering] = useState<PurchasesOffering | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -60,9 +56,6 @@ export default function PaywallRoute() {
       setPurchasing(pkg.identifier);
       try {
         const info = await purchase(pkg);
-        // info が non-null = RevenueCat が購入を受け付けた証拠。
-        // entitlement はサーバー処理遅延で即座に反映されないことがあるため
-        // エンタイトルメントチェックを購入成功の判定には使わない。
         if (info) {
           // subscriptionStatus を即座に更新してからナビゲート (タイミング問題を防ぐ)
           completePurchase(info);
@@ -77,7 +70,7 @@ export default function PaywallRoute() {
         }
       } catch (e: unknown) {
         const err = e as { message?: string };
-        Alert.alert('購入に失敗しました', err.message ?? '時間をおいて再度お試しください。');
+        Alert.alert(tr('paywall.alerts.purchaseError'), err.message ?? tr('paywall.alerts.purchaseErrorRetry'));
       } finally {
         setPurchasing(null);
       }
@@ -89,12 +82,10 @@ export default function PaywallRoute() {
     const restored = await restorePurchase();
     if (restored) {
       markPaywallSeen();
-      // 復元成功 = 既に課金済 or トライアル中。残期間中の通知をキャンセル。
-      // (本登録に切り替わっている場合は不要、トライアル復元なら既にスケジュール済)
       await cancelTrialExpiryNotification();
       router.replace('/');
     } else {
-      Alert.alert('復元できる購入が見つかりません', 'Apple IDかGoogleアカウントをご確認ください。');
+      Alert.alert(tr('paywall.alerts.restoreFail'), tr('paywall.alerts.restoreFailBody'));
     }
   }, [restorePurchase, markPaywallSeen, router]);
 
@@ -118,14 +109,12 @@ export default function PaywallRoute() {
           <View style={styles.closeRow} />
 
           <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-            <Badge tone="accent" size="md">{TRIAL_DAYS}日間無料</Badge>
-            <Text style={styles.title}>静かに続けられる{`\n`}食事記録を</Text>
-            <Text style={styles.subtitle}>
-              まずは{TRIAL_DAYS}日間無料で。その後は月額または年額プランで継続できます。
-            </Text>
+            <Badge tone="accent" size="md">{tr('paywall.badge', { days: TRIAL_DAYS })}</Badge>
+            <Text style={styles.title}>{tr('paywall.title')}</Text>
+            <Text style={styles.subtitle}>{tr('paywall.subtitle', { days: TRIAL_DAYS })}</Text>
 
             <View style={styles.benefitsCard}>
-              {BENEFITS.map((b) => (
+              {benefits.map((b) => (
                 <View key={b} style={styles.benefitRow}>
                   <View style={styles.checkDot}>
                     <Icon name="check" size={14} color={colors.stone[900]} />
@@ -139,20 +128,20 @@ export default function PaywallRoute() {
             {loading ? (
               <View style={styles.loadingBox}>
                 <ActivityIndicator color={t.colors.action.text.default} />
-                <Text style={styles.priceSub}>プランを読み込み中…</Text>
+                <Text style={styles.priceSub}>{tr('paywall.loading')}</Text>
               </View>
             ) : !offering ? (
               <View style={styles.loadingBox}>
-                <Text style={styles.priceSub}>プランを取得できませんでした</Text>
-                <Text style={styles.priceHint}>App Store / Google Play で IAP プロダクトの設定を完了してください。</Text>
+                <Text style={styles.priceSub}>{tr('paywall.loadError')}</Text>
+                <Text style={styles.priceHint}>{tr('paywall.iapSetupHint')}</Text>
               </View>
             ) : (
               <View style={{ gap: 12 }}>
                 {annualPkg ? (
                   <PlanCard
                     pkg={annualPkg}
-                    label="年額プラン"
-                    badgeLabel="お得"
+                    label={tr('paywall.annual')}
+                    badgeLabel={tr('paywall.discount')}
                     isPurchasing={purchasing === annualPkg.identifier}
                     disabled={!!purchasing || isTrialOrActive}
                     onPress={() => handlePurchase(annualPkg)}
@@ -161,7 +150,7 @@ export default function PaywallRoute() {
                 {monthlyPkg ? (
                   <PlanCard
                     pkg={monthlyPkg}
-                    label="月額プラン"
+                    label={tr('paywall.monthly')}
                     isPurchasing={purchasing === monthlyPkg.identifier}
                     disabled={!!purchasing || isTrialOrActive}
                     onPress={() => handlePurchase(monthlyPkg)}
@@ -170,9 +159,7 @@ export default function PaywallRoute() {
               </View>
             )}
 
-            <Text style={styles.priceHint}>
-              {TRIAL_DAYS}日間の無料期間終了後に自動で課金が始まります。いつでも解約できます。
-            </Text>
+            <Text style={styles.priceHint}>{tr('paywall.priceHint', { days: TRIAL_DAYS })}</Text>
           </ScrollView>
 
           <View style={styles.footer}>
@@ -194,18 +181,18 @@ export default function PaywallRoute() {
                 onPress={handleRestore}
                 testID="paywall-restore"
                 accessibilityRole="button"
-                accessibilityLabel="購入を復元"
+                accessibilityLabel={tr('paywall.restore')}
               >
-                <Label size="sm" tone="link">購入を復元</Label>
+                <Label size="sm" tone="link">{tr('paywall.restore')}</Label>
               </Pressable>
             </View>
             <View style={styles.legalRow}>
               <Pressable onPress={() => openLegal(LEGAL_LINKS.terms)}>
-                <Body size="sm" tone="link" style={{ textDecorationLine: 'underline' }}>利用規約</Body>
+                <Body size="sm" tone="link" style={{ textDecorationLine: 'underline' }}>{tr('nav.terms')}</Body>
               </Pressable>
               <Body size="sm" tone="secondary">·</Body>
               <Pressable onPress={() => openLegal(LEGAL_LINKS.privacy)}>
-                <Body size="sm" tone="link" style={{ textDecorationLine: 'underline' }}>プライバシーポリシー</Body>
+                <Body size="sm" tone="link" style={{ textDecorationLine: 'underline' }}>{tr('nav.privacy')}</Body>
               </Pressable>
             </View>
           </View>
@@ -231,6 +218,7 @@ function PlanCard({
   onPress: () => void;
 }) {
   const t = useTheme();
+  const tr = useT();
   const styles = useMemo(() => makeStyles(t), [t]);
   const product = pkg.product;
   return (
@@ -244,7 +232,7 @@ function PlanCard({
       testID={`paywall-plan-${pkg.packageType}`}
       accessibilityRole="button"
       accessibilityLabel={`${label} ${product.priceString}`}
-      accessibilityHint="このプランで購入手続きを開始します"
+      accessibilityHint={tr('paywall.a11y.purchaseHint')}
       accessibilityState={{ disabled, busy: isPurchasing }}
     >
       <View style={{ flex: 1 }}>
@@ -260,7 +248,7 @@ function PlanCard({
         <ActivityIndicator color={t.colors.action.text.default} />
       ) : (
         <View style={styles.ctaPill}>
-          <Text style={styles.ctaPillText}>選ぶ</Text>
+          <Text style={styles.ctaPillText}>{tr('paywall.select')}</Text>
         </View>
       )}
     </Pressable>
