@@ -8,10 +8,12 @@ import { LEGAL_LINKS, TRIAL_DURATION_DAYS } from '@/constants/onboarding';
 import { Body, Caption, Card, Label, useTheme } from '@/design-system';
 import { useAppState } from '@/providers/app-state-provider';
 import { getEffectiveSubscriptionStatus, trialDaysRemaining } from '@/utils/goals';
+import { useT } from '@/hooks/useT';
 
 export default function SubscriptionRoute() {
   const router = useRouter();
   const theme = useTheme();
+  const t = useT();
   const { settings, restorePurchase } = useAppState();
 
   const trialDays = trialDaysRemaining(settings.trialStartedAtISO, TRIAL_DURATION_DAYS);
@@ -19,17 +21,17 @@ export default function SubscriptionRoute() {
 
   const statusLabel =
     status === 'trialing'
-      ? '無料トライアル中'
+      ? t('subscription.statusLabel.trialing')
       : status === 'active'
-      ? '有効'
-      : '未加入';
+      ? t('subscription.statusLabel.active')
+      : t('subscription.statusLabel.inactive');
 
   const statusSub =
     status === 'trialing'
-      ? `残り ${trialDays} 日 · 終了2日前にお知らせします`
+      ? t('subscription.statusSub.trialing', { days: trialDays })
       : status === 'active'
-      ? '自動更新が有効です'
-      : 'プランを購入してフル機能を解放できます';
+      ? t('subscription.statusSub.active')
+      : t('subscription.statusSub.inactive');
 
   // トライアル終了日 (表示用)
   const trialEndDate =
@@ -40,15 +42,17 @@ export default function SubscriptionRoute() {
         )
       : null;
   const trialEndLabel = trialEndDate
-    ? `${trialEndDate.getMonth() + 1}月${trialEndDate.getDate()}日 (${trialDays}日後)`
+    ? t('subscription.trialEndDate', {
+        date: `${trialEndDate.getMonth() + 1}/${trialEndDate.getDate()} (${trialDays}d)`,
+      })
     : null;
 
   const handleRestore = async () => {
     const restored = await restorePurchase();
     if (restored) {
-      Alert.alert('購入を復元しました', 'プレミアム機能をご利用いただけます。');
+      Alert.alert(t('subscription.alerts.restoreSuccess'), t('subscription.alerts.restoreSuccessBody'));
     } else {
-      Alert.alert('復元できる購入が見つかりません', 'Apple ID か Google アカウントをご確認ください。');
+      Alert.alert(t('subscription.alerts.restoreFail'), t('subscription.alerts.restoreFailBody'));
     }
   };
 
@@ -62,7 +66,7 @@ export default function SubscriptionRoute() {
     <>
       <Stack.Screen
         options={{
-          title: 'サブスクリプション',
+          title: t('nav.subscription'),
           headerStyle: { backgroundColor: theme.colors.surface.default },
           headerTintColor: theme.colors.content.primary,
           headerShadowVisible: false,
@@ -74,7 +78,7 @@ export default function SubscriptionRoute() {
 
             {/* §現在のステータス */}
             <View style={styles.section}>
-              <SettingsSectionLabel>現在のステータス</SettingsSectionLabel>
+              <SettingsSectionLabel>{t('subscription.sections.status')}</SettingsSectionLabel>
               <Card
                 variant="raised"
                 style={{
@@ -95,8 +99,7 @@ export default function SubscriptionRoute() {
                 ) : null}
                 {status === 'trialing' && trialDays > 0 ? (
                   <Body size="sm" tone="secondary" style={{ marginTop: 4 }}>
-                    本登録後は月額¥480 または 年額¥4,800 で自動更新されます。
-                    解約は Google Play のサブスクリプション設定からいつでも可能です。
+                    {t('subscription.trialBody')}
                   </Body>
                 ) : null}
               </Card>
@@ -104,12 +107,14 @@ export default function SubscriptionRoute() {
 
             {/* §プラン操作 */}
             <View style={styles.section}>
-              <SettingsSectionLabel>プラン</SettingsSectionLabel>
+              <SettingsSectionLabel>{t('subscription.sections.plan')}</SettingsSectionLabel>
               <SettingsListCard>
                 {status !== 'active' ? (
                   <>
                     <SettingsLinkRow
-                      label={status === 'trialing' ? 'プランを選択する' : '購入してプレミアムを開始'}
+                      label={status === 'trialing'
+                        ? t('subscription.planActions.selectTrialing')
+                        : t('subscription.planActions.buyInactive')}
                       onPress={() => router.push('/paywall')}
                       testID="subscription-link-paywall"
                     />
@@ -117,14 +122,14 @@ export default function SubscriptionRoute() {
                   </>
                 ) : null}
                 <SettingsLinkRow
-                  label="購入を復元"
+                  label={t('subscription.planActions.restore')}
                   onPress={handleRestore}
                   testID="subscription-link-restore"
                 />
                 <SettingsDivider />
                 <SettingsLinkRow
-                  label="サブスクリプションを管理"
-                  sub="App Store のサブスクリプション設定を開きます"
+                  label={t('subscription.planActions.manage')}
+                  sub={t('subscription.planActions.manageSub')}
                   onPress={openManage}
                   testID="subscription-link-manage"
                 />

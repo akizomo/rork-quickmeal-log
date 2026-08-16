@@ -8,9 +8,11 @@ import { Logo } from '@/components/Logo';
 import { SettingsDivider, SettingsLinkRow, SettingsListCard, SettingsSectionLabel } from '@/design-system';
 import { LEGAL_LINKS } from '@/constants/onboarding';
 import { Body, Caption, useTheme } from '@/design-system';
+import { useT } from '@/hooks/useT';
 
 export default function AboutRoute() {
   const theme = useTheme();
+  const t = useT();
 
   const openLink = (url: string) => {
     Linking.openURL(url).catch((e) => console.warn('[about] failed to open legal URL', e));
@@ -26,7 +28,7 @@ export default function AboutRoute() {
     <>
       <Stack.Screen
         options={{
-          title: 'アプリについて',
+          title: t('nav.about'),
           headerStyle: { backgroundColor: theme.colors.surface.default },
           headerTintColor: theme.colors.content.primary,
           headerShadowVisible: false,
@@ -45,16 +47,16 @@ export default function AboutRoute() {
 
             {/* §法的情報 */}
             <View style={styles.section}>
-              <SettingsSectionLabel>法的情報</SettingsSectionLabel>
+              <SettingsSectionLabel>{t('about.legal')}</SettingsSectionLabel>
               <SettingsListCard>
                 <SettingsLinkRow
-                  label="利用規約"
+                  label={t('nav.terms')}
                   onPress={() => openLink(LEGAL_LINKS.terms)}
                   testID="about-link-terms"
                 />
                 <SettingsDivider />
                 <SettingsLinkRow
-                  label="プライバシーポリシー"
+                  label={t('nav.privacy')}
                   onPress={() => openLink(LEGAL_LINKS.privacy)}
                   testID="about-link-privacy"
                 />
@@ -63,10 +65,10 @@ export default function AboutRoute() {
 
             {/* §バージョン */}
             <View style={styles.section}>
-              <SettingsSectionLabel>バージョン</SettingsSectionLabel>
+              <SettingsSectionLabel>{t('about.version')}</SettingsSectionLabel>
               <SettingsListCard>
                 <SettingsLinkRow
-                  label="バージョン"
+                  label={t('about.version')}
                   sub={`${version} (${buildNumber})`}
                   showChevron={false}
                 />

@@ -20,10 +20,12 @@ import { useHealthSyncContext } from '@/providers/health-sync-provider';
 import type { HealthSyncStatus } from '@/utils/health-sync';
 import { useAppState } from '@/providers/app-state-provider';
 import { getEffectiveSubscriptionStatus, trialDaysRemaining } from '@/utils/goals';
+import { useT } from '@/hooks/useT';
 
 export default function StatusRoute() {
   const router = useRouter();
   const theme = useTheme();
+  const t = useT();
   const { profile, settings, weights, addWeightEntry, addBodyFatEntry } = useAppState();
   const healthSync = useHealthSyncContext();
   const [weightSheetVisible, setWeightSheetVisible] = useState<boolean>(false);
@@ -35,10 +37,10 @@ export default function StatusRoute() {
   const effectiveStatus = getEffectiveSubscriptionStatus(settings, TRIAL_DURATION_DAYS);
   const subscriptionLabel =
     effectiveStatus === 'trialing'
-      ? `無料トライアル中 (残り${trialDays}日)`
+      ? t('status.subscriptionSub.trialing', { days: trialDays })
       : effectiveStatus === 'active'
-      ? '有効'
-      : '未加入';
+      ? t('status.subscriptionSub.active')
+      : t('status.subscriptionSub.inactive');
 
   const submitWeight = () => {
     const v = Number(weightInput);
@@ -58,19 +60,20 @@ export default function StatusRoute() {
 
   const paceLabel = useMemo(() => {
     if (!profile.goalDirection || profile.goalDirection === 'maintain' || profile.goalDirection === 'recomp') return null;
-    return profile.paceLevel === 'gentle' ? 'ゆるやか' : profile.paceLevel === 'strong' ? 'しっかり' : '標準';
-  }, [profile.goalDirection, profile.paceLevel]);
+    const key = profile.paceLevel === 'gentle' ? 'gentle' : profile.paceLevel === 'strong' ? 'strong' : 'standard';
+    return t(`status.paceLevel.${key}`);
+  }, [profile.goalDirection, profile.paceLevel, t]);
 
-  const weightDisplay = profile.currentWeightKg ? `${profile.currentWeightKg} kg` : '未設定';
-  const targetWeightDisplay = profile.targetWeightKg ? `${profile.targetWeightKg} kg` : '未設定';
-  const bfDisplay = profile.currentBodyFatPct != null ? `${profile.currentBodyFatPct}%` : '未設定';
-  const targetBfDisplay = profile.targetBodyFatPct != null ? `${profile.targetBodyFatPct}%` : '未設定';
+  const weightDisplay = profile.currentWeightKg ? `${profile.currentWeightKg} kg` : t('common.notSet');
+  const targetWeightDisplay = profile.targetWeightKg ? `${profile.targetWeightKg} kg` : t('common.notSet');
+  const bfDisplay = profile.currentBodyFatPct != null ? `${profile.currentBodyFatPct}%` : t('common.notSet');
+  const targetBfDisplay = profile.targetBodyFatPct != null ? `${profile.targetBodyFatPct}%` : t('common.notSet');
 
   return (
     <>
       <Stack.Screen
         options={{
-          title: 'ステータス',
+          title: t('nav.status'),
           headerStyle: { backgroundColor: theme.colors.surface.default },
           headerTintColor: theme.colors.content.primary,
           headerShadowVisible: false,
@@ -101,14 +104,16 @@ export default function StatusRoute() {
                 >
                   <View style={styles.trialRow}>
                     <Label>
-                      無料トライアル中{trialDays > 0 ? ` · 残り${trialDays}日` : ''}
+                      {trialDays > 0
+                        ? t('status.trialCard.labelWithDays', { days: trialDays })
+                        : t('status.trialCard.label')}
                     </Label>
                     <Icon name="chevronRight" size={14} color={theme.colors.content.tertiary} />
                   </View>
                   <Body size="sm" tone="secondary">
                     {trialDays <= 2
-                      ? `あと${trialDays}日で本登録に切り替わります。継続される場合は何もしなくてOK。`
-                      : 'いつでも解約できます。詳細はサブスクリプション画面から。'}
+                      ? t('status.trialCard.ending', { days: trialDays })
+                      : t('status.trialCard.ongoing')}
                   </Body>
                 </Card>
               </Pressable>
@@ -117,9 +122,9 @@ export default function StatusRoute() {
             {/* HERO */}
             <Card variant="raised" style={{ gap: theme.spacing['4'] }}>
               <View style={styles.heroMetricRow}>
-                <HeroMetric label="体重" value={weightDisplay} target={targetWeightDisplay} />
+                <HeroMetric label={t('status.weight')} value={weightDisplay} target={targetWeightDisplay} t={t} />
                 <View style={[styles.heroDivider, { backgroundColor: theme.colors.border.subtle }]} />
-                <HeroMetric label="体脂肪" value={bfDisplay} target={targetBfDisplay} />
+                <HeroMetric label={t('status.bodyFat')} value={bfDisplay} target={targetBfDisplay} t={t} />
               </View>
               <View style={styles.recordButtonRow}>
                 <Pressable
@@ -127,20 +132,18 @@ export default function StatusRoute() {
                   onPress={() => setWeightSheetVisible(true)}
                   testID="status-update-weight"
                   accessibilityRole="button"
-                  accessibilityLabel="体重を記録"
-                  accessibilityHint="今日の体重を入力するシートを開きます"
+                  accessibilityLabel={t('status.recordWeight')}
                 >
-                  <Label size="sm" tone="link">体重を記録</Label>
+                  <Label size="sm" tone="link">{t('status.recordWeight')}</Label>
                 </Pressable>
                 <Pressable
                   style={styles.textButton}
                   onPress={() => setBfSheetVisible(true)}
                   testID="status-update-bf"
                   accessibilityRole="button"
-                  accessibilityLabel="体脂肪率を記録"
-                  accessibilityHint="今日の体脂肪率を入力するシートを開きます"
+                  accessibilityLabel={t('status.recordBodyFat')}
                 >
-                  <Label size="sm" tone="link">体脂肪を記録</Label>
+                  <Label size="sm" tone="link">{t('status.recordBodyFat')}</Label>
                 </Pressable>
               </View>
               {healthSync.supported ? (
@@ -193,9 +196,9 @@ export default function StatusRoute() {
             >
               <Card variant="raised" style={{ gap: theme.spacing['3'] }}>
                 <View style={styles.goalHeader}>
-                  <Label>目標</Label>
+                  <Label>{t('status.goal')}</Label>
                   <View style={styles.changeRow}>
-                    <Caption tone="secondary">変更</Caption>
+                    <Caption tone="secondary">{t('status.change')}</Caption>
                     <Icon name="chevronRight" size={14} color={theme.colors.content.tertiary} />
                   </View>
                 </View>
@@ -210,7 +213,7 @@ export default function StatusRoute() {
                 </View>
                 {paceLabel ? (
                   <Caption tone="secondary">
-                    ペース: {paceLabel}
+                    {t('status.paceLabel', { label: paceLabel })}
                   </Caption>
                 ) : null}
               </Card>
@@ -218,10 +221,10 @@ export default function StatusRoute() {
 
             {/* §あなた */}
             <View style={styles.section}>
-              <SettingsSectionLabel>あなた</SettingsSectionLabel>
+              <SettingsSectionLabel>{t('status.sections.you')}</SettingsSectionLabel>
               <SettingsListCard>
                 <SettingsLinkRow
-                  label="プロフィール"
+                  label={t('nav.profile')}
                   onPress={() => router.push('/profile')}
                   testID="status-link-profile"
                 />
@@ -230,17 +233,17 @@ export default function StatusRoute() {
 
             {/* §アプリ */}
             <View style={styles.section}>
-              <SettingsSectionLabel>アプリ</SettingsSectionLabel>
+              <SettingsSectionLabel>{t('status.sections.app')}</SettingsSectionLabel>
               <SettingsListCard>
                 <SettingsLinkRow
-                  label="サブスクリプション"
+                  label={t('nav.subscription')}
                   sub={subscriptionLabel}
                   onPress={() => router.push('/subscription')}
                   testID="status-link-subscription"
                 />
                 <SettingsDivider />
                 <SettingsLinkRow
-                  label="設定"
+                  label={t('nav.settings')}
                   onPress={() => router.push('/settings')}
                   testID="status-link-settings"
                 />
@@ -286,14 +289,15 @@ function HealthSyncRow({
   onLongPress?: () => void;
 }) {
   const theme = useTheme();
+  const t = useT();
   const label = useMemo(() => {
-    if (syncing) return '同期中…';
-    if (status === 'provider_missing') return 'Health Connect を入手';
-    if (status === 'provider_update_required') return 'Health Connect を更新';
-    if (lastError) return '同期エラー · 権限を確認';
-    if (status === 'authorized' && lastSyncedAt) return `ヘルス同期 · ${formatRelativeTime(lastSyncedAt)}`;
-    return 'ヘルス同期';
-  }, [syncing, lastError, status, lastSyncedAt]);
+    if (syncing) return t('status.health.syncing');
+    if (status === 'provider_missing') return t('status.health.providerMissing');
+    if (status === 'provider_update_required') return t('status.health.providerUpdate');
+    if (lastError) return t('status.health.syncError');
+    if (status === 'authorized' && lastSyncedAt) return t('status.health.syncedAt', { time: formatRelativeTime(lastSyncedAt, t) });
+    return t('status.health.sync');
+  }, [syncing, lastError, status, lastSyncedAt, t]);
 
   return (
     <Pressable
@@ -322,22 +326,24 @@ function HealthSyncRow({
   );
 }
 
-function formatRelativeTime(iso: string): string {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function formatRelativeTime(iso: string, t: (key: string, opts?: any) => any): string {
   const then = new Date(iso).getTime();
   if (!Number.isFinite(then)) return '—';
   const diffSec = Math.max(0, Math.floor((Date.now() - then) / 1000));
-  if (diffSec < 60) return 'たった今';
-  if (diffSec < 3600) return `${Math.floor(diffSec / 60)}分前`;
-  if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}時間前`;
-  return `${Math.floor(diffSec / 86400)}日前`;
+  if (diffSec < 60) return t('status.timeAgo.justNow');
+  if (diffSec < 3600) return t('status.timeAgo.minutes', { n: Math.floor(diffSec / 60) });
+  if (diffSec < 86400) return t('status.timeAgo.hours', { n: Math.floor(diffSec / 3600) });
+  return t('status.timeAgo.days', { n: Math.floor(diffSec / 86400) });
 }
 
-function HeroMetric({ label, value, target }: { label: string; value: string; target: string }) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function HeroMetric({ label, value, target, t }: { label: string; value: string; target: string; t: (key: string, opts?: any) => any }) {
   return (
     <View style={styles.heroMetric}>
       <Caption tone="secondary">{label}</Caption>
       <Heading size="2xl">{value}</Heading>
-      <Caption tone="secondary">目標 {target}</Caption>
+      <Caption tone="secondary">{t('status.targetLabel', { value: target })}</Caption>
     </View>
   );
 }
@@ -358,15 +364,16 @@ function BodyFatSheet({
   currentBfPct: number | null;
 }) {
   const theme = useTheme();
+  const t = useT();
   const diff =
     currentBfPct !== null && value !== '' ? Number((Number(value) - currentBfPct).toFixed(1)) : null;
   return (
     <BottomSheet
       visible={visible}
       onClose={onClose}
-      title="体脂肪率を更新"
+      title={t('status.bfSheet.title')}
       scrollable={false}
-      primaryAction={{ label: '保存', onPress: onSubmit }}
+      primaryAction={{ label: t('common.save'), onPress: onSubmit }}
       testID="bf-sheet"
     >
       <View style={[styles.weightInputWrap, { backgroundColor: theme.colors.surface.sunken }]}>
@@ -384,7 +391,7 @@ function BodyFatSheet({
       </View>
       {diff !== null && Number.isFinite(diff) ? (
         <Caption tone="secondary">
-          前回との差 {diff > 0 ? '+' : ''}{diff} %
+          {t('status.bfSheet.diff', { diff: `${diff > 0 ? '+' : ''}${diff}` })}
         </Caption>
       ) : null}
     </BottomSheet>
@@ -405,13 +412,14 @@ function WeightSheet({
   onSubmit: () => void;
 }) {
   const theme = useTheme();
+  const t = useT();
   return (
     <BottomSheet
       visible={visible}
       onClose={onClose}
-      title="体重を更新"
+      title={t('status.weightSheet.title')}
       scrollable={false}
-      primaryAction={{ label: '保存', onPress: onSubmit }}
+      primaryAction={{ label: t('common.save'), onPress: onSubmit }}
       testID="weight-sheet"
     >
       <View style={[styles.weightInputWrap, { backgroundColor: theme.colors.surface.sunken }]}>

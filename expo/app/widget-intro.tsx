@@ -6,6 +6,7 @@ import Svg, { Circle, Polygon, Rect } from 'react-native-svg';
 
 import { Body, Button, Heading, useTheme } from '@/design-system';
 import { useAppState } from '@/providers/app-state-provider';
+import { useT } from '@/hooks/useT';
 import { widgetRequestPin } from '@/utils/widget-bridge';
 
 // ─── ホーム画面見本の色 (実ウィジェット/OS chromeに合わせた固定値) ────────────
@@ -112,6 +113,7 @@ function HomeScreenMock() {
 export default function WidgetIntroRoute() {
   const router = useRouter();
   const t = useTheme();
+  const tr = useT();
   const { updateSettingsValues } = useAppState();
   const [busy, setBusy] = useState<boolean>(false);
 
@@ -145,10 +147,8 @@ export default function WidgetIntroRoute() {
               gap: t.spacing['4'],
             }}
           >
-            <Heading size="2xl">ホーム画面からワンタップで記録</Heading>
-            <Body tone="secondary">
-              ウィジェットを追加すると、アプリを開かずにホーム画面から食事を記録できます。
-            </Body>
+            <Heading size="2xl">{tr('widgetIntro.title')}</Heading>
+            <Body tone="secondary">{tr('widgetIntro.body')}</Body>
 
             <View style={{ flex: 1, justifyContent: 'center' }}>
               <HomeScreenMock />
@@ -164,7 +164,7 @@ export default function WidgetIntroRoute() {
             }}
           >
             <Button
-              label="ウィジェットを追加"
+              label={tr('widgetIntro.cta')}
               variant="primary"
               size="lg"
               fullWidth
@@ -173,7 +173,7 @@ export default function WidgetIntroRoute() {
               testID="widget-intro-cta"
             />
             <Button
-              label="あとで"
+              label={tr('widgetIntro.skip')}
               variant="ghost"
               size="lg"
               fullWidth

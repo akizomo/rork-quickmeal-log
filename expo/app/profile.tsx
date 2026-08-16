@@ -7,11 +7,13 @@ import { ACTIVITY_LEVEL_OPTIONS, BASIS_OPTIONS } from '@/constants/onboarding';
 import { Body, Button, Card, Heading, SelectCard, useTheme } from '@/design-system';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { useAppState } from '@/providers/app-state-provider';
+import { useT } from '@/hooks/useT';
 import { ActivityLevel, BiologicalBasis } from '@/types/nutrition';
 
 export default function ProfileRoute() {
   const router = useRouter();
   const theme = useTheme();
+  const t = useT();
   const { profile, updateProfileValues } = useAppState();
 
   const [heightCm, setHeightCm] = useState<string>(profile.heightCm != null ? String(profile.heightCm) : '');
@@ -44,7 +46,7 @@ export default function ProfileRoute() {
     <>
       <Stack.Screen
         options={{
-          title: 'プロフィール',
+          title: t('nav.profile'),
           headerStyle: { backgroundColor: theme.colors.surface.default },
           headerTintColor: theme.colors.content.primary,
           headerShadowVisible: false,
@@ -56,9 +58,9 @@ export default function ProfileRoute() {
             {/* 基礎データ: コンパクトなリスト形式 */}
             <Card variant="raised" style={styles.listCard}>
               <View style={styles.listCardHeader}>
-                <Heading size="lg">基礎データ</Heading>
+                <Heading size="lg">{t('profile.basicData')}</Heading>
               </View>
-              <DataRow label="身長">
+              <DataRow label={t('profile.height')}>
                 <TextInput
                   style={inputStyle}
                   value={heightCm}
@@ -71,7 +73,7 @@ export default function ProfileRoute() {
                 <Text style={[styles.suffix, { color: theme.colors.content.secondary }]}>cm</Text>
               </DataRow>
               <View style={[styles.divider, { backgroundColor: theme.colors.border.subtle }]} />
-              <DataRow label="年齢">
+              <DataRow label={t('profile.age')}>
                 <TextInput
                   style={inputStyle}
                   value={ageYears}
@@ -81,20 +83,20 @@ export default function ProfileRoute() {
                   placeholderTextColor={theme.colors.content.tertiary}
                   testID="profile-age"
                 />
-                <Text style={[styles.suffix, { color: theme.colors.content.secondary }]}>歳</Text>
+                <Text style={[styles.suffix, { color: theme.colors.content.secondary }]}>{t('profile.ageSuffix')}</Text>
               </DataRow>
             </Card>
 
             <Card variant="raised" style={{ gap: theme.spacing['3'] }}>
               <View style={{ gap: theme.spacing['1'] }}>
-                <Heading size="lg">身体基準</Heading>
-                <Body size="sm" tone="secondary">RMR・推奨タンパク質量に反映されます</Body>
+                <Heading size="lg">{t('profile.basisSection')}</Heading>
+                <Body size="sm" tone="secondary">{t('profile.basisDesc')}</Body>
               </View>
               <View style={{ gap: theme.spacing['2'] }}>
                 {BASIS_OPTIONS.map((opt) => (
                   <SelectCard
                     key={opt.key}
-                    label={opt.label}
+                    label={t(`onboarding.basis.${opt.key}.label`)}
                     selected={basis === opt.key}
                     onPress={() => setBasis(opt.key)}
                     testID={`profile-basis-${opt.key}`}
@@ -105,15 +107,15 @@ export default function ProfileRoute() {
 
             <Card variant="raised" style={{ gap: theme.spacing['3'] }}>
               <View style={{ gap: theme.spacing['1'] }}>
-                <Heading size="lg">運動習慣</Heading>
-                <Body size="sm" tone="secondary">活動係数・推奨タンパク質量に反映されます</Body>
+                <Heading size="lg">{t('profile.activitySection')}</Heading>
+                <Body size="sm" tone="secondary">{t('profile.activityDesc')}</Body>
               </View>
               <View style={{ gap: theme.spacing['2'] }}>
                 {ACTIVITY_LEVEL_OPTIONS.map((opt) => (
                   <SelectCard
                     key={opt.level}
-                    label={opt.label}
-                    hint={opt.hint}
+                    label={t(`onboarding.activity.${opt.level}.label`)}
+                    hint={t(`onboarding.activity.${opt.level}.hint`)}
                     selected={activityLevel === opt.level}
                     onPress={() => setActivityLevel(opt.level)}
                     testID={`profile-activity-${opt.level}`}
@@ -122,7 +124,7 @@ export default function ProfileRoute() {
               </View>
             </Card>
 
-            <Button label="保存" onPress={handleSave} testID="profile-save" />
+            <Button label={t('common.save')} onPress={handleSave} testID="profile-save" />
           </ScrollView>
         </SafeAreaView>
       </View>
