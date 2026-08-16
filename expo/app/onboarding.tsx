@@ -150,7 +150,7 @@ export default function OnboardingRoute() {
       case 4: return !!activityLevel;
       case 5: return currentBodyType9 !== null;
       case 6: return !!direction;
-      case 7: return direction === 'maintain' || direction === 'recomp' || !!paceLevel;
+      case 7: return direction === 'maintain' || !!paceLevel;
       case 8: return recommendation !== null;
       default: return true;
     }
@@ -180,7 +180,7 @@ export default function OnboardingRoute() {
   }, [activityLevel, ageYears, basis, bodyFatPct, currentBodyType9, currentPfc.carbsG, currentPfc.fatG, currentPfc.proteinG, currentStage, direction, heightCm, paceLevel, recommendation, targetBodyType9, targetStage, updateProfileValues, weightKg]);
 
   // 維持目標はペース選択が不要なため、step 7 (StepPlan) を飛ばす。
-  const skipPlanStep = direction === 'maintain' || direction === 'recomp';
+  const skipPlanStep = direction === 'maintain';
 
   const goNext = useCallback(() => {
     saveAllCurrent();

@@ -20,6 +20,7 @@ import {
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
+import { useT } from '@/hooks/useT';
 import { useTheme } from '../theme';
 import type { MacroChipKind } from './MacroChip';
 
@@ -30,21 +31,17 @@ export type MacroCardProps = {
   testID?: string;
 };
 
-const LABEL_BY_KIND: Record<MacroChipKind, string> = {
+const LETTER_BY_KIND: Record<MacroChipKind, string> = {
   protein: 'P',
   fat: 'F',
   carbs: 'C',
 };
 
-const LABEL_JA_BY_KIND: Record<MacroChipKind, string> = {
-  protein: 'たんぱく質',
-  fat: '脂質',
-  carbs: '炭水化物',
-};
-
 export function MacroCard({ kind, value, style, testID }: MacroCardProps) {
   const t = useTheme();
+  const tr = useT();
   const palette = t.colors.nutrition[kind];
+  const subLabel = tr(`common.macros.${kind}` as Parameters<typeof tr>[0]);
 
   return (
     <View
@@ -72,7 +69,7 @@ export function MacroCard({ kind, value, style, testID }: MacroCardProps) {
             color: palette.text,
           }}
         >
-          {LABEL_BY_KIND[kind]}
+          {LETTER_BY_KIND[kind]}
         </Text>
         <Text
           style={{
@@ -81,7 +78,7 @@ export function MacroCard({ kind, value, style, testID }: MacroCardProps) {
             color: palette.text,
           }}
         >
-          {LABEL_JA_BY_KIND[kind]}
+          {subLabel}
         </Text>
       </View>
       <Text

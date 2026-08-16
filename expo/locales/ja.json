@@ -30,7 +30,12 @@
     "remove": "削除",
     "recommended": "おすすめ",
     "needsInput": "前のステップの入力が必要です。",
-    "notSet": "未設定"
+    "notSet": "未設定",
+    "macros": {
+      "protein": "たんぱく質",
+      "fat": "脂質",
+      "carbs": "炭水化物"
+    }
   },
   "intro": {
     "slides": [

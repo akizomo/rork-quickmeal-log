@@ -30,7 +30,12 @@
     "remove": "Remove",
     "recommended": "Recommended",
     "needsInput": "Please complete the previous step.",
-    "notSet": "Not set"
+    "notSet": "Not set",
+    "macros": {
+      "protein": "Protein",
+      "fat": "Fat",
+      "carbs": "Carbs"
+    }
   },
   "intro": {
     "slides": [
