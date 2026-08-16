@@ -29,7 +29,202 @@
     "add": "追加",
     "remove": "削除",
     "recommended": "おすすめ",
-    "needsInput": "前のステップの入力が必要です。"
+    "needsInput": "前のステップの入力が必要です。",
+    "notSet": "未設定"
+  },
+  "intro": {
+    "slides": [
+      { "title": "9ボタンで、ざっくり記録", "subtitle": "ふだんの食事は、タップひとつで残せる。" },
+      { "title": "急ぎはタップ、余裕は長押し", "subtitle": "くわしく残したい日は、もう一歩ふみこめる。" },
+      { "title": "進みは、ひと目で", "subtitle": "目標と今の差が、グラフでそのまま見える。" }
+    ],
+    "skip": "スキップ",
+    "next": "次へ",
+    "start": "はじめる",
+    "progress": {
+      "label": "体重 ・ 12週",
+      "delta": "-2.3kg",
+      "axis": ["1月", "3月", "目標"]
+    },
+    "a11y": {
+      "skip": "紹介をスキップ",
+      "skipHint": "オンボーディングへ進みます",
+      "next": "次のスライドへ"
+    }
+  },
+  "about": {
+    "legal": "法的情報",
+    "version": "バージョン"
+  },
+  "widgetIntro": {
+    "title": "ホーム画面からワンタップで記録",
+    "body": "ウィジェットを追加すると、アプリを開かずにホーム画面から食事を記録できます。",
+    "cta": "ウィジェットを追加",
+    "skip": "あとで"
+  },
+  "profile": {
+    "basicData": "基礎データ",
+    "height": "身長",
+    "age": "年齢",
+    "ageSuffix": "歳",
+    "basisSection": "身体基準",
+    "basisDesc": "RMR・推奨タンパク質量に反映されます",
+    "activitySection": "運動習慣",
+    "activityDesc": "活動係数・推奨タンパク質量に反映されます"
+  },
+  "status": {
+    "subscriptionSub": {
+      "trialing": "無料トライアル中 (残り{{days}}日)",
+      "active": "有効",
+      "inactive": "未加入"
+    },
+    "trialCard": {
+      "label": "無料トライアル中",
+      "labelWithDays": "無料トライアル中 · 残り{{days}}日",
+      "ending": "あと{{days}}日で本登録に切り替わります。継続される場合は何もしなくてOK。",
+      "ongoing": "いつでも解約できます。詳細はサブスクリプション画面から。"
+    },
+    "goal": "目標",
+    "change": "変更",
+    "paceLabel": "ペース: {{label}}",
+    "paceLevel": {
+      "gentle": "ゆるやか",
+      "standard": "標準",
+      "strong": "しっかり"
+    },
+    "weight": "体重",
+    "bodyFat": "体脂肪",
+    "targetLabel": "目標 {{value}}",
+    "recordWeight": "体重を記録",
+    "recordBodyFat": "体脂肪を記録",
+    "sections": {
+      "you": "あなた",
+      "app": "アプリ"
+    },
+    "health": {
+      "syncing": "同期中…",
+      "providerMissing": "Health Connect を入手",
+      "providerUpdate": "Health Connect を更新",
+      "syncError": "同期エラー · 権限を確認",
+      "syncedAt": "ヘルス同期 · {{time}}",
+      "sync": "ヘルス同期"
+    },
+    "timeAgo": {
+      "justNow": "たった今",
+      "minutes": "{{n}}分前",
+      "hours": "{{n}}時間前",
+      "days": "{{n}}日前"
+    },
+    "weightSheet": { "title": "体重を更新" },
+    "bfSheet": { "title": "体脂肪率を更新", "diff": "前回との差 {{diff}} %" }
+  },
+  "subscription": {
+    "sections": {
+      "status": "現在のステータス",
+      "plan": "プラン"
+    },
+    "statusLabel": {
+      "trialing": "無料トライアル中",
+      "active": "有効",
+      "inactive": "未加入"
+    },
+    "statusSub": {
+      "trialing": "残り {{days}} 日 · 終了2日前にお知らせします",
+      "active": "自動更新が有効です",
+      "inactive": "プランを購入してフル機能を解放できます"
+    },
+    "trialEndDate": "本登録切替日: {{date}}",
+    "trialBody": "本登録後は月額¥480 または 年額¥4,800 で自動更新されます。解約は Google Play のサブスクリプション設定からいつでも可能です。",
+    "planActions": {
+      "selectTrialing": "プランを選択する",
+      "buyInactive": "購入してプレミアムを開始",
+      "restore": "購入を復元",
+      "manage": "サブスクリプションを管理",
+      "manageSub": "App Store のサブスクリプション設定を開きます"
+    },
+    "alerts": {
+      "restoreSuccess": "購入を復元しました",
+      "restoreSuccessBody": "プレミアム機能をご利用いただけます。",
+      "restoreFail": "復元できる購入が見つかりません",
+      "restoreFailBody": "Apple ID か Google アカウントをご確認ください。"
+    }
+  },
+  "paywall": {
+    "badge": "{{days}}日間無料",
+    "title": "静かに続けられる\n食事記録を",
+    "subtitle": "まずは{{days}}日間無料で。その後は月額または年額プランで継続できます。",
+    "benefits": [
+      "食材・一皿料理の両方を最短で記録",
+      "P/F/C と目標カロリーの日次フィードバック",
+      "体重と体脂肪率の静かな変化を追う",
+      "あなた向けに最適化されたQuick Log"
+    ],
+    "loading": "プランを読み込み中…",
+    "loadError": "プランを取得できませんでした",
+    "iapSetupHint": "App Store / Google Play で IAP プロダクトの設定を完了してください。",
+    "priceHint": "{{days}}日間の無料期間終了後に自動で課金が始まります。いつでも解約できます。",
+    "annual": "年額プラン",
+    "monthly": "月額プラン",
+    "discount": "お得",
+    "select": "選ぶ",
+    "restore": "購入を復元",
+    "a11y": { "purchaseHint": "このプランで購入手続きを開始します" },
+    "alerts": {
+      "purchaseError": "購入に失敗しました",
+      "purchaseErrorRetry": "時間をおいて再度お試しください。",
+      "restoreFail": "復元できる購入が見つかりません",
+      "restoreFailBody": "Apple IDかGoogleアカウントをご確認ください。"
+    }
+  },
+  "goalEdit": {
+    "label": "目標",
+    "auto": "おまかせに戻す",
+    "manual": "自分で決める",
+    "noPreviewNoPace": "目的を選ぶとここに表示されます",
+    "noPreviewWithPace": "目的・ペースを選ぶとここに表示されます",
+    "weight": "体重",
+    "bodyFat": "体脂肪率",
+    "sections": {
+      "direction": "目的",
+      "pace": "ペース"
+    },
+    "direction": {
+      "lose": "減らす",
+      "maintain": "維持",
+      "recomp": "引き締め",
+      "gain": "増やす"
+    },
+    "duration": {
+      "overYear": "1年以上",
+      "weeks": "約{{n}}週間",
+      "months": "約{{n}}ヶ月"
+    },
+    "delta": {
+      "maintain": "現在の体重を維持します",
+      "change": "{{sign}}{{abs}} kg",
+      "eta": "・{{duration}}の見込み"
+    },
+    "warn": {
+      "weightHard": "健康的な目安を大きく下回るため、この値では設定できません",
+      "weightSoft": "標準的な体重の目安から外れています（BMI {{bmi}}）",
+      "bfHard": "体を保つのに必要な水準を下回るため、この値では設定できません",
+      "bfSoftLow": "アスリート並みの水準です。維持には専門的な管理が必要になります",
+      "bfSoftHigh": "標準的な目安より高めです"
+    },
+    "alert": {
+      "notReachedTitle": "まだ目標体重（{{target}}kg）に届いていません",
+      "continueLose": "減量を続ける",
+      "continueGain": "増量を続ける",
+      "maintainCurrent": "今の体重（{{current}}kg）を維持"
+    }
+  },
+  "help": {
+    "nav": {
+      "prev": "前へ",
+      "next": "次へ",
+      "close": "とじる"
+    },
+    "steps": ["操作の基本", "食材ボタンの中身", "料理ボタンの中身", "もっと、あなたに合わせて", "よくある質問"]
   },
   "settings": {
     "theme": {
@@ -114,11 +309,11 @@
       "subtitle": "体脂肪率やカロリー目安の計算に使います",
       "male_basis": {
         "label": "男性基準",
-        "hint": "体脂肪率の目安 10〜19%"
+        "hint": ""
       },
       "female_basis": {
         "label": "女性基準",
-        "hint": "体脂肪率の目安 20〜29%"
+        "hint": ""
       }
     },
     "height": {

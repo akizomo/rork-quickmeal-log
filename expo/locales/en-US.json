@@ -29,7 +29,202 @@
     "add": "Add",
     "remove": "Remove",
     "recommended": "Recommended",
-    "needsInput": "Please complete the previous step."
+    "needsInput": "Please complete the previous step.",
+    "notSet": "Not set"
+  },
+  "intro": {
+    "slides": [
+      { "title": "Log meals in 9 taps", "subtitle": "Your everyday meals, captured with a single tap." },
+      { "title": "Quick tap. Deep dive when you want.", "subtitle": "Long-press for more detail on days you need it." },
+      { "title": "Track your progress at a glance", "subtitle": "Goal vs. today — clear in one look." }
+    ],
+    "skip": "Skip",
+    "next": "Next",
+    "start": "Get Started",
+    "progress": {
+      "label": "Weight · 12 wk",
+      "delta": "-2.3 kg",
+      "axis": ["Jan", "Mar", "Goal"]
+    },
+    "a11y": {
+      "skip": "Skip intro",
+      "skipHint": "Goes to onboarding",
+      "next": "Next slide"
+    }
+  },
+  "about": {
+    "legal": "Legal",
+    "version": "Version"
+  },
+  "widgetIntro": {
+    "title": "Log in one tap from your home screen",
+    "body": "Add a widget to log meals without opening the app.",
+    "cta": "Add Widget",
+    "skip": "Later"
+  },
+  "profile": {
+    "basicData": "Basic Info",
+    "height": "Height",
+    "age": "Age",
+    "ageSuffix": "yrs",
+    "basisSection": "Biological Reference",
+    "basisDesc": "Used for BMR and protein recommendations",
+    "activitySection": "Activity Level",
+    "activityDesc": "Used for activity multiplier and protein targets"
+  },
+  "status": {
+    "subscriptionSub": {
+      "trialing": "Free trial ({{days}} days left)",
+      "active": "Active",
+      "inactive": "Not subscribed"
+    },
+    "trialCard": {
+      "label": "Free Trial",
+      "labelWithDays": "Free Trial · {{days}} days left",
+      "ending": "{{days}} days until your trial ends. No action needed to continue.",
+      "ongoing": "Cancel anytime from your subscription settings."
+    },
+    "goal": "Goal",
+    "change": "Change",
+    "paceLabel": "Pace: {{label}}",
+    "paceLevel": {
+      "gentle": "Gradual",
+      "standard": "Moderate",
+      "strong": "Aggressive"
+    },
+    "weight": "Weight",
+    "bodyFat": "Body Fat",
+    "targetLabel": "Target {{value}}",
+    "recordWeight": "Log Weight",
+    "recordBodyFat": "Log Body Fat",
+    "sections": {
+      "you": "You",
+      "app": "App"
+    },
+    "health": {
+      "syncing": "Syncing…",
+      "providerMissing": "Get Health Connect",
+      "providerUpdate": "Update Health Connect",
+      "syncError": "Sync error · Check permissions",
+      "syncedAt": "Health sync · {{time}}",
+      "sync": "Health sync"
+    },
+    "timeAgo": {
+      "justNow": "Just now",
+      "minutes": "{{n}}m ago",
+      "hours": "{{n}}h ago",
+      "days": "{{n}}d ago"
+    },
+    "weightSheet": { "title": "Update Weight" },
+    "bfSheet": { "title": "Update Body Fat %", "diff": "Change from last: {{diff}} %" }
+  },
+  "subscription": {
+    "sections": {
+      "status": "Current Status",
+      "plan": "Plan"
+    },
+    "statusLabel": {
+      "trialing": "Free Trial",
+      "active": "Active",
+      "inactive": "Not Subscribed"
+    },
+    "statusSub": {
+      "trialing": "{{days}} days remaining · Notified 2 days before it ends",
+      "active": "Auto-renewal is active",
+      "inactive": "Purchase a plan to unlock all features"
+    },
+    "trialEndDate": "Billing starts: {{date}}",
+    "trialBody": "After the trial, you'll be billed automatically. Cancel anytime from your subscription settings.",
+    "planActions": {
+      "selectTrialing": "Choose a plan",
+      "buyInactive": "Start Premium",
+      "restore": "Restore Purchase",
+      "manage": "Manage Subscription",
+      "manageSub": "Opens your App Store subscription settings"
+    },
+    "alerts": {
+      "restoreSuccess": "Purchase restored",
+      "restoreSuccessBody": "You can now enjoy premium features.",
+      "restoreFail": "No purchase found to restore",
+      "restoreFailBody": "Please check your Apple ID or Google Account."
+    }
+  },
+  "paywall": {
+    "badge": "{{days}} days free",
+    "title": "Meal logging you'll actually stick with",
+    "subtitle": "Start free for {{days}} days. Then continue with a monthly or annual plan.",
+    "benefits": [
+      "Log ingredients and full meals in seconds",
+      "Daily P/F/C and calorie feedback",
+      "Track gradual changes in weight and body fat",
+      "Quick Log tuned to your habits"
+    ],
+    "loading": "Loading plans…",
+    "loadError": "Could not load plans",
+    "iapSetupHint": "Please complete IAP product setup in App Store / Google Play.",
+    "priceHint": "Billing starts after your {{days}}-day free trial. Cancel anytime.",
+    "annual": "Annual Plan",
+    "monthly": "Monthly Plan",
+    "discount": "Best value",
+    "select": "Select",
+    "restore": "Restore Purchase",
+    "a11y": { "purchaseHint": "Start the purchase flow for this plan" },
+    "alerts": {
+      "purchaseError": "Purchase failed",
+      "purchaseErrorRetry": "Please try again later.",
+      "restoreFail": "No purchase found to restore",
+      "restoreFailBody": "Please check your Apple ID or Google Account."
+    }
+  },
+  "goalEdit": {
+    "label": "Goal",
+    "auto": "Back to recommended",
+    "manual": "Set manually",
+    "noPreviewNoPace": "Select a direction to preview",
+    "noPreviewWithPace": "Select a direction and pace to preview",
+    "weight": "Weight",
+    "bodyFat": "Body Fat %",
+    "sections": {
+      "direction": "Direction",
+      "pace": "Pace"
+    },
+    "direction": {
+      "lose": "Lose",
+      "maintain": "Maintain",
+      "recomp": "Recomp",
+      "gain": "Gain"
+    },
+    "duration": {
+      "overYear": "1+ year",
+      "weeks": "~{{n}} wk",
+      "months": "~{{n}} mo"
+    },
+    "delta": {
+      "maintain": "Maintaining current weight",
+      "change": "{{sign}}{{abs}} kg",
+      "eta": " · est. {{duration}}"
+    },
+    "warn": {
+      "weightHard": "Below a healthy minimum — cannot set this value",
+      "weightSoft": "Outside standard weight range (BMI {{bmi}})",
+      "bfHard": "Below essential body fat — cannot set this value",
+      "bfSoftLow": "Athlete-level — requires specialized management",
+      "bfSoftHigh": "Above typical targets"
+    },
+    "alert": {
+      "notReachedTitle": "You haven't reached your goal weight ({{target}} kg) yet",
+      "continueLose": "Keep losing",
+      "continueGain": "Keep gaining",
+      "maintainCurrent": "Maintain current ({{current}} kg)"
+    }
+  },
+  "help": {
+    "nav": {
+      "prev": "Prev",
+      "next": "Next",
+      "close": "Close"
+    },
+    "steps": ["The Basics", "Ingredient Buttons", "Dish Buttons", "More for You", "FAQ"]
   },
   "settings": {
     "theme": {
@@ -114,11 +309,11 @@
       "subtitle": "Used to estimate body fat % and calorie targets",
       "male_basis": {
         "label": "Male Reference",
-        "hint": "Body fat target: 10–19%"
+        "hint": ""
       },
       "female_basis": {
         "label": "Female Reference",
-        "hint": "Body fat target: 20–29%"
+        "hint": ""
       }
     },
     "height": {
