@@ -293,6 +293,19 @@ export const PURE_ADDONS: Addon[] = [
     addedMacro: { kcal: 180, protein: 11, fat: 10, carbs: 7 },
     allowedIdentityIds: ['gyudon_class', 'curry_class'],
   },
+  {
+    id: 'patty_add',
+    label: 'パティ追加',
+    unit: 'piece',
+    unitAmount: 1,
+    unitLabel: '1枚',
+    // マクドナルド公式のチーズバーガー(310kcal/P15.9/F13.5/C31.0) と
+    // ダブルチーズバーガー(459/P26.4/F25.1/C31.8) の実測差分 = パティ1枚分。
+    // 「ダブル」「ビッグマック」等のパティ増しはこの Add-on で表現する
+    // (旧 burger の「こってり」属性は P+5.9 しか増えず約14g過小計上だった)。
+    addedMacro: { kcal: 150, protein: 11, fat: 12, carbs: 1 },
+    allowedIdentityIds: ['burger', 'burger_big'],
+  },
 
   // ---- Yogurt / oatmeal sweet toppings ----
   {

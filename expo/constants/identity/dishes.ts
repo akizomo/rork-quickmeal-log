@@ -239,6 +239,7 @@ const BUCKET_CHINESE_NOODLES: Identity[] = [
     referenceDescription: '麺300g + 大量野菜+豚 (1人前=小)',
     amount: { unit: 'percent', default: 100, chips: [{ label: '麺少', value: 75 }, { label: '小', value: 100 }, { label: '大', value: 150 }] },
     defaultAddonIds: ['chashu', 'seabura'],
+    allowedAddonIds: RAMEN_ADDONS,
   },
   {
     id: 'tsukemen',
@@ -380,7 +381,7 @@ const BUCKET_PASTA: Identity[] = [
     primaryHome: { tab: 'dish', bucket: 'pasta' },
     defaultMacro: { kcal: 680, protein: 22, fat: 19, carbs: 102 },
     referenceDescription: '麺250g (茹で) + トマトソース・基本具',
-    amount: { unit: 'percent', default: 100, chips: [{ label: '小', value: 50 }, { label: '1皿', value: 100 }, { label: '大盛', value: 150 }, { label: 'しっかり', value: 200 }] },
+    amount: { unit: 'percent', default: 100, chips: [{ label: '小', value: 50 }, { label: '1皿', value: 100 }, { label: '大盛', value: 150 }, { label: '特盛', value: 200 }] },
     defaultAddonIds: ['cheese', 'bacon_sausage'],
     allowedAddonIds: ['cheese', 'bacon_sausage', 'egg'],
   },
@@ -391,7 +392,7 @@ const BUCKET_PASTA: Identity[] = [
     primaryHome: { tab: 'dish', bucket: 'pasta' },
     defaultMacro: { kcal: 700, protein: 20, fat: 28, carbs: 88 },
     referenceDescription: '麺250g + オイル+ガーリック・少量具',
-    amount: { unit: 'percent', default: 100, chips: [{ label: '小', value: 50 }, { label: '1皿', value: 100 }, { label: '大盛', value: 150 }] },
+    amount: { unit: 'percent', default: 100, chips: [{ label: '小', value: 50 }, { label: '1皿', value: 100 }, { label: '大盛', value: 150 }, { label: '特盛', value: 200 }] },
     defaultAddonIds: ['cheese'], // oil 重複は冗長なので allowed のみに
     allowedAddonIds: ['cheese', 'oil', 'bacon_sausage'],
   },
@@ -402,8 +403,9 @@ const BUCKET_PASTA: Identity[] = [
     primaryHome: { tab: 'dish', bucket: 'pasta' },
     defaultMacro: { kcal: 780, protein: 24, fat: 36, carbs: 86 },
     referenceDescription: '麺250g + クリームソース・チーズ',
-    amount: { unit: 'percent', default: 100, chips: [{ label: '小', value: 50 }, { label: '1皿', value: 100 }, { label: '大盛', value: 150 }] },
+    amount: { unit: 'percent', default: 100, chips: [{ label: '小', value: 50 }, { label: '1皿', value: 100 }, { label: '大盛', value: 150 }, { label: '特盛', value: 200 }] },
     defaultAddonIds: ['cheese', 'bacon_sausage'],
+    allowedAddonIds: ['cheese', 'bacon_sausage', 'egg'],
   },
   {
     id: 'pasta_meat',
@@ -412,8 +414,9 @@ const BUCKET_PASTA: Identity[] = [
     primaryHome: { tab: 'dish', bucket: 'pasta' },
     defaultMacro: { kcal: 690, protein: 26, fat: 22, carbs: 96 },
     referenceDescription: '麺250g + ミートソース',
-    amount: { unit: 'percent', default: 100, chips: [{ label: '小', value: 50 }, { label: '1皿', value: 100 }, { label: '大盛', value: 150 }] },
+    amount: { unit: 'percent', default: 100, chips: [{ label: '小', value: 50 }, { label: '1皿', value: 100 }, { label: '大盛', value: 150 }, { label: '特盛', value: 200 }] },
     defaultAddonIds: ['cheese'],
+    allowedAddonIds: ['cheese', 'bacon_sausage', 'egg'],
   },
   {
     id: 'pasta_japanese',
@@ -422,7 +425,7 @@ const BUCKET_PASTA: Identity[] = [
     primaryHome: { tab: 'dish', bucket: 'pasta' },
     defaultMacro: { kcal: 620, protein: 20, fat: 20, carbs: 88 },
     referenceDescription: '麺250g + 醤油・和風具',
-    amount: { unit: 'percent', default: 100, chips: [{ label: '小', value: 50 }, { label: '1皿', value: 100 }, { label: '大盛', value: 150 }] },
+    amount: { unit: 'percent', default: 100, chips: [{ label: '小', value: 50 }, { label: '1皿', value: 100 }, { label: '大盛', value: 150 }, { label: '特盛', value: 200 }] },
     defaultAddonIds: ['egg', 'nori_furikake'],
     allowedAddonIds: ['egg', 'nori_furikake', 'cheese'],
   },
@@ -503,6 +506,7 @@ const BUCKET_SANDWICH: Identity[] = [
   {
     id: 'cold_sand',
     label: 'サンドイッチ',
+    searchTags: ['さんどいっち', 'サンド', 'たまごサンド', 'ツナサンド', 'コンビニサンド'],
     primaryHome: { tab: 'dish', bucket: 'sandwich' },
     defaultMacro: { kcal: 345, protein: 13, fat: 18, carbs: 30 },
     referenceDescription: 'パン2枚 + 具',
@@ -511,12 +515,16 @@ const BUCKET_SANDWICH: Identity[] = [
       { key: 'egg', label: 'たまご', isDefault: true },
       { key: 'tuna', label: 'ツナ', factor: { kcal: 1.04, protein: 1.08, fat: 1.11 } },
       { key: 'ham_blt', label: 'ハム・BLT', factor: { kcal: 0.96, protein: 1.08, fat: 0.89, carbs: 1.03 } },
+      // コンビニ実測 (セブン チキンカツ422/P17.2/F22/C39.8・ハムカツ369/P9.3/F18.3/C43.1、
+      // 一般的なカツサンド160g 400/P16.4/F20.8/C38.9) の平均から逆算。
+      { key: 'katsu', label: 'カツサンド', searchTags: ['かつさんど', 'コンビニカツサンド'], factor: { kcal: 1.16, protein: 1.1, fat: 1.13, carbs: 1.35 } },
     ],
     defaultAddonIds: ['cheese', 'bacon_sausage', 'avocado'],
   },
   {
     id: 'hot_sand',
     label: 'ホットサンド',
+    searchTags: ['ほっとさんど', 'ホットサンド', 'グリルドチーズ', 'パニーニ'],
     primaryHome: { tab: 'dish', bucket: 'sandwich' },
     defaultMacro: { kcal: 420, protein: 18, fat: 22, carbs: 36 },
     referenceDescription: 'パン2枚 + 具・チーズ・トースト',
@@ -524,20 +532,63 @@ const BUCKET_SANDWICH: Identity[] = [
     defaultAddonIds: ['cheese', 'bacon_sausage'],
   },
   {
+    // チェーン定番帯。マック/モスの主力商品11点が 330-425kcal に密集しており、
+    // base はその中心 (モスバーガー 372/15.2/17.0/40.0 相当) に置く。
+    // 旧 base は 460kcal で、実際にはダブルチーズ(459)・チキンフィレオ(479)の帯に
+    // あたり、素で「バーガー」を選ぶと恒常的に過大計上していた。
+    // 「ダブル/ビッグマック」等のパティ増しは属性ではなく patty_add で表現する。
     id: 'burger',
     label: 'バーガー',
+    searchTags: ['はんばーがー', 'ハンバーガー', 'マック', 'マクドナルド', 'モス', 'モスバーガー', 'ロッテリア', 'フレッシュネス', 'ファストフード'],
     primaryHome: { tab: 'dish', bucket: 'sandwich' },
-    quickTapDisabled: true, // Attribute 普通/チーズ/こってり: kcal 460-600, F 24-32
-    defaultMacro: { kcal: 460, protein: 22, fat: 24, carbs: 39 },
-    referenceDescription: '普通=バンズ+パテ100g+野菜(約460kcal)。こってり=ダブルパテ/てりやきマヨ・ベーコン増し系で約600kcal・脂質32g',
-    amount: { unit: 'piece', default: 1 },
-    // Combined burger + burger_heavy via Attribute
+    defaultMacro: { kcal: 380, protein: 15, fat: 18, carbs: 40 },
+    referenceDescription: 'バンズ+パティ+野菜 1個 (チェーン定番サイズ)',
+    // 小=マックのハンバーガー(259)/チーズバーガー(310) 帯、大=ビッグマック(524) 帯。
+    amount: {
+      unit: 'percent',
+      default: 100,
+      chips: [{ label: '小', value: 75 }, { label: '1個', value: 100 }, { label: '大', value: 125 }],
+    },
+    // factor はマクドナルド・モスバーガー公式栄養成分の実測値から逆算 (同種商品は平均)。
     attributes: [
-      { key: 'normal', label: '普通', isDefault: true },
-      { key: 'cheese', label: 'チーズ', factor: { kcal: 1.15, protein: 1.14, fat: 1.17, carbs: 1.08 } },
-      { key: 'heavy', label: 'こってり', factor: { kcal: 1.3, protein: 1.27, fat: 1.33, carbs: 1.08 } },
+      { key: 'beef', label: 'ビーフ', isDefault: true },
+      // モスチーズバーガー 425/18.2/21.4/40.4
+      { key: 'cheese', label: 'チーズ', factor: { kcal: 1.12, protein: 1.21, fat: 1.19, carbs: 1.01 } },
+      // フィレオフィッシュ 338/15.1/14.2/37.4・モスフィッシュ 381/16.2/18.8/37.0
+      { key: 'fish', label: 'フィッシュ', searchTags: ['フィレオフィッシュ', 'さかな'], factor: { kcal: 0.95, protein: 1.04, fat: 0.92, carbs: 0.93 } },
+      // マックチキン 386/13.5/19.6/39.5・モスチキン 386/15.0/18.5/40.0
+      { key: 'chicken', label: 'チキン', searchTags: ['とり', 'チキンフィレオ'], factor: { kcal: 1.02, protein: 0.95, fat: 1.06, carbs: 0.99 } },
+      // てりやきは脂質が突出しタンパク質が低い (マックてりやき 485/P14.2/F31.3)。
+      // 旧「こってり」ではこのPFCの偏りを表現できなかったため独立させる。
+      { key: 'teriyaki', label: 'てりやき', searchTags: ['テリヤキ', '照り焼き'], factor: { kcal: 1.14, protein: 0.95, fat: 1.38, carbs: 0.98 } },
+      // モスロースカツ 410/16.6/16.3/49.7・えびフィレオ 408/11.4/18.6/49.5
+      { key: 'katsu', label: 'カツ・エビカツ', searchTags: ['かつばーがー', 'えびかつ'], factor: { kcal: 1.08, protein: 0.93, fat: 0.97, carbs: 1.24 } },
     ],
-    defaultAddonIds: ['cheese', 'bacon_sausage', 'avocado'],
+    defaultAddonIds: ['cheese', 'patty_add', 'bacon_sausage', 'avocado'],
+  },
+  {
+    // 専門店・大型バーガー帯。ワッパー(672)・ぜいたくモスチーズ(685)・
+    // グルメバーガー(757)・BBQステーキワッパー(811) はチェーン定番帯の約2倍あり、
+    // ラーメンを ramen_light / ramen_heavy に分けているのと同じ理由で Identity を分ける。
+    id: 'burger_big',
+    label: 'バーガー (大きめ・専門店)',
+    searchTags: ['ぐるめばーがー', 'グルメバーガー', 'ワッパー', 'バーガーキング', 'クラフトバーガー', 'ぜいたく'],
+    primaryHome: { tab: 'dish', bucket: 'sandwich' },
+    defaultMacro: { kcal: 700, protein: 29, fat: 40, carbs: 51 },
+    referenceDescription: 'ワッパー・ぜいたく系・専門店バーガー 1個',
+    amount: {
+      unit: 'percent',
+      default: 100,
+      chips: [{ label: '1個', value: 100 }, { label: '大', value: 130 }],
+    },
+    attributes: [
+      { key: 'standard', label: '定番', isDefault: true },
+      // グルメ系アボカドチーズバーガー 約757kcal
+      { key: 'gourmet', label: 'グルメ・専門店', factor: { kcal: 1.08 } },
+      // BBQステーキワッパー 811/33.3/52.6/51.9
+      { key: 'heavy', label: '特盛・BBQ系', factor: { kcal: 1.16, protein: 1.15, fat: 1.32, carbs: 1.02 } },
+    ],
+    defaultAddonIds: ['cheese', 'patty_add', 'bacon_sausage', 'avocado'],
   },
   {
     id: 'burrito_taco',
@@ -549,7 +600,24 @@ const BUCKET_SANDWICH: Identity[] = [
     amount: { unit: 'piece', default: 1 },
     attributes: [
       { key: 'burrito', label: 'ブリトー', isDefault: true },
-      { key: 'taco', label: 'タコス(2個)', factor: { kcal: 0.76, protein: 0.88, fat: 0.83, carbs: 0.76 } },
+      {
+        key: 'taco',
+        label: 'タコス',
+        // factor は「2個」基準 (500kcal×0.76=380kcal)。個数入力を実数に合わせるため
+        // amount を上書き (Identity既定の piece=1個 だと「1個」表示なのに実際は2個分になっていた)。
+        factor: { kcal: 0.76, protein: 0.88, fat: 0.83, carbs: 0.76 },
+        amount: {
+          unit: 'piece',
+          default: 2,
+          unitLabel: '個',
+          chips: [
+            { label: '1', value: 1 },
+            { label: '2', value: 2 },
+            { label: '3', value: 3 },
+            { label: '4', value: 4 },
+          ],
+        },
+      },
       { key: 'bowl', label: 'ブリトーボウル', factor: { kcal: 0.84, fat: 0.78, carbs: 0.8 } },
     ],
     searchTags: ['メキシコ', 'メキシカン', 'トルティーヤ', 'ラップ'],
@@ -566,6 +634,10 @@ const BUCKET_SANDWICH: Identity[] = [
       { key: 'hot_dog', label: 'ホットドッグ', isDefault: true },
       { key: 'banh_mi', label: 'バインミー', factor: { kcal: 1.07, protein: 1.13 } },
       { key: 'pita', label: 'ピタサンド', factor: { kcal: 0.93 } },
+      // 衣で揚げる衣物のため脂質特性が別物 (セブン アメリカンドッグ358/P10/F28.3/C17.1、
+      // ビッグアメリカンドッグ324/P6/F17.3/C37.7 の平均から逆算)。パン系の他属性と違い
+      // 高脂質・低たんぱくにシフトする。
+      { key: 'corn_dog', label: 'アメリカンドッグ', searchTags: ['あめりかんどっぐ', 'コーンドッグ'], factor: { kcal: 0.91, protein: 0.53, fat: 1.52, carbs: 0.69 } },
     ],
     defaultAddonIds: ['cheese'],
     allowedAddonIds: ['cheese', 'bacon_sausage'],

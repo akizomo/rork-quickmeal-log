@@ -244,6 +244,9 @@ const BUCKET_STAPLE: Identity[] = [
     styles: [
       { key: 'plain', label: '蒸し・茹で', isDefault: true },
       { key: 'baked', label: '焼き', factor: { kcal: 1.11, carbs: 1.17 } },
+      // マッシュ自体のkcalは茹でと同等 (factor省略=1.0)。バター・牛乳分は
+      // defaultAddonIds の butter_cream で別計上する (ingredient全体で共通)。
+      { key: 'mashed', label: 'マッシュ', searchTags: ['つぶし', 'マッシュポテト'] },
       {
         key: 'fried',
         label: '揚げ',
