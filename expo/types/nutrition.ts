@@ -272,10 +272,17 @@ export interface AppSettings {
   weeklyRecapDismissedWeekKey?: string;
 
   /**
-   * UI 表示言語。未設定時は 'ja' にフォールバック。
-   * i18next の lng と同期して管理する (useLocale フック参照)。
+   * UI 表示言語。デバイスの languageCode から初期値を設定。未設定時は 'ja'。
+   * @deprecated 旧 `locale` フィールドは uiLanguage + foodRegion に分割済み。
+   * migrateSettings でのみ参照。
    */
   locale?: 'ja' | 'en-US';
+
+  /** UI 表示言語。デバイスの languageCode から初期値を設定。未設定時は 'ja'。 */
+  uiLanguage?: 'ja' | 'en-US';
+
+  /** 食事DBのリージョン。デバイスの regionCode から初期値を設定。未設定時は 'ja'。 */
+  foodRegion?: 'ja' | 'en-US';
 }
 
 export interface QuickCategory {

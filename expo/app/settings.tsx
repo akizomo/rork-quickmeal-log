@@ -11,9 +11,13 @@ import { useLocale } from '@/hooks/useLocale';
 import { widgetRequestPin } from '@/utils/widget-bridge';
 
 const THEME_OPTION_KEYS: ('system' | 'light' | 'dark')[] = ['system', 'light', 'dark'];
-const LOCALE_OPTIONS: { key: 'ja' | 'en-US'; label: string }[] = [
+const LANGUAGE_OPTIONS: { key: 'ja' | 'en-US'; label: string }[] = [
   { key: 'ja', label: '日本語' },
   { key: 'en-US', label: 'English (US)' },
+];
+const REGION_OPTIONS: { key: 'ja' | 'en-US'; labelKey: string }[] = [
+  { key: 'ja', labelKey: 'settings.region.ja' },
+  { key: 'en-US', labelKey: 'settings.region.enUS' },
 ];
 
 export default function SettingsRoute() {
@@ -21,7 +25,7 @@ export default function SettingsRoute() {
   const theme = useTheme();
   const t = useT();
   const { settings, updateSettingsValues, resetOnboarding } = useAppState();
-  const { locale, setLocale } = useLocale();
+  const { uiLanguage, foodRegion, setUiLanguage, setFoodRegion } = useLocale();
 
   const THEME_OPTIONS = THEME_OPTION_KEYS.map((key) => ({
     key,
@@ -88,19 +92,43 @@ export default function SettingsRoute() {
             <View style={styles.section}>
               <SettingsSectionLabel>{`${t('settings.language.title')} / Language`}</SettingsSectionLabel>
               <SettingsListCard>
-                {LOCALE_OPTIONS.map((option, i) => {
-                  const selected = locale === option.key;
+                {LANGUAGE_OPTIONS.map((option, i) => {
+                  const selected = uiLanguage === option.key;
                   return (
                     <React.Fragment key={option.key}>
                       {i > 0 ? <SettingsDivider /> : null}
                       <SettingsLinkRow
                         label={option.label}
                         showChevron={false}
-                        onPress={() => setLocale(option.key)}
+                        onPress={() => setUiLanguage(option.key)}
                         trailing={
                           selected ? <Icon name="check" size={18} color={theme.colors.action.text.default} /> : null
                         }
-                        testID={`settings-locale-option-${option.key}`}
+                        testID={`settings-language-option-${option.key}`}
+                      />
+                    </React.Fragment>
+                  );
+                })}
+              </SettingsListCard>
+            </View>
+
+            {/* §食事DB地域 / Food Region */}
+            <View style={styles.section}>
+              <SettingsSectionLabel>{t('settings.region.title')}</SettingsSectionLabel>
+              <SettingsListCard>
+                {REGION_OPTIONS.map((option, i) => {
+                  const selected = foodRegion === option.key;
+                  return (
+                    <React.Fragment key={option.key}>
+                      {i > 0 ? <SettingsDivider /> : null}
+                      <SettingsLinkRow
+                        label={t(option.labelKey)}
+                        showChevron={false}
+                        onPress={() => setFoodRegion(option.key)}
+                        trailing={
+                          selected ? <Icon name="check" size={18} color={theme.colors.action.text.default} /> : null
+                        }
+                        testID={`settings-region-option-${option.key}`}
                       />
                     </React.Fragment>
                   );

@@ -133,7 +133,7 @@ function HorizontalChipRow({ children }: { children: React.ReactNode }) {
 export function IdentityLogSheet() {
   const t = useTheme();
   const tr = useT();
-  const { locale } = useLocale();
+  const { foodRegion: locale } = useLocale();
   const {
     identityLogSheet,
     openIdentityLogSheet,

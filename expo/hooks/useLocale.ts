@@ -4,12 +4,17 @@ import type { AppLocale } from '@/types/locale';
 
 export function useLocale() {
   const { settings, updateSettingsValues } = useAppState();
-  const locale = (settings.locale ?? 'ja') as AppLocale;
-  const setLocale = useCallback(
-    (newLocale: AppLocale) => {
-      updateSettingsValues({ locale: newLocale });
-    },
+  const uiLanguage = (settings.uiLanguage ?? 'ja') as AppLocale;
+  const foodRegion = (settings.foodRegion ?? 'ja') as AppLocale;
+
+  const setUiLanguage = useCallback(
+    (lang: AppLocale) => updateSettingsValues({ uiLanguage: lang }),
     [updateSettingsValues],
   );
-  return { locale, setLocale };
+  const setFoodRegion = useCallback(
+    (region: AppLocale) => updateSettingsValues({ foodRegion: region }),
+    [updateSettingsValues],
+  );
+
+  return { uiLanguage, foodRegion, setUiLanguage, setFoodRegion };
 }

@@ -94,7 +94,7 @@ function SearchResultRow({
 export function SearchSheet({ visible, onClose, onOpen }: Props) {
   const t = useTheme();
   const { openIdentityLogSheet, recordSearchMissEvent, bumpDiagnostic, settings } = useAppState();
-  const { locale } = useLocale();
+  const { foodRegion: locale } = useLocale();
 
   const [query, setQuery] = useState('');
   const [debounced, setDebounced] = useState('');

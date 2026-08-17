@@ -24,9 +24,9 @@ function resolvePath(obj: Record<string, unknown>, path: string): unknown {
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function useT(): (key: string, opts?: Record<string, unknown> & { returnObjects?: boolean }) => any {
-  const { locale } = useLocale();
+  const { uiLanguage } = useLocale();
   return useMemo(() => {
-    const dict = TRANSLATIONS[locale] ?? TRANSLATIONS.ja;
+    const dict = TRANSLATIONS[uiLanguage] ?? TRANSLATIONS.ja;
     return (key: string, opts?: Record<string, unknown> & { returnObjects?: boolean }) => {
       const value = resolvePath(dict, key);
       if (opts?.returnObjects) return value;
@@ -38,5 +38,5 @@ export function useT(): (key: string, opts?: Record<string, unknown> & { returnO
       }
       return key;
     };
-  }, [locale]);
+  }, [uiLanguage]);
 }

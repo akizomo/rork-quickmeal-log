@@ -153,7 +153,7 @@ function QuickLogButton({
   const { openIdentityLogSheet, quickLogIdentity } = useAppState();
   const t = useTheme();
   const tr = useT();
-  const { locale } = useLocale();
+  const { foodRegion: locale } = useLocale();
   const scale = useRef(new Animated.Value(1)).current;
 
   const registry = useMemo(() => buildRegistry(locale), [locale]);
@@ -374,7 +374,7 @@ function FrequentButton({
 export const QuickLogSection = memo(function QuickLogSection() {
   const { selectedMode, setSelectedMode, settings, quickLog, bumpDiagnostic } = useAppState();
   const tr = useT();
-  const { locale } = useLocale();
+  const { foodRegion: locale } = useLocale();
   const { width: screenWidth } = useWindowDimensions();
   const [searchOpen, setSearchOpen] = useState(false);
 

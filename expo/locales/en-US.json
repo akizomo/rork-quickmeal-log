@@ -582,6 +582,11 @@
     "info": {
       "title": "Info",
       "aboutApp": "About Hachibu"
+    },
+    "region": {
+      "title": "Food Region",
+      "ja": "Japan (Japanese food)",
+      "enUS": "US (Western food)"
     }
   },
   "home": {

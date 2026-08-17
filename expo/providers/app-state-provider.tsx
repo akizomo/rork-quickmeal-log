@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import createContextHook from '@nkzw/create-context-hook';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import * as Haptics from 'expo-haptics';
+import { getLocales } from 'expo-localization';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 
@@ -108,10 +109,32 @@ const defaultPersistedState: PersistedState = {
   dailyActivities: [],
 };
 
+function resolveLocaleDefaults(raw: Partial<AppSettings> | undefined): {
+  uiLanguage: 'ja' | 'en-US';
+  foodRegion: 'ja' | 'en-US';
+} {
+  // 既存ユーザー: uiLanguage/foodRegion が既に設定済み
+  if (raw?.uiLanguage && raw?.foodRegion) {
+    return { uiLanguage: raw.uiLanguage, foodRegion: raw.foodRegion };
+  }
+  // 旧 locale フィールドからの移行 (既存ユーザー)
+  if (raw?.locale) {
+    return { uiLanguage: raw.locale, foodRegion: raw.locale };
+  }
+  // 新規ユーザー: デバイスのロケールから初期値を決定
+  const [deviceLocale] = getLocales();
+  const uiLanguage = deviceLocale?.languageCode === 'ja' ? 'ja' : 'en-US';
+  const foodRegion = deviceLocale?.regionCode === 'JP' ? 'ja' : 'en-US';
+  return { uiLanguage, foodRegion };
+}
+
 function migrateSettings(raw: Partial<AppSettings> | undefined): AppSettings {
   const base = { ...defaultSettings, ...(raw ?? {}) };
+  const { uiLanguage, foodRegion } = resolveLocaleDefaults(raw);
   return {
     ...base,
+    uiLanguage,
+    foodRegion,
     mealStyleBySlot: { ...defaultSettings.mealStyleBySlot!, ...(raw?.mealStyleBySlot ?? {}) },
     favoriteItemIds: raw?.favoriteItemIds ?? [],
     introSeenVersion: raw?.introSeenVersion ?? 0,
