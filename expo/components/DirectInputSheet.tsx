@@ -9,6 +9,7 @@ import React, { useCallback, useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 
 import { Body, BottomSheet, Label, Overline, useTheme } from '@/design-system';
+import { useT } from '@/hooks/useT';
 import { useAppState } from '@/providers/app-state-provider';
 import { formatDateKey, generateId, getMealSlot } from '@/utils/nutrition';
 
@@ -21,6 +22,7 @@ type Props = {
 
 export function DirectInputSheet({ visible, onClose, onDismiss }: Props) {
   const t = useTheme();
+  const tr = useT();
   const { pushLog, loggingDate } = useAppState();
 
   const [name, setName] = useState('');
@@ -52,7 +54,7 @@ export function DirectInputSheet({ visible, onClose, onDismiss }: Props) {
     const protein = parseFloat(proteinStr) || 0;
     const fat = parseFloat(fatStr) || 0;
     const carbs = parseFloat(carbsStr) || 0;
-    const label = name.trim() || '直接入力';
+    const label = name.trim() || tr('directInput.fallbackLabel');
 
     const now = new Date();
     // Preserve time-of-day even when logging to a past date
@@ -83,20 +85,20 @@ export function DirectInputSheet({ visible, onClose, onDismiss }: Props) {
     <BottomSheet
       visible={visible}
       onClose={handleClose}
-      title="数値で入力"
-      primaryAction={{ label: '記録する', onPress: handleSave, disabled: !canSave }}
-      secondaryAction={{ label: 'キャンセル', onPress: handleClose }}
+      title={tr('directInput.title')}
+      primaryAction={{ label: tr('directInput.record'), onPress: handleSave, disabled: !canSave }}
+      secondaryAction={{ label: tr('common.cancel'), onPress: handleClose }}
       keyboardAware
       expandToFull
     >
       <View style={{ gap: t.spacing['5'] }}>
         {/* 名前 */}
         <View style={{ gap: t.spacing['2'] }}>
-          <Overline tone="secondary">名前（任意）</Overline>
+          <Overline tone="secondary">{tr('directInput.sections.name')}</Overline>
           <TextInput
             value={name}
             onChangeText={setName}
-            placeholder="例: プロテインバー、カスタムシェイク"
+            placeholder={tr('directInput.namePlaceholder')}
             placeholderTextColor={t.colors.content.tertiary}
             returnKeyType="next"
             style={[
@@ -109,51 +111,51 @@ export function DirectInputSheet({ visible, onClose, onDismiss }: Props) {
                 paddingVertical: t.spacing['3'],
               },
             ]}
-            accessibilityLabel="食品名"
+            accessibilityLabel={tr('directInput.nameA11y')}
           />
         </View>
 
         {/* カロリー */}
         <View style={{ gap: t.spacing['2'] }}>
-          <Overline tone="secondary">カロリー（必須）</Overline>
+          <Overline tone="secondary">{tr('directInput.sections.kcal')}</Overline>
           <View style={[styles.macroRow, { gap: t.spacing['3'] }]}>
             <MacroField
               value={kcalStr}
               onChangeText={setKcalStr}
               suffix="kcal"
               placeholder="0"
-              accessibilityLabel="カロリー"
+              accessibilityLabel={tr('directInput.kcalA11y')}
             />
           </View>
         </View>
 
         {/* PFC */}
         <View style={{ gap: t.spacing['2'] }}>
-          <Overline tone="secondary">PFC（任意）</Overline>
+          <Overline tone="secondary">{tr('directInput.sections.pfc')}</Overline>
           <View style={[styles.macroRow, { gap: t.spacing['3'] }]}>
             <MacroField
               value={proteinStr}
               onChangeText={setProteinStr}
               suffix="P"
               placeholder="0"
-              accessibilityLabel="タンパク質(g)"
+              accessibilityLabel={tr('directInput.proteinA11y')}
             />
             <MacroField
               value={fatStr}
               onChangeText={setFatStr}
               suffix="F"
               placeholder="0"
-              accessibilityLabel="脂質(g)"
+              accessibilityLabel={tr('directInput.fatA11y')}
             />
             <MacroField
               value={carbsStr}
               onChangeText={setCarbsStr}
               suffix="C"
               placeholder="0"
-              accessibilityLabel="炭水化物(g)"
+              accessibilityLabel={tr('directInput.carbsA11y')}
             />
           </View>
-          <Body size="sm" tone="secondary">単位はすべて g</Body>
+          <Body size="sm" tone="secondary">{tr('directInput.gramUnit')}</Body>
         </View>
       </View>
     </BottomSheet>

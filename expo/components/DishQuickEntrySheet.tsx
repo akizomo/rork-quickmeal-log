@@ -22,6 +22,7 @@ import {
   multiplyMacroSimple,
 } from '@/constants/dish-master';
 import { BottomSheet, Button, Chip as DSChip, Icon, Overline, useTheme, type Theme } from '@/design-system';
+import { useT } from '@/hooks/useT';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { useAppState } from '@/providers/app-state-provider';
 import {
@@ -128,6 +129,7 @@ function ChineseNoodlesBody({
   onSubmit: (p: DishQuickEntryPayload) => void;
 }) {
   const t = useTheme();
+  const tr = useT();
   const styles = useMemo(() => makeStyles(t), [t]);
   if (category.quickEntry.kind !== 'chinese_noodles') return null;
   const primaryOptions = category.quickEntry.primaryOptions;
@@ -164,7 +166,7 @@ function ChineseNoodlesBody({
 
   return (
     <>
-      <Overline style={styles.sectionLabel}>種類</Overline>
+      <Overline style={styles.sectionLabel}>{tr('dishEntry.sections.type')}</Overline>
       <View style={styles.row}>
         {primaryOptions.map((p) => (
           <Chip
@@ -179,7 +181,7 @@ function ChineseNoodlesBody({
 
       {primary.ramenStyles && ramenStyleKey ? (
         <>
-          <Overline style={styles.sectionLabel}>スタイル</Overline>
+          <Overline style={styles.sectionLabel}>{tr('dishEntry.sections.style')}</Overline>
           <View style={styles.row}>
             {primary.ramenStyles.map((s) => (
               <Chip
@@ -196,7 +198,7 @@ function ChineseNoodlesBody({
 
       {portionOptions.length > 0 ? (
         <>
-          <Overline style={styles.sectionLabel}>量</Overline>
+          <Overline style={styles.sectionLabel}>{tr('dishEntry.sections.amount')}</Overline>
           <PortionRow options={portionOptions} factor={factor} onChange={setFactor} />
         </>
       ) : null}
@@ -204,7 +206,7 @@ function ChineseNoodlesBody({
       <InstantPreview subcategoryLabel={label} portionLabel={activePortionLabel} macro={macro} />
 
       <PrimaryActionButton
-        label="追加"
+        label={tr('dishEntry.add')}
         onPress={() =>
           onSubmit({
             topCategoryKey: category.key,
@@ -232,6 +234,7 @@ function SushiBody({
   onOpenAmountEditor: (config: AmountEditConfig, initialValue: number, onClose: (n: number | null) => void) => void;
 }) {
   const t = useTheme();
+  const tr = useT();
   const styles = useMemo(() => makeStyles(t), [t]);
   if (category.quickEntry.kind !== 'sushi_count') return null;
   const config = category.quickEntry;
@@ -254,7 +257,7 @@ function SushiBody({
 
   return (
     <>
-      <Overline style={styles.sectionLabel}>モード</Overline>
+      <Overline style={styles.sectionLabel}>{tr('dishEntry.sections.mode')}</Overline>
       <View style={styles.row}>
         {config.modes.map((m) => (
           <Chip
@@ -267,11 +270,11 @@ function SushiBody({
         ))}
       </View>
 
-      <Overline style={styles.sectionLabel}>{mode.unitLabel}数</Overline>
+      <Overline style={styles.sectionLabel}>{tr('dishEntry.sections.count', { unit: mode.unitLabel })}</Overline>
       <Pressable
         onPress={handleOpenEditor}
         accessibilityRole="button"
-        accessibilityLabel={`量を変更。現在 ${count}${mode.unitLabel}`}
+        accessibilityLabel={tr('dishEntry.a11yAmountChange', { value: count, unit: mode.unitLabel })}
         style={styles.amountRow}
         testID="dqe-sushi-amount-row"
       >
@@ -286,7 +289,7 @@ function SushiBody({
       />
 
       <PrimaryActionButton
-        label="追加"
+        label={tr('dishEntry.add')}
         onPress={() =>
           onSubmit({
             topCategoryKey: category.key,
@@ -313,6 +316,7 @@ function PizzaBody({
   onOpenAmountEditor: (config: AmountEditConfig, initialValue: number, onClose: (n: number | null) => void) => void;
 }) {
   const theme = useTheme();
+  const tr = useT();
   const styles = useMemo(() => makeStyles(theme), [theme]);
   if (category.quickEntry.kind !== 'pizza_slices') return null;
   const config = category.quickEntry;
@@ -331,7 +335,7 @@ function PizzaBody({
 
   return (
     <>
-      <Overline style={styles.sectionLabel}>タイプ</Overline>
+      <Overline style={styles.sectionLabel}>{tr('dishEntry.sections.pizzaType')}</Overline>
       <View style={styles.row}>
         {config.pizzaTypes.map((t) => (
           <Chip
@@ -344,34 +348,34 @@ function PizzaBody({
         ))}
       </View>
 
-      <Overline style={styles.sectionLabel}>切れ数</Overline>
+      <Overline style={styles.sectionLabel}>{tr('dishEntry.sections.slices')}</Overline>
       <Pressable
         onPress={handleOpenEditor}
         accessibilityRole="button"
-        accessibilityLabel={`量を変更。現在 ${slices}切`}
+        accessibilityLabel={tr('dishEntry.a11yAmountChange', { value: slices, unit: tr('dishEntry.sliceUnit') })}
         style={styles.amountRow}
         testID="dqe-pizza-amount-row"
       >
-        <Text style={styles.amountRowValue}>{slices}切</Text>
+        <Text style={styles.amountRowValue}>{tr('dishEntry.sliceCount', { n: slices })}</Text>
         <Icon name="edit" size={14} color={theme.colors.content.secondary} />
       </Pressable>
 
       <InstantPreview
-        subcategoryLabel={`ピザ ${type.label}`}
-        portionLabel={`${slices}切`}
+        subcategoryLabel={tr('dishEntry.pizzaLabel', { type: type.label })}
+        portionLabel={tr('dishEntry.sliceCount', { n: slices })}
         macro={macro}
       />
 
       <PrimaryActionButton
-        label="追加"
+        label={tr('dishEntry.add')}
         onPress={() =>
           onSubmit({
             topCategoryKey: category.key,
             subcategoryKey: `pizza_${type.key}`,
-            subcategoryLabel: `ピザ ${type.label}`,
+            subcategoryLabel: tr('dishEntry.pizzaLabel', { type: type.label }),
             pizzaType: type.key,
             pizzaSliceCount: slices,
-            portionPrimaryLabel: `${slices}切`,
+            portionPrimaryLabel: tr('dishEntry.sliceCount', { n: slices }),
             macro,
           })
         }
@@ -388,6 +392,7 @@ function SetMealBody({
   onSubmit: (p: DishQuickEntryPayload) => void;
 }) {
   const t = useTheme();
+  const tr = useT();
   const styles = useMemo(() => makeStyles(t), [t]);
   if (category.quickEntry.kind !== 'set_meal_select') return null;
   const config = category.quickEntry;
@@ -400,7 +405,7 @@ function SetMealBody({
 
   return (
     <>
-      <Overline style={styles.sectionLabel}>種類</Overline>
+      <Overline style={styles.sectionLabel}>{tr('dishEntry.sections.type')}</Overline>
       <View style={styles.row}>
         {config.options.map((o) => (
           <Chip
@@ -413,13 +418,13 @@ function SetMealBody({
         ))}
       </View>
 
-      <Overline style={styles.sectionLabel}>量</Overline>
+      <Overline style={styles.sectionLabel}>{tr('dishEntry.sections.amount')}</Overline>
       <PortionRow options={option.portionOptions} factor={factor} onChange={setFactor} />
 
       <InstantPreview subcategoryLabel={option.label} portionLabel={portionLabel} macro={macro} />
 
       <PrimaryActionButton
-        label="追加"
+        label={tr('dishEntry.add')}
         onPress={() =>
           onSubmit({
             topCategoryKey: category.key,
@@ -444,6 +449,7 @@ function InstantSaveBody({
   onSubmit: (p: DishQuickEntryPayload) => void;
 }) {
   const t = useTheme();
+  const tr = useT();
   const styles = useMemo(() => makeStyles(t), [t]);
   if (category.quickEntry.kind !== 'instant_save') return null;
   const defaultKey = category.quickEntry.defaultSubcategoryKey;
@@ -455,7 +461,7 @@ function InstantSaveBody({
 
   return (
     <>
-      <Overline style={styles.sectionLabel}>種類</Overline>
+      <Overline style={styles.sectionLabel}>{tr('dishEntry.sections.type')}</Overline>
       <View style={styles.row}>
         {category.subcategories.map((s) => (
           <Chip
@@ -468,13 +474,13 @@ function InstantSaveBody({
         ))}
       </View>
 
-      <Overline style={styles.sectionLabel}>量</Overline>
+      <Overline style={styles.sectionLabel}>{tr('dishEntry.sections.amount')}</Overline>
       <PortionRow options={sub.portionOptions} factor={factor} onChange={setFactor} />
 
       <InstantPreview subcategoryLabel={sub.label} portionLabel={portionLabel} macro={macro} />
 
       <PrimaryActionButton
-        label="追加"
+        label={tr('dishEntry.add')}
         onPress={() =>
           onSubmit({
             topCategoryKey: category.key,

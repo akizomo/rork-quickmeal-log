@@ -3,6 +3,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 import { IconButton, useTheme, type Theme } from '@/design-system';
+import { useT } from '@/hooks/useT';
 import { colors } from '@/design-system/tokens/primitives/colors';
 import { radius } from '@/design-system/tokens/primitives/radius';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
@@ -23,11 +24,11 @@ import {
   startOfDay,
 } from '@/utils/history';
 
-const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'] as const;
-
 export function MonthlyStatsView() {
   const { logs, profile, settings, exerciseLogs, dailyActivities } = useAppState();
   const t = useTheme();
+  const tr = useT();
+  const weekdays = tr('monthlyStats.weekDays', { returnObjects: true }) as string[];
   const styles = useMemo(() => makeStyles(t), [t]);
   const router = useRouter();
   const { width: screenWidth } = useWindowDimensions();
@@ -198,7 +199,7 @@ export function MonthlyStatsView() {
           onPress={goPrev}
           disabled={!canGoPrev}
           testID="month-prev"
-          accessibilityLabel="前の月へ"
+          accessibilityLabel={tr('monthlyStats.prevMonth')}
         />
         <Text style={styles.headerLabel}>{formatMonthLabel(anchor)}</Text>
         <IconButton
@@ -209,13 +210,13 @@ export function MonthlyStatsView() {
           onPress={goNext}
           disabled={!canGoNext}
           testID="month-next"
-          accessibilityLabel="次の月へ"
+          accessibilityLabel={tr('monthlyStats.nextMonth')}
         />
       </View>
 
       <View style={{ padding: 12 }}>
         <View style={styles.weekdayRow}>
-          {WEEKDAYS.map((d, i) => (
+          {weekdays.map((d, i) => (
             <View key={d} style={[styles.weekdayCell, { width: cellSize }]}>
               <Text style={[styles.weekdayText, i === 0 ? styles.sunday : null, i === 6 ? styles.saturday : null]}>
                 {d}

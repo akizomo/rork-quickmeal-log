@@ -11,7 +11,9 @@
     "stats": "実績",
     "status": "ステータス",
     "subscription": "サブスクリプション",
-    "notFound": "ページが見つかりません"
+    "notFound": "ページが見つかりません",
+    "modal": "アプリについて",
+    "barcodeLog": "バーコードスキャン"
   },
   "common": {
     "save": "保存",
@@ -35,13 +37,29 @@
       "protein": "たんぱく質",
       "fat": "脂質",
       "carbs": "炭水化物"
+    },
+    "record": "記録する",
+    "weight": "体重",
+    "bodyFat": "体脂肪率",
+    "unit": {
+      "min": "分",
+      "kcalPerDay": "kcal / 日"
     }
   },
   "intro": {
     "slides": [
-      { "title": "9ボタンで、ざっくり記録", "subtitle": "ふだんの食事は、タップひとつで残せる。" },
-      { "title": "急ぎはタップ、余裕は長押し", "subtitle": "くわしく残したい日は、もう一歩ふみこめる。" },
-      { "title": "進みは、ひと目で", "subtitle": "目標と今の差が、グラフでそのまま見える。" }
+      {
+        "title": "9ボタンで、ざっくり記録",
+        "subtitle": "ふだんの食事は、タップひとつで残せる。"
+      },
+      {
+        "title": "急ぎはタップ、余裕は長押し",
+        "subtitle": "くわしく残したい日は、もう一歩ふみこめる。"
+      },
+      {
+        "title": "進みは、ひと目で",
+        "subtitle": "目標と今の差が、グラフでそのまま見える。"
+      }
     ],
     "skip": "スキップ",
     "next": "次へ",
@@ -49,12 +67,60 @@
     "progress": {
       "label": "体重 ・ 12週",
       "delta": "-2.3kg",
-      "axis": ["1月", "3月", "目標"]
+      "axis": [
+        "1月",
+        "3月",
+        "目標"
+      ]
     },
     "a11y": {
       "skip": "紹介をスキップ",
       "skipHint": "オンボーディングへ進みます",
       "next": "次のスライドへ"
+    }
+  },
+  "notFound": {
+    "title": "このページは見つかりませんでした",
+    "description": "ホームに戻って、今日の記録を続けてください。",
+    "homeButton": "ホームへ戻る"
+  },
+  "modal": {
+    "title": "迷わず記録できる食事ログ",
+    "description": "1タップ入力、取り消し、再編集までを静かに気持ちよくまとめたMVPです。",
+    "close": "とじる"
+  },
+  "barcode": {
+    "screenTitle": {
+      "scan": "バーコードスキャン",
+      "manual": "手動入力",
+      "confirm": "栄養情報を確認"
+    },
+    "permissionText": "バーコードをスキャンするにはカメラへのアクセスが必要です。",
+    "allowCamera": "カメラを許可する",
+    "searching": "検索中...",
+    "scanHint": "バーコードを枠内に合わせてください",
+    "manualEntry": "手動で入力する",
+    "fields": {
+      "name": "食品名",
+      "namePlaceholder": "例: プロテインバー",
+      "grams": "摂取量 (g)",
+      "per100gHint": "100g あたりの値を編集できます",
+      "perServingHint": "1食分の値を入力してください",
+      "protein": "タンパク質 (g)",
+      "fat": "脂質 (g)",
+      "carbs": "炭水化物 (g)"
+    },
+    "addToLog": "ログに追加",
+    "scanAgain": "もう一度スキャン",
+    "manualFallback": "手動入力",
+    "alert": {
+      "title": "バーコードを読み取れませんでした",
+      "notFound": "この商品はデータベースに登録されていません。手動で入力してください。",
+      "noNutrition": "この商品の栄養情報が登録されていません。手動で入力してください。",
+      "networkError": "通信エラーが発生しました。手動で入力してください。",
+      "manualInput": "手動入力",
+      "inputError": "入力エラー",
+      "inputErrorBody": "kcal・P・F・C を正しく入力してください。"
     }
   },
   "about": {
@@ -65,13 +131,23 @@
     "title": "ホーム画面からワンタップで記録",
     "body": "ウィジェットを追加すると、アプリを開かずにホーム画面から食事を記録できます。",
     "cta": "ウィジェットを追加",
-    "skip": "あとで"
+    "skip": "あとで",
+    "previewCategories": [
+      "主食",
+      "肉魚(低脂)",
+      "卵",
+      "脂あり肉魚"
+    ]
   },
   "healthConnect": {
     "title": "ヘルスデータと連携しますか？",
     "subtitle": "歩数・運動・体重を自動で取り込んで、毎日の入力をすこし軽くします。あとからでも変更できます。",
     "dataLabel": "取り込むデータ",
-    "dataItems": ["体重 / 体脂肪率", "歩数 / 消費カロリー", "運動セッション"],
+    "dataItems": [
+      "体重 / 体脂肪率",
+      "歩数 / 消費カロリー",
+      "運動セッション"
+    ],
     "providerRequired": "Health Connect が必要です",
     "providerUpdateMsg": "インストール済みの Health Connect アプリのアップデートが必要です。Play Store で更新してから戻ってきてください。",
     "providerInstallMsg": "Android では Google の Health Connect アプリ経由でデータを取り込みます。Play Store からインストールして戻ってきてください。",
@@ -135,8 +211,20 @@
       "hours": "{{n}}時間前",
       "days": "{{n}}日前"
     },
-    "weightSheet": { "title": "体重を更新" },
-    "bfSheet": { "title": "体脂肪率を更新", "diff": "前回との差 {{diff}} %" }
+    "weightSheet": {
+      "title": "体重を更新"
+    },
+    "bfSheet": {
+      "title": "体脂肪率を更新",
+      "diff": "前回との差 {{diff}} %"
+    },
+    "a11y": {
+      "trialCard": "トライアル詳細",
+      "trialHint": "サブスクリプション画面を開きます",
+      "goalCard": "目標を変更",
+      "goalHint": "目的とプランの設定画面を開きます",
+      "diagTitle": "ヘルス連携 診断情報"
+    }
   },
   "subscription": {
     "sections": {
@@ -188,7 +276,9 @@
     "discount": "お得",
     "select": "選ぶ",
     "restore": "購入を復元",
-    "a11y": { "purchaseHint": "このプランで購入手続きを開始します" },
+    "a11y": {
+      "purchaseHint": "このプランで購入手続きを開始します"
+    },
     "alerts": {
       "purchaseError": "購入に失敗しました",
       "purchaseErrorRetry": "時間をおいて再度お試しください。",
@@ -204,6 +294,10 @@
     "noPreviewWithPace": "目的・ペースを選ぶとここに表示されます",
     "weight": "体重",
     "bodyFat": "体脂肪率",
+    "a11y": {
+      "targetWeight": "目標体重",
+      "targetBodyFat": "目標体脂肪率"
+    },
     "sections": {
       "direction": "目的",
       "pace": "ペース"
@@ -238,13 +332,223 @@
       "maintainCurrent": "今の体重（{{current}}kg）を維持"
     }
   },
+  "errorBoundary": {
+    "title": "画面の表示で問題が起きました",
+    "message": "もう一度開き直してください。",
+    "retry": "再表示"
+  },
+  "calorieRing": {
+    "remaining": "のこり",
+    "over": "オーバー",
+    "statusRemaining": "あと {{kcal}} kcal",
+    "statusOver": "+{{kcal}} kcal 多め",
+    "statusOverSoft": "+{{kcal}} kcal",
+    "a11yDefault": "目標{{target}}kcalのうち{{consumed}}kcal"
+  },
+  "dayLog": {
+    "todayTitle": "今日のログ",
+    "dayTitle": "{{day}} のログ",
+    "emptyTitle": "まだ記録はありません",
+    "emptyText": "上のボタンから、その日の食事をすばやく残せます。",
+    "open": "ひらく",
+    "fullscreen": "全画面",
+    "close": "とじる"
+  },
+  "directInput": {
+    "title": "数値で入力",
+    "record": "記録する",
+    "sections": {
+      "name": "名前（任意）",
+      "kcal": "カロリー（必須）",
+      "pfc": "PFC（任意）"
+    },
+    "namePlaceholder": "例: プロテインバー、カスタムシェイク",
+    "nameA11y": "食品名",
+    "kcalA11y": "カロリー",
+    "proteinA11y": "タンパク質(g)",
+    "fatA11y": "脂質(g)",
+    "carbsA11y": "炭水化物(g)",
+    "gramUnit": "単位はすべて g",
+    "fallbackLabel": "直接入力"
+  },
+  "dishEntry": {
+    "sections": {
+      "type": "種類",
+      "style": "スタイル",
+      "amount": "量",
+      "mode": "モード",
+      "slices": "切れ数",
+      "pizzaType": "タイプ",
+      "count": "{{unit}}数"
+    },
+    "add": "追加",
+    "a11yAmountChange": "量を変更。現在 {{value}}{{unit}}",
+    "sliceCount": "{{n}}切",
+    "pizzaLabel": "ピザ {{type}}",
+    "sliceUnit": "切"
+  },
+  "exercise": {
+    "sheetTitle": "{{day}}の消費",
+    "addExercise": "運動を追加",
+    "historyTitle": "{{day}}の運動",
+    "walking": "ウォーキング",
+    "sourceHealth": "ヘルス",
+    "sourceManual": "手動",
+    "steps": "{{n}}歩",
+    "burnedKcal": "+{{kcal}} kcal",
+    "activityLevelBase": "活動レベル「{{level}}」の想定",
+    "goalAddition": "目標に追加",
+    "goalAdditionCapped": "目標に追加（上限あり）",
+    "burnedCaloriesLabel": "消費カロリー",
+    "add": "追加",
+    "deleteA11y": "{{label}} を削除"
+  },
+  "identityLog": {
+    "sections": {
+      "type": "種類",
+      "cooking": "調理",
+      "amount": "量",
+      "topping": "トッピング"
+    },
+    "save": "保存して追加",
+    "update": "更新",
+    "deleteA11y": "この記録を削除",
+    "closeA11y": "閉じる",
+    "deleteTitle": "記録を削除",
+    "deleteMessage": "この記録を削除しますか？",
+    "switchToG": "gに切り替え",
+    "switchToCount": "個数に切り替え",
+    "amountRefPrefix": "目安"
+  },
+  "logEditor": {
+    "addIngredient": "食材を追加",
+    "addDish": "料理を追加",
+    "editIngredient": "食材を編集",
+    "editDish": "料理を編集",
+    "amountTitle": "食べた量",
+    "typeSection": "種類",
+    "flavorSection": "味・タイプ",
+    "additionSection": "高影響追加",
+    "sizeSection": "サイズ",
+    "categoryLabel": "カテゴリ",
+    "toppingSection": "トッピング",
+    "preview": "プレビュー"
+  },
+  "monthlyStats": {
+    "prevMonth": "前の月へ",
+    "nextMonth": "次の月へ",
+    "weekDays": [
+      "日",
+      "月",
+      "火",
+      "水",
+      "木",
+      "金",
+      "土"
+    ]
+  },
+  "amountEdit": {
+    "defaultTitle": "量を変更",
+    "decreaseA11y": "量を減らす",
+    "increaseA11y": "量を増やす",
+    "inputA11y": "量を入力。{{min}}から{{max}}{{unit}}の範囲"
+  },
+  "bodyStats": {
+    "weight": "体重",
+    "bodyFat": "体脂肪率",
+    "noRecord": "記録なし",
+    "goalReached": "目標に到達",
+    "remaining": "あと {{value}} {{unit}}",
+    "noGoal": "目標未設定",
+    "emptyPeriod": "この期間の記録はありません",
+    "emptyAll": "記録が増えると推移が表示されます",
+    "goalLabel": "目標",
+    "chartA11yLabel": "{{title}}の推移グラフ"
+  },
+  "weeklyRecap": {
+    "close": "とじる",
+    "prevCard": "前へ",
+    "nextCard": "次へ",
+    "cover": {
+      "lead": "先週の\nごはんを\nふりかえる",
+      "tapHint": "タップして進む"
+    },
+    "days": {
+      "label": "01 — 記録日数",
+      "lead": "先週、記録が残っていたのは",
+      "outOf": "／7日"
+    },
+    "kcal": {
+      "label": "02 — カロリー",
+      "lead": "先週、1日あたり食べていたのは",
+      "target": "目標 {{kcal}}kcal"
+    },
+    "insight": {
+      "label": "03 — {{macro}}",
+      "lead": "目標との差がいちばん大きかったのは",
+      "less": "目標より 少なめ",
+      "more": "目標より 多め",
+      "barActual": "1日の平均",
+      "barTarget": "1日の目標"
+    },
+    "advice": {
+      "label": "04 — アドバイス",
+      "leadMore": "{{macro}}を増やしたいときは",
+      "leadLess": "{{macro}}が少なめの選択肢なら",
+      "sourcePrefix": "出典: "
+    },
+    "outro": {
+      "lead": "ざっくりが、\n続くコツ",
+      "nextWeek": "来週の振り返りは、次の月曜に。"
+    },
+    "nutritionNote": "豆知識 · {{label}}"
+  },
   "help": {
     "nav": {
       "prev": "前へ",
       "next": "次へ",
       "close": "とじる"
     },
-    "steps": ["操作の基本", "食材ボタンの中身", "料理ボタンの中身", "もっと、あなたに合わせて", "よくある質問"]
+    "steps": [
+      "操作の基本",
+      "食材ボタンの中身",
+      "料理ボタンの中身",
+      "もっと、あなたに合わせて",
+      "よくある質問"
+    ],
+    "content": {
+      "gestures": {
+        "body": "タップと長押し、2つだけ覚えれば使えます。",
+        "callout": "ふだんの食事はタップで足ります。\n違うものを食べた日や、くわしく残したい日だけ長押しを。"
+      },
+      "ingredients": {
+        "body": "各ボタンには、日本人がよく食べる食材を集約しています。タップで記録される値は、実際の食事に近い範囲に収まる設計です。",
+        "footnote1": "「よく食べる」基準: 国民健康・栄養調査 (NHNS) における各バケット内の摂取量シェア上位の食材を採用しています。",
+        "footnote2": "「長押し」表記のボタンは、種類により値が大きく変わるため、毎回明示選択する仕様です。"
+      },
+      "dishes": {
+        "body": "一皿料理は、構成された料理単位の代表値で記録します。丼やパスタなど、ふだんの一食をそのまま選んでください。",
+        "footnote1": "料理タブは、定食・寿司・ピザ・ラーメンなど値の幅が広いボタンが多いため、長押しが基本のボタンも含まれます。",
+        "footnote2": "味噌汁や豚汁など汁物は「定食・単品・汁」の中にあります。"
+      },
+      "future": {
+        "body": "記録を続けるほど、あなたがいつも選ぶ食材や料理が、見つけやすくなっていきます。",
+        "starTitle": "⭐️ よく使うタブ",
+        "starBody": "タブを⭐️に切り替えると、使う頻度が高い順に並びます。いつもの組み合わせなら、探さずそのままタップできます。",
+        "defaultTitle": "起動時のタブ",
+        "defaultBody": "アプリを開いたときに最初に表示されるタブも、よく使うほうへ自動で切り替わっていきます。"
+      },
+      "faq": {
+        "q1": "量がぴったりじゃないけど大丈夫？",
+        "a1": "標準的な1人前で記録します。大盛り・小盛りはタップ後の画面で切り替えられます。微調整より「続けやすさ」を優先した設計です。",
+        "q2": "1ボタンに何種類も入っていて、ざっくりすぎない？",
+        "a2": "各ボタンに含まれる食材は、よく食べる範囲ならタップ値とほぼ同じカロリー範囲に収まる設計です。ボタンごとの幅は「食材ボタンの中身」「料理ボタンの中身」で確認できます。",
+        "q3": "写真で記録できないの？",
+        "a3": "撮影 → 認識 → 確認の手間で、結局時間がかかり続かない原因になりやすいため、あえてタップ式にしています。ボタンを数回タップするだけで終わるので、毎日続けやすい設計です。",
+        "q4": "もっと厳密に計算したい場合は？",
+        "a4": "このアプリは「ざっくり、続ける」を優先した設計です。1g単位で計算したい方は、食品成分表ベースの計測アプリ (あすけん等) との併用がおすすめです。"
+      }
+    }
   },
   "settings": {
     "theme": {
@@ -282,7 +586,15 @@
   },
   "home": {
     "today": "今日",
-    "weekDays": ["月", "火", "水", "木", "金", "土", "日"],
+    "weekDays": [
+      "月",
+      "火",
+      "水",
+      "木",
+      "金",
+      "土",
+      "日"
+    ],
     "a11y": {
       "profile": "プロフィール",
       "help": "使い方を見る",
@@ -353,10 +665,22 @@
       "title": "普段の生活はどんな感じ？",
       "subtitle": "運動は別で加算されます。普段の生活パターンだけ選んでください。",
       "note": "",
-      "Sedentary": { "label": "デスクワーク中心", "hint": "1日の大半が座り（在宅勤務・PC作業）" },
-      "LightlyActive": { "label": "立ち仕事・歩きがある", "hint": "接客・教員・通勤で歩くなど" },
-      "ModeratelyActive": { "label": "動き回る仕事", "hint": "看護・営業・配達など歩き回る" },
-      "VeryActive": { "label": "体力仕事", "hint": "建築・農業・運送など重労働" }
+      "Sedentary": {
+        "label": "デスクワーク中心",
+        "hint": "1日の大半が座り（在宅勤務・PC作業）"
+      },
+      "LightlyActive": {
+        "label": "立ち仕事・歩きがある",
+        "hint": "接客・教員・通勤で歩くなど"
+      },
+      "ModeratelyActive": {
+        "label": "動き回る仕事",
+        "hint": "看護・営業・配達など歩き回る"
+      },
+      "VeryActive": {
+        "label": "体力仕事",
+        "hint": "建築・農業・運送など重労働"
+      }
     },
     "currentBody": {
       "title": "今の自分に近いのは？",
@@ -380,10 +704,22 @@
     "direction": {
       "title": "どう変わりたいですか？",
       "subtitle": "プランの提案に使います。あとから変更できます。",
-      "lose": { "label": "減らしたい", "hint": "体重・体脂肪率を落とす" },
-      "maintain": { "label": "維持したい", "hint": "今の体格をキープ" },
-      "recomp": { "label": "引き締めたい", "hint": "体重はそのまま、脂肪を筋量に置き換える" },
-      "gain": { "label": "増やしたい", "hint": "体重・筋量を増やす" }
+      "lose": {
+        "label": "減らしたい",
+        "hint": "体重・体脂肪率を落とす"
+      },
+      "maintain": {
+        "label": "維持したい",
+        "hint": "今の体格をキープ"
+      },
+      "recomp": {
+        "label": "引き締めたい",
+        "hint": "体重はそのまま、脂肪を筋量に置き換える"
+      },
+      "gain": {
+        "label": "増やしたい",
+        "hint": "体重・筋量を増やす"
+      }
     },
     "plan": {
       "title": "3ヶ月後、どう変わりたい？",
@@ -395,9 +731,18 @@
       "targetBodyFat": "目標体脂肪率",
       "dailyGoal": "1日の目標",
       "pace": "ペース",
-      "gentle": { "label": "ゆるやか", "hint": "無理なく続けたい人に" },
-      "standard": { "label": "標準", "hint": "バランスよく結果を出したい" },
-      "strong": { "label": "しっかり", "hint": "短期集中で変えたい" },
+      "gentle": {
+        "label": "ゆるやか",
+        "hint": "無理なく続けたい人に"
+      },
+      "standard": {
+        "label": "標準",
+        "hint": "バランスよく結果を出したい"
+      },
+      "strong": {
+        "label": "しっかり",
+        "hint": "短期集中で変えたい"
+      },
       "changeIn3mo": "3ヶ月で {{sign}}{{abs}}kg",
       "monthlyRate": "（月{{sign}}{{monthly}}kg目安）",
       "bfChange": "体脂肪率 {{from}}→{{to}}%",

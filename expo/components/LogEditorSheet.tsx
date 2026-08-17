@@ -3,6 +3,7 @@ import { PanResponder, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { additionPresets, portionSnapPoints, sizeOptions } from '@/constants/nutrition-data';
 import { Badge, BottomSheet, Caption, Icon, useTheme, type Theme } from '@/design-system';
+import { useT } from '@/hooks/useT';
 import { radius } from '@/design-system/tokens/primitives/radius';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { useAppState } from '@/providers/app-state-provider';
@@ -10,6 +11,7 @@ import { DishDraft, DishSize, IngredientDraft, Macro, PortionValue } from '@/typ
 import { buildDishMacro, clampPortion, computeIngredient, draftFromLog, getIngredientSubtypeDef, getIngredientSubtypeDefs, getQuickCategories, getSubtypes, getToppingsForSubtype, summarizeToppings } from '@/utils/nutrition';
 
 export const LogEditorSheet = memo(function LogEditorSheet() {
+  const tr = useT();
   const { editorLog, setEditorLogId, updateDishLog, updateIngredientLog, deleteLog, editorIsPending, commitPendingLog, cancelPendingLog } = useAppState();
 
   const handleClose = () => {
@@ -53,8 +55,8 @@ export const LogEditorSheet = memo(function LogEditorSheet() {
   const log = editorLog;
   const title = log
     ? editorIsPending
-      ? log.mode === 'ingredient' ? '食材を追加' : '料理を追加'
-      : log.mode === 'ingredient' ? '食材を編集' : '料理を編集'
+      ? log.mode === 'ingredient' ? tr('logEditor.addIngredient') : tr('logEditor.addDish')
+      : log.mode === 'ingredient' ? tr('logEditor.editIngredient') : tr('logEditor.editDish')
     : '';
 
   return (
@@ -63,11 +65,11 @@ export const LogEditorSheet = memo(function LogEditorSheet() {
       onClose={handleClose}
       title={title}
       secondaryAction={{
-        label: editorIsPending ? 'キャンセル' : '削除',
+        label: editorIsPending ? tr('common.cancel') : tr('common.delete'),
         onPress: handleDelete,
       }}
       primaryAction={{
-        label: editorIsPending ? '追加' : '完了',
+        label: editorIsPending ? tr('common.add') : tr('common.done'),
         onPress: handleDone,
       }}
       testID="log-editor-sheet"
@@ -90,6 +92,7 @@ export const LogEditorSheet = memo(function LogEditorSheet() {
 
 function IngredientEditorContent({ draft, onChange }: { draft: IngredientDraft; onChange: (draft: IngredientDraft) => void }) {
   const t = useTheme();
+  const tr = useT();
   const styles = useMemo(() => makeStyles(t), [t]);
   const categories = getQuickCategories('ingredient');
   const currentCategory = categories.find((item) => item.key === draft.categoryKey);
@@ -133,7 +136,7 @@ function IngredientEditorContent({ draft, onChange }: { draft: IngredientDraft; 
         onPress={() => setCategoryOpen((v) => !v)}
         testID="ingredient-category-row"
       >
-        <Text style={styles.categoryRowLabel}>カテゴリ</Text>
+        <Text style={styles.categoryRowLabel}>{tr('logEditor.categoryLabel')}</Text>
         <View style={styles.categoryRowValue}>
           <Text style={styles.categoryRowValueText}>
             {currentCategory ? `${currentCategory.emoji} ${currentCategory.label}` : '—'}
@@ -163,7 +166,7 @@ function IngredientEditorContent({ draft, onChange }: { draft: IngredientDraft; 
 
       {subtypeDefs.length > 0 ? (
         <View style={styles.subSection}>
-          <Caption tone="secondary" style={styles.editorSectionTitle}>種類</Caption>
+          <Caption tone="secondary" style={styles.editorSectionTitle}>{tr('logEditor.typeSection')}</Caption>
           <View style={styles.optionWrap}>
             {subtypeDefs.map((item) => (
               <LocalChip
@@ -179,7 +182,7 @@ function IngredientEditorContent({ draft, onChange }: { draft: IngredientDraft; 
 
       <View style={styles.portionSection}>
         <View style={styles.portionHeader}>
-          <Text style={styles.portionTitle}>食べた量</Text>
+          <Text style={styles.portionTitle}>{tr('logEditor.amountTitle')}</Text>
           <Badge tone="brand">{draft.portionValue}x</Badge>
         </View>
         <Text style={styles.portionNowLine} numberOfLines={1} testID="ingredient-portion-label">
@@ -191,7 +194,7 @@ function IngredientEditorContent({ draft, onChange }: { draft: IngredientDraft; 
 
       {toppings.length > 0 ? (
         <View style={styles.subSection}>
-          <Caption tone="secondary" style={styles.editorSectionTitle}>トッピング</Caption>
+          <Caption tone="secondary" style={styles.editorSectionTitle}>{tr('logEditor.toppingSection')}</Caption>
           <View style={styles.optionWrap}>
             {toppings.map((item) => (
               <LocalChip
@@ -297,10 +300,11 @@ function PortionSlider({ value, onChange }: { value: PortionValue; onChange: (po
 
 function IngredientPreviewCard({ subLabel, portionLabel, portionSecondary, toppingSummary, macro }: { subLabel: string; portionLabel: string; portionSecondary?: string; toppingSummary: string | null; macro: Macro }) {
   const t = useTheme();
+  const tr = useT();
   const styles = useMemo(() => makeStyles(t), [t]);
   return (
     <View style={styles.previewCard}>
-      <Text style={styles.previewTitle}>プレビュー</Text>
+      <Text style={styles.previewTitle}>{tr('logEditor.preview')}</Text>
       <Text style={styles.previewSummaryText} numberOfLines={2}>
         {subLabel}
         <Text style={styles.previewSummaryDivider}>  ·  </Text>
@@ -327,6 +331,7 @@ function IngredientPreviewCard({ subLabel, portionLabel, portionSecondary, toppi
 
 function DishEditorContent({ draft, onChange }: { draft: DishDraft; onChange: (draft: DishDraft) => void }) {
   const t = useTheme();
+  const tr = useT();
   const styles = useMemo(() => makeStyles(t), [t]);
   const categories = getQuickCategories('dish');
   const subtypes = getSubtypes('dish', draft.categoryKey);
@@ -334,7 +339,7 @@ function DishEditorContent({ draft, onChange }: { draft: DishDraft; onChange: (d
 
   return (
     <View style={styles.editorSection}>
-      <Caption tone="secondary" style={styles.editorSectionTitle}>種類</Caption>
+      <Caption tone="secondary" style={styles.editorSectionTitle}>{tr('logEditor.typeSection')}</Caption>
       <View style={styles.optionWrap}>
         {categories.map((item) => (
           <LocalChip key={item.key} label={`${item.emoji} ${item.label}`} active={draft.categoryKey === item.key} onPress={() => onChange({ ...draft, categoryKey: item.key, subTypeKey: undefined })} />
@@ -342,7 +347,7 @@ function DishEditorContent({ draft, onChange }: { draft: DishDraft; onChange: (d
       </View>
       {subtypes.length > 0 ? (
         <>
-          <Caption tone="secondary" style={styles.editorSectionTitle}>味・タイプ</Caption>
+          <Caption tone="secondary" style={styles.editorSectionTitle}>{tr('logEditor.flavorSection')}</Caption>
           <View style={styles.optionWrap}>
             {subtypes.map((item) => (
               <LocalChip key={item.key} label={item.label} active={draft.subTypeKey === item.key} onPress={() => onChange({ ...draft, subTypeKey: item.key })} />
@@ -350,7 +355,7 @@ function DishEditorContent({ draft, onChange }: { draft: DishDraft; onChange: (d
           </View>
         </>
       ) : null}
-      <Caption tone="secondary" style={styles.editorSectionTitle}>高影響追加</Caption>
+      <Caption tone="secondary" style={styles.editorSectionTitle}>{tr('logEditor.additionSection')}</Caption>
       <View style={styles.optionWrap}>
         {additionPresets.map((item) => {
           const active = draft.additions.includes(item.key);
@@ -373,7 +378,7 @@ function DishEditorContent({ draft, onChange }: { draft: DishDraft; onChange: (d
           );
         })}
       </View>
-      <Caption tone="secondary" style={styles.editorSectionTitle}>サイズ</Caption>
+      <Caption tone="secondary" style={styles.editorSectionTitle}>{tr('logEditor.sizeSection')}</Caption>
       <View style={styles.optionWrap}>
         {sizeOptions.map((size) => (
           <LocalChip key={size} label={size} active={draft.size === size} onPress={() => onChange({ ...draft, size: size as DishSize })} />
@@ -398,10 +403,11 @@ function MacroPill({ label, value, macro }: { label: string; value: number; macr
 
 function PreviewCard({ macro }: { macro: Macro }) {
   const t = useTheme();
+  const tr = useT();
   const styles = useMemo(() => makeStyles(t), [t]);
   return (
     <View style={styles.previewCard}>
-      <Text style={styles.previewTitle}>プレビュー</Text>
+      <Text style={styles.previewTitle}>{tr('logEditor.preview')}</Text>
       <Text style={styles.previewCalories}>{Math.round(macro.kcal)} kcal</Text>
       <View style={styles.goalMacroRow}>
         <MacroPill label="P" value={macro.protein} macro="protein" />

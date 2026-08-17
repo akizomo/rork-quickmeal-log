@@ -249,19 +249,19 @@ function StepIndicator({ total, current }: { total: number; current: number }) {
 
 function StepContent({ stepKey }: { stepKey: string }) {
   const t = useTheme();
+  const tr = useT();
 
   switch (stepKey) {
     case 'gestures':
       return (
         <View style={styles.stepContent}>
-          <Body>タップと長押し、2つだけ覚えれば使えます。</Body>
+          <Body>{tr('help.content.gestures.body')}</Body>
           <View style={styles.illustrationWrap}>
             <GestureDemoIllustration />
           </View>
           <View style={[styles.calloutBox, { backgroundColor: t.colors.action.primary.container, borderLeftColor: t.colors.action.primary.default }]}>
             <Body style={{ color: t.colors.action.primary.onContainer }}>
-              ふだんの食事はタップで足ります。{'\n'}
-              違うものを食べた日や、くわしく残したい日だけ長押しを。
+              {tr('help.content.gestures.callout')}
             </Body>
           </View>
         </View>
@@ -270,16 +270,13 @@ function StepContent({ stepKey }: { stepKey: string }) {
     case 'ingredients':
       return (
         <View style={styles.stepContent}>
-          <Body>
-            各ボタンには、日本人がよく食べる食材を集約しています。
-            タップで記録される値は、実際の食事に近い範囲に収まる設計です。
-          </Body>
+          <Body>{tr('help.content.ingredients.body')}</Body>
           <View style={styles.infographicWrap}>
             <HelpInfographic bucketKeys={INGREDIENT_BUCKETS} scaleMaxKcal={300} />
           </View>
           <View style={styles.footnotes}>
-            <Footnote>「よく食べる」基準: 国民健康・栄養調査 (NHNS) における各バケット内の摂取量シェア上位の食材を採用しています。</Footnote>
-            <Footnote>「長押し」表記のボタンは、種類により値が大きく変わるため、毎回明示選択する仕様です。</Footnote>
+            <Footnote>{tr('help.content.ingredients.footnote1')}</Footnote>
+            <Footnote>{tr('help.content.ingredients.footnote2')}</Footnote>
           </View>
         </View>
       );
@@ -287,16 +284,13 @@ function StepContent({ stepKey }: { stepKey: string }) {
     case 'dishes':
       return (
         <View style={styles.stepContent}>
-          <Body>
-            一皿料理は、構成された料理単位の代表値で記録します。
-            丼やパスタなど、ふだんの一食をそのまま選んでください。
-          </Body>
+          <Body>{tr('help.content.dishes.body')}</Body>
           <View style={styles.infographicWrap}>
             <HelpInfographic bucketKeys={DISH_BUCKETS} scaleMaxKcal={1000} />
           </View>
           <View style={styles.footnotes}>
-            <Footnote>料理タブは、定食・寿司・ピザ・ラーメンなど値の幅が広いボタンが多いため、長押しが基本のボタンも含まれます。</Footnote>
-            <Footnote>味噌汁や豚汁など汁物は「定食・単品・汁」の中にあります。</Footnote>
+            <Footnote>{tr('help.content.dishes.footnote1')}</Footnote>
+            <Footnote>{tr('help.content.dishes.footnote2')}</Footnote>
           </View>
         </View>
       );
@@ -304,19 +298,17 @@ function StepContent({ stepKey }: { stepKey: string }) {
     case 'future':
       return (
         <View style={styles.stepContent}>
-          <Body>
-            記録を続けるほど、あなたがいつも選ぶ食材や料理が、見つけやすくなっていきます。
-          </Body>
+          <Body>{tr('help.content.future.body')}</Body>
           <View style={styles.illustrationWrap}>
             <FrequentTabIllustration />
           </View>
           <View style={styles.subsection}>
-            <Body style={styles.h3}>⭐️ よく使うタブ</Body>
-            <Body>タブを⭐️に切り替えると、使う頻度が高い順に並びます。いつもの組み合わせなら、探さずそのままタップできます。</Body>
+            <Body style={styles.h3}>{tr('help.content.future.starTitle')}</Body>
+            <Body>{tr('help.content.future.starBody')}</Body>
           </View>
           <View style={styles.subsection}>
-            <Body style={styles.h3}>起動時のタブ</Body>
-            <Body>アプリを開いたときに最初に表示されるタブも、よく使うほうへ自動で切り替わっていきます。</Body>
+            <Body style={styles.h3}>{tr('help.content.future.defaultTitle')}</Body>
+            <Body>{tr('help.content.future.defaultBody')}</Body>
           </View>
         </View>
       );
@@ -324,22 +316,10 @@ function StepContent({ stepKey }: { stepKey: string }) {
     case 'faq':
       return (
         <View style={styles.stepContent}>
-          <FaqItem
-            q="量がぴったりじゃないけど大丈夫？"
-            a="標準的な1人前で記録します。大盛り・小盛りはタップ後の画面で切り替えられます。微調整より「続けやすさ」を優先した設計です。"
-          />
-          <FaqItem
-            q="1ボタンに何種類も入っていて、ざっくりすぎない？"
-            a="各ボタンに含まれる食材は、よく食べる範囲ならタップ値とほぼ同じカロリー範囲に収まる設計です。ボタンごとの幅は「食材ボタンの中身」「料理ボタンの中身」で確認できます。"
-          />
-          <FaqItem
-            q="写真で記録できないの？"
-            a="撮影 → 認識 → 確認の手間で、結局時間がかかり続かない原因になりやすいため、あえてタップ式にしています。ボタンを数回タップするだけで終わるので、毎日続けやすい設計です。"
-          />
-          <FaqItem
-            q="もっと厳密に計算したい場合は？"
-            a="このアプリは「ざっくり、続ける」を優先した設計です。1g単位で計算したい方は、食品成分表ベースの計測アプリ (あすけん等) との併用がおすすめです。"
-          />
+          <FaqItem q={tr('help.content.faq.q1')} a={tr('help.content.faq.a1')} />
+          <FaqItem q={tr('help.content.faq.q2')} a={tr('help.content.faq.a2')} />
+          <FaqItem q={tr('help.content.faq.q3')} a={tr('help.content.faq.a3')} />
+          <FaqItem q={tr('help.content.faq.q4')} a={tr('help.content.faq.a4')} />
         </View>
       );
 

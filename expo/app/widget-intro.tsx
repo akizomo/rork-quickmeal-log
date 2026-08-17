@@ -21,17 +21,15 @@ const WIDGET_TRACK = 'rgba(255,255,255,0.12)';
 const WIDGET_BUTTON_BG = 'rgba(255,255,255,0.08)';
 const STATUS_SHAPE = 'rgba(30, 30, 26, 0.22)';
 
-const PREVIEW_CATEGORIES = [
-  { icon: '🍚', name: '主食' },
-  { icon: '🐓', name: '肉魚(低脂)' },
-  { icon: '🥚', name: '卵' },
-  { icon: '🥩', name: '脂あり肉魚' },
-];
+const PREVIEW_ICONS = ['🍚', '🐓', '🥚', '🥩'];
 
 const RING_SIZE = 76;
 const PHONE_W = 260;
 
 function WidgetMock() {
+  const tr = useT();
+  const categoryNames: string[] = tr('widgetIntro.previewCategories', { returnObjects: true }) ?? [];
+  const previewCategories = PREVIEW_ICONS.map((icon, i) => ({ icon, name: categoryNames[i] ?? icon }));
   const r = (RING_SIZE - 8) / 2;
   const cx = RING_SIZE / 2;
   const circ = 2 * Math.PI * r;
@@ -61,7 +59,7 @@ function WidgetMock() {
       </View>
       <View style={styles.widgetDivider} />
       <View style={styles.widgetButtonGrid}>
-        {PREVIEW_CATEGORIES.map((cat) => (
+        {previewCategories.map((cat) => (
           <View key={cat.name} style={styles.widgetButton}>
             <Text style={{ fontSize: 16 }}>{cat.icon}</Text>
             <Text numberOfLines={1} style={{ fontSize: 9, color: WIDGET_TEXT_PRIMARY, fontWeight: '700' }}>

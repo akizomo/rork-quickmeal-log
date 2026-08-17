@@ -23,6 +23,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Body, Button, Caption, useTheme } from '@/design-system';
+import { useT } from '@/hooks/useT';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { colors as primitiveColors } from '@/design-system/tokens/primitives/colors';
 import { useAppState } from '@/providers/app-state-provider';
@@ -83,6 +84,7 @@ function parseMacro(d: DraftMacro): { kcal: number; protein: number; fat: number
 export default function BarcodLogRoute() {
   const router = useRouter();
   const theme = useTheme();
+  const tr = useT();
   const { pushLog, loggingDate } = useAppState();
   const [permission, requestPermission] = useCameraPermissions();
 
@@ -104,20 +106,20 @@ export default function BarcodLogRoute() {
         } else {
           const msg =
             error === 'not_found'
-              ? 'この商品はデータベースに登録されていません。手動で入力してください。'
+              ? tr('barcode.alert.notFound')
               : error === 'no_nutrition'
-              ? 'この商品の栄養情報が登録されていません。手動で入力してください。'
-              : '通信エラーが発生しました。手動で入力してください。';
-          Alert.alert('バーコードを読み取れませんでした', msg, [
+              ? tr('barcode.alert.noNutrition')
+              : tr('barcode.alert.networkError');
+          Alert.alert(tr('barcode.alert.title'), msg, [
             {
-              text: '手動入力',
+              text: tr('barcode.alert.manualInput'),
               onPress: () => {
                 setDraft(EMPTY_DRAFT);
                 setScreen('manual');
               },
             },
             {
-              text: 'もう一度スキャン',
+              text: tr('barcode.scanAgain'),
               onPress: () => {
                 scannedRef.current = false;
               },
@@ -134,10 +136,10 @@ export default function BarcodLogRoute() {
   const handleAdd = useCallback(() => {
     const macro = parseMacro(draft);
     if (!macro) {
-      Alert.alert('入力エラー', 'kcal・P・F・C を正しく入力してください。');
+      Alert.alert(tr('barcode.alert.inputError'), tr('barcode.alert.inputErrorBody'));
       return;
     }
-    const name = draft.name.trim() || '手動入力';
+    const name = draft.name.trim() || tr('barcode.manualFallback');
     const now = new Date();
     const dateKey = loggingDate ? formatDateKey(loggingDate) : formatDateKey(now);
     pushLog({
@@ -162,12 +164,12 @@ export default function BarcodLogRoute() {
   if (Platform.OS !== 'web' && !permission?.granted) {
     return (
       <>
-        <Stack.Screen options={{ title: 'バーコードスキャン', headerStyle: { backgroundColor: colors.surface.default }, headerTintColor: colors.content.primary, headerShadowVisible: false }} />
+        <Stack.Screen options={{ title: tr('nav.barcodeLog'), headerStyle: { backgroundColor: colors.surface.default }, headerTintColor: colors.content.primary, headerShadowVisible: false }} />
         <SafeAreaView style={[styles.center, { backgroundColor: colors.surface.default }]}>
           <Body style={{ textAlign: 'center', marginBottom: 16 }}>
-            バーコードをスキャンするにはカメラへのアクセスが必要です。
+            {tr('barcode.permissionText')}
           </Body>
-          <Button label="カメラを許可する" onPress={requestPermission} size="lg" fullWidth />
+          <Button label={tr('barcode.allowCamera')} onPress={requestPermission} size="lg" fullWidth />
         </SafeAreaView>
       </>
     );
@@ -177,7 +179,7 @@ export default function BarcodLogRoute() {
     <>
       <Stack.Screen
         options={{
-          title: screen === 'scan' ? 'バーコードスキャン' : screen === 'manual' ? '手動入力' : '栄養情報を確認',
+          title: screen === 'scan' ? tr('barcode.screenTitle.scan') : screen === 'manual' ? tr('barcode.screenTitle.manual') : tr('barcode.screenTitle.confirm'),
           headerStyle: { backgroundColor: colors.surface.default },
           headerTintColor: colors.content.primary,
           headerShadowVisible: false,
@@ -195,13 +197,13 @@ export default function BarcodLogRoute() {
           {loading && (
             <View style={styles.loadingOverlay}>
               <ActivityIndicator size="large" color={primitiveColors.white} />
-              <Body style={{ color: primitiveColors.white, marginTop: 8 }}>検索中...</Body>
+              <Body style={{ color: primitiveColors.white, marginTop: 8 }}>{tr('barcode.searching')}</Body>
             </View>
           )}
           <View style={styles.scanFrame} pointerEvents="none">
             <View style={[styles.scanBox, { borderColor: colors.action.primary.default }]} />
             <Caption style={{ color: primitiveColors.white, marginTop: 12, textAlign: 'center' }}>
-              バーコードを枠内に合わせてください
+              {tr('barcode.scanHint')}
             </Caption>
           </View>
           <View style={[styles.manualBar, { backgroundColor: colors.surface.default }]}>
@@ -209,7 +211,7 @@ export default function BarcodLogRoute() {
               onPress={() => { setDraft(EMPTY_DRAFT); setScreen('manual'); }}
               style={styles.manualBtn}
             >
-              <Body style={{ color: colors.action.primary.default }}>手動で入力する</Body>
+              <Body style={{ color: colors.action.primary.default }}>{tr('barcode.manualEntry')}</Body>
             </Pressable>
           </View>
         </View>
@@ -221,15 +223,15 @@ export default function BarcodLogRoute() {
           <SafeAreaView edges={['bottom']} style={{ flex: 1 }}>
             <ScrollView contentContainerStyle={styles.form} keyboardShouldPersistTaps="handled">
               <MacroField
-                label="食品名"
+                label={tr('barcode.fields.name')}
                 value={draft.name}
                 onChangeText={(v) => setDraft((d) => ({ ...d, name: v }))}
-                placeholder="例: プロテインバー"
+                placeholder={tr('barcode.fields.namePlaceholder')}
                 colors={colors}
               />
               {draft.per100g && (
                 <MacroField
-                  label="摂取量 (g)"
+                  label={tr('barcode.fields.grams')}
                   value={draft.grams}
                   onChangeText={(v) => setDraft((d) => ({ ...d, grams: v }))}
                   placeholder="100"
@@ -238,18 +240,18 @@ export default function BarcodLogRoute() {
                 />
               )}
               <Caption tone="secondary" style={{ marginBottom: 8 }}>
-                {draft.per100g ? '100g あたりの値を編集できます' : '1食分の値を入力してください'}
+                {draft.per100g ? tr('barcode.fields.per100gHint') : tr('barcode.fields.perServingHint')}
               </Caption>
               <MacroField label="kcal" value={draft.kcal} onChangeText={(v) => setDraft((d) => ({ ...d, kcal: v }))} keyboardType="decimal-pad" colors={colors} />
-              <MacroField label="タンパク質 (g)" value={draft.protein} onChangeText={(v) => setDraft((d) => ({ ...d, protein: v }))} keyboardType="decimal-pad" colors={colors} />
-              <MacroField label="脂質 (g)" value={draft.fat} onChangeText={(v) => setDraft((d) => ({ ...d, fat: v }))} keyboardType="decimal-pad" colors={colors} />
-              <MacroField label="炭水化物 (g)" value={draft.carbs} onChangeText={(v) => setDraft((d) => ({ ...d, carbs: v }))} keyboardType="decimal-pad" colors={colors} />
+              <MacroField label={tr('barcode.fields.protein')} value={draft.protein} onChangeText={(v) => setDraft((d) => ({ ...d, protein: v }))} keyboardType="decimal-pad" colors={colors} />
+              <MacroField label={tr('barcode.fields.fat')} value={draft.fat} onChangeText={(v) => setDraft((d) => ({ ...d, fat: v }))} keyboardType="decimal-pad" colors={colors} />
+              <MacroField label={tr('barcode.fields.carbs')} value={draft.carbs} onChangeText={(v) => setDraft((d) => ({ ...d, carbs: v }))} keyboardType="decimal-pad" colors={colors} />
 
-              <Button label="ログに追加" onPress={handleAdd} size="lg" fullWidth style={{ marginTop: 24 }} />
+              <Button label={tr('barcode.addToLog')} onPress={handleAdd} size="lg" fullWidth style={{ marginTop: 24 }} />
 
               {screen === 'confirm' && (
                 <Button
-                  label="もう一度スキャン"
+                  label={tr('barcode.scanAgain')}
                   variant="secondary"
                   onPress={() => { scannedRef.current = false; setScreen('scan'); }}
                   size="lg"

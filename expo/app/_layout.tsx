@@ -11,6 +11,7 @@ import { DishQuickEntrySheet } from '@/components/DishQuickEntrySheet';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { IdentityLogSheet } from '@/components/IdentityLogSheet';
 import { ThemeProvider, darkTheme, lightTheme, useTheme } from '@/design-system';
+import { useT } from '@/hooks/useT';
 import { AppStateProvider, useAppState } from '@/providers/app-state-provider';
 import { HealthSyncProvider } from '@/providers/health-sync-provider';
 import { initIap } from '@/utils/iap';
@@ -34,10 +35,11 @@ function ThemedApp({ children }: { children: React.ReactNode }) {
 
 function RootLayoutNav() {
   const t = useTheme();
+  const tr = useT();
   return (
     <Stack
       screenOptions={{
-        headerBackTitle: '戻る',
+        headerBackTitle: tr('nav.back'),
         headerStyle: { backgroundColor: t.colors.surface.default },
         headerTintColor: t.colors.content.primary,
         contentStyle: { backgroundColor: t.colors.surface.default },
@@ -48,17 +50,17 @@ function RootLayoutNav() {
       <Stack.Screen name="paywall" options={{ headerShown: false, presentation: 'modal' }} />
       <Stack.Screen name="weekly-recap" options={{ headerShown: false, presentation: 'modal' }} />
       <Stack.Screen name="onboarding" options={{ headerShown: false, gestureEnabled: false }} />
-      <Stack.Screen name="status" options={{ title: 'ステータス' }} />
-      <Stack.Screen name="stats" options={{ title: '実績' }} />
-      <Stack.Screen name="profile" options={{ title: 'プロフィール' }} />
-      <Stack.Screen name="goal-edit" options={{ title: '目標を変更' }} />
-      <Stack.Screen name="subscription" options={{ title: 'サブスクリプション' }} />
-      <Stack.Screen name="about" options={{ title: 'アプリについて' }} />
-      <Stack.Screen name="help" options={{ title: 'Hachibu の使い方' }} />
-      <Stack.Screen name="legal/privacy" options={{ title: 'プライバシーポリシー' }} />
-      <Stack.Screen name="legal/terms" options={{ title: '利用規約' }} />
-      <Stack.Screen name="settings" options={{ title: '設定' }} />
-      <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'アプリについて' }} />
+      <Stack.Screen name="status" options={{ title: tr('nav.status') }} />
+      <Stack.Screen name="stats" options={{ title: tr('nav.stats') }} />
+      <Stack.Screen name="profile" options={{ title: tr('nav.profile') }} />
+      <Stack.Screen name="goal-edit" options={{ title: tr('nav.goalEdit') }} />
+      <Stack.Screen name="subscription" options={{ title: tr('nav.subscription') }} />
+      <Stack.Screen name="about" options={{ title: tr('nav.about') }} />
+      <Stack.Screen name="help" options={{ title: tr('nav.help') }} />
+      <Stack.Screen name="legal/privacy" options={{ title: tr('nav.privacy') }} />
+      <Stack.Screen name="legal/terms" options={{ title: tr('nav.terms') }} />
+      <Stack.Screen name="settings" options={{ title: tr('nav.settings') }} />
+      <Stack.Screen name="modal" options={{ presentation: 'modal', title: tr('nav.modal') }} />
       {__DEV__ ? <Stack.Screen name="dev" options={{ headerShown: false }} /> : null}
     </Stack>
   );

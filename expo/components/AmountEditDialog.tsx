@@ -31,6 +31,7 @@ import {
 } from 'react-native';
 
 import { Chip, Dialog, useTheme } from '@/design-system';
+import { useT } from '@/hooks/useT';
 import { fontSize as fs, letterSpacing as ls } from '@/design-system/tokens/primitives/typography';
 import {
   type AmountEditConfig,
@@ -85,10 +86,12 @@ export function AmountEditDialog({
   onClose,
   config,
   initialValue,
-  title = '量を変更',
+  title,
   testID,
 }: AmountEditDialogProps) {
   const t = useTheme();
+  const tr = useT();
+  const resolvedTitle = title ?? tr('amountEdit.defaultTitle');
   const inputRef = useRef<TextInput>(null);
 
   // draft: 常に valid (clamp済み・step揃い)
@@ -201,14 +204,14 @@ export function AmountEditDialog({
     <Dialog
       visible={visible}
       onClose={handleCancel}
-      title={title}
+      title={resolvedTitle}
       primaryAction={{
-        label: '完了',
+        label: tr('common.done'),
         onPress: () => commitAndClose(draft),
         disabled: !isValidAmount(draft, config),
       }}
       secondaryAction={{
-        label: 'キャンセル',
+        label: tr('common.cancel'),
         onPress: handleCancel,
       }}
       testID={testID}
@@ -220,7 +223,7 @@ export function AmountEditDialog({
           disabled={atMin}
           hitSlop={12}
           accessibilityRole="button"
-          accessibilityLabel="量を減らす"
+          accessibilityLabel={tr('amountEdit.decreaseA11y')}
           accessibilityState={{ disabled: atMin }}
           style={({ pressed }) => [
             styles.stepperBtn,
@@ -253,7 +256,7 @@ export function AmountEditDialog({
             keyboardType={config.decimals > 0 ? 'decimal-pad' : 'number-pad'}
             returnKeyType="done"
             onSubmitEditing={() => commitAndClose(draft)}
-            accessibilityLabel={`量を入力。${config.min}から${config.max}${config.unitLabel}の範囲`}
+            accessibilityLabel={tr('amountEdit.inputA11y', { min: config.min, max: config.max, unit: config.unitLabel })}
             accessibilityValue={{ now: draft, min: config.min, max: config.max }}
             testID={testID ? `${testID}-input` : undefined}
           />
@@ -267,7 +270,7 @@ export function AmountEditDialog({
           disabled={atMax}
           hitSlop={12}
           accessibilityRole="button"
-          accessibilityLabel="量を増やす"
+          accessibilityLabel={tr('amountEdit.increaseA11y')}
           accessibilityState={{ disabled: atMax }}
           style={({ pressed }) => [
             styles.stepperBtn,

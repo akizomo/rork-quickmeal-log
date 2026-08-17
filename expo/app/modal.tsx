@@ -4,21 +4,23 @@ import { StyleSheet, Text } from 'react-native';
 
 import { Dialog, Overline, useTheme } from '@/design-system';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
+import { useT } from '@/hooks/useT';
 
 export default function AboutModalRoute() {
   const t = useTheme();
+  const tr = useT();
   return (
     <>
-      <Stack.Screen options={{ title: 'アプリについて', presentation: 'modal' }} />
+      <Stack.Screen options={{ title: tr('nav.modal'), presentation: 'modal' }} />
       <Dialog
         visible
         onClose={() => router.back()}
-        primaryAction={{ label: 'とじる', onPress: () => router.back() }}
+        primaryAction={{ label: tr('modal.close'), onPress: () => router.back() }}
         testID="about-modal"
       >
         <Overline tone="link" style={styles.eyebrow}>Hachibu</Overline>
-        <Text style={[styles.title, { color: t.colors.content.primary }]}>迷わず記録できる食事ログ</Text>
-        <Text style={[styles.description, { color: t.colors.content.secondary }]}>1タップ入力、取り消し、再編集までを静かに気持ちよくまとめたMVPです。</Text>
+        <Text style={[styles.title, { color: t.colors.content.primary }]}>{tr('modal.title')}</Text>
+        <Text style={[styles.description, { color: t.colors.content.secondary }]}>{tr('modal.description')}</Text>
       </Dialog>
     </>
   );

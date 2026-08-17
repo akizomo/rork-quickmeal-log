@@ -3,6 +3,7 @@ import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Polyline } from 'react-native-svg';
 
 import { useTheme } from '@/design-system';
+import { useT } from '@/hooks/useT';
 import { duration, easing } from '@/design-system/tokens/primitives/motion';
 import { fontSize, fontWeight, letterSpacing } from '@/design-system/tokens/primitives/typography';
 
@@ -77,6 +78,7 @@ function formatKcal(value: number): string {
 
 export const CalorieOverflowRing = memo(function CalorieOverflowRing(props: CalorieOverflowRingProps) {
   const t = useTheme();
+  const tr = useT();
   const {
     consumedKcal,
     targetKcal,
@@ -210,14 +212,14 @@ export const CalorieOverflowRing = memo(function CalorieOverflowRing(props: Calo
     }
     const over = consumedInt - targetInt;
     if (over <= 0) {
-      return `あと ${Math.abs(over).toLocaleString()} kcal`;
+      return tr('calorieRing.statusRemaining', { kcal: Math.abs(over).toLocaleString() });
     }
     const overRatio = over / safeTarget;
     // tolerance 以内はソフトな表示のみ、超えたら「多め」
     if (overRatio <= toleranceFraction) {
-      return `+${over.toLocaleString()} kcal`;
+      return tr('calorieRing.statusOverSoft', { kcal: over.toLocaleString() });
     }
-    return `+${over.toLocaleString()} kcal 多め`;
+    return tr('calorieRing.statusOver', { kcal: over.toLocaleString() });
   }, [animatedConsumed, safeTarget, showStatusText, statusMode, toleranceFraction]);
 
   return (
@@ -228,7 +230,7 @@ export const CalorieOverflowRing = memo(function CalorieOverflowRing(props: Calo
       // 既定ラベルが英語 ("of ... kilocalories") のままで、日本語 VoiceOver が
       // 英語読みしていた (2026-08-09修正)。
       accessibilityLabel={
-        accessibilityLabel ?? `目標${formatKcal(safeTarget)}kcalのうち${formatKcal(safeConsumed)}kcal`
+        accessibilityLabel ?? tr('calorieRing.a11yDefault', { target: formatKcal(safeTarget), consumed: formatKcal(safeConsumed) })
       }
       testID={testID ?? 'calorie-overflow-ring'}
     >
@@ -276,9 +278,9 @@ export const CalorieOverflowRing = memo(function CalorieOverflowRing(props: Calo
           {centerMode === 'remaining' ? (
             // 目標以下:「のこり」/ 許容内超過: ラベルなし / 許容外: 「オーバー」
             !isAnyOver ? (
-              <Text style={[styles.centerModeLabel, { color: subTextColor }]} numberOfLines={1}>のこり</Text>
+              <Text style={[styles.centerModeLabel, { color: subTextColor }]} numberOfLines={1}>{tr('calorieRing.remaining')}</Text>
             ) : isPastTolerance ? (
-              <Text style={[styles.centerModeLabel, { color: overflowTextColor }]} numberOfLines={1}>オーバー</Text>
+              <Text style={[styles.centerModeLabel, { color: overflowTextColor }]} numberOfLines={1}>{tr('calorieRing.over')}</Text>
             ) : null
           ) : null}
           <Text style={[styles.kcalValue, { color: centerTextColor }]} numberOfLines={1}>

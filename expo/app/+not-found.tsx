@@ -4,19 +4,21 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { Button, useTheme } from '@/design-system';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
+import { useT } from '@/hooks/useT';
 
 export default function NotFoundRoute() {
   const t = useTheme();
+  const tr = useT();
   return (
     <>
-      <Stack.Screen options={{ title: '見つかりません' }} />
+      <Stack.Screen options={{ title: tr('nav.notFound') }} />
       <View style={[styles.container, { backgroundColor: t.colors.surface.default }]} testID="not-found-screen">
         <View style={[styles.card, { backgroundColor: t.colors.surface.raised }]}>
           <Text style={styles.emoji}>🥣</Text>
-          <Text style={[styles.title, { color: t.colors.content.primary }]}>このページは見つかりませんでした</Text>
-          <Text style={[styles.description, { color: t.colors.content.secondary }]}>ホームに戻って、今日の記録を続けてください。</Text>
+          <Text style={[styles.title, { color: t.colors.content.primary }]}>{tr('notFound.title')}</Text>
+          <Text style={[styles.description, { color: t.colors.content.secondary }]}>{tr('notFound.description')}</Text>
           <Link href="/" asChild>
-            <Button label="ホームへ戻る" style={styles.button} testID="not-found-home-link" />
+            <Button label={tr('notFound.homeButton')} style={styles.button} testID="not-found-home-link" />
           </Link>
         </View>
       </View>

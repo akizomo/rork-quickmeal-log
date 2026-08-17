@@ -94,7 +94,7 @@ export default function SubscriptionRoute() {
                 <Caption tone="secondary">{statusSub}</Caption>
                 {trialEndLabel ? (
                   <Caption tone="secondary" style={{ marginTop: 4 }}>
-                    本登録切替日: {trialEndLabel}
+                    {t('subscription.trialEndDate', { date: trialEndLabel })}
                   </Caption>
                 ) : null}
                 {status === 'trialing' && trialDays > 0 ? (

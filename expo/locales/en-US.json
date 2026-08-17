@@ -11,7 +11,9 @@
     "stats": "Progress",
     "status": "Status",
     "subscription": "Subscription",
-    "notFound": "Not Found"
+    "notFound": "Not Found",
+    "modal": "About",
+    "barcodeLog": "Barcode Scan"
   },
   "common": {
     "save": "Save",
@@ -35,13 +37,29 @@
       "protein": "Protein",
       "fat": "Fat",
       "carbs": "Carbs"
+    },
+    "record": "Log",
+    "weight": "Weight",
+    "bodyFat": "Body Fat",
+    "unit": {
+      "min": "min",
+      "kcalPerDay": "kcal / day"
     }
   },
   "intro": {
     "slides": [
-      { "title": "Log meals in 9 taps", "subtitle": "Your everyday meals, captured with a single tap." },
-      { "title": "Quick tap. Deep dive when you want.", "subtitle": "Long-press for more detail on days you need it." },
-      { "title": "Track your progress at a glance", "subtitle": "Goal vs. today — clear in one look." }
+      {
+        "title": "Log meals in 9 taps",
+        "subtitle": "Your everyday meals, captured with a single tap."
+      },
+      {
+        "title": "Quick tap. Deep dive when you want.",
+        "subtitle": "Long-press for more detail on days you need it."
+      },
+      {
+        "title": "Track your progress at a glance",
+        "subtitle": "Goal vs. today — clear in one look."
+      }
     ],
     "skip": "Skip",
     "next": "Next",
@@ -49,12 +67,60 @@
     "progress": {
       "label": "Weight · 12 wk",
       "delta": "-2.3 kg",
-      "axis": ["Jan", "Mar", "Goal"]
+      "axis": [
+        "Jan",
+        "Mar",
+        "Goal"
+      ]
     },
     "a11y": {
       "skip": "Skip intro",
       "skipHint": "Goes to onboarding",
       "next": "Next slide"
+    }
+  },
+  "notFound": {
+    "title": "Page not found",
+    "description": "Go back home and continue logging your meals.",
+    "homeButton": "Go Home"
+  },
+  "modal": {
+    "title": "Meal logging you'll actually stick with",
+    "description": "One-tap entry, undo, and re-edit — a clean MVP built around staying consistent.",
+    "close": "Close"
+  },
+  "barcode": {
+    "screenTitle": {
+      "scan": "Barcode Scan",
+      "manual": "Manual Entry",
+      "confirm": "Check Nutrition Info"
+    },
+    "permissionText": "Camera access is required to scan barcodes.",
+    "allowCamera": "Allow Camera",
+    "searching": "Searching…",
+    "scanHint": "Align the barcode within the frame",
+    "manualEntry": "Enter manually",
+    "fields": {
+      "name": "Food name",
+      "namePlaceholder": "e.g. Protein bar",
+      "grams": "Amount (g)",
+      "per100gHint": "You can edit per-100g values",
+      "perServingHint": "Enter per-serving values",
+      "protein": "Protein (g)",
+      "fat": "Fat (g)",
+      "carbs": "Carbs (g)"
+    },
+    "addToLog": "Add to log",
+    "scanAgain": "Scan again",
+    "manualFallback": "Manual entry",
+    "alert": {
+      "title": "Could not read barcode",
+      "notFound": "This product is not in the database. Please enter it manually.",
+      "noNutrition": "Nutrition info for this product is not available. Please enter it manually.",
+      "networkError": "Network error. Please enter it manually.",
+      "manualInput": "Enter manually",
+      "inputError": "Input error",
+      "inputErrorBody": "Please enter valid kcal, P, F, and C values."
     }
   },
   "about": {
@@ -65,13 +131,23 @@
     "title": "Log in one tap from your home screen",
     "body": "Add a widget to log meals without opening the app.",
     "cta": "Add Widget",
-    "skip": "Later"
+    "skip": "Later",
+    "previewCategories": [
+      "Grains",
+      "Lean Protein",
+      "Eggs",
+      "Meat & Fish"
+    ]
   },
   "healthConnect": {
     "title": "Connect to Health Data?",
     "subtitle": "Automatically sync steps, workouts, and weight to lighten your daily logging. You can change this anytime.",
     "dataLabel": "Data we'll sync",
-    "dataItems": ["Weight / Body Fat", "Steps / Calories Burned", "Workout Sessions"],
+    "dataItems": [
+      "Weight / Body Fat",
+      "Steps / Calories Burned",
+      "Workout Sessions"
+    ],
     "providerRequired": "Health Connect Required",
     "providerUpdateMsg": "Your Health Connect app needs an update. Update it from the Play Store, then come back.",
     "providerInstallMsg": "On Android, data syncs via Google's Health Connect app. Install it from the Play Store, then come back.",
@@ -135,8 +211,20 @@
       "hours": "{{n}}h ago",
       "days": "{{n}}d ago"
     },
-    "weightSheet": { "title": "Update Weight" },
-    "bfSheet": { "title": "Update Body Fat %", "diff": "Change from last: {{diff}} %" }
+    "weightSheet": {
+      "title": "Update Weight"
+    },
+    "bfSheet": {
+      "title": "Update Body Fat %",
+      "diff": "Change from last: {{diff}} %"
+    },
+    "a11y": {
+      "trialCard": "Trial details",
+      "trialHint": "Opens subscription screen",
+      "goalCard": "Edit goal",
+      "goalHint": "Opens goal direction and plan settings",
+      "diagTitle": "Health sync diagnostics"
+    }
   },
   "subscription": {
     "sections": {
@@ -188,7 +276,9 @@
     "discount": "Best value",
     "select": "Select",
     "restore": "Restore Purchase",
-    "a11y": { "purchaseHint": "Start the purchase flow for this plan" },
+    "a11y": {
+      "purchaseHint": "Start the purchase flow for this plan"
+    },
     "alerts": {
       "purchaseError": "Purchase failed",
       "purchaseErrorRetry": "Please try again later.",
@@ -204,6 +294,10 @@
     "noPreviewWithPace": "Select a direction and pace to preview",
     "weight": "Weight",
     "bodyFat": "Body Fat %",
+    "a11y": {
+      "targetWeight": "Target weight",
+      "targetBodyFat": "Target body fat"
+    },
     "sections": {
       "direction": "Direction",
       "pace": "Pace"
@@ -238,13 +332,223 @@
       "maintainCurrent": "Maintain current ({{current}} kg)"
     }
   },
+  "errorBoundary": {
+    "title": "Something went wrong",
+    "message": "Please reopen the screen.",
+    "retry": "Reload"
+  },
+  "calorieRing": {
+    "remaining": "left",
+    "over": "over",
+    "statusRemaining": "{{kcal}} kcal left",
+    "statusOver": "+{{kcal}} kcal over",
+    "statusOverSoft": "+{{kcal}} kcal",
+    "a11yDefault": "{{consumed}} of {{target}} kcal goal"
+  },
+  "dayLog": {
+    "todayTitle": "Today's log",
+    "dayTitle": "{{day}}'s log",
+    "emptyTitle": "No entries yet",
+    "emptyText": "Use the buttons above to quickly log your meals.",
+    "open": "Open",
+    "fullscreen": "Full screen",
+    "close": "Close"
+  },
+  "directInput": {
+    "title": "Enter numbers",
+    "record": "Log",
+    "sections": {
+      "name": "Name (optional)",
+      "kcal": "Calories (required)",
+      "pfc": "P/F/C (optional)"
+    },
+    "namePlaceholder": "e.g. Protein shake, custom meal",
+    "nameA11y": "Food name",
+    "kcalA11y": "Calories",
+    "proteinA11y": "Protein (g)",
+    "fatA11y": "Fat (g)",
+    "carbsA11y": "Carbs (g)",
+    "gramUnit": "All values in grams",
+    "fallbackLabel": "Direct entry"
+  },
+  "dishEntry": {
+    "sections": {
+      "type": "Type",
+      "style": "Style",
+      "amount": "Amount",
+      "mode": "Mode",
+      "slices": "Slices",
+      "pizzaType": "Type",
+      "count": "Count"
+    },
+    "add": "Add",
+    "a11yAmountChange": "Change amount. Currently {{value}}{{unit}}",
+    "sliceCount": "{{n}} slices",
+    "pizzaLabel": "Pizza {{type}}",
+    "sliceUnit": " slices"
+  },
+  "exercise": {
+    "sheetTitle": "{{day}} burn",
+    "addExercise": "Add exercise",
+    "historyTitle": "{{day}} exercise",
+    "walking": "Walking",
+    "sourceHealth": "Health",
+    "sourceManual": "Manual",
+    "steps": "{{n}} steps",
+    "burnedKcal": "+{{kcal}} kcal",
+    "activityLevelBase": "Based on activity level '{{level}}'",
+    "goalAddition": "Added to goal",
+    "goalAdditionCapped": "Added to goal (capped)",
+    "burnedCaloriesLabel": "Calories burned",
+    "add": "Add",
+    "deleteA11y": "Delete {{label}}"
+  },
+  "identityLog": {
+    "sections": {
+      "type": "Type",
+      "cooking": "Cooking",
+      "amount": "Amount",
+      "topping": "Toppings"
+    },
+    "save": "Save & Add",
+    "update": "Update",
+    "deleteA11y": "Delete entry",
+    "closeA11y": "Close",
+    "deleteTitle": "Delete entry",
+    "deleteMessage": "Delete this entry?",
+    "switchToG": "Switch to g",
+    "switchToCount": "Switch to count",
+    "amountRefPrefix": "Reference"
+  },
+  "logEditor": {
+    "addIngredient": "Add ingredient",
+    "addDish": "Add dish",
+    "editIngredient": "Edit ingredient",
+    "editDish": "Edit dish",
+    "amountTitle": "Amount eaten",
+    "typeSection": "Type",
+    "flavorSection": "Flavor / Type",
+    "additionSection": "High-impact add-ons",
+    "sizeSection": "Size",
+    "categoryLabel": "Category",
+    "toppingSection": "Toppings",
+    "preview": "Preview"
+  },
+  "monthlyStats": {
+    "prevMonth": "Previous month",
+    "nextMonth": "Next month",
+    "weekDays": [
+      "Sun",
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Fri",
+      "Sat"
+    ]
+  },
+  "amountEdit": {
+    "defaultTitle": "Edit amount",
+    "decreaseA11y": "Decrease amount",
+    "increaseA11y": "Increase amount",
+    "inputA11y": "Enter amount. Range: {{min}} to {{max}} {{unit}}"
+  },
+  "bodyStats": {
+    "weight": "Weight",
+    "bodyFat": "Body Fat",
+    "noRecord": "No data",
+    "goalReached": "Goal reached",
+    "remaining": "{{value}} {{unit}} to go",
+    "noGoal": "No goal set",
+    "emptyPeriod": "No records in this period",
+    "emptyAll": "Your trend will appear as records build up",
+    "goalLabel": "Goal",
+    "chartA11yLabel": "{{title}} trend chart"
+  },
+  "weeklyRecap": {
+    "close": "Close",
+    "prevCard": "Previous",
+    "nextCard": "Next",
+    "cover": {
+      "lead": "Last week\nin review",
+      "tapHint": "Tap to continue"
+    },
+    "days": {
+      "label": "01 — Days logged",
+      "lead": "Last week, you logged on",
+      "outOf": " of 7 days"
+    },
+    "kcal": {
+      "label": "02 — Calories",
+      "lead": "Last week, your daily average was",
+      "target": "Goal: {{kcal}} kcal"
+    },
+    "insight": {
+      "label": "03 — {{macro}}",
+      "lead": "The biggest gap from your goal was",
+      "less": "Below target",
+      "more": "Above target",
+      "barActual": "Daily average",
+      "barTarget": "Daily goal"
+    },
+    "advice": {
+      "label": "04 — Tips",
+      "leadMore": "To get more {{macro}}",
+      "leadLess": "Lower-{{macro}} options",
+      "sourcePrefix": "Source: "
+    },
+    "outro": {
+      "lead": "Roughly is\nenough",
+      "nextWeek": "Next week's recap drops on Monday."
+    },
+    "nutritionNote": "Fun fact · {{label}}"
+  },
   "help": {
     "nav": {
       "prev": "Prev",
       "next": "Next",
       "close": "Close"
     },
-    "steps": ["The Basics", "Ingredient Buttons", "Dish Buttons", "More for You", "FAQ"]
+    "steps": [
+      "The Basics",
+      "Ingredient Buttons",
+      "Dish Buttons",
+      "More for You",
+      "FAQ"
+    ],
+    "content": {
+      "gestures": {
+        "body": "Just two gestures: tap and long-press.",
+        "callout": "Tap handles most meals.\nLong-press only when you had something different or want more detail."
+      },
+      "ingredients": {
+        "body": "Each button groups foods commonly eaten in Japan. The calorie value logged on tap stays close to a typical portion.",
+        "footnote1": "Top foods are selected based on consumption share within each category in Japan's National Health and Nutrition Survey (NHNS).",
+        "footnote2": "Buttons labelled \"long-press\" require a selection each time because the calorie range varies significantly by type."
+      },
+      "dishes": {
+        "body": "Dish buttons log a representative value for a complete meal. Pick the dish closest to what you ate.",
+        "footnote1": "Many dish buttons (set meals, sushi, pizza, ramen, etc.) have a wide calorie range, so long-press is the default for those.",
+        "footnote2": "Soups such as miso soup and tonjiru are under \"Set meal / Single dish / Soup\"."
+      },
+      "future": {
+        "body": "The more you log, the easier it becomes to find your go-to foods and dishes.",
+        "starTitle": "⭐️ Favorites tab",
+        "starBody": "Switch to the ⭐️ tab to see your most-used items at the top. Tap straight through your usual combination without searching.",
+        "defaultTitle": "Default tab on launch",
+        "defaultBody": "The tab shown when you open the app automatically shifts to whichever tab you use most."
+      },
+      "faq": {
+        "q1": "What if the portion isn't exactly right?",
+        "a1": "Logging at a standard serving is fine. You can adjust to large or small after tapping. The design prioritizes \"easy to keep up\" over precision.",
+        "q2": "Isn't one button too rough with multiple foods inside?",
+        "a2": "Foods within each button are chosen so that typical portions land in roughly the same calorie range as the tap value. You can check the range in the \"Ingredient button contents\" and \"Dish button contents\" steps.",
+        "q3": "Can't I log with a photo?",
+        "a3": "Photo → recognition → confirmation adds friction that makes it hard to sustain. A few taps is all it takes, so you can log every day without effort.",
+        "q4": "What if I want more precise tracking?",
+        "a4": "This app is designed around \"roughly, consistently\". For gram-level precision, pairing with a food-composition app (e.g. Asken) works well."
+      }
+    }
   },
   "settings": {
     "theme": {
@@ -282,7 +586,15 @@
   },
   "home": {
     "today": "Today",
-    "weekDays": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+    "weekDays": [
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Fri",
+      "Sat",
+      "Sun"
+    ],
     "a11y": {
       "profile": "Profile",
       "help": "How to Use",
@@ -353,10 +665,22 @@
       "title": "What's your daily routine like?",
       "subtitle": "Logged exercise adds on top. Just pick your everyday lifestyle.",
       "note": "",
-      "Sedentary": { "label": "Desk / Remote Work", "hint": "Mostly sitting — WFH, office, computer work" },
-      "LightlyActive": { "label": "On Your Feet", "hint": "Retail, teaching, commuting on foot" },
-      "ModeratelyActive": { "label": "Active Job", "hint": "Nursing, sales, delivery — lots of walking" },
-      "VeryActive": { "label": "Physical Labor", "hint": "Construction, agriculture, heavy manual work" }
+      "Sedentary": {
+        "label": "Desk / Remote Work",
+        "hint": "Mostly sitting — WFH, office, computer work"
+      },
+      "LightlyActive": {
+        "label": "On Your Feet",
+        "hint": "Retail, teaching, commuting on foot"
+      },
+      "ModeratelyActive": {
+        "label": "Active Job",
+        "hint": "Nursing, sales, delivery — lots of walking"
+      },
+      "VeryActive": {
+        "label": "Physical Labor",
+        "hint": "Construction, agriculture, heavy manual work"
+      }
     },
     "currentBody": {
       "title": "Which looks closest to you now?",
@@ -380,10 +704,22 @@
     "direction": {
       "title": "How do you want to change?",
       "subtitle": "Used to suggest a plan. You can change this anytime.",
-      "lose": { "label": "Lose fat", "hint": "Reduce weight and body fat %" },
-      "maintain": { "label": "Maintain", "hint": "Keep your current build" },
-      "recomp": { "label": "Recomposition", "hint": "Same weight — swap fat for muscle" },
-      "gain": { "label": "Gain", "hint": "Increase weight and muscle" }
+      "lose": {
+        "label": "Lose fat",
+        "hint": "Reduce weight and body fat %"
+      },
+      "maintain": {
+        "label": "Maintain",
+        "hint": "Keep your current build"
+      },
+      "recomp": {
+        "label": "Recomposition",
+        "hint": "Same weight — swap fat for muscle"
+      },
+      "gain": {
+        "label": "Gain",
+        "hint": "Increase weight and muscle"
+      }
     },
     "plan": {
       "title": "3-Month Goal",
@@ -395,9 +731,18 @@
       "targetBodyFat": "Target body fat",
       "dailyGoal": "Daily goal",
       "pace": "Pace",
-      "gentle": { "label": "Gradual", "hint": "Sustainable — easy to stick with" },
-      "standard": { "label": "Moderate", "hint": "Balanced pace and results" },
-      "strong": { "label": "Aggressive", "hint": "Focused, short-term change" },
+      "gentle": {
+        "label": "Gradual",
+        "hint": "Sustainable — easy to stick with"
+      },
+      "standard": {
+        "label": "Moderate",
+        "hint": "Balanced pace and results"
+      },
+      "strong": {
+        "label": "Aggressive",
+        "hint": "Focused, short-term change"
+      },
       "changeIn3mo": "3 months: {{sign}}{{abs}}kg",
       "monthlyRate": "(~{{sign}}{{monthly}}kg/mo)",
       "bfChange": "Body fat: {{from}}→{{to}}%",

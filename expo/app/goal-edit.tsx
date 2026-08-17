@@ -221,18 +221,17 @@ export default function GoalEditRoute() {
       (priorDir === 'lose' ? current > priorTarget + 0.05 : current < priorTarget - 0.05);
 
     if (switchingToMaintain && notReached) {
-      const verb = priorDir === 'lose' ? '減量' : '増量';
       Alert.alert(
-        `まだ目標体重（${priorTarget!.toFixed(1)}kg）に届いていません`,
+        t('goalEdit.alert.notReachedTitle', { target: priorTarget!.toFixed(1) }),
         undefined,
         [
           {
-            text: `${verb}を続ける`,
+            text: priorDir === 'lose' ? t('goalEdit.alert.continueLose') : t('goalEdit.alert.continueGain'),
             style: 'cancel',
             onPress: () => setDirection(priorDir ?? null),
           },
           {
-            text: `今の体重（${current!.toFixed(1)}kg）を維持`,
+            text: t('goalEdit.alert.maintainCurrent', { current: current!.toFixed(1) }),
             onPress: commit,
           },
         ]
@@ -307,7 +306,7 @@ export default function GoalEditRoute() {
     <>
       <Stack.Screen
         options={{
-          title: '目標を変更',
+          title: t('nav.goalEdit'),
           headerStyle: { backgroundColor: theme.colors.surface.default },
           headerTintColor: theme.colors.content.primary,
           headerShadowVisible: false,
@@ -322,10 +321,10 @@ export default function GoalEditRoute() {
               {card ? (
                 <>
                   <View style={styles.cardHeaderRow}>
-                    <Label size="sm" tone="secondary">目標</Label>
+                    <Label size="sm" tone="secondary">{t('goalEdit.label')}</Label>
                     {isManual ? (
                       <Pressable onPress={exitManual} hitSlop={8} testID="goal-target-auto">
-                        <Label size="sm" tone="link">おまかせに戻す</Label>
+                        <Label size="sm" tone="link">{t('goalEdit.auto')}</Label>
                       </Pressable>
                     ) : (
                       <Pressable
@@ -334,7 +333,7 @@ export default function GoalEditRoute() {
                         testID="goal-target-edit"
                         style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
                       >
-                        <Label size="sm" tone="link">自分で決める</Label>
+                        <Label size="sm" tone="link">{t('goalEdit.manual')}</Label>
                         <Icon name="edit" size={13} color={theme.colors.content.secondary} />
                       </Pressable>
                     )}
@@ -344,17 +343,17 @@ export default function GoalEditRoute() {
                     <View style={{ gap: 4 }}>
                       <View style={styles.metricsRow}>
                         <EditableMetricBlock
-                          label="体重"
+                          label={t('goalEdit.weight')}
                           value={targetText}
                           onChangeText={onChangeTargetText}
                           onBlur={() => applyManual(manualTargetKg ?? profile.currentWeightKg ?? 60)}
                           unit="kg"
                           testID="goal-target-input"
-                          accessibilityLabel="目標体重"
+                          accessibilityLabel={t('goalEdit.a11y.targetWeight')}
                         />
                         <View style={[styles.divider, { backgroundColor: theme.colors.border.subtle }]} />
                         <EditableMetricBlock
-                          label="体脂肪率"
+                          label={t('goalEdit.bodyFat')}
                           // 未入力時は推定値をそのまま value として見せる (placeholder にしない)。
                           // 推定値は「これから決める空欄」ではなく「使ってよい妥当な値」なので、
                           // disabled に見える薄い placeholder 色にしたくない。
@@ -365,7 +364,7 @@ export default function GoalEditRoute() {
                           }}
                           unit="%"
                           testID="goal-bf-input"
-                          accessibilityLabel="目標体脂肪率"
+                          accessibilityLabel={t('goalEdit.a11y.targetBodyFat')}
                         />
                       </View>
                       {deltaLine ? <Body size="sm" tone="secondary">{deltaLine}</Body> : null}
@@ -383,10 +382,10 @@ export default function GoalEditRoute() {
                   ) : (
                     <View style={{ gap: 4 }}>
                       <View style={styles.metricsRow}>
-                        <MetricBlock label="体重" value={card.targetWeightKg.toFixed(1)} unit="kg" />
+                        <MetricBlock label={t('goalEdit.weight')} value={card.targetWeightKg.toFixed(1)} unit="kg" />
                         <View style={[styles.divider, { backgroundColor: theme.colors.border.subtle }]} />
                         <MetricBlock
-                          label="体脂肪率"
+                          label={t('goalEdit.bodyFat')}
                           value={card.targetBodyFatPct != null ? String(card.targetBodyFatPct) : '—'}
                           unit="%"
                         />
@@ -408,7 +407,7 @@ export default function GoalEditRoute() {
                   <View style={[styles.hr, { backgroundColor: theme.colors.border.subtle }]} />
                   <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8 }}>
                     <Heading size="3xl">{card.targetKcal}</Heading>
-                    <Caption tone="secondary" style={{ marginBottom: 6 }}>kcal / 日</Caption>
+                    <Caption tone="secondary" style={{ marginBottom: 6 }}>{t('common.unit.kcalPerDay')}</Caption>
                   </View>
                   <View style={{ flexDirection: 'row', gap: 8 }}>
                     <MacroCard kind="protein" value={card.proteinG} />
@@ -417,14 +416,14 @@ export default function GoalEditRoute() {
                   </View>
                 </>
               ) : (
-                <Body tone="secondary">目的{direction == null ? '' : '・ペース'}を選ぶとここに表示されます</Body>
+                <Body tone="secondary">{direction == null ? t('goalEdit.noPreviewNoPace') : t('goalEdit.noPreviewWithPace')}</Body>
               )}
             </Card>
 
             {/* DIRECTION — segmented (手動指定中は非表示・目的は自動導出, PRD §6.4.4) */}
             {!isManual ? (
               <View style={{ gap: theme.spacing['2'] }}>
-                <Overline>目的</Overline>
+                <Overline>{t('goalEdit.sections.direction')}</Overline>
                 <SegmentedRow
                   options={DIRECTION_OPTIONS.map((o) => ({ key: o.key, label: o.label }))}
                   value={direction}
@@ -437,7 +436,7 @@ export default function GoalEditRoute() {
             {/* PACE — segmented (maintain/recomp時は非表示) */}
             {effectiveDirection !== 'maintain' && effectiveDirection !== 'recomp' ? (
               <View style={{ gap: theme.spacing['2'] }}>
-                <Overline>ペース</Overline>
+                <Overline>{t('goalEdit.sections.pace')}</Overline>
                 <SegmentedRow
                   options={PACE_OPTIONS.map((o) => ({ key: o.key, label: o.label }))}
                   value={paceLevel}
@@ -449,7 +448,7 @@ export default function GoalEditRoute() {
 
             <View style={{ flex: 1 }} />
 
-            <Button label="保存" onPress={handleSave} disabled={!canSave} testID="goal-save" />
+            <Button label={t('common.save')} onPress={handleSave} disabled={!canSave} testID="goal-save" />
           </View>
         </SafeAreaView>
       </View>

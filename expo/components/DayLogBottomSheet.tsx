@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getIdentity } from '@/constants/identity';
 import { MealLogCard, useTheme } from '@/design-system';
+import { useT } from '@/hooks/useT';
 import { spring } from '@/design-system/tokens/primitives/motion';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { radius } from '@/design-system/tokens/primitives/radius';
@@ -95,6 +96,7 @@ export interface DayLogBottomSheetRef {
 export const DayLogBottomSheet = memo(
   forwardRef<DayLogBottomSheetRef, Props>(function DayLogBottomSheet({ viewedDate }, ref) {
   const t = useTheme();
+  const tr = useT();
   const { logs, todayLogs, todayMacro } = useAppState();
   const { height: screenHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -112,7 +114,7 @@ export const DayLogBottomSheet = memo(
     [isToday, todayMacro, logs, dateKey]
   );
 
-  const titleText = isToday ? '今日のログ' : `${formatShortDay(viewedDate)} のログ`;
+  const titleText = isToday ? tr('dayLog.todayTitle') : tr('dayLog.dayTitle', { day: formatShortDay(viewedDate) });
 
   const peekHeight = PEEK_HEIGHT_PX;
   const halfHeight = Math.round(screenHeight * SNAP_RATIOS.half);
@@ -270,7 +272,7 @@ export const DayLogBottomSheet = memo(
               testID="sheet-stage-toggle"
             >
               <Text style={[styles.stagePillText, { color: t.colors.action.text.default }]}>
-                {stage === 'peek' ? 'ひらく' : stage === 'half' ? '全画面' : 'とじる'}
+                {stage === 'peek' ? tr('dayLog.open') : stage === 'half' ? tr('dayLog.fullscreen') : tr('dayLog.close')}
               </Text>
             </Pressable>
           </View>
@@ -286,8 +288,8 @@ export const DayLogBottomSheet = memo(
         >
           {dayLogs.length === 0 ? (
             <View style={[styles.emptyState, { backgroundColor: t.colors.surface.raised }]}>
-              <Text style={[styles.emptyTitle, { color: t.colors.content.primary }]}>まだ記録はありません</Text>
-              <Text style={[styles.emptyText, { color: t.colors.content.secondary }]}>上のボタンから、その日の食事をすばやく残せます。</Text>
+              <Text style={[styles.emptyTitle, { color: t.colors.content.primary }]}>{tr('dayLog.emptyTitle')}</Text>
+              <Text style={[styles.emptyText, { color: t.colors.content.secondary }]}>{tr('dayLog.emptyText')}</Text>
             </View>
           ) : (
             dayLogs.map((log) => <LogListItem key={log.id} log={log} />)

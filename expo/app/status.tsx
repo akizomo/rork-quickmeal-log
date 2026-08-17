@@ -89,8 +89,8 @@ export default function StatusRoute() {
                 onPress={() => router.push('/subscription')}
                 testID="status-trial-card"
                 accessibilityRole="button"
-                accessibilityLabel="トライアル詳細"
-                accessibilityHint="サブスクリプション画面を開きます"
+                accessibilityLabel={t('status.a11y.trialCard')}
+                accessibilityHint={t('status.a11y.trialHint')}
               >
                 <Card
                   variant="raised"
@@ -171,7 +171,7 @@ export default function StatusRoute() {
                     // 実機トラブルシュート: getSdkStatus() の生の値などを表示
                     const d = await healthSync.fetchDiagnostics();
                     Alert.alert(
-                      'ヘルス連携 診断情報',
+                      t('status.a11y.diagTitle'),
                       [
                         `platform: ${d.platform}`,
                         `getSdkStatus: ${d.sdkStatusLabel} (raw=${d.rawSdkStatus})`,
@@ -191,8 +191,8 @@ export default function StatusRoute() {
               onPress={() => router.push('/goal-edit')}
               testID="status-goal-card"
               accessibilityRole="button"
-              accessibilityLabel="目標を変更"
-              accessibilityHint="目的とプランの設定画面を開きます"
+              accessibilityLabel={t('status.a11y.goalCard')}
+              accessibilityHint={t('status.a11y.goalHint')}
             >
               <Card variant="raised" style={{ gap: theme.spacing['3'] }}>
                 <View style={styles.goalHeader}>
@@ -204,7 +204,7 @@ export default function StatusRoute() {
                 </View>
                 <View style={styles.kcalRow}>
                   <Heading size="3xl">{profile.targetCalories || '--'}</Heading>
-                  <Caption tone="secondary" style={{ marginLeft: 4, marginBottom: 8 }}>kcal / 日</Caption>
+                  <Caption tone="secondary" style={{ marginLeft: 4, marginBottom: 8 }}>{t('common.unit.kcalPerDay')}</Caption>
                 </View>
                 <View style={styles.pfcRow}>
                   <MacroCard kind="protein" value={profile.targetProtein} />

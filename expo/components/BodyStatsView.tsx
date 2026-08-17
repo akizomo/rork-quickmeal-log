@@ -11,6 +11,7 @@ import {
 import Svg, { Circle, Line, Polyline, Text as SvgText } from 'react-native-svg';
 
 import { useTheme } from '@/design-system';
+import { useT } from '@/hooks/useT';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { useAppState } from '@/providers/app-state-provider';
 import type { BodyFatEntry, GoalDirection, WeightEntry } from '@/types/nutrition';
@@ -123,6 +124,7 @@ function MetricCardHeader({
   direction,
 }: MetricCardHeaderProps) {
   const t = useTheme();
+  const tr = useT();
   const fmt = (v: number) => v.toFixed(fractionDigits);
   const hasGoal = current != null && target != null;
   const remaining = hasGoal ? current! - target! : null;
@@ -133,13 +135,13 @@ function MetricCardHeader({
   let goalLabel: string | null = null;
   if (hasGoal) {
     if (Math.abs(remaining!) < epsilon) {
-      goalLabel = '目標に到達';
+      goalLabel = tr('bodyStats.goalReached');
     } else if (direction === 'lose' && remaining! < 0) {
-      goalLabel = '目標に到達';
+      goalLabel = tr('bodyStats.goalReached');
     } else if (direction === 'gain' && remaining! > 0) {
-      goalLabel = '目標に到達';
+      goalLabel = tr('bodyStats.goalReached');
     } else {
-      goalLabel = `あと ${Math.abs(remaining!).toFixed(fractionDigits)} ${unit}`;
+      goalLabel = tr('bodyStats.remaining', { value: Math.abs(remaining!).toFixed(fractionDigits), unit });
     }
   }
 
@@ -153,13 +155,13 @@ function MetricCardHeader({
             <Text style={[styles.cardUnit, { color: t.colors.content.secondary }]}> {unit}</Text>
           </Text>
         ) : (
-          <Text style={[styles.cardEmpty, { color: t.colors.content.secondary }]}>記録なし</Text>
+          <Text style={[styles.cardEmpty, { color: t.colors.content.secondary }]}>{tr('bodyStats.noRecord')}</Text>
         )}
       </View>
       {goalLabel ? (
         <Text style={[styles.cardMeta, { color: t.colors.content.secondary }]}>{goalLabel}</Text>
       ) : current != null ? (
-        <Text style={[styles.cardMeta, { color: t.colors.content.secondary }]}>目標未設定</Text>
+        <Text style={[styles.cardMeta, { color: t.colors.content.secondary }]}>{tr('bodyStats.noGoal')}</Text>
       ) : null}
     </View>
   );
@@ -193,6 +195,7 @@ function TrendChart({
   title,
 }: TrendChartProps) {
   const t = useTheme();
+  const tr = useT();
   // タップ/ドラッグで選択中の記録値インデックス (null=未選択)
   const [selected, setSelected] = useState<number | null>(null);
   // ツールチップの実測サイズ (中央寄せ・端クランプ・上下反転の算出に使う)
@@ -203,7 +206,7 @@ function TrendChart({
       <View
         style={[styles.chartWrap, { width, height: CHART_HEIGHT }]}
         accessible
-        accessibilityLabel={`${title}の推移グラフ。${emptyMessage}`}
+        accessibilityLabel={`${tr('bodyStats.chartA11yLabel', { title })}。${emptyMessage}`}
       >
         <Text style={[styles.chartEmpty, { color: t.colors.content.secondary }]}>{emptyMessage}</Text>
       </View>
@@ -312,7 +315,7 @@ function TrendChart({
       onResponderMove={handleTouch}
       accessible
       accessibilityRole="image"
-      accessibilityLabel={`${title}の推移グラフ`}
+      accessibilityLabel={tr('bodyStats.chartA11yLabel', { title })}
       accessibilityHint={chartSummary}
     >
       <Svg width={width} height={CHART_HEIGHT}>
@@ -334,7 +337,7 @@ function TrendChart({
               fill={labelColor}
               textAnchor="end"
             >
-              目標
+              {tr('bodyStats.goalLabel')}
             </SvgText>
           </>
         ) : null}
@@ -496,6 +499,7 @@ function TrendChart({
 
 export function BodyStatsView({ period = 'month' }: { period?: BodyPeriod }) {
   const t = useTheme();
+  const tr = useT();
   const { weights, bodyFatEntries, profile } = useAppState();
   const { width: screenWidth } = useWindowDimensions();
   const chartWidth = screenWidth - 32;
@@ -556,7 +560,7 @@ export function BodyStatsView({ period = 'month' }: { period?: BodyPeriod }) {
       {/* 体重: ヘッダー + グラフを1枚のカードに統合 */}
       <View style={[styles.metricCard, { width: chartWidth, backgroundColor: t.colors.surface.raised }]}>
         <MetricCardHeader
-          title="体重"
+          title={tr('bodyStats.weight')}
           unit="kg"
           current={weightCurrent}
           target={profile.targetWeightKg}
@@ -567,7 +571,7 @@ export function BodyStatsView({ period = 'month' }: { period?: BodyPeriod }) {
         <View style={[styles.cardDivider, { backgroundColor: t.colors.border.default }]} />
         <TrendChart
           width={chartWidth}
-          title="体重"
+          title={tr('bodyStats.weight')}
           points={weightPoints}
           target={profile.targetWeightKg}
           color={t.colors.action.text.default}
@@ -575,7 +579,7 @@ export function BodyStatsView({ period = 'month' }: { period?: BodyPeriod }) {
           fractionDigits={1}
           grain={grain}
           emptyMessage={
-            weightSeries.length > 0 ? 'この期間の記録はありません' : '記録が増えると推移が表示されます'
+            weightSeries.length > 0 ? tr('bodyStats.emptyPeriod') : tr('bodyStats.emptyAll')
           }
         />
       </View>
@@ -583,7 +587,7 @@ export function BodyStatsView({ period = 'month' }: { period?: BodyPeriod }) {
       {/* 体脂肪率: ヘッダー + グラフを1枚のカードに統合 */}
       <View style={[styles.metricCard, { width: chartWidth, backgroundColor: t.colors.surface.raised }]}>
         <MetricCardHeader
-          title="体脂肪率"
+          title={tr('bodyStats.bodyFat')}
           unit="%"
           current={bfCurrent}
           target={profile.targetBodyFatPct ?? null}
@@ -595,7 +599,7 @@ export function BodyStatsView({ period = 'month' }: { period?: BodyPeriod }) {
         <View style={[styles.cardDivider, { backgroundColor: t.colors.border.default }]} />
         <TrendChart
           width={chartWidth}
-          title="体脂肪率"
+          title={tr('bodyStats.bodyFat')}
           points={bodyFatPoints}
           target={profile.targetBodyFatPct ?? null}
           color={t.colors.accent.default}
@@ -604,8 +608,8 @@ export function BodyStatsView({ period = 'month' }: { period?: BodyPeriod }) {
           grain={grain}
           emptyMessage={
             bodyFatSeries.length > 0
-              ? 'この期間の記録はありません'
-              : '記録が増えると推移が表示されます'
+              ? tr('bodyStats.emptyPeriod')
+              : tr('bodyStats.emptyAll')
           }
         />
       </View>

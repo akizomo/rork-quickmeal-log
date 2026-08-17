@@ -6,11 +6,17 @@ import type { Theme } from '@/design-system';
 import { radius } from '@/design-system/tokens/primitives/radius';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 
+interface Props {
+  title?: string;
+  message?: string;
+  retryLabel?: string;
+}
+
 interface State {
   hasError: boolean;
 }
 
-export class ErrorBoundary extends React.Component<React.PropsWithChildren, State> {
+export class ErrorBoundary extends React.Component<React.PropsWithChildren<Props>, State> {
   // contextType でテーマを直接取得する。ThemeProvider が壊れていても
   // createContext のデフォルト値 (lightTheme) にフォールバックするため安全。
   static contextType = ThemeContext;
@@ -32,13 +38,14 @@ export class ErrorBoundary extends React.Component<React.PropsWithChildren, Stat
   render() {
     if (this.state.hasError) {
       const t = this.context as Theme;
+      const { title = 'Something went wrong', message = 'Please reopen the screen.', retryLabel = 'Reload' } = this.props;
       return (
         <View style={[styles.container, { backgroundColor: t.colors.surface.default }]} testID="error-boundary">
           <View style={[styles.card, { backgroundColor: t.colors.surface.raised }]}>
-            <Text style={[styles.title, { color: t.colors.content.primary }]}>画面の表示で問題が起きました</Text>
-            <Text style={[styles.text, { color: t.colors.content.secondary }]}>もう一度開き直してください。</Text>
+            <Text style={[styles.title, { color: t.colors.content.primary }]}>{title}</Text>
+            <Text style={[styles.text, { color: t.colors.content.secondary }]}>{message}</Text>
             <Pressable onPress={this.handleReset} style={[styles.button, { backgroundColor: t.colors.action.primary.default }]} testID="error-boundary-reset-button">
-              <Text style={[styles.buttonText, { color: t.colors.content.onAction }]}>再表示</Text>
+              <Text style={[styles.buttonText, { color: t.colors.content.onAction }]}>{retryLabel}</Text>
             </Pressable>
           </View>
         </View>

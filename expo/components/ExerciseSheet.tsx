@@ -2,6 +2,7 @@ import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { BottomSheet, Chip, IconButton, Label, Overline, useTheme, type Theme } from '@/design-system';
+import { useT } from '@/hooks/useT';
 import { fontSize as fs, letterSpacing as ls } from '@/design-system/tokens/primitives/typography';
 import { radius } from '@/design-system/tokens/primitives/radius';
 import { ACTIVITY_LEVEL_OPTIONS } from '@/constants/onboarding';
@@ -31,6 +32,7 @@ interface ExerciseSheetProps {
 
 export const ExerciseSheet = memo(function ExerciseSheet({ visible, onClose, dateKey: dateKeyProp }: ExerciseSheetProps) {
   const t = useTheme();
+  const tr = useT();
   const styles = useMemo(() => makeStyles(t), [t]);
   const {
     logExercise,
@@ -130,15 +132,15 @@ export const ExerciseSheet = memo(function ExerciseSheet({ visible, onClose, dat
   }, [hasHealthActivity, selectedType, availableTypes]);
 
   const dayLabel = useMemo(() => formatDayLabel(new Date(dateKey)), [dateKey]);
-  const sheetTitle = `${dayLabel}の消費`;
+  const sheetTitle = tr('exercise.sheetTitle', { day: dayLabel });
 
   return (
     <BottomSheet
       visible={visible}
       onClose={onClose}
       title={sheetTitle}
-      primaryAction={{ label: '追加', onPress: handleSave }}
-      secondaryAction={{ label: 'キャンセル', onPress: onClose }}
+      primaryAction={{ label: tr('exercise.add'), onPress: handleSave }}
+      secondaryAction={{ label: tr('common.cancel'), onPress: onClose }}
       testID="exercise-sheet"
     >
       <ScrollView showsVerticalScrollIndicator={false} style={styles.scroll}>
@@ -155,7 +157,7 @@ export const ExerciseSheet = memo(function ExerciseSheet({ visible, onClose, dat
               <>
                 <View style={styles.ledgerRow}>
                   <Text style={styles.ledgerLabel}>
-                    活動レベル「{activityLevelLabel ?? '-'}」の想定
+                    {tr('exercise.activityLevelBase', { level: activityLevelLabel ?? '-' })}
                   </Text>
                   <Text style={styles.ledgerValue}>
                     −{(baselineKcal as number).toLocaleString()} kcal
@@ -163,7 +165,7 @@ export const ExerciseSheet = memo(function ExerciseSheet({ visible, onClose, dat
                 </View>
                 <View style={[styles.ledgerRow, styles.ledgerResultRow]}>
                   <Text style={styles.ledgerResultLabel}>
-                    目標に追加{activityCapped ? '（上限あり）' : ''}
+                    {activityCapped ? tr('exercise.goalAdditionCapped') : tr('exercise.goalAddition')}
                   </Text>
                   <Text style={[styles.ledgerResultValue, goalAddition === 0 && styles.ledgerResultZero]}>
                     +{goalAddition.toLocaleString()} kcal
@@ -176,19 +178,19 @@ export const ExerciseSheet = memo(function ExerciseSheet({ visible, onClose, dat
           {/* === 運動記録 (歩数=ヘルスのウォーキングに集約 + 手動ログ) === */}
           {hasHealthActivity || hasWorkouts ? (
             <View style={styles.historyBlock} testID="exercise-history-list">
-              <Overline>{dayLabel}の運動</Overline>
+              <Overline>{tr('exercise.historyTitle', { day: dayLabel })}</Overline>
               {hasHealthActivity ? (
                 <View style={styles.historyRow} testID="exercise-health-walking">
                   <Text style={styles.historyEmoji}>{walkingType?.emoji ?? '🚶'}</Text>
                   <View style={styles.historyMeta}>
                     <View style={styles.historyLabelRow}>
-                      <Text style={styles.historyLabel}>ウォーキング</Text>
+                      <Text style={styles.historyLabel}>{tr('exercise.walking')}</Text>
                       <View style={[styles.sourceBadge, styles.sourceBadgeHealth]}>
-                        <Text style={[styles.sourceBadgeText, styles.sourceBadgeTextHealth]}>ヘルス</Text>
+                        <Text style={[styles.sourceBadgeText, styles.sourceBadgeTextHealth]}>{tr('exercise.sourceHealth')}</Text>
                       </View>
                     </View>
                     <Text style={styles.historySub}>
-                      {Math.round(dailyActivity!.steps).toLocaleString()}歩
+                      {tr('exercise.steps', { n: Math.round(dailyActivity!.steps).toLocaleString() })}
                     </Text>
                   </View>
                   <Text style={styles.historyKcal}>
@@ -204,7 +206,7 @@ export const ExerciseSheet = memo(function ExerciseSheet({ visible, onClose, dat
 
           {/* === 運動を追加 === */}
           <View style={styles.addBlock}>
-            <Overline>運動を追加</Overline>
+            <Overline>{tr('exercise.addExercise')}</Overline>
             <View style={styles.typeGrid}>
               {[availableTypes.slice(0, 4), availableTypes.slice(4)].map((row, rowIdx) => (
                 <View key={rowIdx} style={styles.typeRow}>
@@ -263,7 +265,7 @@ export const ExerciseSheet = memo(function ExerciseSheet({ visible, onClose, dat
 
             <View style={styles.previewCard}>
               <View style={styles.previewRow}>
-                <Text style={styles.previewLabel}>消費カロリー</Text>
+                <Text style={styles.previewLabel}>{tr('exercise.burnedCaloriesLabel')}</Text>
                 <Text style={styles.previewKcal}>{grossKcal} kcal</Text>
               </View>
             </View>
@@ -284,11 +286,12 @@ function formatLogTime(timestamp: string): string | null {
 
 function ExerciseHistoryRow({ log, onDelete }: { log: ExerciseLog; onDelete: () => void }) {
   const theme = useTheme();
+  const tr = useT();
   const styles = useMemo(() => makeStyles(theme), [theme]);
   const type = EXERCISE_TYPES.find((t) => t.key === log.exerciseType);
   const isHealth = log.source === 'health';
   const time = formatLogTime(log.timestamp);
-  const subParts = [`${log.minutes}分`, time].filter(Boolean) as string[];
+  const subParts = [`${log.minutes}${tr('common.unit.min')}`, time].filter(Boolean) as string[];
   return (
     <View style={styles.historyRow} testID={`exercise-history-${log.id}`}>
       <Text style={styles.historyEmoji}>{type?.emoji ?? '🏅'}</Text>
@@ -297,7 +300,7 @@ function ExerciseHistoryRow({ log, onDelete }: { log: ExerciseLog; onDelete: () 
           <Text style={styles.historyLabel}>{log.exerciseLabel}</Text>
           <View style={[styles.sourceBadge, isHealth ? styles.sourceBadgeHealth : styles.sourceBadgeManual]}>
             <Text style={[styles.sourceBadgeText, isHealth ? styles.sourceBadgeTextHealth : styles.sourceBadgeTextManual]}>
-              {isHealth ? 'ヘルス' : '手動'}
+              {isHealth ? tr('exercise.sourceHealth') : tr('exercise.sourceManual')}
             </Text>
           </View>
         </View>
@@ -309,7 +312,7 @@ function ExerciseHistoryRow({ log, onDelete }: { log: ExerciseLog; onDelete: () 
         size="sm"
         onPress={onDelete}
         testID={`exercise-history-delete-${log.id}`}
-        accessibilityLabel={`${log.exerciseLabel} を削除`}
+        accessibilityLabel={tr('exercise.deleteA11y', { label: log.exerciseLabel })}
       />
     </View>
   );

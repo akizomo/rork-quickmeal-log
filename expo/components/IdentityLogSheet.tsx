@@ -23,6 +23,7 @@ import { AmountEditDialog } from '@/components/AmountEditDialog';
 import { buildIdentityAmountEditConfig } from '@/utils/amount-edit';
 import { useAppState } from '@/providers/app-state-provider';
 import { useLocale } from '@/hooks/useLocale';
+import { useT } from '@/hooks/useT';
 import {
   buildRegistry,
   getBucketDef,
@@ -131,6 +132,7 @@ function HorizontalChipRow({ children }: { children: React.ReactNode }) {
 
 export function IdentityLogSheet() {
   const t = useTheme();
+  const tr = useT();
   const { locale } = useLocale();
   const {
     identityLogSheet,
@@ -459,12 +461,12 @@ export function IdentityLogSheet() {
   const confirmDelete = useCallback(() => {
     if (!editingLog) return;
     Alert.alert(
-      '記録を削除',
-      'この記録を削除しますか？',
+      tr('identityLog.deleteTitle'),
+      tr('identityLog.deleteMessage'),
       [
-        { text: 'キャンセル', style: 'cancel' },
+        { text: tr('common.cancel'), style: 'cancel' },
         {
-          text: '削除',
+          text: tr('common.delete'),
           style: 'destructive',
           onPress: () => {
             deleteLog(editingLog.id);
@@ -474,7 +476,7 @@ export function IdentityLogSheet() {
         },
       ],
     );
-  }, [editingLog, deleteLog, updateLivePreview, closeIdentityLogSheet]);
+  }, [editingLog, deleteLog, updateLivePreview, closeIdentityLogSheet, tr]);
 
   const canSave = !!resolved && resolved.totalMacro.kcal > 0;
 
@@ -498,7 +500,7 @@ export function IdentityLogSheet() {
       onClose={closeIdentityLogSheet}
       title={bucket ? `${bucket.emoji} ${bucket.label}` : ''}
       primaryAction={{
-        label: editingLog ? '更新' : '保存して追加',
+        label: editingLog ? tr('identityLog.update') : tr('identityLog.save'),
         onPress: handleSave,
         disabled: !canSave,
       }}
@@ -511,7 +513,7 @@ export function IdentityLogSheet() {
               size="lg"
               tone="danger"
               onPress={confirmDelete}
-              accessibilityLabel="この記録を削除"
+              accessibilityLabel={tr('identityLog.deleteA11y')}
               testID="ils-delete"
             />
           ) : null}
@@ -519,7 +521,7 @@ export function IdentityLogSheet() {
             icon="close"
             size="lg"
             onPress={closeIdentityLogSheet}
-            accessibilityLabel="閉じる"
+            accessibilityLabel={tr('identityLog.closeA11y')}
             testID="ils-close"
           />
         </View>
@@ -553,7 +555,7 @@ export function IdentityLogSheet() {
 
           {/* Attribute */}
           {origin.attributes && origin.attributes.length > 0 ? (
-            <Section title="種類">
+            <Section title={tr('identityLog.sections.type')}>
               <ChipRow>
                 {origin.attributes.map((opt) => (
                   <Chip
@@ -571,7 +573,7 @@ export function IdentityLogSheet() {
 
           {/* Style */}
           {origin.styles && origin.styles.length > 0 ? (
-            <Section title="調理">
+            <Section title={tr('identityLog.sections.cooking')}>
               <ChipRow>
                 {origin.styles.map((opt) => (
                   <Chip
@@ -599,9 +601,9 @@ export function IdentityLogSheet() {
             const amt = activeAmountSpec ?? origin.amount;
             const amtUnitLabel = amt.unitLabel ?? UNIT_LABEL[amt.unit];
             const amountRefIdentity = amountBasis?.identity ?? origin;
-            const toggleLabel = isAltMode ? 'gに切り替え' : '個数に切り替え';
+            const toggleLabel = isAltMode ? tr('identityLog.switchToG') : tr('identityLog.switchToCount');
             return (
-          <Section title="量">
+          <Section title={tr('identityLog.sections.amount')}>
             {(amt.chips && amt.chips.length > 0) || altAmountSpec ? (
               <ChipRow>
                 {(amt.chips ?? []).map((c) => (
@@ -639,7 +641,7 @@ export function IdentityLogSheet() {
                 },
               ]}
               accessibilityRole="button"
-              accessibilityLabel={`量を変更。現在 ${displayAmountValue}${amtUnitLabel}`}
+              accessibilityLabel={tr('dishEntry.a11yAmountChange', { value: displayAmountValue, unit: amtUnitLabel })}
               testID="ils-amount-row"
             >
               <Text style={[ilsStyles.amountRowValue, { color: t.colors.content.primary, fontSize: t.typography.fontSize['2xl'] }]}>
@@ -652,7 +654,7 @@ export function IdentityLogSheet() {
             </Pressable>
             {amountRefIdentity.referenceDescription && amt.unit === amountRefIdentity.amount.unit ? (
               <Caption tone="tertiary" style={{ marginTop: t.spacing['2'] }} testID="ils-amount-ref">
-                目安: {amountRefIdentity.referenceDescription}
+                {tr('identityLog.amountRefPrefix')}: {amountRefIdentity.referenceDescription}
               </Caption>
             ) : null}
           </Section>
@@ -661,7 +663,7 @@ export function IdentityLogSheet() {
 
           {/* Add-ons */}
           {visibleAddonIds.length > 0 ? (
-            <Section title="トッピング">
+            <Section title={tr('identityLog.sections.topping')}>
               <ChipRow>
                 {visibleAddonIds.map((aid) => {
                   const selected = addons.some((a) => a.refId === aid);

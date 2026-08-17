@@ -25,6 +25,7 @@ import Svg, { Circle, Polyline, Rect, Text as SvgText } from 'react-native-svg';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Body, Caption, Icon, IconButton, MacroChip, Overline, useTheme, type Theme } from '@/design-system';
+import { useT } from '@/hooks/useT';
 import { colors } from '@/design-system/tokens/primitives/colors';
 import { Logo } from '@/components/Logo';
 import { duration, easing } from '@/design-system/tokens/primitives/motion';
@@ -37,13 +38,8 @@ import {
   type WeeklyRecap,
 } from '@/utils/weekly-recap';
 
-const MACRO_LABEL: Record<MacroAxis, { jp: string }> = {
-  protein: { jp: 'たんぱく質' },
-  fat: { jp: '脂質' },
-  carbs: { jp: '炭水化物' },
-};
-
 type CardBg = 'light' | 'deep';
+type Tr = (key: string, opts?: Record<string, unknown> & { returnObjects?: boolean }) => any;
 interface Card {
   bg: CardBg;
   render: (t: Theme) => React.ReactNode;
@@ -53,6 +49,7 @@ const M3_EASE = Easing.bezier(...easing.enter);
 
 export default function WeeklyRecapScreen() {
   const t = useTheme();
+  const tr = useT();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { logs, profile, exerciseLogs, dailyActivities, settings, updateSettingsValues } = useAppState();
@@ -71,7 +68,7 @@ export default function WeeklyRecapScreen() {
   }, [recap?.weekKey]);
 
   const styles = useMemo(() => makeStyles(t), [t]);
-  const cards = useMemo<Card[]>(() => (recap ? buildCards(recap, styles) : []), [recap, styles]);
+  const cards = useMemo<Card[]>(() => (recap ? buildCards(recap, styles, tr) : []), [recap, styles, tr]);
   const [index, setIndex] = useState(0);
   const fade = useRef(new Animated.Value(0)).current;
 
@@ -129,7 +126,7 @@ export default function WeeklyRecapScreen() {
               icon="close"
               size="md"
               onPress={close}
-              accessibilityLabel="閉じる"
+              accessibilityLabel={tr('common.close')}
               style={{ opacity: 0.6 }}
               tone={current.bg === 'deep' ? 'inverse' : 'secondary'}
             />
@@ -137,9 +134,9 @@ export default function WeeklyRecapScreen() {
         </View>
 
         <View style={styles.zones} pointerEvents="box-none">
-          <Pressable style={styles.zonePrev} onPress={goPrev} accessibilityRole="button" accessibilityLabel="前へ" />
+          <Pressable style={styles.zonePrev} onPress={goPrev} accessibilityRole="button" accessibilityLabel={tr('weeklyRecap.prevCard')} />
           {index < cards.length - 1 ? (
-            <Pressable style={styles.zoneNext} onPress={goNext} accessibilityRole="button" accessibilityLabel="次へ" />
+            <Pressable style={styles.zoneNext} onPress={goNext} accessibilityRole="button" accessibilityLabel={tr('weeklyRecap.nextCard')} />
           ) : (
             <View style={styles.zoneNext} pointerEvents="none" />
           )}
@@ -171,7 +168,7 @@ export default function WeeklyRecapScreen() {
   );
 }
 
-function buildCards(recap: WeeklyRecap, styles: Styles): Card[] {
+function buildCards(recap: WeeklyRecap, styles: Styles, tr: Tr): Card[] {
   const cards: Card[] = [];
 
   // 1. 表紙 (deep) — 統計なし
@@ -191,14 +188,14 @@ function buildCards(recap: WeeklyRecap, styles: Styles): Card[] {
             fontWeight: '300',
           }}
         >
-          先週の{'\n'}ごはんを{'\n'}ふりかえる
+          {tr('weeklyRecap.cover.lead')}
         </Body>
         <Body size="sm" style={{ color: t.tokens.colors.ivory[100], opacity: 0.8, marginTop: t.spacing['6'] }}>
           {recap.weekRangeLabel}
         </Body>
         <View style={styles.spacer} />
         <Overline style={{ color: t.tokens.colors.ivory[200], opacity: 0.45, textAlign: 'center' }}>
-          タップして進む
+          {tr('weeklyRecap.cover.tapHint')}
         </Overline>
       </>
     ),
@@ -209,12 +206,12 @@ function buildCards(recap: WeeklyRecap, styles: Styles): Card[] {
     bg: 'light',
     render: (t) => (
       <>
-        <Overline tone="secondary">01 — 記録日数</Overline>
+        <Overline tone="secondary">{tr('weeklyRecap.days.label')}</Overline>
         <View style={{ marginTop: t.spacing['6'] }}>
-          <Body size="lg" style={{ lineHeight: 26 }}>先週、記録が残っていたのは</Body>
+          <Body size="lg" style={{ lineHeight: 26 }}>{tr('weeklyRecap.days.lead')}</Body>
           <View style={[styles.heroRow, { marginTop: t.spacing['5'] }]}>
             <Body style={heroTextStyle(t, 88)}>{recap.daysLogged}</Body>
-            <Body style={[heroUnitStyle(t), { marginLeft: t.spacing['2'] }]}>／7日</Body>
+            <Body style={[heroUnitStyle(t), { marginLeft: t.spacing['2'] }]}>{tr('weeklyRecap.days.outOf')}</Body>
           </View>
         </View>
         <View style={[styles.spacer, { justifyContent: 'center' }]}>
@@ -251,16 +248,16 @@ function buildCards(recap: WeeklyRecap, styles: Styles): Card[] {
     bg: 'light',
     render: (t) => (
       <>
-        <Overline tone="secondary">02 — カロリー</Overline>
+        <Overline tone="secondary">{tr('weeklyRecap.kcal.label')}</Overline>
         <View style={{ marginTop: t.spacing['6'] }}>
-          <Body size="lg" style={{ lineHeight: 26 }}>先週、1日あたり食べていたのは</Body>
+          <Body size="lg" style={{ lineHeight: 26 }}>{tr('weeklyRecap.kcal.lead')}</Body>
           <View style={[styles.heroRow, { marginTop: t.spacing['5'] }]}>
             <Body style={heroTextStyle(t, 60)}>{recap.avgKcal.toLocaleString('ja-JP')}</Body>
             <Body style={[heroUnitStyle(t), { marginLeft: t.spacing['2'] }]}>kcal</Body>
           </View>
           {recap.avgTargetKcal > 0 ? (
             <Body size="sm" tone="secondary" style={{ marginTop: t.spacing['2'] }}>
-              目標 {recap.avgTargetKcal.toLocaleString('ja-JP')}kcal
+              {tr('weeklyRecap.kcal.target', { kcal: recap.avgTargetKcal.toLocaleString('ja-JP') })}
             </Body>
           ) : null}
         </View>
@@ -274,7 +271,7 @@ function buildCards(recap: WeeklyRecap, styles: Styles): Card[] {
   // 4. PFCインサイト (light, 条件あり)
   if (recap.macroInsight) {
     const insight = recap.macroInsight;
-    const label = MACRO_LABEL[insight.axis];
+    const macroName = tr(`common.macros.${insight.axis}`);
     const max = Math.max(insight.avgActual, insight.avgTarget) || 1;
     cards.push({
       bg: 'light',
@@ -282,9 +279,9 @@ function buildCards(recap: WeeklyRecap, styles: Styles): Card[] {
         const nutri = t.colors.nutrition[insight.axis];
         return (
           <>
-            <Overline tone="secondary">03 — {label.jp}</Overline>
+            <Overline tone="secondary">{tr('weeklyRecap.insight.label', { macro: macroName })}</Overline>
             <Body size="lg" style={{ marginTop: t.spacing['6'], lineHeight: 26 }}>
-              目標との差がいちばん大きかったのは
+              {tr('weeklyRecap.insight.lead')}
             </Body>
             <Body
               style={{
@@ -295,7 +292,7 @@ function buildCards(recap: WeeklyRecap, styles: Styles): Card[] {
                 color: nutri.text,
               }}
             >
-              {label.jp}
+              {macroName}
             </Body>
             <View
               style={[
@@ -304,13 +301,13 @@ function buildCards(recap: WeeklyRecap, styles: Styles): Card[] {
               ]}
             >
               <Body size="sm" weight="medium" style={{ color: nutri.text }}>
-                目標より {insight.direction === 'less' ? '少なめ' : '多め'}
+                {insight.direction === 'less' ? tr('weeklyRecap.insight.less') : tr('weeklyRecap.insight.more')}
               </Body>
             </View>
             <View style={[styles.spacer, { justifyContent: 'center' }]}>
               <View style={{ gap: t.spacing['4'] }}>
-                <MacroBar label="1日の平均" value={insight.avgActual} max={max} color={nutri.graphic} t={t} styles={styles} />
-                <MacroBar label="1日の目標" value={insight.avgTarget} max={max} color={t.colors.border.default} t={t} styles={styles} muted />
+                <MacroBar label={tr('weeklyRecap.insight.barActual')} value={insight.avgActual} max={max} color={nutri.graphic} t={t} styles={styles} />
+                <MacroBar label={tr('weeklyRecap.insight.barTarget')} value={insight.avgTarget} max={max} color={t.colors.border.default} t={t} styles={styles} muted />
               </View>
             </View>
           </>
@@ -322,16 +319,16 @@ function buildCards(recap: WeeklyRecap, styles: Styles): Card[] {
   // 5. アドバイス+豆知識 (light, 条件あり: direction='less' = 増やす候補 / 'more' = 代替案)
   if (recap.macroBoost) {
     const boost = recap.macroBoost;
-    const label = MACRO_LABEL[boost.axis];
+    const boostMacroName = tr(`common.macros.${boost.axis}`);
     cards.push({
       bg: 'light',
       render: (t) => (
         <>
-          <Overline tone="secondary">04 — アドバイス</Overline>
+          <Overline tone="secondary">{tr('weeklyRecap.advice.label')}</Overline>
           <Body size="lg" style={{ marginTop: t.spacing['6'], lineHeight: 26 }}>
             {boost.direction === 'less'
-              ? `${label.jp}を増やしたいときは`
-              : `${label.jp}が少なめの選択肢なら`}
+              ? tr('weeklyRecap.advice.leadMore', { macro: boostMacroName })
+              : tr('weeklyRecap.advice.leadLess', { macro: boostMacroName })}
           </Body>
           <View style={[styles.spacer, { justifyContent: 'center' }]}>
             <View style={{ gap: t.spacing['3'] }}>
@@ -356,13 +353,13 @@ function buildCards(recap: WeeklyRecap, styles: Styles): Card[] {
           </View>
           {boost.note ? (
             <View style={{ borderTopWidth: 1, borderTopColor: t.colors.border.default, paddingTop: t.spacing['4'] }}>
-              <Overline tone="tertiary">豆知識 · {boost.note.identityLabel}</Overline>
+              <Overline tone="tertiary">{tr('weeklyRecap.nutritionNote', { label: boost.note.identityLabel })}</Overline>
               <Body size="sm" tone="secondary" style={{ marginTop: t.spacing['2'], lineHeight: 22 }}>
                 {boost.note.note.text}
               </Body>
               {/* 出典表示は必須 (§10.14 追補-1)。栄養素の働きまで書ける条件が「出典を持ち UI に出すこと」。 */}
               <Caption tone="tertiary" style={{ marginTop: t.spacing['2'] }}>
-                出典: {boost.note.note.source.label}
+                {tr('weeklyRecap.advice.sourcePrefix')}{boost.note.note.source.label}
               </Caption>
             </View>
           ) : null}
@@ -387,13 +384,13 @@ function buildCards(recap: WeeklyRecap, styles: Styles): Card[] {
             fontWeight: '300',
           }}
         >
-          ざっくりが、{'\n'}続くコツ
+          {tr('weeklyRecap.outro.lead')}
         </Body>
         <Body size="sm" style={{ color: t.tokens.colors.ivory[100], opacity: 0.75, marginTop: t.spacing['5'] }}>
-          来週の振り返りは、次の月曜に。
+          {tr('weeklyRecap.outro.nextWeek')}
         </Body>
         <View style={styles.spacer} />
-        <OutroButton t={t} styles={styles} />
+        <OutroButton t={t} styles={styles} tr={tr} />
       </>
     ),
   });
@@ -401,7 +398,7 @@ function buildCards(recap: WeeklyRecap, styles: Styles): Card[] {
   return cards;
 }
 
-function OutroButton({ t, styles }: { t: Theme; styles: Styles }) {
+function OutroButton({ t, styles, tr }: { t: Theme; styles: Styles; tr: Tr }) {
   const router = useRouter();
   return (
     <Pressable
@@ -422,9 +419,9 @@ function OutroButton({ t, styles }: { t: Theme; styles: Styles }) {
         },
       ]}
       accessibilityRole="button"
-      accessibilityLabel="とじる"
+      accessibilityLabel={tr('weeklyRecap.close')}
     >
-      <Body style={{ color: t.tokens.colors.ivory[100] }}>とじる</Body>
+      <Body style={{ color: t.tokens.colors.ivory[100] }}>{tr('weeklyRecap.close')}</Body>
     </Pressable>
   );
 }

@@ -393,7 +393,7 @@ export default function OnboardingRoute() {
             }}
           >
             <Button
-              label={step === TOTAL_STEPS - 1 ? 'はじめる' : '次へ'}
+              label={step === TOTAL_STEPS - 1 ? tr('onboarding.nav.start') : tr('onboarding.nav.next')}
               variant="primary"
               size="lg"
               fullWidth
