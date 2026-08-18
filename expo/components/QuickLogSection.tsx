@@ -153,10 +153,10 @@ function QuickLogButton({
   const { openIdentityLogSheet, quickLogIdentity } = useAppState();
   const t = useTheme();
   const tr = useT();
-  const { foodRegion: locale } = useLocale();
+  const { foodRegion: locale, uiLanguage } = useLocale();
   const scale = useRef(new Animated.Value(1)).current;
 
-  const registry = useMemo(() => buildRegistry(locale), [locale]);
+  const registry = useMemo(() => buildRegistry(locale, uiLanguage), [locale, uiLanguage]);
   const bucketKey = item.key;
   const bucketIdentities = registry.byBucket[bucketKey] ?? [];
   const hasIdentities = bucketIdentities.length > 0;
@@ -374,7 +374,7 @@ function FrequentButton({
 export const QuickLogSection = memo(function QuickLogSection() {
   const { selectedMode, setSelectedMode, settings, quickLog, bumpDiagnostic } = useAppState();
   const tr = useT();
-  const { foodRegion: locale } = useLocale();
+  const { foodRegion: locale, uiLanguage } = useLocale();
   const { width: screenWidth } = useWindowDimensions();
   const [searchOpen, setSearchOpen] = useState(false);
 
@@ -417,8 +417,8 @@ export const QuickLogSection = memo(function QuickLogSection() {
 
   const effectiveMode = selectedTab === 'frequent' ? selectedMode : selectedTab;
   const categories = useMemo(
-    () => buildRegistry(locale).buckets.filter((b: BucketDef) => b.tab === effectiveMode),
-    [locale, effectiveMode],
+    () => buildRegistry(locale, uiLanguage).buckets.filter((b: BucketDef) => b.tab === effectiveMode),
+    [locale, uiLanguage, effectiveMode],
   );
 
   const { gridGap, gridColumns } = QUICK_LOG_TOKENS;

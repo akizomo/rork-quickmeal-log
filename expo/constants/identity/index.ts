@@ -44,15 +44,15 @@ export const INGREDIENT_BUCKETS: BucketDef[] = [
 ];
 
 export const DISH_BUCKETS: BucketDef[] = [
-  { key: 'rice_dish',        tab: 'dish', label: 'どんぶり',       shortLabel: '丼',     emoji: '🥣', locale: 'ja' },
-  { key: 'curry',            tab: 'dish', label: 'カレー',         shortLabel: 'カレー', emoji: '🍛', locale: 'ja' },
-  { key: 'chinese_noodles',  tab: 'dish', label: 'ラーメン中華麺', shortLabel: '中華麺', emoji: '🍜', locale: 'ja', quickTapDisabled: true },
-  { key: 'japanese_noodles', tab: 'dish', label: 'うどん蕎麦',     shortLabel: '和麺',   emoji: '🍲', locale: 'ja' },
-  { key: 'pasta',            tab: 'dish', label: 'パスタ',         shortLabel: 'パスタ', emoji: '🍝', locale: 'ja' },
-  { key: 'sushi',            tab: 'dish', label: '寿司',           shortLabel: '寿司',   emoji: '🍣', locale: 'ja', quickTapDisabled: true },
-  { key: 'sandwich',         tab: 'dish', label: 'サンドバーガー', shortLabel: 'サンド', emoji: '🥪', locale: 'ja' },
-  { key: 'pizza',            tab: 'dish', label: 'ピザ',           shortLabel: 'ピザ',   emoji: '🍕', locale: 'ja', quickTapDisabled: true },
-  { key: 'misc_dish',        tab: 'dish', label: '定食・単品・汁', shortLabel: '定食汁', emoji: '🍱', locale: 'ja', quickTapDisabled: true },
+  { key: 'rice_dish',        tab: 'dish', label: 'どんぶり',       shortLabel: '丼',     emoji: '🥣', locale: 'ja', labelEn: 'Rice Bowls',      shortLabelEn: 'Donburi' },
+  { key: 'curry',            tab: 'dish', label: 'カレー',         shortLabel: 'カレー', emoji: '🍛', locale: 'ja', labelEn: 'Curry',            shortLabelEn: 'Curry'   },
+  { key: 'chinese_noodles',  tab: 'dish', label: 'ラーメン中華麺', shortLabel: '中華麺', emoji: '🍜', locale: 'ja', labelEn: 'Ramen & Noodles', shortLabelEn: 'Ramen',   quickTapDisabled: true },
+  { key: 'japanese_noodles', tab: 'dish', label: 'うどん蕎麦',     shortLabel: '和麺',   emoji: '🍲', locale: 'ja', labelEn: 'Udon & Soba',     shortLabelEn: 'Udon'    },
+  { key: 'pasta',            tab: 'dish', label: 'パスタ',         shortLabel: 'パスタ', emoji: '🍝', locale: 'ja', labelEn: 'Pasta',            shortLabelEn: 'Pasta'   },
+  { key: 'sushi',            tab: 'dish', label: '寿司',           shortLabel: '寿司',   emoji: '🍣', locale: 'ja', labelEn: 'Sushi',            shortLabelEn: 'Sushi',   quickTapDisabled: true },
+  { key: 'sandwich',         tab: 'dish', label: 'サンドバーガー', shortLabel: 'サンド', emoji: '🥪', locale: 'ja', labelEn: 'Sandwiches',       shortLabelEn: 'Sand.'   },
+  { key: 'pizza',            tab: 'dish', label: 'ピザ',           shortLabel: 'ピザ',   emoji: '🍕', locale: 'ja', labelEn: 'Pizza',            shortLabelEn: 'Pizza',   quickTapDisabled: true },
+  { key: 'misc_dish',        tab: 'dish', label: '定食・単品・汁', shortLabel: '定食汁', emoji: '🍱', locale: 'ja', labelEn: 'Set Meals',        shortLabelEn: 'Set',     quickTapDisabled: true },
 ];
 
 export const US_DISH_BUCKETS: BucketDef[] = [
@@ -123,16 +123,20 @@ export const IDENTITY_REGISTRY: IdentityRegistry = {
 
 /**
  * Returns a locale-filtered registry.
- * - `ja` (default): JP ingredient + JP dish buckets.
- * - `en-US`: English-labelled ingredient + US dish buckets with full US identity data.
+ *
+ * @param foodRegion - Which region's food data to use ('ja' = JP dishes, 'en-US' = US dishes).
+ * @param uiLanguage - Which language to use for bucket labels. Defaults to foodRegion.
  *
  * `byId` always spans all locales so past log entries resolve regardless of current locale.
  */
-export function buildRegistry(locale: AppLocale = 'ja'): IdentityRegistry {
-  if (locale === 'en-US') {
-    const ingredientBuckets: BucketDef[] = INGREDIENT_BUCKETS.map((b) =>
-      b.labelEn ? { ...b, label: b.labelEn, shortLabel: b.shortLabelEn ?? b.shortLabel } : b
-    );
+export function buildRegistry(foodRegion: AppLocale = 'ja', uiLanguage?: AppLocale): IdentityRegistry {
+  const lang = uiLanguage ?? foodRegion;
+  const applyEnLabels = <T extends BucketDef>(buckets: T[]): T[] =>
+    lang === 'en-US'
+      ? buckets.map((b) => b.labelEn ? { ...b, label: b.labelEn, shortLabel: b.shortLabelEn ?? b.shortLabel } : b)
+      : buckets;
+
+  if (foodRegion === 'en-US') {
     const byBucket = {
       ...US_INGREDIENT_IDENTITIES_BY_BUCKET,
       ...US_DISH_IDENTITIES_BY_BUCKET,
@@ -140,15 +144,15 @@ export function buildRegistry(locale: AppLocale = 'ja'): IdentityRegistry {
     return {
       byId: GLOBAL_BY_ID,
       byBucket,
-      buckets: [...ingredientBuckets, ...US_DISH_BUCKETS],
+      buckets: [...applyEnLabels(INGREDIENT_BUCKETS), ...US_DISH_BUCKETS],
       addons: GLOBAL_PURE_ADDONS_BY_ID,
     };
   }
 
-  // 'ja' (default): ingredient buckets (locale-agnostic) + JP dish buckets only
+  // 'ja': JP ingredient + JP dish buckets. Apply English labels when uiLanguage='en-US'.
   return {
     ...IDENTITY_REGISTRY,
-    buckets: [...INGREDIENT_BUCKETS, ...DISH_BUCKETS],
+    buckets: [...applyEnLabels(INGREDIENT_BUCKETS), ...applyEnLabels(DISH_BUCKETS)],
   };
 }
 

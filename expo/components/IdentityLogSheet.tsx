@@ -133,7 +133,7 @@ function HorizontalChipRow({ children }: { children: React.ReactNode }) {
 export function IdentityLogSheet() {
   const t = useTheme();
   const tr = useT();
-  const { foodRegion: locale } = useLocale();
+  const { foodRegion: locale, uiLanguage } = useLocale();
   const {
     identityLogSheet,
     openIdentityLogSheet,
@@ -147,7 +147,7 @@ export function IdentityLogSheet() {
   const visible = identityLogSheet.visible;
   const bucketKey = identityLogSheet.bucketKey;
   const bucket = bucketKey ? getBucketDef(bucketKey) : undefined;
-  const registry = useMemo(() => buildRegistry(locale), [locale]);
+  const registry = useMemo(() => buildRegistry(locale, uiLanguage), [locale, uiLanguage]);
   const identitiesInBucket = useMemo(
     () => (bucketKey ? registry.byBucket[bucketKey] ?? [] : []),
     [bucketKey, registry]
