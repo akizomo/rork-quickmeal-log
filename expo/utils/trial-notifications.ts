@@ -66,13 +66,27 @@ export async function requestTrialNotificationPermission(): Promise<boolean> {
   }
 }
 
+const NOTIFY_CONTENT: Record<string, { channelName: string; title: string; body: string }> = {
+  ja: {
+    channelName: 'トライアル終了のお知らせ',
+    title: 'Hachibu トライアル残り2日',
+    body: '7日間の無料体験はあと2日で終了します。継続される場合は何もしなくてOK、解約は App Store / Google Play から。',
+  },
+  'en-US': {
+    channelName: 'Trial Expiry',
+    title: 'Hachibu Trial — 2 Days Left',
+    body: 'Your 7-day free trial ends in 2 days. Do nothing to continue — or cancel in App Store / Google Play settings.',
+  },
+};
+
 /**
  * トライアル終了 48時間前にローカル通知をスケジュールする。
  * 既存スケジュールがあれば上書き (cancel + schedule)。
  */
 export async function scheduleTrialExpiryNotification(
   trialStartedAtISO: string,
-  trialDays = 7
+  trialDays = 7,
+  lang: 'ja' | 'en-US' = 'ja'
 ): Promise<void> {
   const N = loadNotificationsModule() as
     | {
@@ -98,11 +112,12 @@ export async function scheduleTrialExpiryNotification(
     console.log('[trial-notify] target time already passed; not scheduling', fireAt.toISOString());
     return;
   }
+  const content = NOTIFY_CONTENT[lang] ?? NOTIFY_CONTENT.ja;
   try {
     // Android: チャネル登録 (初回のみ。既存ならno-op)
     if (N.setNotificationChannelAsync) {
       await N.setNotificationChannelAsync(TRIAL_NOTIFY_CHANNEL_ID, {
-        name: 'トライアル終了のお知らせ',
+        name: content.channelName,
         importance: 4, // DEFAULT
       }).catch(() => undefined);
     }
@@ -111,10 +126,7 @@ export async function scheduleTrialExpiryNotification(
     // schedule
     await N.scheduleNotificationAsync({
       identifier: TRIAL_NOTIFY_SCHEDULE_ID,
-      content: {
-        title: 'Hachibu トライアル残り2日',
-        body: '7日間の無料体験はあと2日で終了します。継続される場合は何もしなくてOK、解約は Google Play から。',
-      },
+      content: { title: content.title, body: content.body },
       trigger: { date: fireAt },
     });
     console.log('[trial-notify] scheduled for', fireAt.toISOString());

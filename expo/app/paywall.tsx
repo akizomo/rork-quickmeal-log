@@ -13,6 +13,7 @@ import { radius } from '@/design-system/tokens/primitives/radius';
 import { fontSize as fs, lineHeight as lh } from '@/design-system/tokens/primitives/typography';
 import { useAppState } from '@/providers/app-state-provider';
 import { useT } from '@/hooks/useT';
+import { useLocale } from '@/hooks/useLocale';
 import { fetchOffering, purchase } from '@/utils/iap';
 import {
   cancelTrialExpiryNotification,
@@ -24,6 +25,7 @@ export default function PaywallRoute() {
   const router = useRouter();
   const t = useTheme();
   const tr = useT();
+  const { uiLanguage } = useLocale();
   const styles = useMemo(() => makeStyles(t), [t]);
   const { restorePurchase, markPaywallSeen, completePurchase, settings, updateSettingsValues } = useAppState();
   const benefits: string[] = tr('paywall.benefits', { returnObjects: true }) ?? [];
@@ -64,7 +66,7 @@ export default function PaywallRoute() {
           // 通知許諾は購入完了直後に文脈一致でリクエスト (ユーザー保護のため)
           await requestTrialNotificationPermission();
           const trialStartedAtISO = new Date().toISOString();
-          await scheduleTrialExpiryNotification(trialStartedAtISO, TRIAL_DAYS);
+          await scheduleTrialExpiryNotification(trialStartedAtISO, TRIAL_DAYS, uiLanguage);
 
           router.replace('/');
         }
