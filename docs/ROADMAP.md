@@ -316,7 +316,13 @@ Next 期以降は **D7 / D30 リテンション** および **週次アクティ
   - (検討) Web ダッシュボード
 - **アクセシビリティ・国際化**
   - i18n、英語対応 (海外ユーザーリーチの選択肢確保)
-  - **単位ローカライズ (US展開必須)** — 表示を lbs/ft/in に変換。内部ストレージは metric 固定、render 時に変換する。対象: オンボーディング身長/体重入力、プロフィール、My Status、目標編集、統計グラフの軸ラベル。UI入力も現地単位で受け付け metric に変換して保存。(2026-08-15 追加)
+  - ✅ **単位ローカライズ (lbs/ft-in)** — utils/units.ts + useUnitSystem hook 実装済み。内部 metric、表示時変換。オンボーディング/Status/目標編集/BodyStatsView 対応済み (2026-08-18)
+  - ✅ **US食材DB (Phase 2)** — `constants/identity/us/` 実装済み (ingredients 58件・dishes 57件・addons)。`buildRegistry(foodRegion, uiLanguage)` で JP/US 切替。JP料理バケットに英語ラベル追加済み (2026-08-18)
+  - ✅ **全UXコピー英語化** — useT() + en-US.json で全画面英語対応済み (2026-08-18)
+  - ✅ **利用規約・プライバシーポリシー英語化** — uiLanguage で日英切替 (2026-08-18)
+  - ✅ **通知テキスト英語化** — scheduleTrialExpiryNotification に lang 引数追加 (2026-08-18)
+  - ✅ **uiLanguage / foodRegion 分離** — デバイス languageCode/regionCode/measurementSystem から初期値設定 (2026-08-18)
+  - **残**: Play Store / App Store 英語ストアページ・US クローズドテスト
 - **ソーシャル / コミュニティ再評価**
   - PRD §4.2 で Out。価値判断・羞恥を生まない設計が成立するなら長期で再考の余地
 

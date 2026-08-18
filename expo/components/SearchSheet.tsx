@@ -145,7 +145,7 @@ export function SearchSheet({ visible, onClose, onOpen }: Props) {
       locale,
     });
     return { confidentResults: confident, maybeResults: maybe };
-  }, [debounced, settings.quickLogHistory]);
+  }, [debounced, locale, settings.quickLogHistory]);
 
   // 層2/3: 主辞辞書・料理名辞書によるバケット/Identity推測 (SEARCH_SPEC v0.4
   // §5.4.5 / §5.4.6)。DB に文字列として存在しない語 (グラタン/ハムカツ等) を
