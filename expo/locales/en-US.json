@@ -43,7 +43,10 @@
     "bodyFat": "Body Fat",
     "unit": {
       "min": "min",
-      "kcalPerDay": "kcal / day"
+      "kcalPerDay": "kcal / day",
+      "kg": "kg",
+      "lbs": "lbs",
+      "cm": "cm"
     }
   },
   "intro": {
@@ -315,7 +318,7 @@
     },
     "delta": {
       "maintain": "Maintaining current weight",
-      "change": "{{sign}}{{abs}} kg",
+      "change": "{{sign}}{{abs}} {{unit}}",
       "eta": " · est. {{duration}}"
     },
     "warn": {
@@ -326,10 +329,10 @@
       "bfSoftHigh": "Above typical targets"
     },
     "alert": {
-      "notReachedTitle": "You haven't reached your goal weight ({{target}} kg) yet",
+      "notReachedTitle": "Haven't reached target ({{target}}{{unit}}) yet",
       "continueLose": "Keep losing",
       "continueGain": "Keep gaining",
-      "maintainCurrent": "Maintain current ({{current}} kg)"
+      "maintainCurrent": "Maintain current weight ({{current}}{{unit}})"
     }
   },
   "errorBoundary": {
@@ -587,6 +590,11 @@
       "title": "Food Region",
       "ja": "Japan (Japanese food)",
       "enUS": "US (Western food)"
+    },
+    "unitSystem": {
+      "title": "Unit System",
+      "metric": "Metric (kg · cm)",
+      "imperial": "Imperial (lbs · ft/in)"
     }
   },
   "home": {

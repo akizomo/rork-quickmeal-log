@@ -14,6 +14,8 @@ import { useTheme } from '@/design-system';
 import { useT } from '@/hooks/useT';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { useAppState } from '@/providers/app-state-provider';
+import { useUnitSystem } from '@/hooks/useUnitSystem';
+import { toDisplayWeight, weightSuffix } from '@/utils/units';
 import type { BodyFatEntry, GoalDirection, WeightEntry } from '@/types/nutrition';
 import { formatMonthLabel, formatShortDay, formatWeekRangeLabel } from '@/utils/history';
 
@@ -501,6 +503,8 @@ export function BodyStatsView({ period = 'month' }: { period?: BodyPeriod }) {
   const t = useTheme();
   const tr = useT();
   const { weights, bodyFatEntries, profile } = useAppState();
+  const { unitSystem } = useUnitSystem();
+  const wUnit = weightSuffix(unitSystem);
   const { width: screenWidth } = useWindowDimensions();
   const chartWidth = screenWidth - 32;
   const grain = PERIOD_CONFIG[period].grain;
@@ -544,9 +548,15 @@ export function BodyStatsView({ period = 'month' }: { period?: BodyPeriod }) {
     [bodyFatSeries, period, todayT]
   );
 
-  const weightCurrent =
+  const weightCurrentKg =
     profile.currentWeightKg ??
     (weightSeries.length > 0 ? weightSeries[weightSeries.length - 1].value : null);
+  const weightCurrent = weightCurrentKg != null ? toDisplayWeight(weightCurrentKg, unitSystem) : null;
+  const weightTargetDisplay = profile.targetWeightKg != null ? toDisplayWeight(profile.targetWeightKg, unitSystem) : null;
+  const weightPointsDisplay = useMemo(
+    () => weightPoints.map((p) => ({ ...p, value: toDisplayWeight(p.value, unitSystem) })),
+    [weightPoints, unitSystem]
+  );
 
   const bfCurrent =
     profile.currentBodyFatPct ??
@@ -561,9 +571,9 @@ export function BodyStatsView({ period = 'month' }: { period?: BodyPeriod }) {
       <View style={[styles.metricCard, { width: chartWidth, backgroundColor: t.colors.surface.raised }]}>
         <MetricCardHeader
           title={tr('bodyStats.weight')}
-          unit="kg"
+          unit={wUnit}
           current={weightCurrent}
-          target={profile.targetWeightKg}
+          target={weightTargetDisplay}
           fractionDigits={1}
           color={t.colors.action.text.default}
           direction={profile.goalDirection ?? null}
@@ -572,10 +582,10 @@ export function BodyStatsView({ period = 'month' }: { period?: BodyPeriod }) {
         <TrendChart
           width={chartWidth}
           title={tr('bodyStats.weight')}
-          points={weightPoints}
-          target={profile.targetWeightKg}
+          points={weightPointsDisplay}
+          target={weightTargetDisplay}
           color={t.colors.action.text.default}
-          unit="kg"
+          unit={wUnit}
           fractionDigits={1}
           grain={grain}
           emptyMessage={

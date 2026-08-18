@@ -9,6 +9,8 @@ import { Body, Button, Caption, Card, Heading, Icon, Label, MacroCard, Overline,
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { useAppState } from '@/providers/app-state-provider';
 import { useT } from '@/hooks/useT';
+import { useUnitSystem } from '@/hooks/useUnitSystem';
+import { formatDisplayWeight, fromDisplayWeight, toDisplayWeight, weightSuffix } from '@/utils/units';
 import { BodyType9, GoalDirection, PaceLevel } from '@/types/nutrition';
 import {
   bmiFromWeight,
@@ -25,6 +27,8 @@ export default function GoalEditRoute() {
   const theme = useTheme();
   const t = useT();
   const { profile, updateProfileValues } = useAppState();
+  const { unitSystem } = useUnitSystem();
+  const wUnit = weightSuffix(unitSystem);
 
   const DIRECTION_OPTIONS: { key: GoalDirection; label: string }[] = [
     { key: 'lose', label: t('goalEdit.direction.lose') },
@@ -140,8 +144,8 @@ export default function GoalEditRoute() {
     const seed = profile.targetWeightKg ?? profile.currentWeightKg ?? 60;
     const v = Math.round(seed * 10) / 10;
     setManualTargetKg(v);
-    setTargetText(v.toFixed(1));
-  }, [profile.targetWeightKg, profile.currentWeightKg]);
+    setTargetText(toDisplayWeight(v, unitSystem).toFixed(1));
+  }, [profile.targetWeightKg, profile.currentWeightKg, unitSystem]);
 
   const exitManual = useCallback(() => {
     setManualTargetKg(null);
@@ -168,16 +172,18 @@ export default function GoalEditRoute() {
   }, []);
 
   const applyManual = useCallback((v: number) => {
-    const clamped = Math.min(200, Math.max(30, Math.round(v * 10) / 10));
+    // v は表示単位 (lbs or kg)、内部は常に kg で保持
+    const kg = Math.round(fromDisplayWeight(v, unitSystem) * 10) / 10;
+    const clamped = Math.min(200, Math.max(30, kg));
     setManualTargetKg(clamped);
-    setTargetText(clamped.toFixed(1));
-  }, []);
+    setTargetText(toDisplayWeight(clamped, unitSystem).toFixed(1));
+  }, [unitSystem]);
 
-  const onChangeTargetText = useCallback((t: string) => {
-    setTargetText(t);
-    const n = parseFloat(t);
-    if (Number.isFinite(n)) setManualTargetKg(Math.round(n * 10) / 10);
-  }, []);
+  const onChangeTargetText = useCallback((text: string) => {
+    setTargetText(text);
+    const n = parseFloat(text);
+    if (Number.isFinite(n)) setManualTargetKg(Math.round(fromDisplayWeight(n, unitSystem) * 10) / 10);
+  }, [unitSystem]);
 
   // 新しいアンカーを確定して保存。
   const commit = useCallback(() => {
@@ -222,7 +228,7 @@ export default function GoalEditRoute() {
 
     if (switchingToMaintain && notReached) {
       Alert.alert(
-        t('goalEdit.alert.notReachedTitle', { target: priorTarget!.toFixed(1) }),
+        t('goalEdit.alert.notReachedTitle', { target: formatDisplayWeight(priorTarget!, unitSystem), unit: wUnit }),
         undefined,
         [
           {
@@ -231,7 +237,7 @@ export default function GoalEditRoute() {
             onPress: () => setDirection(priorDir ?? null),
           },
           {
-            text: t('goalEdit.alert.maintainCurrent', { current: current!.toFixed(1) }),
+            text: t('goalEdit.alert.maintainCurrent', { current: formatDisplayWeight(current!, unitSystem), unit: wUnit }),
             onPress: commit,
           },
         ]
@@ -267,8 +273,11 @@ export default function GoalEditRoute() {
       ? null
       : Math.abs(deltaKg) < 0.05
         ? t('goalEdit.delta.maintain')
-        : t('goalEdit.delta.change', { sign: deltaKg < 0 ? '−' : '＋', abs: Math.abs(deltaKg).toFixed(1) }) +
-          (etaMonths != null ? t('goalEdit.delta.eta', { duration: formatDuration(etaMonths) }) : '');
+        : t('goalEdit.delta.change', {
+            sign: deltaKg < 0 ? '−' : '＋',
+            abs: Math.abs(toDisplayWeight(deltaKg, unitSystem)).toFixed(1),
+            unit: wUnit,
+          }) + (etaMonths != null ? t('goalEdit.delta.eta', { duration: formatDuration(etaMonths) }) : '');
   // 体重の警告 (自分で決めた時のみ; 方向依存で「行き過ぎ」側しか出ない)。
   const previewTargetKg = preview?.targetWeightKg ?? null;
   let warnText: string | null = null;
@@ -346,8 +355,8 @@ export default function GoalEditRoute() {
                           label={t('goalEdit.weight')}
                           value={targetText}
                           onChangeText={onChangeTargetText}
-                          onBlur={() => applyManual(manualTargetKg ?? profile.currentWeightKg ?? 60)}
-                          unit="kg"
+                          onBlur={() => applyManual(parseFloat(targetText) || toDisplayWeight(manualTargetKg ?? profile.currentWeightKg ?? 60, unitSystem))}
+                          unit={wUnit}
                           testID="goal-target-input"
                           accessibilityLabel={t('goalEdit.a11y.targetWeight')}
                         />
@@ -382,7 +391,7 @@ export default function GoalEditRoute() {
                   ) : (
                     <View style={{ gap: 4 }}>
                       <View style={styles.metricsRow}>
-                        <MetricBlock label={t('goalEdit.weight')} value={card.targetWeightKg.toFixed(1)} unit="kg" />
+                        <MetricBlock label={t('goalEdit.weight')} value={formatDisplayWeight(card.targetWeightKg, unitSystem)} unit={wUnit} />
                         <View style={[styles.divider, { backgroundColor: theme.colors.border.subtle }]} />
                         <MetricBlock
                           label={t('goalEdit.bodyFat')}

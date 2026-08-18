@@ -21,6 +21,8 @@ import type { HealthSyncStatus } from '@/utils/health-sync';
 import { useAppState } from '@/providers/app-state-provider';
 import { getEffectiveSubscriptionStatus, trialDaysRemaining } from '@/utils/goals';
 import { useT } from '@/hooks/useT';
+import { useUnitSystem } from '@/hooks/useUnitSystem';
+import { formatDisplayWeight, weightSuffix } from '@/utils/units';
 
 export default function StatusRoute() {
   const router = useRouter();
@@ -33,6 +35,7 @@ export default function StatusRoute() {
   const [bfSheetVisible, setBfSheetVisible] = useState<boolean>(false);
   const [bfInput, setBfInput] = useState<string>('');
 
+  const { unitSystem } = useUnitSystem();
   const trialDays = trialDaysRemaining(settings.trialStartedAtISO, TRIAL_DURATION_DAYS);
   const effectiveStatus = getEffectiveSubscriptionStatus(settings, TRIAL_DURATION_DAYS);
   const subscriptionLabel =
@@ -64,8 +67,13 @@ export default function StatusRoute() {
     return t(`status.paceLevel.${key}`);
   }, [profile.goalDirection, profile.paceLevel, t]);
 
-  const weightDisplay = profile.currentWeightKg ? `${profile.currentWeightKg} kg` : t('common.notSet');
-  const targetWeightDisplay = profile.targetWeightKg ? `${profile.targetWeightKg} kg` : t('common.notSet');
+  const wUnit = weightSuffix(unitSystem);
+  const weightDisplay = profile.currentWeightKg
+    ? `${formatDisplayWeight(profile.currentWeightKg, unitSystem)} ${wUnit}`
+    : t('common.notSet');
+  const targetWeightDisplay = profile.targetWeightKg
+    ? `${formatDisplayWeight(profile.targetWeightKg, unitSystem)} ${wUnit}`
+    : t('common.notSet');
   const bfDisplay = profile.currentBodyFatPct != null ? `${profile.currentBodyFatPct}%` : t('common.notSet');
   const targetBfDisplay = profile.targetBodyFatPct != null ? `${profile.targetBodyFatPct}%` : t('common.notSet');
 

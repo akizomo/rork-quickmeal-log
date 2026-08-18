@@ -112,29 +112,34 @@ const defaultPersistedState: PersistedState = {
 function resolveLocaleDefaults(raw: Partial<AppSettings> | undefined): {
   uiLanguage: 'ja' | 'en-US';
   foodRegion: 'ja' | 'en-US';
+  unitSystem: 'metric' | 'imperial';
 } {
   // 既存ユーザー: uiLanguage/foodRegion が既に設定済み
   if (raw?.uiLanguage && raw?.foodRegion) {
-    return { uiLanguage: raw.uiLanguage, foodRegion: raw.foodRegion };
+    const unitSystem = raw.unitSystem ?? (raw.uiLanguage === 'en-US' ? 'imperial' : 'metric');
+    return { uiLanguage: raw.uiLanguage, foodRegion: raw.foodRegion, unitSystem };
   }
   // 旧 locale フィールドからの移行 (既存ユーザー)
   if (raw?.locale) {
-    return { uiLanguage: raw.locale, foodRegion: raw.locale };
+    const unitSystem = raw.unitSystem ?? (raw.locale === 'en-US' ? 'imperial' : 'metric');
+    return { uiLanguage: raw.locale, foodRegion: raw.locale, unitSystem };
   }
   // 新規ユーザー: デバイスのロケールから初期値を決定
   const [deviceLocale] = getLocales();
   const uiLanguage = deviceLocale?.languageCode === 'ja' ? 'ja' : 'en-US';
   const foodRegion = deviceLocale?.regionCode === 'JP' ? 'ja' : 'en-US';
-  return { uiLanguage, foodRegion };
+  const unitSystem = deviceLocale?.measurementSystem === 'us' ? 'imperial' : 'metric';
+  return { uiLanguage, foodRegion, unitSystem };
 }
 
 function migrateSettings(raw: Partial<AppSettings> | undefined): AppSettings {
   const base = { ...defaultSettings, ...(raw ?? {}) };
-  const { uiLanguage, foodRegion } = resolveLocaleDefaults(raw);
+  const { uiLanguage, foodRegion, unitSystem } = resolveLocaleDefaults(raw);
   return {
     ...base,
     uiLanguage,
     foodRegion,
+    unitSystem,
     mealStyleBySlot: { ...defaultSettings.mealStyleBySlot!, ...(raw?.mealStyleBySlot ?? {}) },
     favoriteItemIds: raw?.favoriteItemIds ?? [],
     introSeenVersion: raw?.introSeenVersion ?? 0,

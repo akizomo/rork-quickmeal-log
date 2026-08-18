@@ -57,6 +57,8 @@ import {
   PaceLevel,
 } from '@/types/nutrition';
 import { computePlanOutcome, recommendGoal, type GoalRecommendation } from '@/utils/goals';
+import { useUnitSystem } from '@/hooks/useUnitSystem';
+import { cmToFtIn, ftInToCm, kgToLbs, lbsToKg, weightSuffix, formatDisplayWeight } from '@/utils/units';
 
 // Step layout:
 // 0=basis, 1=height, 2=weight, 3=age, 4=activity,
@@ -78,13 +80,40 @@ export default function OnboardingRoute() {
   const { profile, settings, updateProfileValues, setOnboardingStep, completeOnboarding } = useAppState();
   const t = useTheme();
   const tr = useT();
+  const { unitSystem } = useUnitSystem();
 
   const [step, setStep] = useState<Step>(() => Math.min(settings.onboardingStep ?? 0, TOTAL_STEPS - 1));
 
-  // Phase 1 inputs
+  // Phase 1 inputs (内部値は常にメートル法)
   const [basis, setBasis] = useState<BiologicalBasis | null>(profile.biologicalBasis ?? null);
   const [heightCm, setHeightCm] = useState<string>(profile.heightCm ? String(profile.heightCm) : '');
   const [weightKg, setWeightKg] = useState<string>(profile.currentWeightKg ? String(profile.currentWeightKg) : '');
+
+  // ヤード・ポンド法用の表示状態 (imperial時のみ使用)
+  const [heightFt, setHeightFt] = useState<string>(() =>
+    profile.heightCm ? String(cmToFtIn(profile.heightCm).ft) : ''
+  );
+  const [heightInch, setHeightInch] = useState<string>(() =>
+    profile.heightCm ? String(cmToFtIn(profile.heightCm).inch) : ''
+  );
+  const [weightLbs, setWeightLbs] = useState<string>(() =>
+    profile.currentWeightKg ? kgToLbs(profile.currentWeightKg).toFixed(1) : ''
+  );
+
+  const onHeightFtChange = (v: string) => {
+    setHeightFt(v);
+    const cm = ftInToCm(Number(v) || 0, Number(heightInch) || 0);
+    setHeightCm(v ? String(Math.round(cm)) : '');
+  };
+  const onHeightInchChange = (v: string) => {
+    setHeightInch(v);
+    const cm = ftInToCm(Number(heightFt) || 0, Number(v) || 0);
+    setHeightCm(heightFt ? String(Math.round(cm)) : '');
+  };
+  const onWeightLbsChange = (v: string) => {
+    setWeightLbs(v);
+    setWeightKg(v ? String(Math.round(lbsToKg(Number(v)) * 10) / 10) : '');
+  };
   const [ageYears, setAgeYears] = useState<string>(profile.ageYears ? String(profile.ageYears) : '');
   const [activityLevel, setActivityLevel] = useState<ActivityLevel | null>(profile.activityLevel ?? null);
 
@@ -270,26 +299,39 @@ export default function OnboardingRoute() {
               {step === 0 ? <StepBasis basis={basis} onBasis={setBasis} /> : null}
 
               {step === 1 ? (
-                <StepNumber
-                  title={tr('onboarding.height.title')}
-                  subtitle={tr('onboarding.height.subtitle')}
-                  value={heightCm}
-                  onChange={setHeightCm}
-                  suffix="cm"
-                  keyboardType="decimal-pad"
-                  testID="onboarding-height"
-                  inputAccessoryViewID={Platform.OS === 'ios' ? ACCESSORY_ID : undefined}
-                  onSubmitEditing={() => { if (canNext) goNext(); }}
-                />
+                unitSystem === 'imperial' ? (
+                  <StepHeightImperial
+                    title={tr('onboarding.height.title')}
+                    subtitle={tr('onboarding.height.subtitle')}
+                    ft={heightFt}
+                    inch={heightInch}
+                    onFtChange={onHeightFtChange}
+                    onInchChange={onHeightInchChange}
+                    inputAccessoryViewID={Platform.OS === 'ios' ? ACCESSORY_ID : undefined}
+                    onSubmitEditing={() => { if (canNext) goNext(); }}
+                  />
+                ) : (
+                  <StepNumber
+                    title={tr('onboarding.height.title')}
+                    subtitle={tr('onboarding.height.subtitle')}
+                    value={heightCm}
+                    onChange={setHeightCm}
+                    suffix="cm"
+                    keyboardType="decimal-pad"
+                    testID="onboarding-height"
+                    inputAccessoryViewID={Platform.OS === 'ios' ? ACCESSORY_ID : undefined}
+                    onSubmitEditing={() => { if (canNext) goNext(); }}
+                  />
+                )
               ) : null}
 
               {step === 2 ? (
                 <StepNumber
                   title={tr('onboarding.weight.title')}
                   subtitle={tr('onboarding.weight.subtitle')}
-                  value={weightKg}
-                  onChange={setWeightKg}
-                  suffix="kg"
+                  value={unitSystem === 'imperial' ? weightLbs : weightKg}
+                  onChange={unitSystem === 'imperial' ? onWeightLbsChange : setWeightKg}
+                  suffix={weightSuffix(unitSystem)}
                   keyboardType="decimal-pad"
                   testID="onboarding-weight"
                   inputAccessoryViewID={Platform.OS === 'ios' ? ACCESSORY_ID : undefined}
@@ -473,6 +515,59 @@ function StepNumber({
           placeholder={placeholder}
           autoFocus
           testID={testID}
+          inputAccessoryViewID={inputAccessoryViewID}
+          returnKeyType="next"
+          onSubmitEditing={onSubmitEditing}
+        />
+      </View>
+    </View>
+  );
+}
+
+function StepHeightImperial({
+  title,
+  subtitle,
+  ft,
+  inch,
+  onFtChange,
+  onInchChange,
+  inputAccessoryViewID,
+  onSubmitEditing,
+}: {
+  title: string;
+  subtitle: string;
+  ft: string;
+  inch: string;
+  onFtChange: (v: string) => void;
+  onInchChange: (v: string) => void;
+  inputAccessoryViewID?: string;
+  onSubmitEditing?: () => void;
+}) {
+  return (
+    <View style={stepWrap}>
+      <Heading size="2xl">{title}</Heading>
+      <Body tone="secondary">{subtitle}</Body>
+      <View style={{ marginTop: 'auto', marginBottom: 'auto', flexDirection: 'row', gap: 12, justifyContent: 'center' }}>
+        <NumberField
+          value={ft}
+          onChangeText={onFtChange}
+          suffix="ft"
+          decimal={false}
+          size="display"
+          align="center"
+          autoFocus
+          testID="onboarding-height-ft"
+          inputAccessoryViewID={inputAccessoryViewID}
+          returnKeyType="next"
+        />
+        <NumberField
+          value={inch}
+          onChangeText={onInchChange}
+          suffix="in"
+          decimal={false}
+          size="display"
+          align="center"
+          testID="onboarding-height-in"
           inputAccessoryViewID={inputAccessoryViewID}
           returnKeyType="next"
           onSubmitEditing={onSubmitEditing}
@@ -696,6 +791,7 @@ function StepPlan({
 }) {
   const theme = useTheme();
   const t = useT();
+  const { unitSystem: planUnitSystem } = useUnitSystem();
 
   if (!direction) {
     return (
@@ -720,7 +816,7 @@ function StepPlan({
         <Heading size="2xl">{t('onboarding.plan.maintainTitle')}</Heading>
         <Body tone="secondary">{t('onboarding.plan.maintainNote')}</Body>
         <Card variant="raised" style={{ gap: theme.spacing['3'] }}>
-          <SummaryRow label={t('onboarding.plan.targetWeight')} value={`${recommendation.targetWeightKg.toFixed(1)} kg`} />
+          <SummaryRow label={t('onboarding.plan.targetWeight')} value={`${formatDisplayWeight(recommendation.targetWeightKg, planUnitSystem)} ${weightSuffix(planUnitSystem)}`} />
           <SummaryRow label={t('onboarding.plan.targetBodyFat')} value={`${recommendation.targetBodyFatPct} %`} />
           <View style={{ height: 1, backgroundColor: theme.colors.border.subtle }} />
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -839,6 +935,7 @@ function StepPreview({
 }) {
   const theme = useTheme();
   const t = useT();
+  const { unitSystem: previewUnitSystem } = useUnitSystem();
   const tipsByDir = t('onboarding.tips', { returnObjects: true }) as Record<GoalDirection, string[]>;
   if (!recommendation) {
     return (
@@ -858,7 +955,7 @@ function StepPreview({
 
       <Card variant="raised" style={{ gap: theme.spacing['3'] }}>
         <Overline>{t('onboarding.preview.threeMonthLabel')}</Overline>
-        <SummaryRow label={t('onboarding.preview.targetWeight')} value={`${recommendation.targetWeightKg.toFixed(1)} kg`} />
+        <SummaryRow label={t('onboarding.preview.targetWeight')} value={`${formatDisplayWeight(recommendation.targetWeightKg, previewUnitSystem)} ${weightSuffix(previewUnitSystem)}`} />
         <SummaryRow label={t('onboarding.preview.targetBodyFat')} value={`${recommendation.targetBodyFatPct} %`} />
         <View style={{ height: 1, backgroundColor: theme.colors.border.subtle }} />
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>

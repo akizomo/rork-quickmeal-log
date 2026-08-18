@@ -43,7 +43,10 @@
     "bodyFat": "体脂肪率",
     "unit": {
       "min": "分",
-      "kcalPerDay": "kcal / 日"
+      "kcalPerDay": "kcal / 日",
+      "kg": "kg",
+      "lbs": "lbs",
+      "cm": "cm"
     }
   },
   "intro": {
@@ -315,7 +318,7 @@
     },
     "delta": {
       "maintain": "現在の体重を維持します",
-      "change": "{{sign}}{{abs}} kg",
+      "change": "{{sign}}{{abs}} {{unit}}",
       "eta": "・{{duration}}の見込み"
     },
     "warn": {
@@ -326,10 +329,10 @@
       "bfSoftHigh": "標準的な目安より高めです"
     },
     "alert": {
-      "notReachedTitle": "まだ目標体重（{{target}}kg）に届いていません",
+      "notReachedTitle": "まだ目標体重（{{target}}{{unit}}）に届いていません",
       "continueLose": "減量を続ける",
       "continueGain": "増量を続ける",
-      "maintainCurrent": "今の体重（{{current}}kg）を維持"
+      "maintainCurrent": "今の体重（{{current}}{{unit}}）を維持"
     }
   },
   "errorBoundary": {
@@ -587,6 +590,11 @@
       "title": "食事DB地域",
       "ja": "日本 (和食)",
       "enUS": "アメリカ (洋食)"
+    },
+    "unitSystem": {
+      "title": "単位系",
+      "metric": "メートル法（kg・cm）",
+      "imperial": "ヤード・ポンド法（lbs・ft/in）"
     }
   },
   "home": {

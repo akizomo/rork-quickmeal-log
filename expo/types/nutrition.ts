@@ -283,6 +283,9 @@ export interface AppSettings {
 
   /** 食事DBのリージョン。デバイスの regionCode から初期値を設定。未設定時は 'ja'。 */
   foodRegion?: 'ja' | 'en-US';
+
+  /** 体重・身長の表示単位系。デバイスの measurementSystem から初期値を設定。未設定時は 'metric'。 */
+  unitSystem?: 'metric' | 'imperial';
 }
 
 export interface QuickCategory {

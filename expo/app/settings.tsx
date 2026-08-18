@@ -8,6 +8,7 @@ import { SettingsDivider, SettingsLinkRow, SettingsListCard, SettingsSectionLabe
 import { Body, Icon, Label, useTheme } from '@/design-system';
 import { useAppState } from '@/providers/app-state-provider';
 import { useLocale } from '@/hooks/useLocale';
+import { useUnitSystem } from '@/hooks/useUnitSystem';
 import { widgetRequestPin } from '@/utils/widget-bridge';
 
 const THEME_OPTION_KEYS: ('system' | 'light' | 'dark')[] = ['system', 'light', 'dark'];
@@ -26,6 +27,7 @@ export default function SettingsRoute() {
   const t = useT();
   const { settings, updateSettingsValues, resetOnboarding } = useAppState();
   const { uiLanguage, foodRegion, setUiLanguage, setFoodRegion } = useLocale();
+  const { unitSystem, setUnitSystem } = useUnitSystem();
 
   const THEME_OPTIONS = THEME_OPTION_KEYS.map((key) => ({
     key,
@@ -133,6 +135,29 @@ export default function SettingsRoute() {
                     </React.Fragment>
                   );
                 })}
+              </SettingsListCard>
+            </View>
+
+            {/* §単位系 */}
+            <View style={styles.section}>
+              <SettingsSectionLabel>{t('settings.unitSystem.title')}</SettingsSectionLabel>
+              <SettingsListCard>
+                {(['metric', 'imperial'] as const).map((key, i) => (
+                  <React.Fragment key={key}>
+                    {i > 0 ? <SettingsDivider /> : null}
+                    <SettingsLinkRow
+                      label={t(`settings.unitSystem.${key}`)}
+                      showChevron={false}
+                      onPress={() => setUnitSystem(key)}
+                      trailing={
+                        unitSystem === key
+                          ? <Icon name="check" size={18} color={theme.colors.action.text.default} />
+                          : null
+                      }
+                      testID={`settings-unit-option-${key}`}
+                    />
+                  </React.Fragment>
+                ))}
               </SettingsListCard>
             </View>
 
