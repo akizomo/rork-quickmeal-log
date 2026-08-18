@@ -6,12 +6,14 @@
     <meta name="robots" content="index,follow" />
     <meta
       name="description"
+      id="meta-description"
       content="Hachibu — ざっくりで、続く食事ログ。9つのボタンを、タップだけで。Android クローズドテスト 募集中。"
     />
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="Hachibu — ざっくりで、続く食事ログ。" />
+    <meta property="og:title" id="og-title" content="Hachibu — ざっくりで、続く食事ログ。" />
     <meta
       property="og:description"
+      id="og-description"
       content="9つのボタンを、タップだけで。計らない、調べない、迷わない。Android クローズドテスト 募集中。"
     />
     <meta name="theme-color" content="#F6F3EC" />
@@ -34,8 +36,65 @@
         };
     </script>
     <script defer src="/_vercel/insights/script.js"></script>
+    <style>
+      body[lang="en"] .ja { display: none; }
+      body[lang="ja"] .en { display: none; }
+
+      /* Phone frame */
+      .lp-phone-frame {
+        position: relative;
+        display: block;
+        width: 100%;
+        max-width: 280px;
+        margin: 0 auto;
+        border-radius: 36px;
+        border: 6px solid rgba(255,255,255,0.15);
+        box-shadow:
+          0 0 0 1px rgba(255,255,255,0.06),
+          inset 0 0 0 1px rgba(0,0,0,0.3),
+          0 32px 64px rgba(0,0,0,0.5);
+        overflow: hidden;
+        background: #000;
+        line-height: 0;
+      }
+      .lp-phone-frame video,
+      .lp-phone-frame img {
+        display: block;
+        width: 100%;
+        height: auto;
+        border-radius: 30px;
+        filter: none;
+        max-width: none;
+      }
+      @media (max-width: 600px) {
+        .lp-phone-frame { max-width: 200px; }
+      }
+
+      .lp-lang-switch {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        margin-right: 8px;
+      }
+      .lp-lang-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-family: inherit;
+        font-size: 0.8rem;
+        font-weight: 500;
+        padding: 4px 6px;
+        color: inherit;
+        opacity: 0.4;
+        transition: opacity 0.15s;
+        letter-spacing: 0.05em;
+      }
+      .lp-lang-btn:hover { opacity: 0.7; }
+      .lp-lang-btn.active { opacity: 1; font-weight: 700; }
+      .lp-lang-sep { opacity: 0.2; font-size: 0.75rem; }
+    </style>
   </head>
-  <body class="lp-body">
+  <body lang="ja" class="lp-body">
     <header class="lp-header" aria-label="サイトヘッダー">
       <div class="lp-header-inner">
         <a href="/" class="lp-brand" aria-label="Hachibu トップへ">
@@ -52,10 +111,15 @@
           <span class="lp-brand-text">Hachibu</span>
         </a>
         <nav class="lp-nav" aria-label="主要ナビゲーション">
-          <a href="#features">機能</a>
-          <a href="#why">なぜ8割</a>
+          <a href="#features"><span class="ja">機能</span><span class="en">Features</span></a>
+          <a href="#why"><span class="ja">なぜ8割</span><span class="en">Why it works</span></a>
           <a href="#faq">FAQ</a>
         </nav>
+        <div class="lp-lang-switch" role="group" aria-label="Language">
+          <button class="lp-lang-btn active" data-lang="ja" onclick="setLang('ja')">JP</button>
+          <span class="lp-lang-sep" aria-hidden="true">|</span>
+          <button class="lp-lang-btn" data-lang="en" onclick="setLang('en')">EN</button>
+        </div>
         <a
           class="lp-header-cta"
           href="https://groups.google.com/g/hachibu-testers"
@@ -64,7 +128,8 @@
           data-cta="android-group-header"
           aria-label="Googleグループに参加して Android クローズドテストに参加する"
         >
-          Androidで試す
+          <span class="ja">Androidで試す</span>
+          <span class="en">Try on Android</span>
         </a>
       </div>
     </header>
@@ -74,12 +139,22 @@
       <section class="lp-hero" aria-labelledby="hero-title">
         <div class="lp-hero-grid">
           <div class="lp-hero-copy">
-            <p class="lp-eyebrow">Android クローズドテスト 募集中</p>
+            <p class="lp-eyebrow">
+              <span class="ja">Android クローズドテスト 募集中</span>
+              <span class="en">Android Closed Beta — Join Now</span>
+            </p>
             <h1 id="hero-title" class="lp-hero-title">
-              ざっくりで、<br />続く食事ログ。
+              <span class="ja">ざっくりで、<br />続く食事ログ。</span>
+              <span class="en">Rough logging.<br />Lasting habit.</span>
             </h1>
-            <p class="lp-hero-sub">9つのボタンを、タップだけで。</p>
-            <p class="lp-hero-tagline">計らない、調べない、迷わない。</p>
+            <p class="lp-hero-sub">
+              <span class="ja">9つのボタンを、タップだけで。</span>
+              <span class="en">Nine buttons. One tap each.</span>
+            </p>
+            <p class="lp-hero-tagline">
+              <span class="ja">計らない、調べない、迷わない。</span>
+              <span class="en">No measuring. No searching. No deciding.</span>
+            </p>
 
             <div class="lp-cta-row">
               <!-- Primary: Android (Googleグループ経由でクローズドテスト参加) -->
@@ -91,7 +166,8 @@
                 data-cta="android-group"
                 aria-label="Googleグループに参加して Android クローズドテストに参加する"
               >
-                Androidで試す
+                <span class="ja">Androidで試す</span>
+                <span class="en">Try on Android</span>
               </a>
               <!-- Secondary: iPhone notify (iOS リリース待ち層) -->
               <div class="lp-cta-secondary-wrap">
@@ -101,22 +177,33 @@
                   data-cta="ios-notify"
                   aria-label="iOS リリース通知メーリングリストに登録する"
                 >
-                  <span class="cta-mute">iPhone をお使いなら</span>
-                  <span class="cta-strong">知らせを受け取る</span>
+                  <span class="cta-mute">
+                    <span class="ja">iPhone をお使いなら</span>
+                    <span class="en">On iPhone?</span>
+                  </span>
+                  <span class="cta-strong">
+                    <span class="ja">知らせを受け取る</span>
+                    <span class="en">Get notified</span>
+                  </span>
                 </a>
-                <p class="lp-cta-note">iOSローンチ時の1通のみ</p>
+                <p class="lp-cta-note">
+                  <span class="ja">iOSローンチ時の1通のみ</span>
+                  <span class="en">One email when iOS launches</span>
+                </p>
               </div>
             </div>
           </div>
           <figure class="lp-hero-figure" aria-hidden="true">
-            <img
-              src="/lp/feature-quicklog.png"
-              alt="Hachibu アプリのホーム画面。9つのボタンと +105 kcal プレビュー。"
-              width="300"
-              height="615"
-              loading="eager"
-              decoding="async"
-            />
+            <div class="lp-phone-frame">
+              <img
+                src="/lp/quicklog-poster.png"
+                alt="Hachibu アプリのホーム画面。ごはんパン麺を記録した瞬間のトーストと +234 kcal プレビュー。"
+                width="300"
+                height="615"
+                loading="eager"
+                decoding="async"
+              />
+            </div>
           </figure>
         </div>
       </section>
@@ -125,13 +212,18 @@
       <section id="concept" class="lp-section lp-concept" aria-labelledby="concept-title">
         <p class="lp-section-num">§ 01 — Concept</p>
         <h2 id="concept-title" class="lp-section-h">
-          食事記録のいちばんの敵は、<br />
-          <em>「ちゃんと書こう」</em>という気持ち。
+          <span class="ja">食事記録のいちばんの敵は、<br /><em>「ちゃんと書こう」</em>という気持ち。</span>
+          <span class="en">The biggest enemy of meal tracking<br />is trying to do it <em>perfectly</em>.</span>
         </h2>
-        <p class="lp-section-body">
+        <p class="lp-section-body ja">
           続かない理由は、だいたい入力にある。<br />
           だから Hachibu は、ちゃんと書かなくても、<br />
           ざっくりで成立する設計から始めました。
+        </p>
+        <p class="lp-section-body en">
+          Most people quit because of the input — not the habit.<br />
+          Hachibu starts from the opposite:<br />
+          roughly is enough. You don't have to get it right. You just have to get it done.
         </p>
       </section>
 
@@ -140,77 +232,90 @@
         <div class="lp-section-head">
           <p class="lp-section-num">§ 02 — Features</p>
           <h2 id="features-title" class="lp-section-h">
-            急ぐ日も、しっかり残したい日も。
+            <span class="ja">急ぐ日も、しっかり残したい日も。</span>
+            <span class="en">Rush days. Unhurried days. Hachibu handles both.</span>
           </h2>
         </div>
 
         <div class="lp-feature-grid">
           <article class="lp-feature">
             <figure class="lp-feature-figure" aria-hidden="true">
-              <img
-                src="/lp/feature-quicklog.png"
-                alt="Quick Log 画面: タブと9バケットで1タップ登録"
-                width="389"
-                height="705"
-                loading="lazy"
-                decoding="async"
-              />
+              <div class="lp-phone-frame">
+                <video
+                  src="/lp/demo-quicklog.mp4"
+                  width="389"
+                  autoplay
+                  loop
+                  muted
+                  playsinline
+                ></video>
+              </div>
             </figure>
             <p class="lp-feature-num">01</p>
             <h3 class="lp-feature-title">Quick Log</h3>
             <p class="lp-feature-lead">
-              食事は、<strong>9つのボタン</strong>から。
+              <span class="ja">食事は、<strong>9つのボタン</strong>から。</span>
+              <span class="en">Nine buttons. <strong>That's your whole menu.</strong></span>
             </p>
-            <p class="lp-feature-body">
+            <p class="lp-feature-body ja">
               いつもの食事を 9 つのボタンから選ぶだけ。1 タップで kcal と PFC が記録され、迷う時間はゼロ。
+            </p>
+            <p class="lp-feature-body en">
+              Pick from nine category buttons. One tap logs calories and macros. Zero time spent deciding.
             </p>
             <dl class="lp-feature-meta">
               <div>
-                <dt>食材 / 一皿料理</dt>
-                <dd>タブで切替</dd>
+                <dt><span class="ja">食材 / 一皿料理</span><span class="en">Ingredients / Dishes</span></dt>
+                <dd><span class="ja">タブで切替</span><span class="en">Switch by tab</span></dd>
               </div>
               <div>
-                <dt>9バケット</dt>
-                <dd>1タップで登録</dd>
+                <dt><span class="ja">9バケット</span><span class="en">9 categories</span></dt>
+                <dd><span class="ja">1タップで登録</span><span class="en">One tap to log</span></dd>
               </div>
               <div>
-                <dt>kcal · PFC</dt>
-                <dd>即時にスナップ</dd>
+                <dt><span class="ja">kcal · PFC</span><span class="en">cal & macros</span></dt>
+                <dd><span class="ja">即時にスナップ</span><span class="en">Logged instantly</span></dd>
               </div>
             </dl>
           </article>
 
           <article class="lp-feature">
             <figure class="lp-feature-figure" aria-hidden="true">
-              <img
-                src="/lp/feature-longpress.png"
-                alt="Long-press Detail シート: 種類・調理法・量を3軸で記録"
-                width="389"
-                height="705"
-                loading="lazy"
-                decoding="async"
-              />
+              <div class="lp-phone-frame">
+                <video
+                  src="/lp/demo-longpress.mp4"
+                  width="389"
+                  autoplay
+                  loop
+                  muted
+                  playsinline
+                ></video>
+              </div>
             </figure>
             <p class="lp-feature-num">02</p>
             <h3 class="lp-feature-title">Long-press Detail</h3>
             <p class="lp-feature-lead">
-              余裕がある日は、<strong>長押し</strong>で深く。
+              <span class="ja">余裕がある日は、<strong>長押し</strong>で深く。</span>
+              <span class="en">Time to spare? <strong>Hold for more.</strong></span>
             </p>
-            <p class="lp-feature-body">
+            <p class="lp-feature-body ja">
               同じボタンを長押しすれば、種類・調理法・量まで残せます。残したい日に、残したい分だけ。続けることを邪魔しません。
+            </p>
+            <p class="lp-feature-body en">
+              Long-press the same button to log type, cooking method, and amount. As much or as little as you feel like. The app doesn't push back.
             </p>
             <dl class="lp-feature-meta">
               <div>
-                <dt>種類・部位</dt>
-                <dd>鶏ささみ / 白身魚 …</dd>
+                <dt><span class="ja">種類・部位</span><span class="en">Type / cut</span></dt>
+                <dd><span class="ja">鶏ささみ / 白身魚 …</span><span class="en">breast, thigh, fillet…</span></dd>
               </div>
               <div>
-                <dt>調理法</dt>
-                <dd>あっさり / 油あり / 揚げ</dd>
+                <dt><span class="ja">調理法</span><span class="en">Cooking method</span></dt>
+                <dd><span class="ja">あっさり / 油あり / 揚げ</span><span class="en">light, oily, fried</span></dd>
               </div>
               <div>
-                <dt>量</dt>
-                <dd>3段グラム + 微調整</dd>
+                <dt><span class="ja">量</span><span class="en">Amount</span></dt>
+                <dd><span class="ja">3段グラム + 微調整</span><span class="en">3 sizes + fine-tune</span></dd>
               </div>
             </dl>
           </article>
@@ -222,38 +327,72 @@
         <div class="lp-section-head">
           <p class="lp-section-num">§ 03 — Why roughly works</p>
           <h2 id="why-title" class="lp-section-h">
-            ざっくり、でも8割。
+            <span class="ja">ざっくり、でも8割。</span>
+            <span class="en">Rough. But close enough.</span>
           </h2>
         </div>
 
         <div class="lp-why-grid">
           <article class="lp-why-card">
             <p class="lp-why-num">01</p>
-            <p class="lp-why-stat">346 → 9</p>
-            <p class="lp-why-label">食材 → ボタン</p>
-            <h3 class="lp-why-h">栄養が近い食材は、同じボタンへ。</h3>
-            <p class="lp-why-body">
+            <p class="lp-why-stat">
+              <span class="ja">346 → 9</span>
+              <span class="en">foods → 9</span>
+            </p>
+            <p class="lp-why-label">
+              <span class="ja">食材 → ボタン</span>
+              <span class="en">everyday → buttons</span>
+            </p>
+            <h3 class="lp-why-h">
+              <span class="ja">栄養が近い食材は、同じボタンへ。</span>
+              <span class="en">Similar nutrition? Same button.</span>
+            </h3>
+            <p class="lp-why-body ja">
               日常の 346 種の食材を、栄養が近いもの同士で 9 つに集約。同じボタンの中なら、選んだ食材が違ってもカロリーはほぼ変わりません。
+            </p>
+            <p class="lp-why-body en">
+              Everyday foods, grouped by nutritional similarity into nine buttons. Pick any food in the same category — the calories are close enough to count.
             </p>
           </article>
 
           <article class="lp-why-card">
             <p class="lp-why-num">02</p>
-            <p class="lp-why-stat">105 / 200</p>
-            <p class="lp-why-label">鶏むね vs もも · kcal</p>
-            <h3 class="lp-why-h">違いが大きい食材は、別のボタンへ。</h3>
-            <p class="lp-why-body">
+            <p class="lp-why-stat">
+              <span class="ja">105 / 200</span>
+              <span class="en">165 / 210</span>
+            </p>
+            <p class="lp-why-label">
+              <span class="ja">鶏むね vs もも · kcal</span>
+              <span class="en">chicken breast vs thigh · cal/100g</span>
+            </p>
+            <h3 class="lp-why-h">
+              <span class="ja">違いが大きい食材は、別のボタンへ。</span>
+              <span class="en">Big difference? Separate buttons.</span>
+            </h3>
+            <p class="lp-why-body ja">
               鶏むね (105 kcal) と鶏もも (200 kcal) は約 2 倍の差。明らかに違うものは別のボタンに分けてあるので、選んだ方の値で記録されます。
+            </p>
+            <p class="lp-why-body en">
+              Chicken breast (165 cal) and thigh (210 cal) differ enough to matter. When the gap is real, they get separate buttons — so you always log the right one.
             </p>
           </article>
 
           <article class="lp-why-card">
             <p class="lp-why-num">03</p>
             <p class="lp-why-stat">9 → 1</p>
-            <p class="lp-why-label">9 ボタン → あなた一人</p>
-            <h3 class="lp-why-h">ボタンは、あなたに寄っていく。</h3>
-            <p class="lp-why-body">
+            <p class="lp-why-label">
+              <span class="ja">9 ボタン → あなた一人</span>
+              <span class="en">9 buttons → just you</span>
+            </p>
+            <h3 class="lp-why-h">
+              <span class="ja">ボタンは、あなたに寄っていく。</span>
+              <span class="en">The buttons adapt to you.</span>
+            </h3>
+            <p class="lp-why-body ja">
               ふだんの食事に合わせて、記録される値は少しずつ調整されます。続けるほど、あなたの食生活に近づきます。
+            </p>
+            <p class="lp-why-body en">
+              The more you log, the closer Hachibu gets to your actual eating habits. Keep going — it gets more accurate.
             </p>
           </article>
         </div>
@@ -263,32 +402,59 @@
       <section id="faq" class="lp-section lp-faq" aria-labelledby="faq-title">
         <div class="lp-section-head">
           <p class="lp-section-num">§ 04 — FAQ</p>
-          <h2 id="faq-title" class="lp-section-h">よくある質問。</h2>
+          <h2 id="faq-title" class="lp-section-h">
+            <span class="ja">よくある質問。</span>
+            <span class="en">Common questions.</span>
+          </h2>
         </div>
 
         <div class="lp-faq-list">
           <details class="lp-faq-item">
-            <summary>量がぴったりじゃないけど大丈夫?</summary>
-            <p>
+            <summary>
+              <span class="ja">量がぴったりじゃないけど大丈夫?</span>
+              <span class="en">What if my portion doesn't match exactly?</span>
+            </summary>
+            <p class="ja">
               標準的な1人前で記録します。大盛り・小盛りはタップ後の画面で切り替えられます。微調整より「続けやすさ」を優先した設計です。
             </p>
+            <p class="en">
+              Hachibu logs a standard single serving. After tapping, you can switch to large or small. We prioritize keeping it easy over getting it perfect.
+            </p>
           </details>
           <details class="lp-faq-item">
-            <summary>1ボタンに何種類も入っていて、ざっくりすぎない?</summary>
-            <p>
+            <summary>
+              <span class="ja">1ボタンに何種類も入っていて、ざっくりすぎない?</span>
+              <span class="en">Isn't one button for multiple foods too rough?</span>
+            </summary>
+            <p class="ja">
               各ボタンに含まれる食材は、よく食べる範囲ならタップ値とほぼ同じカロリー範囲に収まる設計です。ボタンごとの幅は「食材ボタンの中身」「料理ボタンの中身」で確認できます。
             </p>
-          </details>
-          <details class="lp-faq-item">
-            <summary>写真で記録できないの?</summary>
-            <p>
-              撮影 → 認識 → 確認の手間で、結局時間がかかり続かない原因になりやすいため、あえてタップ式にしています。ボタンを数回タップするだけで終わるので、毎日続けやすい設計です。
+            <p class="en">
+              Foods within a button are grouped by nutritional similarity, so the calorie range stays tight for everyday eating. The rare outliers get their own button.
             </p>
           </details>
           <details class="lp-faq-item">
-            <summary>もっと厳密に計算したい場合は?</summary>
-            <p>
+            <summary>
+              <span class="ja">写真で記録できないの?</span>
+              <span class="en">Why no photo logging?</span>
+            </summary>
+            <p class="ja">
+              撮影 → 認識 → 確認の手間で、結局時間がかかり続かない原因になりやすいため、あえてタップ式にしています。ボタンを数回タップするだけで終わるので、毎日続けやすい設計です。
+            </p>
+            <p class="en">
+              Photo → scan → confirm adds more steps than it looks. It's one of the most common reasons people stop. A few taps and you're done — every day.
+            </p>
+          </details>
+          <details class="lp-faq-item">
+            <summary>
+              <span class="ja">もっと厳密に計算したい場合は?</span>
+              <span class="en">What if I want to track more precisely?</span>
+            </summary>
+            <p class="ja">
               このアプリは「ざっくり、続ける」を優先した設計です。1g単位で計算したい方は、食品成分表ベースの計測アプリ (あすけん等) との併用がおすすめです。
+            </p>
+            <p class="en">
+              Hachibu is built for "roughly, consistently." For gram-level tracking, a food-database app will serve you better. The two aren't mutually exclusive.
             </p>
           </details>
         </div>
@@ -300,17 +466,22 @@
           <div class="lp-start-copy">
             <p class="lp-section-num">§ 05 — Start</p>
             <h2 id="start-title" class="lp-section-h lp-start-h">
-              ざっくり記録、<br />はじめてみる。
+              <span class="ja">ざっくり記録、<br />はじめてみる。</span>
+              <span class="en">Start logging,<br />roughly.</span>
             </h2>
-            <p class="lp-start-sub">
+            <p class="lp-start-sub ja">
               いま試せるのは Android のクローズドテスト。<br />
               iPhone の方は、準備が整い次第お知らせします。
             </p>
+            <p class="lp-start-sub en">
+              Android closed beta is open now.<br />
+              iPhone version coming soon — sign up and we'll let you know.
+            </p>
 
             <ul class="lp-start-bullets" aria-label="テスト参加条件">
-              <li>全機能、無料</li>
-              <li>クレカ不要</li>
-              <li>合わなければアンインストールするだけ</li>
+              <li><span class="ja">全機能、無料</span><span class="en">Free, full access</span></li>
+              <li><span class="ja">クレカ不要</span><span class="en">No credit card</span></li>
+              <li><span class="ja">合わなければアンインストールするだけ</span><span class="en">Uninstall any time</span></li>
             </ul>
 
             <div class="lp-cta-row">
@@ -323,7 +494,8 @@
                 data-cta="android-group"
                 aria-label="Googleグループに参加して Android クローズドテストに参加する"
               >
-                Androidで試す
+                <span class="ja">Androidで試す</span>
+                <span class="en">Try on Android</span>
               </a>
               <div class="lp-cta-secondary-wrap">
                 <a
@@ -332,22 +504,33 @@
                   data-cta="ios-notify"
                   aria-label="iOS リリース通知メーリングリストに登録する"
                 >
-                  <span class="cta-mute">iPhone をお使いなら</span>
-                  <span class="cta-strong">知らせを受け取る</span>
+                  <span class="cta-mute">
+                    <span class="ja">iPhone をお使いなら</span>
+                    <span class="en">On iPhone?</span>
+                  </span>
+                  <span class="cta-strong">
+                    <span class="ja">知らせを受け取る</span>
+                    <span class="en">Get notified</span>
+                  </span>
                 </a>
-                <p class="lp-cta-note">iOSローンチ時の1通のみ</p>
+                <p class="lp-cta-note">
+                  <span class="ja">iOSローンチ時の1通のみ</span>
+                  <span class="en">One email when iOS launches</span>
+                </p>
               </div>
             </div>
           </div>
           <figure class="lp-start-figure" aria-hidden="true">
-            <img
-              src="/lp/hero-phone.png"
-              alt="Hachibu アプリのホーム画面。今日のカロリーと PFC のサマリー、9 つのボタン。"
-              width="300"
-              height="615"
-              loading="lazy"
-              decoding="async"
-            />
+            <div class="lp-phone-frame">
+              <img
+                src="/lp/quicklog-poster.png"
+                alt="Hachibu アプリのホーム画面。ごはんパン麺を記録した瞬間のトーストと +234 kcal プレビュー。"
+                width="300"
+                height="615"
+                loading="lazy"
+                decoding="async"
+              />
+            </div>
           </figure>
         </div>
       </section>
@@ -357,9 +540,9 @@
       <div class="lp-footer-inner">
         <span class="lp-footer-brand">Hachibu</span>
         <nav class="lp-footer-nav" aria-label="フッターリンク">
-          <a href="/terms">利用規約</a>
-          <a href="/privacy">プライバシー</a>
-          <a href="mailto:contact@akizony.com">お問い合わせ</a>
+          <a href="/terms"><span class="ja">利用規約</span><span class="en">Terms</span></a>
+          <a href="/privacy"><span class="ja">プライバシー</span><span class="en">Privacy</span></a>
+          <a href="mailto:contact@akizony.com"><span class="ja">お問い合わせ</span><span class="en">Contact</span></a>
         </nav>
         <span class="lp-footer-copy">© 2026 Hachibu</span>
       </div>
@@ -378,10 +561,14 @@
 
       <div class="lp-modal-body" data-state="form">
         <h2 id="subscribe-title" class="lp-modal-title">
-          iOS版の準備ができたら、<br />お知らせします。
+          <span class="ja">iOS版の準備ができたら、<br />お知らせします。</span>
+          <span class="en">We'll let you know<br />when iOS is ready.</span>
         </h2>
-        <p class="lp-modal-sub">
+        <p class="lp-modal-sub ja">
           登録はメールアドレスだけ。他には何も聞きません。
+        </p>
+        <p class="lp-modal-sub en">
+          Just your email. Nothing else.
         </p>
 
         <form
@@ -389,13 +576,16 @@
           action="https://formsubmit.co/contact@akizony.com"
           method="POST"
         >
-          <input type="hidden" name="_subject" value="Hachibu iOS版 お知らせ希望" />
+          <input type="hidden" name="_subject" id="form-subject" value="Hachibu iOS版 お知らせ希望" />
           <input type="hidden" name="_captcha" value="false" />
           <input type="hidden" name="_template" value="table" />
           <input type="hidden" name="_honey" value="" />
 
           <label class="lp-modal-field">
-            <span class="lp-modal-label">メールアドレス</span>
+            <span class="lp-modal-label">
+              <span class="ja">メールアドレス</span>
+              <span class="en">Email address</span>
+            </span>
             <input
               type="email"
               name="email"
@@ -408,33 +598,49 @@
           </label>
 
           <ul class="lp-modal-bullets" aria-label="ポリシー">
-            <li>iOSローンチ時の1通だけお送りします</li>
-            <li>他社への共有・販売はありません</li>
+            <li>
+              <span class="ja">iOSローンチ時の1通だけお送りします</span>
+              <span class="en">One email when iOS launches</span>
+            </li>
+            <li>
+              <span class="ja">他社への共有・販売はありません</span>
+              <span class="en">Never shared or sold</span>
+            </li>
           </ul>
 
           <button type="submit" class="cta cta-primary lp-modal-submit">
-            登録する
+            <span class="ja">登録する</span>
+            <span class="en">Subscribe</span>
           </button>
 
           <p class="lp-modal-finep">
-            登録すると <a href="/privacy">プライバシーポリシー</a> に同意したものとみなします。
+            <span class="ja">登録すると <a href="/privacy">プライバシーポリシー</a> に同意したものとみなします。</span>
+            <span class="en">By subscribing you agree to our <a href="/privacy">Privacy Policy</a>.</span>
           </p>
         </form>
       </div>
 
       <div class="lp-modal-thanks" data-state="thanks" hidden>
-        <h2 class="lp-modal-title">ありがとうございます。</h2>
-        <p class="lp-modal-sub">
+        <h2 class="lp-modal-title">
+          <span class="ja">ありがとうございます。</span>
+          <span class="en">You're in.</span>
+        </h2>
+        <p class="lp-modal-sub ja">
           iOSローンチの準備ができたら、<br />
           ご登録いただいたアドレスへ 1 通だけお知らせします。
         </p>
-        <p class="lp-modal-sub">他の用途には一切使いません。</p>
+        <p class="lp-modal-sub en">
+          We'll send one email when iOS is ready.<br />
+          Your address won't be used for anything else.
+        </p>
+        <p class="lp-modal-sub ja">他の用途には一切使いません。</p>
         <button
           type="button"
           class="cta cta-primary lp-modal-submit"
           onclick="document.getElementById('subscribe-modal').close()"
         >
-          閉じる
+          <span class="ja">閉じる</span>
+          <span class="en">Close</span>
         </button>
       </div>
     </dialog>
@@ -452,26 +658,37 @@
 
       <div class="lp-modal-body">
         <h2 id="android-title" class="lp-modal-title">
-          Android クローズドテスト<br />
-          参加の 2 ステップ
+          <span class="ja">Android クローズドテスト<br />参加の 2 ステップ</span>
+          <span class="en">Join the Android Closed Beta<br />— 2 steps</span>
         </h2>
-        <p class="lp-modal-sub">
+        <p class="lp-modal-sub ja">
           Google グループに参加すると、テスターとして Play Store からインストールできます。
+        </p>
+        <p class="lp-modal-sub en">
+          Join the Google Group to install Hachibu from the Play Store as a tester.
         </p>
 
         <ol class="lp-modal-steps" aria-label="参加手順">
           <li>
             <span class="lp-modal-step-num">1</span>
             <div class="lp-modal-step-text">
-              <strong>Google グループに参加</strong>
-              <span>下のボタンから「参加」を押すだけ。承認は不要です。</span>
+              <strong>
+                <span class="ja">Google グループに参加</span>
+                <span class="en">Join the Google Group</span>
+              </strong>
+              <span class="ja">下のボタンから「参加」を押すだけ。承認は不要です。</span>
+              <span class="en">Tap the button below and join. No approval needed.</span>
             </div>
           </li>
           <li>
             <span class="lp-modal-step-num">2</span>
             <div class="lp-modal-step-text">
-              <strong>Play Store からインストール</strong>
-              <span>グループ内のリンクから Play Store を開いてインストール</span>
+              <strong>
+                <span class="ja">Play Store からインストール</span>
+                <span class="en">Install from the Play Store</span>
+              </strong>
+              <span class="ja">グループ内のリンクから Play Store を開いてインストール</span>
+              <span class="en">Open the link in the Group to install from the Play Store</span>
             </div>
           </li>
         </ol>
@@ -483,21 +700,65 @@
           class="cta cta-primary lp-modal-submit"
           onclick="setTimeout(function(){document.getElementById('android-modal').close();},150)"
         >
-          Google グループを開く
+          <span class="ja">Google グループを開く</span>
+          <span class="en">Open Google Group</span>
         </a>
 
         <p class="lp-modal-finep">
-          Google アカウントでのログインが必要です。
+          <span class="ja">Google アカウントでのログインが必要です。</span>
+          <span class="en">A Google account is required.</span>
         </p>
       </div>
     </dialog>
 
     <script>
+      // ── Language switch ──────────────────────────────────────────────────────
+      var LP_META = {
+        ja: {
+          title: 'Hachibu — ざっくりで、続く食事ログ。',
+          description: 'Hachibu — ざっくりで、続く食事ログ。9つのボタンを、タップだけで。Android クローズドテスト 募集中。',
+          ogTitle: 'Hachibu — ざっくりで、続く食事ログ。',
+          ogDescription: '9つのボタンを、タップだけで。計らない、調べない、迷わない。Android クローズドテスト 募集中。',
+          formSubject: 'Hachibu iOS版 お知らせ希望',
+        },
+        en: {
+          title: 'Hachibu — Rough logging. Lasting habit.',
+          description: 'Hachibu — rough, quick meal logging. Nine buttons, one tap. No measuring, no searching, no deciding. Android closed beta open now.',
+          ogTitle: 'Hachibu — Rough logging. Lasting habit.',
+          ogDescription: 'Nine buttons. One tap each. No measuring. No searching. No deciding. Android closed beta open now.',
+          formSubject: 'Hachibu iOS notify request',
+        },
+      };
+
+      function setLang(lang) {
+        document.documentElement.lang = lang;
+        document.body.lang = lang;
+        localStorage.setItem('lp-lang', lang);
+
+        var m = LP_META[lang];
+        document.title = m.title;
+        document.getElementById('meta-description').setAttribute('content', m.description);
+        document.getElementById('og-title').setAttribute('content', m.ogTitle);
+        document.getElementById('og-description').setAttribute('content', m.ogDescription);
+        var subjectEl = document.getElementById('form-subject');
+        if (subjectEl) subjectEl.value = m.formSubject;
+
+        document.querySelectorAll('.lp-lang-btn').forEach(function (btn) {
+          btn.classList.toggle('active', btn.dataset.lang === lang);
+        });
+      }
+
+      // Init from localStorage
+      (function () {
+        var saved = localStorage.getItem('lp-lang');
+        if (saved === 'en') setLang('en');
+      })();
+
+      // ── Subscribe modal ──────────────────────────────────────────────────────
       (function () {
         var modal = document.getElementById('subscribe-modal');
         if (!modal) return;
 
-        // 各 iOS notify CTA: クリックでモーダルを開く (JS 無効時は mailto: にフォールバック)
         document.querySelectorAll('a[data-cta="ios-notify"]').forEach(function (a) {
           a.addEventListener('click', function (e) {
             if (typeof modal.showModal === 'function') {
@@ -507,13 +768,10 @@
           });
         });
 
-        // 背景クリックで閉じる
         modal.addEventListener('click', function (e) {
           if (e.target === modal) modal.close();
         });
 
-        // Android クローズドテスト参加 CTA: クリックで手順モーダルを開く
-        // (JS 無効時は Google グループへ直接遷移)
         var androidModal = document.getElementById('android-modal');
         if (androidModal) {
           document
@@ -531,15 +789,17 @@
           });
         }
 
-        // フォーム送信 → fetch で送り、成功状態に切替
         var form = document.getElementById('subscribe-form');
-        var body = modal.querySelector('[data-state="form"]');
+        var formBody = modal.querySelector('[data-state="form"]');
         var thanks = modal.querySelector('[data-state="thanks"]');
         form.addEventListener('submit', function (e) {
           e.preventDefault();
           var btn = form.querySelector('button[type="submit"]');
+          var isEn = document.body.lang === 'en';
           btn.disabled = true;
-          btn.textContent = '送信中...';
+          btn.innerHTML = isEn
+            ? '<span class="en">Sending…</span>'
+            : '<span class="ja">送信中...</span>';
           fetch(form.action, {
             method: 'POST',
             body: new FormData(form),
@@ -547,13 +807,19 @@
           })
             .then(function (r) {
               if (!r.ok) throw new Error('submission failed');
-              body.hidden = true;
+              formBody.hidden = true;
               thanks.hidden = false;
             })
             .catch(function () {
               btn.disabled = false;
-              btn.textContent = '登録する';
-              alert('送信に失敗しました。お手数ですが時間をおいて再度お試しください。');
+              btn.innerHTML = isEn
+                ? '<span class="en">Subscribe</span>'
+                : '<span class="ja">登録する</span>';
+              alert(
+                isEn
+                  ? 'Submission failed. Please try again later.'
+                  : '送信に失敗しました。お手数ですが時間をおいて再度お試しください。'
+              );
             });
         });
       })();

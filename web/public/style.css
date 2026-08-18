@@ -1291,12 +1291,19 @@ body.lp-body {
 
   .lp-footer-inner {
     padding: 24px 20px;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 12px;
   }
 
   .lp-footer-nav {
     margin-left: 0;
-    width: 100%;
+    width: auto;
     order: 3;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 16px;
   }
 }
 
