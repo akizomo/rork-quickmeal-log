@@ -16,8 +16,15 @@ import { formatDateKey } from '@/utils/nutrition';
 import { adjustedTargetKcal } from '@/utils/goals';
 import { ALL_IDENTITIES, getIdentity } from '@/constants/identity';
 import type { NutritionNote } from '@/types/identity';
+import type { AppLocale } from '@/types/locale';
+import ja from '@/locales/ja.json';
+import enUS from '@/locales/en-US.json';
 
-const WEEKDAY_JP_MON_FIRST = ['月', '火', '水', '木', '金', '土', '日'];
+// monthlyStats.weekDays is Sun-first; rotate to Mon-first to match getWeekRange's Monday start.
+const WEEKDAY_MON_FIRST: Record<AppLocale, string[]> = {
+  ja: [...ja.monthlyStats.weekDays.slice(1), ja.monthlyStats.weekDays[0]],
+  'en-US': [...enUS.monthlyStats.weekDays.slice(1), enUS.monthlyStats.weekDays[0]],
+};
 
 /** PFC 傾向を「特筆すべき」と判定する最小乖離率。これ未満は insight を出さない。 */
 const INSIGHT_THRESHOLD_RATIO = 0.15;
@@ -147,6 +154,7 @@ export function computeWeeklyRecap(
   exerciseLogs: ExerciseLog[],
   dailyActivities: DailyActivitySummary[] | undefined,
   now: Date,
+  uiLanguage: AppLocale = 'ja',
 ): WeeklyRecap | null {
   const today = startOfDay(now);
   const lastWeekAnchor = addDays(today, -7);
@@ -176,7 +184,7 @@ export function computeWeeklyRecap(
 
   const days: WeeklyRecapDay[] = entries.map(([key, m], i) => ({
     dateKey: key,
-    weekdayLabel: WEEKDAY_JP_MON_FIRST[i] ?? '',
+    weekdayLabel: WEEKDAY_MON_FIRST[uiLanguage][i] ?? '',
     logged: m.kcal > 0,
     kcal: Math.round(m.kcal),
     targetKcal: Math.round(targetForKey(key)),

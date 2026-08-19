@@ -518,8 +518,8 @@ function WeeklyRecapTeaser() {
   const { logs, profile, exerciseLogs, dailyActivities, settings, updateSettingsValues } = useAppState();
 
   const recap = useMemo(
-    () => computeWeeklyRecap(logs, profile, exerciseLogs, dailyActivities, new Date()),
-    [logs, profile, exerciseLogs, dailyActivities]
+    () => computeWeeklyRecap(logs, profile, exerciseLogs, dailyActivities, new Date(), settings.uiLanguage),
+    [logs, profile, exerciseLogs, dailyActivities, settings.uiLanguage]
   );
 
   if (!recap || settings.weeklyRecapDismissedWeekKey === recap.weekKey) return null;

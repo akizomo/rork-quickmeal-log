@@ -55,8 +55,8 @@ export default function WeeklyRecapScreen() {
   const { logs, profile, exerciseLogs, dailyActivities, settings, updateSettingsValues } = useAppState();
 
   const recap = useMemo(
-    () => computeWeeklyRecap(logs, profile, exerciseLogs, dailyActivities, new Date()),
-    [logs, profile, exerciseLogs, dailyActivities],
+    () => computeWeeklyRecap(logs, profile, exerciseLogs, dailyActivities, new Date(), settings.uiLanguage),
+    [logs, profile, exerciseLogs, dailyActivities, settings.uiLanguage],
   );
 
   // 開いた時点で「見た」とみなし、その週は teaser を再表示しない (WidgetNudgeBanner と同じ考え方)。
