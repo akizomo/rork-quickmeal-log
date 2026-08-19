@@ -66,6 +66,7 @@ export async function requestTrialNotificationPermission(): Promise<boolean> {
   }
 }
 
+// i18n-ignore-start: NOTIFY_CONTENT is a locale data table — JA strings are the JA locale, not hardcoded UI text.
 const NOTIFY_CONTENT: Record<string, { channelName: string; title: string; body: string }> = {
   ja: {
     channelName: 'トライアル終了のお知らせ',
@@ -78,6 +79,7 @@ const NOTIFY_CONTENT: Record<string, { channelName: string; title: string; body:
     body: 'Your 7-day free trial ends in 2 days. Do nothing to continue — or cancel in App Store / Google Play settings.',
   },
 };
+// i18n-ignore-end
 
 /**
  * トライアル終了 48時間前にローカル通知をスケジュールする。

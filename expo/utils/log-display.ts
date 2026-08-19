@@ -31,29 +31,7 @@ import {
 import { FoodLog, FoodLogAddon } from '@/types/nutrition';
 import type { AppLocale } from '@/types/locale';
 import { migrateAmountValueForUnit } from './amount-migration';
-
-const UNIT_SUFFIX: Record<AppLocale, Record<AmountUnit, string>> = {
-  ja: {
-    g: 'g',
-    ml: 'ml',
-    piece: '個',
-    serving: '人前',
-    percent: '%',
-    plate: '皿',
-    slice: '切',
-    cut: '切れ',
-  },
-  'en-US': {
-    g: 'g',
-    ml: 'ml',
-    piece: 'pcs',
-    serving: 'servings',
-    percent: '%',
-    plate: 'plates',
-    slice: 'slices',
-    cut: 'pieces',
-  },
-};
+import { UNIT_LABELS } from './unit-labels';
 
 export interface LogDisplayInfo {
   title: string;
@@ -73,7 +51,7 @@ export function getLogDisplayInfo(log: FoodLog, uiLanguage: AppLocale = 'ja'): L
   // Older logs (pre Phase 2) — fall back to legacy fields.
   if (!identity) {
     return {
-      title: log.subTypeLabel ?? log.categoryLabel ?? (uiLanguage === 'en-US' ? 'Log' : '記録'),
+      title: log.subTypeLabel ?? log.categoryLabel ?? (uiLanguage === 'en-US' ? 'Log' : '記録'), // i18n-ignore: legacy logs without labels, fallback for JA
       subtitle: undefined,
       amountText: legacyAmountText(log, uiLanguage),
       addonsText: legacyAddonsText(log),
@@ -135,7 +113,7 @@ function buildAmountText(identity: Identity, log: FoodLog, uiLanguage: AppLocale
   // matches a defined chip exactly.
   const chipHit = identity.amount.chips?.find((c) => c.value === value);
   if (chipHit) return chipHit.label;
-  const suffix = identity.amount.unitLabel ?? UNIT_SUFFIX[uiLanguage][identity.amount.unit];
+  const suffix = identity.amount.unitLabel ?? UNIT_LABELS[uiLanguage][identity.amount.unit];
   return `${formatAmountValue(value)} ${suffix}`;
 }
 
@@ -180,7 +158,7 @@ function prefixUnits(label: string, units: number): string {
 function legacyAmountText(log: FoodLog, uiLanguage: AppLocale): string {
   if (log.amountLabel) return log.amountLabel;
   if (log.amountValue && log.amountUnit) {
-    const suffix = log.amountUnit === 'piece' ? UNIT_SUFFIX[uiLanguage].piece : log.amountUnit;
+    const suffix = log.amountUnit === 'piece' ? UNIT_LABELS[uiLanguage].piece : log.amountUnit;
     return `${log.amountValue} ${suffix}`;
   }
   if (log.portionLabel) return log.portionLabel;

@@ -230,7 +230,7 @@ export function WeeklyStatsView() {
           ? tr('weeklyStats.dayKcal', { dow, kcal: Math.round(macro.kcal).toLocaleString() })
           : tr('weeklyStats.dayNoRecord', { dow });
       })
-      .join(settings.uiLanguage === 'en-US' ? ', ' : '、');
+      .join(settings.uiLanguage === 'en-US' ? ', ' : '、'); // i18n-ignore: locale-conditional punctuation
     return tr('weeklyStats.chartA11ySummary', { loggedDays: logged.length, avg: avg.toLocaleString(), exceeded, days });
   }, [dailyEntries, dayTargets, tr, weekdays, settings.uiLanguage]);
 

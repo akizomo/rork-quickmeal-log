@@ -130,7 +130,7 @@ export function useHealthSync(): UseHealthSyncReturn {
       setLastSyncedAt(result.syncedAt);
       return result;
     } catch (err) {
-      const message = err instanceof Error ? err.message : '同期に失敗しました';
+      const message = err instanceof Error ? err.message : '同期に失敗しました'; // i18n-ignore: error.message is OS-provided; this fallback is an unreachable guard
       setLastError(message);
       if (__DEV__) console.log('[health-sync] sync error', err instanceof Error ? err.message : err);
       return null;

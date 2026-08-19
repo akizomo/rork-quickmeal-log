@@ -334,6 +334,10 @@
       "continueLose": "Keep losing",
       "continueGain": "Keep gaining",
       "maintainCurrent": "Maintain current weight ({{current}}{{unit}})"
+    },
+    "notes": {
+      "floorApplied": "Minimum {{kcal}} kcal floor applied.",
+      "transitionWarning": "Increasing fat while decreasing muscle is not recommended. Consider a different goal."
     }
   },
   "errorBoundary": {

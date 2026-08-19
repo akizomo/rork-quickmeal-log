@@ -49,33 +49,11 @@ import {
 } from '@/utils/identity-attribute';
 import { Macro } from '@/types/nutrition';
 import type { AppLocale } from '@/types/locale';
+import { UNIT_LABELS } from '@/utils/unit-labels';
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-const UNIT_LABEL: Record<AppLocale, Record<AmountUnit, string>> = {
-  ja: {
-    g: 'g',
-    ml: 'ml',
-    piece: '個',
-    serving: '人前',
-    percent: '%',
-    plate: '皿',
-    slice: '切',
-    cut: '切れ',
-  },
-  'en-US': {
-    g: 'g',
-    ml: 'ml',
-    piece: 'pcs',
-    serving: 'servings',
-    percent: '%',
-    plate: 'plates',
-    slice: 'slices',
-    cut: 'pieces',
-  },
-};
 
 const NUMERIC_RE = /^\d+(\.\d+)?$/;
 
@@ -612,7 +590,7 @@ export function IdentityLogSheet() {
           {/* Amount (振替先があればその実効 spec を使う) */}
           {(() => {
             const amt = activeAmountSpec ?? origin.amount;
-            const amtUnitLabel = amt.unitLabel ?? UNIT_LABEL[uiLanguage][amt.unit];
+            const amtUnitLabel = amt.unitLabel ?? UNIT_LABELS[uiLanguage][amt.unit];
             const amountRefIdentity = amountBasis?.identity ?? origin;
             const toggleLabel = isAltMode ? tr('identityLog.switchToG') : tr('identityLog.switchToCount');
             return (

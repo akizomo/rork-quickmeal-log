@@ -1,4 +1,12 @@
 import { ActivityLevel, AppSettings, BiologicalBasis, BodyStage, BodyType9, GoalDirection, Macro, PaceLevel, SubscriptionStatus } from '@/types/nutrition';
+import type { AppLocale } from '@/types/locale';
+import ja from '@/locales/ja.json';
+import enUS from '@/locales/en-US.json';
+
+const GOAL_NOTES: Record<AppLocale, typeof ja.goalEdit.notes> = {
+  ja: ja.goalEdit.notes,
+  'en-US': enUS.goalEdit.notes,
+};
 import {
   getCellBodyFatTypical,
   getCellRef,
@@ -30,12 +38,13 @@ export function deriveDirection(current: BodyType9, target: BodyType9): GoalDire
 /** Returns a warning string if the transition is considered non-recommended. */
 export function deriveTransitionWarning(
   current: BodyType9,
-  target: BodyType9
+  target: BodyType9,
+  locale: AppLocale = 'ja'
 ): string | null {
   const fatDelta = target.fat - current.fat;
   const muscleDelta = target.muscle - current.muscle;
   if (fatDelta > 0 && muscleDelta < 0) {
-    return '脂肪を増やしつつ筋量を減らす方向は非推奨です。別の目標を検討してください。';
+    return GOAL_NOTES[locale].transitionWarning;
   }
   return null;
 }
@@ -128,6 +137,7 @@ export interface GoalInputs {
   /** Legacy 5-stage body stages (not used in new logic, kept for back-compat). */
   currentStage?: BodyStage | null;
   targetStage?: BodyStage | null;
+  locale?: AppLocale;
 }
 
 export interface GoalRecommendation {
@@ -428,6 +438,7 @@ export function estimateMonthsToTarget(
  * ETA の表記コア (ペース名・「の見込み」は UI 側で付与, PRD §6.4.4 文言表)。
  *   1ヶ月未満 → 「約 N 週間」 / 12ヶ月超 → 「1 年以上」 / それ以外 → 「約 X ヶ月」(0.5刻み)。
  */
+// i18n-ignore-start: JA-only helper used only in tests. goal-edit.tsx uses t('goalEdit.duration.*') instead.
 export function formatGoalDuration(months: number): string {
   if (months >= 12) return '1 年以上';
   if (months < 1) {
@@ -437,6 +448,7 @@ export function formatGoalDuration(months: number): string {
   const rounded = Math.round(months * 2) / 2;
   return `約 ${rounded} ヶ月`;
 }
+// i18n-ignore-end
 
 /**
  * Calculates the daily kcal adjustment based on direction + pace.
@@ -504,6 +516,7 @@ export function recommendGoal(input: GoalInputs): GoalRecommendation | null {
     paceLevel,
     targetBodyType9,
     currentBodyFatPct,
+    locale = 'ja',
   } = input;
   if (!heightCm || !weightKg || !ageYears || !basis || !direction || !activityLevel || !targetBodyType9) {
     return null;
@@ -571,7 +584,7 @@ export function recommendGoal(input: GoalInputs): GoalRecommendation | null {
   // 6. Note
   let note: string | undefined;
   if (rawKcal < minKcal) {
-    note = `下限 ${minKcal}kcal を適用しました。`;
+    note = GOAL_NOTES[locale].floorApplied.replace('{{kcal}}', String(minKcal));
   }
 
   return {
@@ -643,6 +656,7 @@ export const EXERCISE_BASELINE_KCAL: Record<ActivityLevel, number> = {
   4: 0,
 };
 
+// i18n-ignore-start: EXERCISE_TYPES.label is JA locale data. EN UI uses tr('exercise.typeLabels.*') in ExerciseSheet.
 export const EXERCISE_TYPES = [
   { key: 'walking', label: 'ウォーキング', emoji: '🚶', met: 3.5 },
   { key: 'running', label: 'ランニング', emoji: '🏃', met: 7.0 },
@@ -653,6 +667,7 @@ export const EXERCISE_TYPES = [
   { key: 'hiit', label: 'HIIT', emoji: '💪', met: 8.0 },
   { key: 'other', label: 'スポーツ', emoji: '🏅', met: 5.0 },
 ] as const;
+// i18n-ignore-end
 
 export type ExerciseTypeKey = (typeof EXERCISE_TYPES)[number]['key'];
 
@@ -799,11 +814,13 @@ export function calorieRatioTone(ratio: number): 'success' | 'warning' | 'danger
   return 'danger';
 }
 
+// i18n-ignore-start: not called from UI (dead code candidate). Future: remove or add locale param.
 export function calorieRatioLabel(ratio: number): string {
   if (ratio <= 1.1) return '目標どおり';
   if (ratio <= 1.3) return 'やや多め';
   return 'かなり多め';
 }
+// i18n-ignore-end
 
 /**
  * TDEE に加算すべき運動 kcal を返す。

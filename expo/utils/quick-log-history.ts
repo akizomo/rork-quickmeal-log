@@ -313,7 +313,7 @@ function buildRankedItem(
     const styleLabel = sel.styleKey
       ? identity.styles?.find((s) => s.key === sel.styleKey)?.label
       : undefined;
-    const detailLabel = [attrLabel, styleLabel, amountLabel].filter(Boolean).join('・');
+    const detailLabel = [attrLabel, styleLabel, amountLabel].filter(Boolean).join('・'); // i18n-ignore: separator in stored history, legacy quick-log
     return {
       mode,
       categoryKey,

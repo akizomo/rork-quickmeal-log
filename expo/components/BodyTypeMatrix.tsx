@@ -39,7 +39,7 @@ export function BodyTypeMatrix({
   const t = useTheme();
   const tr = useT();
   const { uiLanguage } = useLocale();
-  const a11ySeparator = uiLanguage === 'en-US' ? '. ' : '。';
+  const a11ySeparator = uiLanguage === 'en-US' ? '. ' : '。'; // i18n-ignore: locale-conditional punctuation
   const axisLevel: Record<BodyAxisLevel, string> = {
     0: tr('onboarding.currentBody.matrix.low'),
     1: tr('onboarding.currentBody.matrix.mid'),

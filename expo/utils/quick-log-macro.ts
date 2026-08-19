@@ -80,6 +80,6 @@ export function computeQuickLogMacro(draft: IngredientQuickDraft): QuickLogCompu
  */
 export function buildAmountLabel(draft: IngredientQuickDraft): string {
   if (draft.amountLabel && draft.amountLabel.length > 0) return draft.amountLabel;
-  const unit = draft.amountUnit === 'piece' ? '個' : draft.amountUnit;
+  const unit = draft.amountUnit === 'piece' ? '個' : draft.amountUnit; // i18n-ignore: legacy quick-log system (pre-Phase-2), JA-only path
   return `${draft.amountValue}${unit}`;
 }

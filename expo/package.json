@@ -9,6 +9,7 @@
     "start-web": "bunx rork start -p w58nppn267v73txs8n9d4 --web",
     "start-web-dev": "DEBUG=expo* bunx rork start -p w58nppn267v73txs8n9d4 --web",
     "lint": "expo lint",
+    "check:i18n": "node scripts/check-i18n.mjs",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",

@@ -211,7 +211,7 @@ function TrendChart({
       <View
         style={[styles.chartWrap, { width, height: CHART_HEIGHT }]}
         accessible
-        accessibilityLabel={`${tr('bodyStats.chartA11yLabel', { title })}${locale === 'en-US' ? '. ' : '。'}${emptyMessage}`}
+        accessibilityLabel={`${tr('bodyStats.chartA11yLabel', { title })}${locale === 'en-US' ? '. ' : '。' /* i18n-ignore: locale-conditional punctuation */}${emptyMessage}`}
       >
         <Text style={[styles.chartEmpty, { color: t.colors.content.secondary }]}>{emptyMessage}</Text>
       </View>
@@ -298,7 +298,7 @@ function TrendChart({
   const deltaText =
     points.length < 2
       ? ''
-      : `${locale === 'en-US' ? ', ' : '、'}${Math.abs(deltaValue) < Math.pow(10, -fractionDigits) / 2
+      : `${locale === 'en-US' ? ', ' : '、' /* i18n-ignore: locale-conditional punctuation */}${Math.abs(deltaValue) < Math.pow(10, -fractionDigits) / 2
           ? tr('bodyStats.noChange')
           : tr(deltaValue > 0 ? 'bodyStats.deltaPlus' : 'bodyStats.deltaMinus', {
               value: fmt(Math.abs(deltaValue)),

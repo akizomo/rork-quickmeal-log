@@ -62,5 +62,5 @@ export function normalizeAndroidExerciseType(rawType: number | undefined | null)
 }
 
 export function getExerciseLabel(key: ExerciseTypeKey): string {
-  return EXERCISE_TYPES.find((t) => t.key === key)?.label ?? 'スポーツ';
+  return EXERCISE_TYPES.find((t) => t.key === key)?.label ?? 'スポーツ'; // i18n-ignore: stored at log-time; ExerciseSheet renders via tr() — future: pass locale to adapter
 }

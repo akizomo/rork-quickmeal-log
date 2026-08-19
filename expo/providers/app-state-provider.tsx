@@ -621,7 +621,7 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
             timestamp: existing.timestamp,
             mealSlot: existing.mealSlot,
             wasShortTap: existing.wasShortTap, // preserve original origin flag
-          });
+          }, settings.uiLanguage);
           await replaceLog(updated);
           setIdentityLogSheet({ visible: false });
           return updated;
@@ -636,7 +636,7 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
         timestamp: now.toISOString(),
         mealSlot: getMealSlot(now),
         wasShortTap: opts?.wasShortTap,
-      });
+      }, settings.uiLanguage);
       const log = applyLoggingDate(baseLog);
       await pushLog(log);
 
@@ -718,7 +718,7 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       if (payload.topCategoryKey) {
         const subcategoryKey = payload.subcategoryKey ?? 'default';
         const parts = [payload.subcategoryLabel, payload.portionPrimaryLabel].filter(Boolean);
-        const amountLabel = parts.length > 0 ? parts.join(' · ') : '1食';
+        const amountLabel = parts.length > 0 ? parts.join(' · ') : '1食'; // i18n-ignore: legacy quick-log system, JA-only path
         const currentHistory = (settings.quickLogHistory ?? {}) as QuickLogHistoryMap;
         const nextHistory = recordDishSelection(
           currentHistory, payload.topCategoryKey, subcategoryKey, amountLabel,
@@ -756,7 +756,7 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       // baseLog.portionLabel: 量ラベル (例: '1人前')
       if (selectedMode === 'dish' && baseLog) {
         const subcategoryKey = baseLog.subTypeKey ?? 'default';
-        const amountLabel = baseLog.portionLabel ?? '1食';
+        const amountLabel = baseLog.portionLabel ?? '1食'; // i18n-ignore: legacy quick-log system, JA-only path
         const currentHistory = (settings.quickLogHistory ?? {}) as QuickLogHistoryMap;
         const nextHistory = recordDishSelection(
           currentHistory, categoryKey, subcategoryKey, amountLabel,

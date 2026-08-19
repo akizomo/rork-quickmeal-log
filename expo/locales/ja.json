@@ -334,6 +334,10 @@
       "continueLose": "減量を続ける",
       "continueGain": "増量を続ける",
       "maintainCurrent": "今の体重（{{current}}{{unit}}）を維持"
+    },
+    "notes": {
+      "floorApplied": "下限 {{kcal}}kcal を適用しました。",
+      "transitionWarning": "脂肪を増やしつつ筋量を減らす方向は非推奨です。別の目標を検討してください。"
     }
   },
   "errorBoundary": {

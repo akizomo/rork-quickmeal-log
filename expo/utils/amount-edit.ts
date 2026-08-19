@@ -10,6 +10,7 @@
 import { SushiModeDef, PizzaConfig } from '@/constants/dish-master';
 import { AmountSpec, AmountUnit } from '@/types/identity';
 import type { AppLocale } from '@/types/locale';
+import { UNIT_LABELS } from './unit-labels';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -272,35 +273,12 @@ export function buildPizzaAmountEditConfig(
     max: config.maxSlices,
     step,
     decimals: decimalsFromStep(step),
-    unitLabel: '切',
+    unitLabel: '切', // i18n-ignore: sushi-specific JA unit label, not shown to EN users (sushi tab is JA food DB)
     presets: config.presetSlices,
     defaultValue: config.presetSlices[0] ?? config.minSlices,
   };
 }
 
-/** Default suffix labels for AmountUnit values. */
-const UNIT_LABEL_FALLBACK: Record<AppLocale, Record<AmountUnit, string>> = {
-  ja: {
-    g: 'g',
-    ml: 'ml',
-    piece: '個',
-    serving: '人前',
-    percent: '%',
-    plate: '皿',
-    slice: '切',
-    cut: '切れ',
-  },
-  'en-US': {
-    g: 'g',
-    ml: 'ml',
-    piece: 'pcs',
-    serving: 'servings',
-    percent: '%',
-    plate: 'plates',
-    slice: 'slices',
-    cut: 'pieces',
-  },
-};
 
 /** 数え物の単位 (個/切/切れ/皿)。半端が「半分」「1/4」で表現される。 */
 const COUNT_UNITS: ReadonlySet<AmountUnit> = new Set<AmountUnit>([
@@ -357,7 +335,7 @@ export function buildIdentityAmountEditConfig(
       ? lastChipValue * 4
       : spec.default * 4);
 
-  const unitLabel = spec.unitLabel ?? UNIT_LABEL_FALLBACK[uiLanguage][spec.unit] ?? spec.unit;
+  const unitLabel = spec.unitLabel ?? UNIT_LABELS[uiLanguage][spec.unit] ?? spec.unit;
 
   return {
     min: derivedMin,

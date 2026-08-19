@@ -155,6 +155,7 @@ export default function OnboardingRoute() {
       currentBodyFatPct: bodyFatPct ? Number(bodyFatPct) : null,
       currentStage,
       targetStage,
+      locale: settings.uiLanguage,
     });
   }, [activityLevel, ageYears, basis, bodyFatPct, currentStage, direction, heightCm, paceLevel, targetBodyType9, targetStage, weightKg]);
 

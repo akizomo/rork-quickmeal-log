@@ -12,6 +12,8 @@
 import { getBucketDef, getIdentity } from '@/constants/identity';
 import { Identity } from '@/types/identity';
 import { FoodLog, MealSlot } from '@/types/nutrition';
+import type { AppLocale } from '@/types/locale';
+import { UNIT_LABELS } from './unit-labels';
 import { ResolveResult } from './identity-resolver';
 
 export interface BridgeMeta {
@@ -31,7 +33,7 @@ export interface BridgeMeta {
  * - `subTypeKey` / `subTypeLabel` mirror the recordIdentity itself.
  * - `identityId` / `originIdentityId` carry the new IA metadata.
  */
-export function logDraftToFoodLog(draft: ResolveResult, meta: BridgeMeta): FoodLog {
+export function logDraftToFoodLog(draft: ResolveResult, meta: BridgeMeta, locale: AppLocale = 'ja'): FoodLog {
   const recordIdentity = requireIdentity(draft.recordIdentityId);
   const bucketKey = recordIdentity.primaryHome.bucket;
   const bucketDef = getBucketDef(bucketKey);
@@ -52,7 +54,7 @@ export function logDraftToFoodLog(draft: ResolveResult, meta: BridgeMeta): FoodL
     styleKey: draft.styleKey,
     amountValue: draft.amountValue,
     amountUnit: toLegacyAmountUnit(recordIdentity),
-    amountLabel: buildAmountLabel(recordIdentity, draft.amountValue),
+    amountLabel: buildAmountLabel(recordIdentity, draft.amountValue, locale),
     identityId: recordIdentity.id,
     originIdentityId: draft.originIdentityId,
     appliedAddons: draft.addons?.map((a) => ({
@@ -81,18 +83,13 @@ function toLegacyAmountUnit(identity: Identity): 'g' | 'ml' | 'piece' {
   return 'piece';
 }
 
-function buildAmountLabel(identity: Identity, amountValue: number): string {
+function buildAmountLabel(identity: Identity, amountValue: number, locale: AppLocale): string {
   const u = identity.amount.unit;
   // chip-aware: if value matches a defined chip exactly, prefer its human label
   // (e.g. "1人前", "大盛"). Falls back to numeric + suffix otherwise.
   const chipHit = identity.amount.chips?.find((c) => c.value === amountValue);
   if (chipHit) return chipHit.label;
-  if (u === 'g' || u === 'ml') return `${amountValue}${u}`;
-  if (u === 'piece') return `${amountValue}${identity.amount.unitLabel ?? '個'}`;
-  if (u === 'plate') return `${amountValue}皿`;
-  if (u === 'slice') return `${amountValue}切`;
-  if (u === 'cut') return `${amountValue}切れ`;
-  if (u === 'percent') return `${amountValue}%`;
-  if (u === 'serving') return `${amountValue}${identity.amount.unitLabel ?? '人前'}`;
-  return `${amountValue}`;
+  if (u === 'g' || u === 'ml' || u === 'percent') return `${amountValue}${u === 'percent' ? '%' : u}`;
+  const unitLabel = identity.amount.unitLabel ?? UNIT_LABELS[locale][u];
+  return `${amountValue}${unitLabel}`;
 }

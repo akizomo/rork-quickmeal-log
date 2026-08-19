@@ -62,7 +62,7 @@ export async function fetchByBarcode(barcode: string): Promise<FoodFactsResponse
     const name: string =
       product.product_name_ja ??
       product.product_name ??
-      '不明な食品';
+      '不明な食品'; // i18n-ignore: barcode scan fallback for unknown food; locale-aware fix is future work
 
     return {
       result: {

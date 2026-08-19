@@ -174,7 +174,7 @@ export default function PaywallRoute() {
                 style={{ alignItems: 'center', paddingVertical: 8 }}
               >
                 <Text style={{ fontSize: fs.xs, color: t.colors.status.danger.default, fontWeight: '700' }}>
-                  [DEV] Paywall スキップ
+                  [DEV] Paywall スキップ {/* i18n-ignore: dev-only label */}
                 </Text>
               </Pressable>
             ) : null}

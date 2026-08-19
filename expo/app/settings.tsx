@@ -13,7 +13,7 @@ import { widgetRequestPin } from '@/utils/widget-bridge';
 
 const THEME_OPTION_KEYS: ('system' | 'light' | 'dark')[] = ['system', 'light', 'dark'];
 const LANGUAGE_OPTIONS: { key: 'ja' | 'en-US'; label: string }[] = [
-  { key: 'ja', label: '日本語' },
+  { key: 'ja', label: '日本語' }, // i18n-ignore: language option always shown in its own language
   { key: 'en-US', label: 'English (US)' },
 ];
 const REGION_OPTIONS: { key: 'ja' | 'en-US'; labelKey: string }[] = [
