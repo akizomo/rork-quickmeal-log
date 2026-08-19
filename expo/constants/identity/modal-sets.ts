@@ -17,8 +17,9 @@
  */
 
 import { BucketKey } from '@/types/identity';
+import type { AppLocale } from '@/types/locale';
 
-import { getIdentitiesInBucket, getBucketDef } from './index';
+import { buildRegistry, getIdentitiesInBucket, getBucketDef } from './index';
 
 // ---------------------------------------------------------------------------
 // 1. Modal-set membership table
@@ -89,38 +90,66 @@ void getDefaultServingMacro; // exported via resolveBucketView
  * P/F/C カロリー寄与比から主成分タグキーを判定する。
  * intro infographic / help infographic で同じ判定を使う。
  */
-export type PfcTagKey = 'tag-c' | 'tag-c-light' | 'tag-p' | 'tag-f' | 'tag-pf' | 'tag-fc' | 'tag-pc' | 'tag-balance';
+export type PfcTagKey = 'tag-c' | 'tag-c-light' | 'tag-p' | 'tag-f' | 'tag-pf' | 'tag-fc' | 'tag-pc' | 'tag-balance' | 'tag-none';
+
+const PFC_TAG_LABELS: Record<AppLocale, Record<PfcTagKey, string>> = {
+  ja: {
+    'tag-c': 'C 多め',
+    'tag-p': 'P 主体',
+    'tag-f': 'F のみ',
+    'tag-balance': 'バランス',
+    'tag-pf': 'P + F',
+    'tag-fc': 'F + C',
+    'tag-pc': 'P + C',
+    'tag-c-light': 'C 少なめ',
+    'tag-none': '—',
+  },
+  'en-US': {
+    'tag-c': 'Carb-heavy',
+    'tag-p': 'Protein-focused',
+    'tag-f': 'Fat only',
+    'tag-balance': 'Balanced',
+    'tag-pf': 'P + F',
+    'tag-fc': 'F + C',
+    'tag-pc': 'P + C',
+    'tag-c-light': 'Light carb',
+    'tag-none': '—',
+  },
+};
+
+export function pfcTagLabel(key: PfcTagKey, lang: AppLocale): string {
+  return PFC_TAG_LABELS[lang]?.[key] ?? PFC_TAG_LABELS.ja[key];
+}
 
 export function classifyPfcTag(macro: { protein: number; fat: number; carbs: number }): {
   key: PfcTagKey;
-  label: string;
 } {
   const pKcal = macro.protein * 4;
   const fKcal = macro.fat * 9;
   const cKcal = macro.carbs * 4;
   const total = pKcal + fKcal + cKcal;
-  if (total <= 0) return { key: 'tag-c-light', label: '—' };
+  if (total <= 0) return { key: 'tag-none' };
 
   const pRatio = pKcal / total;
   const fRatio = fKcal / total;
   const cRatio = cKcal / total;
 
   // Single dominant macro (>= 70%)
-  if (cRatio >= 0.7) return { key: 'tag-c', label: 'C 多め' };
-  if (pRatio >= 0.7) return { key: 'tag-p', label: 'P 主体' };
-  if (fRatio >= 0.95) return { key: 'tag-f', label: 'F のみ' };
+  if (cRatio >= 0.7) return { key: 'tag-c' };
+  if (pRatio >= 0.7) return { key: 'tag-p' };
+  if (fRatio >= 0.95) return { key: 'tag-f' };
 
   // Two-way mixes (each >= 25%)
   const above25 = (pRatio >= 0.25 ? 1 : 0) + (fRatio >= 0.25 ? 1 : 0) + (cRatio >= 0.25 ? 1 : 0);
-  if (above25 >= 3) return { key: 'tag-balance', label: 'バランス' };
+  if (above25 >= 3) return { key: 'tag-balance' };
 
-  if (pRatio >= 0.25 && fRatio >= 0.25) return { key: 'tag-pf', label: 'P + F' };
-  if (fRatio >= 0.25 && cRatio >= 0.25) return { key: 'tag-fc', label: 'F + C' };
-  if (pRatio >= 0.25 && cRatio >= 0.25) return { key: 'tag-pc', label: 'P + C' };
+  if (pRatio >= 0.25 && fRatio >= 0.25) return { key: 'tag-pf' };
+  if (fRatio >= 0.25 && cRatio >= 0.25) return { key: 'tag-fc' };
+  if (pRatio >= 0.25 && cRatio >= 0.25) return { key: 'tag-pc' };
 
   // Fallback: "C 少なめ" — kcal小で C 主体だがバー控えめ
-  if (cRatio >= fRatio && cRatio >= pRatio) return { key: 'tag-c-light', label: 'C 少なめ' };
-  return { key: 'tag-c-light', label: '—' };
+  if (cRatio >= fRatio && cRatio >= pRatio) return { key: 'tag-c-light' };
+  return { key: 'tag-none' };
 }
 
 // ---------------------------------------------------------------------------
@@ -149,8 +178,11 @@ export interface BucketHelpView {
  * - bucket level または default Identity level で quickTapDisabled の場合は
  *   modal range を null にして UI 側で「長押し」表記にする
  */
-export function resolveBucketHelpView(bucketKey: BucketKey): BucketHelpView {
+export function resolveBucketHelpView(bucketKey: BucketKey, uiLanguage: AppLocale = 'ja'): BucketHelpView {
   const bucketDef = getBucketDef(bucketKey);
+  const localizedLabel = buildRegistry('ja', uiLanguage).buckets.find((b) => b.key === bucketKey)?.label
+    ?? bucketDef?.label
+    ?? '';
   const identities = getIdentitiesInBucket(bucketKey);
   const modalIds = MODAL_SETS[bucketKey] ?? [];
 
@@ -164,11 +196,12 @@ export function resolveBucketHelpView(bucketKey: BucketKey): BucketHelpView {
   const modalKcalMin = kcals.length > 0 ? Math.min(...kcals) : null;
   const modalKcalMax = kcals.length > 0 ? Math.max(...kcals) : null;
 
-  const pfcTag = defaultIdentity ? classifyPfcTag(defaultIdentity.defaultMacro) : null;
+  const pfcTagKey = defaultIdentity ? classifyPfcTag(defaultIdentity.defaultMacro).key : null;
+  const pfcTag = pfcTagKey ? { key: pfcTagKey, label: pfcTagLabel(pfcTagKey, uiLanguage) } : null;
 
   return {
     bucketKey,
-    label: bucketDef?.label ?? '',
+    label: localizedLabel,
     emoji: bucketDef?.emoji ?? '',
     isQuickTapDisabled,
     defaultIdentityId: defaultIdentity?.id ?? null,

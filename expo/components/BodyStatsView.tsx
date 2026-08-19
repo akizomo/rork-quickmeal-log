@@ -183,6 +183,8 @@ interface TrendChartProps {
   emptyMessage: string;
   /** 指標名 ("体重" 等)。スクリーンリーダー向けの代替テキスト生成に使う */
   title: string;
+  /** 表示言語 (軸ラベル・ツールチップの日付整形に使用) */
+  locale?: 'ja' | 'en-US';
 }
 
 function TrendChart({
@@ -195,6 +197,7 @@ function TrendChart({
   grain,
   emptyMessage,
   title,
+  locale,
 }: TrendChartProps) {
   const t = useTheme();
   const tr = useT();
@@ -208,7 +211,7 @@ function TrendChart({
       <View
         style={[styles.chartWrap, { width, height: CHART_HEIGHT }]}
         accessible
-        accessibilityLabel={`${tr('bodyStats.chartA11yLabel', { title })}。${emptyMessage}`}
+        accessibilityLabel={`${tr('bodyStats.chartA11yLabel', { title })}${locale === 'en-US' ? '. ' : '。'}${emptyMessage}`}
       >
         <Text style={[styles.chartEmpty, { color: t.colors.content.secondary }]}>{emptyMessage}</Text>
       </View>
@@ -269,13 +272,13 @@ function TrendChart({
 
   // ラベルは食事タブと統一: 軸端は粒度に応じた簡易表記、点ごとの詳細は食事の formatter を流用。
   const xLabel = (ts: number) =>
-    grain === 'month' ? formatMonthLabel(new Date(ts)) : fmtMD(ts);
+    grain === 'month' ? formatMonthLabel(new Date(ts), locale) : fmtMD(ts);
   const tooltipDate = (ts: number) =>
     grain === 'day'
-      ? formatShortDay(new Date(ts))
+      ? formatShortDay(new Date(ts), locale)
       : grain === 'week'
         ? formatWeekRangeLabel(weekRangeOf(ts))
-        : formatMonthLabel(new Date(ts));
+        : formatMonthLabel(new Date(ts), locale);
 
   // ツールチップ配置: 選択点の中央上に置き、上に余白が無ければ下へ反転。左右端はクランプ。
   const TIP_GAP = 10;
@@ -295,18 +298,38 @@ function TrendChart({
   const deltaText =
     points.length < 2
       ? ''
-      : `、${Math.abs(deltaValue) < Math.pow(10, -fractionDigits) / 2
-          ? '変化なし'
-          : `${deltaValue > 0 ? 'プラス' : 'マイナス'}${fmt(Math.abs(deltaValue))}${unit}`}`;
+      : `${locale === 'en-US' ? ', ' : '、'}${Math.abs(deltaValue) < Math.pow(10, -fractionDigits) / 2
+          ? tr('bodyStats.noChange')
+          : tr(deltaValue > 0 ? 'bodyStats.deltaPlus' : 'bodyStats.deltaMinus', {
+              value: fmt(Math.abs(deltaValue)),
+              unit,
+            })}`;
   const targetText =
     target != null
-      ? `。目標${fmt(target)}${unit}、残り${fmt(Math.abs(lastPoint.value - target))}${unit}`
+      ? tr('bodyStats.targetRemainingSuffix', {
+          target: fmt(target),
+          unit,
+          remaining: fmt(Math.abs(lastPoint.value - target)),
+        })
       : '';
   const chartSummary =
     points.length < 2
-      ? `${xLabel(firstPoint.t)}に${fmt(firstPoint.value)}${unit}の記録が1件${targetText}`
-      : `${xLabel(firstPoint.t)}から${xLabel(lastPoint.t)}まで${points.length}件。` +
-        `${fmt(firstPoint.value)}${unit}から${fmt(lastPoint.value)}${unit}へ${deltaText}${targetText}`;
+      ? tr('bodyStats.singlePointSummary', {
+          date: xLabel(firstPoint.t),
+          value: fmt(firstPoint.value),
+          unit,
+          targetText,
+        })
+      : tr('bodyStats.rangeSummary', {
+          fromDate: xLabel(firstPoint.t),
+          toDate: xLabel(lastPoint.t),
+          count: points.length,
+          fromValue: fmt(firstPoint.value),
+          toValue: fmt(lastPoint.value),
+          unit,
+          deltaText,
+          targetText,
+        });
 
   return (
     <View
@@ -502,7 +525,7 @@ function TrendChart({
 export function BodyStatsView({ period = 'month' }: { period?: BodyPeriod }) {
   const t = useTheme();
   const tr = useT();
-  const { weights, bodyFatEntries, profile } = useAppState();
+  const { weights, bodyFatEntries, profile, settings } = useAppState();
   const { unitSystem } = useUnitSystem();
   const wUnit = weightSuffix(unitSystem);
   const { width: screenWidth } = useWindowDimensions();
@@ -588,6 +611,7 @@ export function BodyStatsView({ period = 'month' }: { period?: BodyPeriod }) {
           unit={wUnit}
           fractionDigits={1}
           grain={grain}
+          locale={settings.uiLanguage}
           emptyMessage={
             weightSeries.length > 0 ? tr('bodyStats.emptyPeriod') : tr('bodyStats.emptyAll')
           }
@@ -616,6 +640,7 @@ export function BodyStatsView({ period = 'month' }: { period?: BodyPeriod }) {
           unit="%"
           fractionDigits={1}
           grain={grain}
+          locale={settings.uiLanguage}
           emptyMessage={
             bodyFatSeries.length > 0
               ? tr('bodyStats.emptyPeriod')

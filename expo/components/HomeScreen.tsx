@@ -21,7 +21,6 @@ import { getEffectiveSubscriptionStatus, trialDaysRemaining, adjustedTargetKcal,
 import { formatDateKey } from '@/utils/nutrition';
 import { formatDayLabel, sumForDate } from '@/utils/history';
 
-const WEEK_DAYS_JA = ['月', '火', '水', '木', '金', '土', '日'];
 const TOLERANCE = 0.15;
 
 const Header = memo(function Header({ viewedDate }: { viewedDate?: Date }) {
@@ -41,8 +40,8 @@ const Header = memo(function Header({ viewedDate }: { viewedDate?: Date }) {
   }, [avatarScale]);
 
   const dateLabel = useMemo(
-    () => (viewedDate ? formatDayLabel(viewedDate) : tr('home.today')),
-    [viewedDate, tr]
+    () => (viewedDate ? formatDayLabel(viewedDate, new Date(), settings.uiLanguage) : tr('home.today')),
+    [viewedDate, tr, settings.uiLanguage]
   );
 
   const showTrialBadge = useMemo(() => {

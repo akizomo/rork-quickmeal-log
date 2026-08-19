@@ -43,8 +43,8 @@ function formatTime(timestamp: string): string {
 }
 
 function LogListItem({ log }: { log: FoodLog }) {
-  const { deleteLog, setEditorLogId, openIdentityLogSheet } = useAppState();
-  const display = getLogDisplayInfo(log);
+  const { deleteLog, setEditorLogId, openIdentityLogSheet, settings } = useAppState();
+  const display = getLogDisplayInfo(log, settings.uiLanguage);
   const handlePress = () => {
     // New IA log → open IdentityLogSheet in edit mode (preload from log)
     if (log.identityId) {
@@ -97,7 +97,7 @@ export const DayLogBottomSheet = memo(
   forwardRef<DayLogBottomSheetRef, Props>(function DayLogBottomSheet({ viewedDate }, ref) {
   const t = useTheme();
   const tr = useT();
-  const { logs, todayLogs, todayMacro } = useAppState();
+  const { logs, todayLogs, todayMacro, settings } = useAppState();
   const { height: screenHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
 
@@ -114,7 +114,7 @@ export const DayLogBottomSheet = memo(
     [isToday, todayMacro, logs, dateKey]
   );
 
-  const titleText = isToday ? tr('dayLog.todayTitle') : tr('dayLog.dayTitle', { day: formatShortDay(viewedDate) });
+  const titleText = isToday ? tr('dayLog.todayTitle') : tr('dayLog.dayTitle', { day: formatShortDay(viewedDate, settings.uiLanguage) });
 
   const peekHeight = PEEK_HEIGHT_PX;
   const halfHeight = Math.round(screenHeight * SNAP_RATIOS.half);
@@ -260,7 +260,7 @@ export const DayLogBottomSheet = memo(
             <View>
               <Text style={[styles.title, { color: t.colors.content.primary }]}>{titleText}</Text>
               <Text style={[styles.subtitle, { color: t.colors.content.secondary }]}>
-                {dayLogs.length}件 · {Math.round(dayMacro.kcal)} kcal
+                {tr('dayLog.countSummary', { count: dayLogs.length, kcal: Math.round(dayMacro.kcal) })}
               </Text>
             </View>
             <Pressable

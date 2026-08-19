@@ -18,6 +18,7 @@
 
 import {
   PURE_ADDONS_BY_ID,
+  buildRegistry,
   getBucketDef,
   getIdentity,
 } from '@/constants/identity';
@@ -28,6 +29,7 @@ import {
   StyleOption,
 } from '@/types/identity';
 import { FoodLog, FoodLogAddon } from '@/types/nutrition';
+import type { AppLocale } from '@/types/locale';
 import { migrateAmountValueForUnit } from './amount-migration';
 
 const UNIT_SUFFIX: Record<AmountUnit, string> = {
@@ -53,13 +55,13 @@ export interface LogDisplayInfo {
   addonsText?: string;
 }
 
-export function getLogDisplayInfo(log: FoodLog): LogDisplayInfo {
+export function getLogDisplayInfo(log: FoodLog, uiLanguage: AppLocale = 'ja'): LogDisplayInfo {
   const identity = log.identityId ? getIdentity(log.identityId) : undefined;
 
   // Older logs (pre Phase 2) — fall back to legacy fields.
   if (!identity) {
     return {
-      title: log.subTypeLabel ?? log.categoryLabel ?? '記録',
+      title: log.subTypeLabel ?? log.categoryLabel ?? (uiLanguage === 'en-US' ? 'Log' : '記録'),
       subtitle: undefined,
       amountText: legacyAmountText(log),
       addonsText: legacyAddonsText(log),
@@ -67,13 +69,16 @@ export function getLogDisplayInfo(log: FoodLog): LogDisplayInfo {
   }
 
   const bucket = getBucketDef(identity.primaryHome.bucket);
+  const localizedBucketLabel = bucket
+    ? buildRegistry('ja', uiLanguage).buckets.find((b) => b.key === bucket.key)?.label ?? bucket.label
+    : undefined;
   const isShortTap = log.wasShortTap === true;
 
   // Title rule:
   //   - shortTap → bucket label (matches user's tap target, avoids surprise)
   //   - otherwise → Identity label
-  const title = isShortTap && bucket ? bucket.label : identity.label;
-  const bucketHint = !isShortTap && bucket ? bucket.label : undefined;
+  const title = isShortTap && localizedBucketLabel ? localizedBucketLabel : identity.label;
+  const bucketHint = !isShortTap && localizedBucketLabel ? localizedBucketLabel : undefined;
 
   return {
     title,

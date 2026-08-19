@@ -18,6 +18,8 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { useTheme } from '@/design-system';
 import { fontSize as fs, letterSpacing as ls } from '@/design-system/tokens/primitives/typography';
+import { useT } from '@/hooks/useT';
+import { useLocale } from '@/hooks/useLocale';
 import {
   type BucketHelpView,
   type PfcTagKey,
@@ -33,13 +35,15 @@ interface HelpInfographicProps {
 
 export function HelpInfographic({ bucketKeys, scaleMaxKcal }: HelpInfographicProps) {
   const t = useTheme();
-  const views = bucketKeys.map((k) => resolveBucketHelpView(k));
+  const tr = useT();
+  const { uiLanguage } = useLocale();
+  const views = bucketKeys.map((k) => resolveBucketHelpView(k, uiLanguage));
 
   return (
     <View style={[styles.container, { backgroundColor: t.colors.surface.raised }]}>
       <RangeLegend />
       {views.map((v) => (
-        <BucketRow key={v.bucketKey} view={v} scaleMaxKcal={scaleMaxKcal} />
+        <BucketRow key={v.bucketKey} view={v} scaleMaxKcal={scaleMaxKcal} tr={tr} />
       ))}
     </View>
   );
@@ -59,6 +63,7 @@ export function HelpInfographic({ bucketKeys, scaleMaxKcal }: HelpInfographicPro
 
 function RangeLegend() {
   const t = useTheme();
+  const tr = useT();
   return (
     <View style={styles.legend}>
       <View style={styles.legendItem}>
@@ -68,7 +73,7 @@ function RangeLegend() {
             { backgroundColor: t.colors.action.primary.default, borderColor: t.colors.surface.raised },
           ]}
         />
-        <Text style={[styles.legendText, { color: t.colors.content.secondary }]}>代表値</Text>
+        <Text style={[styles.legendText, { color: t.colors.content.secondary }]}>{tr('help.infographic.representativeValue')}</Text>
       </View>
       <View style={styles.legendItem}>
         <View
@@ -77,7 +82,7 @@ function RangeLegend() {
             { backgroundColor: t.colors.action.primary.container, borderColor: t.colors.action.primary.default },
           ]}
         />
-        <Text style={[styles.legendText, { color: t.colors.content.secondary }]}>食材の幅</Text>
+        <Text style={[styles.legendText, { color: t.colors.content.secondary }]}>{tr('help.infographic.ingredientRange')}</Text>
       </View>
     </View>
   );
@@ -87,7 +92,7 @@ function RangeLegend() {
 // BucketRow — emoji / label / range bar / kcal text / PFC tag
 // ---------------------------------------------------------------------------
 
-function BucketRow({ view, scaleMaxKcal }: { view: BucketHelpView; scaleMaxKcal: number }) {
+function BucketRow({ view, scaleMaxKcal, tr }: { view: BucketHelpView; scaleMaxKcal: number; tr: ReturnType<typeof useT> }) {
   const t = useTheme();
 
   // Range bar geometry (percent positions on the 0–scaleMaxKcal axis)
@@ -105,7 +110,7 @@ function BucketRow({ view, scaleMaxKcal }: { view: BucketHelpView; scaleMaxKcal:
   // kcal text
   let kcalText = '';
   if (view.isQuickTapDisabled) {
-    kcalText = '長押し';
+    kcalText = tr('onboarding.illustrations.gesture.longPress');
   } else if (isSinglePoint) {
     kcalText = `${Math.round(min)}`;
   } else {

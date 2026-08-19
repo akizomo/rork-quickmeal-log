@@ -40,6 +40,7 @@ export const ExerciseSheet = memo(function ExerciseSheet({ visible, onClose, dat
     profile,
     exerciseLogs,
     dailyActivities,
+    settings,
   } = useAppState();
   const [selectedType, setSelectedType] = useState<ExerciseTypeKey>('walking');
   const [minutes, setMinutes] = useState<number>(30);
@@ -131,7 +132,7 @@ export const ExerciseSheet = memo(function ExerciseSheet({ visible, onClose, dat
     }
   }, [hasHealthActivity, selectedType, availableTypes]);
 
-  const dayLabel = useMemo(() => formatDayLabel(new Date(dateKey)), [dateKey]);
+  const dayLabel = useMemo(() => formatDayLabel(new Date(dateKey), new Date(), settings.uiLanguage), [dateKey, settings.uiLanguage]);
   const sheetTitle = tr('exercise.sheetTitle', { day: dayLabel });
 
   return (
@@ -242,7 +243,7 @@ export const ExerciseSheet = memo(function ExerciseSheet({ visible, onClose, dat
                             color: active ? t.colors.action.primary.onContainer : t.colors.content.primary,
                           }}
                         >
-                          {type.label}
+                          {type.key === 'walking' ? tr('exercise.walking') : tr(`exercise.typeLabels.${type.key}`)}
                         </Text>
                       </Pressable>
                     );
@@ -255,7 +256,7 @@ export const ExerciseSheet = memo(function ExerciseSheet({ visible, onClose, dat
               {DURATION_PRESETS.map((preset) => (
                 <Chip
                   key={preset}
-                  label={`${preset}分`}
+                  label={`${preset}${tr('common.unit.min')}`}
                   selected={minutes === preset}
                   onPress={() => setMinutes(preset)}
                   testID={`exercise-duration-${preset}`}
@@ -289,6 +290,9 @@ function ExerciseHistoryRow({ log, onDelete }: { log: ExerciseLog; onDelete: () 
   const tr = useT();
   const styles = useMemo(() => makeStyles(theme), [theme]);
   const type = EXERCISE_TYPES.find((t) => t.key === log.exerciseType);
+  const localizedLabel = type
+    ? (type.key === 'walking' ? tr('exercise.walking') : tr(`exercise.typeLabels.${type.key}`))
+    : log.exerciseLabel;
   const isHealth = log.source === 'health';
   const time = formatLogTime(log.timestamp);
   const subParts = [`${log.minutes}${tr('common.unit.min')}`, time].filter(Boolean) as string[];
@@ -297,7 +301,7 @@ function ExerciseHistoryRow({ log, onDelete }: { log: ExerciseLog; onDelete: () 
       <Text style={styles.historyEmoji}>{type?.emoji ?? '🏅'}</Text>
       <View style={styles.historyMeta}>
         <View style={styles.historyLabelRow}>
-          <Text style={styles.historyLabel}>{log.exerciseLabel}</Text>
+          <Text style={styles.historyLabel}>{localizedLabel}</Text>
           <View style={[styles.sourceBadge, isHealth ? styles.sourceBadgeHealth : styles.sourceBadgeManual]}>
             <Text style={[styles.sourceBadgeText, isHealth ? styles.sourceBadgeTextHealth : styles.sourceBadgeTextManual]}>
               {isHealth ? tr('exercise.sourceHealth') : tr('exercise.sourceManual')}
@@ -312,7 +316,7 @@ function ExerciseHistoryRow({ log, onDelete }: { log: ExerciseLog; onDelete: () 
         size="sm"
         onPress={onDelete}
         testID={`exercise-history-delete-${log.id}`}
-        accessibilityLabel={tr('exercise.deleteA11y', { label: log.exerciseLabel })}
+        accessibilityLabel={tr('exercise.deleteA11y', { label: localizedLabel })}
       />
     </View>
   );

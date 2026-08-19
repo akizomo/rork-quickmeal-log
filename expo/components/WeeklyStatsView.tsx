@@ -5,6 +5,7 @@ import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } fr
 import Svg, { Circle, Polyline, Rect, Text as SvgText } from 'react-native-svg';
 
 import type { Theme } from '@/design-system';
+import { useT } from '@/hooks/useT';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { radius } from '@/design-system/tokens/primitives/radius';
 import { CalorieOverflowRing } from '@/components/CalorieOverflowRing';
@@ -31,11 +32,11 @@ const CHART_HEIGHT = CHART_CONTENT_HEIGHT + CHART_BOTTOM_GAP;
 const CHART_PADDING_TOP = 20;
 const CHART_PADDING_BOTTOM = 38;
 
-const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'] as const;
-
 export function WeeklyStatsView() {
   const { logs, profile, settings, exerciseLogs, dailyActivities } = useAppState();
   const t = useTheme();
+  const tr = useT();
+  const weekdays = tr('monthlyStats.weekDays', { returnObjects: true }) as string[];
   const styles = useMemo(() => makeStyles(t), [t]);
   const router = useRouter();
   const { width: screenWidth } = useWindowDimensions();
@@ -216,7 +217,7 @@ export function WeeklyStatsView() {
   // 読み上げられないため、チャート全体を1要素にまとめて要約を渡す (2026-08-09追加)。
   const chartSummary = useMemo(() => {
     const logged = dailyEntries.filter(([, macro]) => macro.kcal > 0);
-    if (logged.length === 0) return 'この週の記録はありません';
+    if (logged.length === 0) return tr('weeklyStats.noRecordThisWeek');
     const total = logged.reduce((sum, [, macro]) => sum + macro.kcal, 0);
     const avg = Math.round(total / logged.length);
     const exceeded = dailyEntries.filter(
@@ -224,12 +225,14 @@ export function WeeklyStatsView() {
     ).length;
     const days = dailyEntries
       .map(([key, macro]) => {
-        const dow = WEEKDAYS[new Date(key).getDay()];
-        return macro.kcal > 0 ? `${dow}${Math.round(macro.kcal).toLocaleString()}` : `${dow}記録なし`;
+        const dow = weekdays[new Date(key).getDay()];
+        return macro.kcal > 0
+          ? tr('weeklyStats.dayKcal', { dow, kcal: Math.round(macro.kcal).toLocaleString() })
+          : tr('weeklyStats.dayNoRecord', { dow });
       })
-      .join('、');
-    return `記録${logged.length}日、平均${avg.toLocaleString()}kcal、目安超えは${exceeded}日。${days}`;
-  }, [dailyEntries, dayTargets]);
+      .join(settings.uiLanguage === 'en-US' ? ', ' : '、');
+    return tr('weeklyStats.chartA11ySummary', { loggedDays: logged.length, avg: avg.toLocaleString(), exceeded, days });
+  }, [dailyEntries, dayTargets, tr, weekdays, settings.uiLanguage]);
 
   return (
     <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
@@ -242,7 +245,7 @@ export function WeeklyStatsView() {
           onPress={goPrev}
           disabled={!canGoPrev}
           testID="week-prev"
-          accessibilityLabel="前の週へ"
+          accessibilityLabel={tr('weeklyStats.prevWeekA11y')}
         />
         <Text style={styles.headerLabel}>{formatWeekRangeLabel(range)}</Text>
         <IconButton
@@ -253,12 +256,12 @@ export function WeeklyStatsView() {
           onPress={goNext}
           disabled={!canGoNext}
           testID="week-next"
-          accessibilityLabel="次の週へ"
+          accessibilityLabel={tr('weeklyStats.nextWeekA11y')}
         />
       </View>
 
       {/* チャート: 背景なし */}
-      <View accessible accessibilityRole="image" accessibilityLabel="この週のカロリーグラフ" accessibilityHint={chartSummary}>
+      <View accessible accessibilityRole="image" accessibilityLabel={tr('weeklyStats.chartA11y')} accessibilityHint={chartSummary}>
       <Svg width={chartWidth} height={CHART_HEIGHT}>
         {dailyEntries.map(([key, macro], i) => {
           const ratio = macro.kcal / maxKcal;
@@ -268,7 +271,7 @@ export function WeeklyStatsView() {
           const x = centerX - barWidth / 2;
           const y = CHART_PADDING_TOP + (chartInnerHeight - h);
           const date = new Date(key);
-          const dow = WEEKDAYS[date.getDay()];
+          const dow = weekdays[date.getDay()];
           return (
             <React.Fragment key={key}>
               <Rect
@@ -322,13 +325,13 @@ export function WeeklyStatsView() {
       <View style={[styles.summaryCard, { width: chartWidth }]} testID="week-summary">
         <View style={styles.summaryRow}>
           <View style={styles.summaryLeft}>
-            <Text style={styles.summaryTitle}>週平均</Text>
+            <Text style={styles.summaryTitle}>{tr('weeklyStats.averageTitle')}</Text>
             <Text style={styles.summaryKcal}>
               {Math.round(avgMacro.kcal).toLocaleString()}
               <Text style={styles.summaryKcalTarget}> / {Math.round(targetKcal).toLocaleString()} kcal</Text>
             </Text>
             {avgExerciseKcal > 0 ? (
-              <Text style={styles.summaryConsume}>平均消費 {avgExerciseKcal} kcal / 日</Text>
+              <Text style={styles.summaryConsume}>{tr('weeklyStats.averageBurned', { kcal: avgExerciseKcal })}</Text>
             ) : null}
           </View>
           {ringAvg ? (
@@ -351,7 +354,7 @@ export function WeeklyStatsView() {
         <View style={styles.pfcRow} testID="week-pfc-row">
           <MiniProgressBar
             letter="P"
-            label="タンパク質"
+            label={tr('common.macros.protein')}
             current={avgMacro.protein}
             target={avgPfcTarget.protein}
             textColor={t.colors.nutrition.protein.text}
@@ -360,7 +363,7 @@ export function WeeklyStatsView() {
           />
           <MiniProgressBar
             letter="F"
-            label="脂肪"
+            label={tr('common.macros.fat')}
             current={avgMacro.fat}
             target={avgPfcTarget.fat}
             textColor={t.colors.nutrition.fat.text}
@@ -369,7 +372,7 @@ export function WeeklyStatsView() {
           />
           <MiniProgressBar
             letter="C"
-            label="炭水化物"
+            label={tr('common.macros.carbs')}
             current={avgMacro.carbs}
             target={avgPfcTarget.carbs}
             textColor={t.colors.nutrition.carbs.text}
@@ -381,7 +384,7 @@ export function WeeklyStatsView() {
 
       {/* 日別リスト: 個別カードを廃止し、グループ化フラットリストに */}
       <View style={styles.listSection}>
-        <Text style={styles.listTitle}>日別の記録</Text>
+        <Text style={styles.listTitle}>{tr('weeklyStats.dailyRecordsTitle')}</Text>
         <View style={[styles.listGroup, { width: chartWidth }]}>
           {dailyEntries.map(([key, macro], idx) => {
             const date = new Date(key);
@@ -396,15 +399,15 @@ export function WeeklyStatsView() {
                 testID={`week-day-row-${key}`}
               >
                 <View style={styles.dayRowLeft}>
-                  <Text style={styles.dayLabel}>{formatShortDay(date)}</Text>
-                  {!hasLog ? <Text style={styles.dayNoLog}>記録なし</Text> : null}
+                  <Text style={styles.dayLabel}>{formatShortDay(date, settings.uiLanguage)}</Text>
+                  {!hasLog ? <Text style={styles.dayNoLog}>{tr('weeklyStats.noRecord')}</Text> : null}
                 </View>
                 {hasLog ? (
                   <View style={styles.dayRowRight}>
                     <Text style={styles.dayKcal}>{Math.round(macro.kcal)} kcal</Text>
                     <Text style={styles.dayMacroLine}>
                       P{Math.round(macro.protein)} F{Math.round(macro.fat)} C{Math.round(macro.carbs)}
-                      {exerciseKcal > 0 ? ` · 消費 ${Math.round(exerciseKcal)}` : ''}
+                      {exerciseKcal > 0 ? tr('weeklyStats.burnedSuffix', { kcal: Math.round(exerciseKcal) }) : ''}
                     </Text>
                   </View>
                 ) : (

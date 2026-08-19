@@ -5,11 +5,14 @@ import { useTheme, type Theme } from '@/design-system';
 import { duration, easing } from '@/design-system/tokens/primitives/motion';
 import { radius } from '@/design-system/tokens/primitives/radius';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
+import { useT } from '@/hooks/useT';
 import { useAppState } from '@/providers/app-state-provider';
+import { getLogDisplayInfo } from '@/utils/log-display';
 
 export const UndoToast = memo(function UndoToast() {
-  const { undoState, undoLastLog } = useAppState();
+  const { undoState, undoLastLog, settings } = useAppState();
   const t = useTheme();
+  const tr = useT();
   const styles = useMemo(() => makeStyles(t), [t]);
   const opacity = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(16)).current;
@@ -59,12 +62,14 @@ export const UndoToast = memo(function UndoToast() {
     >
       <View>
         <Text style={styles.undoTitle}>
-          {active.kind === 'delete' ? `${active.log.categoryLabel} を削除しました` : `${active.log.categoryLabel} を記録しました`}
+          {tr(active.kind === 'delete' ? 'undoToast.deleted' : 'undoToast.recorded', {
+            label: getLogDisplayInfo(active.log, settings.uiLanguage).title,
+          })}
         </Text>
-        <Text style={[styles.undoText, { color: t.colors.content.inverseSecondary }]}>必要なら元に戻せます</Text>
+        <Text style={[styles.undoText, { color: t.colors.content.inverseSecondary }]}>{tr('undoToast.hint')}</Text>
       </View>
       <Pressable onPress={undoLastLog} testID="undo-button">
-        <Text style={[styles.undoAction, { color: t.colors.action.text.onInverse }]}>取り消す</Text>
+        <Text style={[styles.undoAction, { color: t.colors.action.text.onInverse }]}>{tr('undoToast.undo')}</Text>
       </Pressable>
     </Animated.View>
   );

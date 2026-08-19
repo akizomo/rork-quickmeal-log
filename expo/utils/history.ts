@@ -1,6 +1,15 @@
 import type { FoodLog, Macro } from '@/types/nutrition';
 
 import { addMacro, createEmptyMacro, formatDateKey, roundMacro } from '@/utils/nutrition';
+import ja from '@/locales/ja.json';
+import enUS from '@/locales/en-US.json';
+
+export type HistoryLocale = 'ja' | 'en-US';
+
+const WEEKDAYS_BY_LOCALE: Record<HistoryLocale, readonly string[]> = {
+  ja: ja.monthlyStats.weekDays,
+  'en-US': enUS.monthlyStats.weekDays,
+};
 
 export interface DateRange {
   start: Date;
@@ -119,17 +128,16 @@ export function countLoggedDays(dailyMap: Map<string, Macro>): number {
   return Array.from(dailyMap.values()).filter((m) => m.kcal > 0).length;
 }
 
-const WEEKDAY_JP = ['日', '月', '火', '水', '木', '金', '土'] as const;
-
-export function formatDayLabel(date: Date, today: Date = new Date()): string {
-  if (isSameDay(date, today)) return '今日';
-  if (isSameDay(date, addDays(today, -1))) return '昨日';
-  const dow = WEEKDAY_JP[date.getDay()];
+export function formatDayLabel(date: Date, today: Date = new Date(), locale: HistoryLocale = 'ja'): string {
+  const dict = locale === 'en-US' ? enUS : ja;
+  if (isSameDay(date, today)) return dict.home.today;
+  if (isSameDay(date, addDays(today, -1))) return dict.common.yesterday;
+  const dow = WEEKDAYS_BY_LOCALE[locale][date.getDay()];
   return `${date.getMonth() + 1}/${date.getDate()} (${dow})`;
 }
 
-export function formatShortDay(date: Date): string {
-  const dow = WEEKDAY_JP[date.getDay()];
+export function formatShortDay(date: Date, locale: HistoryLocale = 'ja'): string {
+  const dow = WEEKDAYS_BY_LOCALE[locale][date.getDay()];
   return `${date.getMonth() + 1}/${date.getDate()} (${dow})`;
 }
 
@@ -142,8 +150,9 @@ export function formatWeekRangeLabel(range: DateRange): string {
   return `${startLabel} – ${endLabel}`;
 }
 
-export function formatMonthLabel(anchor: Date): string {
-  return `${anchor.getFullYear()}年 ${anchor.getMonth() + 1}月`;
+export function formatMonthLabel(anchor: Date, locale: HistoryLocale = 'ja'): string {
+  const intlLocale = locale === 'en-US' ? 'en-US' : 'ja-JP';
+  return new Intl.DateTimeFormat(intlLocale, { year: 'numeric', month: 'long' }).format(anchor);
 }
 
 // Earliest date a user can navigate to. Falls back to oldest log date or today.

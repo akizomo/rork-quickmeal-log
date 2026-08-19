@@ -47,7 +47,8 @@
       "kg": "kg",
       "lbs": "lbs",
       "cm": "cm"
-    }
+    },
+    "yesterday": "昨日"
   },
   "intro": {
     "slides": [
@@ -355,7 +356,8 @@
     "emptyText": "上のボタンから、その日の食事をすばやく残せます。",
     "open": "ひらく",
     "fullscreen": "全画面",
-    "close": "とじる"
+    "close": "とじる",
+    "countSummary": "{{count}}件 · {{kcal}} kcal"
   },
   "directInput": {
     "title": "数値で入力",
@@ -404,7 +406,16 @@
     "goalAdditionCapped": "目標に追加（上限あり）",
     "burnedCaloriesLabel": "消費カロリー",
     "add": "追加",
-    "deleteA11y": "{{label}} を削除"
+    "deleteA11y": "{{label}} を削除",
+    "typeLabels": {
+      "running": "ランニング",
+      "cycling": "サイクリング",
+      "strength": "筋トレ",
+      "yoga": "ヨガ",
+      "swimming": "水泳",
+      "hiit": "HIIT",
+      "other": "スポーツ"
+    }
   },
   "identityLog": {
     "sections": {
@@ -448,7 +459,20 @@
       "木",
       "金",
       "土"
-    ]
+    ],
+    "tierLabel": {
+      "within": "目安の範囲内",
+      "mildExceed": "やや多め",
+      "severeExceed": "大きく超過"
+    },
+    "a11yDate": "{{month}}月{{day}}日",
+    "a11yDateNoRecord": "{{month}}月{{day}}日、記録なし",
+    "a11yDateSummary": "{{month}}月{{day}}日、{{kcal}}kcal、{{tier}}",
+    "averageTitle": "{{month}} の平均",
+    "averageBurned": "平均消費 {{kcal}} kcal / 日",
+    "dailyRecordsTitle": "日別の記録",
+    "noRecord": "記録なし",
+    "burnedSuffix": " · 消費 {{kcal}}"
   },
   "amountEdit": {
     "defaultTitle": "量を変更",
@@ -466,7 +490,13 @@
     "emptyPeriod": "この期間の記録はありません",
     "emptyAll": "記録が増えると推移が表示されます",
     "goalLabel": "目標",
-    "chartA11yLabel": "{{title}}の推移グラフ"
+    "chartA11yLabel": "{{title}}の推移グラフ",
+    "noChange": "変化なし",
+    "deltaPlus": "プラス{{value}}{{unit}}",
+    "deltaMinus": "マイナス{{value}}{{unit}}",
+    "targetRemainingSuffix": "。目標{{target}}{{unit}}、残り{{remaining}}{{unit}}",
+    "singlePointSummary": "{{date}}に{{value}}{{unit}}の記録が1件{{targetText}}",
+    "rangeSummary": "{{fromDate}}から{{toDate}}まで{{count}}件。{{fromValue}}{{unit}}から{{toValue}}{{unit}}へ{{deltaText}}{{targetText}}"
   },
   "weeklyRecap": {
     "close": "とじる",
@@ -551,6 +581,10 @@
         "q4": "もっと厳密に計算したい場合は？",
         "a4": "このアプリは「ざっくり、続ける」を優先した設計です。1g単位で計算したい方は、食品成分表ベースの計測アプリ (あすけん等) との併用がおすすめです。"
       }
+    },
+    "infographic": {
+      "representativeValue": "代表値",
+      "ingredientRange": "食材の幅"
     }
   },
   "settings": {
@@ -793,6 +827,134 @@
         "カロリーは維持カロリーを目安に",
         "変化はゆっくり。体重より体型の変化を見る"
       ]
+    },
+    "illustrations": {
+      "buckets": {
+        "staple": "主食",
+        "leanProtein": "低脂P",
+        "egg": "卵",
+        "fattyProtein": "脂P",
+        "dairySoy": "乳大豆",
+        "vegetable": "野菜",
+        "fruit": "果物",
+        "oilSeasoning": "油調味",
+        "snack": "おやつ"
+      },
+      "gesture": {
+        "tap": "タップ",
+        "riceExample": "ご飯1杯 234 kcal",
+        "quickLogHint": "代表値で即記録",
+        "longPress": "長押し",
+        "chooseTypeAmount": "種類・量を選択",
+        "breadNoodleExample": "パン / 麺 / 大盛 …"
+      },
+      "frequentTab": {
+        "rice": "ごはん",
+        "ramen": "ラーメン",
+        "salad": "サラダ"
+      },
+      "tabs": [
+        "食材",
+        "一皿料理",
+        "⭐️"
+      ]
     }
+  },
+  "statusCard": {
+    "meals": "食事",
+    "burned": "消費",
+    "a11y": {
+      "openMealLog": "食事ログを開く",
+      "openMealLogHint": "今日の食事ログを開きます",
+      "showBalance": "今日の収支を表示",
+      "showBalanceHint": "食事と消費の内訳を表示します",
+      "viewExerciseDetail": "消費の詳細を見る",
+      "viewExerciseDetailHint": "今日の運動履歴と追加のシートを開きます"
+    },
+    "balance": {
+      "over": "オーバー",
+      "remaining": "残り",
+      "baseGoal": "ベース目標",
+      "activityIncluded": "普段の活動「{{level}}」を含む",
+      "todayGoal": "今日の目標",
+      "adjusting": "調整中（{{index}}/{{total}}日目）",
+      "meals": "食事",
+      "addedActivity": "活動・運動"
+    },
+    "carryover": {
+      "activePlan": "調整中（{{days}}日間）",
+      "changePlanA11y": "プランを変更する",
+      "change": "変更",
+      "stop": "やめる",
+      "stopAdjustingA11y": "調整をやめる",
+      "startAdjustingA11y": "食事の調整をはじめる",
+      "yesterdayOverBanner": "昨日の食事、少し多めでした — 調整する",
+      "stopDialogTitle": "調整プランをやめますか？",
+      "stopDialogBody": "残りの調整がキャンセルされ、毎日の目標カロリーが通常に戻ります。",
+      "continue": "続ける"
+    },
+    "carryoverSheet": {
+      "titleStart": "帳尻調整プランを設定",
+      "titleEdit": "調整プランを変更",
+      "confirmStart": "開始",
+      "confirmEdit": "変更",
+      "stopPlan": "プランをやめる",
+      "remainingAdjustment": "残り調整分",
+      "surplusCalories": "余剰カロリー",
+      "daysToSplit": "分割する日数",
+      "days": "日間",
+      "perDaySummary": "1日あたり{{perDay}} kcalずつ差し引き",
+      "decreaseDaysA11y": "日数を減らす",
+      "increaseDaysA11y": "日数を増やす",
+      "hardError": "1日 {{kcal}} kcal は健康的な目安を大きく下回るため設定できません",
+      "softWarn": "1日 {{kcal}} kcal — 推奨される最低ライン（{{floor}} kcal）を下回ります",
+      "summary": "{{start}}から{{days}}日間、毎日の目標から{{perDay}} kcalを差し引きます。",
+      "startToday": "今日",
+      "startTomorrow": "明日"
+    },
+    "carryoverBanner": {
+      "newPlan": "余剰カロリーを調整する",
+      "activePlan": "調整プラン 実行中 · 残り {{days}} 日",
+      "newPlanBody": "昨日+{{surplus}}kcal超過。調整を始めますか？",
+      "setUp": "設定する",
+      "change": "変更",
+      "setUpA11y": "調整プランを設定する",
+      "changeA11y": "調整プランを変更する"
+    },
+    "weeklyRecap": {
+      "title": "先週の振り返り",
+      "a11y": "先週の振り返りを見る"
+    }
+  },
+  "weeklyStats": {
+    "noRecordThisWeek": "この週の記録はありません",
+    "dayKcal": "{{dow}}{{kcal}}",
+    "dayNoRecord": "{{dow}}記録なし",
+    "chartA11ySummary": "記録{{loggedDays}}日、平均{{avg}}kcal、目安超えは{{exceeded}}日。{{days}}",
+    "prevWeekA11y": "前の週へ",
+    "nextWeekA11y": "次の週へ",
+    "chartA11y": "この週のカロリーグラフ",
+    "averageTitle": "週平均",
+    "averageBurned": "平均消費 {{kcal}} kcal / 日",
+    "dailyRecordsTitle": "日別の記録",
+    "noRecord": "記録なし",
+    "burnedSuffix": " · 消費 {{kcal}}"
+  },
+  "undoToast": {
+    "deleted": "{{label}} を削除しました",
+    "recorded": "{{label}} を記録しました",
+    "undo": "取り消す",
+    "hint": "必要なら元に戻せます"
+  },
+  "search": {
+    "title": "食品を検索",
+    "placeholder": "例: アボカド、チキン、ラーメン",
+    "clearA11y": "検索をクリア",
+    "suggestions": "もしかして",
+    "categoryHint": "このカテゴリかも",
+    "noResults": "見つかりませんでした",
+    "notFoundPrompt": "食品が見つかりませんか？",
+    "enterManuallyA11y": "数値で直接入力する",
+    "enterManually": "数値で入力する"
   }
 }

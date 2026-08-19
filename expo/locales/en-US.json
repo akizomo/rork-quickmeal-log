@@ -47,7 +47,8 @@
       "kg": "kg",
       "lbs": "lbs",
       "cm": "cm"
-    }
+    },
+    "yesterday": "Yesterday"
   },
   "intro": {
     "slides": [
@@ -355,7 +356,8 @@
     "emptyText": "Use the buttons above to quickly log your meals.",
     "open": "Open",
     "fullscreen": "Full screen",
-    "close": "Close"
+    "close": "Close",
+    "countSummary": "{{count}} items · {{kcal}} kcal"
   },
   "directInput": {
     "title": "Enter numbers",
@@ -404,7 +406,16 @@
     "goalAdditionCapped": "Added to goal (capped)",
     "burnedCaloriesLabel": "Calories burned",
     "add": "Add",
-    "deleteA11y": "Delete {{label}}"
+    "deleteA11y": "Delete {{label}}",
+    "typeLabels": {
+      "running": "Running",
+      "cycling": "Cycling",
+      "strength": "Strength",
+      "yoga": "Yoga",
+      "swimming": "Swimming",
+      "hiit": "HIIT",
+      "other": "Sports"
+    }
   },
   "identityLog": {
     "sections": {
@@ -448,7 +459,20 @@
       "Thu",
       "Fri",
       "Sat"
-    ]
+    ],
+    "tierLabel": {
+      "within": "Within target",
+      "mildExceed": "Slightly over",
+      "severeExceed": "Significantly over"
+    },
+    "a11yDate": "{{month}}/{{day}}",
+    "a11yDateNoRecord": "{{month}}/{{day}}, no record",
+    "a11yDateSummary": "{{month}}/{{day}}, {{kcal}}kcal, {{tier}}",
+    "averageTitle": "{{month}} average",
+    "averageBurned": "Avg burned {{kcal}} kcal / day",
+    "dailyRecordsTitle": "Daily records",
+    "noRecord": "No record",
+    "burnedSuffix": " · Burned {{kcal}}"
   },
   "amountEdit": {
     "defaultTitle": "Edit amount",
@@ -466,7 +490,13 @@
     "emptyPeriod": "No records in this period",
     "emptyAll": "Your trend will appear as records build up",
     "goalLabel": "Goal",
-    "chartA11yLabel": "{{title}} trend chart"
+    "chartA11yLabel": "{{title}} trend chart",
+    "noChange": "No change",
+    "deltaPlus": "+{{value}}{{unit}}",
+    "deltaMinus": "-{{value}}{{unit}}",
+    "targetRemainingSuffix": ". Target {{target}}{{unit}}, {{remaining}}{{unit}} to go",
+    "singlePointSummary": "{{date}}: one record of {{value}}{{unit}}{{targetText}}",
+    "rangeSummary": "{{fromDate}} to {{toDate}}, {{count}} records. {{fromValue}}{{unit}} to {{toValue}}{{unit}}{{deltaText}}{{targetText}}"
   },
   "weeklyRecap": {
     "close": "Close",
@@ -551,6 +581,10 @@
         "q4": "What if I want more precise tracking?",
         "a4": "This app is designed around \"roughly, consistently\". For gram-level precision, pairing with a food-composition app (e.g. Asken) works well."
       }
+    },
+    "infographic": {
+      "representativeValue": "Typical value",
+      "ingredientRange": "Ingredient range"
     }
   },
   "settings": {
@@ -600,13 +634,13 @@
   "home": {
     "today": "Today",
     "weekDays": [
-      "Mon",
-      "Tue",
-      "Wed",
-      "Thu",
-      "Fri",
-      "Sat",
-      "Sun"
+      "M",
+      "T",
+      "W",
+      "T",
+      "F",
+      "S",
+      "S"
     ],
     "a11y": {
       "profile": "Profile",
@@ -793,6 +827,134 @@
         "Stay near maintenance calories",
         "Change is gradual — track shape more than weight"
       ]
+    },
+    "illustrations": {
+      "buckets": {
+        "staple": "Staples",
+        "leanProtein": "Lean protein",
+        "egg": "Egg",
+        "fattyProtein": "Fatty protein",
+        "dairySoy": "Dairy & soy",
+        "vegetable": "Vegetables",
+        "fruit": "Fruit",
+        "oilSeasoning": "Oil & sauces",
+        "snack": "Snacks"
+      },
+      "gesture": {
+        "tap": "Tap",
+        "riceExample": "1 bowl of rice, 234 kcal",
+        "quickLogHint": "Log instantly with a typical value",
+        "longPress": "Long-press",
+        "chooseTypeAmount": "Choose type & amount",
+        "breadNoodleExample": "Bread / noodles / large …"
+      },
+      "frequentTab": {
+        "rice": "Rice",
+        "ramen": "Ramen",
+        "salad": "Salad"
+      },
+      "tabs": [
+        "Ingredients",
+        "Dishes",
+        "⭐️"
+      ]
     }
+  },
+  "statusCard": {
+    "meals": "Meals",
+    "burned": "Burned",
+    "a11y": {
+      "openMealLog": "Open meal log",
+      "openMealLogHint": "Opens today's meal log",
+      "showBalance": "Show today's balance",
+      "showBalanceHint": "Shows a breakdown of meals and calories burned",
+      "viewExerciseDetail": "View burn details",
+      "viewExerciseDetailHint": "Opens today's exercise history and add sheet"
+    },
+    "balance": {
+      "over": "Over",
+      "remaining": "Remaining",
+      "baseGoal": "Base goal",
+      "activityIncluded": "Includes your usual activity level (\"{{level}}\")",
+      "todayGoal": "Today's goal",
+      "adjusting": "Adjusting (day {{index}}/{{total}})",
+      "meals": "Meals",
+      "addedActivity": "Activity & exercise"
+    },
+    "carryover": {
+      "activePlan": "Adjusting ({{days}} days)",
+      "changePlanA11y": "Change plan",
+      "change": "Change",
+      "stop": "Stop",
+      "stopAdjustingA11y": "Stop adjusting",
+      "startAdjustingA11y": "Start adjusting meals",
+      "yesterdayOverBanner": "Yesterday's meals were a bit much — adjust?",
+      "stopDialogTitle": "Stop the adjustment plan?",
+      "stopDialogBody": "Remaining adjustments will be canceled and your daily goal will return to normal.",
+      "continue": "Continue"
+    },
+    "carryoverSheet": {
+      "titleStart": "Set up an adjustment plan",
+      "titleEdit": "Change adjustment plan",
+      "confirmStart": "Start",
+      "confirmEdit": "Change",
+      "stopPlan": "Stop plan",
+      "remainingAdjustment": "Remaining adjustment",
+      "surplusCalories": "Surplus calories",
+      "daysToSplit": "Days to split across",
+      "days": "days",
+      "perDaySummary": "Deducting {{perDay}} kcal per day",
+      "decreaseDaysA11y": "Decrease days",
+      "increaseDaysA11y": "Increase days",
+      "hardError": "{{kcal}} kcal/day is well below a healthy minimum, so this can't be set",
+      "softWarn": "{{kcal}} kcal/day — below the recommended minimum ({{floor}} kcal)",
+      "summary": "Starting {{start}}, {{perDay}} kcal will be deducted from your daily goal for {{days}} days.",
+      "startToday": "today",
+      "startTomorrow": "tomorrow"
+    },
+    "carryoverBanner": {
+      "newPlan": "Adjust surplus calories",
+      "activePlan": "Adjustment plan active · {{days}} days left",
+      "newPlanBody": "Yesterday +{{surplus}}kcal over. Start adjusting?",
+      "setUp": "Set up",
+      "change": "Change",
+      "setUpA11y": "Set up adjustment plan",
+      "changeA11y": "Change adjustment plan"
+    },
+    "weeklyRecap": {
+      "title": "Last week's recap",
+      "a11y": "View last week's recap"
+    }
+  },
+  "weeklyStats": {
+    "noRecordThisWeek": "No records this week",
+    "dayKcal": "{{dow}} {{kcal}}",
+    "dayNoRecord": "{{dow}} no record",
+    "chartA11ySummary": "{{loggedDays}} days logged, avg {{avg}}kcal, {{exceeded}} days over target. {{days}}",
+    "prevWeekA11y": "Previous week",
+    "nextWeekA11y": "Next week",
+    "chartA11y": "This week's calorie chart",
+    "averageTitle": "Weekly average",
+    "averageBurned": "Avg burned {{kcal}} kcal / day",
+    "dailyRecordsTitle": "Daily records",
+    "noRecord": "No record",
+    "burnedSuffix": " · Burned {{kcal}}"
+  },
+  "undoToast": {
+    "deleted": "{{label}} deleted",
+    "recorded": "{{label}} logged",
+    "undo": "Undo",
+    "hint": "You can undo this if needed"
+  },
+  "search": {
+    "title": "Search food",
+    "placeholder": "e.g. avocado, chicken, ramen",
+    "clearA11y": "Clear search",
+    "suggestions": "Did you mean",
+    "categoryHint": "Maybe this category?",
+    "noResults": "No results found",
+    "notFoundPrompt": "Can't find your food?",
+    "enterManuallyA11y": "Enter values manually",
+    "enterManually": "Enter manually"
   }
 }

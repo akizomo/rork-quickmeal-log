@@ -22,26 +22,32 @@ import { useTheme } from '@/design-system';
 import { colors } from '@/design-system/tokens/primitives/colors';
 import { radius } from '@/design-system/tokens/primitives/radius';
 import { fontSize as fs, letterSpacing as ls } from '@/design-system/tokens/primitives/typography';
+import { useT } from '@/hooks/useT';
 
 // ---------------------------------------------------------------------------
 // ButtonGridIllustration (Slide 1: コンセプト)
 // ---------------------------------------------------------------------------
 
 type GridButton = { e: string; l: string; highlight?: boolean };
-const GRID_BUTTONS: GridButton[] = [
-  { e: '🍚', l: '主食' },
-  { e: '🐓', l: '低脂P' },
-  { e: '🥚', l: '卵' },
-  { e: '🥩', l: '脂P' },
-  { e: '🥛', l: '乳大豆', highlight: true },
-  { e: '🥦', l: '野菜' },
-  { e: '🍎', l: '果物' },
-  { e: '🧈', l: '油調味' },
-  { e: '🍩', l: 'おやつ' },
-];
+
+function getGridButtons(tr: ReturnType<typeof useT>): GridButton[] {
+  return [
+    { e: '🍚', l: tr('onboarding.illustrations.buckets.staple') },
+    { e: '🐓', l: tr('onboarding.illustrations.buckets.leanProtein') },
+    { e: '🥚', l: tr('onboarding.illustrations.buckets.egg') },
+    { e: '🥩', l: tr('onboarding.illustrations.buckets.fattyProtein') },
+    { e: '🥛', l: tr('onboarding.illustrations.buckets.dairySoy'), highlight: true },
+    { e: '🥦', l: tr('onboarding.illustrations.buckets.vegetable') },
+    { e: '🍎', l: tr('onboarding.illustrations.buckets.fruit') },
+    { e: '🧈', l: tr('onboarding.illustrations.buckets.oilSeasoning') },
+    { e: '🍩', l: tr('onboarding.illustrations.buckets.snack') },
+  ];
+}
 
 export function ButtonGridIllustration() {
   const t = useTheme();
+  const tr = useT();
+  const GRID_BUTTONS = getGridButtons(tr);
   const { height: screenHeight } = useWindowDimensions();
   const scale = Math.max(0.7, Math.min(1, (screenHeight - 349) / 420));
   return (
@@ -71,6 +77,7 @@ export function ButtonGridIllustration() {
 
 export function GestureDemoIllustration() {
   const t = useTheme();
+  const tr = useT();
   const { height: screenHeight } = useWindowDimensions();
   const scale = Math.max(0.7, Math.min(1, (screenHeight - 349) / 420));
   return (
@@ -79,24 +86,24 @@ export function GestureDemoIllustration() {
       <View style={gestureStyles.row}>
         <View style={gestureStyles.action}>
           <Text style={gestureStyles.gesture}>👆</Text>
-          <Text style={[gestureStyles.gestureLabel, { color: t.colors.content.secondary }]}>タップ</Text>
+          <Text style={[gestureStyles.gestureLabel, { color: t.colors.content.secondary }]}>{tr('onboarding.illustrations.gesture.tap')}</Text>
         </View>
         <Text style={[gestureStyles.arrow, { color: t.colors.action.text.default }]}>→</Text>
         <View style={[gestureStyles.result, { backgroundColor: t.colors.surface.raised, borderColor: t.colors.border.default }]}>
-          <Text style={[gestureStyles.resultTitle, { color: t.colors.content.primary }]}>ご飯1杯 234 kcal</Text>
-          <Text style={[gestureStyles.resultSub, { color: t.colors.content.secondary }]}>代表値で即記録</Text>
+          <Text style={[gestureStyles.resultTitle, { color: t.colors.content.primary }]}>{tr('onboarding.illustrations.gesture.riceExample')}</Text>
+          <Text style={[gestureStyles.resultSub, { color: t.colors.content.secondary }]}>{tr('onboarding.illustrations.gesture.quickLogHint')}</Text>
         </View>
       </View>
       {/* 長押しデモ */}
       <View style={gestureStyles.row}>
         <View style={gestureStyles.action}>
           <Text style={gestureStyles.gesture}>✋</Text>
-          <Text style={[gestureStyles.gestureLabel, { color: t.colors.content.secondary }]}>長押し</Text>
+          <Text style={[gestureStyles.gestureLabel, { color: t.colors.content.secondary }]}>{tr('onboarding.illustrations.gesture.longPress')}</Text>
         </View>
         <Text style={[gestureStyles.arrow, { color: t.colors.action.text.default }]}>→</Text>
         <View style={[gestureStyles.result, { backgroundColor: t.colors.surface.raised, borderColor: t.colors.border.default }]}>
-          <Text style={[gestureStyles.resultTitle, { color: t.colors.content.primary }]}>種類・量を選択</Text>
-          <Text style={[gestureStyles.resultSub, { color: t.colors.content.secondary }]}>パン / 麺 / 大盛 …</Text>
+          <Text style={[gestureStyles.resultTitle, { color: t.colors.content.primary }]}>{tr('onboarding.illustrations.gesture.chooseTypeAmount')}</Text>
+          <Text style={[gestureStyles.resultSub, { color: t.colors.content.secondary }]}>{tr('onboarding.illustrations.gesture.breadNoodleExample')}</Text>
         </View>
       </View>
     </View>
@@ -108,19 +115,24 @@ export function GestureDemoIllustration() {
 // ---------------------------------------------------------------------------
 
 type RankButton = { e: string; l: string };
-const RANK_BUTTONS: RankButton[] = [
-  { e: '🍚', l: 'ごはん' },
-  { e: '🍜', l: 'ラーメン' },
-  { e: '🥗', l: 'サラダ' },
-];
+
+function getRankButtons(tr: ReturnType<typeof useT>): RankButton[] {
+  return [
+    { e: '🍚', l: tr('onboarding.illustrations.frequentTab.rice') },
+    { e: '🍜', l: tr('onboarding.illustrations.frequentTab.ramen') },
+    { e: '🥗', l: tr('onboarding.illustrations.frequentTab.salad') },
+  ];
+}
 
 // 実際の segmentOptions (QuickLogSection.tsx) と同じ並び・ラベル。
 // ⭐️ タブは末尾に追加され、ラベルは絵文字のみ。
-const TAB_SEGMENTS = ['食材', '一皿料理', '⭐️'];
 const ACTIVE_TAB_INDEX = 2;
 
 export function FrequentTabIllustration() {
   const t = useTheme();
+  const tr = useT();
+  const RANK_BUTTONS = getRankButtons(tr);
+  const TAB_SEGMENTS = tr('onboarding.illustrations.tabs', { returnObjects: true }) as string[];
   const { height: screenHeight } = useWindowDimensions();
   const scale = Math.max(0.7, Math.min(1, (screenHeight - 349) / 420));
   return (

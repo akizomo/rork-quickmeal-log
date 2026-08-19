@@ -7,6 +7,7 @@ import { ExerciseSheet } from '@/components/ExerciseSheet';
 import { MiniProgressBar } from '@/components/MiniProgressBar';
 import { ACTIVITY_LEVEL_OPTIONS, TRIAL_DURATION_DAYS } from '@/constants/onboarding';
 import { Body, BottomSheet, Button, Caption, Dialog, Icon, IconButton, Label, useTheme, type Theme } from '@/design-system';
+import { useT } from '@/hooks/useT';
 import { radius } from '@/design-system/tokens/primitives/radius';
 import { fontSize as fs, letterSpacing as ls } from '@/design-system/tokens/primitives/typography';
 import { useAppState } from '@/providers/app-state-provider';
@@ -83,6 +84,7 @@ const BalanceModal = memo(function BalanceModal({
   onCancelCarryoverPlan: () => void;
 }) {
   const t = useTheme();
+  const tr = useT();
   const styles = useMemo(() => makeStyles(t), [t]);
   const remaining = adjustedTargetKcal - consumedKcal;
   const progress = adjustedTargetKcal > 0 ? Math.min(1, Math.max(0, consumedKcal / adjustedTargetKcal)) : 0;
@@ -99,11 +101,11 @@ const BalanceModal = memo(function BalanceModal({
         size="md"
         onPress={onClose}
         style={styles.balanceCloseButton}
-        accessibilityLabel="閉じる"
+        accessibilityLabel={tr('common.close')}
       />
 
       <View style={styles.balanceHero}>
-        <Label size="sm" tone="secondary">{overshoot ? 'オーバー' : '残り'}</Label>
+        <Label size="sm" tone="secondary">{overshoot ? tr('statusCard.balance.over') : tr('statusCard.balance.remaining')}</Label>
         <Text style={[styles.balanceHeroValue, overshoot && { color: t.colors.status.danger.default }]}>
           {Math.abs(remaining).toLocaleString()}
         </Text>
@@ -124,28 +126,28 @@ const BalanceModal = memo(function BalanceModal({
 
       <View style={styles.balanceMath}>
         <View>
-          <BalanceMathRow label="ベース目標" value={baseTargetKcal} />
+          <BalanceMathRow label={tr('statusCard.balance.baseGoal')} value={baseTargetKcal} />
           {activityLevelLabel ? (
-            <Text style={styles.balanceMathSubtitle}>普段の活動「{activityLevelLabel}」を含む</Text>
+            <Text style={styles.balanceMathSubtitle}>{tr('statusCard.balance.activityIncluded', { level: activityLevelLabel })}</Text>
           ) : null}
         </View>
         {hasExercise ? (
           <BalanceMathRow label={addedLabel} value={exerciseAdded} sign="+" tone="positive" />
         ) : null}
         {(hasExercise || carryoverPlanActive) ? (
-          <BalanceMathRow label="今日の目標" value={adjustedTargetKcal + carryoverDeductionKcal} emphasis="mid" />
+          <BalanceMathRow label={tr('statusCard.balance.todayGoal')} value={adjustedTargetKcal + carryoverDeductionKcal} emphasis="mid" />
         ) : null}
         {carryoverPlanActive ? (
           <BalanceMathRow
-            label={`調整中（${carryoverDayIndex}/${carryoverDaysTotal}日目）`}
+            label={tr('statusCard.balance.adjusting', { index: carryoverDayIndex, total: carryoverDaysTotal })}
             value={carryoverDeductionKcal}
             sign="-"
           />
         ) : null}
-        <BalanceMathRow label="食事" value={consumedKcal} sign="-" />
+        <BalanceMathRow label={tr('statusCard.balance.meals')} value={consumedKcal} sign="-" />
         <View style={styles.balanceMathDivider} />
         <BalanceMathRow
-          label="残り"
+          label={tr('statusCard.balance.remaining')}
           value={remaining}
           emphasis="strong"
           tone={overshoot ? 'alert' : undefined}
@@ -162,15 +164,15 @@ const BalanceModal = memo(function BalanceModal({
           <View style={styles.carryoverToggleLeft}>
             <Text style={{ fontSize: fs.sm }}>🍽️</Text>
             <Text style={[styles.carryoverToggleLabel, { color: t.colors.action.primary.onContainer }]}>
-              調整中（{carryoverDaysTotal}日間）
+              {tr('statusCard.carryover.activePlan', { days: carryoverDaysTotal })}
             </Text>
           </View>
-          <Pressable onPress={onApplyCarryover} hitSlop={8} accessibilityRole="button" accessibilityLabel="プランを変更する">
-            <Label size="sm" tone="link">変更</Label>
+          <Pressable onPress={onApplyCarryover} hitSlop={8} accessibilityRole="button" accessibilityLabel={tr('statusCard.carryover.changePlanA11y')}>
+            <Label size="sm" tone="link">{tr('statusCard.carryover.change')}</Label>
           </Pressable>
           <Text style={{ color: t.colors.border.default, marginHorizontal: t.spacing['2'] }}>|</Text>
-          <Pressable onPress={() => setCancelDialogVisible(true)} hitSlop={8} accessibilityRole="button" accessibilityLabel="調整をやめる">
-            <Label size="sm" style={{ color: t.colors.status.danger.default }}>やめる</Label>
+          <Pressable onPress={() => setCancelDialogVisible(true)} hitSlop={8} accessibilityRole="button" accessibilityLabel={tr('statusCard.carryover.stopAdjustingA11y')}>
+            <Label size="sm" style={{ color: t.colors.status.danger.default }}>{tr('statusCard.carryover.stop')}</Label>
           </Pressable>
         </View>
       ) : showCarryoverSection ? (
@@ -181,12 +183,12 @@ const BalanceModal = memo(function BalanceModal({
             borderColor: t.colors.border.interactive,
           }]}
           accessibilityRole="button"
-          accessibilityLabel="食事の調整をはじめる"
+          accessibilityLabel={tr('statusCard.carryover.startAdjustingA11y')}
         >
           <View style={styles.carryoverToggleLeft}>
             <Text style={{ fontSize: fs.sm }}>🍽️</Text>
             <Text style={[styles.carryoverToggleLabel, { color: t.colors.content.secondary }]}>
-              昨日の食事、少し多めでした — 調整する
+              {tr('statusCard.carryover.yesterdayOverBanner')}
             </Text>
           </View>
         </Pressable>
@@ -195,18 +197,18 @@ const BalanceModal = memo(function BalanceModal({
     <Dialog
       visible={cancelDialogVisible}
       onClose={() => setCancelDialogVisible(false)}
-      title="調整プランをやめますか？"
+      title={tr('statusCard.carryover.stopDialogTitle')}
       primaryAction={{
-        label: 'やめる',
+        label: tr('statusCard.carryover.stop'),
         onPress: () => { setCancelDialogVisible(false); onClose(); onCancelCarryoverPlan(); },
       }}
       secondaryAction={{
-        label: '続ける',
+        label: tr('statusCard.carryover.continue'),
         onPress: () => setCancelDialogVisible(false),
       }}
     >
       <Body size="sm" tone="secondary">
-        残りの調整がキャンセルされ、毎日の目標カロリーが通常に戻ります。
+        {tr('statusCard.carryover.stopDialogBody')}
       </Body>
     </Dialog>
     </>
@@ -281,6 +283,7 @@ function CarryoverDaySheet({
   initialDays?: number;
 }) {
   const t = useTheme();
+  const tr = useT();
   const { profile } = useAppState();
   const maxDays = 14;
   const hardMinDays = minCarryoverDays(profile.targetCalories, surplusKcal, maxDays);
@@ -326,12 +329,12 @@ function CarryoverDaySheet({
   let warnColor = t.colors.status.warning.default;
   if (showHardError) {
     const blocked = profile.targetCalories - Math.ceil(surplusKcal / (days - 1));
-    warnText = `1日 ${blocked.toLocaleString()} kcal は健康的な目安を大きく下回るため設定できません`;
+    warnText = tr('statusCard.carryoverSheet.hardError', { kcal: blocked.toLocaleString() });
     warnColor = t.colors.status.danger.default;
   } else if (verdict === 'soft') {
     const effective = profile.targetCalories - perDay;
     const softFloor = carryoverSoftFloorKcal(profile.biologicalBasis);
-    warnText = `1日 ${effective.toLocaleString()} kcal — 推奨される最低ライン（${softFloor.toLocaleString()} kcal）を下回ります`;
+    warnText = tr('statusCard.carryoverSheet.softWarn', { kcal: effective.toLocaleString(), floor: softFloor.toLocaleString() });
   }
 
   const canDecrease = days > 1;
@@ -342,14 +345,14 @@ function CarryoverDaySheet({
     <BottomSheet
       visible={visible}
       onClose={onClose}
-      title={mode === 'edit' ? '調整プランを変更' : '帳尻調整プランを設定'}
+      title={mode === 'edit' ? tr('statusCard.carryoverSheet.titleEdit') : tr('statusCard.carryoverSheet.titleStart')}
       primaryAction={{
-        label: mode === 'edit' ? '変更' : '開始',
+        label: mode === 'edit' ? tr('statusCard.carryoverSheet.confirmEdit') : tr('statusCard.carryoverSheet.confirmStart'),
         onPress: () => { onClose(); onConfirm(days); },
         disabled: verdict === 'hard',
       }}
       secondaryAction={mode === 'edit' && onCancel ? {
-        label: 'プランをやめる',
+        label: tr('statusCard.carryoverSheet.stopPlan'),
         onPress: () => setCancelDialogVisible(true),
         destructive: true,
       } : undefined}
@@ -357,12 +360,12 @@ function CarryoverDaySheet({
     >
       <View style={{ gap: t.spacing['1'] }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: t.spacing['2'] }}>
-          <Label size="sm" tone="secondary">{mode === 'edit' ? '残り調整分' : '余剰カロリー'}</Label>
+          <Label size="sm" tone="secondary">{mode === 'edit' ? tr('statusCard.carryoverSheet.remainingAdjustment') : tr('statusCard.carryoverSheet.surplusCalories')}</Label>
           <Body size="sm" weight="semibold">+{surplusKcal} kcal</Body>
         </View>
         <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: t.colors.border.subtle }} />
         <View style={{ paddingVertical: t.spacing['4'], alignItems: 'center', gap: t.spacing['2'] }}>
-          <Label size="sm" tone="secondary">分割する日数</Label>
+          <Label size="sm" tone="secondary">{tr('statusCard.carryoverSheet.daysToSplit')}</Label>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.spacing['6'] }}>
             <Pressable
               onPress={handleDecrement}
@@ -374,7 +377,7 @@ function CarryoverDaySheet({
                 backgroundColor: !canDecrease ? t.colors.surface.sunken : pressed ? t.colors.surface.sunken : t.colors.surface.raised,
                 alignItems: 'center', justifyContent: 'center',
               })}
-              accessibilityLabel="日数を減らす"
+              accessibilityLabel={tr('statusCard.carryoverSheet.decreaseDaysA11y')}
             >
               <Icon name="remove" size={20} color={!canDecrease ? t.colors.content.disabled : t.colors.content.primary} />
             </Pressable>
@@ -387,7 +390,7 @@ function CarryoverDaySheet({
               }}>
                 {days}
               </Text>
-              <Caption tone="secondary">日間</Caption>
+              <Caption tone="secondary">{tr('statusCard.carryoverSheet.days')}</Caption>
             </View>
             <Pressable
               onPress={handleIncrement}
@@ -399,15 +402,13 @@ function CarryoverDaySheet({
                 backgroundColor: !canIncrease ? t.colors.surface.sunken : pressed ? t.colors.surface.sunken : t.colors.surface.raised,
                 alignItems: 'center', justifyContent: 'center',
               })}
-              accessibilityLabel="日数を増やす"
+              accessibilityLabel={tr('statusCard.carryoverSheet.increaseDaysA11y')}
             >
               <Icon name="add" size={20} color={!canIncrease ? t.colors.content.disabled : t.colors.content.primary} />
             </Pressable>
           </View>
           <Body size="sm" tone="secondary">
-            1日あたり{' '}
-            <Body size="sm" weight="semibold" tone="primary">{perDay} kcal</Body>
-            {' '}ずつ差し引き
+            {tr('statusCard.carryoverSheet.perDaySummary', { perDay })}
           </Body>
           {warnText ? (
             <Body size="sm" style={{ color: warnColor, textAlign: 'center', paddingHorizontal: t.spacing['4'] }}>
@@ -417,25 +418,29 @@ function CarryoverDaySheet({
         </View>
         <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: t.colors.border.subtle }} />
         <Body size="sm" tone="secondary" style={{ paddingTop: t.spacing['2'] }}>
-          {mode === 'edit' ? '今日' : '明日'}から{days}日間、毎日の目標から{perDay} kcalを差し引きます。
+          {tr('statusCard.carryoverSheet.summary', {
+            start: mode === 'edit' ? tr('statusCard.carryoverSheet.startToday') : tr('statusCard.carryoverSheet.startTomorrow'),
+            perDay,
+            days,
+          })}
         </Body>
       </View>
     </BottomSheet>
     <Dialog
       visible={cancelDialogVisible}
       onClose={() => setCancelDialogVisible(false)}
-      title="調整プランをやめますか？"
+      title={tr('statusCard.carryover.stopDialogTitle')}
       primaryAction={{
-        label: 'やめる',
+        label: tr('statusCard.carryover.stop'),
         onPress: () => { setCancelDialogVisible(false); onClose(); onCancel?.(); },
       }}
       secondaryAction={{
-        label: '続ける',
+        label: tr('statusCard.carryover.continue'),
         onPress: () => setCancelDialogVisible(false),
       }}
     >
       <Body size="sm" tone="secondary">
-        残りの調整がキャンセルされ、毎日の目標カロリーが通常に戻ります。
+        {tr('statusCard.carryover.stopDialogBody')}
       </Body>
     </Dialog>
     </>
@@ -456,6 +461,7 @@ function CarryoverBanner({
   onDismiss: () => void;
 }) {
   const t = useTheme();
+  const tr = useT();
   return (
     <View
       style={{
@@ -473,12 +479,12 @@ function CarryoverBanner({
         <View style={{ flex: 1, gap: t.spacing['0.5'] }}>
           <Label tone="primary">
             {isNewPlan
-              ? '余剰カロリーを調整する'
-              : `調整プラン 実行中 · 残り ${daysRemaining} 日`}
+              ? tr('statusCard.carryoverBanner.newPlan')
+              : tr('statusCard.carryoverBanner.activePlan', { days: daysRemaining })}
           </Label>
           {isNewPlan ? (
             <Body size="sm" tone="secondary">
-              {`昨日+${surplusKcal}kcal超過。調整を始めますか？`}
+              {tr('statusCard.carryoverBanner.newPlanBody', { surplus: surplusKcal })}
             </Body>
           ) : null}
           <Pressable
@@ -486,14 +492,14 @@ function CarryoverBanner({
             hitSlop={8}
             style={({ pressed }) => ({ alignSelf: 'flex-start', opacity: pressed ? 0.5 : 1, marginTop: t.spacing['0.5'] })}
             accessibilityRole="button"
-            accessibilityLabel={isNewPlan ? '調整プランを設定する' : '調整プランを変更する'}
+            accessibilityLabel={isNewPlan ? tr('statusCard.carryoverBanner.setUpA11y') : tr('statusCard.carryoverBanner.changeA11y')}
           >
             <Label size="sm" tone="link">
-              {isNewPlan ? '設定する' : '変更'}
+              {isNewPlan ? tr('statusCard.carryoverBanner.setUp') : tr('statusCard.carryoverBanner.change')}
             </Label>
           </Pressable>
         </View>
-        <IconButton icon="close" size="sm" tone="tertiary" onPress={onDismiss} accessibilityLabel="閉じる" />
+        <IconButton icon="close" size="sm" tone="tertiary" onPress={onDismiss} accessibilityLabel={tr('common.close')} />
       </View>
     </View>
   );
@@ -507,6 +513,7 @@ function CarryoverBanner({
  */
 function WeeklyRecapTeaser() {
   const t = useTheme();
+  const tr = useT();
   const router = useRouter();
   const { logs, profile, exerciseLogs, dailyActivities, settings, updateSettingsValues } = useAppState();
 
@@ -536,7 +543,7 @@ function WeeklyRecapTeaser() {
         },
       ]}
       accessibilityRole="button"
-      accessibilityLabel="先週の振り返りを見る"
+      accessibilityLabel={tr('statusCard.weeklyRecap.a11y')}
     >
       <View pointerEvents="none" style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width: 170 }}>
         <Svg width="100%" height="100%" viewBox="0 0 170 100" preserveAspectRatio="xMaxYMid slice">
@@ -554,7 +561,7 @@ function WeeklyRecapTeaser() {
       </View>
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
         <View style={{ flex: 1 }}>
-          <Label tone="primary">先週の振り返り</Label>
+          <Label tone="primary">{tr('statusCard.weeklyRecap.title')}</Label>
           <Caption tone="secondary">{recap.weekRangeLabel}</Caption>
         </View>
         <IconButton
@@ -562,7 +569,7 @@ function WeeklyRecapTeaser() {
           size="sm"
           tone="tertiary"
           onPress={dismiss}
-          accessibilityLabel="閉じる"
+          accessibilityLabel={tr('common.close')}
         />
         <Icon name="chevronRight" size={16} color={t.colors.content.tertiary} />
       </View>
@@ -586,6 +593,7 @@ export const StatusCard = memo(function StatusCard({
     applyCarryover, cancelCarryoverPlan, dismissCarryoverBanner,
   } = useAppState();
   const t = useTheme();
+  const tr = useT();
   const styles = useMemo(() => makeStyles(t), [t]);
   const { width: screenWidth } = useWindowDimensions();
   const [exerciseSheetVisible, setExerciseSheetVisible] = useState(false);
@@ -679,13 +687,13 @@ export const StatusCard = memo(function StatusCard({
           onPress={onFoodPress}
           testID="status-food-area"
           accessibilityRole="button"
-          accessibilityLabel="食事ログを開く"
-          accessibilityHint="今日の食事ログを開きます"
+          accessibilityLabel={tr('statusCard.a11y.openMealLog')}
+          accessibilityHint={tr('statusCard.a11y.openMealLogHint')}
           disabled={!onFoodPress}
         >
           <View style={styles.sideLabelRow}>
             <View style={styles.sideLabelChevronSpacer} />
-            <Label size="sm" tone="secondary">食事</Label>
+            <Label size="sm" tone="secondary">{tr('statusCard.meals')}</Label>
             <Icon name="chevronRight" size={12} color={t.colors.content.secondary} />
           </View>
           <Text style={styles.sideValue}>{Math.round(dayMacro.kcal).toLocaleString()}</Text>
@@ -697,8 +705,8 @@ export const StatusCard = memo(function StatusCard({
           onPress={() => setBalanceVisible(true)}
           testID="status-ring-area"
           accessibilityRole="button"
-          accessibilityLabel="今日の収支を表示"
-          accessibilityHint="食事と消費の内訳を表示します"
+          accessibilityLabel={tr('statusCard.a11y.showBalance')}
+          accessibilityHint={tr('statusCard.a11y.showBalanceHint')}
           style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
         >
           <CalorieOverflowRing
@@ -718,12 +726,12 @@ export const StatusCard = memo(function StatusCard({
           onPress={openExerciseSheet}
           testID="exercise-add-button"
           accessibilityRole="button"
-          accessibilityLabel="消費の詳細を見る"
-          accessibilityHint="今日の運動履歴と追加のシートを開きます"
+          accessibilityLabel={tr('statusCard.a11y.viewExerciseDetail')}
+          accessibilityHint={tr('statusCard.a11y.viewExerciseDetailHint')}
         >
           <View style={styles.sideLabelRow}>
             <View style={styles.sideLabelChevronSpacer} />
-            <Label size="sm" tone="secondary">消費</Label>
+            <Label size="sm" tone="secondary">{tr('statusCard.burned')}</Label>
             <Icon name="chevronRight" size={12} color={t.colors.content.secondary} />
           </View>
           <Text style={styles.sideValue}>{effectiveExerciseKcal > 0 ? effectiveExerciseKcal.toLocaleString() : '—'}</Text>
@@ -735,7 +743,7 @@ export const StatusCard = memo(function StatusCard({
       <View style={styles.pfcMiniRow}>
         <MiniProgressBar
           letter="P"
-          label="タンパク質"
+          label={tr('common.macros.protein')}
           current={dayMacro.protein}
           target={effectivePfc.protein}
           textColor={t.colors.nutrition.protein.text}
@@ -744,7 +752,7 @@ export const StatusCard = memo(function StatusCard({
         />
         <MiniProgressBar
           letter="F"
-          label="脂肪"
+          label={tr('common.macros.fat')}
           current={dayMacro.fat}
           target={effectivePfc.fat}
           textColor={t.colors.nutrition.fat.text}
@@ -753,7 +761,7 @@ export const StatusCard = memo(function StatusCard({
         />
         <MiniProgressBar
           letter="C"
-          label="炭水化物"
+          label={tr('common.macros.carbs')}
           current={dayMacro.carbs}
           target={effectivePfc.carbs}
           textColor={t.colors.nutrition.carbs.text}
@@ -770,7 +778,7 @@ export const StatusCard = memo(function StatusCard({
         adjustedTargetKcal={effectiveTarget}
         consumedKcal={Math.round(dayMacro.kcal)}
         exerciseAdded={Math.max(0, effectiveTarget + carryoverDeductionKcal - profile.targetCalories)}
-        addedLabel="活動・運動"
+        addedLabel={tr('statusCard.balance.addedActivity')}
         activityLevelLabel={
           ACTIVITY_LEVEL_OPTIONS.find((a) => a.level === profile.activityLevel)?.label ?? null
         }

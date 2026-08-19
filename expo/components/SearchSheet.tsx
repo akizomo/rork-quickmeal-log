@@ -30,9 +30,10 @@ import {
   useTheme,
 } from '@/design-system';
 import { DirectInputSheet } from '@/components/DirectInputSheet';
-import { getBucketDef, getIdentity } from '@/constants/identity';
+import { buildRegistry, getBucketDef, getIdentity } from '@/constants/identity';
 import { useAppState } from '@/providers/app-state-provider';
 import { useLocale } from '@/hooks/useLocale';
+import { useT } from '@/hooks/useT';
 import {
   describeSearchEntry,
   getCategoryHints,
@@ -93,6 +94,7 @@ function SearchResultRow({
 
 export function SearchSheet({ visible, onClose, onOpen }: Props) {
   const t = useTheme();
+  const tr = useT();
   const { openIdentityLogSheet, recordSearchMissEvent, bumpDiagnostic, settings } = useAppState();
   const { foodRegion: locale } = useLocale();
 
@@ -249,7 +251,7 @@ export function SearchSheet({ visible, onClose, onOpen }: Props) {
       <BottomSheet
         visible={visible}
         onClose={handleClose}
-        title="食品を検索"
+        title={tr('search.title')}
         keyboardAware
         expandToFull
         maxHeightRatio={0.96}
@@ -272,7 +274,7 @@ export function SearchSheet({ visible, onClose, onOpen }: Props) {
             ref={inputRef}
             value={query}
             onChangeText={setQuery}
-            placeholder="例: アボカド、チキン、ラーメン"
+            placeholder={tr('search.placeholder')}
             placeholderTextColor={t.colors.content.tertiary}
             style={[
               styles.searchInput,
@@ -288,7 +290,7 @@ export function SearchSheet({ visible, onClose, onOpen }: Props) {
               icon="close"
               size="sm"
               onPress={handleClear}
-              accessibilityLabel="検索をクリア"
+              accessibilityLabel={tr('search.clearA11y')}
             />
           ) : null}
         </View>
@@ -306,7 +308,7 @@ export function SearchSheet({ visible, onClose, onOpen }: Props) {
         {/* もしかして (層2/3: 主辞辞書・料理名辞書 + bigram類似度のファジー一致) */}
         {hasMaybe ? (
           <View style={{ gap: t.spacing['2'], marginBottom: hasHints ? t.spacing['4'] : 0 }}>
-            <Overline tone="secondary">もしかして</Overline>
+            <Overline tone="secondary">{tr('search.suggestions')}</Overline>
             {vocabularyMatches.length > 0 ? (
               <View style={styles.hintChips}>
                 {vocabularyMatches.map((match, i) => {
@@ -337,15 +339,16 @@ export function SearchSheet({ visible, onClose, onOpen }: Props) {
         {/* このカテゴリかも (層4: 常時表示フォールバック) */}
         {hasHints ? (
           <View style={{ gap: t.spacing['3'] }}>
-            <Overline tone="secondary">このカテゴリかも</Overline>
+            <Overline tone="secondary">{tr('search.categoryHint')}</Overline>
             <View style={styles.hintChips}>
               {categoryHints.map((bucket) => {
                 const def = getBucketDef(bucket);
                 if (!def) return null;
+                const label = buildRegistry('ja', settings.uiLanguage).buckets.find((b) => b.key === bucket)?.label ?? def.label;
                 return (
                   <Chip
                     key={bucket}
-                    label={`${def.emoji} ${def.label}`}
+                    label={`${def.emoji} ${label}`}
                     onPress={() => handleCategoryHint(bucket)}
                   />
                 );
@@ -357,20 +360,20 @@ export function SearchSheet({ visible, onClose, onOpen }: Props) {
         {/* 完全0件 */}
         {noMatch ? (
           <Body tone="secondary" style={{ textAlign: 'center', paddingVertical: t.spacing['4'] }}>
-            見つかりませんでした
+            {tr('search.noResults')}
           </Body>
         ) : null}
 
         {/* 数値で入力する — 常設テキストリンク (最終手段、目立たせない) */}
         <View style={{ marginTop: t.spacing['5'], flexDirection: 'row', alignItems: 'center', gap: t.spacing['1'] }}>
-          <Body size="sm" tone="secondary">食品が見つかりませんか？</Body>
+          <Body size="sm" tone="secondary">{tr('search.notFoundPrompt')}</Body>
           <Pressable
             onPress={handleOpenDirectInput}
             style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1 })}
             accessibilityRole="button"
-            accessibilityLabel="数値で直接入力する"
+            accessibilityLabel={tr('search.enterManuallyA11y')}
           >
-            <Label size="sm" tone="link">数値で入力する</Label>
+            <Label size="sm" tone="link">{tr('search.enterManually')}</Label>
           </Pressable>
         </View>
       </BottomSheet>

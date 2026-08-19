@@ -201,7 +201,7 @@ export function MonthlyStatsView() {
           testID="month-prev"
           accessibilityLabel={tr('monthlyStats.prevMonth')}
         />
-        <Text style={styles.headerLabel}>{formatMonthLabel(anchor)}</Text>
+        <Text style={styles.headerLabel}>{formatMonthLabel(anchor, settings.uiLanguage)}</Text>
         <IconButton
           icon="chevronRight"
           size="md"
@@ -258,18 +258,14 @@ export function MonthlyStatsView() {
             const tierLabel =
               kcal === 0
                 ? null
-                : tier === 'within'
-                  ? '目安の範囲内'
-                  : tier === 'mildExceed'
-                    ? 'やや多め'
-                    : '大きく超過';
+                : tr(`monthlyStats.tierLabel.${tier}`);
             const month = cell.date.getMonth() + 1;
             const day = cell.date.getDate();
             const cellA11yLabel = future
-              ? `${month}月${day}日`
+              ? tr('monthlyStats.a11yDate', { month, day })
               : kcal === 0
-                ? `${month}月${day}日、記録なし`
-                : `${month}月${day}日、${Math.round(kcal).toLocaleString()}kcal、${tierLabel}`;
+                ? tr('monthlyStats.a11yDateNoRecord', { month, day })
+                : tr('monthlyStats.a11yDateSummary', { month, day, kcal: Math.round(kcal).toLocaleString(), tier: tierLabel });
             return (
               <Pressable
                 key={cell.dateKey}
@@ -317,13 +313,13 @@ export function MonthlyStatsView() {
       <View style={styles.summaryCard} testID="month-summary">
         <View style={styles.summaryRow}>
           <View style={styles.summaryLeft}>
-            <Text style={styles.summaryTitle}>{formatMonthLabel(anchor)} の平均</Text>
+            <Text style={styles.summaryTitle}>{tr('monthlyStats.averageTitle', { month: formatMonthLabel(anchor, settings.uiLanguage) })}</Text>
             <Text style={styles.summaryKcal}>
               {Math.round(avgMacro.kcal).toLocaleString()}
               <Text style={styles.summaryKcalTarget}> / {Math.round(avgAdjustedTarget).toLocaleString()} kcal</Text>
             </Text>
             {avgExerciseKcal > 0 ? (
-              <Text style={styles.summaryConsume}>平均消費 {avgExerciseKcal} kcal / 日</Text>
+              <Text style={styles.summaryConsume}>{tr('monthlyStats.averageBurned', { kcal: avgExerciseKcal })}</Text>
             ) : null}
           </View>
           {monthRingAvg ? (
@@ -346,7 +342,7 @@ export function MonthlyStatsView() {
         <View style={styles.pfcRow} testID="month-pfc-row">
           <MiniProgressBar
             letter="P"
-            label="タンパク質"
+            label={tr('common.macros.protein')}
             current={avgMacro.protein}
             target={avgPfcTarget.protein}
             textColor={t.colors.nutrition.protein.text}
@@ -355,7 +351,7 @@ export function MonthlyStatsView() {
           />
           <MiniProgressBar
             letter="F"
-            label="脂肪"
+            label={tr('common.macros.fat')}
             current={avgMacro.fat}
             target={avgPfcTarget.fat}
             textColor={t.colors.nutrition.fat.text}
@@ -364,7 +360,7 @@ export function MonthlyStatsView() {
           />
           <MiniProgressBar
             letter="C"
-            label="炭水化物"
+            label={tr('common.macros.carbs')}
             current={avgMacro.carbs}
             target={avgPfcTarget.carbs}
             textColor={t.colors.nutrition.carbs.text}
@@ -375,7 +371,7 @@ export function MonthlyStatsView() {
       </View>
 
       <View style={styles.listSection}>
-        <Text style={styles.listTitle}>日別の記録</Text>
+        <Text style={styles.listTitle}>{tr('monthlyStats.dailyRecordsTitle')}</Text>
         <View style={styles.listGroup}>
           {monthDailyEntries.map(([key, macro], idx) => {
             const date = new Date(key);
@@ -390,15 +386,15 @@ export function MonthlyStatsView() {
                 testID={`month-day-row-${key}`}
               >
                 <View style={styles.dayRowLeft}>
-                  <Text style={styles.dayLabel}>{formatShortDay(date)}</Text>
-                  {!hasLog ? <Text style={styles.dayNoLog}>記録なし</Text> : null}
+                  <Text style={styles.dayLabel}>{formatShortDay(date, settings.uiLanguage)}</Text>
+                  {!hasLog ? <Text style={styles.dayNoLog}>{tr('monthlyStats.noRecord')}</Text> : null}
                 </View>
                 {hasLog ? (
                   <View style={styles.dayRowRight}>
                     <Text style={styles.dayKcal}>{Math.round(macro.kcal)} kcal</Text>
                     <Text style={styles.dayMacroLine}>
                       P{Math.round(macro.protein)} F{Math.round(macro.fat)} C{Math.round(macro.carbs)}
-                      {exerciseKcal > 0 ? ` · 消費 ${Math.round(exerciseKcal)}` : ''}
+                      {exerciseKcal > 0 ? tr('monthlyStats.burnedSuffix', { kcal: Math.round(exerciseKcal) }) : ''}
                     </Text>
                   </View>
                 ) : (
