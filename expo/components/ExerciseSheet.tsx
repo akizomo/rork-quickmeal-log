@@ -5,7 +5,7 @@ import { BottomSheet, Chip, IconButton, Label, Overline, useTheme, type Theme } 
 import { useT } from '@/hooks/useT';
 import { fontSize as fs, letterSpacing as ls } from '@/design-system/tokens/primitives/typography';
 import { radius } from '@/design-system/tokens/primitives/radius';
-import { ACTIVITY_LEVEL_OPTIONS } from '@/constants/onboarding';
+import { ACTIVITY_LEVEL_I18N_KEY } from '@/constants/onboarding';
 import {
   ACTIVITY_BONUS_DAILY_CAP_KCAL,
   calcBaselineActiveKcal,
@@ -113,8 +113,8 @@ export const ExerciseSheet = memo(function ExerciseSheet({ visible, onClose, dat
     (measuredActiveKcal ?? 0) - (baselineKcal as number) > ACTIVITY_BONUS_DAILY_CAP_KCAL;
 
   const activityLevelLabel = useMemo(
-    () => ACTIVITY_LEVEL_OPTIONS.find((a) => a.level === profile.activityLevel)?.label ?? null,
-    [profile.activityLevel]
+    () => (profile.activityLevel ? tr(`onboarding.activity.${ACTIVITY_LEVEL_I18N_KEY[profile.activityLevel]}.label`) : null),
+    [profile.activityLevel, tr]
   );
 
   // ヘルスの歩数が取れている日はウォーキングを「歩数(ヘルス)」に集約し、

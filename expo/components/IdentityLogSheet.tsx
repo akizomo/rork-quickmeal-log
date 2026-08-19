@@ -48,20 +48,33 @@ import {
   getHiddenAddonIds,
 } from '@/utils/identity-attribute';
 import { Macro } from '@/types/nutrition';
+import type { AppLocale } from '@/types/locale';
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-const UNIT_LABEL: Record<AmountUnit, string> = {
-  g: 'g',
-  ml: 'ml',
-  piece: '個',
-  serving: '人前',
-  percent: '%',
-  plate: '皿',
-  slice: '切',
-  cut: '切れ',
+const UNIT_LABEL: Record<AppLocale, Record<AmountUnit, string>> = {
+  ja: {
+    g: 'g',
+    ml: 'ml',
+    piece: '個',
+    serving: '人前',
+    percent: '%',
+    plate: '皿',
+    slice: '切',
+    cut: '切れ',
+  },
+  'en-US': {
+    g: 'g',
+    ml: 'ml',
+    piece: 'pcs',
+    serving: 'servings',
+    percent: '%',
+    plate: 'plates',
+    slice: 'slices',
+    cut: 'pieces',
+  },
 };
 
 const NUMERIC_RE = /^\d+(\.\d+)?$/;
@@ -146,8 +159,8 @@ export function IdentityLogSheet() {
 
   const visible = identityLogSheet.visible;
   const bucketKey = identityLogSheet.bucketKey;
-  const bucket = bucketKey ? getBucketDef(bucketKey) : undefined;
   const registry = useMemo(() => buildRegistry(locale, uiLanguage), [locale, uiLanguage]);
+  const bucket = bucketKey ? (registry.buckets.find((b) => b.key === bucketKey) ?? getBucketDef(bucketKey)) : undefined;
   const identitiesInBucket = useMemo(
     () => (bucketKey ? registry.byBucket[bucketKey] ?? [] : []),
     [bucketKey, registry]
@@ -398,8 +411,8 @@ export function IdentityLogSheet() {
   }, [altAmountSpec]);
 
   const amountConfig = useMemo(
-    () => (activeAmountSpec ? buildIdentityAmountEditConfig(activeAmountSpec) : null),
-    [activeAmountSpec],
+    () => (activeAmountSpec ? buildIdentityAmountEditConfig(activeAmountSpec, uiLanguage) : null),
+    [activeAmountSpec, uiLanguage],
   );
 
   const toggleAddon = useCallback(
@@ -599,7 +612,7 @@ export function IdentityLogSheet() {
           {/* Amount (振替先があればその実効 spec を使う) */}
           {(() => {
             const amt = activeAmountSpec ?? origin.amount;
-            const amtUnitLabel = amt.unitLabel ?? UNIT_LABEL[amt.unit];
+            const amtUnitLabel = amt.unitLabel ?? UNIT_LABEL[uiLanguage][amt.unit];
             const amountRefIdentity = amountBasis?.identity ?? origin;
             const toggleLabel = isAltMode ? tr('identityLog.switchToG') : tr('identityLog.switchToCount');
             return (

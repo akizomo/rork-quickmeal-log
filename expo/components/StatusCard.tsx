@@ -5,7 +5,7 @@ import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-na
 import { CalorieOverflowRing } from '@/components/CalorieOverflowRing';
 import { ExerciseSheet } from '@/components/ExerciseSheet';
 import { MiniProgressBar } from '@/components/MiniProgressBar';
-import { ACTIVITY_LEVEL_OPTIONS, TRIAL_DURATION_DAYS } from '@/constants/onboarding';
+import { ACTIVITY_LEVEL_I18N_KEY, TRIAL_DURATION_DAYS } from '@/constants/onboarding';
 import { Body, BottomSheet, Button, Caption, Dialog, Icon, IconButton, Label, useTheme, type Theme } from '@/design-system';
 import { useT } from '@/hooks/useT';
 import { radius } from '@/design-system/tokens/primitives/radius';
@@ -780,7 +780,7 @@ export const StatusCard = memo(function StatusCard({
         exerciseAdded={Math.max(0, effectiveTarget + carryoverDeductionKcal - profile.targetCalories)}
         addedLabel={tr('statusCard.balance.addedActivity')}
         activityLevelLabel={
-          ACTIVITY_LEVEL_OPTIONS.find((a) => a.level === profile.activityLevel)?.label ?? null
+          profile.activityLevel ? tr(`onboarding.activity.${ACTIVITY_LEVEL_I18N_KEY[profile.activityLevel]}.label`) : null
         }
         carryoverPlanActive={isToday && carryoverPlanActive}
         carryoverDeductionKcal={isToday ? carryoverDeductionKcal : 0}

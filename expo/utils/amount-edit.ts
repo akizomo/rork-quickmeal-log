@@ -9,6 +9,7 @@
 
 import { SushiModeDef, PizzaConfig } from '@/constants/dish-master';
 import { AmountSpec, AmountUnit } from '@/types/identity';
+import type { AppLocale } from '@/types/locale';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -278,15 +279,27 @@ export function buildPizzaAmountEditConfig(
 }
 
 /** Default suffix labels for AmountUnit values. */
-const UNIT_LABEL_FALLBACK: Record<AmountUnit, string> = {
-  g: 'g',
-  ml: 'ml',
-  piece: '個',
-  serving: '人前',
-  percent: '%',
-  plate: '皿',
-  slice: '切',
-  cut: '切れ',
+const UNIT_LABEL_FALLBACK: Record<AppLocale, Record<AmountUnit, string>> = {
+  ja: {
+    g: 'g',
+    ml: 'ml',
+    piece: '個',
+    serving: '人前',
+    percent: '%',
+    plate: '皿',
+    slice: '切',
+    cut: '切れ',
+  },
+  'en-US': {
+    g: 'g',
+    ml: 'ml',
+    piece: 'pcs',
+    serving: 'servings',
+    percent: '%',
+    plate: 'plates',
+    slice: 'slices',
+    cut: 'pieces',
+  },
 };
 
 /** 数え物の単位 (個/切/切れ/皿)。半端が「半分」「1/4」で表現される。 */
@@ -318,6 +331,7 @@ const COUNT_STEPPER_TIERS: readonly { upTo: number; step: number }[] = [
  */
 export function buildIdentityAmountEditConfig(
   spec: AmountSpec & { min?: number; max?: number; step?: number },
+  uiLanguage: AppLocale = 'ja',
 ): AmountEditConfig {
   // Percent unit gets a coarser default stepper step (10) and a wider min/max
   // envelope matching what a user can sensibly express: 10% – 400%.
@@ -343,7 +357,7 @@ export function buildIdentityAmountEditConfig(
       ? lastChipValue * 4
       : spec.default * 4);
 
-  const unitLabel = spec.unitLabel ?? UNIT_LABEL_FALLBACK[spec.unit] ?? spec.unit;
+  const unitLabel = spec.unitLabel ?? UNIT_LABEL_FALLBACK[uiLanguage][spec.unit] ?? spec.unit;
 
   return {
     min: derivedMin,

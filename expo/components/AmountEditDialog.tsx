@@ -303,7 +303,7 @@ export function AmountEditDialog({
       ) : null}
 
       <Text style={[styles.rangeHint, { color: t.colors.content.tertiary }]}>
-        {config.min}〜{config.max} {config.unitLabel}
+        {config.min}–{config.max} {config.unitLabel}
       </Text>
     </Dialog>
   );

@@ -13,6 +13,7 @@ import {
 import { useTheme } from '@/design-system';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { useT } from '@/hooks/useT';
+import { useLocale } from '@/hooks/useLocale';
 import { BiologicalBasis, BodyAxisLevel, BodyType9 } from '@/types/nutrition';
 
 interface Props {
@@ -37,6 +38,8 @@ export function BodyTypeMatrix({
 }: Props) {
   const t = useTheme();
   const tr = useT();
+  const { uiLanguage } = useLocale();
+  const a11ySeparator = uiLanguage === 'en-US' ? '. ' : '。';
   const axisLevel: Record<BodyAxisLevel, string> = {
     0: tr('onboarding.currentBody.matrix.low'),
     1: tr('onboarding.currentBody.matrix.mid'),
@@ -102,7 +105,7 @@ export function BodyTypeMatrix({
                     isCurrent ? tr('onboarding.currentBody.matrix.a11yCurrent') : null,
                   ]
                     .filter(Boolean)
-                    .join('。')}
+                    .join(a11ySeparator)}
                   style={[
                     styles.cell,
                     { backgroundColor: t.colors.surface.raised },

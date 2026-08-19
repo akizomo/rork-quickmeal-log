@@ -44,6 +44,14 @@ export interface ActivityLevelInfo {
  *
  * 倍率 (factor) は標準的な PAL 係数を維持。
  */
+/** Maps ActivityLevel (1-4) → i18n key segment under `onboarding.activity.*`. */
+export const ACTIVITY_LEVEL_I18N_KEY: Record<ActivityLevel, string> = {
+  1: 'Sedentary',
+  2: 'LightlyActive',
+  3: 'ModeratelyActive',
+  4: 'VeryActive',
+};
+
 export const ACTIVITY_LEVEL_OPTIONS: ActivityLevelInfo[] = [
   {
     level: 1,

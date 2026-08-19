@@ -32,15 +32,27 @@ import { FoodLog, FoodLogAddon } from '@/types/nutrition';
 import type { AppLocale } from '@/types/locale';
 import { migrateAmountValueForUnit } from './amount-migration';
 
-const UNIT_SUFFIX: Record<AmountUnit, string> = {
-  g: 'g',
-  ml: 'ml',
-  piece: '個',
-  serving: '人前',
-  percent: '%',
-  plate: '皿',
-  slice: '切',
-  cut: '切れ',
+const UNIT_SUFFIX: Record<AppLocale, Record<AmountUnit, string>> = {
+  ja: {
+    g: 'g',
+    ml: 'ml',
+    piece: '個',
+    serving: '人前',
+    percent: '%',
+    plate: '皿',
+    slice: '切',
+    cut: '切れ',
+  },
+  'en-US': {
+    g: 'g',
+    ml: 'ml',
+    piece: 'pcs',
+    serving: 'servings',
+    percent: '%',
+    plate: 'plates',
+    slice: 'slices',
+    cut: 'pieces',
+  },
 };
 
 export interface LogDisplayInfo {
@@ -63,7 +75,7 @@ export function getLogDisplayInfo(log: FoodLog, uiLanguage: AppLocale = 'ja'): L
     return {
       title: log.subTypeLabel ?? log.categoryLabel ?? (uiLanguage === 'en-US' ? 'Log' : '記録'),
       subtitle: undefined,
-      amountText: legacyAmountText(log),
+      amountText: legacyAmountText(log, uiLanguage),
       addonsText: legacyAddonsText(log),
     };
   }
@@ -84,7 +96,7 @@ export function getLogDisplayInfo(log: FoodLog, uiLanguage: AppLocale = 'ja'): L
     title,
     subtitle: buildSubtitle(identity, log),
     bucketHint,
-    amountText: buildAmountText(identity, log),
+    amountText: buildAmountText(identity, log, uiLanguage),
     addonsText: buildAddonsText(log.appliedAddons),
   };
 }
@@ -115,7 +127,7 @@ function buildSubtitle(identity: Identity, log: FoodLog): string | undefined {
 // Amount text: number + Identity-specific unit suffix
 // ---------------------------------------------------------------------------
 
-function buildAmountText(identity: Identity, log: FoodLog): string {
+function buildAmountText(identity: Identity, log: FoodLog, uiLanguage: AppLocale): string {
   const rawValue = log.amountValue ?? identity.amount.default;
   // Translate legacy 'serving' values into the Identity's current unit (e.g. percent).
   const value = migrateAmountValueForUnit(rawValue, log.amountUnit, identity.amount.unit);
@@ -123,7 +135,7 @@ function buildAmountText(identity: Identity, log: FoodLog): string {
   // matches a defined chip exactly.
   const chipHit = identity.amount.chips?.find((c) => c.value === value);
   if (chipHit) return chipHit.label;
-  const suffix = identity.amount.unitLabel ?? UNIT_SUFFIX[identity.amount.unit];
+  const suffix = identity.amount.unitLabel ?? UNIT_SUFFIX[uiLanguage][identity.amount.unit];
   return `${formatAmountValue(value)} ${suffix}`;
 }
 
@@ -165,10 +177,10 @@ function prefixUnits(label: string, units: number): string {
 // Legacy fallbacks (older logs without identityId)
 // ---------------------------------------------------------------------------
 
-function legacyAmountText(log: FoodLog): string {
+function legacyAmountText(log: FoodLog, uiLanguage: AppLocale): string {
   if (log.amountLabel) return log.amountLabel;
   if (log.amountValue && log.amountUnit) {
-    const suffix = log.amountUnit === 'piece' ? '個' : log.amountUnit;
+    const suffix = log.amountUnit === 'piece' ? UNIT_SUFFIX[uiLanguage].piece : log.amountUnit;
     return `${log.amountValue} ${suffix}`;
   }
   if (log.portionLabel) return log.portionLabel;

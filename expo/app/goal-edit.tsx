@@ -447,7 +447,7 @@ export default function GoalEditRoute() {
               <View style={{ gap: theme.spacing['2'] }}>
                 <Overline>{t('goalEdit.sections.pace')}</Overline>
                 <SegmentedRow
-                  options={PACE_OPTIONS.map((o) => ({ key: o.key, label: o.label }))}
+                  options={PACE_OPTIONS.map((o) => ({ key: o.key, label: t(`onboarding.plan.${o.key}.label`) }))}
                   value={paceLevel}
                   onChange={(k) => setPaceLevel(k as PaceLevel)}
                   testIDPrefix="goal-pace"

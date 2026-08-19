@@ -3,7 +3,7 @@ import React, { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { ACTIVITY_LEVEL_OPTIONS, BASIS_OPTIONS } from '@/constants/onboarding';
+import { ACTIVITY_LEVEL_I18N_KEY, ACTIVITY_LEVEL_OPTIONS, BASIS_OPTIONS } from '@/constants/onboarding';
 import { Body, Button, Card, Heading, SelectCard, useTheme } from '@/design-system';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { useAppState } from '@/providers/app-state-provider';
@@ -114,8 +114,8 @@ export default function ProfileRoute() {
                 {ACTIVITY_LEVEL_OPTIONS.map((opt) => (
                   <SelectCard
                     key={opt.level}
-                    label={t(`onboarding.activity.${opt.level}.label`)}
-                    hint={t(`onboarding.activity.${opt.level}.hint`)}
+                    label={t(`onboarding.activity.${ACTIVITY_LEVEL_I18N_KEY[opt.level]}.label`)}
+                    hint={t(`onboarding.activity.${ACTIVITY_LEVEL_I18N_KEY[opt.level]}.hint`)}
                     selected={activityLevel === opt.level}
                     onPress={() => setActivityLevel(opt.level)}
                     testID={`profile-activity-${opt.level}`}
