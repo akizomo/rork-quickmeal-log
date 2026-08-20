@@ -32,7 +32,7 @@ import { US_PURE_ADDONS_BY_ID, US_IDENTITY_ADDON_REFS } from './us/addons';
 // ---------------------------------------------------------------------------
 
 export const INGREDIENT_BUCKETS: BucketDef[] = [
-  { key: 'staple',        tab: 'ingredient', label: 'ごはんパン麺', shortLabel: '主食',   emoji: '🍚', labelEn: 'Grains & Carbs',    shortLabelEn: 'Grains' },
+  { key: 'staple',        tab: 'ingredient', label: 'ごはんパン麺', shortLabel: '主食',   emoji: '🍚', emojiEn: '🍞', labelEn: 'Grains & Carbs',    shortLabelEn: 'Grains' },
   { key: 'lean_protein',  tab: 'ingredient', label: '肉魚(低脂肪)', shortLabel: '低脂P',  emoji: '🐓', labelEn: 'Lean Protein',      shortLabelEn: 'LeanP'  },
   { key: 'egg',           tab: 'ingredient', label: '卵',           shortLabel: '卵',     emoji: '🥚', labelEn: 'Eggs',              shortLabelEn: 'Eggs'   },
   { key: 'fatty_protein', tab: 'ingredient', label: '脂あり肉魚',   shortLabel: '脂P',    emoji: '🥩', labelEn: 'Fatty Protein',     shortLabelEn: 'FattyP' },
@@ -133,7 +133,7 @@ export function buildRegistry(foodRegion: AppLocale = 'ja', uiLanguage?: AppLoca
   const lang = uiLanguage ?? foodRegion;
   const applyEnLabels = <T extends BucketDef>(buckets: T[]): T[] =>
     lang === 'en-US'
-      ? buckets.map((b) => b.labelEn ? { ...b, label: b.labelEn, shortLabel: b.shortLabelEn ?? b.shortLabel } : b)
+      ? buckets.map((b) => b.labelEn ? { ...b, label: b.labelEn, shortLabel: b.shortLabelEn ?? b.shortLabel, emoji: b.emojiEn ?? b.emoji } : b)
       : buckets;
 
   if (foodRegion === 'en-US') {

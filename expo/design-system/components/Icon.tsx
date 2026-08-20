@@ -29,6 +29,7 @@ const ICON_GLYPH = {
   delete: 'delete-outline',
   barChart: 'bar-chart',
   check: 'check',
+  checkCircle: 'check-circle',
   help: 'help-outline',
   search: 'search',
   user: 'person-outline',

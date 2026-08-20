@@ -1,7 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle, Path, Polyline } from 'react-native-svg';
 
@@ -161,17 +161,6 @@ export default function HealthConnectRoute() {
               gap: t.spacing['2'],
             }}
           >
-            {healthSync.supported ? (
-              <Pressable
-                onPress={goHome}
-                testID="health-connect-skip"
-                hitSlop={10}
-                disabled={busy}
-                style={{ alignSelf: 'center', paddingVertical: t.spacing['1'] }}
-              >
-                <Caption tone="link">{tr('healthConnect.skip')}</Caption>
-              </Pressable>
-            ) : null}
             {needsInstall ? (
               <Button
                 label={healthSync.status === 'provider_update_required' ? tr('healthConnect.ctaUpdate') : tr('healthConnect.ctaInstall')}
@@ -193,6 +182,17 @@ export default function HealthConnectRoute() {
                 testID="health-connect-cta"
               />
             )}
+            {healthSync.supported ? (
+              <Button
+                label={tr('healthConnect.skip')}
+                variant="ghost"
+                size="lg"
+                fullWidth
+                onPress={goHome}
+                disabled={busy}
+                testID="health-connect-skip"
+              />
+            ) : null}
           </View>
         </SafeAreaView>
       </View>

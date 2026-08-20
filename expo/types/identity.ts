@@ -67,6 +67,8 @@ export interface BucketDef {
   /** English compact label. Used with labelEn. */
   shortLabelEn?: string;
   emoji: string;
+  /** English-locale emoji override. Used by buildRegistry('en-US') to override emoji on shared buckets. */
+  emojiEn?: string;
   /**
    * If true, tapping the bucket button does NOT instant-record. Instead, the
    * detail sheet opens so the user picks an Identity first.

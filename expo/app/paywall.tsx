@@ -8,7 +8,6 @@ import type { PurchasesOffering, PurchasesPackage } from 'react-native-purchases
 import { TRIAL_DAYS } from '@/constants/iap';
 import { LEGAL_LINKS } from '@/constants/onboarding';
 import { Badge, Body, Icon, Label, useTheme, type Theme } from '@/design-system';
-import { colors } from '@/design-system/tokens/primitives/colors';
 import { radius } from '@/design-system/tokens/primitives/radius';
 import { fontSize as fs, lineHeight as lh } from '@/design-system/tokens/primitives/typography';
 import { useAppState } from '@/providers/app-state-provider';
@@ -118,9 +117,7 @@ export default function PaywallRoute() {
             <View style={styles.benefitsCard}>
               {benefits.map((b) => (
                 <View key={b} style={styles.benefitRow}>
-                  <View style={styles.checkDot}>
-                    <Icon name="check" size={14} color={colors.stone[900]} />
-                  </View>
+                  <Icon name="checkCircle" size={22} color={t.colors.status.success.default} />
                   <Text style={styles.benefitText}>{b}</Text>
                 </View>
               ))}
@@ -269,7 +266,6 @@ const makeStyles = (t: Theme) => StyleSheet.create({
   benefitRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   // アクション色は本来インタラクティブ要素専用。特典チェックは「含まれている」を
   // 示す状態表示なのでstatus.successを使う (2026-08-07指摘)。
-  checkDot: { width: 22, height: 22, borderRadius: 11, backgroundColor: t.colors.status.success.default, alignItems: 'center', justifyContent: 'center' },
   benefitText: { fontSize: fs.md, color: t.colors.content.primary, flex: 1 },
   loadingBox: { backgroundColor: t.colors.surface.raised, borderRadius: 24, padding: 20, alignItems: 'center', gap: 8 },
   priceCard: { backgroundColor: t.colors.surface.raised, borderRadius: 20, padding: 20, flexDirection: 'row', alignItems: 'center', gap: 12 },

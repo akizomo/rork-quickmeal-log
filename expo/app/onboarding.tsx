@@ -46,7 +46,6 @@ import {
   type IconName,
   type Theme,
 } from '@/design-system';
-import { colors } from '@/design-system/tokens/primitives/colors';
 import { useAppState } from '@/providers/app-state-provider';
 import {
   ActivityLevel,
@@ -989,25 +988,13 @@ function StepPreview({
               key={i}
               style={{ flexDirection: 'row', gap: theme.spacing['2'], alignItems: 'flex-start' }}
             >
-              <View
-                style={{
-                  width: 20,
-                  height: 20,
-                  borderRadius: 10,
-                  marginTop: 1,
-                  // アクション色(action.primary)はインタラクティブ要素専用。
-                  // このチェックマークは「達成/良い」を示す状態表示なので
-                  // status.successを使う (2026-08-07指摘)。
-                  backgroundColor: theme.colors.status.success.default,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                {/* status.success.defaultはtheme間でmoss[400]/[500]と中間トーンで
-                    固定的ではないため、content.onAction(action.primary専用に調整
-                    済み)は流用しない。固定の濃色アイコンで両テーマとも十分な
-                    コントラストを確保する。 */}
-                <Icon name="check" size={12} color={colors.stone[900]} />
+              <View style={{ marginTop: 1 }}>
+                {/* アクション色(action.primary)はインタラクティブ要素専用。
+                    このチェックマークは「達成/良い」を示す状態表示なので
+                    status.successを使う (2026-08-07指摘)。
+                    checkCircleは円+白抜きチェックが1枚のグリフに含まれるため、
+                    View+Iconの手動2層合成をしない (2026-08-20指摘)。 */}
+                <Icon name="checkCircle" size={20} color={theme.colors.status.success.default} />
               </View>
               <Body size="sm" style={{ flex: 1 }}>
                 {tip}
