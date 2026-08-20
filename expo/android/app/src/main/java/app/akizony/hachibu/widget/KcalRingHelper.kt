@@ -15,6 +15,7 @@ object KcalRingHelper {
      * @param progressColor リング進捗部分の色 (@color/widget_accent)
      * @param textPrimary 中央の数値の色 (@color/widget_text_primary)
      * @param textSecondary 「のこり」「kcal」ラベルの色 (@color/widget_text_secondary)
+     * @param remainingLabel 中央上部のラベル文言 (呼び出し側で言語分岐して渡す。既定は日本語「のこり」)
      */
     fun createRingBitmap(
         sizePx: Int,
@@ -24,7 +25,8 @@ object KcalRingHelper {
         trackColor: Int,
         progressColor: Int,
         textPrimary: Int,
-        textSecondary: Int
+        textSecondary: Int,
+        remainingLabel: String = "のこり"
     ): Bitmap {
         val bmp = Bitmap.createBitmap(sizePx, sizePx, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bmp)
@@ -77,7 +79,7 @@ object KcalRingHelper {
             val blockH = labelPaint.textSize + valuePaint.textSize * 0.9f + unitPaint.textSize * 1.3f
             val baseY  = cy - blockH / 2f + labelPaint.textSize
 
-            canvas.drawText("のこり",  cx, baseY,                                         labelPaint)
+            canvas.drawText(remainingLabel, cx, baseY,                                     labelPaint)
             canvas.drawText(valText,   cx, baseY + valuePaint.textSize * 0.9f,             valuePaint)
             canvas.drawText("kcal",    cx, baseY + valuePaint.textSize * 0.9f + unitPaint.textSize * 1.3f, unitPaint)
         }

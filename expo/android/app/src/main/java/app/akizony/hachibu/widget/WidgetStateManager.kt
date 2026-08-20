@@ -35,14 +35,28 @@ object WidgetStateManager {
     private const val KEY_TARGET_KCAL       = "widget_target_kcal"
     private const val KEY_PENDING_QUEUE     = "widget_pending_queue"
     private const val KEY_LOGGED_CATEGORIES = "widget_logged_categories"
+    private const val KEY_UI_LANGUAGE       = "widget_ui_language"
 
     fun prefs(context: Context): SharedPreferences =
         context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
+    // ── UI Language ──────────────────────────────────────────────────────────
+    // JS 側 settings.uiLanguage ('ja' | 'en-US') をそのまま保存する。
+    // アプリの uiLanguage は端末ロケールと独立した設定のため、Android の
+    // 通常の values-en リソース分岐 (端末ロケール依存) は使わずここで持つ。
+
+    fun getUiLanguage(context: Context): String = prefs(context).getString(KEY_UI_LANGUAGE, "ja") ?: "ja"
+
+    fun isEnglish(context: Context): Boolean = getUiLanguage(context) == "en-US"
+
+    fun setUiLanguage(context: Context, uiLanguage: String) {
+        prefs(context).edit().putString(KEY_UI_LANGUAGE, uiLanguage).commit()
+    }
+
     // ── Categories ───────────────────────────────────────────────────────────
 
     fun getCategories(context: Context): List<CategoryData> {
-        val json = prefs(context).getString(KEY_CATEGORIES, null) ?: return defaultCategories()
+        val json = prefs(context).getString(KEY_CATEGORIES, null) ?: return defaultCategories(context)
         return try {
             val arr = JSONArray(json)
             (0 until arr.length()).map { i ->
@@ -56,7 +70,7 @@ object WidgetStateManager {
                     kcal     = o.getInt("kcal")
                 )
             }
-        } catch (e: Exception) { defaultCategories() }
+        } catch (e: Exception) { defaultCategories(context) }
     }
 
     fun setCategories(context: Context, categories: List<CategoryData>) {
@@ -162,8 +176,12 @@ object WidgetStateManager {
     }
 
     // ── Defaults ─────────────────────────────────────────────────────────────
+    // アプリと同期する前のプレースホルダー。uiLanguage に応じて言語を切り替える。
 
-    fun defaultCategories(): List<CategoryData> = listOf(
+    fun defaultCategories(context: Context): List<CategoryData> =
+        if (isEnglish(context)) defaultCategoriesEn() else defaultCategoriesJa()
+
+    private fun defaultCategoriesJa(): List<CategoryData> = listOf(
         CategoryData("staple",        "🍚", "主食",       "ごはん",     "1杯",     252),
         CategoryData("lean_protein",  "🐓", "肉魚(低脂)", "鶏むね",     "100g",    114),
         CategoryData("egg",           "🥚", "卵",         "卵",         "1個",     76),
@@ -173,5 +191,17 @@ object WidgetStateManager {
         CategoryData("fruit",         "🍎", "果物",       "バナナ",     "1本",     86),
         CategoryData("added_fat",     "🧈", "油・調味",   "オリーブ油", "大さじ1", 111),
         CategoryData("snack_drink",   "🍩", "おやつ甘飲", "プロテイン", "1杯",     130),
+    )
+
+    private fun defaultCategoriesEn(): List<CategoryData> = listOf(
+        CategoryData("staple",        "🍚", "Staples",       "Rice",          "1 bowl",  252),
+        CategoryData("lean_protein",  "🐓", "Lean protein",  "Chicken breast","100g",    114),
+        CategoryData("egg",           "🥚", "Egg",           "Egg",           "1",       76),
+        CategoryData("fatty_protein", "🥩", "Fatty protein", "Beef strips",   "100g",    235),
+        CategoryData("dairy_soy",     "🥛", "Dairy & soy",   "Tofu",          "1/2 block", 57),
+        CategoryData("veggies",       "🥦", "Vegetables",    "Salad",         "1 plate", 30),
+        CategoryData("fruit",         "🍎", "Fruit",         "Banana",        "1",       86),
+        CategoryData("added_fat",     "🧈", "Oil & sauces",  "Olive oil",     "1 tbsp",  111),
+        CategoryData("snack_drink",   "🍩", "Snacks",        "Protein shake", "1 cup",   130),
     )
 }

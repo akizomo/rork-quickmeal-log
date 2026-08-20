@@ -30,6 +30,7 @@ class Widget4x2Glance : GlanceAppWidget() {
     private fun Content(context: Context) {
         val categories = WidgetStateManager.getCategories(context).take(4)
         val logged     = WidgetStateManager.getLoggedCategories(context)
+        val isEn       = WidgetStateManager.isEnglish(context)
         val consumed   = WidgetStateManager.getConsumedKcal(context)
         val target     = WidgetStateManager.getTargetKcal(context)
         val density    = context.resources.displayMetrics.density
@@ -42,7 +43,8 @@ class Widget4x2Glance : GlanceAppWidget() {
             trackColor    = ContextCompat.getColor(context, R.color.widget_btn_surface),
             progressColor = ContextCompat.getColor(context, R.color.widget_accent),
             textPrimary   = ContextCompat.getColor(context, R.color.widget_text_primary),
-            textSecondary = ContextCompat.getColor(context, R.color.widget_text_secondary)
+            textSecondary = ContextCompat.getColor(context, R.color.widget_text_secondary),
+            remainingLabel = WidgetStrings.remainingRingLabel(isEn)
         )
 
         Box(
@@ -65,7 +67,7 @@ class Widget4x2Glance : GlanceAppWidget() {
                 ) {
                     Image(
                         provider           = BitmapImageProvider(ringBmp),
-                        contentDescription = "カロリーリング — タップでアプリを開く",
+                        contentDescription = WidgetStrings.ringContentDescription(isEn, tappable = true),
                         contentScale       = ContentScale.Fit,
                         modifier           = GlanceModifier.fillMaxSize()
                     )
@@ -93,6 +95,7 @@ class Widget4x2Glance : GlanceAppWidget() {
                             CategoryButtonGlance(
                                 cat      = cat,
                                 logged   = cat.id in logged,
+                                isEn     = isEn,
                                 modifier = GlanceModifier.defaultWeight().fillMaxHeight()
                             )
                         }
@@ -102,6 +105,7 @@ class Widget4x2Glance : GlanceAppWidget() {
                             CategoryButtonGlance(
                                 cat      = cat,
                                 logged   = cat.id in logged,
+                                isEn     = isEn,
                                 modifier = GlanceModifier.defaultWeight().fillMaxHeight()
                             )
                         }

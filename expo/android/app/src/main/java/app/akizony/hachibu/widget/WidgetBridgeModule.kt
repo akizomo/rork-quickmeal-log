@@ -28,6 +28,17 @@ class WidgetBridgeModule(private val reactContext: ReactApplicationContext) :
     }
 
     /**
+     * ウィジェットの表示言語を更新する。settings.uiLanguage が変わるたびに呼ぶ。
+     * @param uiLanguage 'ja' | 'en-US'
+     */
+    @ReactMethod
+    fun updateUiLanguage(uiLanguage: String) {
+        val ctx = reactContext.applicationContext
+        WidgetStateManager.setUiLanguage(ctx, uiLanguage)
+        scope.launch { updateAllWidgets(ctx) }
+    }
+
+    /**
      * カテゴリ別のデフォルト食品データを更新する。
      * 自動学習が実装された段階で、各カテゴリの直近食品をここに渡す。
      * @param categoriesJson JSON配列文字列

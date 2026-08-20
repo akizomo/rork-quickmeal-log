@@ -29,6 +29,7 @@ class Widget4x3Glance : GlanceAppWidget() {
     private fun Content(context: Context) {
         val categories = WidgetStateManager.getCategories(context).take(9)
         val logged     = WidgetStateManager.getLoggedCategories(context)
+        val isEn       = WidgetStateManager.isEnglish(context)
         val consumed   = WidgetStateManager.getConsumedKcal(context)
         val target     = WidgetStateManager.getTargetKcal(context)
         val density    = context.resources.displayMetrics.density
@@ -38,7 +39,8 @@ class Widget4x3Glance : GlanceAppWidget() {
             trackColor    = ContextCompat.getColor(context, R.color.widget_btn_surface),
             progressColor = ContextCompat.getColor(context, R.color.widget_accent),
             textPrimary   = ContextCompat.getColor(context, R.color.widget_text_primary),
-            textSecondary = ContextCompat.getColor(context, R.color.widget_text_secondary)
+            textSecondary = ContextCompat.getColor(context, R.color.widget_text_secondary),
+            remainingLabel = WidgetStrings.remainingRingLabel(isEn)
         )
         val remaining  = (target - consumed).coerceAtLeast(0)
 
@@ -62,7 +64,7 @@ class Widget4x3Glance : GlanceAppWidget() {
                 ) {
                     Image(
                         provider           = BitmapImageProvider(ringBmp),
-                        contentDescription = "カロリーリング",
+                        contentDescription = WidgetStrings.ringContentDescription(isEn, tappable = false),
                         contentScale       = ContentScale.Fit,
                         modifier           = GlanceModifier.size(44.dp)
                     )
@@ -86,7 +88,7 @@ class Widget4x3Glance : GlanceAppWidget() {
                         }
                         // ステータス文言 = Label役割 → Label sm(13sp)
                         Text(
-                            "あと $remaining kcal",
+                            WidgetStrings.remainingKcal(isEn, remaining),
                             style = TextStyle(
                                 color      = ColorProvider(R.color.widget_accent),
                                 fontSize   = 13.sp,
@@ -104,6 +106,7 @@ class Widget4x3Glance : GlanceAppWidget() {
                                 CategoryButtonGlance(
                                     cat      = cat,
                                     logged   = cat.id in logged,
+                                    isEn     = isEn,
                                     modifier = GlanceModifier.defaultWeight().fillMaxHeight()
                                 )
                             }

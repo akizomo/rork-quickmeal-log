@@ -23,7 +23,7 @@ import { castHistoryMap, deriveDefaultTab, rankFrequentSelections, recordDishSel
 import { computeQuickLogMacro } from '@/utils/quick-log-macro';
 import { bumpDiagnosticCounter, castDiagnostics, recordSearchMiss } from '@/utils/diagnostics';
 import { beginSpan } from '@/utils/perf';
-import { widgetUpdateKcal, widgetDrainPendingQueue, widgetUpdateCategories } from '@/utils/widget-bridge';
+import { widgetUpdateKcal, widgetDrainPendingQueue, widgetUpdateCategories, widgetUpdateUiLanguage } from '@/utils/widget-bridge';
 import { resolveLog, ResolveInput, ResolveResult } from '@/utils/identity-resolver';
 import { logDraftToFoodLog } from '@/utils/identity-log-bridge';
 import { getBucketDef, getIdentity } from '@/constants/identity';
@@ -1620,6 +1620,12 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
   useEffect(() => {
     widgetUpdateKcal(todayMacro.kcal, todayAdjustedTargetKcal);
   }, [todayMacro.kcal, todayAdjustedTargetKcal]);
+
+  // ── ウィジェット: 表示言語を同期 ─────────────────────────────────────────
+  // ネイティブ Kotlin 側は RN の i18n ランタイムに乗らないため、明示的に伝える。
+  useEffect(() => {
+    widgetUpdateUiLanguage(settings.uiLanguage ?? 'ja');
+  }, [settings.uiLanguage]);
 
   // ── ウィジェット: ランキングベースのカテゴリボタンを同期 ──────────────────
   // 記録のたびに quickLogHistory が変わるので、ranked top-9 をウィジェットへプッシュ。

@@ -30,6 +30,7 @@ class Widget2x2Glance : GlanceAppWidget() {
     private fun Content(context: Context) {
         val categories = WidgetStateManager.getCategories(context).take(4)
         val logged     = WidgetStateManager.getLoggedCategories(context)
+        val isEn       = WidgetStateManager.isEnglish(context)
 
         Box(
             modifier = GlanceModifier
@@ -45,6 +46,7 @@ class Widget2x2Glance : GlanceAppWidget() {
                         CategoryButtonGlance(
                             cat      = cat,
                             logged   = cat.id in logged,
+                            isEn     = isEn,
                             modifier = GlanceModifier.defaultWeight().fillMaxHeight()
                         )
                     }
@@ -54,6 +56,7 @@ class Widget2x2Glance : GlanceAppWidget() {
                         CategoryButtonGlance(
                             cat      = cat,
                             logged   = cat.id in logged,
+                            isEn     = isEn,
                             modifier = GlanceModifier.defaultWeight().fillMaxHeight()
                         )
                     }
@@ -82,6 +85,7 @@ private val COLOR_BTN_BG    = ColorProvider(R.color.widget_btn_surface)
 internal fun CategoryButtonGlance(
     cat: CategoryData,
     logged: Boolean,
+    isEn: Boolean,
     modifier: GlanceModifier = GlanceModifier
 ) {
     // 外側透明 Box: padding(4dp) = spacing['1'] でボタン間 gap を作る
@@ -116,7 +120,7 @@ internal fun CategoryButtonGlance(
                     )
                     // 取り消す: UI操作名 = Label役割 → Label sm(13sp)
                     Text(
-                        "取り消す",
+                        WidgetStrings.undo(isEn),
                         style = TextStyle(color = COLOR_ON_CONTAINER, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                     )
                 }

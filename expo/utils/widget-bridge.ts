@@ -7,9 +7,24 @@
  */
 import { NativeModules, Platform } from 'react-native';
 
+import type { AppLocale } from '@/types/locale';
+
 const { WidgetBridge } = NativeModules;
 
 const isAvailable = Platform.OS === 'android' && !!WidgetBridge;
+
+/**
+ * ウィジェットの表示言語を更新する。settings.uiLanguage が変わるたびに呼ぶ。
+ * ネイティブ Kotlin 側は RN の i18n ランタイムに乗らないため、明示的に伝える必要がある。
+ */
+export function widgetUpdateUiLanguage(uiLanguage: AppLocale): void {
+  if (!isAvailable) return;
+  try {
+    WidgetBridge.updateUiLanguage(uiLanguage);
+  } catch {
+    // ignore
+  }
+}
 
 export type WidgetPendingEntry = {
   categoryId: string; // 'staple' | 'lean_protein' | ...

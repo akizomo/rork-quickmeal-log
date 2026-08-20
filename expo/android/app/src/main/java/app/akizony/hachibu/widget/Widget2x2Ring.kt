@@ -28,6 +28,7 @@ class Widget2x2RingGlance : GlanceAppWidget() {
     private fun Content(context: Context) {
         val consumed = WidgetStateManager.getConsumedKcal(context)
         val target   = WidgetStateManager.getTargetKcal(context)
+        val isEn     = WidgetStateManager.isEnglish(context)
         val density  = context.resources.displayMetrics.density
         val size     = LocalSize.current
         // ウィジェット内側の最小辺を正方形リングに使う (padding 8dp × 2)
@@ -38,7 +39,8 @@ class Widget2x2RingGlance : GlanceAppWidget() {
             trackColor    = ContextCompat.getColor(context, R.color.widget_btn_surface),
             progressColor = ContextCompat.getColor(context, R.color.widget_accent),
             textPrimary   = ContextCompat.getColor(context, R.color.widget_text_primary),
-            textSecondary = ContextCompat.getColor(context, R.color.widget_text_secondary)
+            textSecondary = ContextCompat.getColor(context, R.color.widget_text_secondary),
+            remainingLabel = WidgetStrings.remainingRingLabel(isEn)
         )
 
         Box(
@@ -52,7 +54,7 @@ class Widget2x2RingGlance : GlanceAppWidget() {
         ) {
             Image(
                 provider           = BitmapImageProvider(ringBmp),
-                contentDescription = "カロリーリング — タップでアプリを開く",
+                contentDescription = WidgetStrings.ringContentDescription(isEn, tappable = true),
                 contentScale       = ContentScale.Fit,
                 modifier           = GlanceModifier.fillMaxSize()
             )
