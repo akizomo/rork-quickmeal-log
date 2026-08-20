@@ -789,10 +789,15 @@
         });
       }
 
-      // Init from localStorage
+      // Init: localStorage の保存値を優先。未選択の初回訪問時のみブラウザ言語で自動判定。
       (function () {
         var saved = localStorage.getItem('lp-lang');
-        if (saved === 'en') setLang('en');
+        if (saved === 'en' || saved === 'ja') {
+          setLang(saved);
+          return;
+        }
+        var browserLang = (navigator.language || '').toLowerCase();
+        if (browserLang.indexOf('ja') !== 0) setLang('en');
       })();
 
       // ── Subscribe modal ──────────────────────────────────────────────────────
