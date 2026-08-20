@@ -86,7 +86,9 @@
           }
         }
       ],
-      "./plugins/health-connect-manifest.plugin.js"
+      "./plugins/health-connect-manifest.plugin.js",
+      "@sentry/react-native",
+      "expo-localization"
     ],
     "experiments": {
       "typedRoutes": true
