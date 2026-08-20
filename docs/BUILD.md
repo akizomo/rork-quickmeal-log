@@ -199,6 +199,27 @@ find expo/android -name "*.kt" | xargs grep -l "cornerRadius"
 
 ## 6. トラブルシューティング
 
+### 配布したビルドが splash 表示直後にクラッシュする
+
+**まず依存バージョンを疑う。** SDK 非互換のネイティブモジュールが混ざっていると、JS に到達する前に落ちる。`tsc` / `jest` / Web 起動確認はすべて通るため、この症状はコード側を追っても原因に辿り着かない。
+
+```bash
+cd expo && npx expo install --check
+```
+
+`expected version` と桁が違う警告 (例: `expo-localization@57.0.1 - expected version: ~17.0.9`) が出たらそれが原因。
+
+```bash
+npx expo install --fix
+git diff app.json    # plugins への config plugin 自動追加を必ず確認する
+```
+
+修正後は**ビルドを作り直して配布し直す**。既に配布済みのビルドはローカル修正では直らない。
+
+再発防止ルールは [CLAUDE.md「依存パッケージの追加・更新ルール」](../CLAUDE.md#依存パッケージの追加更新ルール-必読) を参照。要点は **Expo 関連は必ず `npx expo install` で入れる**こと。
+
+- 実績: 2026-08-20 `expo-localization@^57.0.1` (正 `~17.0.9`) + config plugin 未登録 → 内部テスト版が splash でクラッシュ。修正コミット `db60e2a`。
+
 ### `npm install` が peer dependency エラーで失敗
 
 ```

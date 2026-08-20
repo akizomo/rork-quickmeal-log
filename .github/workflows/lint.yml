@@ -8,7 +8,7 @@ on:
 
 jobs:
   lint:
-    name: Lint & i18n check
+    name: Lint & static checks
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -32,3 +32,14 @@ jobs:
       - name: i18n check — no hardcoded Japanese strings
         working-directory: expo
         run: node scripts/check-i18n.mjs
+
+      # SDK 非互換のネイティブモジュールが混ざると実機ビルドが splash で落ちる。
+      # (2026-08-20: expo-localization@^57.0.1 が SDK 54 に入り起動直後クラッシュ)
+      # tsc も jest も Web も検出できない。ここが唯一の防波堤。
+      - name: Expo SDK dependency check
+        working-directory: expo
+        run: npx expo install --check
+
+      - name: Test
+        working-directory: expo
+        run: npx jest --ci

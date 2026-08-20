@@ -116,6 +116,26 @@ UI の実装・修正を行う際は**必ず以下の順序**で参照するこ�
 - トーン: 静かな日本語ウェルネス。中立・非評価・非性的。
 
 ## 開発環境ルール
+### 依存パッケージの追加・更新ルール (必読)
+**背景**: 2026-08-20、`expo-localization` を `^57.0.1` (SDK 54 の正は `~17.0.9`) で追加したため、内部テスト配布版が splash 表示直後にクラッシュした。`tsc` も `jest` も Web 起動確認もすべて通っており、**実機ビルドまで誰も気づけなかった**。同種の事故を繰り返さないための規則。
+
+- **Expo エコシステムのパッケージは絶対に `npm/bun add` で直接入れない。必ず `npx expo install <pkg>` を使う。**
+  - `expo-*`, `react-native-*`, `@sentry/react-native`, `react`, `react-dom`, `react-native` が対象。
+  - `expo install` は **インストール済み SDK に対応するバージョンを解決する**。`npm add` は latest を取りにいくため、SDK と無関係な別系列 (今回の 57.x) が入る。
+  - 判断に迷ったら `expo install` を使う。Expo 管理外のパッケージに対しても安全に動作する (内部で npm/bun に委譲する)。
+- **`package.json` の Expo 関連依存を手で編集しない。** バージョンを変えたいときも `npx expo install <pkg>` 経由にする。
+- **ネイティブモジュールを追加したら、その config plugin が `app.json` の `plugins` に登録されているか必ず確認する。**
+  - 未登録だとネイティブ初期化に失敗し、これ単体でも起動時クラッシュになる。今回 `expo-localization` が未登録だった。
+  - `npx expo install --fix` は不足している plugin を自動追加してくれる。実行後は `git diff app.json` で必ず差分を見る。
+- **依存を触ったら `bun run check:deps` (= `expo install --check`) を必ず通す。** CI (`.github/workflows/lint.yml`) でも実行され、不整合があれば落ちる。
+  - 注意: `--check` は **`package.json` の範囲指定ではなく `node_modules` の実インストール版**を見る。package.json を手編集しただけの状態ではローカルの `--check` は素通りする (CI は `npm install` 後に走るので検出できる)。**ローカルで確認するときは必ずインストールを済ませてから実行する。** これも「手編集しない」理由のひとつ。
+- **`expo install --check` / `--fix` の警告を「動いてるから」で無視しない。** メジャーが飛んでいる警告 (`expected version` と桁が違う) は**確実にクラッシュ要因**であり、警告ではなくエラーとして扱う。
+
+#### 「Web で動いた」はネイティブの動作保証にならない
+`bun run start-web` / Claude Preview で確認できるのは JS レイヤーだけ。**ネイティブモジュールのバージョン不整合・config plugin 欠落・権限設定漏れは Web では一切再現しない。**
+- ネイティブ依存 (カメラ / 通知 / ヘルス / ロケール / IAP / Sentry 等) に触れた変更は、**Simulator/Emulator か実機ビルドで起動確認するまで「動いた」と言わない。**
+- 特に **依存追加を含む変更を配布ビルドに乗せる前**は、`expo run:ios` / `expo run:android` でローカルネイティブ起動を1回通す。
+
 ### ngrok 禁止 (Woven AUP)
 - **ngrok / Expo tunnel モードは絶対に使用しない**。Woven の Acceptable Use Policy で禁止されている。
 - `expo start --tunnel`, `bun run start -- --tunnel`, `bunx ngrok ...`, `@expo/ngrok` の手動起動はすべて禁止。
