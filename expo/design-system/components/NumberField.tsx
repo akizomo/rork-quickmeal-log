@@ -90,6 +90,9 @@ export function NumberField({
             lineHeight: t.typography.lineHeight[size],
             fontWeight: t.typography.fontWeight.bold as TextStyle['fontWeight'],
             letterSpacing: t.typography.letterSpacing.tighter,
+            // web: <input> はデフォルトでUA既定幅(≒20文字ぶん)を取ってしまい、
+            // minWidthだけでは上書きされない。widthを明示してブラウザ既定を殺す。
+            width: compact ? 56 : 120,
             minWidth: compact ? 56 : 120,
             textAlign: align,
             paddingVertical: 0,

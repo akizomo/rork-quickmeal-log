@@ -34,6 +34,7 @@ import {
   Button,
   Card,
   Caption,
+  Chip,
   Heading,
   Icon,
   IconButton,
@@ -57,7 +58,7 @@ import {
 } from '@/types/nutrition';
 import { computePlanOutcome, recommendGoal, type GoalRecommendation } from '@/utils/goals';
 import { useUnitSystem } from '@/hooks/useUnitSystem';
-import { cmToFtIn, ftInToCm, kgToLbs, lbsToKg, weightSuffix, formatDisplayWeight } from '@/utils/units';
+import { cmToFtIn, ftInToCm, kgToLbs, lbsToKg, weightSuffix, formatDisplayWeight, type UnitSystem } from '@/utils/units';
 
 // Step layout:
 // 0=basis, 1=height, 2=weight, 3=age, 4=activity,
@@ -74,12 +75,30 @@ const PACE_ICON: Record<PaceLevel, IconName> = {
 
 type Step = number;
 
+// 主役の数値入力より目立たない、小さめの単位切り替え。
+// SegmentedControl は等分割レイアウトのため "cm/kg" 等の長いラベルだと
+// 溢れてしまう。ラベル幅にフィットする Chip 2個並びのほうが適する。
+function UnitSystemToggle({
+  unitSystem,
+  onChange,
+}: {
+  unitSystem: UnitSystem;
+  onChange: (u: UnitSystem) => void;
+}) {
+  return (
+    <View style={{ flexDirection: 'row', gap: 8 }}>
+      <Chip label="cm/kg" size="sm" selected={unitSystem === 'metric'} onPress={() => onChange('metric')} />
+      <Chip label="ft/lbs" size="sm" selected={unitSystem === 'imperial'} onPress={() => onChange('imperial')} />
+    </View>
+  );
+}
+
 export default function OnboardingRoute() {
   const router = useRouter();
   const { profile, settings, updateProfileValues, setOnboardingStep, completeOnboarding } = useAppState();
   const t = useTheme();
   const tr = useT();
-  const { unitSystem } = useUnitSystem();
+  const { unitSystem, setUnitSystem } = useUnitSystem();
 
   const [step, setStep] = useState<Step>(() => Math.min(settings.onboardingStep ?? 0, TOTAL_STEPS - 1));
 
@@ -309,6 +328,7 @@ export default function OnboardingRoute() {
                     onInchChange={onHeightInchChange}
                     inputAccessoryViewID={Platform.OS === 'ios' ? ACCESSORY_ID : undefined}
                     onSubmitEditing={() => { if (canNext) goNext(); }}
+                    unitToggle={<UnitSystemToggle unitSystem={unitSystem} onChange={setUnitSystem} />}
                   />
                 ) : (
                   <StepNumber
@@ -321,6 +341,7 @@ export default function OnboardingRoute() {
                     testID="onboarding-height"
                     inputAccessoryViewID={Platform.OS === 'ios' ? ACCESSORY_ID : undefined}
                     onSubmitEditing={() => { if (canNext) goNext(); }}
+                    unitToggle={<UnitSystemToggle unitSystem={unitSystem} onChange={setUnitSystem} />}
                   />
                 )
               ) : null}
@@ -336,6 +357,7 @@ export default function OnboardingRoute() {
                   testID="onboarding-weight"
                   inputAccessoryViewID={Platform.OS === 'ios' ? ACCESSORY_ID : undefined}
                   onSubmitEditing={() => { if (canNext) goNext(); }}
+                  unitToggle={<UnitSystemToggle unitSystem={unitSystem} onChange={setUnitSystem} />}
                 />
               ) : null}
 
@@ -488,6 +510,7 @@ function StepNumber({
   testID,
   inputAccessoryViewID,
   onSubmitEditing,
+  unitToggle,
 }: {
   title: string;
   subtitle: string;
@@ -499,6 +522,7 @@ function StepNumber({
   testID?: string;
   inputAccessoryViewID?: string;
   onSubmitEditing?: () => void;
+  unitToggle?: React.ReactNode;
 }) {
   return (
     <View style={stepWrap}>
@@ -519,6 +543,7 @@ function StepNumber({
           returnKeyType="next"
           onSubmitEditing={onSubmitEditing}
         />
+        {unitToggle ? <View style={{ marginTop: 16, alignItems: 'center' }}>{unitToggle}</View> : null}
       </View>
     </View>
   );
@@ -533,6 +558,7 @@ function StepHeightImperial({
   onInchChange,
   inputAccessoryViewID,
   onSubmitEditing,
+  unitToggle,
 }: {
   title: string;
   subtitle: string;
@@ -542,36 +568,40 @@ function StepHeightImperial({
   onInchChange: (v: string) => void;
   inputAccessoryViewID?: string;
   onSubmitEditing?: () => void;
+  unitToggle?: React.ReactNode;
 }) {
   return (
     <View style={stepWrap}>
       <Heading size="2xl">{title}</Heading>
       <Body tone="secondary">{subtitle}</Body>
-      <View style={{ marginTop: 'auto', marginBottom: 'auto', flexDirection: 'row', gap: 12, justifyContent: 'center' }}>
-        <NumberField
-          value={ft}
-          onChangeText={onFtChange}
-          suffix="ft"
-          decimal={false}
-          size="display"
-          align="center"
-          autoFocus
-          testID="onboarding-height-ft"
-          inputAccessoryViewID={inputAccessoryViewID}
-          returnKeyType="next"
-        />
-        <NumberField
-          value={inch}
-          onChangeText={onInchChange}
-          suffix="in"
-          decimal={false}
-          size="display"
-          align="center"
-          testID="onboarding-height-in"
-          inputAccessoryViewID={inputAccessoryViewID}
-          returnKeyType="next"
-          onSubmitEditing={onSubmitEditing}
-        />
+      <View style={{ marginTop: 'auto', marginBottom: 'auto' }}>
+        <View style={{ flexDirection: 'row', gap: 12, justifyContent: 'center' }}>
+          <NumberField
+            value={ft}
+            onChangeText={onFtChange}
+            suffix="ft"
+            decimal={false}
+            size="display"
+            align="center"
+            autoFocus
+            testID="onboarding-height-ft"
+            inputAccessoryViewID={inputAccessoryViewID}
+            returnKeyType="next"
+          />
+          <NumberField
+            value={inch}
+            onChangeText={onInchChange}
+            suffix="in"
+            decimal={false}
+            size="display"
+            align="center"
+            testID="onboarding-height-in"
+            inputAccessoryViewID={inputAccessoryViewID}
+            returnKeyType="next"
+            onSubmitEditing={onSubmitEditing}
+          />
+        </View>
+        {unitToggle ? <View style={{ marginTop: 16, alignItems: 'center' }}>{unitToggle}</View> : null}
       </View>
     </View>
   );
