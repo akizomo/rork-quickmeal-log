@@ -1321,6 +1321,7 @@ const BUCKET_SNACK_DRINK: Identity[] = [
   {
     id: 'chocolate',
     label: 'チョコ',
+    searchTags: ['板チョコ', 'ミルクチョコ', 'チョコレート'],
     primaryHome: { tab: 'ingredient', bucket: 'snack_drink' },
     // 基準は板チョコ (明治ミルクチョコ等) 1枚=50g。
     defaultMacro: { kcal: 138, protein: 1.7, fat: 8.3, carbs: 14 },
@@ -1351,7 +1352,7 @@ const BUCKET_SNACK_DRINK: Identity[] = [
     primaryHome: { tab: 'ingredient', bucket: 'snack_drink' },
     defaultMacro: { kcal: 230, protein: 4, fat: 12, carbs: 28 },
     amount: { unit: 'piece', default: 1, chips: [{ label: '小', value: 0.5 }, { label: '1切', value: 1 }] },
-    searchTags: ['ショート', 'チーズケーキ', 'シュー', 'ティラミス'],
+    searchTags: ['ショート', 'チーズケーキ', 'シュー', 'ティラミス', 'モンブラン', 'ガトーショコラ', 'タルト'],
   },
   {
     id: 'pudding',
@@ -1372,6 +1373,7 @@ const BUCKET_SNACK_DRINK: Identity[] = [
     primaryHome: { tab: 'ingredient', bucket: 'snack_drink' },
     defaultMacro: { kcal: 215, protein: 4, fat: 10, carbs: 27 },
     amount: { unit: 'piece', default: 1, chips: [{ label: '小', value: 0.5 }, { label: '1個', value: 1 }] },
+    searchTags: ['アイスクリーム', 'ソフトクリーム', 'シャーベット', 'ジェラート'],
   },
   {
     id: 'cookie',
@@ -1385,7 +1387,7 @@ const BUCKET_SNACK_DRINK: Identity[] = [
   {
     id: 'snack',
     label: 'スナック菓子',
-    searchTags: ['すなっくがし', 'ポテチ', 'ぽてち'],
+    searchTags: ['すなっくがし', 'ポテチ', 'ぽてち', 'ポテトチップス', 'かっぱえびせん', 'コーンスナック'],
     primaryHome: { tab: 'ingredient', bucket: 'snack_drink' },
     defaultMacro: { kcal: 320, protein: 4, fat: 18, carbs: 36 },
     referenceDescription: 'ポテチ・コーンスナック等。1袋(ポテチ普通サイズ)≈60g',
@@ -1424,7 +1426,7 @@ const BUCKET_SNACK_DRINK: Identity[] = [
   {
     id: 'sweet_bread',
     label: '菓子パン',
-    searchTags: ['かしぱん', 'めろんぱん', 'あんぱん'],
+    searchTags: ['かしぱん', 'めろんぱん', 'あんぱん', 'クリームパン', 'チョココロネ', 'カレーパン'],
     primaryHome: { tab: 'ingredient', bucket: 'snack_drink' },
     defaultMacro: { kcal: 305, protein: 6, fat: 8, carbs: 51 },
     amount: { unit: 'piece', default: 1, chips: [{ label: '半分', value: 0.5 }, { label: '1個', value: 1 }] },

@@ -60,6 +60,7 @@ const BUCKET_RICE_DISH: Identity[] = [
   {
     id: 'fried_rice_omurice',
     label: 'チャーハン・オムライス',
+    searchTags: ['やきめし', 'ケチャップライス'],
     primaryHome: { tab: 'dish', bucket: 'rice_dish' },
     defaultMacro: { kcal: 720, protein: 20, fat: 26, carbs: 94 },
     referenceDescription: 'ご飯200g + 卵2個・具',
@@ -102,6 +103,7 @@ const BUCKET_RICE_DISH: Identity[] = [
   {
     id: 'bibimbap',
     label: 'ビビンバ',
+    searchTags: ['びびんば', 'コリアン', '韓国'],
     primaryHome: { tab: 'dish', bucket: 'rice_dish' },
     defaultMacro: { kcal: 650, protein: 23, fat: 16, carbs: 95 },
     referenceDescription: 'ご飯200g + ナムル・肉80g',
@@ -130,10 +132,10 @@ const BUCKET_CURRY: Identity[] = [
     amount: { unit: 'percent', default: 100, chips: [{ label: '並', value: 100 }, { label: '大盛', value: 150 }, { label: '特盛', value: 200 }] },
     attributes: [
       { key: 'curry', label: 'カレーライス', isDefault: true },
-      { key: 'keema', label: 'キーマカレー', factor: { kcal: 0.93 } },
+      { key: 'keema', label: 'キーマカレー', searchTags: ['キーマ'], factor: { kcal: 0.93 } },
       { key: 'dry', label: 'ドライカレー', factor: { kcal: 0.97 } },
-      { key: 'stew', label: 'シチュー', factor: { kcal: 0.97 } },
-      { key: 'hashed', label: 'ハッシュドビーフ', factor: { kcal: 1.04 } },
+      { key: 'stew', label: 'シチュー', searchTags: ['クリームシチュー', 'ビーフシチュー'], factor: { kcal: 0.97 } },
+      { key: 'hashed', label: 'ハッシュドビーフ', searchTags: ['ハヤシライス', 'ハヤシ'], factor: { kcal: 1.04 } },
     ],
     defaultAddonIds: ['katsu_add', 'cheese', 'egg', 'kimchi_top'],
     allowedAddonIds: ['katsu_add', 'cheese', 'egg', 'kimchi_top', 'karaage_add'],
@@ -151,6 +153,7 @@ const BUCKET_CURRY: Identity[] = [
   {
     id: 'butter_chicken',
     label: 'バターチキン',
+    searchTags: ['バターチキンカレー'],
     primaryHome: { tab: 'dish', bucket: 'curry' },
     defaultMacro: { kcal: 780, protein: 22, fat: 40, carbs: 72 },
     referenceDescription: 'ご飯200g + バターチキン (or ナンで代用可)',
@@ -185,6 +188,7 @@ const BUCKET_CHINESE_NOODLES: Identity[] = [
   {
     id: 'ramen_light',
     label: 'ラーメン (あっさり)',
+    searchTags: ['らーめん', 'ラーメン'],
     primaryHome: { tab: 'dish', bucket: 'chinese_noodles' },
     defaultMacro: { kcal: 560, protein: 25, fat: 10, carbs: 100 },
     referenceDescription: '麺150g + スープ・基本具 (汁残し前提)',
@@ -203,6 +207,7 @@ const BUCKET_CHINESE_NOODLES: Identity[] = [
   {
     id: 'ramen_heavy',
     label: 'ラーメン (こってり)',
+    searchTags: ['らーめん', 'ラーメン'],
     primaryHome: { tab: 'dish', bucket: 'chinese_noodles' },
     defaultMacro: { kcal: 820, protein: 32, fat: 29, carbs: 99 },
     referenceDescription: '麺150g + こってりスープ・チャーシュー (汁残し前提)',
@@ -311,9 +316,9 @@ const BUCKET_JAPANESE_NOODLES: Identity[] = [
       { key: 'bukkake', label: 'ぶっかけ' },
       // きつね/月見は具を factor に織り込み済みなので、二重計上になる
       // トッピングを隠す (きつね=油揚げ, 月見=卵)。
-      { key: 'kitsune', label: 'きつね', factor: { kcal: 1.16, protein: 1.13, fat: 1.33 }, hiddenAddonIds: ['kitsune_top'] },
-      { key: 'tsukimi', label: '月見', factor: { kcal: 1.09, protein: 1.25, fat: 1.11 }, hiddenAddonIds: ['egg'] },
-      { key: 'kamaage', label: '釜揚げ', factor: { kcal: 0.91, fat: 0.78 } },
+      { key: 'kitsune', label: 'きつね', searchTags: ['きつねうどん'], factor: { kcal: 1.16, protein: 1.13, fat: 1.33 }, hiddenAddonIds: ['kitsune_top'] },
+      { key: 'tsukimi', label: '月見', searchTags: ['つきみうどん'], factor: { kcal: 1.09, protein: 1.25, fat: 1.11 }, hiddenAddonIds: ['egg'] },
+      { key: 'kamaage', label: '釜揚げ', searchTags: ['かまあげうどん'], factor: { kcal: 0.91, fat: 0.78 } },
     ],
     defaultAddonIds: ['egg', 'tempura_top', 'tororo'],
     allowedAddonIds: ['egg', 'tempura_top', 'kitsune_top', 'tororo'],
@@ -327,9 +332,9 @@ const BUCKET_JAPANESE_NOODLES: Identity[] = [
     amount: { unit: 'percent', default: 100, chips: [{ label: '小', value: 50 }, { label: '1人前', value: 100 }, { label: '大盛', value: 150 }, { label: '特盛', value: 200 }] },
     attributes: [
       { key: 'kake', label: 'かけ', isDefault: true },
-      { key: 'zaru', label: 'ざる', factor: { kcal: 0.89 } },
+      { key: 'zaru', label: 'ざる', searchTags: ['ざるそば'], factor: { kcal: 0.89 } },
       // 山かけ = とろろを factor に織り込み済みなので tororo トッピングを隠す
-      { key: 'yamakake', label: '山かけ', factor: { kcal: 1.06, protein: 1.06 }, hiddenAddonIds: ['tororo'] },
+      { key: 'yamakake', label: '山かけ', searchTags: ['やまかけそば'], factor: { kcal: 1.06, protein: 1.06 }, hiddenAddonIds: ['tororo'] },
     ],
     defaultAddonIds: ['egg', 'tempura_top', 'tororo'],
     allowedAddonIds: ['egg', 'tempura_top', 'kitsune_top', 'tororo'],
@@ -1002,7 +1007,7 @@ const BUCKET_MISC_DISH: Identity[] = [
       {
         key: 'western',
         label: '洋風スープ',
-        searchTags: ['ようふうすーぷ'],
+        searchTags: ['ようふうすーぷ', 'コンソメスープ', 'コンソメ', 'ミネストローネ', 'オニオンスープ', 'ポトフ'],
         factor: { kcal: 1.25, protein: 0.8, fat: 1.4, carbs: 2.0 },
         defaultAddonIds: ['cheese', 'crouton'],
         allowedAddonIds: ['cheese', 'crouton', 'corn_top'],
@@ -1010,6 +1015,7 @@ const BUCKET_MISC_DISH: Identity[] = [
       {
         key: 'creamy',
         label: 'クリームスープ',
+        searchTags: ['ポタージュ', 'コーンスープ', 'コーンポタージュ', 'かぼちゃスープ', 'パンプキンスープ', 'ヴィシソワーズ', 'クラムチャウダー', 'チャウダー'],
         factor: { kcal: 3.5, protein: 1.2, fat: 6.0, carbs: 4.5 },
         defaultAddonIds: ['crouton', 'cheese'],
         allowedAddonIds: ['crouton', 'cheese', 'corn_top'],
