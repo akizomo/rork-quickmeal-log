@@ -795,12 +795,6 @@ body.lp-body {
 }
 
 /* ---------- §04 FAQ ---------- */
-.lp-faq .lp-section-head,
-.lp-faq-list {
-  max-width: 720px;
-  margin-left: auto;
-  margin-right: auto;
-}
 
 .lp-faq-list {
   display: grid;
