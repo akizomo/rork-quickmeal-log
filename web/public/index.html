@@ -219,43 +219,54 @@
 
       <!-- §03 WHY -->
       <section id="why" class="lp-section lp-why" aria-labelledby="why-title">
-        <div class="lp-section-head">
-          <p class="lp-section-num">§ 03 — Why roughly works</p>
-          <h2 id="why-title" class="lp-section-h">
-            ざっくり、でも8割。
-          </h2>
-        </div>
+        <div class="lp-why-scroll-track">
+          <div class="lp-why-sticky">
+            <div class="lp-section-head">
+              <p class="lp-section-num">§ 03 — Why roughly works</p>
+              <h2 id="why-title" class="lp-section-h">
+                ざっくり、でも8割。
+              </h2>
+            </div>
 
-        <div class="lp-why-grid">
-          <article class="lp-why-card">
-            <p class="lp-why-num">01</p>
-            <p class="lp-why-stat">346 → 9</p>
-            <p class="lp-why-label">食材 → ボタン</p>
-            <h3 class="lp-why-h">栄養が近い食材は、同じボタンへ。</h3>
-            <p class="lp-why-body">
-              日常の 346 種の食材を、栄養が近いもの同士で 9 つに集約。同じボタンの中なら、選んだ食材が違ってもカロリーはほぼ変わりません。
-            </p>
-          </article>
+            <div class="lp-why-layout">
+              <div class="lp-why-anim" aria-hidden="true">
+                <canvas data-hb-anim data-ratio="square"></canvas>
+              </div>
+              <div class="lp-why-cards">
+                <article class="lp-why-card">
+                  <p class="lp-why-num">01</p>
+                  <p class="lp-why-stat">181 → 9</p>
+                  <p class="lp-why-label">食材 → ボタン</p>
+                  <h3 class="lp-why-h">栄養が近い食材は、同じボタンへ。</h3>
+                  <p class="lp-why-body">
+                    日常の 181 種の食材を、栄養が近いもの同士で 9 つに集約。同じボタンの中なら、選んだ食材が違ってもカロリーはほぼ変わりません。
+                  </p>
+                </article>
 
-          <article class="lp-why-card">
-            <p class="lp-why-num">02</p>
-            <p class="lp-why-stat">105 / 200</p>
-            <p class="lp-why-label">鶏むね vs もも · kcal</p>
-            <h3 class="lp-why-h">違いが大きい食材は、別のボタンへ。</h3>
-            <p class="lp-why-body">
-              鶏むね (105 kcal) と鶏もも (200 kcal) は約 2 倍の差。明らかに違うものは別のボタンに分けてあるので、選んだ方の値で記録されます。
-            </p>
-          </article>
+                <article class="lp-why-card">
+                  <p class="lp-why-num">02</p>
+                  <p class="lp-why-stat">105 / 200</p>
+                  <p class="lp-why-label">鶏むね vs もも · kcal</p>
+                  <h3 class="lp-why-h">違いが大きい食材は、別のボタンへ。</h3>
+                  <p class="lp-why-body">
+                    鶏むね (105 kcal) と鶏もも (200 kcal) は約 2 倍の差。明らかに違うものは別のボタンに分けてあるので、選んだ方の値で記録されます。
+                  </p>
+                </article>
 
-          <article class="lp-why-card">
-            <p class="lp-why-num">03</p>
-            <p class="lp-why-stat">9 → 1</p>
-            <p class="lp-why-label">9 ボタン → あなた一人</p>
-            <h3 class="lp-why-h">ボタンは、あなたに寄っていく。</h3>
-            <p class="lp-why-body">
-              ふだんの食事に合わせて、記録される値は少しずつ調整されます。続けるほど、あなたの食生活に近づきます。
-            </p>
-          </article>
+                <article class="lp-why-card">
+                  <p class="lp-why-num">03</p>
+                  <p class="lp-why-stat">9 → 1</p>
+                  <p class="lp-why-label">9 ボタン → あなた一人</p>
+                  <h3 class="lp-why-h">ボタンは、あなたに寄っていく。</h3>
+                  <p class="lp-why-body">
+                    ふだんの食事に合わせて、記録される値は少しずつ調整されます。続けるほど、あなたの食生活に近づきます。
+                  </p>
+                </article>
+              </div>
+            </div>
+            <script src="/lp/food-data.js"></script>
+            <script src="/lp/why-animation.js"></script>
+          </div>
         </div>
       </section>
 
@@ -556,6 +567,67 @@
               alert('送信に失敗しました。お手数ですが時間をおいて再度お試しください。');
             });
         });
+      })();
+
+      // §03 Why — scroll-driven card deck (desktop only)
+      (function () {
+        var track = document.querySelector('.lp-why-scroll-track');
+        var cards = track ? Array.from(track.querySelectorAll('.lp-why-card')) : [];
+        if (!track || cards.length < 2) return;
+
+        var CLASSES = ['is-gone', 'is-front', 'is-mid', 'is-back'];
+        var currentIdx = 0;
+
+        function applyDeck(idx) {
+          cards.forEach(function (card, i) {
+            card.classList.remove('is-gone', 'is-front', 'is-mid', 'is-back');
+            var diff = i - idx;
+            if (diff < 0) card.classList.add('is-gone');
+            else if (diff === 0) card.classList.add('is-front');
+            else if (diff === 1) card.classList.add('is-mid');
+            else card.classList.add('is-back');
+          });
+        }
+
+        function setup() {
+          applyDeck(0);
+          track.setAttribute('data-scroll-ready', '');
+          onScroll();
+        }
+
+        function teardown() {
+          track.removeAttribute('data-scroll-ready');
+          cards.forEach(function (c) { c.classList.remove('is-gone', 'is-front', 'is-mid', 'is-back'); });
+          currentIdx = 0;
+        }
+
+        function setCard(idx) {
+          if (idx === currentIdx) return;
+          currentIdx = idx;
+          applyDeck(idx);
+        }
+
+        function onScroll() {
+          if (!track.hasAttribute('data-scroll-ready')) return;
+          var rect = track.getBoundingClientRect();
+          var scrolled = -rect.top;
+          var scrollable = rect.height - window.innerHeight;
+          if (scrollable <= 0) return;
+          var progress = Math.max(0, Math.min(1, scrolled / scrollable));
+          var idx = Math.min(cards.length - 1, Math.floor(progress * cards.length));
+          setCard(idx);
+        }
+
+        if (window.innerWidth > 768) setup();
+
+        window.addEventListener('scroll', onScroll, { passive: true });
+        window.addEventListener('resize', function () {
+          if (window.innerWidth <= 768) {
+            if (track.hasAttribute('data-scroll-ready')) teardown();
+          } else {
+            if (!track.hasAttribute('data-scroll-ready')) setup();
+          }
+        }, { passive: true });
       })();
     </script>
   </body>

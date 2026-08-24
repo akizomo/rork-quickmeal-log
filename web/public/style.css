@@ -615,31 +615,138 @@ body.lp-body {
   text-align: right;
 }
 
-/* ---------- §03 Why ---------- */
-.lp-why-grid {
+/* ---------- §03 Why — layout ---------- */
+.lp-why-layout {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: 1fr 1fr;
   gap: 32px;
+  align-items: start;
 }
 
-@media (max-width: 960px) {
-  .lp-why-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 24px;
-  }
-  .lp-why-grid > .lp-why-card:last-child {
-    grid-column: 1 / -1;
-    max-width: calc(50% - 12px);
-  }
+.lp-why-anim {
+  border-radius: 16px;
+  overflow: hidden;
+  background: #F6F3EC;
+}
+
+.lp-why-anim canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.lp-why-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .lp-why-card {
   background: var(--paper-sub);
   border: 1px solid var(--border-soft);
   border-radius: 4px;
-  padding: 32px 24px;
+  padding: 24px;
   display: flex;
   flex-direction: column;
+}
+
+/* Desktop: sticky scroll, cards stacked and transitioned */
+@media (min-width: 769px) {
+  .lp-why-scroll-track {
+    height: 240vh;
+  }
+
+  .lp-why-sticky {
+    position: sticky;
+    top: 72px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .lp-why-sticky .lp-section-head {
+    margin-bottom: 0;
+  }
+
+  /* Cards container matches animation square */
+  .lp-why-cards {
+    display: grid;
+    grid-template-rows: 1fr;
+    aspect-ratio: 1;
+    gap: 0;
+  }
+
+  /* Card deck: all cards in same grid cell, z-stacked */
+  .lp-why-scroll-track[data-scroll-ready] .lp-why-card {
+    grid-area: 1 / 1;
+    opacity: 0;
+    transform: translateY(20px);
+    pointer-events: none;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    z-index: 0;
+  }
+
+  /* 2 cards behind front, peeking out below */
+  .lp-why-scroll-track[data-scroll-ready] .lp-why-card.is-back {
+    opacity: 0.4;
+    transform: translateY(28px) scaleX(0.92);
+    z-index: 1;
+  }
+
+  .lp-why-scroll-track[data-scroll-ready] .lp-why-card.is-mid {
+    opacity: 0.65;
+    transform: translateY(14px) scaleX(0.96);
+    z-index: 2;
+  }
+
+  /* Front card: fully visible with elevation shadow */
+  .lp-why-scroll-track[data-scroll-ready] .lp-why-card.is-front {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+    z-index: 3;
+    box-shadow: 0 8px 32px rgba(28, 28, 26, 0.14);
+  }
+
+  /* Dismissed: slide up and out */
+  .lp-why-scroll-track[data-scroll-ready] .lp-why-card.is-gone {
+    opacity: 0;
+    transform: translateY(-24px);
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  /* Larger padding + justify top-half on tall square card */
+  .lp-why-card {
+    padding: 36px 32px;
+    justify-content: center;
+  }
+
+  .lp-why-num {
+    margin-bottom: 16px;
+  }
+
+  .lp-why-stat {
+    font-size: clamp(40px, 4vw, 56px);
+    margin-bottom: 8px;
+  }
+
+  .lp-why-label {
+    margin-bottom: 24px;
+    padding-bottom: 20px;
+  }
+
+  .lp-why-h {
+    margin-bottom: 12px;
+  }
+}
+
+/* Mobile: single-column stack */
+@media (max-width: 768px) {
+  .lp-why-layout {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
 }
 
 .lp-why-num {
@@ -649,18 +756,16 @@ body.lp-body {
   font-weight: 500;
   letter-spacing: 0.08em;
   color: var(--ink-mute);
-  margin: 0 0 24px;
+  margin: 0 0 12px;
 }
 
 .lp-why-stat {
-  /* font-text = Lato → Noto Sans JP の per-glyph fallback。
-     "346 → 9" などは Lato、"ざっくり" は Noto Sans JP で描画される */
   font-family: var(--font-text);
   font-style: normal;
-  font-size: clamp(36px, 4vw, 48px);
+  font-size: clamp(28px, 3vw, 40px);
   font-weight: 700;
   color: var(--sage);
-  margin: 0 0 8px;
+  margin: 0 0 6px;
   letter-spacing: -0.015em;
   line-height: 1.05;
 }
@@ -669,8 +774,8 @@ body.lp-body {
   font-size: 12px;
   color: var(--ink-mute);
   letter-spacing: 0.06em;
-  margin: 0 0 28px;
-  padding-bottom: 16px;
+  margin: 0 0 16px;
+  padding-bottom: 12px;
   border-bottom: 1px solid var(--border-soft);
 }
 
@@ -678,7 +783,7 @@ body.lp-body {
   font-size: 17px;
   font-weight: 700;
   color: var(--ink);
-  margin: 0 0 12px;
+  margin: 0 0 8px;
   line-height: 1.5;
 }
 
@@ -1235,20 +1340,6 @@ body.lp-body {
   .lp-feature-grid {
     grid-template-columns: 1fr;
     gap: 40px;
-  }
-
-  .lp-why-grid {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-
-  .lp-why-grid > .lp-why-card:last-child {
-    grid-column: auto;
-    max-width: none;
-  }
-
-  .lp-why-card {
-    padding: 24px 20px;
   }
 
   .lp-faq-item {
