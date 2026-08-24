@@ -180,16 +180,18 @@
   }
 
   // ─── Draw: counter (top-left) ─────────────────────────────────────────────
-  function drawCounter(ctx, T, L, NF, NI) {
+  function drawCounter(ctx, T, L, NF, NI, lang) {
     var v, unit;
+    var en = (lang === 'en');
     if (T < CUES.Merge) {
-      v = lerp(0, NF, P(T,0,0.9,M.enter)); unit = '品';
+      v = lerp(0, NF, P(T,0,0.9,M.enter));
+      unit = en ? 'foods' : '品';
     } else if (T < CUES.Grid) {
       v = lerp(NF, NI, P(T,CUES.Merge+0.35,CUES.Merge+1.25,M.drift));
-      unit = v > 120 ? '品' : '種類';
+      unit = v > 120 ? (en ? 'foods' : '品') : (en ? 'types' : '種類');
     } else {
       v = lerp(NI, 9, P(T,CUES.Grid,CUES.Grid+0.6,M.drift));
-      unit = v > 24 ? '種類' : 'ボタン';
+      unit = v > 24 ? (en ? 'types' : '種類') : (en ? 'buttons' : 'ボタン');
     }
     var alpha = P(T,0,0.35,M.enter);
     ctx.globalAlpha = alpha;
@@ -361,19 +363,37 @@
     portrait:  [405,  720],
   };
 
-  function setupCanvas(canvas, BK) {
+  function setupCanvas(canvas) {
+    var dpr   = window.devicePixelRatio || 1;
     var ratio = canvas.dataset.ratio || 'landscape';
     var dims  = RATIO_DIMS[ratio] || RATIO_DIMS.landscape;
-    var LW = dims[0], LH = dims[1];
 
-    canvas.width  = LW;
-    canvas.height = LH;
+    // Logical coordinate space stays in RATIO_DIMS units (e.g. 720×720 for square).
+    // CSS controls the display size via width:100%; height:auto — we don't touch it.
+    // Buffer is dpr× so one canvas pixel maps to one physical pixel, eliminating
+    // the upscaling blur that appeared on HiDPI screens.
+    var LW = dims[0], LH = dims[1];
+    canvas.width  = LW * dpr;
+    canvas.height = LH * dpr;
 
     var ctx  = canvas.getContext('2d');
+    ctx.scale(dpr, dpr); // draw in logical px — physical buffer is dpr× larger
+
     var L    = buildLayout(LW, LH);
-    var data = buildData(L, BK);
-    var NF   = data.nodes.length;  // 181
-    var NI   = data.idents.length; // 71
+
+    // ─── Lang-aware data ────────────────────────────────────────────────────
+    var currentLang = 'ja';
+    var BK, data, NF, NI;
+
+    function loadBK() {
+      currentLang = (document.body.lang === 'en') ? 'en' : 'ja';
+      BK   = (currentLang === 'en' && window.HB_BUCKETS_EN) ? window.HB_BUCKETS_EN : window.HB_BUCKETS;
+      data = buildData(L, BK);
+      NF   = data.nodes.length;
+      NI   = data.idents.length;
+    }
+
+    loadBK();
 
     var startTime = null, rafId = null, visible = false;
 
@@ -387,7 +407,7 @@
 
       ctx.globalAlpha = fade;
       drawLight(ctx, T, L);
-      drawCounter(ctx, T, L, NF, NI);
+      drawCounter(ctx, T, L, NF, NI, currentLang);
       drawZones(ctx, T, L, BK);
       drawNodes(ctx, T, L, data.nodes);
       drawIdentities(ctx, T, L, data.idents);
@@ -399,6 +419,19 @@
 
     function start() { if(rafId) return; startTime=null; rafId=requestAnimationFrame(draw); }
     function stop()  { if(rafId) { cancelAnimationFrame(rafId); rafId=null; } }
+
+    function restart() {
+      loadBK();
+      startTime = null;
+    }
+
+    // Watch body[lang] changes for live lang switching
+    if ('MutationObserver' in window) {
+      var _mo = new MutationObserver(function(muts) {
+        muts.forEach(function(m) { if (m.attributeName === 'lang') restart(); });
+      });
+      _mo.observe(document.body, { attributes: true, attributeFilter: ['lang'] });
+    }
 
     // Start/stop tied to visibility (IntersectionObserver)
     if ('IntersectionObserver' in window) {
@@ -417,7 +450,6 @@
   // ─── Init: wire up all [data-hb-anim] canvases ───────────────────────────
   function init() {
     if (!window.HB_BUCKETS) return;
-    var BK = window.HB_BUCKETS;
 
     // Primary selector: data-hb-anim attribute
     var canvases = document.querySelectorAll('[data-hb-anim]');
@@ -426,7 +458,7 @@
       var el = document.getElementById('why-anim');
       if (el) canvases = [el];
     }
-    canvases.forEach(function(c) { setupCanvas(c, BK); });
+    canvases.forEach(function(c) { setupCanvas(c); });
   }
 
   if (document.readyState === 'loading') {
