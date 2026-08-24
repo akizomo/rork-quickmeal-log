@@ -513,7 +513,7 @@ body.lp-body {
 }
 
 .lp-feature {
-  border-top: 1px solid var(--ink);
+  border-top: 1px solid var(--border-soft);
   padding-top: 24px;
   display: flex;
   flex-direction: column;
@@ -807,7 +807,7 @@ body.lp-body {
 }
 
 .lp-faq-item:first-child {
-  border-top: 1px solid var(--ink);
+  border-top: 1px solid var(--border-soft);
 }
 
 .lp-faq-item summary {
@@ -1450,7 +1450,7 @@ body.lp-body {
 
   .lp-feature,
   .lp-faq-item:first-child {
-    border-top-color: #F7F7F6;
+    border-top-color: #403A2E;
   }
 
   .lp-faq-item,
