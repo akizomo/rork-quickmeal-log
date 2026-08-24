@@ -1442,6 +1442,18 @@ body.lp-body {
     border-color: #403A2E;
   }
 
+  .lp-footer {
+    background: #1D1913;
+  }
+
+  .lp-footer-copy {
+    color: #80817A;
+  }
+
+  .lp-footer-nav a:hover {
+    color: #9AB594;
+  }
+
   .lp-feature,
   .lp-faq-item:first-child {
     border-top-color: #F7F7F6;
