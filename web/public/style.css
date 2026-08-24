@@ -513,7 +513,6 @@ body.lp-body {
 }
 
 .lp-feature {
-  border-top: 1px solid var(--border-soft);
   padding-top: 24px;
   display: flex;
   flex-direction: column;
@@ -1448,7 +1447,6 @@ body.lp-body {
     color: #9AB594;
   }
 
-  .lp-feature,
   .lp-faq-item:first-child {
     border-top-color: #403A2E;
   }
