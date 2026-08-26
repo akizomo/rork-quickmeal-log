@@ -257,7 +257,7 @@ function StepContent({ stepKey }: { stepKey: string }) {
         <View style={styles.stepContent}>
           <Body>{tr('help.content.gestures.body')}</Body>
           <View style={styles.illustrationWrap}>
-            <GestureDemoIllustration />
+            <GestureDemoIllustration animate />
           </View>
           <View style={[styles.calloutBox, { backgroundColor: t.colors.action.primary.container, borderLeftColor: t.colors.action.primary.default }]}>
             <Body style={{ color: t.colors.action.primary.onContainer }}>

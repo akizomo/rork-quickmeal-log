@@ -269,9 +269,9 @@ export default function IntroRoute() {
                   ]}
                 >
                   {item.media.kind === 'buttonGrid' ? (
-                    <ButtonGridIllustration />
+                    <ButtonGridIllustration animate />
                   ) : item.media.kind === 'gestureDemo' ? (
-                    <GestureDemoIllustration />
+                    <GestureDemoIllustration animate />
                   ) : (
                     <IntroProgressIllustration />
                   )}
