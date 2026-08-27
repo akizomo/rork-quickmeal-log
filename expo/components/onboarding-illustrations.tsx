@@ -626,7 +626,7 @@ function AnimatedProgressIllustration({ animate = false }: { animate?: boolean }
           </View>
           <View style={progressStyles.sideCol}>
             <Text style={[progressStyles.sideLabel, { color: t.colors.content.secondary }]}>消費</Text>
-            <Text style={[progressStyles.sideValue, { color: t.colors.content.primary }]}>—</Text>
+            <Text style={[progressStyles.sideValue, { color: t.colors.content.primary }]}>280</Text>
             <Text style={[progressStyles.sideUnit,  { color: t.colors.content.secondary }]}>kcal</Text>
           </View>
         </View>
