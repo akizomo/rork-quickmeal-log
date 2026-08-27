@@ -12,20 +12,11 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Svg, {
-  Circle,
-  Defs,
-  LinearGradient as SvgLinearGradient,
-  Path,
-  Stop,
-} from 'react-native-svg';
-
 import { Logo } from '@/components/Logo';
-import { ButtonGridIllustration, GestureDemoIllustration } from '@/components/onboarding-illustrations';
+import { ButtonGridIllustration, GestureDemoIllustration, IntroProgressIllustration } from '@/components/onboarding-illustrations';
 import { INTRO_VERSION, LEGAL_LINKS } from '@/constants/onboarding';
 import { Label, useTheme, type Theme } from '@/design-system';
 import { useT } from '@/hooks/useT';
-import { colors } from '@/design-system/tokens/primitives/colors';
 import { radius } from '@/design-system/tokens/primitives/radius';
 import { fontSize as fs, letterSpacing as ls } from '@/design-system/tokens/primitives/typography';
 import { useAppState } from '@/providers/app-state-provider';
@@ -48,126 +39,7 @@ const SLIDE_META: { key: string; media: SlideMedia }[] = [
   { key: 's3', media: { kind: 'progress' } },
 ];
 
-// ── Intro 専用 進捗イラスト ───────────────────────────────────
-// kcal リング + 体重スパークライン + PFC バー の 3 カード合成。
-// intro 以外で再利用する見込みが無いため、ローカル定義。
-function IntroProgressIllustration() {
-  const t = useTheme();
-  const tr = useT();
-  const axisLabels: string[] = tr('intro.progress.axis', { returnObjects: true }) ?? ['', '', ''];
-  const illustColors = {
-    protein: t.colors.nutrition.protein.graphic,
-    fat: t.colors.nutrition.fat.graphic,
-    carb: t.colors.action.text.default,
-  };
-  const illustStyles = useMemo(() => makeIllustStyles(t), [t]);
-  const { height: screenHeight } = useWindowDimensions();
-  // 画面高さに応じて 0.6〜1.0 の範囲でスケール。
-  // ヒーロー利用可能高さ ≒ screenHeight - 349 (TopBar + footer + textBlock 等のクローム概算)。
-  // 474 = 3 カード合計のベース高 410 + wrap の paddingVertical 32×2 = 64。
-  // これで 600〜950px の縦幅でもカードと上下余白が収まる。
-  const scale = Math.max(0.6, Math.min(1, (screenHeight - 349) / 474));
-
-  const pfcRows: { l: 'P' | 'F' | 'C'; v: number; c: string }[] = [
-    { l: 'P', v: 0.62, c: illustColors.protein },
-    { l: 'F', v: 0.41, c: illustColors.fat },
-    { l: 'C', v: 0.35, c: illustColors.carb },
-  ];
-
-  return (
-    <View style={[illustStyles.wrap, { transform: [{ scale }] }]}>
-      {/* Card 1 — kcal リング */}
-      <View style={illustStyles.card}>
-        <View style={illustStyles.ringBox}>
-          <Svg width={120} height={120} viewBox="0 0 120 120">
-            <Circle
-              cx={60}
-              cy={60}
-              r={46}
-              stroke={t.colors.border.default}
-              strokeWidth={9}
-              fill="none"
-            />
-            <Circle
-              cx={60}
-              cy={60}
-              r={46}
-              stroke={t.colors.action.primary.default}
-              strokeWidth={9}
-              fill="none"
-              strokeDasharray="289"
-              strokeDashoffset="92"
-              strokeLinecap="round"
-              transform="rotate(-90 60 60)"
-            />
-          </Svg>
-          <View style={illustStyles.ringCenter} pointerEvents="none">
-            <Text style={illustStyles.ringNumber}>1,438</Text>
-            <Text style={illustStyles.ringUnit}>/ 2,070 kcal</Text>
-          </View>
-        </View>
-      </View>
-
-      {/* Card 2 — 体重トレンド */}
-      <View style={[illustStyles.card, illustStyles.cardSpark]}>
-        <View style={illustStyles.sparkHeader}>
-          <Text style={illustStyles.sparkLabel}>{tr('intro.progress.label')}</Text>
-          <Text style={illustStyles.sparkDelta}>{tr('intro.progress.delta')}</Text>
-        </View>
-        <Svg
-          width="100%"
-          height={56}
-          viewBox="0 0 220 56"
-          preserveAspectRatio="none"
-        >
-          <Defs>
-            <SvgLinearGradient id="sparkfill" x1="0" y1="0" x2="0" y2="1">
-              <Stop offset="0%" stopColor={t.colors.action.primary.default} stopOpacity={0.18} />
-              <Stop offset="100%" stopColor={t.colors.action.primary.default} stopOpacity={0} />
-            </SvgLinearGradient>
-          </Defs>
-          <Path
-            d="M0,18 L20,16 L40,22 L60,20 L80,28 L100,30 L120,34 L140,32 L160,40 L180,38 L200,44 L220,46 L220,56 L0,56 Z"
-            fill="url(#sparkfill)"
-          />
-          <Path
-            d="M0,18 L20,16 L40,22 L60,20 L80,28 L100,30 L120,34 L140,32 L160,40 L180,38 L200,44 L220,46"
-            stroke={t.colors.action.primary.default}
-            strokeWidth={2}
-            fill="none"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <Circle cx={220} cy={46} r={3.5} fill={t.colors.action.primary.default} />
-        </Svg>
-        <View style={illustStyles.sparkAxis}>
-          {axisLabels.map((label, i) => (
-            <Text key={i} style={illustStyles.sparkAxisText}>{label}</Text>
-          ))}
-        </View>
-      </View>
-
-      {/* Card 3 — PFC ミニバー */}
-      <View style={[illustStyles.card, illustStyles.cardPfc]}>
-        {pfcRows.map((row) => (
-          <View key={row.l} style={illustStyles.pfcRow}>
-            <Text style={illustStyles.pfcLabel}>{row.l}</Text>
-            <View style={illustStyles.pfcTrack}>
-              <View
-                style={[
-                  illustStyles.pfcFill,
-                  { width: `${row.v * 100}%`, backgroundColor: row.c },
-                ]}
-              />
-            </View>
-          </View>
-        ))}
-      </View>
-    </View>
-  );
-}
-
-// Slide 1/2 のイラストは help 画面と共通化済み。`onboarding-illustrations.tsx` を参照。
+// Slide 1/2/3 のイラストは `onboarding-illustrations.tsx` で一元管理。
 
 export default function IntroRoute() {
   const router = useRouter();
@@ -273,7 +145,7 @@ export default function IntroRoute() {
                   ) : item.media.kind === 'gestureDemo' ? (
                     <GestureDemoIllustration animate />
                   ) : (
-                    <IntroProgressIllustration />
+                    <IntroProgressIllustration animate />
                   )}
                 </View>
 
@@ -369,69 +241,3 @@ const makeStyles = (t: Theme) => StyleSheet.create({
   legalSep: { fontSize: fs.sm, color: t.colors.content.secondary },
 });
 
-const makeIllustStyles = (t: Theme) => StyleSheet.create({
-  // hero の縦をフルに使い、3 カードを均等に縦中央寄せ。
-  // 画面高さが変わっても各カードの比率と余白が保たれる。
-  wrap: {
-    width: '78%',
-    flex: 1,
-    flexDirection: 'column',
-    justifyContent: 'center',
-    gap: 16,
-    paddingVertical: 32,
-  },
-  card: {
-    backgroundColor: t.colors.surface.raised,
-    borderRadius: radius['2xl'],
-    borderWidth: 1,
-    borderColor: t.colors.border.default,
-    paddingVertical: 20,
-    paddingHorizontal: 20,
-    alignItems: 'center',
-  },
-  cardSpark: { paddingVertical: 20, paddingHorizontal: 20, alignItems: 'stretch', gap: 12 },
-  cardPfc: { paddingVertical: 16, paddingHorizontal: 20, alignItems: 'stretch', gap: 9 },
-  // Card 1
-  ringBox: { position: 'relative', width: 120, height: 120 },
-  ringCenter: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  ringNumber: { fontSize: fs['3xl'], fontWeight: '700', color: t.colors.content.primary, lineHeight: 28 },
-  ringUnit: { fontSize: fs.xs, color: t.colors.content.secondary, marginTop: 4 },
-  // Card 2
-  sparkHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'baseline',
-  },
-  // カードのヘッダ行 (ラベル+値)。下の sparkAxisText(xs) より一段上に置く。
-  sparkLabel: { fontSize: fs.sm, color: t.colors.content.secondary, letterSpacing: ls.wider },
-  sparkDelta: { fontSize: fs.sm, color: t.colors.action.text.default, fontWeight: '600' },
-  sparkAxis: { flexDirection: 'row', justifyContent: 'space-between' },
-  sparkAxisText: { fontSize: fs.xs, color: t.colors.content.secondary, letterSpacing: ls.wide },
-  // Card 3
-  pfcRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  // P/F/C の1文字ラベル = 添え字なので Caption 相当 (xs)
-  pfcLabel: {
-    width: 12,
-    fontSize: fs.xs,
-    fontWeight: '700',
-    color: t.colors.content.primary,
-  },
-  pfcTrack: {
-    flex: 1,
-    height: 6,
-    borderRadius: radius.full,
-    backgroundColor: t.colors.border.default,
-    overflow: 'hidden',
-  },
-  pfcFill: { height: '100%', borderRadius: radius.full },
-});
-
-// (gridStyles / gestureStyles は components/onboarding-illustrations.tsx に移動)

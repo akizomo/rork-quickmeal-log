@@ -15,8 +15,9 @@
  * intro (slide 高制約あり) / help (scrollable) どちらでも自然なサイズで表示される。
  */
 
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import Svg, { Circle, Defs, LinearGradient as SvgLinearGradient, Path, Stop } from 'react-native-svg';
 import { WebView } from 'react-native-webview';
 
 import { useTheme } from '@/design-system';
@@ -461,6 +462,269 @@ export function FrequentTabIllustration() {
 }
 
 // ---------------------------------------------------------------------------
+// IntroProgressIllustration (Slide 3: 進捗ダッシュボード)
+// ---------------------------------------------------------------------------
+//
+// 2 カードのアニメーションループ:
+//   Card A: ホーム画面 StatusCard 風 (カロリーリング + PFC ミニバー)
+//   Card B: 体重スパークライン
+//
+// animate=true  → 入場 → フィル → 退場 の ~5s ループ
+// animate=false → 静止最終フレーム
+
+const RING_SIZE   = 110;
+const RING_STROKE = 12;
+const RING_R      = (RING_SIZE - RING_STROKE) / 2; // 49
+const RING_CIRC   = 2 * Math.PI * RING_R;          // ≈ 307.9
+const TARGET_FILL = 0.68;                          // 1438 / 2070
+const SPARK_LEN   = 226;
+
+function AnimatedProgressIllustration({ animate = false }: { animate?: boolean }) {
+  const t = useTheme();
+  const tr = useT();
+  const { height: screenHeight } = useWindowDimensions();
+  const isMounted = useRef(true);
+
+  // native driver: カード入退場
+  const card1Opacity = useRef(new Animated.Value(0)).current;
+  const card1Y       = useRef(new Animated.Value(12)).current;
+  const card2Opacity = useRef(new Animated.Value(0)).current;
+  const card2Y       = useRef(new Animated.Value(12)).current;
+
+  // JS driver: SVG (ringAnim/sparkAnim) + Animated.View width (PFC)
+  const ringAnim  = useRef(new Animated.Value(0)).current;
+  const barPAnim  = useRef(new Animated.Value(0)).current;
+  const barFAnim  = useRef(new Animated.Value(0)).current;
+  const barCAnim  = useRef(new Animated.Value(0)).current;
+  const sparkAnim = useRef(new Animated.Value(0)).current;
+
+  // SVG プロパティはリスナー経由で state に写す (CalorieOverflowRing と同方式)
+  const [ringFill,  setRingFill]  = useState(animate ? 0 : 1);
+  const [sparkFill, setSparkFill] = useState(animate ? 0 : 1);
+
+  const barPWidth = barPAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', '62%'] });
+  const barFWidth = barFAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', '59%'] });
+  const barCWidth = barCAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', '67%'] });
+
+  const ringOffset  = RING_CIRC * (1 - ringFill  * TARGET_FILL);
+  const sparkOffset = SPARK_LEN * (1 - sparkFill);
+
+  const scale = Math.max(0.6, Math.min(1, (screenHeight - 349) / 380));
+  const axisLabels: string[] = tr('intro.progress.axis', { returnObjects: true }) ?? ['', '', ''];
+
+  useEffect(() => {
+    isMounted.current = true;
+
+    const ridRing  = ringAnim.addListener( ({ value }) => { if (isMounted.current) setRingFill(value);  });
+    const ridSpark = sparkAnim.addListener(({ value }) => { if (isMounted.current) setSparkFill(value); });
+
+    if (!animate) {
+      card1Opacity.setValue(1); card1Y.setValue(0);
+      card2Opacity.setValue(1); card2Y.setValue(0);
+      ringAnim.setValue(1);
+      barPAnim.setValue(1); barFAnim.setValue(1); barCAnim.setValue(1);
+      sparkAnim.setValue(1);
+      return () => {
+        isMounted.current = false;
+        ringAnim.removeListener(ridRing);
+        sparkAnim.removeListener(ridSpark);
+      };
+    }
+
+    const E_IN  = Easing.bezier(...(eas.enter as [number, number, number, number]));
+    const E_OUT = Easing.bezier(...(eas.exit  as [number, number, number, number]));
+
+    function reset() {
+      card1Opacity.setValue(0); card1Y.setValue(12);
+      card2Opacity.setValue(0); card2Y.setValue(12);
+      ringAnim.setValue(0);
+      barPAnim.setValue(0); barFAnim.setValue(0); barCAnim.setValue(0);
+      sparkAnim.setValue(0);
+    }
+
+    function runLoop() {
+      if (!isMounted.current) return;
+      reset();
+      Animated.sequence([
+        Animated.delay(300),
+        // Card A 入場 + カロリーリング塗り
+        Animated.parallel([
+          Animated.timing(card1Opacity, { toValue: 1, duration: dur.long, easing: E_IN, useNativeDriver: true }),
+          Animated.timing(card1Y,       { toValue: 0, duration: dur.long, easing: E_IN, useNativeDriver: true }),
+          Animated.timing(ringAnim,     { toValue: 1, duration: dur.long, easing: E_IN, useNativeDriver: false }),
+        ]),
+        // PFC バー スタッガー
+        Animated.stagger(120, [
+          Animated.timing(barPAnim, { toValue: 1, duration: 350, easing: E_IN, useNativeDriver: false }),
+          Animated.timing(barFAnim, { toValue: 1, duration: 350, easing: E_IN, useNativeDriver: false }),
+          Animated.timing(barCAnim, { toValue: 1, duration: 350, easing: E_IN, useNativeDriver: false }),
+        ]),
+        Animated.delay(200),
+        // Card B 入場 + スパークライン描画
+        Animated.parallel([
+          Animated.timing(card2Opacity, { toValue: 1, duration: dur.long, easing: E_IN, useNativeDriver: true }),
+          Animated.timing(card2Y,       { toValue: 0, duration: dur.long, easing: E_IN, useNativeDriver: true }),
+          Animated.timing(sparkAnim,    { toValue: 1, duration: 600,      easing: E_IN, useNativeDriver: false }),
+        ]),
+        Animated.delay(2200),
+        // 退場
+        Animated.parallel([
+          Animated.timing(card1Opacity, { toValue: 0, duration: dur.short, easing: E_OUT, useNativeDriver: true }),
+          Animated.timing(card2Opacity, { toValue: 0, duration: dur.short, easing: E_OUT, useNativeDriver: true }),
+        ]),
+        Animated.delay(300),
+      ]).start(({ finished }) => { if (isMounted.current && finished) runLoop(); });
+    }
+
+    runLoop();
+    return () => {
+      isMounted.current = false;
+      ringAnim.removeListener(ridRing);
+      sparkAnim.removeListener(ridSpark);
+    };
+  }, [animate]);
+
+  return (
+    <View style={[progressStyles.wrap, { transform: [{ scale }] }]}>
+      {/* Card A: ホーム StatusCard 風 (カロリーリング + PFC ミニバー) */}
+      <Animated.View style={[
+        progressStyles.card,
+        { backgroundColor: t.colors.surface.raised, borderColor: t.colors.border.default },
+        { opacity: card1Opacity, transform: [{ translateY: card1Y }] },
+      ]}>
+        {/* 3カラムリング行 (StatusCard.ringRow 相当) */}
+        <View style={progressStyles.ringRow}>
+          <View style={progressStyles.sideCol}>
+            <Text style={[progressStyles.sideLabel, { color: t.colors.content.secondary }]}>食事</Text>
+            <Text style={[progressStyles.sideValue, { color: t.colors.content.primary }]}>1,438</Text>
+            <Text style={[progressStyles.sideUnit,  { color: t.colors.content.secondary }]}>kcal</Text>
+          </View>
+          <View style={progressStyles.ringBox}>
+            <Svg width={RING_SIZE} height={RING_SIZE}>
+              <Circle
+                cx={RING_SIZE / 2} cy={RING_SIZE / 2} r={RING_R}
+                stroke={t.colors.nutrition.calorie.track}
+                strokeWidth={RING_STROKE}
+                fill="none"
+              />
+              <Circle
+                cx={RING_SIZE / 2} cy={RING_SIZE / 2} r={RING_R}
+                stroke={t.colors.nutrition.calorie.within.graphic}
+                strokeWidth={RING_STROKE}
+                strokeLinecap="round"
+                fill="none"
+                strokeDasharray={`${RING_CIRC} ${RING_CIRC}`}
+                strokeDashoffset={ringOffset}
+                transform={`rotate(-90 ${RING_SIZE / 2} ${RING_SIZE / 2})`}
+              />
+            </Svg>
+            <View style={progressStyles.ringCenter} pointerEvents="none">
+              <Text style={[progressStyles.ringLabel, { color: t.colors.content.secondary }]}>のこり</Text>
+              <Text style={[progressStyles.ringValue, { color: t.colors.content.primary }]}>632</Text>
+              <Text style={[progressStyles.ringUnit,  { color: t.colors.content.secondary }]}>/ 2,070</Text>
+            </View>
+          </View>
+          <View style={progressStyles.sideCol}>
+            <Text style={[progressStyles.sideLabel, { color: t.colors.content.secondary }]}>消費</Text>
+            <Text style={[progressStyles.sideValue, { color: t.colors.content.primary }]}>—</Text>
+            <Text style={[progressStyles.sideUnit,  { color: t.colors.content.secondary }]}>kcal</Text>
+          </View>
+        </View>
+        {/* PFC ミニバー (MiniProgressBar + StatusCard.pfcMiniRow 相当、3列縦積み) */}
+        <View style={progressStyles.pfcRow}>
+          <View style={progressStyles.pfcCol}>
+            <Text style={[progressStyles.pfcColLabel, { color: t.colors.content.secondary }]}>
+              <Text style={[progressStyles.pfcColLetter, { color: t.colors.nutrition.protein.text }]}>P</Text>
+              {' タンパク質'}
+            </Text>
+            <View style={[progressStyles.pfcTrack, { backgroundColor: t.colors.nutrition.protein.background }]}>
+              <Animated.View style={[progressStyles.pfcFill, { width: barPWidth, backgroundColor: t.colors.nutrition.protein.graphic }]} />
+            </View>
+            <Text style={[progressStyles.pfcValue, { color: t.colors.content.primary }]}>
+              {'62'}<Text style={{ color: t.colors.content.secondary }}>{' / 100 g'}</Text>
+            </Text>
+          </View>
+          <View style={progressStyles.pfcCol}>
+            <Text style={[progressStyles.pfcColLabel, { color: t.colors.content.secondary }]}>
+              <Text style={[progressStyles.pfcColLetter, { color: t.colors.nutrition.fat.text }]}>F</Text>
+              {' 脂質'}
+            </Text>
+            <View style={[progressStyles.pfcTrack, { backgroundColor: t.colors.nutrition.fat.background }]}>
+              <Animated.View style={[progressStyles.pfcFill, { width: barFWidth, backgroundColor: t.colors.nutrition.fat.graphic }]} />
+            </View>
+            <Text style={[progressStyles.pfcValue, { color: t.colors.content.primary }]}>
+              {'41'}<Text style={{ color: t.colors.content.secondary }}>{' / 70 g'}</Text>
+            </Text>
+          </View>
+          <View style={progressStyles.pfcCol}>
+            <Text style={[progressStyles.pfcColLabel, { color: t.colors.content.secondary }]}>
+              <Text style={[progressStyles.pfcColLetter, { color: t.colors.nutrition.carbs.text }]}>C</Text>
+              {' 炭水化物'}
+            </Text>
+            <View style={[progressStyles.pfcTrack, { backgroundColor: t.colors.nutrition.carbs.background }]}>
+              <Animated.View style={[progressStyles.pfcFill, { width: barCWidth, backgroundColor: t.colors.nutrition.carbs.graphic }]} />
+            </View>
+            <Text style={[progressStyles.pfcValue, { color: t.colors.content.primary }]}>
+              {'200'}<Text style={{ color: t.colors.content.secondary }}>{' / 300 g'}</Text>
+            </Text>
+          </View>
+        </View>
+      </Animated.View>
+
+      {/* Card B: 体重スパークライン */}
+      <Animated.View style={[
+        progressStyles.card,
+        { backgroundColor: t.colors.surface.raised, borderColor: t.colors.border.default },
+        { opacity: card2Opacity, transform: [{ translateY: card2Y }] },
+      ]}>
+        <View style={progressStyles.sparkHeader}>
+          <Text style={[progressStyles.sparkLabel, { color: t.colors.content.secondary }]}>
+            {tr('intro.progress.label')}
+          </Text>
+          <Text style={[progressStyles.sparkDelta, { color: t.colors.nutrition.trend.improve.text }]}>
+            {tr('intro.progress.delta')}
+          </Text>
+        </View>
+        <Svg width="100%" height={56} viewBox="0 0 220 56" preserveAspectRatio="none">
+          <Defs>
+            <SvgLinearGradient id="pg_sparkfill" x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0%" stopColor={t.colors.action.primary.default} stopOpacity={0.15} />
+              <Stop offset="100%" stopColor={t.colors.action.primary.default} stopOpacity={0} />
+            </SvgLinearGradient>
+          </Defs>
+          <Path
+            d="M0,18 L20,16 L40,22 L60,20 L80,28 L100,30 L120,34 L140,32 L160,40 L180,38 L200,44 L220,46 L220,56 L0,56 Z"
+            fill="url(#pg_sparkfill)"
+          />
+          <Path
+            d="M0,18 L20,16 L40,22 L60,20 L80,28 L100,30 L120,34 L140,32 L160,40 L180,38 L200,44 L220,46"
+            stroke={t.colors.action.primary.default}
+            strokeWidth={2}
+            fill="none"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeDasharray={SPARK_LEN}
+            strokeDashoffset={sparkOffset}
+          />
+          <Circle cx={220} cy={46} r={3.5} fill={t.colors.action.primary.default} opacity={sparkFill >= 0.95 ? 1 : 0} />
+        </Svg>
+        <View style={progressStyles.sparkAxis}>
+          {axisLabels.map((label, i) => (
+            <Text key={i} style={[progressStyles.sparkAxisText, { color: t.colors.content.secondary }]}>
+              {label}
+            </Text>
+          ))}
+        </View>
+      </Animated.View>
+    </View>
+  );
+}
+
+export function IntroProgressIllustration({ animate }: { animate?: boolean } = {}) {
+  return <AnimatedProgressIllustration animate={animate} />;
+}
+
+// ---------------------------------------------------------------------------
 // Styles
 // ---------------------------------------------------------------------------
 
@@ -654,4 +918,123 @@ const frequentStyles = StyleSheet.create({
   },
   btnEmoji: { fontSize: 28 },
   btnLabel: { fontSize: fs.xs },
+});
+
+const progressStyles = StyleSheet.create({
+  wrap: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 24,
+    gap: 12,
+  },
+  card: {
+    width: 300,
+    borderWidth: 1,
+    borderRadius: radius['2xl'],
+    padding: 14,
+  },
+  // 3カラムリング行 (StatusCard.ringRow 相当)
+  ringRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 14,
+  },
+  sideCol: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 2,
+  },
+  sideLabel: {
+    fontSize: fs.xs,
+    fontWeight: '600',
+    letterSpacing: ls.wider,
+  },
+  sideValue: {
+    fontSize: fs.lg,
+    fontWeight: '700',
+    letterSpacing: ls.tight,
+  },
+  sideUnit: {
+    fontSize: fs.xs,
+    fontWeight: '500',
+  },
+  ringBox: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: RING_SIZE,
+    height: RING_SIZE,
+  },
+  ringCenter: {
+    position: 'absolute',
+    alignItems: 'center',
+  },
+  ringLabel: {
+    fontSize: fs.xs,
+    fontWeight: '600',
+    marginBottom: 1,
+  },
+  ringValue: {
+    fontSize: fs['2xl'],
+    fontWeight: '700',
+    letterSpacing: ls.tighter,
+  },
+  ringUnit: {
+    marginTop: 3,
+    fontSize: fs.xs,
+    fontWeight: '500',
+  },
+  // PFC ミニバー 3列 (MiniProgressBar + StatusCard.pfcMiniRow 相当)
+  pfcRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  pfcCol: {
+    flex: 1,
+    gap: 4,
+  },
+  pfcColLabel: {
+    fontSize: fs.sm,
+    fontWeight: '600',
+  },
+  pfcColLetter: {
+    fontWeight: '700',
+  },
+  pfcTrack: {
+    height: 6,
+    borderRadius: radius.full,
+    overflow: 'hidden',
+  },
+  pfcFill: {
+    height: '100%',
+    borderRadius: radius.full,
+  },
+  pfcValue: {
+    fontSize: fs.sm,
+    fontWeight: '600',
+  },
+  // スパークライン
+  sparkHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    marginBottom: 8,
+  },
+  sparkLabel: {
+    fontSize: fs.sm,
+    fontWeight: '600',
+  },
+  sparkDelta: {
+    fontSize: fs.sm,
+    fontWeight: '600',
+  },
+  sparkAxis: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 4,
+  },
+  sparkAxisText: {
+    fontSize: fs.xs,
+  },
 });
