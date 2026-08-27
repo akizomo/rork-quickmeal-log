@@ -49,7 +49,7 @@ export default function IntroRoute() {
   const slideAccentMap = useMemo<Record<string, string>>(() => ({
     s1: t.colors.surface.raised,           // neutral: light=ivory[50], dark=#2B2620
     s2: t.colors.action.primary.container, // sage: light=sage[100], dark=sage[900]
-    s3: t.colors.accent.subtle,            // ai: light=ai[100], dark=ai[900]
+    s3: t.colors.status.success.container, // moss: light=moss[100]
   }), [t]);
   const slideTexts: { title: string; subtitle: string }[] = tr('intro.slides', { returnObjects: true }) ?? [];
   const slides: Slide[] = SLIDE_META.map((meta, i) => ({

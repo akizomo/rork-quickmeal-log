@@ -85,7 +85,7 @@ export function ButtonGridIllustration({ animate }: { animate?: boolean } = {}) 
             key={i}
             style={[
               gridStyles.btn,
-              { backgroundColor: t.colors.surface.raised, borderColor: t.colors.border.default },
+              { backgroundColor: t.colors.surface.raised },
               btn.highlight ? [gridStyles.btnHighlight, { backgroundColor: t.colors.action.primary.container, borderColor: t.colors.action.primary.default }] : null,
             ]}
           >
@@ -329,7 +329,7 @@ function AnimatedGestureDemoIllustration() {
 
         <Animated.View style={[
           gestureStyles.result,
-          { backgroundColor: t.colors.surface.raised, borderColor: t.colors.border.default },
+          { backgroundColor: t.colors.surface.raised },
           { opacity: res1Opacity, transform: [{ translateX: res1X }] },
         ]}>
           <Text style={[gestureStyles.resultTitle, { color: t.colors.content.primary }]}>
@@ -380,7 +380,7 @@ function AnimatedGestureDemoIllustration() {
 
         <Animated.View style={[
           gestureStyles.result,
-          { backgroundColor: t.colors.surface.raised, borderColor: t.colors.border.default },
+          { backgroundColor: t.colors.surface.raised },
           { opacity: res2Opacity, transform: [{ translateX: res2X }] },
         ]}>
           <Text style={[gestureStyles.resultTitle, { color: t.colors.content.primary }]}>
@@ -589,13 +589,13 @@ function AnimatedProgressIllustration({ animate = false }: { animate?: boolean }
       {/* Card A: ホーム StatusCard 風 (カロリーリング + PFC ミニバー) */}
       <Animated.View style={[
         progressStyles.card,
-        { backgroundColor: t.colors.surface.raised, borderColor: t.colors.border.default },
+        { backgroundColor: t.colors.surface.raised },
         { opacity: card1Opacity, transform: [{ translateY: card1Y }] },
       ]}>
         {/* 3カラムリング行 (StatusCard.ringRow 相当) */}
         <View style={progressStyles.ringRow}>
           <View style={progressStyles.sideCol}>
-            <Text style={[progressStyles.sideLabel, { color: t.colors.content.secondary }]}>食事</Text>
+            <Text style={[progressStyles.sideLabel, { color: t.colors.content.secondary }]}>{tr('statusCard.meals')}</Text>
             <Text style={[progressStyles.sideValue, { color: t.colors.content.primary }]}>1,438</Text>
             <Text style={[progressStyles.sideUnit,  { color: t.colors.content.secondary }]}>kcal</Text>
           </View>
@@ -619,13 +619,13 @@ function AnimatedProgressIllustration({ animate = false }: { animate?: boolean }
               />
             </Svg>
             <View style={progressStyles.ringCenter} pointerEvents="none">
-              <Text style={[progressStyles.ringLabel, { color: t.colors.content.secondary }]}>のこり</Text>
+              <Text style={[progressStyles.ringLabel, { color: t.colors.content.secondary }]}>{tr('calorieRing.remaining')}</Text>
               <Text style={[progressStyles.ringValue, { color: t.colors.content.primary }]}>632</Text>
               <Text style={[progressStyles.ringUnit,  { color: t.colors.content.secondary }]}>/ 2,070</Text>
             </View>
           </View>
           <View style={progressStyles.sideCol}>
-            <Text style={[progressStyles.sideLabel, { color: t.colors.content.secondary }]}>消費</Text>
+            <Text style={[progressStyles.sideLabel, { color: t.colors.content.secondary }]}>{tr('statusCard.burned')}</Text>
             <Text style={[progressStyles.sideValue, { color: t.colors.content.primary }]}>280</Text>
             <Text style={[progressStyles.sideUnit,  { color: t.colors.content.secondary }]}>kcal</Text>
           </View>
@@ -635,7 +635,7 @@ function AnimatedProgressIllustration({ animate = false }: { animate?: boolean }
           <View style={progressStyles.pfcCol}>
             <Text style={[progressStyles.pfcColLabel, { color: t.colors.content.secondary }]}>
               <Text style={[progressStyles.pfcColLetter, { color: t.colors.nutrition.protein.text }]}>P</Text>
-              {' タンパク質'}
+              {` ${tr('common.macros.protein')}`}
             </Text>
             <View style={[progressStyles.pfcTrack, { backgroundColor: t.colors.nutrition.protein.background }]}>
               <Animated.View style={[progressStyles.pfcFill, { width: barPWidth, backgroundColor: t.colors.nutrition.protein.graphic }]} />
@@ -647,7 +647,7 @@ function AnimatedProgressIllustration({ animate = false }: { animate?: boolean }
           <View style={progressStyles.pfcCol}>
             <Text style={[progressStyles.pfcColLabel, { color: t.colors.content.secondary }]}>
               <Text style={[progressStyles.pfcColLetter, { color: t.colors.nutrition.fat.text }]}>F</Text>
-              {' 脂質'}
+              {` ${tr('common.macros.fat')}`}
             </Text>
             <View style={[progressStyles.pfcTrack, { backgroundColor: t.colors.nutrition.fat.background }]}>
               <Animated.View style={[progressStyles.pfcFill, { width: barFWidth, backgroundColor: t.colors.nutrition.fat.graphic }]} />
@@ -659,7 +659,7 @@ function AnimatedProgressIllustration({ animate = false }: { animate?: boolean }
           <View style={progressStyles.pfcCol}>
             <Text style={[progressStyles.pfcColLabel, { color: t.colors.content.secondary }]}>
               <Text style={[progressStyles.pfcColLetter, { color: t.colors.nutrition.carbs.text }]}>C</Text>
-              {' 炭水化物'}
+              {` ${tr('common.macros.carbs')}`}
             </Text>
             <View style={[progressStyles.pfcTrack, { backgroundColor: t.colors.nutrition.carbs.background }]}>
               <Animated.View style={[progressStyles.pfcFill, { width: barCWidth, backgroundColor: t.colors.nutrition.carbs.graphic }]} />
@@ -674,7 +674,7 @@ function AnimatedProgressIllustration({ animate = false }: { animate?: boolean }
       {/* Card B: 体重スパークライン */}
       <Animated.View style={[
         progressStyles.card,
-        { backgroundColor: t.colors.surface.raised, borderColor: t.colors.border.default },
+        { backgroundColor: t.colors.surface.raised },
         { opacity: card2Opacity, transform: [{ translateY: card2Y }] },
       ]}>
         <View style={progressStyles.sparkHeader}>
@@ -685,7 +685,7 @@ function AnimatedProgressIllustration({ animate = false }: { animate?: boolean }
             {tr('intro.progress.delta')}
           </Text>
         </View>
-        <Svg width="100%" height={56} viewBox="0 0 220 56" preserveAspectRatio="none">
+        <Svg width="100%" height={56} viewBox="0 0 224 56" preserveAspectRatio="none">
           <Defs>
             <SvgLinearGradient id="pg_sparkfill" x1="0" y1="0" x2="0" y2="1">
               <Stop offset="0%" stopColor={t.colors.action.primary.default} stopOpacity={0.15} />
@@ -930,8 +930,7 @@ const progressStyles = StyleSheet.create({
   },
   card: {
     width: 300,
-    borderWidth: 1,
-    borderRadius: radius['2xl'],
+    borderRadius: radius.xl,
     padding: 14,
   },
   // 3カラムリング行 (StatusCard.ringRow 相当)
