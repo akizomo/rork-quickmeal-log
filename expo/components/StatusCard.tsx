@@ -89,6 +89,14 @@ const BalanceModal = memo(function BalanceModal({
   const remaining = adjustedTargetKcal - consumedKcal;
   const progress = adjustedTargetKcal > 0 ? Math.min(1, Math.max(0, consumedKcal / adjustedTargetKcal)) : 0;
   const overshoot = remaining < 0;
+  // リングと同じ tolerance ルール: 15% 超えるまでは danger 色にしない
+  const TOLERANCE = 0.15;
+  const isPastTolerance = adjustedTargetKcal > 0 && consumedKcal > adjustedTargetKcal * (1 + TOLERANCE);
+  const barColor = !overshoot
+    ? t.colors.nutrition.calorie.within.graphic
+    : isPastTolerance
+      ? t.colors.nutrition.calorie.severeExceed.graphic
+      : t.colors.nutrition.calorie.within.text;
   const hasExercise = exerciseAdded > 0;
   const showCarryoverSection = carryoverPlanActive ||
     yesterdayOvershootKcal > Math.round(baseTargetKcal * 0.15);
@@ -106,7 +114,7 @@ const BalanceModal = memo(function BalanceModal({
 
       <View style={styles.balanceHero}>
         <Label size="sm" tone="secondary">{overshoot ? tr('statusCard.balance.over') : tr('statusCard.balance.remaining')}</Label>
-        <Text style={[styles.balanceHeroValue, overshoot && { color: t.colors.status.danger.default }]}>
+        <Text style={[styles.balanceHeroValue, isPastTolerance && { color: t.colors.nutrition.calorie.severeExceed.text }]}>
           {Math.abs(remaining).toLocaleString()}
         </Text>
         <Text style={styles.balanceHeroUnit}>kcal</Text>
@@ -118,7 +126,7 @@ const BalanceModal = memo(function BalanceModal({
             styles.balanceProgressFill,
             {
               width: `${Math.min(Math.round(progress * 100), 100)}%`,
-              backgroundColor: overshoot ? t.colors.status.danger.default : t.colors.action.primary.default,
+              backgroundColor: barColor,
             },
           ]}
         />
@@ -150,7 +158,7 @@ const BalanceModal = memo(function BalanceModal({
           label={tr('statusCard.balance.remaining')}
           value={remaining}
           emphasis="strong"
-          tone={overshoot ? 'alert' : undefined}
+          tone={isPastTolerance ? 'alert' : undefined}
         />
       </View>
 
@@ -834,7 +842,7 @@ const makeStyles = (t: Theme) => StyleSheet.create({
     letterSpacing: ls.wider,
   },
   balanceProgressTrack: {
-    height: 6,
+    height: 12,
     borderRadius: radius.full,
     overflow: 'hidden',
   },
