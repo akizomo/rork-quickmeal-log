@@ -489,6 +489,7 @@
     "bodyFat": "体脂肪率",
     "noRecord": "記録なし",
     "goalReached": "目標に到達",
+    "record": "記録",
     "remaining": "あと {{value}} {{unit}}",
     "noGoal": "目標未設定",
     "emptyPeriod": "この期間の記録はありません",

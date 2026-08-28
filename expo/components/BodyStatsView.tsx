@@ -1,16 +1,18 @@
 import React, { useMemo, useState } from 'react';
 import {
   type GestureResponderEvent,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   type TextStyle,
   useWindowDimensions,
   View,
 } from 'react-native';
 import Svg, { Circle, Line, Polyline, Text as SvgText } from 'react-native-svg';
 
-import { useTheme } from '@/design-system';
+import { BottomSheet, useTheme } from '@/design-system';
 import { useT } from '@/hooks/useT';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { useAppState } from '@/providers/app-state-provider';
@@ -22,20 +24,20 @@ import { formatMonthLabel, formatShortDay, formatWeekRangeLabel } from '@/utils/
 const CHART_HEIGHT = 158;
 const CHART_PAD_TOP = 16;
 const CHART_PAD_BOTTOM = 32;
-const CHART_PAD_X = 14;
+const CHART_PL = 10; // left padding
+const CHART_PR = 38; // right padding — Y軸ラベル列
 const DAY_MS = 86_400_000;
 
 /**
- * 食事タブと同じ規則: タブ名 = 表示する期間。点の粒度は期間から自動で決まる別レイヤー
- * (長期でも「帯」にしないため粗くする)。ユーザーには粒度を見せない。
+ * 食事タブと同じ規則: タブ名 = 表示する期間。点の粒度は期間から自動で決まる別レイヤー。
  */
 export type BodyPeriod = 'week' | 'month' | 'year';
 type Grain = 'day' | 'week' | 'month';
 
 const PERIOD_CONFIG: Record<BodyPeriod, { windowDays: number; grain: Grain }> = {
-  week: { windowDays: 7, grain: 'day' }, // 直近1週間を日毎
-  month: { windowDays: 31, grain: 'week' }, // 直近1ヶ月を週毎(平均)
-  year: { windowDays: 366, grain: 'month' }, // 直近1年を月毎(平均)
+  week: { windowDays: 7, grain: 'day' },
+  month: { windowDays: 31, grain: 'day' }, // 日次 (週平均ではなく各日の記録をそのまま)
+  year: { windowDays: 366, grain: 'month' },
 };
 
 type Point = { t: number; value: number };
@@ -44,7 +46,7 @@ type Point = { t: number; value: number };
 function startOfWeek(t: number): number {
   const d = new Date(t);
   d.setHours(0, 0, 0, 0);
-  const mondayOffset = (d.getDay() + 6) % 7; // Sun=0 → 6, Mon=1 → 0
+  const mondayOffset = (d.getDay() + 6) % 7;
   d.setDate(d.getDate() - mondayOffset);
   return d.getTime();
 }
@@ -56,8 +58,8 @@ function startOfMonth(t: number): number {
 }
 
 /**
- * 期間の窓で絞り、粒度に応じてバケット平均を1点として返す (x=バケット起点で等間隔)。
- * 日粒度は日次系列をそのまま窓だけ適用。
+ * 期間の窓で絞り、粒度に応じてバケット平均を1点として返す。
+ * day 粒度は日次系列をそのまま窓だけ適用。
  */
 function aggregate(series: Point[], period: BodyPeriod, todayT: number): Point[] {
   const { windowDays, grain } = PERIOD_CONFIG[period];
@@ -78,10 +80,9 @@ function aggregate(series: Point[], period: BodyPeriod, todayT: number): Point[]
     .sort((a, b) => a.t - b.t);
 }
 
-/** 日付昇順・1日1点 (同日複数は最新=配列先頭を採用) に正規化 */
+/** 日付昇順・1日1点に正規化 */
 function toSeries(entries: { date: string; createdAt: string; value: number }[]): Point[] {
   const byDate = new Map<string, { t: number; value: number }>();
-  // entries は新しい順で渡ってくる前提。先に来た (新しい) ものを優先して同日を1点に。
   for (const e of entries) {
     if (byDate.has(e.date)) continue;
     const t = new Date(e.date).getTime();
@@ -91,19 +92,42 @@ function toSeries(entries: { date: string; createdAt: string; value: number }[])
   return Array.from(byDate.values()).sort((a, b) => a.t - b.t);
 }
 
-/** 軸端用のコンパクトな "M/D" (日・週粒度の端点)。点ごとの詳細表記は食事の formatter を流用。 */
 function fmtMD(t: number): string {
   const d = new Date(t);
   return `${d.getMonth() + 1}/${d.getDate()}`;
 }
 
-/** 週バケット起点 → その週の DateRange (食事の formatWeekRangeLabel に渡す)。 */
 function weekRangeOf(t: number): { start: Date; end: Date } {
   const start = new Date(t);
   const end = new Date(t);
   end.setDate(end.getDate() + 6);
   return { start, end };
 }
+
+/** Y軸のきりのいい目盛りを生成 (ステップは 1/2/5/10 × magnitude) */
+function niceYTicks(lo: number, hi: number): number[] {
+  const r = hi - lo;
+  if (r < 0.001) return [lo];
+  const rough = r / 4;
+  const mag = Math.pow(10, Math.floor(Math.log10(rough)));
+  const step = [1, 2, 5, 10].map((s) => s * mag).find((s) => s >= rough) ?? mag;
+  const ticks: number[] = [];
+  for (
+    let v = Math.ceil(lo / step) * step;
+    v <= hi + step * 1e-6;
+    v = Math.round((v + step) * 1e10) / 1e10
+  ) {
+    ticks.push(v);
+  }
+  return ticks;
+}
+
+/** 整数の目盛りは小数点なしで表示 */
+function fmtYTick(v: number, fractionDigits: number): string {
+  return v % 1 === 0 ? String(Math.round(v)) : v.toFixed(fractionDigits);
+}
+
+// ---- MetricCardHeader -------------------------------------------------------
 
 interface MetricCardHeaderProps {
   title: string;
@@ -112,8 +136,8 @@ interface MetricCardHeaderProps {
   target: number | null;
   fractionDigits: number;
   color: string;
-  /** 目標に対して現在値が上下どちら側にあるべきか。到達判定の向きに使う。 */
   direction: GoalDirection | null;
+  onRecord?: () => void;
 }
 
 function MetricCardHeader({
@@ -124,6 +148,7 @@ function MetricCardHeader({
   fractionDigits,
   color,
   direction,
+  onRecord,
 }: MetricCardHeaderProps) {
   const t = useTheme();
   const tr = useT();
@@ -132,20 +157,16 @@ function MetricCardHeader({
   const remaining = hasGoal ? current! - target! : null;
   const epsilon = Math.pow(10, -fractionDigits) / 2;
 
-  // 目標を通り越した場合も「到達」。符号を捨てて絶対値だけ見ると、
-  // 目標より下回った減量ユーザーに「あと N kg」と増量を促す表示になってしまう。
-  let goalLabel: string | null = null;
-  if (hasGoal) {
-    if (Math.abs(remaining!) < epsilon) {
-      goalLabel = tr('bodyStats.goalReached');
-    } else if (direction === 'lose' && remaining! < 0) {
-      goalLabel = tr('bodyStats.goalReached');
-    } else if (direction === 'gain' && remaining! > 0) {
-      goalLabel = tr('bodyStats.goalReached');
-    } else {
-      goalLabel = tr('bodyStats.remaining', { value: Math.abs(remaining!).toFixed(fractionDigits), unit });
-    }
-  }
+  const isReached =
+    hasGoal &&
+    (Math.abs(remaining!) < epsilon ||
+      (direction === 'lose' && remaining! < 0) ||
+      (direction === 'gain' && remaining! > 0));
+
+  const remainingLabel =
+    hasGoal && !isReached
+      ? tr('bodyStats.remaining', { value: Math.abs(remaining!).toFixed(fractionDigits), unit })
+      : null;
 
   return (
     <View style={styles.cardHeader} testID={`body-progress-${title}`}>
@@ -160,30 +181,49 @@ function MetricCardHeader({
           <Text style={[styles.cardEmpty, { color: t.colors.content.secondary }]}>{tr('bodyStats.noRecord')}</Text>
         )}
       </View>
-      {goalLabel ? (
-        <Text style={[styles.cardMeta, { color: t.colors.content.secondary }]}>{goalLabel}</Text>
-      ) : current != null ? (
-        <Text style={[styles.cardMeta, { color: t.colors.content.secondary }]}>{tr('bodyStats.noGoal')}</Text>
-      ) : null}
+
+      <View style={styles.cardHeaderRight}>
+        {onRecord && (
+          <Pressable
+            onPress={onRecord}
+            accessibilityRole="button"
+            accessibilityLabel={tr('bodyStats.record')}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Text style={[styles.recordLink, { color: t.colors.action.text.default }]}>
+              {tr('bodyStats.record')}
+            </Text>
+          </Pressable>
+        )}
+        {isReached ? (
+          <View style={[styles.goalBadge, { backgroundColor: t.colors.status.success.container }]}>
+            <Text style={[styles.goalBadgeText, { color: t.colors.status.success.onContainer }]}>
+              {'✓ '}{tr('bodyStats.goalReached')}
+            </Text>
+          </View>
+        ) : remainingLabel ? (
+          <Text style={[styles.cardMeta, { color: t.colors.content.secondary }]}>{remainingLabel}</Text>
+        ) : current != null ? (
+          <Text style={[styles.cardMeta, { color: t.colors.content.secondary }]}>{tr('bodyStats.noGoal')}</Text>
+        ) : null}
+      </View>
     </View>
   );
 }
+
+// ---- TrendChart -------------------------------------------------------------
 
 interface TrendChartProps {
   width: number;
   points: Point[];
   target: number | null;
   color: string;
-  /** 吹き出し・目盛りラベルの単位と小数桁 */
   unit: string;
   fractionDigits: number;
-  /** 点の粒度 (ラベル整形に使用。期間から自動決定) */
   grain: Grain;
-  /** 点が無いときの文言 (履歴あり=期間外 / 履歴なし で出し分け) */
+  period: BodyPeriod;
   emptyMessage: string;
-  /** 指標名 ("体重" 等)。スクリーンリーダー向けの代替テキスト生成に使う */
   title: string;
-  /** 表示言語 (軸ラベル・ツールチップの日付整形に使用) */
   locale?: 'ja' | 'en-US';
 }
 
@@ -195,15 +235,14 @@ function TrendChart({
   unit,
   fractionDigits,
   grain,
+  period,
   emptyMessage,
   title,
   locale,
 }: TrendChartProps) {
   const t = useTheme();
   const tr = useT();
-  // タップ/ドラッグで選択中の記録値インデックス (null=未選択)
   const [selected, setSelected] = useState<number | null>(null);
-  // ツールチップの実測サイズ (中央寄せ・端クランプ・上下反転の算出に使う)
   const [tipSize, setTipSize] = useState({ w: 0, h: 0 });
 
   if (points.length === 0) {
@@ -211,7 +250,7 @@ function TrendChart({
       <View
         style={[styles.chartWrap, { width, height: CHART_HEIGHT }]}
         accessible
-        accessibilityLabel={`${tr('bodyStats.chartA11yLabel', { title })}${locale === 'en-US' ? '. ' : '。' /* i18n-ignore: locale-conditional punctuation */}${emptyMessage}`}
+        accessibilityLabel={`${tr('bodyStats.chartA11yLabel', { title })}${locale === 'en-US' ? '. ' : '。'}${emptyMessage}`}
       >
         <Text style={[styles.chartEmpty, { color: t.colors.content.secondary }]}>{emptyMessage}</Text>
       </View>
@@ -219,44 +258,44 @@ function TrendChart({
   }
 
   const innerH = CHART_HEIGHT - CHART_PAD_TOP - CHART_PAD_BOTTOM;
-  const innerW = width - CHART_PAD_X * 2;
+  const innerW = width - CHART_PL - CHART_PR;
 
-  const dataMin = Math.min(...points.map((p) => p.value));
-  const dataMax = Math.max(...points.map((p) => p.value));
-
-  const values = [...points.map((p) => p.value), ...(target != null ? [target] : [])];
-  let min = Math.min(...values);
-  let max = Math.max(...values);
+  // Y range: data + target を常に含む
+  const allValues = [...points.map((p) => p.value), ...(target != null ? [target] : [])];
+  let min = Math.min(...allValues);
+  let max = Math.max(...allValues);
   if (min === max) {
     min -= 1;
     max += 1;
   } else {
-    const pad = (max - min) * 0.12;
+    const pad = (max - min) * 0.15;
     min -= pad;
     max += pad;
   }
+  const yTicks = niceYTicks(min, max);
+  if (yTicks.length > 0) {
+    min = Math.min(min, yTicks[0]);
+    max = Math.max(max, yTicks[yTicks.length - 1]);
+  }
+  if (min >= max) { min -= 1; max += 1; }
 
   const tMin = points[0].t;
   const tMax = points[points.length - 1].t;
-  const xOf = (t: number) =>
-    CHART_PAD_X + (tMax === tMin ? innerW / 2 : ((t - tMin) / (tMax - tMin)) * innerW);
+  const xOf = (ts: number) =>
+    CHART_PL + (tMax === tMin ? innerW / 2 : ((ts - tMin) / (tMax - tMin)) * innerW);
   const yOf = (v: number) => CHART_PAD_TOP + (1 - (v - min) / (max - min)) * innerH;
 
   const linePts = points.map((p) => `${xOf(p.t)},${yOf(p.value)}`).join(' ');
   const targetY = target != null ? yOf(target) : null;
   const fmt = (v: number) => v.toFixed(fractionDigits);
 
-  // タッチ位置 (locationX) に最も近い記録値を選択
   const handleTouch = (e: GestureResponderEvent) => {
     const lx = e.nativeEvent.locationX;
     let best = 0;
     let bestDist = Infinity;
     for (let i = 0; i < points.length; i++) {
       const d = Math.abs(xOf(points[i].t) - lx);
-      if (d < bestDist) {
-        bestDist = d;
-        best = i;
-      }
+      if (d < bestDist) { bestDist = d; best = i; }
     }
     setSelected(best);
   };
@@ -264,15 +303,45 @@ function TrendChart({
   const sel = selected != null ? points[selected] : null;
   const lastPoint = points[points.length - 1];
 
-  // 点が密なら生値ドットを隠して線のみ (説明不要の自明な間引き)。
   const showDots = points.length <= 1 || innerW / (points.length - 1) >= 8;
-  // DS トークン値を SVG 属性用にキャッシュ (SVG は文字列ではなく数値を要求)
-  const labelFontSize = t.typography.fontSize.xs; // 11px — システム最小
-  const labelColor = t.colors.content.secondary;
+  const dotRadius = points.length > 1 && innerW / (points.length - 1) < 12 ? 1.5 : 2.5;
 
-  // ラベルは食事タブと統一: 軸端は粒度に応じた簡易表記、点ごとの詳細は食事の formatter を流用。
-  const xLabel = (ts: number) =>
-    grain === 'month' ? formatMonthLabel(new Date(ts), locale) : fmtMD(ts);
+  const labelFontSize = t.typography.fontSize.xs;
+  const labelColor = t.colors.content.secondary;
+  const gridColor = t.colors.border.subtle;
+  const targetColor = t.colors.status.info.default;
+
+  // X軸ラベル: 期間ごとに適切な文字列
+  const fmtXLabel = (ts: number): string => {
+    const d = new Date(ts);
+    if (period === 'week') {
+      const days =
+        locale === 'en-US'
+          ? ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+          : ['日', '月', '火', '水', '木', '金', '土'];
+      return days[d.getDay()];
+    }
+    if (period === 'year') {
+      return locale === 'en-US'
+        ? ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getMonth()]
+        : `${d.getMonth() + 1}月`;
+    }
+    // month (day grain): M/D 表記
+    return fmtMD(ts);
+  };
+
+  // X軸に表示する点のインデックス
+  const xLabelIndices: number[] = [];
+  if (period === 'week' || period === 'year') {
+    // 全点表示
+    for (let i = 0; i < points.length; i++) xLabelIndices.push(i);
+  } else {
+    // month (day grain): 最初・7日ごと
+    xLabelIndices.push(0);
+    for (let i = 7; i < points.length; i += 7) xLabelIndices.push(i);
+  }
+
+  // ツールチップ日付整形 (既存のまま)
   const tooltipDate = (ts: number) =>
     grain === 'day'
       ? formatShortDay(new Date(ts), locale)
@@ -280,7 +349,6 @@ function TrendChart({
         ? formatWeekRangeLabel(weekRangeOf(ts))
         : formatMonthLabel(new Date(ts), locale);
 
-  // ツールチップ配置: 選択点の中央上に置き、上に余白が無ければ下へ反転。左右端はクランプ。
   const TIP_GAP = 10;
   const pointX = sel ? xOf(sel.t) : 0;
   const pointY = sel ? yOf(sel.value) : 0;
@@ -288,22 +356,20 @@ function TrendChart({
   const tipAbove = pointY - tipSize.h - TIP_GAP >= 0;
   const tipTop = tipAbove ? pointY - tipSize.h - TIP_GAP : pointY + TIP_GAP;
 
-  // --- スクリーンリーダー向けの代替テキスト (2026-08-09追加) ---
-  // SVG の中の <SvgText> は軸ラベルの断片としてバラバラに読み上げられてしまうため、
-  // ラッパーを単一の要素にまとめ、短い説明 (label) と長い説明 (hint) の2層で渡す。
-  // ドラッグで点を選ぶ操作は VoiceOver では使えなくなるが、その代わりに
-  // 「いつからいつまで、いくつからいくつへ、どれだけ変化したか」を一度に得られる。
+  // a11y サマリー (既存のまま)
   const firstPoint = points[0];
   const deltaValue = lastPoint.value - firstPoint.value;
   const deltaText =
     points.length < 2
       ? ''
-      : `${locale === 'en-US' ? ', ' : '、' /* i18n-ignore: locale-conditional punctuation */}${Math.abs(deltaValue) < Math.pow(10, -fractionDigits) / 2
-          ? tr('bodyStats.noChange')
-          : tr(deltaValue > 0 ? 'bodyStats.deltaPlus' : 'bodyStats.deltaMinus', {
-              value: fmt(Math.abs(deltaValue)),
-              unit,
-            })}`;
+      : `${locale === 'en-US' ? ', ' : '、'}${
+          Math.abs(deltaValue) < Math.pow(10, -fractionDigits) / 2
+            ? tr('bodyStats.noChange')
+            : tr(deltaValue > 0 ? 'bodyStats.deltaPlus' : 'bodyStats.deltaMinus', {
+                value: fmt(Math.abs(deltaValue)),
+                unit,
+              })
+        }`;
   const targetText =
     target != null
       ? tr('bodyStats.targetRemainingSuffix', {
@@ -315,14 +381,14 @@ function TrendChart({
   const chartSummary =
     points.length < 2
       ? tr('bodyStats.singlePointSummary', {
-          date: xLabel(firstPoint.t),
+          date: fmtXLabel(firstPoint.t),
           value: fmt(firstPoint.value),
           unit,
           targetText,
         })
       : tr('bodyStats.rangeSummary', {
-          fromDate: xLabel(firstPoint.t),
-          toDate: xLabel(lastPoint.t),
+          fromDate: fmtXLabel(firstPoint.t),
+          toDate: fmtXLabel(lastPoint.t),
           count: points.length,
           fromValue: fmt(firstPoint.value),
           toValue: fmt(lastPoint.value),
@@ -344,51 +410,62 @@ function TrendChart({
       accessibilityHint={chartSummary}
     >
       <Svg width={width} height={CHART_HEIGHT}>
+        {/* Y軸グリッドライン + 右側ラベル */}
+        {yTicks.map((tick) => {
+          const y = yOf(tick);
+          if (y < CHART_PAD_TOP - 4 || y > CHART_HEIGHT - CHART_PAD_BOTTOM + 4) return null;
+          const suppressLabel = targetY != null && Math.abs(y - targetY) < 10;
+          return (
+            <React.Fragment key={`ytick-${tick}`}>
+              <Line
+                x1={CHART_PL}
+                x2={width - CHART_PR}
+                y1={y}
+                y2={y}
+                stroke={gridColor}
+                strokeWidth={0.5}
+              />
+              {!suppressLabel && (
+                <SvgText
+                  x={width - CHART_PR + 5}
+                  y={y + 4}
+                  fontSize={labelFontSize}
+                  fill={labelColor}
+                  textAnchor="start"
+                >
+                  {fmtYTick(tick, fractionDigits)}
+                </SvgText>
+              )}
+            </React.Fragment>
+          );
+        })}
+
+        {/* 目標ライン: 破線 + 右軸に数値ラベル (目標色) */}
         {targetY != null ? (
           <>
             <Line
-              x1={CHART_PAD_X}
-              x2={width - CHART_PAD_X}
+              x1={CHART_PL}
+              x2={width - CHART_PR}
               y1={targetY}
               y2={targetY}
-              stroke={t.colors.content.secondary}
+              stroke={targetColor}
               strokeDasharray="4 4"
               strokeWidth={1}
             />
             <SvgText
-              x={width - CHART_PAD_X}
-              y={Math.max(CHART_PAD_TOP - 4, targetY - 5)}
+              x={width - CHART_PR + 5}
+              y={targetY + 4}
               fontSize={labelFontSize}
-              fill={labelColor}
-              textAnchor="end"
+              fill={targetColor}
+              textAnchor="start"
+              fontWeight={t.typography.fontWeight.medium as string}
             >
-              {tr('bodyStats.goalLabel')}
+              {fmt(target!)}
             </SvgText>
           </>
         ) : null}
 
-        {/* Y軸: データ範囲の最大/最小目盛り */}
-        <SvgText
-          x={CHART_PAD_X}
-          y={yOf(dataMax) - 3}
-          fontSize={labelFontSize}
-          fill={labelColor}
-          textAnchor="start"
-        >
-          {fmt(dataMax)}
-        </SvgText>
-        {dataMax !== dataMin ? (
-          <SvgText
-            x={CHART_PAD_X}
-            y={yOf(dataMin) + 10}
-            fontSize={labelFontSize}
-            fill={labelColor}
-            textAnchor="start"
-          >
-            {fmt(dataMin)}
-          </SvgText>
-        ) : null}
-
+        {/* データ折れ線 */}
         {points.length >= 2 ? (
           <Polyline
             points={linePts}
@@ -400,51 +477,33 @@ function TrendChart({
           />
         ) : null}
 
+        {/* ドット */}
         {showDots
           ? points.map((p) => (
-              <Circle key={p.t} cx={xOf(p.t)} cy={yOf(p.value)} r={2.5} fill={color} />
+              <Circle key={p.t} cx={xOf(p.t)} cy={yOf(p.value)} r={dotRadius} fill={color} />
             ))
           : null}
 
-        {/* X軸: 開始/終了日付 */}
-        <SvgText
-          x={CHART_PAD_X}
-          y={CHART_HEIGHT - 16}
-          fontSize={labelFontSize}
-          fill={labelColor}
-          textAnchor="start"
-        >
-          {xLabel(tMin)}
-        </SvgText>
-        {tMax !== tMin ? (
-          <SvgText
-            x={width - CHART_PAD_X}
-            y={CHART_HEIGHT - 16}
-            fontSize={labelFontSize}
-            fill={labelColor}
-            textAnchor="end"
-          >
-            {xLabel(tMax)}
-          </SvgText>
-        ) : null}
+        {/* X軸ラベル (全点 or 間引き) */}
+        {xLabelIndices.map((i) => {
+          const p = points[i];
+          const px = xOf(p.t);
+          const anchor = i === 0 ? 'start' : i === points.length - 1 ? 'end' : 'middle';
+          return (
+            <SvgText
+              key={`xlabel-${i}`}
+              x={px}
+              y={CHART_HEIGHT - 16}
+              fontSize={labelFontSize}
+              fill={labelColor}
+              textAnchor={anchor}
+            >
+              {fmtXLabel(p.t)}
+            </SvgText>
+          );
+        })}
 
-        {/* 未選択時: 最新値を最終点に注記。目標ラインと近接する場合は「目標」ラベルと重なるため抑制 */}
-        {!sel &&
-        points.length >= 1 &&
-        (targetY == null || Math.abs(yOf(lastPoint.value) - targetY) >= 14) ? (
-          <SvgText
-            x={Math.min(xOf(lastPoint.t) + 4, width - CHART_PAD_X)}
-            y={Math.max(yOf(lastPoint.value) - 6, CHART_PAD_TOP)}
-            fontSize={labelFontSize}
-            fontWeight={t.typography.fontWeight.bold}
-            fill={color}
-            textAnchor={xOf(lastPoint.t) > width - 48 ? 'end' : 'start'}
-          >
-            {fmt(lastPoint.value)}
-          </SvgText>
-        ) : null}
-
-        {/* 選択時: 縦ガイド線 + 強調ドット (吹き出しは SVG 外の実 View で描画) */}
+        {/* 選択時: 縦ガイド線 + 強調ドット */}
         {sel ? (
           <>
             <Line
@@ -469,8 +528,7 @@ function TrendChart({
         ) : null}
       </Svg>
 
-      {/* 吹き出し: DS トークン (近白面 + border.subtle + elevation.md + 角丸/余白/タイポ)。
-          SVG では影が出せないため実 View でオーバーレイし、実測サイズで中央寄せ・端クランプ。 */}
+      {/* ツールチップ (SVG 外の実 View でオーバーレイ) */}
       {sel ? (
         <View
           pointerEvents="none"
@@ -522,10 +580,96 @@ function TrendChart({
   );
 }
 
+// ---- 記録シート (インライン) -------------------------------------------------
+
+function WeightRecordSheet({
+  visible,
+  onClose,
+  value,
+  onChange,
+  onSubmit,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  value: string;
+  onChange: (v: string) => void;
+  onSubmit: () => void;
+}) {
+  const theme = useTheme();
+  const t = useT();
+  return (
+    <BottomSheet
+      visible={visible}
+      onClose={onClose}
+      title={t('status.weightSheet.title')}
+      scrollable={false}
+      primaryAction={{ label: t('common.save'), onPress: onSubmit }}
+      testID="weight-sheet-stats"
+    >
+      <View style={[styles.inputWrap, { backgroundColor: theme.colors.surface.sunken }]}>
+        <TextInput
+          style={[styles.inputField, { color: theme.colors.content.primary }]}
+          value={value}
+          onChangeText={onChange}
+          keyboardType="numeric"
+          placeholder="56.4"
+          placeholderTextColor={theme.colors.content.tertiary}
+          autoFocus
+          testID="weight-input-stats"
+        />
+        <Text style={[styles.inputSuffix, { color: theme.colors.content.tertiary }]}>kg</Text>
+      </View>
+    </BottomSheet>
+  );
+}
+
+function BfRecordSheet({
+  visible,
+  onClose,
+  value,
+  onChange,
+  onSubmit,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  value: string;
+  onChange: (v: string) => void;
+  onSubmit: () => void;
+}) {
+  const theme = useTheme();
+  const t = useT();
+  return (
+    <BottomSheet
+      visible={visible}
+      onClose={onClose}
+      title={t('status.bfSheet.title')}
+      scrollable={false}
+      primaryAction={{ label: t('common.save'), onPress: onSubmit }}
+      testID="bf-sheet-stats"
+    >
+      <View style={[styles.inputWrap, { backgroundColor: theme.colors.surface.sunken }]}>
+        <TextInput
+          style={[styles.inputField, { color: theme.colors.content.primary }]}
+          value={value}
+          onChangeText={onChange}
+          keyboardType="numeric"
+          placeholder="18.5"
+          placeholderTextColor={theme.colors.content.tertiary}
+          autoFocus
+          testID="bf-input-stats"
+        />
+        <Text style={[styles.inputSuffix, { color: theme.colors.content.tertiary }]}>%</Text>
+      </View>
+    </BottomSheet>
+  );
+}
+
+// ---- BodyStatsView ----------------------------------------------------------
+
 export function BodyStatsView({ period = 'month' }: { period?: BodyPeriod }) {
   const t = useTheme();
   const tr = useT();
-  const { weights, bodyFatEntries, profile, settings } = useAppState();
+  const { weights, bodyFatEntries, profile, settings, addWeightEntry, addBodyFatEntry } = useAppState();
   const { unitSystem } = useUnitSystem();
   const wUnit = weightSuffix(unitSystem);
   const { width: screenWidth } = useWindowDimensions();
@@ -536,6 +680,28 @@ export function BodyStatsView({ period = 'month' }: { period?: BodyPeriod }) {
     d.setHours(0, 0, 0, 0);
     return d.getTime();
   }, []);
+
+  // 記録シート状態
+  const [weightSheetVisible, setWeightSheetVisible] = useState(false);
+  const [weightInput, setWeightInput] = useState('');
+  const [bfSheetVisible, setBfSheetVisible] = useState(false);
+  const [bfInput, setBfInput] = useState('');
+
+  const submitWeight = () => {
+    const v = Number(weightInput);
+    if (!Number.isFinite(v) || v <= 0) return;
+    addWeightEntry(v);
+    setWeightInput('');
+    setWeightSheetVisible(false);
+  };
+
+  const submitBf = () => {
+    const v = Number(bfInput);
+    if (!Number.isFinite(v) || v <= 0 || v > 60) return;
+    addBodyFatEntry(v);
+    setBfInput('');
+    setBfSheetVisible(false);
+  };
 
   const weightSeries = useMemo(
     () =>
@@ -561,7 +727,6 @@ export function BodyStatsView({ period = 'month' }: { period?: BodyPeriod }) {
     [bodyFatEntries]
   );
 
-  // 期間＋粒度の集約は推移グラフにのみ適用。現在値カードは常に全履歴の最新を見せる。
   const weightPoints = useMemo(
     () => aggregate(weightSeries, period, todayT),
     [weightSeries, period, todayT]
@@ -575,7 +740,8 @@ export function BodyStatsView({ period = 'month' }: { period?: BodyPeriod }) {
     profile.currentWeightKg ??
     (weightSeries.length > 0 ? weightSeries[weightSeries.length - 1].value : null);
   const weightCurrent = weightCurrentKg != null ? toDisplayWeight(weightCurrentKg, unitSystem) : null;
-  const weightTargetDisplay = profile.targetWeightKg != null ? toDisplayWeight(profile.targetWeightKg, unitSystem) : null;
+  const weightTargetDisplay =
+    profile.targetWeightKg != null ? toDisplayWeight(profile.targetWeightKg, unitSystem) : null;
   const weightPointsDisplay = useMemo(
     () => weightPoints.map((p) => ({ ...p, value: toDisplayWeight(p.value, unitSystem) })),
     [weightPoints, unitSystem]
@@ -589,66 +755,86 @@ export function BodyStatsView({ period = 'month' }: { period?: BodyPeriod }) {
     profile.goalDirection === 'recomp' ? 'lose' : profile.goalDirection ?? null;
 
   return (
-    <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
-      {/* 体重: ヘッダー + グラフを1枚のカードに統合 */}
-      <View style={[styles.metricCard, { width: chartWidth, backgroundColor: t.colors.surface.raised }]}>
-        <MetricCardHeader
-          title={tr('bodyStats.weight')}
-          unit={wUnit}
-          current={weightCurrent}
-          target={weightTargetDisplay}
-          fractionDigits={1}
-          color={t.colors.action.text.default}
-          direction={profile.goalDirection ?? null}
-        />
-        <View style={[styles.cardDivider, { backgroundColor: t.colors.border.default }]} />
-        <TrendChart
-          width={chartWidth}
-          title={tr('bodyStats.weight')}
-          points={weightPointsDisplay}
-          target={weightTargetDisplay}
-          color={t.colors.action.text.default}
-          unit={wUnit}
-          fractionDigits={1}
-          grain={grain}
-          locale={settings.uiLanguage}
-          emptyMessage={
-            weightSeries.length > 0 ? tr('bodyStats.emptyPeriod') : tr('bodyStats.emptyAll')
-          }
-        />
-      </View>
+    <>
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
+        {/* 体重カード */}
+        <View style={[styles.metricCard, { width: chartWidth, backgroundColor: t.colors.surface.raised }]}>
+          <MetricCardHeader
+            title={tr('bodyStats.weight')}
+            unit={wUnit}
+            current={weightCurrent}
+            target={weightTargetDisplay}
+            fractionDigits={1}
+            color={t.colors.action.text.default}
+            direction={profile.goalDirection ?? null}
+            onRecord={() => setWeightSheetVisible(true)}
+          />
+          <View style={[styles.cardDivider, { backgroundColor: t.colors.border.default }]} />
+          <TrendChart
+            width={chartWidth}
+            title={tr('bodyStats.weight')}
+            points={weightPointsDisplay}
+            target={weightTargetDisplay}
+            color={t.colors.action.text.default}
+            unit={wUnit}
+            fractionDigits={1}
+            grain={grain}
+            period={period}
+            locale={settings.uiLanguage}
+            emptyMessage={
+              weightSeries.length > 0 ? tr('bodyStats.emptyPeriod') : tr('bodyStats.emptyAll')
+            }
+          />
+        </View>
 
-      {/* 体脂肪率: ヘッダー + グラフを1枚のカードに統合 */}
-      <View style={[styles.metricCard, { width: chartWidth, backgroundColor: t.colors.surface.raised }]}>
-        <MetricCardHeader
-          title={tr('bodyStats.bodyFat')}
-          unit="%"
-          current={bfCurrent}
-          target={profile.targetBodyFatPct ?? null}
-          fractionDigits={1}
-          color={t.colors.accent.default}
-          // リコンプは体重こそ変わらないが体脂肪率は下げる方向なので lose 扱い。
-          direction={bfGoalDirection}
-        />
-        <View style={[styles.cardDivider, { backgroundColor: t.colors.border.default }]} />
-        <TrendChart
-          width={chartWidth}
-          title={tr('bodyStats.bodyFat')}
-          points={bodyFatPoints}
-          target={profile.targetBodyFatPct ?? null}
-          color={t.colors.accent.default}
-          unit="%"
-          fractionDigits={1}
-          grain={grain}
-          locale={settings.uiLanguage}
-          emptyMessage={
-            bodyFatSeries.length > 0
-              ? tr('bodyStats.emptyPeriod')
-              : tr('bodyStats.emptyAll')
-          }
-        />
-      </View>
-    </ScrollView>
+        {/* 体脂肪率カード */}
+        <View style={[styles.metricCard, { width: chartWidth, backgroundColor: t.colors.surface.raised }]}>
+          <MetricCardHeader
+            title={tr('bodyStats.bodyFat')}
+            unit="%"
+            current={bfCurrent}
+            target={profile.targetBodyFatPct ?? null}
+            fractionDigits={1}
+            color={t.colors.accent.default}
+            direction={bfGoalDirection}
+            onRecord={() => setBfSheetVisible(true)}
+          />
+          <View style={[styles.cardDivider, { backgroundColor: t.colors.border.default }]} />
+          <TrendChart
+            width={chartWidth}
+            title={tr('bodyStats.bodyFat')}
+            points={bodyFatPoints}
+            target={profile.targetBodyFatPct ?? null}
+            color={t.colors.accent.default}
+            unit="%"
+            fractionDigits={1}
+            grain={grain}
+            period={period}
+            locale={settings.uiLanguage}
+            emptyMessage={
+              bodyFatSeries.length > 0
+                ? tr('bodyStats.emptyPeriod')
+                : tr('bodyStats.emptyAll')
+            }
+          />
+        </View>
+      </ScrollView>
+
+      <WeightRecordSheet
+        visible={weightSheetVisible}
+        onClose={() => { setWeightSheetVisible(false); setWeightInput(''); }}
+        value={weightInput}
+        onChange={setWeightInput}
+        onSubmit={submitWeight}
+      />
+      <BfRecordSheet
+        visible={bfSheetVisible}
+        onClose={() => { setBfSheetVisible(false); setBfInput(''); }}
+        value={bfInput}
+        onChange={setBfInput}
+        onSubmit={submitBf}
+      />
+    </>
   );
 }
 
@@ -657,15 +843,19 @@ const styles = StyleSheet.create({
   content: { padding: 16, gap: 20, paddingBottom: 60 },
   metricCard: {
     borderRadius: 20,
-    overflow: 'visible', // ツールチップ影がカード端で切れないよう visible
+    overflow: 'visible',
     alignSelf: 'center',
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-end',
+    alignItems: 'flex-start',
     padding: 16,
     paddingBottom: 12,
+  },
+  cardHeaderRight: {
+    alignItems: 'flex-end',
+    gap: 6,
   },
   cardDivider: {
     height: StyleSheet.hairlineWidth,
@@ -690,6 +880,19 @@ const styles = StyleSheet.create({
   cardMeta: {
     fontSize: fs.sm,
   },
+  recordLink: {
+    fontSize: fs.sm,
+    fontWeight: '500',
+  },
+  goalBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 9999,
+  },
+  goalBadgeText: {
+    fontSize: fs.xs,
+    fontWeight: '500',
+  },
   chartWrap: {
     overflow: 'visible',
     alignItems: 'center',
@@ -697,5 +900,22 @@ const styles = StyleSheet.create({
   },
   chartEmpty: {
     fontSize: fs.sm,
+  },
+  inputWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+  },
+  inputField: {
+    flex: 1,
+    fontSize: fs['3xl'],
+    fontWeight: '700',
+  },
+  inputSuffix: {
+    fontSize: fs.md,
+    fontWeight: '700',
   },
 });

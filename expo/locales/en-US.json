@@ -489,6 +489,7 @@
     "bodyFat": "Body Fat",
     "noRecord": "No data",
     "goalReached": "Goal reached",
+    "record": "Log",
     "remaining": "{{value}} {{unit}} to go",
     "noGoal": "No goal set",
     "emptyPeriod": "No records in this period",

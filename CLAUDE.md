@@ -13,6 +13,7 @@
 - **[docs/BUILD.md](./docs/BUILD.md)** — EAS Build 手順 (GitHub Actions / ローカル CLI)・トラブルシュート・リリースノート規約。**ビルドを作成する際は必ずこのドキュメントに従う。**
 - **[docs/PLAY_STORE.md](./docs/PLAY_STORE.md)** — Play Console 提出時の文言・カテゴリ・連絡先テンプレート
 - **[docs/VOICE.md](./docs/VOICE.md)** — ブランドペルソナ・ライティングルール・USE/AVOID語彙。**UXコピーを書く・レビューする際は必ず参照すること。**
+- **[docs/EXPERIENCE_DEPTH.md](./docs/EXPERIENCE_DEPTH.md)** — 体験軸ロードマップ。6つのコア体験 (①記録 / ②把握 / ③振り返り / ④実感 / ⑤継続 / ⑥納得) に機能をマッピングし、優先順位判断の補完ビューとして使う。
 
 ## プロジェクト概要
 体型理解 × 目標設定 × 食事クイックログ最適化アプリ。Expo Router (React Native) 実装。
