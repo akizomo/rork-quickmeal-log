@@ -378,6 +378,7 @@
     "fatA11y": "脂質(g)",
     "carbsA11y": "炭水化物(g)",
     "gramUnit": "単位はすべて g",
+    "kcalAutoCalc": "PFCから自動計算",
     "fallbackLabel": "直接入力"
   },
   "dishEntry": {

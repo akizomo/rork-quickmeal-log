@@ -149,8 +149,11 @@ export function GestureDemoIllustration({ animate }: { animate?: boolean } = {})
 //   Row 1 (タップ): 🍚ボタン → 指インジケータが出現してタップ → 結果カード
 //   Row 2 (長押し): 🥛ボタン → 指インジケータが出てボタン押下 → 拡張リング → 結果カード
 //
-// 全値 useNativeDriver: true (scale / opacity / translateX のみ)
+// 全値 useNativeDriver: true (scale / opacity のみ)
+// 結果カードは常時表示 (INACTIVE 0.35) → アクティブ時 1.0 にクロスフェード
 // ---------------------------------------------------------------------------
+
+const INACTIVE_OPACITY = 0.35;
 
 function AnimatedGestureDemoIllustration() {
   const t = useTheme();
@@ -169,8 +172,8 @@ function AnimatedGestureDemoIllustration() {
   const btn1Scale    = useRef(new Animated.Value(1)).current;
   const f1Opacity    = useRef(new Animated.Value(0)).current;
   const f1Scale      = useRef(new Animated.Value(0.5)).current;
-  const res1Opacity  = useRef(new Animated.Value(0)).current;
-  const res1X        = useRef(new Animated.Value(10)).current;
+  const res1Opacity  = useRef(new Animated.Value(INACTIVE_OPACITY)).current;
+  const res1Scale    = useRef(new Animated.Value(1)).current;
 
   // ── Long-press row ──
   const btn2Scale    = useRef(new Animated.Value(1)).current;
@@ -179,15 +182,15 @@ function AnimatedGestureDemoIllustration() {
   const ring1Opacity = useRef(new Animated.Value(0)).current;
   const ring2Scale   = useRef(new Animated.Value(1)).current;
   const ring2Opacity = useRef(new Animated.Value(0)).current;
-  const res2Opacity  = useRef(new Animated.Value(0)).current;
-  const res2X        = useRef(new Animated.Value(10)).current;
+  const res2Opacity  = useRef(new Animated.Value(INACTIVE_OPACITY)).current;
+  const res2Scale    = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     isMounted.current = true;
     const allVals = [
-      btn1Scale, f1Opacity, f1Scale, res1Opacity, res1X,
+      btn1Scale, f1Opacity, f1Scale, res1Opacity, res1Scale,
       btn2Scale, f2Opacity, ring1Scale, ring1Opacity, ring2Scale, ring2Opacity,
-      res2Opacity, res2X,
+      res2Opacity, res2Scale,
     ];
 
     const E_IN  = Easing.bezier(...(eas.enter    as [number, number, number, number]));
@@ -196,11 +199,11 @@ function AnimatedGestureDemoIllustration() {
 
     function reset() {
       btn1Scale.setValue(1);   f1Opacity.setValue(0);  f1Scale.setValue(0.5);
-      res1Opacity.setValue(0); res1X.setValue(10);
+      res1Opacity.setValue(INACTIVE_OPACITY); res1Scale.setValue(1);
       btn2Scale.setValue(1);   f2Opacity.setValue(0);
       ring1Scale.setValue(1);  ring1Opacity.setValue(0);
       ring2Scale.setValue(1);  ring2Opacity.setValue(0);
-      res2Opacity.setValue(0); res2X.setValue(10);
+      res2Opacity.setValue(INACTIVE_OPACITY); res2Scale.setValue(1);
     }
 
     function runLoop() {
@@ -220,20 +223,21 @@ function AnimatedGestureDemoIllustration() {
           Animated.timing(btn1Scale, { toValue: 0.88, duration: 80,  easing: E_OUT, useNativeDriver: true }),
           Animated.timing(f1Opacity, { toValue: 0,    duration: 80,  easing: E_OUT, useNativeDriver: true }),
         ]),
-        // ボタン戻り(オーバーシュート) + 同時に結果スライドイン
+        // ボタン戻り + 結果カードをアクティブ化 (opacity + scale バウンス)
         Animated.parallel([
           Animated.sequence([
             Animated.timing(btn1Scale, { toValue: 1.04, duration: 80,  easing: E_IN,  useNativeDriver: true }),
             Animated.timing(btn1Scale, { toValue: 1.0,  duration: 100, easing: E_STD, useNativeDriver: true }),
           ]),
-          Animated.parallel([
-            Animated.timing(res1Opacity, { toValue: 1, duration: 260, easing: E_IN, useNativeDriver: true }),
-            Animated.timing(res1X,       { toValue: 0, duration: 260, easing: E_IN, useNativeDriver: true }),
+          Animated.timing(res1Opacity, { toValue: 1, duration: dur.short, easing: E_IN, useNativeDriver: true }),
+          Animated.sequence([
+            Animated.timing(res1Scale, { toValue: 1.06, duration: 120, easing: E_IN,  useNativeDriver: true }),
+            Animated.timing(res1Scale, { toValue: 1.0,  duration: 180, easing: E_STD, useNativeDriver: true }),
           ]),
         ]),
-        Animated.delay(1400),
-        Animated.timing(res1Opacity, { toValue: 0, duration: dur.short, easing: E_OUT, useNativeDriver: true }),
-        Animated.delay(350),
+        Animated.delay(800),
+        // 非アクティブに戻す
+        Animated.timing(res1Opacity, { toValue: INACTIVE_OPACITY, duration: dur.short, easing: E_OUT, useNativeDriver: true }),
       ]);
 
       // ② 長押しフェーズ
@@ -265,24 +269,25 @@ function AnimatedGestureDemoIllustration() {
           ]),
         ]),
         Animated.delay(200),
-        // 離す: ボタン戻り + 指消える + 結果スライドイン
+        // 離す: ボタン戻り + 指消える + 結果カードをアクティブ化 (opacity + scale バウンス)
         Animated.parallel([
           Animated.sequence([
             Animated.timing(btn2Scale, { toValue: 1.03, duration: 80,  easing: E_IN,  useNativeDriver: true }),
             Animated.timing(btn2Scale, { toValue: 1.0,  duration: 100, easing: E_STD, useNativeDriver: true }),
           ]),
           Animated.timing(f2Opacity,   { toValue: 0, duration: dur.fast, easing: E_OUT, useNativeDriver: true }),
-          Animated.parallel([
-            Animated.timing(res2Opacity, { toValue: 1, duration: 260, easing: E_IN, useNativeDriver: true }),
-            Animated.timing(res2X,       { toValue: 0, duration: 260, easing: E_IN, useNativeDriver: true }),
+          Animated.timing(res2Opacity, { toValue: 1, duration: dur.short, easing: E_IN, useNativeDriver: true }),
+          Animated.sequence([
+            Animated.timing(res2Scale, { toValue: 1.06, duration: 120, easing: E_IN,  useNativeDriver: true }),
+            Animated.timing(res2Scale, { toValue: 1.0,  duration: 180, easing: E_STD, useNativeDriver: true }),
           ]),
         ]),
-        Animated.delay(1400),
-        Animated.timing(res2Opacity, { toValue: 0, duration: dur.short, easing: E_OUT, useNativeDriver: true }),
-        Animated.delay(350),
+        Animated.delay(800),
+        // 非アクティブに戻す
+        Animated.timing(res2Opacity, { toValue: INACTIVE_OPACITY, duration: dur.short, easing: E_OUT, useNativeDriver: true }),
       ]);
 
-      Animated.sequence([tapPhase, lpPhase]).start(({ finished }) => {
+      Animated.sequence([tapPhase, Animated.delay(200), lpPhase]).start(({ finished }) => {
         if (finished && isMounted.current) runLoop();
       });
     }
@@ -299,9 +304,12 @@ function AnimatedGestureDemoIllustration() {
 
   return (
     <View style={[gestureStyles.wrap, { transform: [{ scale }] }]}>
-      {/* Row 1: タップ */}
-      <View style={gestureStyles.row}>
-        <View style={gestureStyles.btnWithLabel}>
+      {/* Section 1: タップ */}
+      <View style={gestureStyles.section}>
+        <Text style={[gestureStyles.gestureLabel, { color: t.colors.content.secondary }]}>
+          {tr('onboarding.illustrations.gesture.tap')}
+        </Text>
+        <View style={gestureStyles.row}>
           <View style={gestureStyles.btnContainer}>
             <Animated.View style={[
               gestureStyles.demoBtn,
@@ -320,30 +328,30 @@ function AnimatedGestureDemoIllustration() {
               { backgroundColor: fc, opacity: f1Opacity, transform: [{ scale: f1Scale }] },
             ]} />
           </View>
-          <Text style={[gestureStyles.gestureLabel, { color: t.colors.content.secondary }]}>
-            {tr('onboarding.illustrations.gesture.tap')}
-          </Text>
+
+          <Text style={[gestureStyles.arrow, { color: t.colors.action.text.default }]}>→</Text>
+
+          <Animated.View style={[
+            gestureStyles.result,
+            { backgroundColor: t.colors.surface.raised },
+            { opacity: res1Opacity, transform: [{ scale: res1Scale }] },
+          ]}>
+            <Text style={[gestureStyles.resultTitle, { color: t.colors.content.primary }]}>
+              {tr('onboarding.illustrations.gesture.riceExample')}
+            </Text>
+            <Text style={[gestureStyles.resultSub, { color: t.colors.content.secondary }]}>
+              {tr('onboarding.illustrations.gesture.quickLogHint')}
+            </Text>
+          </Animated.View>
         </View>
-
-        <Text style={[gestureStyles.arrow, { color: t.colors.action.text.default }]}>→</Text>
-
-        <Animated.View style={[
-          gestureStyles.result,
-          { backgroundColor: t.colors.surface.raised },
-          { opacity: res1Opacity, transform: [{ translateX: res1X }] },
-        ]}>
-          <Text style={[gestureStyles.resultTitle, { color: t.colors.content.primary }]}>
-            {tr('onboarding.illustrations.gesture.riceExample')}
-          </Text>
-          <Text style={[gestureStyles.resultSub, { color: t.colors.content.secondary }]}>
-            {tr('onboarding.illustrations.gesture.quickLogHint')}
-          </Text>
-        </Animated.View>
       </View>
 
-      {/* Row 2: 長押し */}
-      <View style={gestureStyles.row}>
-        <View style={gestureStyles.btnWithLabel}>
+      {/* Section 2: 長押し */}
+      <View style={gestureStyles.section}>
+        <Text style={[gestureStyles.gestureLabel, { color: t.colors.content.secondary }]}>
+          {tr('onboarding.illustrations.gesture.longPress')}
+        </Text>
+        <View style={gestureStyles.row}>
           <View style={gestureStyles.btnContainer}>
             {/* 拡張リング (ボタンより奥に描画) */}
             <Animated.View style={[
@@ -371,25 +379,22 @@ function AnimatedGestureDemoIllustration() {
               { backgroundColor: fc, opacity: f2Opacity },
             ]} />
           </View>
-          <Text style={[gestureStyles.gestureLabel, { color: t.colors.content.secondary }]}>
-            {tr('onboarding.illustrations.gesture.longPress')}
-          </Text>
+
+          <Text style={[gestureStyles.arrow, { color: t.colors.action.text.default }]}>→</Text>
+
+          <Animated.View style={[
+            gestureStyles.result,
+            { backgroundColor: t.colors.surface.raised },
+            { opacity: res2Opacity, transform: [{ scale: res2Scale }] },
+          ]}>
+            <Text style={[gestureStyles.resultTitle, { color: t.colors.content.primary }]}>
+              {tr('onboarding.illustrations.gesture.chooseTypeAmount')}
+            </Text>
+            <Text style={[gestureStyles.resultSub, { color: t.colors.content.secondary }]}>
+              {tr('onboarding.illustrations.gesture.breadNoodleExample')}
+            </Text>
+          </Animated.View>
         </View>
-
-        <Text style={[gestureStyles.arrow, { color: t.colors.action.text.default }]}>→</Text>
-
-        <Animated.View style={[
-          gestureStyles.result,
-          { backgroundColor: t.colors.surface.raised },
-          { opacity: res2Opacity, transform: [{ translateX: res2X }] },
-        ]}>
-          <Text style={[gestureStyles.resultTitle, { color: t.colors.content.primary }]}>
-            {tr('onboarding.illustrations.gesture.chooseTypeAmount')}
-          </Text>
-          <Text style={[gestureStyles.resultSub, { color: t.colors.content.secondary }]}>
-            {tr('onboarding.illustrations.gesture.breadNoodleExample')}
-          </Text>
-        </Animated.View>
       </View>
     </View>
   );
@@ -775,10 +780,8 @@ const gestureStyles = StyleSheet.create({
     width: 290,
   },
   // ── アニメーション版専用 ──
-  // ボタン + ジェスチャーラベルの縦積みコンテナ
-  btnWithLabel: {
-    width: 90,
-    alignItems: 'center',
+  // ラベル + 行コンテンツの縦積みセクション
+  section: {
     gap: 6,
   },
   // リング・ボタン・指インジケータを重ねる 90×56 の固定枠 (overflow: visible でリングが外にはみ出せる)

@@ -30,7 +30,7 @@ import {
   View,
 } from 'react-native';
 
-import { Chip, Dialog, useTheme } from '@/design-system';
+import { BottomSheet, Chip, useTheme } from '@/design-system';
 import { useT } from '@/hooks/useT';
 import { fontSize as fs, letterSpacing as ls } from '@/design-system/tokens/primitives/typography';
 import {
@@ -201,7 +201,7 @@ export function AmountEditDialog({
   // ---------------------------------------------------------------------------
 
   return (
-    <Dialog
+    <BottomSheet
       visible={visible}
       onClose={handleCancel}
       title={resolvedTitle}
@@ -214,6 +214,7 @@ export function AmountEditDialog({
         label: tr('common.cancel'),
         onPress: handleCancel,
       }}
+      keyboardAware
       testID={testID}
     >
       {/* 一体型ステッパー: [ − ] [ TextInput  単位 ] [ + ] */}
@@ -305,7 +306,7 @@ export function AmountEditDialog({
       <Text style={[styles.rangeHint, { color: t.colors.content.tertiary }]}>
         {config.min}–{config.max} {config.unitLabel}
       </Text>
-    </Dialog>
+    </BottomSheet>
   );
 }
 

@@ -378,6 +378,7 @@
     "fatA11y": "Fat (g)",
     "carbsA11y": "Carbs (g)",
     "gramUnit": "All values in grams",
+    "kcalAutoCalc": "Auto-calculated from P/F/C",
     "fallbackLabel": "Direct entry"
   },
   "dishEntry": {

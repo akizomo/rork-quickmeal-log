@@ -984,7 +984,7 @@ const BUCKET_VEGGIES: Identity[] = [
   {
     id: 'veg_dense',
     label: '高タンパク野菜',
-    searchTags: ['こうたんぱくやさい', 'たかたんぱくやさい'],
+    searchTags: ['こうたんぱくやさい', 'たかたんぱくやさい', 'きのこ'],
     primaryHome: { tab: 'ingredient', bucket: 'veggies' },
     // ブロッコリー基準 (生 100g): kcal 35, P 4.3, F 0.4, C 5
     defaultMacro: { kcal: 35, protein: 4.3, fat: 0.4, carbs: 5 },
@@ -999,6 +999,8 @@ const BUCKET_VEGGIES: Identity[] = [
       { key: 'asparagus', label: 'アスパラガス', factor: { kcal: 0.63, protein: 0.60, fat: 0.50, carbs: 0.74 } },
       { key: 'brussels_sprouts', label: '芽キャベツ', factor: { kcal: 1.43, protein: 1.14, fat: 0.50, carbs: 1.80 }, searchTags: ['めきゃべつ'] },
       { key: 'spinach', label: 'ほうれん草', factor: { kcal: 0.57, protein: 0.67, fat: 0.75, carbs: 0.62 }, searchTags: ['ほうれんそう'] },
+      // きのこ類 — 主要6種の平均値 (生/100g: kcal 20, P 2.5, F 0.4, C 3.4)。ブロッコリー比 factor
+      { key: 'mushroom', label: 'きのこ', factor: { kcal: 0.57, protein: 0.58, fat: 1.00, carbs: 0.68 }, searchTags: ['きのこ', 'えのき', 'しいたけ', 'しめじ', 'エリンギ', 'まいたけ', 'なめこ'] },
     ],
     styles: [
       { key: 'steamed', label: '蒸し・茹で', isDefault: true },

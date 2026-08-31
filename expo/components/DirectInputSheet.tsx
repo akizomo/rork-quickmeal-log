@@ -5,7 +5,7 @@
  * 再利用なし・使い捨て。カスタム食品管理は別スコープ (P2-S7)。
  */
 
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 
 import { Body, BottomSheet, Label, Overline, useTheme } from '@/design-system';
@@ -30,6 +30,31 @@ export function DirectInputSheet({ visible, onClose, onDismiss }: Props) {
   const [proteinStr, setProteinStr] = useState('');
   const [fatStr, setFatStr] = useState('');
   const [carbsStr, setCarbsStr] = useState('');
+  const [kcalIsAuto, setKcalIsAuto] = useState(false);
+  // true のとき PFC 変化によるオート上書きを抑制する
+  const kcalManuallyEdited = useRef(false);
+
+  // PFC から kcal を自動計算 (P×4 + F×9 + C×4)
+  useEffect(() => {
+    if (kcalManuallyEdited.current) return;
+    const p = parseFloat(proteinStr) || 0;
+    const f = parseFloat(fatStr) || 0;
+    const c = parseFloat(carbsStr) || 0;
+    const total = Math.round(p * 4 + f * 9 + c * 4);
+    if (total > 0) {
+      setKcalStr(String(total));
+      setKcalIsAuto(true);
+    } else {
+      setKcalStr('');
+      setKcalIsAuto(false);
+    }
+  }, [proteinStr, fatStr, carbsStr]);
+
+  const handleKcalChange = useCallback((v: string) => {
+    setKcalStr(v);
+    kcalManuallyEdited.current = v.length > 0;
+    if (v.length === 0) setKcalIsAuto(false);
+  }, []);
 
   const reset = useCallback(() => {
     setName('');
@@ -37,6 +62,8 @@ export function DirectInputSheet({ visible, onClose, onDismiss }: Props) {
     setProteinStr('');
     setFatStr('');
     setCarbsStr('');
+    setKcalIsAuto(false);
+    kcalManuallyEdited.current = false;
   }, []);
 
   const kcal = parseFloat(kcalStr) || 0;
@@ -121,12 +148,15 @@ export function DirectInputSheet({ visible, onClose, onDismiss }: Props) {
           <View style={[styles.macroRow, { gap: t.spacing['3'] }]}>
             <MacroField
               value={kcalStr}
-              onChangeText={setKcalStr}
+              onChangeText={handleKcalChange}
               suffix="kcal"
               placeholder="0"
               accessibilityLabel={tr('directInput.kcalA11y')}
             />
           </View>
+          {kcalIsAuto && (
+            <Body size="sm" tone="secondary">{tr('directInput.kcalAutoCalc')}</Body>
+          )}
         </View>
 
         {/* PFC */}
