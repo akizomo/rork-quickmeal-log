@@ -275,6 +275,60 @@ export const PURE_ADDONS: Addon[] = [
     addedMacro: { kcal: 168, protein: 2.5, fat: 0.3, carbs: 37 },
     allowedIdentityIds: ['kaisendon', 'gyudon_class', 'katsudon_tendon', 'teishoku'],
   },
+
+  {
+    id: 'niku_omori',
+    label: '肉大盛り',
+    unit: 'g',
+    unitAmount: 50,
+    unitLabel: '+50g',
+    // 牛丼の具(牛肉+玉ねぎ甘辛煮) 50g相当 = 頭大盛りの目安
+    addedMacro: { kcal: 130, protein: 9, fat: 9, carbs: 6 },
+    allowedIdentityIds: ['gyudon_class'],
+  },
+  {
+    id: 'ruu_omori',
+    label: 'ルー増し',
+    unit: 'g',
+    unitAmount: 50,
+    unitLabel: '+50g',
+    // 出来上がりカレーソース 50g相当
+    addedMacro: { kcal: 80, protein: 2, fat: 4, carbs: 10 },
+    allowedIdentityIds: ['curry_class', 'katsu_curry'],
+  },
+
+  // ---- Noodle large serving (麺大盛り) ----
+  // 大盛りは麺のみ増量が実態のため、全体スケールではなく麺単体の栄養値を加算するアドオンで表現する。
+  {
+    id: 'men_omori',
+    label: '麺大盛り',
+    unit: 'g',
+    unitAmount: 100,
+    unitLabel: '+100g',
+    // 中華麺(ゆで) 100g: 文部科学省食品成分データベース準拠
+    addedMacro: { kcal: 149, protein: 5, fat: 0.5, carbs: 29 },
+    allowedIdentityIds: ['ramen_light', 'ramen_heavy', 'ramen_jiro', 'tsukemen', 'tantanmen', 'fried_noodles', 'cold_noodles'],
+  },
+  {
+    id: 'udon_omori',
+    label: 'うどん大盛り',
+    unit: 'g',
+    unitAmount: 200,
+    unitLabel: '+1玉(200g)',
+    // うどん(ゆで) 200g: 文部科学省食品成分データベース準拠
+    addedMacro: { kcal: 190, protein: 5, fat: 0.8, carbs: 42 },
+    allowedIdentityIds: ['udon', 'tempura_noodle', 'yaki_udon', 'somen'],
+  },
+  {
+    id: 'soba_omori',
+    label: 'そば大盛り',
+    unit: 'g',
+    unitAmount: 200,
+    unitLabel: '+1玉(200g)',
+    // そば(ゆで) 200g: 文部科学省食品成分データベース準拠
+    addedMacro: { kcal: 260, protein: 11, fat: 2, carbs: 49 },
+    allowedIdentityIds: ['soba', 'tempura_noodle'],
+  },
   {
     id: 'katsu_add',
     label: 'カツ追加',

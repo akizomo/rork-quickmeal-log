@@ -868,10 +868,13 @@ export function getGrossExerciseKcalForDate(
 }
 
 /**
- * その日の運動 kcal を考慮した PFC ターゲットを **比例スケール** で返す。
+ * その日の運動 kcal を考慮した PFC ターゲットを返す。
  *
- * 計算: ratio = adjustedTargetKcal(date) / baseTargetCalories
- *       protein/fat/carbs を ratio で乗算
+ * 運動による追加 kcal はグリコーゲン補充として**炭水化物のみ**に加算する。
+ * たんぱく質・脂質の目標値は運動量に関わらず変わらない。
+ *
+ * 計算: extraKcal = adjustedTargetKcal(date) − base
+ *       carbs += extraKcal / 4
  *
  * baseTargetKcal が 0 のときは base PFC をそのまま返す (ゼロ除算回避)。
  */
@@ -894,11 +897,11 @@ export function getAdjustedPfcForDate(
       carbs: profile.targetCarbs,
     };
   }
-  const ratio = adjustedTargetKcal(base, exerciseLogs, dateKey, ctx) / base;
+  const extraKcal = adjustedTargetKcal(base, exerciseLogs, dateKey, ctx) - base;
   return {
-    protein: Math.round(profile.targetProtein * ratio),
-    fat: Math.round(profile.targetFat * ratio),
-    carbs: Math.round(profile.targetCarbs * ratio),
+    protein: profile.targetProtein,
+    fat: profile.targetFat,
+    carbs: Math.round(profile.targetCarbs + extraKcal / 4),
   };
 }
 

@@ -44,8 +44,8 @@ const BUCKET_RICE_DISH: Identity[] = [
       { key: 'mabo', label: '麻婆丼', factor: { kcal: 0.98, protein: 1, fat: 1.22, carbs: 0.93 }, searchTags: ['まーぼーどん'] },
     ],
     // cheese は親子丼/中華丼/麻婆丼に合わないので default から外し allowed のみに
-    defaultAddonIds: ['egg', 'kimchi_top', 'rayu'],
-    allowedAddonIds: ['egg', 'cheese', 'kimchi_top', 'rayu', 'mayo', 'katsu_add', 'gohan_omori'],
+    defaultAddonIds: ['egg', 'kimchi_top', 'rayu', 'gohan_omori', 'niku_omori'],
+    allowedAddonIds: ['egg', 'cheese', 'kimchi_top', 'rayu', 'mayo', 'katsu_add', 'gohan_omori', 'niku_omori'],
   },
   {
     id: 'kaisendon',
@@ -55,6 +55,7 @@ const BUCKET_RICE_DISH: Identity[] = [
     defaultMacro: { kcal: 580, protein: 28, fat: 10, carbs: 88 },
     referenceDescription: 'ご飯200g + 海鮮ネタ80g',
     amount: { unit: 'percent', default: 100, chips: [{ label: '小盛', value: 70 }, { label: '並', value: 100 }, { label: '大盛', value: 150 }] },
+    defaultAddonIds: ['gohan_omori'],
     allowedAddonIds: ['gohan_omori'],
   },
   {
@@ -84,6 +85,7 @@ const BUCKET_RICE_DISH: Identity[] = [
       { key: 'katsudon', label: 'カツ丼', isDefault: true },
       { key: 'tendon', label: '天丼', factor: { kcal: 0.94, protein: 0.69, fat: 0.97, carbs: 1.09 } },
     ],
+    defaultAddonIds: ['gohan_omori'],
     allowedAddonIds: ['gohan_omori'],
   },
   {
@@ -137,8 +139,8 @@ const BUCKET_CURRY: Identity[] = [
       { key: 'stew', label: 'シチュー', searchTags: ['クリームシチュー', 'ビーフシチュー'], factor: { kcal: 0.97 } },
       { key: 'hashed', label: 'ハッシュドビーフ', searchTags: ['ハヤシライス', 'ハヤシ'], factor: { kcal: 1.04 } },
     ],
-    defaultAddonIds: ['katsu_add', 'cheese', 'egg', 'kimchi_top'],
-    allowedAddonIds: ['katsu_add', 'cheese', 'egg', 'kimchi_top', 'karaage_add'],
+    defaultAddonIds: ['katsu_add', 'cheese', 'egg', 'kimchi_top', 'gohan_omori', 'ruu_omori'],
+    allowedAddonIds: ['katsu_add', 'cheese', 'egg', 'kimchi_top', 'karaage_add', 'gohan_omori', 'ruu_omori'],
   },
   {
     id: 'katsu_curry',
@@ -147,8 +149,8 @@ const BUCKET_CURRY: Identity[] = [
     defaultMacro: { kcal: 980, protein: 29, fat: 38, carbs: 126 },
     referenceDescription: 'ご飯200g + カツ + ルー',
     amount: { unit: 'percent', default: 100, chips: [{ label: '並', value: 100 }, { label: '大盛', value: 150 }] },
-    defaultAddonIds: ['cheese'],
-    allowedAddonIds: ['cheese', 'egg'],
+    defaultAddonIds: ['cheese', 'gohan_omori', 'ruu_omori'],
+    allowedAddonIds: ['cheese', 'egg', 'gohan_omori', 'ruu_omori'],
   },
   {
     id: 'butter_chicken',
@@ -158,8 +160,8 @@ const BUCKET_CURRY: Identity[] = [
     defaultMacro: { kcal: 780, protein: 22, fat: 40, carbs: 72 },
     referenceDescription: 'ご飯200g + バターチキン (or ナンで代用可)',
     amount: { unit: 'percent', default: 100, chips: [{ label: '並', value: 100 }, { label: '大盛', value: 150 }] },
-    defaultAddonIds: ['cheese'],
-    allowedAddonIds: ['cheese'],
+    defaultAddonIds: ['cheese', 'gohan_omori'],
+    allowedAddonIds: ['cheese', 'gohan_omori'],
   },
   {
     id: 'soup_curry',
@@ -172,8 +174,8 @@ const BUCKET_CURRY: Identity[] = [
       { key: 'soup', label: 'スープカレー', isDefault: true },
       { key: 'green', label: 'グリーンカレー', factor: { kcal: 1.08, fat: 1.18, carbs: 0.97 } },
     ],
-    defaultAddonIds: ['egg', 'cheese'],
-    allowedAddonIds: ['egg', 'cheese'],
+    defaultAddonIds: ['egg', 'cheese', 'gohan_omori'],
+    allowedAddonIds: ['egg', 'cheese', 'gohan_omori'],
   },
 ];
 
@@ -182,7 +184,7 @@ const BUCKET_CURRY: Identity[] = [
 // ---------------------------------------------------------------------------
 
 // 油揚げ(きつね)はラーメンには合わないため除外。代わりにメンマと海苔を追加
-const RAMEN_ADDONS = ['seasoned_egg', 'chashu', 'menma', 'nori_furikake', 'seabura', 'rayu'];
+const RAMEN_ADDONS = ['seasoned_egg', 'chashu', 'menma', 'nori_furikake', 'seabura', 'rayu', 'men_omori'];
 
 const BUCKET_CHINESE_NOODLES: Identity[] = [
   {
@@ -201,7 +203,7 @@ const BUCKET_CHINESE_NOODLES: Identity[] = [
       { key: 'no_soup', label: '汁残し', isDefault: true },
       { key: 'all_soup', label: '汁全飲み', factor: { kcal: 1.18, fat: 1.30 } },
     ],
-    defaultAddonIds: RAMEN_ADDONS.slice(0, 4),
+    defaultAddonIds: [...RAMEN_ADDONS.slice(0, 4), 'men_omori'],
     allowedAddonIds: RAMEN_ADDONS,
   },
   {
@@ -232,7 +234,7 @@ const BUCKET_CHINESE_NOODLES: Identity[] = [
       { key: 'no_soup', label: '汁残し', isDefault: true },
       { key: 'all_soup', label: '汁全飲み', factor: { kcal: 1.24, fat: 1.34 } },
     ],
-    defaultAddonIds: RAMEN_ADDONS.slice(0, 4),
+    defaultAddonIds: [...RAMEN_ADDONS.slice(0, 4), 'men_omori'],
     allowedAddonIds: RAMEN_ADDONS,
   },
   {
@@ -243,7 +245,7 @@ const BUCKET_CHINESE_NOODLES: Identity[] = [
     defaultMacro: { kcal: 1500, protein: 55, fat: 75, carbs: 150 },
     referenceDescription: '麺300g + 大量野菜+豚 (1人前=小)',
     amount: { unit: 'percent', default: 100, chips: [{ label: '麺少', value: 75 }, { label: '小', value: 100 }, { label: '大', value: 150 }] },
-    defaultAddonIds: ['chashu', 'seabura'],
+    defaultAddonIds: ['chashu', 'seabura', 'men_omori'],
     allowedAddonIds: RAMEN_ADDONS,
   },
   {
@@ -258,7 +260,7 @@ const BUCKET_CHINESE_NOODLES: Identity[] = [
       { key: 'tsukemen', label: 'つけ麺', isDefault: true },
       { key: 'mazesoba', label: 'まぜそば', factor: { kcal: 1.06, fat: 1.36 } },
     ],
-    defaultAddonIds: ['seasoned_egg', 'chashu'],
+    defaultAddonIds: ['seasoned_egg', 'chashu', 'men_omori'],
   },
   {
     id: 'tantanmen',
@@ -268,8 +270,8 @@ const BUCKET_CHINESE_NOODLES: Identity[] = [
     defaultMacro: { kcal: 780, protein: 25, fat: 30, carbs: 90 },
     referenceDescription: '麺150g + 担々スープ',
     amount: { unit: 'percent', default: 100, chips: [{ label: '普通', value: 100 }, { label: '大盛', value: 150 }] },
-    defaultAddonIds: ['seasoned_egg', 'chashu', 'menma', 'rayu'],
-    allowedAddonIds: ['seasoned_egg', 'chashu', 'menma', 'rayu', 'seabura', 'nori_furikake'],
+    defaultAddonIds: ['seasoned_egg', 'chashu', 'menma', 'rayu', 'men_omori'],
+    allowedAddonIds: ['seasoned_egg', 'chashu', 'menma', 'rayu', 'seabura', 'nori_furikake', 'men_omori'],
   },
   {
     id: 'fried_noodles',
@@ -279,8 +281,8 @@ const BUCKET_CHINESE_NOODLES: Identity[] = [
     defaultMacro: { kcal: 820, protein: 24, fat: 30, carbs: 112 },
     referenceDescription: '麺150g + 具炒め+ソース',
     amount: { unit: 'percent', default: 100, chips: [{ label: '小', value: 75 }, { label: '1人前', value: 100 }, { label: '大盛', value: 150 }] },
-    defaultAddonIds: ['sauce', 'egg'],
-    allowedAddonIds: ['sauce', 'egg', 'katsuobushi'],
+    defaultAddonIds: ['sauce', 'egg', 'men_omori'],
+    allowedAddonIds: ['sauce', 'egg', 'katsuobushi', 'men_omori'],
   },
   {
     id: 'cold_noodles',
@@ -294,8 +296,8 @@ const BUCKET_CHINESE_NOODLES: Identity[] = [
       { key: 'hiyashi_chuka', label: '冷やし中華', isDefault: true },
       { key: 'reimen', label: '韓国冷麺', factor: { kcal: 0.91 } },
     ],
-    defaultAddonIds: ['egg', 'ham'],
-    allowedAddonIds: ['egg', 'ham', 'rayu'],
+    defaultAddonIds: ['egg', 'ham', 'men_omori'],
+    allowedAddonIds: ['egg', 'ham', 'rayu', 'men_omori'],
   },
 ];
 
@@ -320,8 +322,8 @@ const BUCKET_JAPANESE_NOODLES: Identity[] = [
       { key: 'tsukimi', label: '月見', searchTags: ['つきみうどん'], factor: { kcal: 1.09, protein: 1.25, fat: 1.11 }, hiddenAddonIds: ['egg'] },
       { key: 'kamaage', label: '釜揚げ', searchTags: ['かまあげうどん'], factor: { kcal: 0.91, fat: 0.78 } },
     ],
-    defaultAddonIds: ['egg', 'tempura_top', 'tororo'],
-    allowedAddonIds: ['egg', 'tempura_top', 'kitsune_top', 'tororo'],
+    defaultAddonIds: ['egg', 'tempura_top', 'tororo', 'udon_omori'],
+    allowedAddonIds: ['egg', 'tempura_top', 'kitsune_top', 'tororo', 'udon_omori'],
   },
   {
     id: 'soba',
@@ -336,8 +338,8 @@ const BUCKET_JAPANESE_NOODLES: Identity[] = [
       // 山かけ = とろろを factor に織り込み済みなので tororo トッピングを隠す
       { key: 'yamakake', label: '山かけ', searchTags: ['やまかけそば'], factor: { kcal: 1.06, protein: 1.06 }, hiddenAddonIds: ['tororo'] },
     ],
-    defaultAddonIds: ['egg', 'tempura_top', 'tororo'],
-    allowedAddonIds: ['egg', 'tempura_top', 'kitsune_top', 'tororo'],
+    defaultAddonIds: ['egg', 'tempura_top', 'tororo', 'soba_omori'],
+    allowedAddonIds: ['egg', 'tempura_top', 'kitsune_top', 'tororo', 'soba_omori'],
   },
   {
     id: 'tempura_noodle',
@@ -352,6 +354,8 @@ const BUCKET_JAPANESE_NOODLES: Identity[] = [
       { key: 'tempura_udon', label: '天ぷらうどん' },
       { key: 'nabe_yaki', label: '鍋焼きうどん', factor: { kcal: 1.10, protein: 1.20, fat: 1.15, carbs: 1.05 } },
     ],
+    defaultAddonIds: ['udon_omori', 'soba_omori'],
+    allowedAddonIds: ['udon_omori', 'soba_omori'],
   },
   {
     id: 'yaki_udon',
@@ -361,8 +365,8 @@ const BUCKET_JAPANESE_NOODLES: Identity[] = [
     defaultMacro: { kcal: 560, protein: 18, fat: 16, carbs: 86 },
     referenceDescription: '麺250g + 具炒め',
     amount: { unit: 'percent', default: 100, chips: [{ label: '1人前', value: 100 }, { label: '大盛', value: 150 }] },
-    defaultAddonIds: ['katsuobushi', 'sauce'],
-    allowedAddonIds: ['katsuobushi', 'sauce', 'egg'],
+    defaultAddonIds: ['katsuobushi', 'sauce', 'udon_omori'],
+    allowedAddonIds: ['katsuobushi', 'sauce', 'egg', 'udon_omori'],
   },
   {
     id: 'somen',
@@ -371,6 +375,8 @@ const BUCKET_JAPANESE_NOODLES: Identity[] = [
     defaultMacro: { kcal: 400, protein: 10, fat: 1.5, carbs: 78 },
     referenceDescription: '麺100g (乾麺) + つゆ (トッピングはアドオンで追加)',
     amount: { unit: 'percent', default: 100, chips: [{ label: '1人前', value: 100 }, { label: '大盛', value: 150 }] },
+    defaultAddonIds: ['udon_omori'],
+    allowedAddonIds: ['udon_omori'],
   },
 ];
 
@@ -752,6 +758,7 @@ const BUCKET_MISC_DISH: Identity[] = [
       { key: 'shogayaki', label: '生姜焼き定食', factor: { kcal: 0.96, protein: 1.06, fat: 0.90, carbs: 0.96 }, searchTags: ['しょうがやき'] },
       { key: 'hamburg', label: 'ハンバーグ定食', factor: { kcal: 1.0, protein: 1.0, fat: 1.07, carbs: 0.91 } },
     ],
+    defaultAddonIds: ['gohan_omori'],
     allowedAddonIds: ['gohan_omori'],
   },
   {
