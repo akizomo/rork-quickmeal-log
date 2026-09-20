@@ -247,11 +247,11 @@ export function BottomSheet({
   }, [dragY, openProgress]);
 
   // Keyboard avoidance: slide sheet up when software keyboard appears.
-  // Android は windowSoftInputMode="resize" (既定) でウィンドウ自体が
-  // キーボード分縮むため、bottom:0 のシートは既に正しい位置に来る。
-  // ここで追加 translateY をかけると二重補正になり、シートが必要以上に
-  // 押し上げられて下端の padding が画面外へ押し出され「0 に見える」原因になる。
-  // そのため JS 側の補正は iOS のみに限定する。
+  // iOS: keyboardWillShow/Hide で translateY を動かして完全に機能する。
+  // Android: Modal は Activity の windowSoftInputMode="adjustResize" を継承しない
+  //   別 Window で動くため、キーボードが Modal コンテンツに被るケースがある。
+  //   ここに Android の translateY 補正を追加しても、一部デバイスで二重補正になる
+  //   可能性があるため、現状 iOS 限定としている。Android 対応は未解決の既知制限。
   useEffect(() => {
     if (!keyboardAware || Platform.OS !== 'ios') return;
 

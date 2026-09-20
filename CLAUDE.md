@@ -98,9 +98,8 @@ UI の実装・修正を行う際は**必ず以下の順序**で参照するこ�
    - 生の RN `<Modal>` を直接使わない。モーダル/ボトムシートが必要な場合は必ず `design-system` の `Dialog`（中央配置）または `BottomSheet`（下からのシート）を使う。
    - **BottomSheet と TextInput のキーボードルール（違反するとキーボードがシートを隠す）**
      - TextInput を含む BottomSheet には必ず `keyboardAware={true}` を付ける。
-     - `keyboardAware` は **iOS のみ機能する**（`keyboardWillShow` イベントでシートを translateY）。Android は Modal の `windowSoftInputMode="adjustResize"` 任せ。**「付ければ全 OS で動く」は誤り。**
-     - **BottomSheet 内の TextInput を autoFocus / `setTimeout(() => ref.focus(), N)` で自動フォーカスしない。** シートの開くアニメーションとキーボードアニメーションが競合し、レイアウトが崩れる。ユーザーのタップで初めてキーボードが出る設計にする。
-     - Dialog（中央配置）では auto-focus は許容される（キーボードがダイアログ下に出るため干渉しない）。BottomSheet に変換する際は必ず auto-focus を除去すること。
+     - `keyboardAware` は **iOS のみ機能する**（`keyboardWillShow` イベントでシートを translateY）。**Android の Modal は Activity の `windowSoftInputMode="adjustResize"` を継承しない別 Window で動くため、JS 側の補正も効かない。Android での Modal 内キーボード回避は未解決の既知制限。**
+     - BottomSheet 内で TextInput を auto-focus する場合、delay は **spring アニメーション完了後 (≥650ms)** にする。`setTimeout(() => ref.focus(), 300)` のような短い delay は spring とキーボード出現アニメーションが競合して `keyboardAware` が正しく機能しない。Dialog から BottomSheet に変換する際は delay を調整すること。
    - アイコン単体のタップ領域 (close/削除/前後ナビ等) は必ず `IconButton` (`design-system/components/IconButton.tsx`) を使う。`Pressable + Icon` の手書きは禁止。`variant`(ghost/filled) と `size`(sm/md/lg) と `tone`(secondary/tertiary/danger/action) で表現し、新しい組み合わせが要る場合は `IconButton` 側を拡張する。
 
 3. **コンポーネントは既存の流用を優先する**
