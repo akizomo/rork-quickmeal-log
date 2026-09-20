@@ -99,7 +99,8 @@ UI の実装・修正を行う際は**必ず以下の順序**で参照するこ�
    - **BottomSheet と TextInput のキーボードルール（違反するとキーボードがシートを隠す）**
      - TextInput を含む BottomSheet には必ず `keyboardAware={true}` を付ける。
      - `keyboardAware` は **iOS のみ機能する**（`keyboardWillShow` イベントでシートを translateY）。**Android の Modal は Activity の `windowSoftInputMode="adjustResize"` を継承しない別 Window で動くため、JS 側の補正も効かない。Android での Modal 内キーボード回避は未解決の既知制限。**
-     - BottomSheet 内で TextInput を auto-focus する場合、delay は **spring アニメーション完了後 (≥650ms)** にする。`setTimeout(() => ref.focus(), 300)` のような短い delay は spring とキーボード出現アニメーションが競合して `keyboardAware` が正しく機能しない。Dialog から BottomSheet に変換する際は delay を調整すること。
+     - BottomSheet 内で TextInput を auto-focus する場合、delay は **spring アニメーション完了後 (≥650ms)** にする。短い delay は spring とキーボード出現が競合する。
+     - **TextInput を auto-focus する Dialog は BottomSheet に変換しない。** Android でキーボードが回避できず UX が破綻する。量調整系 (`AmountEditDialog`) はこれに該当し Dialog を維持する。
    - アイコン単体のタップ領域 (close/削除/前後ナビ等) は必ず `IconButton` (`design-system/components/IconButton.tsx`) を使う。`Pressable + Icon` の手書きは禁止。`variant`(ghost/filled) と `size`(sm/md/lg) と `tone`(secondary/tertiary/danger/action) で表現し、新しい組み合わせが要る場合は `IconButton` 側を拡張する。
 
 3. **コンポーネントは既存の流用を優先する**
