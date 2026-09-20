@@ -30,7 +30,7 @@ import {
   View,
 } from 'react-native';
 
-import { BottomSheet, Chip, useTheme } from '@/design-system';
+import { Chip, Dialog, useTheme } from '@/design-system';
 import { useT } from '@/hooks/useT';
 import { fontSize as fs, letterSpacing as ls } from '@/design-system/tokens/primitives/typography';
 import {
@@ -106,16 +106,15 @@ export function AmountEditDialog({
   // 多重発火防止
   const closingRef = useRef(false);
 
-  // シートが開くたびに initialValue でリセット＆入力フォーカス
+  // ダイアログが開くたびに initialValue でリセット＆入力フォーカス
   useEffect(() => {
     if (visible) {
       closingRef.current = false;
       const seeded = clampToRange(snapToStep(initialValue, config), config);
       setDraft(seeded);
       setRawInput(formatValue(seeded, config.decimals));
-      // spring アニメーション完了後 (≈700ms) にフォーカスを当てる。
-      // 300ms だと spring とキーボード出現が競合して keyboardAware が正しく機能しない。
-      const timer = setTimeout(() => inputRef.current?.focus(), 650);
+      // ダイアログのアニメ完了後にフォーカスを当てる
+      const timer = setTimeout(() => inputRef.current?.focus(), 300);
       return () => clearTimeout(timer);
     }
   }, [visible, initialValue, config]);
@@ -202,7 +201,7 @@ export function AmountEditDialog({
   // ---------------------------------------------------------------------------
 
   return (
-    <BottomSheet
+    <Dialog
       visible={visible}
       onClose={handleCancel}
       title={resolvedTitle}
@@ -215,7 +214,6 @@ export function AmountEditDialog({
         label: tr('common.cancel'),
         onPress: handleCancel,
       }}
-      keyboardAware
       testID={testID}
     >
       {/* 一体型ステッパー: [ − ] [ TextInput  単位 ] [ + ] */}
@@ -307,7 +305,7 @@ export function AmountEditDialog({
       <Text style={[styles.rangeHint, { color: t.colors.content.tertiary }]}>
         {config.min}–{config.max} {config.unitLabel}
       </Text>
-    </BottomSheet>
+    </Dialog>
   );
 }
 
