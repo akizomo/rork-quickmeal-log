@@ -106,16 +106,13 @@ export function AmountEditDialog({
   // 多重発火防止
   const closingRef = useRef(false);
 
-  // ダイアログが開くたびに initialValue でリセット＆入力フォーカス
+  // シートが開くたびに initialValue でリセット (BottomSheet なので auto-focus しない)
   useEffect(() => {
     if (visible) {
       closingRef.current = false;
       const seeded = clampToRange(snapToStep(initialValue, config), config);
       setDraft(seeded);
       setRawInput(formatValue(seeded, config.decimals));
-      // ダイアログのアニメ完了後にフォーカスを当てる
-      const timer = setTimeout(() => inputRef.current?.focus(), 300);
-      return () => clearTimeout(timer);
     }
   }, [visible, initialValue, config]);
 

@@ -96,6 +96,11 @@ UI の実装・修正を行う際は**必ず以下の順序**で参照するこ�
      - `easing.standard`=汎用/画面遷移、`enter`=入場(減速)、`exit`=退場(加速)。`spring.enter/exit/snap/pop` も同様に用途別。
      - **既存トークンと数値がほぼ同じ独自定義 (例: 独自の `MD3_STANDARD` 定数) を見つけたら、トークン側に寄せて重複を解消する。** 明確に異なるチューニングが必要な場合のみ、独自定数を保持してよいが、その理由をコメントで明記し、トークン名を騙る紛らわしい命名 (`MD3_*` 等) は避ける。
    - 生の RN `<Modal>` を直接使わない。モーダル/ボトムシートが必要な場合は必ず `design-system` の `Dialog`（中央配置）または `BottomSheet`（下からのシート）を使う。
+   - **BottomSheet と TextInput のキーボードルール（違反するとキーボードがシートを隠す）**
+     - TextInput を含む BottomSheet には必ず `keyboardAware={true}` を付ける。
+     - `keyboardAware` は **iOS のみ機能する**（`keyboardWillShow` イベントでシートを translateY）。Android は Modal の `windowSoftInputMode="adjustResize"` 任せ。**「付ければ全 OS で動く」は誤り。**
+     - **BottomSheet 内の TextInput を autoFocus / `setTimeout(() => ref.focus(), N)` で自動フォーカスしない。** シートの開くアニメーションとキーボードアニメーションが競合し、レイアウトが崩れる。ユーザーのタップで初めてキーボードが出る設計にする。
+     - Dialog（中央配置）では auto-focus は許容される（キーボードがダイアログ下に出るため干渉しない）。BottomSheet に変換する際は必ず auto-focus を除去すること。
    - アイコン単体のタップ領域 (close/削除/前後ナビ等) は必ず `IconButton` (`design-system/components/IconButton.tsx`) を使う。`Pressable + Icon` の手書きは禁止。`variant`(ghost/filled) と `size`(sm/md/lg) と `tone`(secondary/tertiary/danger/action) で表現し、新しい組み合わせが要る場合は `IconButton` 側を拡張する。
 
 3. **コンポーネントは既存の流用を優先する**
