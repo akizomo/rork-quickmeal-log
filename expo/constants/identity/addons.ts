@@ -404,6 +404,8 @@ export const PURE_ADDONS: Addon[] = [
 export const IDENTITY_ADDON_REFS: string[] = [
   'egg',
   'cheese',
+  'cheese_low_fat',
+  'edamame_soy',
   'mayo',
   'butter_cream',
   'natto',

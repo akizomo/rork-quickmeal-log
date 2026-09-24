@@ -1,8 +1,30 @@
-# 食事入力IA — Identity辞書 仕様 v1.2
+# 食事入力IA — Identity辞書 仕様 v1.4
 
 > 関連: [PRD.md](./PRD.md) / [IA-catalog.xlsx](./IA-catalog.xlsx)
 > ステータス: 確定版
-> 最終更新: 2026-05-01
+> 最終更新: 2026-09-23
+>
+> **v1.4 変更点 (2026-09-23)**
+> - **§1.5「Identity を増やす前の判定」を新設** — v1.3 の `washoku_okazu` (煮魚・角煮を取り下げ) で実践した判断が**どこにも明文化されておらず**、同じ議論を毎回やり直していたため規約化した。判定順 (語彙 → Attribute/Style → Add-on → 最後に Identity)、粒度の既定 (**Identity = 型 / Attribute = 個別料理**)、分割軸 (**マクロの段差であって名前の解像度ではない**) を明記。
+>   - **9ボタングリッドを不変条件としてテスト化** — 「9ボタン×2タブ」は PRD §6.5.0 の契約でありながら**件数を検証するテストが存在せず、人間の記憶だけが守っていた**。`bucket-config.test.ts` に `9-button grid invariant` (各ロケール × 各タブ = 9) を追加。
+> - **サラダ派生を Identity を増やさずカバー** (§5.4) — 「ギリシャ風サラダを記録したい」を起点に調査した結果、**問題は DB 欠損ではなく Add-on の配線**だった。
+>   - `salad_raw` は 25kcal/100g の**ほぼ空の器**でカロリーは全て Add-on 側にあるのに、**脂質の主役である `cheese` が default に無かった** (25kcal の `crouton` が枠を占有)。cheese を昇格し crouton は allowed へ。
+>   - `cheese_low_fat` (カッテージ) と `edamame_soy` (豆) は **Identity としては存在するのに `asAddon` が無く、サラダに乗せられなかった**。両者に `asAddon` を付与し `IDENTITY_ADDON_REFS` に登録。
+>   - **フェタ/パルメザン等の銘柄は追加しない** — 普通のチーズ群 (F 6.0g/20g) と低脂質群 (F 1.4g/30g) の**群間の段差 (約5倍)** が分類軸であり、群内の銘柄差を割っても誤差は減らず選択肢だけ増えるため。具体名は `referenceDescription` に置く。
+>   - 派生名の一般形 (「ニース風サラダ」等) は **`head-nouns.ts` の主辞「サラダ」が層2で既に拾えていた**。`searchTags` への追加は whitelist ではなく**頻出語の層2→層1昇格**として位置づける。`identity-search.test.ts` で両経路を検証。
+>
+> **v1.3 変更点 (2026-09-23)**
+> - **`MacroDelta` (加算デルタ) を Attribute / Style に追加** (§3.4)。`applyFactor` は純粋な乗算のため、**ベースが 0 のマクロには何も足せない**。「たれで糖が乗る調理法」(煮つけ・味噌煮・蒲焼) は生魚の `carbs: 0` に糖質を足す必要があり、factor では原理的に表現できなかった。
+>   - **これにより既存バグを1件修正**: `fatty_fish` の うなぎ蒲焼 は `factor: { carbs: 999 }` と書かれ `/* C handled separately */` とコメントされていたが、その「別処理」は**コードベースに存在せず** (`unagi` はこの1行にしか出現しない)、`0 × 999 = 0` で**炭水化物が丸ごと欠落して記録されていた**。八訂 3.1g/100g より既定量80g換算で C 2.5g を加算するよう修正。
+> - **魚に「煮つけ・味噌煮」Style を追加** (`fatty_fish` / `white_fish`)。さばの味噌煮・ぶり大根・煮魚はこれで表現する。
+> - **misc_dish に `washoku_okazu` (和風おかず) を新設**。ただし置くのは **「1素材 + 調理法」に分解できない複合煮物のみ** = 肉じゃが / 肉豆腐 の2 Attribute。
+>   - **背景**: 肉じゃが等が検索で無着地だった (実測: 「ぶり大根」→ブリトー・タコス、「焼き魚」→和菓子・米菓)。
+>   - **重複させない原則**: 当初は さばの味噌煮・ぶり大根・煮魚・豚の角煮 も本 Identity に入れる設計だったが、**これらは食材タブの `fatty_fish` / `white_fish` の Attribute + Style で既に表現できる**ため取り下げた。同じ食べ物が2タブで別マクロ値を持つのは §1.3 の「記録は primary Home 1箇所」に反する。**検索で当たらないことと Identity が無いことは別問題**であり、前者は searchTag で解く。
+>   - **副菜/主菜の切り分け**: `side_seasoned` は §2.1 バケット6 の定義通り **副菜 (50g 小鉢) スケールのまま**維持。かぼちゃの煮物・切り干し大根・ひじき煮・きんぴら・筑前煮は副菜として残す。肉じゃがをここに入れると既定量が約3倍ズレる。
+>   - **未カバー**: 豚の角煮は「豚バラ + 長時間煮込み」だが `beef_pork_fatty` に styles 軸が無く、新設は影響範囲が広いため今回は見送り。
+> - **searchTag の漢字併記を規約化** (§4.1)。`normalize()` は漢字→読み変換をしないため、ひらがなのみのタグは漢字入力に一切マッチしない (実測: 「筑前煮」→0件 / 「ちくぜんに」→ヒット)。
+>
+> **既知のドキュメント差分 (未解消)**: 本書 §2.2 バケット9 の表は v1.2 時点の設計であり、実装 (`expo/constants/identity/dishes.ts`) は統合が進んで乖離している — `nabe_heavy`/`nabe_light`→`nabe` に統合、汁物4種→`soup` に統合、`fries`→`fried_main` の Attribute 化、`grilled_fish_solo` は未実装、`chuka_okazu`/`fresh_roll` は実装のみで本表に無い。表の全面同期は別タスク。
 >
 > **v1.2 変更点 (2026-05-01)**
 > - 評価軸を **modal-set内のPFC収束** に再定義 (§1.4)。「bucket全体PFC収束」前提を改訂し、bucket内全Identity収束は要件としない
@@ -78,6 +100,54 @@
 - snack_drink (chocolate/cookie/ice/snack/sweet_bread が拮抗) → `quickTapDisabled: true` で長押し誘導
 - misc_dish (定食/弁当/汁/単品が混在) → 既に `quickTapDisabled: true`
 - chinese_noodles, sushi, pizza → 既に `quickTapDisabled: true`
+
+---
+
+### 1.5 Identity を増やす前の判定 (v1.4)
+
+「この料理が無い」と気づいたとき、**最初にやるべきは Identity の追加ではない**。
+v1.3 の `washoku_okazu` (煮魚・味噌煮・角煮を取り下げ) も v1.4 のサラダ派生対応も、
+いずれも**Identity を増やさずに解いた**事例である。上から順に判定する。
+
+| # | 問い | Yes なら | 根拠 |
+|---|---|---|---|
+| 1 | 検索で着地しないだけで、既存 Identity で**記録自体は**できるか | `searchTags` / 主辞辞書に語を足す。**Identity は作らない** | 「着地しないこと」と「Identity が無いこと」は別問題 (v1.3) |
+| 2 | 既存 Identity の **Attribute / Style** で表現できるか | その層に足す | §1.2 の入力階層。エビチリは `chuka_okazu` の **Attribute** であって Identity ではない |
+| 3 | 既存 base + **Add-on の組み合わせ**で表現できるか | Add-on を配線する | サラダ派生はすべてこれ (§5.4) |
+| 4 | 上記すべて No | はじめて Identity を新設する | |
+
+> **粒度の既定**: Identity = 料理の「**型**」(和風おかず / 中華おかず / 揚げもの単品)、
+> Attribute = 「**個別の料理**」(エビチリ / 肉じゃが)。
+> 個別料理を Identity に昇格させると、バケットが物置になる。
+
+#### 9ボタングリッドは変更不可の契約
+
+「9ボタン × 2タブ」(§1.1 ①) は**認知負荷の物理上限**として PRD §6.5.0 で固定されており、
+バケットを1つ足すだけで「短押し = modal Identity 代表値で即記録」の前提が崩れる。
+**ジャンルが足りないと感じても、バケットではなく Identity / Attribute の層に足す。**
+
+- 先行事例: アルコールは新バケットを作らず `snack_drink` 内のクラスタで解決した
+  (`US-food-db-design.md` §4.1)
+- 不変条件は `constants/identity/bucket-config.test.ts` の `9-button grid invariant`
+  が **各ロケール × 各タブ = 9** で検証する。v1.3 まではこの検証が存在せず、
+  人間の記憶だけが制約を守っていた
+- **このテストが落ちたら、テストを直すのではなく、まず設計を疑う**
+
+#### 分割の軸は「マクロが動くか」。名前の解像度ではない
+
+Identity / Attribute を分けるかは、**群間にマクロの段差があるか**で決める。
+
+| | 分ける | 分けない |
+|---|---|---|
+| 例 | `cheese` (F 6.0g/20g) と `cheese_low_fat` (F 1.4g/30g) | フェタ / チェダー / パルメザン |
+| 理由 | **脂質で約5倍。段差が群間にある** | いずれも「普通のチーズ」群の内側。分けても誤差は減らず、選択肢だけ増える |
+
+銘柄名や料理名の具体は、**選択肢ではなく `referenceDescription` に書く**。
+`cheese_low_fat` の「カッテージチーズなど低脂質チーズが基準」がその形で、
+「カッテージチーズ」での検索着地を保ちながら選択肢は2つに保たれる。
+
+> この原則は PRD §6.5.0「**DB件数で勝負しない**」をデータ設計側から言い直したもの。
+> 件数を増やす提案が出たら、まず「その追加でマクロの段差を説明できるか」を問う。
 
 ---
 
@@ -300,6 +370,7 @@
 | `fried_main` | 揚げもの単品 | 唐揚げ/とんかつ/メンチカツ/エビフライ/コロッケ/天ぷら盛/魚介揚げ | 200-500 (Attribute変動) |
 | `yakitori` | 焼鳥・串もの | 焼鳥盛り/串もの | 350/32/16/8 |
 | `meat_solo` | 肉単品 | ハンバーグ/ステーキ | 380-420/22-32/22-30/2-18 |
+| `washoku_okazu` ★v1.3 | 和風おかず | 肉じゃが/肉豆腐 | 280/12-18/12-17/12-30 (1人前) |
 | `nabe_heavy` | 鍋もの (こってり) | すき焼き/しゃぶしゃぶ/もつ鍋 | 650-750/32-35/30-40/40-42 |
 | `nabe_light` | 鍋もの (あっさり) | 寄せ鍋/おでん/水炊き | 250-550/15-35/8-18/25-55 |
 | `sashimi` | 刺身盛り | 刺身盛り合わせ/カルパッチョ | 250/30/8/4 |
@@ -347,6 +418,27 @@
 - ログDB側では `categoryKey` / `subTypeKey` が **移動先のID** で記録される (rice_dishのfried_riceとして等)
 - 起点Identityはメタとして `originIdentityKey` で保持 (検索・履歴学習に利用可)
 
+### 3.4 MacroDelta — 加算デルタ (v1.3)
+
+Attribute / Style の `factor` は **純粋な乗算**である (`identity-resolver.ts` の `applyFactor`)。
+
+```ts
+carbs: macro.carbs * (factor.carbs ?? 1)
+```
+
+したがって **ベースが 0 のマクロには、どんな factor を書いても加算できない**。生魚・生肉の `carbs: 0` に対し、煮つけ・味噌煮・照り焼き・蒲焼といった「**たれで糖が乗る調理法**」は factor では原理的に表現できない。
+
+このため Attribute / Style に任意の **`macroDelta?: Macro`** を持たせる。
+
+| 項目 | 規約 |
+|---|---|
+| 適用順 | `defaultMacro × attribute.factor × style.factor` **+ macroDelta** → `× amountFactor` |
+| 値の基準 | **Identity の既定量1単位あたり**で書く。量スケールの前に足すため、2切を選べば煮汁も自動で2倍になる |
+| 整合性 | `P×4 + F×9 + C×4 ≒ kcal` を満たすこと (デルタ単体で検算する) |
+| 既存への影響 | 未指定なら無効。**v1.2 以前のデータの計算結果は不変** |
+
+> **落とし穴 (実例)**: `factor: { carbs: 999 }` のような「巨大な係数で無理やり足す」書き方は **動かない** (`0 × 999 = 0`)。v1.2 の うなぎ蒲焼 がこれに該当し、`/* C handled separately */` というコメントだけがあって実処理は存在せず、炭水化物が欠落して記録されていた。加算したいときは必ず `macroDelta` を使う。
+
 ---
 
 ## 4. マルチエントランス検索辞書
@@ -363,6 +455,23 @@ primary Home以外のバケットからも検索ヒットさせる Identity 一�
 | `aburaage` | dairy_soy | "油揚げ", "厚揚げ" | (内部検索のみ) |
 
 > **マルチエントランスの実装範囲はあくまで「検索ヒット」のみ**。chipの2バケット重複露出はしない (UI混乱防止)。
+
+### 4.1 searchTag の表記規約 (v1.3)
+
+`utils/identity-normalize.ts` の `normalize()` が行うのは **NFKC + カタカナ→ひらがな + 長音符除去 + 小文字化のみ**で、**漢字→読みの変換はしない**。したがって:
+
+> **searchTag には、その語の「ひらがな形」と「漢字形」の両方を書く。**
+> ただし Identity / Attribute の `label` 自体に漢字形が含まれている場合、その漢字形はタグに重複させなくてよい (label も検索対象のため)。
+
+ひらがな形だけを書くと、**ユーザーが実際に打つ漢字クエリが一切マッチしない**。実測 (v1.3 修正前):
+
+| クエリ | 結果 | 原因 |
+|---|---|---|
+| `ちくぜんに` | ✅ `side_seasoned` | searchTag に一致 |
+| `筑前煮` | ❌ 0件 | タグがひらがなのみ・label 「煮物・和え物」にも含まれず |
+| `煮物` | ✅ `side_seasoned` | label に漢字形が含まれるため拾えた |
+
+この落とし穴は `constants/identity/head-nouns.ts` のコメントに既出だが、v1.2 までは `ingredients.ts` 側の searchTag に適用されていなかった。
 
 ---
 
@@ -430,6 +539,16 @@ primary Home以外のバケットからも検索ヒットさせる Identity 一�
 
 各 Identity に **頻出 Add-on を 4-6個** プリセットする (初期固定)。利用ログ蓄積後は頻度学習で並び替え。
 
+**枠が埋まっているときの入れ替え基準 (v1.4)**: default は 6 枠が上限のため、追加は実質
+**入れ替え**になる。優先順位は頻度ではなく「**記録誤差への寄与**」= 1単位で動く
+kcal / 脂質の大きさで決める。
+
+> 実例: `salad_raw` の default にチーズが無く、代わりに `crouton` (25kcal / F1.0g) が
+> 入っていた。サラダの記録が過小になる主因は**チーズと油**であり、`cheese`
+> (80kcal / F6.0g) を昇格させ crouton は allowed に落とした。
+> **base が 25kcal/100g のほぼ空の器である Identity ほど、default Add-on の選定が
+> そのまま記録精度になる** — 器ではなく中身がカロリーを持つため。
+
 例:
 
 ```
@@ -437,9 +556,9 @@ rice:
   defaultAddonIds: [natto, egg, kimchi, salmon_flake, mentaiko, nori_furikake]
   allowedAddonIds: [全許可Add-on...]
 
-salad_raw:
-  defaultAddonIds: [avocado, canned_lean_fish, nuts, dressing, salad_chicken]
-  allowedAddonIds: [...]
+salad_raw:                                                    # v1.4 で cheese を昇格
+  defaultAddonIds: [avocado, canned_lean_fish, nuts, dressing, salad_chicken, cheese]
+  allowedAddonIds: [..., crouton, cheese_low_fat, edamame_soy]
 
 bread:
   defaultAddonIds: [butter_cream, jam, honey, peanut_butter, cheese, avocado]

@@ -78,7 +78,12 @@ export function resolveLog(input: ResolveInput): ResolveResult {
     ? defaultKeyOf(recordIdentity.styles)
     : input.styleKey ?? defaultKeyOf(recordIdentity.styles);
 
-  // 3. Compute base macro: defaultMacro × attribute factor × style factor × amount factor
+  // 3. Compute base macro:
+  //      defaultMacro × attribute factor × style factor + macroDelta × amount factor
+  //
+  // macroDelta は factor の後・量スケールの前に足す。factor は純粋な乗算なので
+  // carbs: 0 のベース (生魚等) に煮汁・たれの糖質を足せないため (types/identity.ts
+  // の MacroDelta 参照)。量スケールの前に足すことで、2切なら煮汁も2倍になる。
   let macro: Macro = { ...recordIdentity.defaultMacro };
 
   const attributeOption = findOption(recordIdentity.attributes, effectiveAttributeKey);
@@ -89,6 +94,13 @@ export function resolveLog(input: ResolveInput): ResolveResult {
   const styleOption = findOption(recordIdentity.styles, effectiveStyleKey);
   if (styleOption?.factor) {
     macro = applyFactor(macro, styleOption.factor);
+  }
+
+  if (attributeOption?.macroDelta) {
+    macro = addMacro(macro, attributeOption.macroDelta);
+  }
+  if (styleOption?.macroDelta) {
+    macro = addMacro(macro, styleOption.macroDelta);
   }
 
   // Amount handling: callers are expected to size `amountValue` against the

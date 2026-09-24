@@ -117,11 +117,25 @@ export interface MigrationTarget {
  */
 export type MacroFactor = Partial<Record<keyof Macro, number>>;
 
+/**
+ * 加算デルタ。`factor` の後・量スケールの前に足される (identity-resolver.ts)。
+ *
+ * `factor` は純粋な乗算なので、**ベースが 0 のマクロには何も足せない**。
+ * 「たれで糖が乗る調理法」(煮つけ・味噌煮・照り焼き・蒲焼) は生魚の `carbs: 0`
+ * に糖質を足す必要があり、factor では原理的に表現できない。その用途の加算枠。
+ *
+ * 値は Identity の**既定量1単位あたり**で書く。量スケールの前に足されるため、
+ * 2切を選べば煮汁も自動で2倍になる。
+ */
+export type MacroDelta = Macro;
+
 export interface AttributeOption {
   key: string;
   label: string;
   isDefault?: boolean;
   factor?: MacroFactor;
+  /** 加算デルタ (factor の後・量スケールの前)。詳細は {@link MacroDelta}。 */
+  macroDelta?: MacroDelta;
   /**
    * If selected, force the entire log to be recorded under another bucket/Identity
    * (PFC崩壊遮断). Example: chicken_thigh + 皮なし → lean_protein/chicken_lean.
@@ -186,6 +200,8 @@ export interface StyleOption {
   label: string;
   isDefault?: boolean;
   factor?: MacroFactor;
+  /** 加算デルタ (factor の後・量スケールの前)。詳細は {@link MacroDelta}。 */
+  macroDelta?: MacroDelta;
   /**
    * Style-driven migration. Example: potato + 揚げ → misc_dish/fries.
    */

@@ -10,7 +10,7 @@
  */
 
 import { resolveLog } from './identity-resolver';
-import { getIdentity } from '@/constants/identity';
+import { getIdentity, ALL_IDENTITIES } from '@/constants/identity';
 
 describe('Identity registry sanity', () => {
   it('has the Identities required by these tests', () => {
@@ -51,6 +51,38 @@ describe('resolveLog — Pattern B (g amount with chips)', () => {
     expect(result.baseMacro.protein).toBeCloseTo(5.1, 1);
     expect(result.baseMacro.fat).toBeCloseTo(0.7, 1);
     expect(result.baseMacro.carbs).toBeCloseTo(74.7, 1);
+  });
+});
+
+describe('resolveLog — macroDelta (加算デルタ, IA spec v1.3 §3.4)', () => {
+  it('adds carbs to a zero-carb base (factor だけでは不可能なケース)', () => {
+    // 生魚は carbs: 0。乗算 factor では煮汁の糖質を足せないため macroDelta を使う。
+    const raw = resolveLog({ originIdentityId: 'fatty_fish', attributeKey: 'saba', styleKey: 'raw' });
+    expect(raw.baseMacro.carbs).toBe(0);
+
+    const simmered = resolveLog({ originIdentityId: 'fatty_fish', attributeKey: 'saba', styleKey: 'nizuke' });
+    expect(simmered.baseMacro.carbs).toBeCloseTo(8.5, 1);
+    expect(simmered.baseMacro.kcal).toBeCloseTo(raw.baseMacro.kcal + 45, 1);
+  });
+
+  it('scales the delta with amount (2切なら煮汁も2倍)', () => {
+    const one = resolveLog({ originIdentityId: 'fatty_fish', attributeKey: 'saba', styleKey: 'nizuke', amountValue: 80 });
+    const two = resolveLog({ originIdentityId: 'fatty_fish', attributeKey: 'saba', styleKey: 'nizuke', amountValue: 160 });
+
+    expect(two.baseMacro.kcal).toBeCloseTo(one.baseMacro.kcal * 2, 1);
+    expect(two.baseMacro.carbs).toBeCloseTo(one.baseMacro.carbs * 2, 1);
+  });
+
+  it('regression: うなぎ蒲焼 の炭水化物が欠落しない', () => {
+    // 旧実装は factor: { carbs: 999 } で「別処理する」とされていたが実処理が無く、
+    // 0 × 999 = 0 で C が丸ごと落ちていた。
+    const unagi = resolveLog({ originIdentityId: 'fatty_fish', attributeKey: 'unagi' });
+    expect(unagi.baseMacro.carbs).toBeGreaterThan(0);
+  });
+
+  it('leaves options without macroDelta unchanged (既存データの計算結果は不変)', () => {
+    const salmon = resolveLog({ originIdentityId: 'fatty_fish', attributeKey: 'salmon', styleKey: 'raw' });
+    expect(salmon.baseMacro).toEqual({ kcal: 200, protein: 20, fat: 12, carbs: 0 });
   });
 });
 
@@ -291,6 +323,33 @@ describe('resolveLog — percent unit (Identity migrated from serving)', () => {
     const def = getIdentity('protein_drink')!.defaultMacro;
     expect(result.baseMacro.kcal).toBeCloseTo(def.kcal * 0.3, 1);
     expect(result.baseMacro.protein).toBeCloseTo(def.protein * 0.3, 1);
+  });
+});
+
+describe('Identity master integrity — 無効な factor の検出 (IA spec v1.3 §3.4)', () => {
+  // factor は乗算なので、defaultMacro が 0 の軸に factor を書いても 0 のまま何も
+  // 起きない。過去に うなぎ蒲焼 と 厚揚げ が `carbs: 999` でこれを踏み、炭水化物が
+  // 欠落したまま記録されていた。加算したいときは macroDelta を使う。
+  it('ゼロのベース値に対して factor を掛けている箇所が無い', () => {
+    const keys = ['kcal', 'protein', 'fat', 'carbs'] as const;
+    const dead: string[] = [];
+
+    for (const id of ALL_IDENTITIES) {
+      const scan = (kind: string, opts: any[] | undefined) => {
+        for (const o of opts ?? []) {
+          for (const k of keys) {
+            const f = o.factor?.[k];
+            if (f !== undefined && f !== 1 && id.defaultMacro[k] === 0) {
+              dead.push(`${id.id}.${kind}=${o.key} の ${k}: base=0 × factor=${f} (macroDelta を使うこと)`);
+            }
+          }
+        }
+      };
+      scan('attr', id.attributes);
+      scan('style', id.styles);
+    }
+
+    expect(dead).toEqual([]);
   });
 });
 

@@ -355,7 +355,10 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
     amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '100', value: 100 }, { label: '150', value: 150 }, { label: '200', value: 200 }] },
     attributes: [
       { key: 'no_skin', label: '皮なし', isDefault: true },
-      { key: 'with_skin', label: '皮あり', factor: { kcal: 1.4, fat: 6.5 } },
+      // 八訂「若どり むね 皮つき 生」100g = 133kcal/P21.3/F5.9 基準 (皮なし 105/23/1.5 比)。
+      // 旧値 (kcal 1.4 / fat 6.5) は F が 9.75g になり八訂比で約65%過大で、
+      // PFC 逆算 180kcal に対し記録 147kcal と -23% 乖離していた。
+      { key: 'with_skin', label: '皮あり', factor: { kcal: 1.267, protein: 0.926, fat: 3.933 } },
     ],
     styles: [
       { key: 'raw', label: '生' },
@@ -406,8 +409,17 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
     ],
     styles: [
       { key: 'raw', label: '生・刺身', isDefault: true },
+      // 「焼き魚」の検索は fatty_fish の[焼き]に寄せる。こちらのラベルは「あっさり」
+      // で、検索結果に出ても何を選んだのか分からないため tag は付けない。
       { key: 'light', label: 'あっさり', factor: { kcal: 1.1 } },
       { key: 'oil', label: '油あり', factor: { kcal: 1.3, fat: 4 } },
+      // 白身魚の醤油煮つけ。煮汁の内訳は fatty_fish の同名 Style と同じ。
+      {
+        key: 'nizuke',
+        label: '煮つけ',
+        macroDelta: { kcal: 45, protein: 1.5, fat: 0.5, carbs: 8.5 },
+        searchTags: ['にざかな', '煮魚', 'につけ', '煮つけ'],
+      },
       {
         key: 'breaded_fried',
         label: 'フライに',
@@ -508,8 +520,13 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
     amount: { unit: 'percent', default: 100, chips: [{ label: 'P15 (200ml)', value: 100 }, { label: 'P20 (270ml)', value: 135 }, { label: 'P30 (400ml)', value: 200 }] },
     attributes: [
       { key: 'commercial_drink', label: 'ドリンク市販', isDefault: true },
-      { key: 'powder_water', label: 'パウダー水割り', factor: { kcal: 1.15, protein: 1.33, carbs: 0.3 } },
-      { key: 'powder_milk', label: 'パウダー牛乳割り', factor: { kcal: 2.4, protein: 1.7, carbs: 1.3 } },
+      // パウダー系は**脂質が 0 のまま記録されていた**。base (ザバス脂肪0) が F:0 の
+      // ため factor では加算できず、書きようが無かった (PFC逆算と +20〜36% 乖離)。
+      // macroDelta で実際の脂質を足す。
+      // 水割り = プロテインパウダー約27g (100kcal/P20/F1.5/C2) 相当。
+      { key: 'powder_water', label: 'パウダー水割り', factor: { kcal: 1.02, protein: 1.33, carbs: 0.2 }, macroDelta: { kcal: 0, protein: 0, fat: 1.5, carbs: 0 } },
+      // 牛乳割り = 上記パウダー + 牛乳200ml (122kcal/P6.6/F7.6/C9.6)。F 9.1g は両者の合計。
+      { key: 'powder_milk', label: 'パウダー牛乳割り', factor: { kcal: 2.3, protein: 1.773, carbs: 1.16 }, macroDelta: { kcal: 0, protein: 0, fat: 9.1, carbs: 0 } },
     ],
     searchableFrom: ['snack_drink', 'dairy_soy'],
     searchTags: ['プロテイン', 'シェイク', 'ドリンク', 'ホエイ', 'ソイ', 'ザバス'],
@@ -692,11 +709,27 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
       { key: 'buri', label: 'ぶり', factor: { kcal: 1.1, fat: 1.25 } },
       { key: 'sanma', label: 'さんま', factor: { kcal: 1.45, protein: 0.73, fat: 2.0 } },
       { key: 'iwashi', label: 'いわし', factor: { kcal: 0.81, fat: 0.83 } },
-      { key: 'unagi', label: 'うなぎ蒲焼', factor: { kcal: 1.45, fat: 1.75, carbs: 999 } /* C handled separately */ },
+      // 蒲焼のたれの糖質は macroDelta で足す。旧実装は `carbs: 999` を factor に
+      // 置いていたが、factor は乗算なのでベース carbs: 0 に対して 0×999=0 となり
+      // **C が丸ごと欠落していた** (コメントの "C handled separately" は実在せず、
+      // unagi はこの1箇所にしか出現しない)。C 2.5g は八訂 うなぎ蒲焼 3.1g/100g の
+      // 既定量80g換算。kcal/P/F の校正値そのものは既存のまま据え置く。
+      { key: 'unagi', label: 'うなぎ蒲焼', factor: { kcal: 1.45, fat: 1.75 }, macroDelta: { kcal: 0, protein: 0, fat: 0, carbs: 2.5 }, searchTags: ['うなぎ', 'かばやき', '蒲焼'] },
     ],
     styles: [
       { key: 'raw', label: '生・刺身', isDefault: true },
-      { key: 'grilled', label: '焼き', factor: { kcal: 1.1 } },
+      { key: 'grilled', label: '焼き', factor: { kcal: 1.1 }, searchTags: ['やきざかな', '焼き魚', 'やきさかな'] },
+      // 煮汁 (砂糖4g+みりん6g+醤油12g、味噌煮なら味噌8g) の平均値を加算。
+      // 生魚は carbs: 0 なので factor では表現できず macroDelta を使う。
+      // 内訳の整合: P1.5×4 + F0.5×9 + C8.5×4 = 44.5 ≒ kcal 45。
+      {
+        key: 'nizuke',
+        label: '煮つけ・味噌煮',
+        macroDelta: { kcal: 45, protein: 1.5, fat: 0.5, carbs: 8.5 },
+        // 「ぶりだいこん」(ひらがな) は入れない。クエリ「だいこん」が部分一致して
+        // 大根を脂魚に着地させてしまうため。漢字形なら「だいこん」とは一致しない。
+        searchTags: ['にざかな', '煮魚', 'につけ', '煮つけ', 'さばのみそに', 'さばの味噌煮', 'さばみそ', 'みそに', '味噌煮', 'ぶり大根'],
+      },
     ],
   },
   {
@@ -712,7 +745,10 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
     amount: { unit: 'piece', default: 1, chips: [{ label: '半缶', value: 0.5 }, { label: '1缶', value: 1 }] },
     attributes: [
       { key: 'water', label: '水煮', isDefault: true },
-      { key: 'miso', label: '味噌煮', factor: { kcal: 1.15, carbs: 7 } },
+      // さば味噌煮缶 150g ≒ 315kcal/P24/F19.5/C10 基準。旧値は味噌だれの C が
+      // 3.5g にしかならず (実際は約10g)、PFC 逆算と +16% 乖離していた。
+      // 水煮より魚の比率が下がるぶん P は減る。
+      { key: 'miso', label: '味噌煮', factor: { kcal: 1.125, protein: 0.857, fat: 1.219, carbs: 20 } },
       { key: 'oil', label: '油漬', factor: { kcal: 1.3, fat: 1.5 } },
     ],
     searchableFrom: ['lean_protein'],
@@ -839,11 +875,20 @@ const BUCKET_DAIRY_SOY: Identity[] = [
   {
     id: 'cheese_low_fat',
     label: 'チーズ (低脂)',
-    searchTags: ['かってーじちーず', 'ていしつちーず'],
+    searchTags: ['かってーじちーず', 'ていしつちーず', '低脂質チーズ'],
     primaryHome: { tab: 'ingredient', bucket: 'dairy_soy' },
     referenceDescription: 'カッテージチーズなど低脂質チーズが基準',
     defaultMacro: { kcal: 32, protein: 4, fat: 1.4, carbs: 1 },
     amount: { unit: 'g', default: 30, step: 10, chips: [{ label: '30', value: 30 }, { label: '50', value: 50 }, { label: '100', value: 100 }] },
+    // サラダのトッピングとして必要 (§5)。`cheese` との違いは脂質で、普通のチーズ
+    // 6g/20g に対しこちらは 1.4g/30g。この**群間の段差**こそが分類軸であり、
+    // フェタ/パルメザン等の銘柄差 (群内) は Attribute にも分けない (spec §1.5)。
+    asAddon: {
+      unit: 'g',
+      unitAmount: 30,
+      addedMacro: { kcal: 32, protein: 4, fat: 1.4, carbs: 1 },
+      defaultLabel: 'チーズ (低脂)',
+    },
   },
   {
     id: 'soy_milk',
@@ -889,7 +934,9 @@ const BUCKET_DAIRY_SOY: Identity[] = [
     amount: { unit: 'piece', default: 1, unitLabel: '枚' },
     attributes: [
       { key: 'thin', label: '油揚げ', isDefault: true },
-      { key: 'thick', label: '厚揚げ', factor: { kcal: 2.33, protein: 3, fat: 1.86, carbs: 999 /* C 1g */ } },
+      // C はベースが 0 なので factor では足せない (旧 `carbs: 999` は 0×999=0 で
+      // 無効だった / うなぎ蒲焼と同型)。macroDelta で 1g を加算する。
+      { key: 'thick', label: '厚揚げ', factor: { kcal: 2.33, protein: 3, fat: 1.86 }, macroDelta: { kcal: 0, protein: 0, fat: 0, carbs: 1 } },
       { key: 'ganmodoki', label: 'がんもどき', factor: { kcal: 1.6, protein: 2.0, fat: 1.5 } },
     ],
     searchTags: ['油揚げ', '厚揚げ', 'がんもどき'],
@@ -927,6 +974,16 @@ const BUCKET_DAIRY_SOY: Identity[] = [
       { key: 'edamame', label: '枝豆', isDefault: true },
       { key: 'soybeans_boiled', label: '大豆水煮', factor: { kcal: 1.08, protein: 1.17, fat: 1.5, carbs: 0.75 } },
     ],
+    // サラダのトッピングとして必要 (§5)。ひよこ豆・キドニー豆は銘柄差が
+    // 群内に収まるため Attribute を分けず、`soybeans_boiled` (大豆水煮) で
+    // 代表させる — 豆サラダで動くのは主に **C** であり、その段差は豆の種類
+    // ではなく「豆が入っているか否か」で決まる (spec §1.5)。
+    asAddon: {
+      unit: 'g',
+      unitAmount: 50,
+      addedMacro: { kcal: 65, protein: 6, fat: 3, carbs: 4 },
+      defaultLabel: '豆 (大豆・枝豆)',
+    },
   },
 ];
 
@@ -938,17 +995,30 @@ const BUCKET_VEGGIES: Identity[] = [
   {
     id: 'salad_raw',
     label: 'サラダ・生野菜',
-    searchTags: ['なまやさい', 'シーザーサラダ', 'グリーンサラダ'],
+    // サラダの「派生」は Identity ではなく **base + Add-on の組み合わせ**で表現する
+    // (spec §1.5)。本 Identity は 25kcal/100g のほぼ空の器で、カロリーは全て Add-on
+    // 側にあるため、派生名はここへ着地させて中身を Add-on で組ませるのが正しい。
+    //
+    // 一般形 (「ニース風サラダ」等) は `head-nouns.ts` の主辞「サラダ」が層2で拾うので、
+    // **ここへの追加は whitelist ではなく「層2→層1の昇格」**。頻出の派生名だけを
+    // 昇格させ、網羅は主辞辞書に任せる。
+    searchTags: ['なまやさい', 'シーザーサラダ', 'グリーンサラダ', 'ギリシャサラダ', 'ギリシャ風サラダ', 'コブサラダ'],
     primaryHome: { tab: 'ingredient', bucket: 'veggies' },
     defaultMacro: { kcal: 25, protein: 1.4, fat: 0.3, carbs: 5 },
     nutritionNotes: [
       { text: 'にんじんなど色の濃い野菜のβ-カロテンは脂溶性で、油と一緒だと吸収されやすくなります。ドレッシングをかけるのは理にかなっています。', source: SRC_SEIBUN },
     ],
     amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '小', value: 50 }, { label: '普通', value: 100 }, { label: '大', value: 150 }] },
-    defaultAddonIds: ['avocado', 'canned_lean_fish', 'nuts', 'dressing', 'salad_chicken', 'crouton'],
+    // default は6件が上限 (`Identity.defaultAddonIds` の "4–6 typical"、実測でも最大6)。
+    // 枠が埋まっていたため、**誤差への寄与が最小の `crouton` (25kcal/F1.0) を外し、
+    // 脂質の主役である `cheese` (80kcal/F6.0) を昇格**させた。サラダの記録が過小に
+    // なる主因はチーズと油であり、それが default に無いのが v1.3 までの実害だった。
+    // crouton は allowed に残るため選択不能になるわけではない。
+    defaultAddonIds: ['avocado', 'canned_lean_fish', 'nuts', 'dressing', 'salad_chicken', 'cheese'],
     allowedAddonIds: [
       'avocado', 'canned_lean_fish', 'nuts', 'dressing', 'salad_chicken',
-      'crouton', 'corn_top', 'cheese', 'bacon_sausage', 'shirasu', 'mayo', 'oil',
+      'crouton', 'corn_top', 'cheese', 'cheese_low_fat', 'edamame_soy',
+      'bacon_sausage', 'shirasu', 'mayo', 'oil',
     ],
   },
   {
@@ -966,7 +1036,11 @@ const BUCKET_VEGGIES: Identity[] = [
     amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '小', value: 50 }, { label: '普通', value: 100 }, { label: '大', value: 150 }] },
     styles: [
       { key: 'steamed', label: '蒸し・茹で', isDefault: true },
-      { key: 'stir_fry', label: '炒め', factor: { kcal: 1.7, fat: 10 } },
+      // 炒め油は「野菜の脂質に比例する」ものではなく**一定量加わる**ので macroDelta。
+      // 小さじ1 (4g) = 36kcal 基準。旧実装は fat×10 の乗算で、ベース脂質が違う
+      // Identity 間で油の量がズレ (一般野菜3.0g / 高タンパク野菜4.0g)、さらに
+      // kcal は×1.7 しか増えないため PFC 逆算と最大 -76% 乖離していた。
+      { key: 'stir_fry', label: '炒め', macroDelta: { kcal: 36, protein: 0, fat: 4, carbs: 0 } },
       {
         key: 'breaded_fried',
         label: '天ぷらに',
@@ -1004,7 +1078,11 @@ const BUCKET_VEGGIES: Identity[] = [
     ],
     styles: [
       { key: 'steamed', label: '蒸し・茹で', isDefault: true },
-      { key: 'stir_fry', label: '炒め', factor: { kcal: 1.7, fat: 10 } },
+      // 炒め油は「野菜の脂質に比例する」ものではなく**一定量加わる**ので macroDelta。
+      // 小さじ1 (4g) = 36kcal 基準。旧実装は fat×10 の乗算で、ベース脂質が違う
+      // Identity 間で油の量がズレ (一般野菜3.0g / 高タンパク野菜4.0g)、さらに
+      // kcal は×1.7 しか増えないため PFC 逆算と最大 -76% 乖離していた。
+      { key: 'stir_fry', label: '炒め', macroDelta: { kcal: 36, protein: 0, fat: 4, carbs: 0 } },
     ],
     defaultAddonIds: ['mayo'],
     allowedAddonIds: ['mayo', 'dressing', 'cheese', 'oil'],
@@ -1037,7 +1115,14 @@ const BUCKET_VEGGIES: Identity[] = [
   {
     id: 'side_seasoned',
     label: '煮物・和え物',
-    searchTags: ['にもの', 'あえもの', 'きんぴらごぼう', 'ひじきに', 'ちくぜんに'],
+    // ひらがな形だけだと漢字クエリが一切当たらない (normalize は漢字→読み変換を
+    // しない)。IA spec §4.1 の規約に従い漢字形を併記する。「煮物」「和え物」は
+    // label に含まれるため重複させない。
+    searchTags: [
+      'にもの', 'あえもの', 'きんぴらごぼう', 'きんぴら', 'ひじきに', 'ひじき煮',
+      'ちくぜんに', '筑前煮', 'きりぼしだいこん', '切り干し大根',
+      'かぼちゃのにもの', 'かぼちゃの煮物',
+    ],
     primaryHome: { tab: 'ingredient', bucket: 'veggies' },
     defaultMacro: { kcal: 55, protein: 1.7, fat: 2.5, carbs: 6.5 },
     amount: { unit: 'g', default: 50, step: 10, chips: [{ label: '小鉢', value: 50 }, { label: '1皿', value: 100 }] },
@@ -1463,6 +1548,67 @@ const BUCKET_SNACK_DRINK: Identity[] = [
     referenceDescription: 'フラペチーノ・タピオカミルクティーなど、生クリームやトッピングでこってり甘い飲み物',
     amount: { unit: 'ml', default: 350, step: 10, chips: [{ label: 'S/Short', value: 240 }, { label: 'M/Tall', value: 350 }, { label: 'L/Grande', value: 470 }] },
     searchTags: ['フラペチーノ', 'タピオカ', 'ミルクティー', 'シェイク', 'スタバ'],
+  },
+  {
+    id: 'alcohol',
+    label: 'お酒',
+    primaryHome: { tab: 'ingredient', bucket: 'snack_drink' },
+    // JP にアルコールの Identity が1つも無く、ビール等が記録できなかった
+    // (US には `us_beer` があり、ロケール間で非対称だった)。
+    // IA spec §1.5 の判定を上から適用した結果:
+    //   1. 既存 Identity で記録できるか → No。`sweet_drink` は同じ 140kcal/350ml でも
+    //      C 35g (ビールは 10.9g)。糖質が3倍ずれるのでジュースでは代用できない
+    //   2. Attribute/Style で表現できるか → No。「ジュース」と「お酒」は別の型
+    //   3. Add-on か → No
+    //   4. → Identity 新設。バケットは増やさず snack_drink 内に置く
+    //      (§1.5「アルコールは新バケットを作らず snack_drink 内クラスタで解決」)
+    //
+    // ⚠️ アルコールの熱量はエタノール (7kcal/g) 由来で、**PFC から逆算できない**。
+    // 4P+9F+4C ≠ kcal になるのは仕様であり、kcal を独立したアンカーとする
+    // (US-food-db-design.md §4.1 / `us_beer` と同じ扱い)。
+    quickTapDisabled: true, // Attribute 間で kcal 82-193 と幅がある
+    // 基準 = ビール 350ml (八訂 淡色 39kcal/100ml)。
+    defaultMacro: { kcal: 140, protein: 1.1, fat: 0, carbs: 10.9 },
+    referenceDescription: 'ビール350ml(缶1本)が基準。お酒の熱量は糖質・脂質からは計算できない',
+    amount: {
+      unit: 'ml',
+      default: 350,
+      step: 10,
+      chips: [{ label: '中瓶/缶(350)', value: 350 }, { label: 'ジョッキ(500)', value: 500 }],
+    },
+    attributes: [
+      { key: 'beer', label: 'ビール', isDefault: true, searchTags: ['びーる', '発泡酒', 'はっぽうしゅ', '生ビール'] },
+      // 以下は酒種ごとに1杯の量が違うため、量チップを Attribute 側で上書きする。
+      {
+        key: 'sake',
+        label: '日本酒',
+        searchTags: ['にほんしゅ', '清酒', 'せいしゅ', '冷酒', '熱燗'],
+        factor: { kcal: 1.379, protein: 0.655, carbs: 0.809 }, // 1合180ml ≒ 193kcal/P0.7/C8.8
+        amount: { unit: 'ml', default: 180, step: 10, chips: [{ label: '1合(180)', value: 180 }, { label: '半合(90)', value: 90 }] },
+      },
+      {
+        key: 'wine',
+        label: 'ワイン',
+        searchTags: ['わいん', '赤ワイン', '白ワイン'],
+        factor: { kcal: 0.586, protein: 0.218, carbs: 0.165 }, // グラス120ml ≒ 82kcal/C1.8
+        amount: { unit: 'ml', default: 120, step: 10, chips: [{ label: 'グラス(120)', value: 120 }, { label: 'ボトル1/2', value: 375 }] },
+      },
+      {
+        key: 'spirits',
+        label: '焼酎・ウイスキー',
+        searchTags: ['しょうちゅう', 'ういすきー', '焼酎', 'ウイスキー', '泡盛', 'ジン', 'ウォッカ'],
+        // 蒸留酒は糖質ゼロ。焼酎(25度)60ml ≒ 86kcal。ウイスキーはシングル30ml相当。
+        factor: { kcal: 0.614, protein: 0, carbs: 0 },
+        amount: { unit: 'ml', default: 60, step: 10, chips: [{ label: '1杯(60)', value: 60 }, { label: 'ダブル(120)', value: 120 }] },
+      },
+      {
+        key: 'chuhai',
+        label: 'チューハイ・ハイボール',
+        searchTags: ['ちゅーはい', 'はいぼーる', '酎ハイ', 'サワー', 'レモンサワー'],
+        factor: { kcal: 1.279, protein: 0, carbs: 1.009 }, // 350ml ≒ 179kcal/C11
+      },
+    ],
+    searchTags: ['おさけ', 'お酒', 'さけ', '酒', 'アルコール', 'あるこーる', '晩酌', 'ばんしゃく'],
   },
 ];
 

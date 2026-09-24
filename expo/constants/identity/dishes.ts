@@ -867,6 +867,31 @@ const BUCKET_MISC_DISH: Identity[] = [
     ],
   },
   {
+    id: 'washoku_okazu',
+    label: '和風おかず',
+    // label が漢字なのでタグ側はひらがな形 (IA spec §4.1)。
+    searchTags: ['わふうおかず', 'にもの'],
+    primaryHome: { tab: 'dish', bucket: 'misc_dish' },
+    // 「1素材 + 調理法」に分解できない和風の複合煮物だけを置く (spec v1.3)。
+    // 煮魚・さばの味噌煮・ぶり大根・焼き魚は fatty_fish / white_fish の Attribute +
+    // 「煮つけ」「焼き」Style で表現できるため、ここには**重複させない**
+    // (同じ食べ物が2タブで別マクロになるのを避ける / spec §1.3 primary Home 原則)。
+    // 副菜スケール (かぼちゃ煮・切り干し・ひじき・きんぴら・筑前煮) も 50g 小鉢の
+    // veggies/side_seasoned 側に残す。
+    quickTapDisabled: true,
+    // 基準は肉じゃが 1人前≒250g (じゃがいも120g + 豚こま50g + 玉ねぎ/にんじん + 煮汁)。
+    // 日本食品標準成分表 八訂の素材値からの積み上げ。
+    // 内訳の整合: P12×4 + F12×9 + C30×4 = 276 ≒ kcal 280。
+    defaultMacro: { kcal: 280, protein: 12, fat: 12, carbs: 30 },
+    referenceDescription: '主菜のみ (ご飯なし)。100% = 1人前',
+    amount: { unit: 'percent', default: 100, chips: [{ label: '軽め', value: 70 }, { label: '1人前', value: 100 }, { label: 'しっかり', value: 150 }] },
+    attributes: [
+      { key: 'nikujaga', label: '肉じゃが', isDefault: true, searchTags: ['にくじゃが'] },
+      // 芋が豆腐に置き換わる分 C が下がり P/F が上がる。
+      { key: 'niku_dofu', label: '肉豆腐', searchTags: ['にくどうふ'], factor: { kcal: 1.0, protein: 1.5, fat: 1.417, carbs: 0.4 } }, // ≒280kcal/P18/F17/C12
+    ],
+  },
+  {
     id: 'tenshin',
     label: '中華点心',
     searchTags: ['ちゅうかてんしん', 'ぎょうざ'],
