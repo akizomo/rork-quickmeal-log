@@ -165,7 +165,7 @@ function AnimatedGestureDemoIllustration() {
 
   const staple = useMemo(() => {
     const b = buildRegistry(foodRegion, uiLanguage).buckets.find((x) => x.key === 'staple');
-    return { emoji: b?.emoji ?? '🍚', label: b?.label ?? 'ごはんパン麺' };
+    return { emoji: b?.emoji ?? '🍚', label: b?.label ?? 'ごはんパン麺' }; // i18n-ignore: 'staple' bucket always exists in both registries; fallback is an unreachable guard
   }, [foodRegion, uiLanguage]);
 
   // ── Tap row ──

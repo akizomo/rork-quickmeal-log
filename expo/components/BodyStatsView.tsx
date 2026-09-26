@@ -250,7 +250,7 @@ function TrendChart({
       <View
         style={[styles.chartWrap, { width, height: CHART_HEIGHT }]}
         accessible
-        accessibilityLabel={`${tr('bodyStats.chartA11yLabel', { title })}${locale === 'en-US' ? '. ' : '。'}${emptyMessage}`}
+        accessibilityLabel={`${tr('bodyStats.chartA11yLabel', { title })}${locale === 'en-US' ? '. ' : '。'}${emptyMessage}`} // i18n-ignore: locale-conditional punctuation
       >
         <Text style={[styles.chartEmpty, { color: t.colors.content.secondary }]}>{emptyMessage}</Text>
       </View>
@@ -318,13 +318,13 @@ function TrendChart({
       const days =
         locale === 'en-US'
           ? ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-          : ['日', '月', '火', '水', '木', '金', '土'];
+          : ['日', '月', '火', '水', '木', '金', '土']; // i18n-ignore: locale-conditional day names
       return days[d.getDay()];
     }
     if (period === 'year') {
       return locale === 'en-US'
         ? ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][d.getMonth()]
-        : `${d.getMonth() + 1}月`;
+        : `${d.getMonth() + 1}月`; // i18n-ignore: locale-conditional month label
     }
     // month (day grain): M/D 表記
     return fmtMD(ts);
@@ -361,7 +361,7 @@ function TrendChart({
   const deltaValue = lastPoint.value - firstPoint.value;
   const deltaText =
     points.length < 2
-      ? ''
+      ? '' // i18n-ignore: next line has locale-conditional punctuation
       : `${locale === 'en-US' ? ', ' : '、'}${
           Math.abs(deltaValue) < Math.pow(10, -fractionDigits) / 2
             ? tr('bodyStats.noChange')

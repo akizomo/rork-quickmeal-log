@@ -29,6 +29,13 @@ export const BUCKET_REVEAL_HTML = `<!DOCTYPE html>
 <canvas id="c"></canvas>
 <script>
 // ── Bucket data (ids only — foods array not needed, drawNodes is disabled) ──
+// i18n-ignore-start: 既知のロケール未対応。このアニメーションは app/intro.tsx から
+// ロケール分岐なしで常時再生されるため、en-US ユーザーにもここの日本語パーティクルが
+// そのまま表示される (装飾アニメーションであり個々の語の可読性は主目的ではないが、
+// 未対応は事実)。ラベルは INGREDIENT_BUCKETS と同期した手打ちの複製データであり、
+// constants/identity 側の登録内容と乖離しうる。恒久対応は buildRegistry(locale) から
+// 動的生成する関数に置き換えること (bucketKey ごとの label/emoji + 内包 Identity の
+// 英語表記が必要。後者は現状 US 版 Identity セットにしか存在しない)。
 var HB_BUCKETS = [
  {label:'ごはんパン麺',emoji:'\\u{1F35A}',c:'#B57E18',
   ids:['ごはん','おにぎり','おかゆ','食パン','パン(リッチ)','オートミール','シリアル','餅・団子','じゃがいも','さつまいも','うどん・蕎麦','パスタ麺','中華麺']},
@@ -49,6 +56,7 @@ var HB_BUCKETS = [
  {label:'おやつ甘飲',emoji:'\\u{1F369}',c:'#8B3E14',
   ids:['チョコ','和菓子・米菓','ケーキ・洋菓子','プリン・ゼリー','アイス','クッキー・焼菓子','スナック菓子','菓子パン','甘飲料']},
 ];
+// i18n-ignore-end
 window.HB_BUCKETS = HB_BUCKETS;
 </script>
 <script>
