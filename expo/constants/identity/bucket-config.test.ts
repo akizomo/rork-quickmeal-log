@@ -103,4 +103,16 @@ describe('Add-on 参照の健全性', () => {
     const allowed = IDENTITY_REGISTRY.byId['salad_raw']?.allowedAddonIds ?? [];
     expect(allowed).toEqual(expect.arrayContaining(['cheese_low_fat', 'edamame_soy']));
   });
+
+  // v1.4: veg_cooked/veg_dense も salad_raw と同型 (base が低kcalの器、dressing/
+  // cheese が allowed に埋もれていた) だったため同じ修正を適用。
+  it.each(['veg_cooked', 'veg_dense'])('%s の default Add-on に dressing が含まれる', (id) => {
+    expect(IDENTITY_REGISTRY.byId[id]?.defaultAddonIds).toContain('dressing');
+  });
+
+  it.each(['veg_cooked', 'veg_dense'])('%s の default / allowed Add-on がすべて解決できる', (id) => {
+    const identity = IDENTITY_REGISTRY.byId[id];
+    const ids = [...(identity?.defaultAddonIds ?? []), ...(identity?.allowedAddonIds ?? [])];
+    expect(ids.filter((refId) => !resolveAddonRef(refId))).toEqual([]);
+  });
 });

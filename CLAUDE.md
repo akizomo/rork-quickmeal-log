@@ -9,6 +9,7 @@
   - **機能を実装・出荷したら、同じ作業の一部として §3.0 と該当レーンを更新する。** 「後でまとめて」にしない
   - **当初案と違う実装になったら差分を書く。** 黙って置き換えると設計判断の履歴が失われる
   - 状態は3層で書く: **「コード有」≠「到達可能」≠「実ユーザー検証済」**。grep で分かるのは1層目のみ
+- **[docs/IA-identity-spec.md](./docs/IA-identity-spec.md)** — Identity辞書の設計規約 (9ボタン契約・Identity/Attribute/Add-onの粒度判断・検索着地の規約)。**Identity/Attribute/Add-onを追加・変更する際は必ず §1.5「Identityを増やす前の判定」を参照すること**。バケット追加やAttributeの新設を検討する前に、まずこの判定順(語彙→Attribute/Style→Add-on→最後にIdentity)を通す
 - **[PLAN.md](./PLAN.md)** — 実装仕様の詳細メモ (計算式・選択肢・UI構成の意思決定根拠)
 - **[docs/BUILD.md](./docs/BUILD.md)** — EAS Build 手順 (GitHub Actions / ローカル CLI)・トラブルシュート・リリースノート規約。**ビルドを作成する際は必ずこのドキュメントに従う。**
 - **[docs/PLAY_STORE.md](./docs/PLAY_STORE.md)** — Play Console 提出時の文言・カテゴリ・連絡先テンプレート

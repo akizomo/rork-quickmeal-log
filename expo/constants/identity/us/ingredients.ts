@@ -214,7 +214,11 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
     },
     attributes: [
       { key: 'grilled', label: 'Grilled / Baked', isDefault: true },
-      { key: 'fried', label: 'Breaded & Fried', factor: { kcal: 1.7, protein: 0.8, fat: 5.0, carbs: 15 } },
+      // Breading carbs must be *added*, not multiplied: the base is carbs: 0, so the
+      // old `carbs: 15` factor evaluated to 0 × 15 = 0 and **the breading carbs were
+      // silently dropped**. Same bug class as JP うなぎ蒲焼 / 厚揚げ (IA spec §3.4).
+      // 15g per the 100g default serving.
+      { key: 'fried', label: 'Breaded & Fried', factor: { kcal: 1.7, protein: 0.8, fat: 5.0 }, macroDelta: { kcal: 0, protein: 0, fat: 0, carbs: 15 } },
     ],
     asAddon: { unit: 'g', unitAmount: 85, addedMacro: { kcal: 140, protein: 26, fat: 3, carbs: 0 }, defaultLabel: 'Grilled Chicken' },
     searchTags: ['chicken breast', 'grilled chicken', 'chicken', 'lean chicken'],
@@ -258,7 +262,9 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
     attributes: [
       { key: 'cod', label: 'Cod', isDefault: true },
       { key: 'tilapia', label: 'Tilapia', factor: { kcal: 1.0, protein: 1.0 } },
-      { key: 'fried', label: 'Fried', factor: { kcal: 2.0, fat: 8.0, carbs: 10 } },
+      // Same zero-base issue as us_chicken_breast.fried above: `carbs: 10` on a
+      // carbs: 0 base evaluated to 0 and lost the breading. 10g per 100g serving.
+      { key: 'fried', label: 'Fried', factor: { kcal: 2.0, fat: 8.0 }, macroDelta: { kcal: 0, protein: 0, fat: 0, carbs: 10 } },
     ],
     searchTags: ['white fish', 'cod', 'tilapia', 'fish fillet', 'baked fish'],
   },

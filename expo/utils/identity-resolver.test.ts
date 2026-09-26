@@ -10,7 +10,8 @@
  */
 
 import { resolveLog } from './identity-resolver';
-import { getIdentity, ALL_IDENTITIES } from '@/constants/identity';
+import { getIdentity, ALL_IDENTITIES, ALL_US_IDENTITIES } from '@/constants/identity';
+import type { AttributeOption, Identity, StyleOption } from '@/types/identity';
 
 describe('Identity registry sanity', () => {
   it('has the Identities required by these tests', () => {
@@ -326,30 +327,106 @@ describe('resolveLog — percent unit (Identity migrated from serving)', () => {
   });
 });
 
-describe('Identity master integrity — 無効な factor の検出 (IA spec v1.3 §3.4)', () => {
+describe('Identity master integrity — マクロ定義のバグクラス検出 (IA spec §3.4)', () => {
+  // 検査対象は **JP・US の両ロケール × 食材・一皿料理の両タブ**。
+  // 2026-09-23 の初版は JP 食材タブしか見ておらず、US の衣の糖質欠落 (2件) と
+  // 一皿料理タブの乖離 (6件) を素通りさせていた。
+  const ALL_LOCALES: [string, Identity[]][] = [
+    ['JP', ALL_IDENTITIES],
+    ['US', ALL_US_IDENTITIES],
+  ];
+
+  const keyOf = (id: Identity, a?: AttributeOption, s?: StyleOption) =>
+    `${id.id}${a ? '/' + a.key : ''}${s ? '[' + s.key + ']' : ''}`;
+
   // factor は乗算なので、defaultMacro が 0 の軸に factor を書いても 0 のまま何も
-  // 起きない。過去に うなぎ蒲焼 と 厚揚げ が `carbs: 999` でこれを踏み、炭水化物が
-  // 欠落したまま記録されていた。加算したいときは macroDelta を使う。
+  // 起きない。過去に うなぎ蒲焼・厚揚げ・US の Breaded & Fried 2件がこれを踏み、
+  // **炭水化物が欠落したまま記録されていた**。加算したいときは macroDelta を使う。
   it('ゼロのベース値に対して factor を掛けている箇所が無い', () => {
     const keys = ['kcal', 'protein', 'fat', 'carbs'] as const;
     const dead: string[] = [];
 
-    for (const id of ALL_IDENTITIES) {
-      const scan = (kind: string, opts: any[] | undefined) => {
-        for (const o of opts ?? []) {
-          for (const k of keys) {
-            const f = o.factor?.[k];
-            if (f !== undefined && f !== 1 && id.defaultMacro[k] === 0) {
-              dead.push(`${id.id}.${kind}=${o.key} の ${k}: base=0 × factor=${f} (macroDelta を使うこと)`);
+    for (const [loc, set] of ALL_LOCALES) {
+      for (const id of set) {
+        const scan = (kind: string, opts: (AttributeOption | StyleOption)[] | undefined) => {
+          for (const o of opts ?? []) {
+            for (const k of keys) {
+              const f = o.factor?.[k];
+              // factor: 0 はゼロベースでも結果が 0 で正しい (例: ダイエットソーダ)。
+              // 「足したかったのに掛けてしまった」のは 0 でも 1 でもない係数。
+              if (f !== undefined && f !== 1 && f !== 0 && id.defaultMacro[k] === 0) {
+                dead.push(`[${loc}] ${id.id}.${kind}=${o.key} の ${k}: base=0 × factor=${f} (macroDelta を使うこと)`);
+              }
             }
           }
-        }
-      };
-      scan('attr', id.attributes);
-      scan('style', id.styles);
+        };
+        scan('attr', id.attributes);
+        scan('style', id.styles);
+      }
     }
 
     expect(dead).toEqual([]);
+  });
+
+  // 「加算されるもの (油・皮・牛乳・たれ・衣) を乗算で書く」と、片方の軸だけが
+  // 増えて kcal と PFC が食い違う。2026-09-23 の監査で JP 食材タブ7件を是正した。
+  describe('記録される kcal と PFC からの逆算が乖離していない', () => {
+    // アルコールの熱量はエタノール (7kcal/g) 由来で PFC から逆算できない。
+    // kcal を独立アンカーとするのは**仕様**であり、例外ではない
+    // (IA spec v1.5 / US-food-db-design.md §4.1)。
+    const KCAL_NOT_FROM_PFC = ['alcohol', 'us_beer', 'us_wine', 'us_cocktail', 'us_hard_seltzer'];
+
+    // 監査時点で既に乖離していた箇所。**是正ではなく凍結**しているだけで、
+    // 一皿料理の代表値には意図的な丸めが混ざっている可能性があり1件ずつ判断が要る。
+    // 新しい乖離が増えたらこのテストが落ちる (ラチェット)。
+    // 追跡: 「PFC↔kcal 乖離の残り18件を精査」タスク
+    const KNOWN_DEVIATIONS = new Set([
+      // JP 一皿料理タブ
+      'ramen_light/shio[no_soup]', 'udon/kitsune', 'maki/maki_thick',
+      'fried_main/tonkatsu_hire', 'sashimi/mixed', 'sashimi/maguro_lean',
+      // US 食材タブ
+      'us_potato/mashed', 'us_potato/fries', 'us_cereal/granola', 'us_shrimp/fried',
+      'us_canned_tuna/in_oil', 'us_ground_beef/extra_lean', 'us_bacon_strip/turkey_bacon',
+      'us_salmon/smoked', 'us_corn/cooked', 'us_nuts_mixed/cashews',
+      'us_cookies/oreo', 'us_smoothie/green',
+    ]);
+
+    /** 乖離している (identity, attribute, style) の key を全て返す。 */
+    function collectDeviations(): Set<string> {
+      const found = new Set<string>();
+      for (const [, set] of ALL_LOCALES) {
+        for (const id of set) {
+          if (KCAL_NOT_FROM_PFC.includes(id.id)) continue;
+          const attrs: (AttributeOption | undefined)[] = id.attributes?.length ? id.attributes : [undefined];
+          const styles: (StyleOption | undefined)[] = id.styles?.length ? id.styles : [undefined];
+
+          for (const a of attrs) {
+            for (const s of styles) {
+              // migration 付きは別 Identity へ飛ぶので、そちら側で検査される
+              if (a?.migration || s?.migration) continue;
+              const m = resolveLog({ originIdentityId: id.id, attributeKey: a?.key, styleKey: s?.key }).baseMacro;
+              if (m.kcal < 30) continue; // 極小項目は絶対差が出ないので対象外
+
+              const calc = m.protein * 4 + m.fat * 9 + m.carbs * 4;
+              const dev = (m.kcal - calc) / m.kcal;
+              if (Math.abs(dev) >= 0.15 && Math.abs(m.kcal - calc) >= 20) found.add(keyOf(id, a, s));
+            }
+          }
+        }
+      }
+      return found;
+    }
+
+    it('新しい乖離が増えていない', () => {
+      const added = [...collectDeviations()].filter((k) => !KNOWN_DEVIATIONS.has(k));
+      expect(added).toEqual([]);
+    });
+
+    it('KNOWN_DEVIATIONS に、もう乖離していない項目が残っていない (リストの腐敗防止)', () => {
+      const current = collectDeviations();
+      const stale = [...KNOWN_DEVIATIONS].filter((k) => !current.has(k));
+      expect(stale).toEqual([]);
+    });
   });
 });
 

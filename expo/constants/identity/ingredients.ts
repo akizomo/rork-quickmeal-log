@@ -82,6 +82,7 @@ const BUCKET_STAPLE: Identity[] = [
       'natto', 'egg', 'kimchi_top', 'salmon_flake', 'mentaiko', 'nori_furikake',
       'butter_cream', 'shirasu', 'katsuobushi',
     ], // cheese / rayu は白米には不自然なので除外
+    searchTags: ['ごはん', 'ご飯', '白米', 'はくまい', '玄米', 'げんまい', '米', 'こめ', '赤飯', 'せきはん'],
   },
   {
     id: 'onigiri',
@@ -234,8 +235,13 @@ const BUCKET_STAPLE: Identity[] = [
   {
     id: 'potato',
     label: 'じゃがいも・里芋',
-    searchTags: ['さといも', 'ポテト'],
+    // かぼちゃもここに着地させる。温野菜 (35kcal/C7) とは kcal 2.2倍・C 3倍の段差が
+    // あるのに対し、かぼちゃ (78/1.9/0.3/20.6) は本 Identity (76/1.9/0.1/17) とほぼ
+    // 同値で、同じ「でんぷん質の野菜」群に入る。選択肢は増やさず具体名は
+    // referenceDescription に置く (IA spec §1.5「分割の軸はマクロの段差」)。
+    searchTags: ['さといも', '里芋', 'ポテト', 'じゃがいも', 'ジャガイモ', '馬鈴薯', 'ながいも', '長芋', 'やまいも', '山芋', 'かぼちゃ', '南瓜'],
     primaryHome: { tab: 'ingredient', bucket: 'staple' },
+    referenceDescription: 'じゃがいも・里芋・長芋・かぼちゃなど、でんぷん質の多い野菜',
     defaultMacro: { kcal: 76, protein: 1.9, fat: 0.1, carbs: 17 },
     nutritionNotes: [
       { text: 'じゃがいもや里芋に含まれるビタミンCは、皮膚や粘膜の健康維持を助けるとともに、抗酸化作用を持つ栄養素です。', source: SRC_CAA },
@@ -281,6 +287,7 @@ const BUCKET_STAPLE: Identity[] = [
     ],
     defaultAddonIds: ['butter_cream', 'honey'],
     allowedAddonIds: ['butter_cream', 'honey', 'kinako'],
+    searchTags: ['さつまいも', '薩摩芋', 'さつま芋', 'やきいも', '焼き芋'],
   },
   {
     id: 'noodle_udon',
@@ -346,7 +353,7 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
   {
     id: 'chicken_lean',
     label: '鶏むね・ささみ',
-    searchTags: ['とりむね', 'むねにく', 'ささみ', 'とりささみ'],
+    searchTags: ['とりむね', '鶏むね', '鶏むね肉', 'むねにく', '胸肉', 'ささみ', 'とりささみ', '鶏ささみ', 'ささ身'],
     primaryHome: { tab: 'ingredient', bucket: 'lean_protein' },
     defaultMacro: { kcal: 105, protein: 23, fat: 1.5, carbs: 0 },
     nutritionNotes: [
@@ -394,7 +401,7 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
   {
     id: 'white_fish',
     label: '白身魚・赤身魚',
-    searchTags: ['しろみざかな', 'あかみざかな', 'たら', 'かれい', 'まぐろ'],
+    searchTags: ['しろみざかな', '白身魚', 'あかみざかな', '赤身魚', 'たら', '鱈', 'かれい', '鰈', 'まぐろ', '鮪', 'ひらめ', '鮃', 'たい', '鯛'],
     primaryHome: { tab: 'ingredient', bucket: 'lean_protein' },
     // v1.2: default 80g→100g 化 (modal-set 1食量を chicken_lean/red_meat と揃える)
     // base = タラ・カレイ・ヒラメ等の白身魚。マグロ赤身は attribute で分岐。
@@ -435,7 +442,7 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
   {
     id: 'seafood_lean',
     label: 'イカ・タコ・エビ・貝',
-    searchTags: ['いか', 'たこ', 'えび', 'かい'],
+    searchTags: ['いか', '烏賊', 'たこ', '蛸', 'えび', '海老', 'かい', '貝', 'ほたて', '帆立', 'あさり', '浅蜊', 'かに', '蟹'],
     primaryHome: { tab: 'ingredient', bucket: 'lean_protein' },
     // v1.2: default 80g→100g 化 (modal-set 1食量を chicken_lean/red_meat と揃える)
     defaultMacro: { kcal: 88, protein: 17.5, fat: 0.8, carbs: 1 },
@@ -459,7 +466,7 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
   {
     id: 'red_meat',
     label: '赤身肉 (牛・豚)',
-    searchTags: ['あかみにく', 'ぎゅうにく', 'ぶたにく', 'ももにく'],
+    searchTags: ['あかみにく', '赤身肉', 'ぎゅうにく', '牛肉', 'ぶたにく', '豚肉', 'ももにく', 'もも肉', 'ぎゅうもも', '牛もも肉', 'ぶたひれ', '豚ヒレ肉', 'ひれにく', 'ヒレ肉'],
     primaryHome: { tab: 'ingredient', bucket: 'lean_protein' },
     // v1.2: Attribute 部位分岐追加。default は もも・ヒレ (純赤身、modal-set median 寄り)。
     // 旧 default 135/21/5 (牛もも基準) → 新 130/22/4 (牛豚もも・ヒレ平均)。
@@ -564,7 +571,8 @@ const BUCKET_EGG: Identity[] = [
   {
     id: 'egg',
     label: '卵',
-    searchTags: ['たまご', 'ゆでたまご', 'たまごやき', 'めだまやき'],
+    // 「卵」「玉子」の漢字が無く、玉子 がサンドイッチの具に誤着地していた。
+    searchTags: ['たまご', '卵', '玉子', 'ゆでたまご', 'ゆで卵', 'たまごやき', '卵焼き', 'めだまやき', '目玉焼き', 'なまたまご', '生卵'],
     primaryHome: { tab: 'ingredient', bucket: 'egg' },
     defaultMacro: { kcal: 75, protein: 6.2, fat: 5.2, carbs: 0.2 },
     nutritionNotes: [
@@ -604,7 +612,7 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
   {
     id: 'chicken_thigh',
     label: '鶏もも・手羽',
-    searchTags: ['とりもも', 'ももにく', 'てば', 'てばさき'],
+    searchTags: ['とりもも', '鶏もも', '鶏もも肉', 'ももにく', 'てば', '手羽', 'てばさき', '手羽先', 'とりかわ', '鶏皮'],
     primaryHome: { tab: 'ingredient', bucket: 'fatty_protein' },
     defaultMacro: { kcal: 200, protein: 17, fat: 14, carbs: 0 },
     nutritionNotes: [
@@ -678,7 +686,7 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
   {
     id: 'beef_pork_fatty',
     label: '牛・豚 (高脂)',
-    searchTags: ['ばらにく', 'さーろいん', 'ほるもん'],
+    searchTags: ['ばらにく', 'バラ肉', 'ぶたばら', '豚バラ', '豚バラ肉', 'ぎゅうばら', '牛バラ', '牛バラ肉', 'さーろいん', 'ほるもん', 'ホルモン'],
     primaryHome: { tab: 'ingredient', bucket: 'fatty_protein' },
     quickTapDisabled: true, // Attribute バラ/サーロイン/ホルモン/タン: kcal 220-470, F 17-46
     defaultMacro: { kcal: 380, protein: 16, fat: 35, carbs: 0 },
@@ -694,7 +702,7 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
   {
     id: 'fatty_fish',
     label: '脂魚',
-    searchTags: ['あぶらざかな', 'さけ', 'しゃけ', 'さば', 'さんま', 'ぶり', 'いわし', 'うなぎ'],
+    searchTags: ['あぶらざかな', '脂魚', 'さけ', '鮭', 'しゃけ', 'さば', '鯖', 'さんま', '秋刀魚', 'ぶり', '鰤', 'いわし', '鰯', 'うなぎ', '鰻', 'あじ', '鯵'],
     primaryHome: { tab: 'ingredient', bucket: 'fatty_protein' },
     quickTapDisabled: true, // Attribute 鮭/サバ/ぶり/さんま/いわし/うなぎ: kcal 130-290, F 9-24
     defaultMacro: { kcal: 200, protein: 20, fat: 12, carbs: 0 },
@@ -1002,7 +1010,12 @@ const BUCKET_VEGGIES: Identity[] = [
     // 一般形 (「ニース風サラダ」等) は `head-nouns.ts` の主辞「サラダ」が層2で拾うので、
     // **ここへの追加は whitelist ではなく「層2→層1の昇格」**。頻出の派生名だけを
     // 昇格させ、網羅は主辞辞書に任せる。
-    searchTags: ['なまやさい', 'シーザーサラダ', 'グリーンサラダ', 'ギリシャサラダ', 'ギリシャ風サラダ', 'コブサラダ'],
+    // 生食が主の野菜はここにも登録する (veg_cooked と両方に出して選ばせる)。
+    // 本 Identity は 25kcal/100g で、トマト(20)・きゅうり(13) は温野菜(35)より近い。
+    searchTags: [
+      'なまやさい', '生野菜', 'シーザーサラダ', 'グリーンサラダ', 'ギリシャサラダ', 'ギリシャ風サラダ', 'コブサラダ',
+      'とまと', 'トマト', 'きゅうり', '胡瓜', 'きゃべつ', 'キャベツ', 'れたす', 'レタス', 'ベビーリーフ', 'サニーレタス',
+    ],
     primaryHome: { tab: 'ingredient', bucket: 'veggies' },
     defaultMacro: { kcal: 25, protein: 1.4, fat: 0.3, carbs: 5 },
     nutritionNotes: [
@@ -1024,7 +1037,17 @@ const BUCKET_VEGGIES: Identity[] = [
   {
     id: 'veg_cooked',
     label: '温野菜',
-    searchTags: ['おんやさい', 'にたやさい'],
+    // 一般野菜の名前が1つも無く、「人参」「玉葱」等が軒並み無着地だった。
+    // 漢字とひらがなを併記する (IA spec §4.1)。ブロッコリー・アスパラ等は
+    // veg_dense (高タンパク野菜)、芋類は staple なのでここには入れない。
+    searchTags: [
+      'おんやさい', 'にたやさい',
+      'にんじん', '人参', 'たまねぎ', '玉ねぎ', '玉葱', 'なす', '茄子', 'なすび',
+      'きゅうり', '胡瓜', 'はくさい', '白菜', 'だいこん', '大根',
+      'ねぎ', 'ながねぎ', '長ねぎ', '長葱', 'きゃべつ', 'キャベツ',
+      'ごぼう', '牛蒡', 'れんこん', '蓮根', 'ぴーまん', 'ピーマン',
+      'もやし', 'ズッキーニ', 'オクラ', 'とまと', 'トマト',
+    ],
     primaryHome: { tab: 'ingredient', bucket: 'veggies' },
     // 一般野菜の代表値 (葉物・根菜・きのこ等)。
     // ブロッコリー類など高タンパク野菜は veg_dense へ。
@@ -1052,7 +1075,10 @@ const BUCKET_VEGGIES: Identity[] = [
         },
       },
     ],
-    defaultAddonIds: ['mayo'], // 鰹節はユーザー指摘で除外
+    // 鰹節除外はユーザー指摘に基づく既存判断のため維持 (allowedAddonIds にも含めない)。
+    // v1.4: dressing は allowed にありながら default に出ておらず、温野菜サラダ・
+    // ぽん酢代替として頻出のはずが埋もれていた (salad_raw と同型の「allowed 止まり」)。
+    defaultAddonIds: ['mayo', 'dressing'],
     allowedAddonIds: ['mayo', 'dressing'],
   },
   {
@@ -1084,7 +1110,11 @@ const BUCKET_VEGGIES: Identity[] = [
       // kcal は×1.7 しか増えないため PFC 逆算と最大 -76% 乖離していた。
       { key: 'stir_fry', label: '炒め', macroDelta: { kcal: 36, protein: 0, fat: 4, carbs: 0 } },
     ],
-    defaultAddonIds: ['mayo'],
+    // v1.4: dressing/cheese は allowed にありながら default に出ておらず埋もれていた
+    // (veg_cooked と同型)。ブロッコリーのチーズ焼き等、チーズは高タンパク野菜で
+    // 特に典型的な組み合わせのため cheese も昇格。oil は stir_fry Style の
+    // macroDelta と役割が重なるため allowed のまま (default には出さない)。
+    defaultAddonIds: ['mayo', 'dressing', 'cheese'],
     allowedAddonIds: ['mayo', 'dressing', 'cheese', 'oil'],
   },
   {
@@ -1202,7 +1232,7 @@ const BUCKET_FRUIT: Identity[] = [
   {
     id: 'apple_pear',
     label: 'りんご・梨',
-    searchTags: ['なし'],
+    searchTags: ['なし', '梨', 'りんご', '林檎', 'アップル'],
     primaryHome: { tab: 'ingredient', bucket: 'fruit' },
     defaultMacro: { kcal: 135, protein: 0.5, fat: 0.5, carbs: 35 },
     nutritionNotes: [
@@ -1219,7 +1249,7 @@ const BUCKET_FRUIT: Identity[] = [
   {
     id: 'citrus',
     label: '柑橘',
-    searchTags: ['かんきつ', 'みかん', 'オレンジ'],
+    searchTags: ['かんきつ', '柑橘', 'みかん', '蜜柑', 'オレンジ', 'グレープフルーツ', 'レモン', '檸檬'],
     primaryHome: { tab: 'ingredient', bucket: 'fruit' },
     defaultMacro: { kcal: 50, protein: 0.8, fat: 0.1, carbs: 13 },
     nutritionNotes: [
@@ -1245,7 +1275,7 @@ const BUCKET_FRUIT: Identity[] = [
         { label: '15粒', value: 15 },
       ],
     },
-    searchTags: ['ストロベリー'],
+    searchTags: ['ストロベリー', 'いちご', '苺'],
   },
   {
     id: 'berry',
@@ -1263,6 +1293,7 @@ const BUCKET_FRUIT: Identity[] = [
       addedMacro: { kcal: 25, protein: 0.4, fat: 0.2, carbs: 6 },
       defaultLabel: 'ベリー',
     },
+    searchTags: ['ぶどう', '葡萄', 'ブルーベリー', 'いちじく', '無花果', 'ベリー'],
   },
   {
     id: 'fruit_other',
@@ -1271,7 +1302,7 @@ const BUCKET_FRUIT: Identity[] = [
     referenceDescription: 'キウイ・桃・パイナップル・マンゴー・柿・すいかなど',
     defaultMacro: { kcal: 60, protein: 0.7, fat: 0.2, carbs: 15 },
     amount: { unit: 'piece', default: 1 },
-    searchTags: ['キウイ', '桃', 'パイナップル', 'マンゴー', '柿', 'すいか'],
+    searchTags: ['キウイ', '桃', 'パイナップル', 'マンゴー', '柿', 'すいか', '西瓜', 'すいか', 'キウイフルーツ', 'パイン'],
   },
 ];
 
@@ -1301,6 +1332,7 @@ const BUCKET_ADDED_FAT: Identity[] = [
       addedMacro: { kcal: 110, protein: 0, fat: 12, carbs: 0 },
       defaultLabel: '油',
     },
+    searchTags: ['あぶら', '油', 'サラダ油', 'さらだあぶら', 'ごま油', '胡麻油', 'ごまあぶら', 'オリーブオイル', 'おりーぶおいる', '植物油'],
   },
   {
     id: 'butter_cream',
@@ -1431,7 +1463,7 @@ const BUCKET_SNACK_DRINK: Identity[] = [
       { text: '和菓子は洋菓子と比べて油脂の使用が少なく、糖質が中心です。同じ甘いものでも脂質の入り方が違います。', source: SRC_SEIBUN },
     ],
     amount: { unit: 'piece', default: 1, chips: [{ label: '小', value: 0.5 }, { label: '1個', value: 1 }, { label: '大', value: 1.5 }] },
-    searchTags: ['大福', 'どら焼き', '羊羹', 'せんべい', '大学いも', '焼き芋'],
+    searchTags: ['大福', 'どら焼き', '羊羹', 'せんべい', '煎餅', 'まんじゅう', '饅頭', '大学いも', '焼き芋', 'もなか', '最中'],
   },
   {
     id: 'cake',
@@ -1591,7 +1623,7 @@ const BUCKET_SNACK_DRINK: Identity[] = [
         label: 'ワイン',
         searchTags: ['わいん', '赤ワイン', '白ワイン'],
         factor: { kcal: 0.586, protein: 0.218, carbs: 0.165 }, // グラス120ml ≒ 82kcal/C1.8
-        amount: { unit: 'ml', default: 120, step: 10, chips: [{ label: 'グラス(120)', value: 120 }, { label: 'ボトル1/2', value: 375 }] },
+        amount: { unit: 'ml', default: 120, step: 10, chips: [{ label: 'グラス(120)', value: 120 }, { label: '2杯(240)', value: 240 }] },
       },
       {
         key: 'spirits',
