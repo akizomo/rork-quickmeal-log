@@ -37,6 +37,7 @@ import { useAppState } from '@/providers/app-state-provider';
 import {
   computeWeeklyRecap,
   type WeeklyDiscovery,
+  type WeeklyFoodFact,
   type WeeklyFoodItem,
   type WeeklyRecap,
 } from '@/utils/weekly-recap';
@@ -316,6 +317,7 @@ function buildCards(recap: WeeklyRecap, styles: Styles, tr: Tr): Card[] {
               {tr('weeklyRecap.topFood.count', { count: d.count })}
             </Body>
             <View style={styles.spacer} />
+            {renderNote(t, d.note, tr)}
           </>
         ),
       });
@@ -346,11 +348,52 @@ function buildCards(recap: WeeklyRecap, styles: Styles, tr: Tr): Card[] {
                 ))}
               </View>
             </View>
+            {renderNote(t, d.note, tr)}
           </>
         ),
       });
       return;
     }
+
+    if (d.kind === 'macroSources') {
+      const macroName = tr(`common.macros.${d.axis}`);
+      const label = section(tr('weeklyRecap.macroSources.label', { macro: macroName }));
+      const max = Math.max(1, ...d.sources.map((x) => x.sharePct));
+      cards.push({
+        bg: 'light',
+        render: (t) => {
+          const nutri = t.colors.nutrition[d.axis];
+          return (
+            <>
+              <Overline tone="secondary">{label}</Overline>
+              <Body size="lg" style={{ marginTop: t.spacing['6'], lineHeight: 26 }}>
+                {tr('weeklyRecap.macroSources.lead', { macro: macroName })}
+              </Body>
+              <View style={[styles.spacer, { justifyContent: 'center' }]}>
+                <View style={{ gap: t.spacing['5'] }}>
+                  {d.sources.map((src) => (
+                    <View key={src.identityId ?? src.label}>
+                      <View style={styles.barCaptionRow}>
+                        <Body weight="medium" style={{ flex: 1, color: t.colors.content.primary }}>
+                          {src.identityId ? `${foodEmoji({ identityId: src.identityId, label: src.label })}  ` : ''}{src.label}
+                        </Body>
+                        <Body tone="secondary">{tr('weeklyRecap.macroSources.share', { pct: src.sharePct })}</Body>
+                      </View>
+                      <View style={[styles.track, { backgroundColor: t.colors.surface.sunken, marginTop: t.spacing['2'] }]}>
+                        <View style={[styles.trackFill, { width: `${Math.max(4, Math.round((src.sharePct / max) * 100))}%`, backgroundColor: nutri.graphic }]} />
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            </>
+          );
+        },
+      });
+      return;
+    }
+
+    if (d.kind !== 'macro') return;
 
     // 4. PFCインサイト (light)
     {
@@ -441,18 +484,7 @@ function buildCards(recap: WeeklyRecap, styles: Styles, tr: Tr): Card[] {
                 })}
               </View>
             </View>
-            {boost.note ? (
-              <View style={{ borderTopWidth: 1, borderTopColor: t.colors.border.default, paddingTop: t.spacing['4'] }}>
-                <Overline tone="tertiary">{tr('weeklyRecap.nutritionNote', { label: boost.note.identityLabel })}</Overline>
-                <Body size="sm" tone="secondary" style={{ marginTop: t.spacing['2'], lineHeight: 22 }}>
-                  {boost.note.note.text}
-                </Body>
-                {/* 出典表示は必須 (§10.14 追補-1)。栄養素の働きまで書ける条件が「出典を持ち UI に出すこと」。 */}
-                <Caption tone="tertiary" style={{ marginTop: t.spacing['2'] }}>
-                  {tr('weeklyRecap.advice.sourcePrefix')}{boost.note.note.source.label}
-                </Caption>
-              </View>
-            ) : null}
+            {renderNote(t, boost.note, tr)}
           </>
         ),
       });
@@ -487,6 +519,22 @@ function buildCards(recap: WeeklyRecap, styles: Styles, tr: Tr): Card[] {
   });
 
   return cards;
+}
+
+/** 豆知識ブロック。出典表示は必須 (§10.14 追補-1: 栄養素の働きまで書ける条件が「出典を持ち UI に出すこと」)。 */
+function renderNote(t: Theme, fact: WeeklyFoodFact | null, tr: Tr): React.ReactNode {
+  if (!fact) return null;
+  return (
+    <View style={{ borderTopWidth: 1, borderTopColor: t.colors.border.default, paddingTop: t.spacing['4'] }}>
+      <Overline tone="tertiary">{tr('weeklyRecap.nutritionNote', { label: fact.identityLabel })}</Overline>
+      <Body size="sm" tone="secondary" style={{ marginTop: t.spacing['2'], lineHeight: 22 }}>
+        {fact.note.text}
+      </Body>
+      <Caption tone="tertiary" style={{ marginTop: t.spacing['2'] }}>
+        {tr('weeklyRecap.advice.sourcePrefix')}{fact.note.source.label}
+      </Caption>
+    </View>
+  );
 }
 
 function foodEmoji(item: WeeklyFoodItem): string {

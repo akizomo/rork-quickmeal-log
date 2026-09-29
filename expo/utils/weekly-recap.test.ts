@@ -469,13 +469,13 @@ describe('computeWeeklyRecap — 食材の発見', () => {
 
     const prevWeek = ['2026-07-20', '2026-07-21', '2026-07-22'].map((d) => makeLog(d, 2000, onTarget, 'egg'));
     const repeat = computeWeeklyRecap([...week, ...prevWeek], makeProfile(2000), [], undefined, NOW);
-    // 前週も egg がトップ → 休ませる。他に発見が無いので fallback で出る
+    // 前週も egg がトップ → 休ませる。他に発見が無い (1品しか記録が無く内訳も出せない) ので fallback で出る
     expect(kinds(repeat)).toEqual(['topFood']);
     const withNew = computeWeeklyRecap(
       [...week, ...prevWeek, makeLog('2026-07-30', 300, onTarget, 'tofu')], makeProfile(2000), [], undefined, NOW,
     );
     // はじめての tofu がある週は、休ませた topFood は出さない
-    expect(kinds(withNew)).toEqual(['newFoods']);
+    expect(kinds(withNew)).toEqual(['newFoods', 'macroSources']);
   });
 });
 
@@ -506,6 +506,34 @@ describe('computeWeeklyRecap — PFC の連続週', () => {
   });
 });
 
+describe('computeWeeklyRecap — 栄養素の内訳 (macroSources) と豆知識', () => {
+  it('対象栄養素を Identity 別に合算し、上位3件と割合を出す。1品だけなら出さない', () => {
+    // 2026-08-03 週の通し番号でローテーションの軸が決まるので、軸に依らず検証できるよう P/F/C を同じ値にする
+    const same = { protein: 30, fat: 30, carbs: 30 };
+    const logs = [
+      makeLog('2026-07-27', 500, same, 'egg'), makeLog('2026-07-28', 500, same, 'egg'),
+      makeLog('2026-07-29', 500, same, 'tofu'), makeLog('2026-07-30', 500, { protein: 10, fat: 10, carbs: 10 }, 'rice'),
+    ];
+    const r = computeWeeklyRecap(logs, makeProfile(2000), [], undefined, NOW);
+    const d = r?.discoveries.find((x) => x.kind === 'macroSources');
+    expect(d && d.kind === 'macroSources' && d.sources.map((s) => [s.identityId, s.sharePct])).toEqual([['egg', 60 / 100 * 100], ['tofu', 30], ['rice', 10]]);
+    const single = computeWeeklyRecap([makeLog('2026-07-27', 500, same, 'egg')], makeProfile(2000), [], undefined, NOW);
+    expect(kinds(single)).not.toContain('macroSources');
+  });
+
+  it('食材系の発見には、その食材の豆知識 (出典つき) を添える。無ければ null', () => {
+    const withNote = getIdentity('egg')!;
+    expect(withNote.nutritionNotes?.length).toBeGreaterThan(0);
+    const r = computeWeeklyRecap(
+      [makeLog('2026-07-01', 500, onTarget, 'rice'), makeLog('2026-07-28', 2000, onTarget, 'egg')],
+      makeProfile(2000), [], undefined, NOW,
+    );
+    const d = r?.discoveries.find((x) => x.kind === 'newFoods');
+    expect(d && d.kind === 'newFoods' && d.note?.identityId).toBe('egg');
+    expect(d && d.kind === 'newFoods' && d.note?.note.source.label).toBeTruthy();
+  });
+});
+
 describe('selectDiscoveries', () => {
   const item = { identityId: 'egg', label: 'たまご' };
   const macro = {
@@ -517,10 +545,10 @@ describe('selectDiscoveries', () => {
 
   it('枠(3枚)に高スコア順で詰め、表示は物語順に並べ直す', () => {
     const picked = selectDiscoveries([
-      { discovery: { kind: 'topFood', item, count: 3 }, score: 0.6, cost: 1 },
+      { discovery: { kind: 'topFood', item, count: 3, note: null }, score: 0.6, cost: 1 },
       { discovery: macro, score: 0.7, cost: 2 },
-      { discovery: { kind: 'newFoods', items: [item] }, score: 0.9, cost: 1 },
-      { discovery: { kind: 'comebackFoods', items: [{ ...item, weeksSince: 5 }] }, score: 0.8, cost: 1 },
+      { discovery: { kind: 'newFoods', items: [item], note: null }, score: 0.9, cost: 1 },
+      { discovery: { kind: 'comebackFoods', items: [{ ...item, weeksSince: 5 }], note: null }, score: 0.8, cost: 1 },
     ]);
     // newFoods(0.9) → comeback(0.8) → macro(2枚)は入らない → topFood(0.6)
     expect(picked.map((d) => d.kind)).toEqual(['topFood', 'newFoods', 'comebackFoods']);

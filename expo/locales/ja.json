@@ -561,6 +561,11 @@
       "label": "ひさしぶり",
       "lead": "先週、ひさしぶりに記録したのは",
       "weeksSince": "{{weeks}}週ぶり"
+    },
+    "macroSources": {
+      "label": "{{macro}}のもと",
+      "lead": "先週の{{macro}}は、おもにこの食べものから",
+      "share": "約{{pct}}%"
     }
   },
   "help": {

@@ -70,6 +70,15 @@ const COMEBACK_MIN_GAP_DAYS = 28;
 /** 「いちばん多く」を出す最小回数。2回程度では「よく食べた」と言えない。 */
 const TOP_FOOD_MIN_COUNT = 3;
 
+/** macroSources に並べる件数。 */
+const MAX_SOURCES = 3;
+
+/** macroSources を出すのに必要な、週内の対象栄養素の最小合計 (g)。 */
+const SOURCES_MIN_TOTAL_GRAMS = 1;
+
+/** macroSources の対象栄養素を週ごとに回す順序。 */
+const SOURCE_AXIS_ROTATION: MacroAxis[] = ['protein', 'fat', 'carbs'];
+
 /** 食材リスト系の発見に並べる最大件数。 */
 const MAX_FOOD_ITEMS = 3;
 
@@ -159,9 +168,11 @@ export interface WeeklyFoodItem {
  * macro だけはインサイト+アドバイスで最大2枚ぶんの枠を使う。
  */
 export type WeeklyDiscovery =
-  | { kind: 'topFood'; item: WeeklyFoodItem; count: number }
-  | { kind: 'newFoods'; items: WeeklyFoodItem[] }
-  | { kind: 'comebackFoods'; items: (WeeklyFoodItem & { weeksSince: number })[] }
+  // note: 掲載食材のうち最初に豆知識を持つ1件 (無ければ null)。食べたものについて語るので読まれやすい (PRD §6.7.5)。
+  | { kind: 'topFood'; item: WeeklyFoodItem; count: number; note: WeeklyFoodFact | null }
+  | { kind: 'newFoods'; items: WeeklyFoodItem[]; note: WeeklyFoodFact | null }
+  | { kind: 'comebackFoods'; items: (WeeklyFoodItem & { weeksSince: number })[]; note: WeeklyFoodFact | null }
+  | { kind: 'macroSources'; axis: MacroAxis; sources: WeeklyMacroSource[] }
   | {
       kind: 'macro';
       insight: WeeklyMacroInsight;
@@ -170,9 +181,17 @@ export type WeeklyDiscovery =
       boost: WeeklyMacroBoost | null;
     };
 
+export interface WeeklyMacroSource {
+  /** Identity を持たない旧形式ログはカテゴリ名でまとめるため任意。 */
+  identityId?: string;
+  label: string;
+  /** その週の対象栄養素の合計に占める割合 (0〜100 の整数)。 */
+  sharePct: number;
+}
+
 export type WeeklyDiscoveryKind = WeeklyDiscovery['kind'];
 
-const DISCOVERY_ORDER: WeeklyDiscoveryKind[] = ['topFood', 'newFoods', 'comebackFoods', 'macro'];
+const DISCOVERY_ORDER: WeeklyDiscoveryKind[] = ['topFood', 'newFoods', 'comebackFoods', 'macroSources', 'macro'];
 
 export interface WeeklyRecap {
   /** 対象週の月曜日 (dateKey)。dismiss 済み判定のキーにも使う。 */
@@ -303,8 +322,13 @@ export function computeWeeklyRecap(
 
   // ── 発見プール ──
   const candidates: ScoredDiscovery[] = [
-    ...computeFoodDiscoveries(logs, range, pastWeeks[0]?.range ?? null),
+    ...computeFoodDiscoveries(logs, range, pastWeeks[0]?.range ?? null, weekKey),
   ];
+  const sources = computeMacroSources(logs, range, SOURCE_AXIS_ROTATION[weekIndex % SOURCE_AXIS_ROTATION.length]);
+  if (sources) {
+    // 常に出せるので、他に強い発見がある週には譲る (穴埋め役)。
+    candidates.push({ discovery: sources, score: 0.5, cost: 1 });
+  }
   if (macroInsight) {
     let streakWeeks = 1;
     for (let k = 2; k <= MAX_STREAK_LOOKBACK + 1; k++) {
@@ -381,6 +405,7 @@ function computeFoodDiscoveries(
   logs: FoodLog[],
   range: DateRange,
   prevRange: DateRange | null,
+  weekKey: string,
 ): ScoredDiscovery[] {
   const startKey = formatDateKey(range.start);
   const endKey = formatDateKey(range.end);
@@ -409,6 +434,16 @@ function computeFoodDiscoveries(
     return identity ? { identityId: id, label: identity.label } : null;
   };
 
+  /** 掲載食材のうち最初に豆知識を持つもの。食材ごとの選択は週で決定的。 */
+  const firstNote = (ids: string[]): WeeklyFoodFact | null => {
+    for (const id of ids) {
+      const identity = getIdentity(id);
+      const picked = identity?.nutritionNotes ? pickNutritionNote(identity.nutritionNotes, id, weekKey) : null;
+      if (identity && picked) return { identityId: id, identityLabel: identity.label, note: picked };
+    }
+    return null;
+  };
+
   const out: ScoredDiscovery[] = [];
 
   // いちばん多く (同数なら週内で先に出た方)
@@ -419,7 +454,7 @@ function computeFoodDiscoveries(
   if (top && topItem) {
     const prevTop = prevRange ? topIdentityIn(logs, prevRange) : null;
     out.push({
-      discovery: { kind: 'topFood', item: topItem, count: top[1] },
+      discovery: { kind: 'topFood', item: topItem, count: top[1], note: firstNote([top[0]]) },
       // 前週と同じ食材なら「いつも通り」なので発見としては弱い。
       score: prevTop === top[0] ? 0.1 : 0.6,
       cost: 1,
@@ -434,7 +469,9 @@ function computeFoodDiscoveries(
       .map(([id]) => toItem(id))
       .filter((x): x is WeeklyFoodItem => x !== null)
       .slice(0, MAX_FOOD_ITEMS);
-    if (items.length > 0) out.push({ discovery: { kind: 'newFoods', items }, score: 0.9, cost: 1 });
+    if (items.length > 0) {
+      out.push({ discovery: { kind: 'newFoods', items, note: firstNote(items.map((i) => i.identityId)) }, score: 0.9, cost: 1 });
+    }
   }
 
   // ひさしぶり (空白の長い順)
@@ -452,10 +489,39 @@ function computeFoodDiscoveries(
     .slice(0, MAX_FOOD_ITEMS)
     .map(({ gap: _gap, ...rest }) => rest);
   if (comebacks.length > 0) {
-    out.push({ discovery: { kind: 'comebackFoods', items: comebacks }, score: 0.8, cost: 1 });
+    out.push({ discovery: { kind: 'comebackFoods', items: comebacks, note: firstNote(comebacks.map((i) => i.identityId)) }, score: 0.8, cost: 1 });
   }
 
   return out;
+}
+
+/**
+ * 週内の対象栄養素が、どの食べものから来ていたかの内訳 (上位 MAX_SOURCES 件)。
+ * 記録ごとの macro (トッピング込み) を Identity 別に合算する。多い/少ないの評価はしない。
+ * 内訳が2件未満 (1品しか記録が無い) なら、内訳と呼べないので null。
+ */
+function computeMacroSources(logs: FoodLog[], range: DateRange, axis: MacroAxis): WeeklyDiscovery | null {
+  const startKey = formatDateKey(range.start);
+  const endKey = formatDateKey(range.end);
+  const byKey = new Map<string, { identityId?: string; label: string; grams: number }>();
+  let total = 0;
+  for (const log of logs) {
+    if (log.date < startKey || log.date > endKey) continue;
+    const grams = log.macro[axis];
+    if (!(grams > 0)) continue;
+    total += grams;
+    const identity = log.identityId ? getIdentity(log.identityId) : undefined;
+    const key = identity ? identity.id : `cat:${log.categoryLabel}`;
+    const entry = byKey.get(key) ?? { identityId: identity?.id, label: identity ? identity.label : log.categoryLabel, grams: 0 };
+    entry.grams += grams;
+    byKey.set(key, entry);
+  }
+  if (total < SOURCES_MIN_TOTAL_GRAMS || byKey.size < 2) return null;
+  const sources = [...byKey.values()]
+    .sort((a, b) => b.grams - a.grams || a.label.localeCompare(b.label))
+    .slice(0, MAX_SOURCES)
+    .map((e): WeeklyMacroSource => ({ identityId: e.identityId, label: e.label, sharePct: Math.round((e.grams / total) * 100) }));
+  return { kind: 'macroSources', axis, sources };
 }
 
 function topIdentityIn(logs: FoodLog[], range: DateRange): string | null {

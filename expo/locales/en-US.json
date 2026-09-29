@@ -561,6 +561,11 @@
       "label": "Welcome back",
       "lead": "Last week, back after a while",
       "weeksSince": "{{weeks}} weeks since"
+    },
+    "macroSources": {
+      "label": "Where {{macro}} came from",
+      "lead": "Last week, most of your {{macro}} came from",
+      "share": "~{{pct}}%"
     }
   },
   "help": {
