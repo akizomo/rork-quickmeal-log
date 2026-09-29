@@ -252,27 +252,30 @@ describe('computeWeeklyRecap — macroBoost.note (観点A は観点Cに従属)',
   it('最有力候補に nutritionNote が無くても、候補内の次点に有れば拾う (候補は3件までまとめて「アドバイス」なので)', () => {
     const logs = [
       makeLog('2026-07-27', 2000, { protein: 60, fat: 50, carbs: 200 }), // protein less
-      makeLog('2026-06-01', 300, {}, 'yakitori'), // nutritionNotes 無し・最頻出
-      makeLog('2026-06-02', 300, {}, 'yakitori'),
-      makeLog('2026-06-03', 300, {}, 'yakitori'),
+      makeLog('2026-06-01', 300, {}, 'meat_solo'), // nutritionNotes 無し・最頻出
+      makeLog('2026-06-02', 300, {}, 'meat_solo'),
+      makeLog('2026-06-03', 300, {}, 'meat_solo'),
       makeLog('2026-06-04', 300, {}, 'egg'), // nutritionNotes 有り・2番手
     ];
     const result = computeWeeklyRecap(logs, makeProfile(2000), [], undefined, NOW);
-    expect(result?.macroBoost?.candidates[0].identityId).toBe('yakitori');
+    expect(result?.macroBoost?.candidates[0].identityId).toBe('meat_solo');
     expect(result?.macroBoost?.note?.identityId).toBe('egg');
   });
 
   it('候補の誰も nutritionNote を持たなければ note は null', () => {
-    // candidates は最大3件で、埋まらないとカタログから補完されるため上位密度の dish 3件で占める
+    // 豆知識が未整備の高たんぱく食材: meat_solo / salad_chicken / seafood_lean / protein_drink / protein_bar / cheese_low_fat
+    // (そこにノートを足したらここも差し替えること)。履歴側で4件埋めてカタログ補完を発生させない
     const logs = [
       makeLog('2026-07-27', 2000, { protein: 60, fat: 50, carbs: 200 }), // protein less
-      makeLog('2026-06-01', 300, {}, 'yakitori'),
-      makeLog('2026-06-02', 300, {}, 'yakitori'),
-      makeLog('2026-06-03', 300, {}, 'meat_solo'),
-      makeLog('2026-06-04', 300, {}, 'sashimi'),
+      makeLog('2026-06-01', 300, {}, 'meat_solo'),
+      makeLog('2026-06-02', 300, {}, 'meat_solo'),
+      makeLog('2026-06-03', 300, {}, 'salad_chicken'),
+      makeLog('2026-06-04', 300, {}, 'seafood_lean'),
+      makeLog('2026-06-05', 300, {}, 'protein_drink'), // 履歴に高密度が4件あれば、カタログ補完なしで履歴だけから3件出る
     ];
     const result = computeWeeklyRecap(logs, makeProfile(2000), [], undefined, NOW);
-    expect(result?.macroBoost?.candidates[0].identityId).toBe('yakitori');
+    expect(result?.macroBoost?.candidates).toHaveLength(3);
+    expect(result?.macroBoost?.candidates.every((c) => c.fromHistory)).toBe(true); // 週ローテーションで先頭は変わる
     expect(result?.macroBoost?.note).toBeNull();
   });
 
@@ -547,10 +550,26 @@ describe('豆知識データ (nutritionNotes) — 出典必須ルール', () => 
     }
   });
 
-  it('料理 (dishes) にも豆知識がある: ラーメン/カレー/定食 など主要な料理', () => {
-    for (const id of ['ramen_light', 'ramen_heavy', 'soba', 'udon', 'curry_class', 'katsu_curry', 'fried_main', 'teishoku', 'nabe']) {
-      expect(getIdentity(id)?.nutritionNotes?.length ?? 0).toBeGreaterThan(0);
+  it('料理 (dishes) の豆知識は、別系統の補強出典 (alsoSources) を必ず持つ — 単一出典では載せない', () => {
+    const dishIds = ['ramen_light', 'ramen_heavy', 'ramen_jiro', 'soba', 'udon', 'tempura_noodle', 'curry_class', 'katsu_curry',
+      'katsudon_tendon', 'fried_main', 'teishoku', 'bento', 'nabe', 'sashimi', 'sushi_plate', 'sushi_piece',
+      'pasta_tomato', 'pasta_oil', 'pasta_cream', 'pasta_meat', 'pasta_japanese', 'yakitori'];
+    for (const id of dishIds) {
+      const notes = getIdentity(id)?.nutritionNotes ?? [];
+      expect(notes.length).toBeGreaterThan(0);
+      for (const n of notes) {
+        expect(n.alsoSources?.length ?? 0).toBeGreaterThan(0);
+        for (const src of n.alsoSources ?? []) expect(src.url ?? '').toMatch(/^https:\/\//);
+      }
     }
+  });
+
+  it('豆知識の出典は、食塩の話に偏らない (料理の豆知識のうち食塩が主題のものは3割以下)', () => {
+    const dishNotes = ALL_IDENTITIES.flatMap((i) => (i.nutritionNotes ?? []).map((n) => ({ id: i.id, text: n.text })))
+      .filter((n) => getIdentity(n.id)?.primaryHome.tab === 'dish');
+    const salty = dishNotes.filter((n) => /食塩|塩分/.test(n.text));
+    expect(dishNotes.length).toBeGreaterThan(20);
+    expect(salty.length / dishNotes.length).toBeLessThanOrEqual(0.3);
   });
 });
 

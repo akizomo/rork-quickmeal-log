@@ -373,6 +373,13 @@ export interface Identity {
 export interface NutritionNote {
   text: string;
   source: NutritionNoteSource;
+  /**
+   * 同じ主張を独立に裏づける追加の出典 (国内外の公的機関・査読論文)。UI では source と並べて表示する。
+   * 数値は公的な一次データ (成分表など) を主出典にし、別系統の出典で照合する。
+   * 出典どうしで数値が食い違うときは、範囲で書くか、どの出典の値かを本文に明記する。
+   * 照合の記録は docs/NUTRITION_NOTES_SOURCES.md。
+   */
+  alsoSources?: NutritionNoteSource[];
 }
 
 export interface NutritionNoteSource {

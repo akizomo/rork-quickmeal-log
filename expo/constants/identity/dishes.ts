@@ -9,23 +9,47 @@
  *   - canned_lean_fish 油漬 migration is on the ingredient side
  */
 
-import { Identity, NutritionNoteSource } from '@/types/identity';
+import { Identity, NutritionNote, NutritionNoteSource } from '@/types/identity';
 
 // ---------------------------------------------------------------------------
 // 豆知識 (nutritionNotes) の出典。方針: docs/US-food-db-design.md §10.14 追補 (出典必須・UI表示・知見の紹介)。
-// 数値は 2026-09-29 に原典で確認したもの。数字を変えるときは原典を必ず再確認すること。
+// 数値は公的な一次データを主出典にし、国内外の別系統の出典で照合する (alsoSources)。
+// 照合の記録・食い違いの扱い: docs/NUTRITION_NOTES_SOURCES.md (2026-09-29 に原典で確認)。数字を変えるときは必ず原典を再確認すること。
 // ---------------------------------------------------------------------------
 
-/** 麺類のつゆ・汁ものの食塩量 (ラーメン 8.1g→4.7g / そば 6.4g→3.2g / 汁もの 1.5〜2g)。「血圧が高い人の食生活」パンフレット。 */
+/** 八訂 増補2023 の個別食品ページ。100gあたりの実測値。 */
+const seibun = (label: string, itemNo: string): NutritionNoteSource => ({
+  label: `文部科学省 日本食品標準成分表（八訂）増補2023 ${label}`,
+  url: `https://fooddb.mext.go.jp/details/details.pl?ITEM_NO=${itemNo}`,
+});
+
+const SRC_USDA: NutritionNoteSource = {
+  label: '米国農務省 USDA FoodData Central',
+  url: 'https://fdc.nal.usda.gov/',
+};
+
+/** 市販ラーメン1食の食塩7.7〜15.4g、うちスープ3.0〜10.3g (38.0〜66.7%)、汁を飲まないと約半分 (お茶の水女子大, 2025)。 */
+const SRC_RAMEN_FSTR: NutritionNoteSource = {
+  label: 'お茶の水女子大学（Food Sci Technol Res 2025）',
+  url: 'https://www.jstage.jst.go.jp/article/fstr/31/5/31_FSTR-D-24-00250/_article',
+};
+
+/** ラーメン1杯6.9g (無作為化クロスオーバー試験, 男子大学生36名)。 */
+const SRC_RAMEN_NUTRIENTS: NutritionNoteSource = {
+  label: 'Nutrients 2023（無作為化試験）',
+  url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC10343361/',
+};
+
+/** 汁を残すと そば 6.4→3.2g / ラーメン 8.1→4.7g。日本人間ドック学会「血圧が高い人の食生活」(2010年版)。 */
 const SRC_DOCK: NutritionNoteSource = {
-  label: '日本人間ドック学会 特定健診パンフレット（厚生労働省 検討会資料所収）',
+  label: '日本人間ドック学会パンフレット（厚労省資料）',
   url: 'https://www.mhlw.go.jp/stf/shingi/2r9852000001reju-att/2r9852000001rep8.pdf',
 };
 
-/** カレールウ 100g あたり 脂質34.1g・食塩相当量10.6g (八訂 増補2023)。 */
-const SRC_SEIBUN_ROUX: NutritionNoteSource = {
-  label: '文部科学省 日本食品標準成分表（八訂）増補2023 カレールウ',
-  url: 'https://fooddb.mext.go.jp/details/details.pl?ITEM_NO=17_17051_7',
+/** うどん1杯 約5.6g、食塩摂取の目標量 (男性7.5g・女性6.5g未満)。 */
+const SRC_MAFF_SALT: NutritionNoteSource = {
+  label: '農林水産省 食塩の取りすぎに注意',
+  url: 'https://www.maff.go.jp/j/syokuiku/minna_navi/topics/topics5_04.html',
 };
 
 /** 揚げ物100gに使われた衣の粉の量と、調理による脂質の増減 (表17)。 */
@@ -34,10 +58,36 @@ const SRC_SEIBUN_FRY: NutritionNoteSource = {
   url: 'https://www.mext.go.jp/component/a_menu/science/detail/__icsFiles/afieldfile/2016/11/08/1365334_1-0320r3.pdf',
 };
 
+/** 揚げ物で肉の脂質が油に置き換わる現象 (縄田ら, 栄養学雑誌 63(6), 2005)。 */
+const SRC_FRY_NAWATA: NutritionNoteSource = {
+  label: '栄養学雑誌 2005（フライの吸油率）',
+  url: 'https://www.jstage.jst.go.jp/article/eiyogakuzashi1941/63/6/63_6_339/_article/-char/ja',
+};
+
+/** カレールウ 100gあたり 脂質34.1g・食塩相当量10.6g (八訂 増補2023)。 */
+const SRC_SEIBUN_ROUX = seibun('カレールウ', '17_17051_7');
+
+/** 米国で流通する日本製ルウの商品表示 (S&B ゴールデンカレー; 100gあたり脂質25〜35g・ナトリウム3.7〜5.0g)。 */
+const SRC_USDA_ROUX: NutritionNoteSource = {
+  label: 'USDA FoodData Central（S&B ゴールデンカレー）',
+  url: 'https://fdc.nal.usda.gov/',
+};
+
 /** 主食・副菜・主菜の区分 (厚生労働省・農林水産省 決定、平成17年6月)。 */
 const SRC_BALANCE_GUIDE: NutritionNoteSource = {
   label: '農林水産省 食事バランスガイド',
   url: 'https://www.maff.go.jp/j/syokuiku/kenzensyokuseikatsu/about_b_guide.html',
+};
+
+const SRC_BALANCE_GUIDE_MHLW: NutritionNoteSource = {
+  label: '厚生労働省 e-ヘルスネット 食事バランスガイド',
+  url: 'https://kennet.mhlw.go.jp/information/information/food/e-03-007.html',
+};
+
+/** 食事バランスガイド遵守度と総死亡 (JPHC研究 79,594人・追跡中央値15年・最高群 vs 最低群 HR 0.85 [0.79-0.91])。 */
+const SRC_BMJ_GUIDE: NutritionNoteSource = {
+  label: 'BMJ 2016（日本の成人約8万人の追跡）',
+  url: 'https://doi.org/10.1136/bmj.i1209',
 };
 
 /** 野菜の目標 350g/日 と平均摂取量 (令和元年 国民健康・栄養調査: 男性約290g・女性約270g)。 */
@@ -46,19 +96,72 @@ const SRC_VEGETABLE: NutritionNoteSource = {
   url: 'https://kennet.mhlw.go.jp/slp/tools/web_learning/eat.html',
 };
 
-const NOTE_RAMEN = {
-  text: 'ラーメンは、スープを残すかどうかで食塩の量が大きく変わります。日本人間ドック学会のパンフレットでは、汁を全部飲むと約8.1g、残すと約4.7gという目安が示されています。',
-  source: SRC_DOCK,
+const SRC_WHO_VEG: NutritionNoteSource = {
+  label: 'WHO Healthy diet ファクトシート',
+  url: 'https://www.who.int/news-room/fact-sheets/detail/healthy-diet',
 };
 
-const NOTE_TEMPURA = {
+/** くろまぐろ(天然) 赤身 脂質1.4g・115kcal / 脂身 脂質27.5g・308kcal。 */
+const SRC_TUNA = seibun('くろまぐろ', '10_10254_7');
+
+/** クロマグロの部位別: 脂質は 赤身<中トロ<大トロ (食品衛生学雑誌 51(5), 2010)。 */
+const SRC_TUNA_CUTS: NutritionNoteSource = {
+  label: '食品衛生学雑誌 2010（マグロの部位別）',
+  url: 'https://www.jstage.jst.go.jp/article/shokueishi/51/5/51_5_258/_article/-char/ja/',
+};
+
+/** マカロニ・スパゲッティ 乾 347kcal・水分11.3g / ゆで 150kcal・水分60.0g。 */
+const SRC_PASTA = seibun('マカロニ・スパゲッティ', '01_01064_6');
+
+/** そば(ゆで) 130kcal・たんぱく質4.8g・食物繊維2.9g。 */
+const SRC_SOBA = seibun('そば（ゆで）', '1_01128_7');
+
+/** うどん(ゆで) 95kcal・水分約75%・たんぱく質2.6g・食物繊維1.3g。 */
+const SRC_UDON = seibun('うどん（ゆで）', '1_01039_7');
+
+/** 鶏もも皮(生) 脂質51.6g / ささみ(生) 脂質0.8g。 */
+const SRC_CHICKEN_PARTS = seibun('にわとり 皮・ささみ', '11_11235_7');
+
+const NOTE_RAMEN: NutritionNote = {
+  text: 'ラーメン1杯の食塩は、商品によって7.7〜15.4gと幅があり、そのうちスープが38〜67%を占めます（市販品の分析）。汁を残すと、食塩は半分ほど減るとされています（種類で差があります）。',
+  source: SRC_RAMEN_FSTR,
+  alsoSources: [SRC_DOCK, SRC_RAMEN_NUTRIENTS],
+};
+
+const NOTE_TEMPURA: NutritionNote = {
   text: 'きすの天ぷら100gあたり、衣の天ぷら粉は約13g、調理で増える脂質は約15gです（成分表の調理例）。素材の外側に、衣と揚げ油の分が足されています。',
   source: SRC_SEIBUN_FRY,
+  alsoSources: [SRC_FRY_NAWATA],
 };
 
-const NOTE_TONKATSU = {
+const NOTE_TONKATSU: NutritionNote = {
   text: '揚げると、脂質の増え方は素材で変わります。成分表の調理例では、とんかつ100gあたり、脂身つきロースで約11g、脂質の少ないヒレで約21g増えています。',
   source: SRC_SEIBUN_FRY,
+  alsoSources: [SRC_FRY_NAWATA],
+};
+
+const NOTE_TUNA: NutritionNote = {
+  text: 'まぐろは、同じ魚でも部位で脂質が大きく違います。成分表では、天然くろまぐろの赤身が100gあたり1.4g、脂身が27.5gです。',
+  source: SRC_TUNA,
+  alsoSources: [SRC_TUNA_CUTS],
+};
+
+const NOTE_PASTA: NutritionNote = {
+  text: 'パスタは、乾麺とゆでた麺でエネルギーが大きく違います。成分表では、100gあたり乾麺が347kcal・水分11.3g、ゆでた麺が150kcal・水分60.0gです（USDAでも乾麺371kcal、ゆで158kcal）。麺のグラム数は、乾麺かゆでた後かで意味が変わります。',
+  source: SRC_PASTA,
+  alsoSources: [SRC_USDA],
+};
+
+const NOTE_CURRY_ROUX: NutritionNote = {
+  text: 'カレーのルウは、重さの約3分の1が脂質、約10分の1が食塩相当量です（市販の固形ルウ100gあたり、脂質34.1g・食塩相当量10.6g）。味の濃さは、ルウの量で大きく変わります。',
+  source: SRC_SEIBUN_ROUX,
+  alsoSources: [SRC_USDA_ROUX],
+};
+
+const NOTE_BALANCE_STUDY: NutritionNote = {
+  text: '食事バランスガイドの点数が高い人ほど、約15年の追跡で総死亡が低かったという研究があります（日本の成人約8万人。最も高い群は最も低い群の0.85倍）。観察研究なので、原因と結果までは分かりません。',
+  source: SRC_BMJ_GUIDE,
+  alsoSources: [SRC_BALANCE_GUIDE],
 };
 
 // ---------------------------------------------------------------------------
@@ -184,7 +287,7 @@ const BUCKET_CURRY: Identity[] = [
     searchTags: ['カレー', 'シチュー', 'カレーライス'],
     primaryHome: { tab: 'dish', bucket: 'curry' },
     nutritionNotes: [
-      { text: 'カレーのルウは、重さの約3分の1が脂質、約10分の1が食塩相当量です（市販の固形ルウ100gあたり、脂質34.1g・食塩相当量10.6g）。味の濃さは、ルウの量で大きく変わります。', source: SRC_SEIBUN_ROUX },
+      NOTE_CURRY_ROUX,
     ],
     defaultMacro: { kcal: 720, protein: 21, fat: 23, carbs: 100 },
     referenceDescription: 'ご飯200g + ルー・具',
@@ -204,7 +307,7 @@ const BUCKET_CURRY: Identity[] = [
     label: 'カツカレー',
     primaryHome: { tab: 'dish', bucket: 'curry' },
     nutritionNotes: [
-      { text: 'カレーのルウは、重さの約3分の1が脂質、約10分の1が食塩相当量です（市販の固形ルウ100gあたり、脂質34.1g・食塩相当量10.6g）。味の濃さは、ルウの量で大きく変わります。', source: SRC_SEIBUN_ROUX },
+      NOTE_CURRY_ROUX,
       NOTE_TONKATSU,
     ],
     defaultMacro: { kcal: 980, protein: 29, fat: 38, carbs: 126 },
@@ -381,7 +484,16 @@ const BUCKET_JAPANESE_NOODLES: Identity[] = [
     label: 'うどん',
     primaryHome: { tab: 'dish', bucket: 'japanese_noodles' },
     nutritionNotes: [
-      { text: 'うどんなどの麺類は、つゆに食塩が多く含まれます。日本人間ドック学会のパンフレットでは、そばは汁を残すと約6.4gが約3.2gに、ラーメンは約8.1gが約4.7gに減る目安が示されています。', source: SRC_DOCK },
+      {
+        text: 'うどん1杯の食塩相当量は約5.6gという資料があります。成人の1日の目標は男性7.5g未満・女性6.5g未満で、麺類は、つゆを残すと食塩が減ります。',
+        source: SRC_MAFF_SALT,
+        alsoSources: [SRC_DOCK, SRC_RAMEN_FSTR],
+      },
+      {
+        text: 'うどんは、ゆでた麺100gの約75%が水分で、エネルギーは95kcalです。同じゆで麺のそばは130kcalで、たんぱく質もうどん2.6gに対しそば4.8gと差があります。',
+        source: SRC_UDON,
+        alsoSources: [SRC_SOBA],
+      },
     ],
     defaultMacro: { kcal: 430, protein: 12, fat: 2, carbs: 85 },
     referenceDescription: '麺250g (生1玉) + 出汁 (トッピングはアドオンで追加)',
@@ -403,7 +515,11 @@ const BUCKET_JAPANESE_NOODLES: Identity[] = [
     label: 'そば',
     primaryHome: { tab: 'dish', bucket: 'japanese_noodles' },
     nutritionNotes: [
-      { text: 'そばは、つゆを残すと食塩が半分ほどになります。日本人間ドック学会のパンフレットでは、つゆまで全部だと約6.4g、残すと約3.2gという目安が示されています。', source: SRC_DOCK },
+      {
+        text: 'そばは、ゆでた麺100gあたりのたんぱく質が4.8g、食物繊維が2.9gです。同じゆで麺のうどん（2.6g・1.3g）より、どちらも多くなっています。',
+        source: SRC_SOBA,
+        alsoSources: [SRC_UDON, SRC_USDA],
+      },
     ],
     defaultMacro: { kcal: 410, protein: 15, fat: 2.5, carbs: 79 },
     referenceDescription: '麺250g (生1玉) + つゆ (トッピングはアドオンで追加)',
@@ -469,6 +585,9 @@ const BUCKET_PASTA: Identity[] = [
     label: 'トマト系パスタ',
     searchTags: ['トマトパスタ', 'アラビアータ'],
     primaryHome: { tab: 'dish', bucket: 'pasta' },
+    nutritionNotes: [
+      NOTE_PASTA,
+    ],
     defaultMacro: { kcal: 680, protein: 22, fat: 19, carbs: 102 },
     referenceDescription: '麺250g (茹で) + トマトソース・基本具',
     amount: { unit: 'percent', default: 100, chips: [{ label: '小', value: 50 }, { label: '1皿', value: 100 }, { label: '大盛', value: 150 }, { label: '特盛', value: 200 }] },
@@ -480,6 +599,9 @@ const BUCKET_PASTA: Identity[] = [
     label: 'オイル系パスタ',
     searchTags: ['ペペロンチーノ'],
     primaryHome: { tab: 'dish', bucket: 'pasta' },
+    nutritionNotes: [
+      NOTE_PASTA,
+    ],
     defaultMacro: { kcal: 700, protein: 20, fat: 28, carbs: 88 },
     referenceDescription: '麺250g + オイル+ガーリック・少量具',
     amount: { unit: 'percent', default: 100, chips: [{ label: '小', value: 50 }, { label: '1皿', value: 100 }, { label: '大盛', value: 150 }, { label: '特盛', value: 200 }] },
@@ -491,6 +613,9 @@ const BUCKET_PASTA: Identity[] = [
     label: 'クリーム系パスタ',
     searchTags: ['カルボナーラ', 'クリームパスタ'],
     primaryHome: { tab: 'dish', bucket: 'pasta' },
+    nutritionNotes: [
+      NOTE_PASTA,
+    ],
     defaultMacro: { kcal: 780, protein: 24, fat: 36, carbs: 86 },
     referenceDescription: '麺250g + クリームソース・チーズ',
     amount: { unit: 'percent', default: 100, chips: [{ label: '小', value: 50 }, { label: '1皿', value: 100 }, { label: '大盛', value: 150 }, { label: '特盛', value: 200 }] },
@@ -502,6 +627,9 @@ const BUCKET_PASTA: Identity[] = [
     label: 'ミート系パスタ',
     searchTags: ['ミートソース', 'ボロネーゼ'],
     primaryHome: { tab: 'dish', bucket: 'pasta' },
+    nutritionNotes: [
+      NOTE_PASTA,
+    ],
     defaultMacro: { kcal: 690, protein: 26, fat: 22, carbs: 96 },
     referenceDescription: '麺250g + ミートソース',
     amount: { unit: 'percent', default: 100, chips: [{ label: '小', value: 50 }, { label: '1皿', value: 100 }, { label: '大盛', value: 150 }, { label: '特盛', value: 200 }] },
@@ -513,6 +641,9 @@ const BUCKET_PASTA: Identity[] = [
     label: '和風パスタ',
     searchTags: ['わふうぱすた', 'たらこぱすた', 'めんたいこぱすた'],
     primaryHome: { tab: 'dish', bucket: 'pasta' },
+    nutritionNotes: [
+      NOTE_PASTA,
+    ],
     defaultMacro: { kcal: 620, protein: 20, fat: 20, carbs: 88 },
     referenceDescription: '麺250g + 醤油・和風具',
     amount: { unit: 'percent', default: 100, chips: [{ label: '小', value: 50 }, { label: '1皿', value: 100 }, { label: '大盛', value: 150 }, { label: '特盛', value: 200 }] },
@@ -531,6 +662,9 @@ const BUCKET_SUSHI: Identity[] = [
     label: '回転寿司 (皿)',
     searchTags: ['かいてんずし', 'すし', 'おすし'],
     primaryHome: { tab: 'dish', bucket: 'sushi' },
+    nutritionNotes: [
+      NOTE_TUNA,
+    ],
     defaultMacro: { kcal: 1040, protein: 56, fat: 32, carbs: 131 }, // 8皿分合計 (1皿=130kcal)
     referenceDescription: '1皿=2貫 (シャリ40g+ネタ20g/皿)',
     amount: { unit: 'plate', default: 8 },
@@ -540,6 +674,9 @@ const BUCKET_SUSHI: Identity[] = [
     label: 'セット寿司 (貫)',
     searchTags: ['せっとずし', 'にぎり'],
     primaryHome: { tab: 'dish', bucket: 'sushi' },
+    nutritionNotes: [
+      NOTE_TUNA,
+    ],
     defaultMacro: { kcal: 650, protein: 35, fat: 20, carbs: 82 }, // 10貫分合計 (1貫=65kcal)
     referenceDescription: '1貫=シャリ20g+ネタ10g',
     amount: { unit: 'piece', default: 10, unitLabel: '貫' },
@@ -818,7 +955,12 @@ const BUCKET_MISC_DISH: Identity[] = [
     searchTags: ['ていしょく'],
     primaryHome: { tab: 'dish', bucket: 'misc_dish' },
     nutritionNotes: [
-      { text: 'ごはんとおかず、汁がそろう定食は、食事バランスガイドの「主食・副菜・主菜」をそろえやすい形です。ごはん・麺は主食、野菜・いも・海藻・きのこは副菜、肉・魚・卵・大豆は主菜にあたります。', source: SRC_BALANCE_GUIDE },
+      {
+        text: 'ごはんとおかず、汁がそろう定食は、食事バランスガイドの「主食・副菜・主菜」をそろえやすい形です。ごはん・麺は主食、野菜・いも・海藻・きのこは副菜、肉・魚・卵・大豆は主菜にあたります。',
+        source: SRC_BALANCE_GUIDE,
+        alsoSources: [SRC_BALANCE_GUIDE_MHLW],
+      },
+      NOTE_BALANCE_STUDY,
     ],
     quickTapDisabled: true, // Attribute 焼魚/焼肉/唐揚げ/トンカツ/生姜焼き/ハンバーグ: kcal 700-1003, F 18-40
     defaultMacro: { kcal: 850, protein: 32, fat: 30, carbs: 108 },
@@ -849,7 +991,12 @@ const BUCKET_MISC_DISH: Identity[] = [
     searchTags: ['べんとう'],
     primaryHome: { tab: 'dish', bucket: 'misc_dish' },
     nutritionNotes: [
-      { text: 'お弁当は、主食のごはんに、主菜と副菜が詰め合わせになった形です。食事バランスガイドでは、野菜・いも・海藻・きのこの料理が「副菜」、肉・魚・卵・大豆の料理が「主菜」とされています。', source: SRC_BALANCE_GUIDE },
+      {
+        text: 'お弁当は、主食のごはんに、主菜と副菜が詰め合わせになった形です。食事バランスガイドでは、野菜・いも・海藻・きのこの料理が「副菜」、肉・魚・卵・大豆の料理が「主菜」とされています。',
+        source: SRC_BALANCE_GUIDE,
+        alsoSources: [SRC_BALANCE_GUIDE_MHLW],
+      },
+      NOTE_BALANCE_STUDY,
     ],
     defaultMacro: { kcal: 700, protein: 23, fat: 20, carbs: 98 },
     referenceDescription: 'ご飯+主菜+副菜 (お弁当箱1食)',
@@ -881,7 +1028,11 @@ const BUCKET_MISC_DISH: Identity[] = [
     primaryHome: { tab: 'dish', bucket: 'misc_dish' },
     nutritionNotes: [
       NOTE_TEMPURA,
-      { text: '揚げ物の脂質は、素材で増え方が変わります。成分表の調理例では、若鶏もも（皮つき）のから揚げは肉の脂が油に溶け出して100gあたり約1g減り、皮なしは約5g増えています。', source: SRC_SEIBUN_FRY },
+      {
+        text: '揚げ物の脂質は、素材で増え方が変わります。成分表の調理例では、若鶏もも（皮つき）のから揚げは肉の脂が油に溶け出して100gあたり約1g減り、皮なしは約5g増えています。',
+        source: SRC_SEIBUN_FRY,
+        alsoSources: [SRC_FRY_NAWATA],
+      },
     ],
     quickTapDisabled: true, // Attribute 唐揚げ/とんかつ/エビフライ/コロッケ/フライドポテト: kcal 200-500, F 12-30
     defaultMacro: { kcal: 350, protein: 18, fat: 20, carbs: 18 },
@@ -939,6 +1090,13 @@ const BUCKET_MISC_DISH: Identity[] = [
     label: '焼鳥・串もの',
     searchTags: ['やきとり', 'くしもの', 'くしやき'],
     primaryHome: { tab: 'dish', bucket: 'misc_dish' },
+    nutritionNotes: [
+      {
+        text: '焼鳥は、串の部位で脂質が大きく違います。鶏の皮は100gあたり約32〜52g（成分表ではもも皮51.6g、USDAでは32.4〜44.2g）、ささみ・むね肉は約1〜3g（成分表のささみ0.8g、USDAのむね肉2.6g）です。',
+        source: SRC_CHICKEN_PARTS,
+        alsoSources: [SRC_USDA],
+      },
+    ],
     defaultMacro: { kcal: 350, protein: 32, fat: 16, carbs: 8 }, // 5本=350kcal
     referenceDescription: '1本=鶏もも30g+タレ',
     amount: { unit: 'piece', default: 5, unitLabel: '本' },
@@ -1040,7 +1198,11 @@ const BUCKET_MISC_DISH: Identity[] = [
     searchTags: ['なべもの', 'なべ'],
     primaryHome: { tab: 'dish', bucket: 'misc_dish' },
     nutritionNotes: [
-      { text: '国の目標は、野菜を1日350g以上。令和元年の調査では、平均は男性約290g、女性約270gでした。鍋ものは、野菜を一度に取り入れやすい料理のひとつです。', source: SRC_VEGETABLE },
+      {
+        text: '国の目標は野菜を1日350g以上（WHOは野菜と果物で400g以上）。令和元年の調査では、平均は男性約290g、女性約270gで、あと約70gが目安とされています。鍋ものの野菜も、この量に数えられます。',
+        source: SRC_VEGETABLE,
+        alsoSources: [SRC_WHO_VEG],
+      },
     ],
     // こってり系(すき焼き/しゃぶしゃぶ)とあっさり系(寄せ鍋/水炊き/豆乳鍋)を統合。
     // 基準はすき焼き (旧 nabe_heavy)。おでんは具のばらつきが大きすぎるため除外
@@ -1063,6 +1225,9 @@ const BUCKET_MISC_DISH: Identity[] = [
     label: '刺身盛り',
     searchTags: ['さしみ', 'おさしみ'],
     primaryHome: { tab: 'dish', bucket: 'misc_dish' },
+    nutritionNotes: [
+      NOTE_TUNA,
+    ],
     quickTapDisabled: true, // Attribute 魚種で kcal/F が大きく振れる
     defaultMacro: { kcal: 250, protein: 30, fat: 8, carbs: 4 }, // 5切=250kcal
     referenceDescription: '1切=魚30g',
@@ -1119,9 +1284,6 @@ const BUCKET_MISC_DISH: Identity[] = [
     label: '汁物・スープ',
     searchTags: ['しるもの', 'みそしる'],
     primaryHome: { tab: 'dish', bucket: 'misc_dish' },
-    nutritionNotes: [
-      { text: '汁もの1杯には、食塩相当量が1.5〜2gほど含まれます。血圧が高い人向けの日本人間ドック学会のパンフレットでは、1日1杯までが目安とされています。', source: SRC_DOCK },
-    ],
     // 和風(味噌汁/豚汁)と洋風(コンソメ/クリーム)を統合。基準は味噌汁(具薄)。
     quickTapDisabled: true,
     defaultMacro: { kcal: 40, protein: 2.5, fat: 1, carbs: 4 },

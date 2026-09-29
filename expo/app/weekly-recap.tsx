@@ -531,7 +531,7 @@ function renderNote(t: Theme, fact: WeeklyFoodFact | null, tr: Tr): React.ReactN
         {fact.note.text}
       </Body>
       <Caption tone="tertiary" style={{ marginTop: t.spacing['2'] }}>
-        {tr('weeklyRecap.advice.sourcePrefix')}{fact.note.source.label}
+        {tr('weeklyRecap.advice.sourcePrefix')}{[fact.note.source, ...(fact.note.alsoSources ?? [])].map((x) => x.label).join(' / ')}
       </Caption>
     </View>
   );
