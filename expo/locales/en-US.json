@@ -513,25 +513,31 @@
       "tapHint": "Tap to continue"
     },
     "days": {
-      "label": "01 — Days logged",
+      "label": "Days logged",
       "lead": "Last week, you logged on",
-      "outOf": " of 7 days"
+      "outOf": " of 7 days",
+      "prevWeek": "The week before: {{days}} days"
     },
     "kcal": {
-      "label": "02 — Calories",
+      "label": "Calories",
       "lead": "Last week, your daily average was",
-      "target": "Goal: {{kcal}} kcal"
+      "target": "Goal: {{kcal}} kcal",
+      "baseline": "Prior 4-week average: {{kcal}} kcal",
+      "usualMore": "More than usual",
+      "usualLess": "Less than usual"
     },
     "insight": {
-      "label": "03 — {{macro}}",
+      "label": "{{macro}}",
       "lead": "The biggest gap from your goal was",
       "less": "Below target",
       "more": "Above target",
       "barActual": "Daily average",
-      "barTarget": "Daily goal"
+      "barTarget": "Daily goal",
+      "streakLess": "Below target {{weeks}} weeks running",
+      "streakMore": "Above target {{weeks}} weeks running"
     },
     "advice": {
-      "label": "04 — Tips",
+      "label": "Tips",
       "leadMore": "To get more {{macro}}",
       "leadLess": "Lower-{{macro}} options",
       "sourcePrefix": "Source: "
@@ -540,7 +546,22 @@
       "lead": "Roughly is\nenough",
       "nextWeek": "Next week's recap drops on Monday."
     },
-    "nutritionNote": "Fun fact · {{label}}"
+    "nutritionNote": "Fun fact · {{label}}",
+    "sectionLabel": "{{num}} — {{label}}",
+    "topFood": {
+      "label": "Most logged",
+      "lead": "Last week, you logged this the most",
+      "count": "{{count}} times"
+    },
+    "newFoods": {
+      "label": "First time",
+      "lead": "Last week, new to your log"
+    },
+    "comebackFoods": {
+      "label": "Welcome back",
+      "lead": "Last week, back after a while",
+      "weeksSince": "{{weeks}} weeks since"
+    }
   },
   "help": {
     "nav": {

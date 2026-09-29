@@ -5,7 +5,7 @@
  * Run: cd expo && bun test weekly-recap
  */
 
-import { computeWeeklyRecap } from './weekly-recap';
+import { computeWeeklyRecap, selectDiscoveries } from './weekly-recap';
 import type { FoodLog, UserProfile } from '@/types/nutrition';
 import { getIdentity } from '@/constants/identity';
 import { formatDateKey } from '@/utils/nutrition';
@@ -373,9 +373,8 @@ describe('computeWeeklyRecap — macroBoost (観点C: 目標接続型・less方�
     expect(candidates.slice(1).every((c) => c.fromHistory === false)).toBe(true);
   });
 
-  it('候補は最大3件まで頻度順 (4件以上の高密度食材があっても上位3件に切り詰める)', () => {
-    const logs = [
-      makeLog('2026-07-27', 2000, { protein: 60, fat: 50, carbs: 200 }),
+  it('履歴に4件以上あれば履歴だけから3件、週ごとにローテーションする (毎週同じ3品にしない)', () => {
+    const history = [
       makeLog('2026-06-01', 300, {}, 'chicken_lean'),
       makeLog('2026-06-02', 300, {}, 'chicken_lean'),
       makeLog('2026-06-03', 300, {}, 'chicken_lean'),
@@ -384,9 +383,151 @@ describe('computeWeeklyRecap — macroBoost (観点C: 目標接続型・less方�
       makeLog('2026-06-06', 300, {}, 'egg'), // density 0.33、単発
       makeLog('2026-06-07', 300, {}, 'tofu'), // density 0.36、単発 (4件目の高密度食材)
     ];
-    const result = computeWeeklyRecap(logs, makeProfile(2000), [], undefined, NOW);
-    expect(result?.macroBoost?.candidates).toHaveLength(3);
-    expect(result?.macroBoost?.candidates[0].identityId).toBe('chicken_lean');
-    expect(result?.macroBoost?.candidates[1].identityId).toBe('chicken_thigh');
+    const lowProtein = { protein: 60, fat: 50, carbs: 200 };
+    const thisWeek = computeWeeklyRecap(
+      [makeLog('2026-07-27', 2000, lowProtein), ...history], makeProfile(2000), [], undefined, NOW,
+    );
+    const nextWeek = computeWeeklyRecap(
+      [makeLog('2026-08-03', 2000, lowProtein), ...history], makeProfile(2000), [], undefined, new Date('2026-08-10T09:00:00'),
+    );
+    const a = thisWeek?.macroBoost?.candidates ?? [];
+    const b = nextWeek?.macroBoost?.candidates ?? [];
+    expect(a).toHaveLength(3);
+    expect(b).toHaveLength(3);
+    expect(a.every((c) => c.fromHistory)).toBe(true);
+    expect(a.map((c) => c.identityId)).not.toEqual(b.map((c) => c.identityId));
+  });
+});
+
+// ─────────────────────────────────────────────────────────────
+// 発見プール (PRD v1.8 §6.7.5)
+// ─────────────────────────────────────────────────────────────
+
+const kinds = (r: ReturnType<typeof computeWeeklyRecap>) => (r?.discoveries ?? []).map((d) => d.kind);
+/** PFC 目標どおり (乖離なし) の1日。macro の発見を出さずに食材系だけを見るため。 */
+const onTarget = { protein: 100, fat: 50, carbs: 200 };
+
+describe('computeWeeklyRecap — いつもとの差', () => {
+  it('その前の週の記録日数を返す。0日なら null', () => {
+    const withPrev = computeWeeklyRecap(
+      [makeLog('2026-07-27', 2000), makeLog('2026-07-20', 2000), makeLog('2026-07-21', 2000)],
+      makeProfile(2000), [], undefined, NOW,
+    );
+    expect(withPrev?.prevWeekDaysLogged).toBe(2);
+    const without = computeWeeklyRecap([makeLog('2026-07-27', 2000)], makeProfile(2000), [], undefined, NOW);
+    expect(without?.prevWeekDaysLogged).toBeNull();
+  });
+
+  it('前4週に7日以上の記録があれば基準平均を出し、±10%以上なら方向を持つ', () => {
+    const baseline = Array.from({ length: 8 }, (_, i) => makeLog(formatDateKey(new Date(2026, 6, 1 + i)), 2000));
+    const more = computeWeeklyRecap([makeLog('2026-07-27', 2400), ...baseline], makeProfile(2000), [], undefined, NOW);
+    expect(more?.baselineAvgKcal).toBe(2000);
+    expect(more?.kcalVsUsual).toBe('more');
+    const same = computeWeeklyRecap([makeLog('2026-07-27', 2100), ...baseline], makeProfile(2000), [], undefined, NOW);
+    expect(same?.kcalVsUsual).toBeNull();
+  });
+
+  it('基準の記録日が7日未満なら基準平均は null', () => {
+    const r = computeWeeklyRecap(
+      [makeLog('2026-07-27', 2400), makeLog('2026-07-20', 2000)], makeProfile(2000), [], undefined, NOW,
+    );
+    expect(r?.baselineAvgKcal).toBeNull();
+    expect(r?.kcalVsUsual).toBeNull();
+  });
+});
+
+describe('computeWeeklyRecap — 食材の発見', () => {
+  it('はじめて記録した食材を newFoods に出す (以前の記録があるユーザーのみ)', () => {
+    const r = computeWeeklyRecap(
+      [makeLog('2026-07-01', 500, onTarget, 'egg'), makeLog('2026-07-28', 2000, onTarget, 'tofu')],
+      makeProfile(2000), [], undefined, NOW,
+    );
+    const d = r?.discoveries.find((x) => x.kind === 'newFoods');
+    expect(d && d.kind === 'newFoods' && d.items.map((i) => i.identityId)).toEqual(['tofu']);
+  });
+
+  it('記録をはじめた最初の週は newFoods を出さない (全部が初登場になるため)', () => {
+    const r = computeWeeklyRecap([makeLog('2026-07-28', 2000, onTarget, 'tofu')], makeProfile(2000), [], undefined, NOW);
+    expect(kinds(r)).not.toContain('newFoods');
+  });
+
+  it('28日以上空いた食材を comebackFoods に「◯週ぶり」付きで出す', () => {
+    const r = computeWeeklyRecap(
+      [makeLog('2026-06-01', 500, onTarget, 'egg'), makeLog('2026-07-10', 500, onTarget, 'tofu'),
+        makeLog('2026-07-29', 2000, onTarget, 'egg'), makeLog('2026-07-29', 300, onTarget, 'tofu')],
+      makeProfile(2000), [], undefined, NOW,
+    );
+    const d = r?.discoveries.find((x) => x.kind === 'comebackFoods');
+    // egg は 58日ぶり (8週)。tofu は 19日なので対象外。
+    expect(d && d.kind === 'comebackFoods' && d.items).toEqual([{ identityId: 'egg', label: getIdentity('egg')!.label, weeksSince: 8 }]);
+  });
+
+  it('週内で3回以上の食材を topFood に出す。前週と同じ食材なら休ませる', () => {
+    const week = ['2026-07-27', '2026-07-28', '2026-07-29'].map((d) => makeLog(d, 2000, onTarget, 'egg'));
+    const fresh = computeWeeklyRecap(week, makeProfile(2000), [], undefined, NOW);
+    expect(kinds(fresh)).toContain('topFood');
+
+    const prevWeek = ['2026-07-20', '2026-07-21', '2026-07-22'].map((d) => makeLog(d, 2000, onTarget, 'egg'));
+    const repeat = computeWeeklyRecap([...week, ...prevWeek], makeProfile(2000), [], undefined, NOW);
+    // 前週も egg がトップ → 休ませる。他に発見が無いので fallback で出る
+    expect(kinds(repeat)).toEqual(['topFood']);
+    const withNew = computeWeeklyRecap(
+      [...week, ...prevWeek, makeLog('2026-07-30', 300, onTarget, 'tofu')], makeProfile(2000), [], undefined, NOW,
+    );
+    // はじめての tofu がある週は、休ませた topFood は出さない
+    expect(kinds(withNew)).toEqual(['newFoods']);
+  });
+});
+
+describe('computeWeeklyRecap — PFC の連続週', () => {
+  const lowProtein = { protein: 60, fat: 50, carbs: 200 };
+  const weekOf = (monday: string) => makeLog(monday, 2000, lowProtein);
+  const newFood = [makeLog('2026-06-01', 300, onTarget, 'egg'), makeLog('2026-07-28', 300, onTarget, 'tofu')];
+
+  it('1週目は streakWeeks=1 で出す', () => {
+    const r = computeWeeklyRecap([weekOf('2026-07-27'), ...newFood], makeProfile(2000), [], undefined, NOW);
+    const m = r?.discoveries.find((d) => d.kind === 'macro');
+    expect(m && m.kind === 'macro' && m.streakWeeks).toBe(1);
+  });
+
+  it('2週連続は休ませる (他に発見があれば出さない)', () => {
+    const r = computeWeeklyRecap(
+      [weekOf('2026-07-27'), weekOf('2026-07-20'), ...newFood], makeProfile(2000), [], undefined, NOW,
+    );
+    expect(kinds(r)).not.toContain('macro');
+  });
+
+  it('3週連続なら streakWeeks=3 で出す (「3週続けて」)', () => {
+    const r = computeWeeklyRecap(
+      [weekOf('2026-07-27'), weekOf('2026-07-20'), weekOf('2026-07-13'), ...newFood], makeProfile(2000), [], undefined, NOW,
+    );
+    const m = r?.discoveries.find((d) => d.kind === 'macro');
+    expect(m && m.kind === 'macro' && m.streakWeeks).toBe(3);
+  });
+});
+
+describe('selectDiscoveries', () => {
+  const item = { identityId: 'egg', label: 'たまご' };
+  const macro = {
+    kind: 'macro' as const,
+    insight: { axis: 'protein' as const, direction: 'less' as const, avgActual: 60, avgTarget: 100 },
+    streakWeeks: 1,
+    boost: null,
+  };
+
+  it('枠(3枚)に高スコア順で詰め、表示は物語順に並べ直す', () => {
+    const picked = selectDiscoveries([
+      { discovery: { kind: 'topFood', item, count: 3 }, score: 0.6, cost: 1 },
+      { discovery: macro, score: 0.7, cost: 2 },
+      { discovery: { kind: 'newFoods', items: [item] }, score: 0.9, cost: 1 },
+      { discovery: { kind: 'comebackFoods', items: [{ ...item, weeksSince: 5 }] }, score: 0.8, cost: 1 },
+    ]);
+    // newFoods(0.9) → comeback(0.8) → macro(2枚)は入らない → topFood(0.6)
+    expect(picked.map((d) => d.kind)).toEqual(['topFood', 'newFoods', 'comebackFoods']);
+  });
+
+  it('休ませる候補しか無ければ、それを使う', () => {
+    const picked = selectDiscoveries([{ discovery: macro, score: 0.05, cost: 1 }]);
+    expect(picked.map((d) => d.kind)).toEqual(['macro']);
   });
 });

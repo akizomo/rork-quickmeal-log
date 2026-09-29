@@ -513,25 +513,31 @@
       "tapHint": "タップして進む"
     },
     "days": {
-      "label": "01 — 記録日数",
+      "label": "記録日数",
       "lead": "先週、記録が残っていたのは",
-      "outOf": "／7日"
+      "outOf": "／7日",
+      "prevWeek": "その前の週は {{days}}日"
     },
     "kcal": {
-      "label": "02 — カロリー",
+      "label": "カロリー",
       "lead": "先週、1日あたり食べていたのは",
-      "target": "目標 {{kcal}}kcal"
+      "target": "目標 {{kcal}}kcal",
+      "baseline": "前の4週の平均 {{kcal}}kcal",
+      "usualMore": "いつもより 多め",
+      "usualLess": "いつもより 少なめ"
     },
     "insight": {
-      "label": "03 — {{macro}}",
+      "label": "{{macro}}",
       "lead": "目標との差がいちばん大きかったのは",
       "less": "目標より 少なめ",
       "more": "目標より 多め",
       "barActual": "1日の平均",
-      "barTarget": "1日の目標"
+      "barTarget": "1日の目標",
+      "streakLess": "{{weeks}}週続けて 少なめ",
+      "streakMore": "{{weeks}}週続けて 多め"
     },
     "advice": {
-      "label": "04 — アドバイス",
+      "label": "アドバイス",
       "leadMore": "{{macro}}を増やしたいときは",
       "leadLess": "{{macro}}が少なめの選択肢なら",
       "sourcePrefix": "出典: "
@@ -540,7 +546,22 @@
       "lead": "ざっくりが、\n続くコツ",
       "nextWeek": "来週の振り返りは、次の月曜に。"
     },
-    "nutritionNote": "豆知識 · {{label}}"
+    "nutritionNote": "豆知識 · {{label}}",
+    "sectionLabel": "{{num}} — {{label}}",
+    "topFood": {
+      "label": "いちばん多く",
+      "lead": "先週、いちばん多く記録したのは",
+      "count": "{{count}}回"
+    },
+    "newFoods": {
+      "label": "はじめて",
+      "lead": "先週、はじめて記録したのは"
+    },
+    "comebackFoods": {
+      "label": "ひさしぶり",
+      "lead": "先週、ひさしぶりに記録したのは",
+      "weeksSince": "{{weeks}}週ぶり"
+    }
   },
   "help": {
     "nav": {

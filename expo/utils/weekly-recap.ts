@@ -7,15 +7,20 @@
  *   - 記録が1日も無い週は null (「0日記録」は評価的に響くため出さない)
  *   - 進行中の今週は対象外 (完了週のみ)
  *
+ * 発見プール方式 (PRD v1.8 §6.7.5): 固定の数値だけでは毎週同じ内容になるため、
+ * 「いつもの自分との差」「はじめて/ひさしぶり」の候補をスコア付きで集め、
+ * 枠 (DISCOVERY_CARD_BUDGET) に収まる分だけ選んで `discoveries` に入れる。
+ * 選抜は記録データだけから決定的に求める (同じ週なら何度開いても同じ内容)。
+ *
  * 詳細は docs/ROADMAP.md §3.0「次の一手」実行順3 (週次振り返りの報酬化)。
  */
 
-import type { DailyActivitySummary, ExerciseLog, FoodLog, UserProfile } from '@/types/nutrition';
-import { addDays, formatWeekRangeLabel, getDailyMacros, getWeekRange, startOfDay } from '@/utils/history';
+import type { DailyActivitySummary, ExerciseLog, FoodLog, Macro, UserProfile } from '@/types/nutrition';
+import { addDays, diffInDays, formatWeekRangeLabel, getDailyMacros, getWeekRange, startOfDay, type DateRange } from '@/utils/history';
 import { formatDateKey } from '@/utils/nutrition';
 import { adjustedTargetKcal } from '@/utils/goals';
 import { ALL_IDENTITIES, getIdentity } from '@/constants/identity';
-import type { NutritionNote } from '@/types/identity';
+import type { Identity, NutritionNote } from '@/types/identity';
 import type { AppLocale } from '@/types/locale';
 import ja from '@/locales/ja.json';
 import enUS from '@/locales/en-US.json';
@@ -46,6 +51,36 @@ const AXIS_LOW_DENSITY_THRESHOLD: Record<MacroAxis, number> = { protein: 0.10, f
 
 /** macroBoost で提示する候補の最大数。 */
 const MAX_BOOST_CANDIDATES = 3;
+
+/** カタログ補完でローテーションする候補の母数 (密度上位)。広げすぎると馴染みの薄い食材ばかりになる。 */
+const CATALOG_ROTATION_POOL = 9;
+
+/** 「いつも」の基準にする、対象週より前の週数。 */
+const BASELINE_WEEKS = 4;
+
+/** 基準平均を出すのに必要な最小記録日数。これ未満の基準は「いつも」と呼べない。 */
+const BASELINE_MIN_DAYS = 7;
+
+/** 平均kcalを「いつもより多め/少なめ」と言える最小乖離率。 */
+const VS_USUAL_THRESHOLD_RATIO = 0.1;
+
+/** 「ひさしぶり」とみなす、直前の記録からの最小空白日数。 */
+const COMEBACK_MIN_GAP_DAYS = 28;
+
+/** 「いちばん多く」を出す最小回数。2回程度では「よく食べた」と言えない。 */
+const TOP_FOOD_MIN_COUNT = 3;
+
+/** 食材リスト系の発見に並べる最大件数。 */
+const MAX_FOOD_ITEMS = 3;
+
+/** 発見スライドの枠 (カード枚数)。固定部と合わせて全体 6〜7 枚に収める。 */
+const DISCOVERY_CARD_BUDGET = 3;
+
+/** これ未満のスコアの候補は「休ませる」。他に出せる発見が1つも無い週だけ使う。 */
+const REST_SCORE = 0.2;
+
+/** PFC の連続週数を遡る上限。1週目 / 3週目 / それ以外、を区別できれば足りる。 */
+const MAX_STREAK_LOOKBACK = 4;
 
 /**
  * 1食材が複数の豆知識を持つとき、どれを出すかを weekKey から決定的に選ぶ。
@@ -114,6 +149,31 @@ export interface WeeklyRecapDay {
   targetKcal: number;
 }
 
+export interface WeeklyFoodItem {
+  identityId: string;
+  label: string;
+}
+
+/**
+ * 発見スライド1件。表示順は DISCOVERY_ORDER で固定 (スコア順ではなく物語の流れ優先)。
+ * macro だけはインサイト+アドバイスで最大2枚ぶんの枠を使う。
+ */
+export type WeeklyDiscovery =
+  | { kind: 'topFood'; item: WeeklyFoodItem; count: number }
+  | { kind: 'newFoods'; items: WeeklyFoodItem[] }
+  | { kind: 'comebackFoods'; items: (WeeklyFoodItem & { weeksSince: number })[] }
+  | {
+      kind: 'macro';
+      insight: WeeklyMacroInsight;
+      /** 同じ軸・方向が何週続いているか (この週を含む)。3 のとき UI は「3週続けて」と言う。 */
+      streakWeeks: number;
+      boost: WeeklyMacroBoost | null;
+    };
+
+export type WeeklyDiscoveryKind = WeeklyDiscovery['kind'];
+
+const DISCOVERY_ORDER: WeeklyDiscoveryKind[] = ['topFood', 'newFoods', 'comebackFoods', 'macro'];
+
 export interface WeeklyRecap {
   /** 対象週の月曜日 (dateKey)。dismiss 済み判定のキーにも使う。 */
   weekKey: string;
@@ -142,6 +202,50 @@ export interface WeeklyRecap {
    * 豆知識 (note) は less 方向のみ添付。
    */
   macroBoost: WeeklyMacroBoost | null;
+  /** その前の週の記録日数。0日なら null (「0日」は評価的に響くため出さない)。 */
+  prevWeekDaysLogged: number | null;
+  /** 前 BASELINE_WEEKS 週の記録日の平均kcal。記録日が BASELINE_MIN_DAYS 未満なら null。 */
+  baselineAvgKcal: number | null;
+  /** 平均kcalが基準から ±VS_USUAL_THRESHOLD_RATIO 以上ずれた週だけ方向を持つ。 */
+  kcalVsUsual: 'more' | 'less' | null;
+  /** 選抜済みの発見スライド (表示順)。 */
+  discoveries: WeeklyDiscovery[];
+}
+
+interface WeekCore {
+  range: DateRange;
+  weekKey: string;
+  entries: [string, Macro][];
+  loggedDays: [string, Macro][];
+  targetForKey: (key: string) => number;
+  macroInsight: WeeklyMacroInsight | null;
+}
+
+/** 1週ぶんの集計の土台。対象週と、比較用の過去週の両方で使う。 */
+function computeWeekCore(
+  logs: FoodLog[],
+  profile: UserProfile,
+  exerciseLogs: ExerciseLog[],
+  dailyActivities: DailyActivitySummary[] | undefined,
+  anchor: Date,
+): WeekCore {
+  const range = getWeekRange(anchor);
+  const weekKey = formatDateKey(range.start);
+  const entries = [...getDailyMacros(logs, range).entries()]; // getWeekRange は月曜始まりなので既に月〜日の順
+  const loggedDays = entries.filter(([, m]) => m.kcal > 0);
+
+  const base = profile.targetCalories > 0 ? profile.targetCalories : 0;
+  const targetForKey = (key: string): number => {
+    if (base <= 0) return 0;
+    const rawActiveKcal = (dailyActivities ?? []).find((d) => d.date === key)?.activeKcal ?? 0;
+    return adjustedTargetKcal(base, exerciseLogs, key, { rawActiveKcal });
+  };
+
+  const macroInsight = base > 0 && loggedDays.length > 0
+    ? computeMacroInsight(loggedDays, profile, targetForKey, base)
+    : null;
+
+  return { range, weekKey, entries, loggedDays, targetForKey, macroInsight };
 }
 
 /**
@@ -157,26 +261,17 @@ export function computeWeeklyRecap(
   uiLanguage: AppLocale = 'ja',
 ): WeeklyRecap | null {
   const today = startOfDay(now);
-  const lastWeekAnchor = addDays(today, -7);
-  const range = getWeekRange(lastWeekAnchor);
-  const weekKey = formatDateKey(range.start);
+  const weekAnchor = (weeksAgo: number) => addDays(today, -7 * weeksAgo);
+  const core = (weeksAgo: number) => computeWeekCore(logs, profile, exerciseLogs, dailyActivities, weekAnchor(weeksAgo));
 
-  const dailyMap = getDailyMacros(logs, range);
-  const entries = [...dailyMap.entries()]; // getWeekRange は月曜始まりなので既に月〜日の順
-  const loggedDays = entries.filter(([, m]) => m.kcal > 0);
+  const current = core(1);
+  const { range, weekKey, entries, loggedDays, targetForKey, macroInsight } = current;
   if (loggedDays.length === 0) return null;
 
   const totalKcal = Math.round(loggedDays.reduce((sum, [, m]) => sum + m.kcal, 0));
   const avgKcal = Math.round(totalKcal / loggedDays.length);
 
-  const base = profile.targetCalories > 0 ? profile.targetCalories : 0;
-  const targetForKey = (key: string): number => {
-    if (base <= 0) return 0;
-    const rawActiveKcal = (dailyActivities ?? []).find((d) => d.date === key)?.activeKcal ?? 0;
-    return adjustedTargetKcal(base, exerciseLogs, key, { rawActiveKcal });
-  };
-
-  const avgTargetKcal = base > 0
+  const avgTargetKcal = profile.targetCalories > 0
     ? Math.round(
         loggedDays.reduce((sum, [key]) => sum + targetForKey(key), 0) / loggedDays.length,
       )
@@ -190,11 +285,41 @@ export function computeWeeklyRecap(
     targetKcal: Math.round(targetForKey(key)),
   }));
 
-  const macroInsight = base > 0
-    ? computeMacroInsight(loggedDays, profile, targetForKey, base)
-    : null;
+  const weekIndex = weekIndexOf(range.start);
+  const macroBoost = computeMacroBoost(logs, macroInsight, weekKey, weekIndex);
 
-  const macroBoost = computeMacroBoost(logs, macroInsight, weekKey);
+  // ── いつもとの差 (固定カードの補足) ──
+  const pastWeeks = Array.from({ length: BASELINE_WEEKS }, (_, i) => core(i + 2));
+  const prevDays = pastWeeks[0]?.loggedDays.length ?? 0;
+  const baselineDays = pastWeeks.flatMap((w) => w.loggedDays);
+  const baselineAvgKcal = baselineDays.length >= BASELINE_MIN_DAYS
+    ? Math.round(baselineDays.reduce((sum, [, m]) => sum + m.kcal, 0) / baselineDays.length)
+    : null;
+  let kcalVsUsual: 'more' | 'less' | null = null;
+  if (baselineAvgKcal && baselineAvgKcal > 0) {
+    const ratio = (avgKcal - baselineAvgKcal) / baselineAvgKcal;
+    if (Math.abs(ratio) >= VS_USUAL_THRESHOLD_RATIO) kcalVsUsual = ratio > 0 ? 'more' : 'less';
+  }
+
+  // ── 発見プール ──
+  const candidates: ScoredDiscovery[] = [
+    ...computeFoodDiscoveries(logs, range, pastWeeks[0]?.range ?? null),
+  ];
+  if (macroInsight) {
+    let streakWeeks = 1;
+    for (let k = 2; k <= MAX_STREAK_LOOKBACK + 1; k++) {
+      const prev = core(k).macroInsight;
+      if (!prev || prev.axis !== macroInsight.axis || prev.direction !== macroInsight.direction) break;
+      streakWeeks += 1;
+    }
+    candidates.push({
+      discovery: { kind: 'macro', insight: macroInsight, streakWeeks, boost: macroBoost },
+      // 1週目は新しい情報。3週目は「3週続けて」と一度だけ言う (VOICE.md の例文)。
+      // それ以外の連続週は、同じことを繰り返さないよう休ませる。
+      score: streakWeeks === 1 ? 0.7 : streakWeeks === 3 ? 0.75 : 0.05,
+      cost: macroBoost ? 2 : 1,
+    });
+  }
 
   return {
     weekKey,
@@ -206,7 +331,143 @@ export function computeWeeklyRecap(
     days,
     macroInsight,
     macroBoost,
+    prevWeekDaysLogged: prevDays > 0 ? prevDays : null,
+    baselineAvgKcal,
+    kcalVsUsual,
+    discoveries: selectDiscoveries(candidates),
   };
+}
+
+export interface ScoredDiscovery {
+  discovery: WeeklyDiscovery;
+  /** 0〜1。「いつもとの差」「新しさ」が大きいほど高い。 */
+  score: number;
+  /** 使うカード枚数。 */
+  cost: number;
+}
+
+/**
+ * スコアの高い順に枠へ詰め、表示は DISCOVERY_ORDER の順に並べ直す。
+ * REST_SCORE 未満の候補は、それ以上の候補が1つも無い週だけ使う。
+ */
+export function selectDiscoveries(candidates: ScoredDiscovery[]): WeeklyDiscovery[] {
+  const strong = candidates.filter((c) => c.score >= REST_SCORE);
+  const pool = (strong.length > 0 ? strong : candidates).slice().sort((a, b) => b.score - a.score);
+  const picked: WeeklyDiscovery[] = [];
+  let used = 0;
+  for (const c of pool) {
+    if (used + c.cost > DISCOVERY_CARD_BUDGET) continue;
+    picked.push(c.discovery);
+    used += c.cost;
+  }
+  return picked.sort((a, b) => DISCOVERY_ORDER.indexOf(a.kind) - DISCOVERY_ORDER.indexOf(b.kind));
+}
+
+/** 週の通し番号 (ローテーション用)。タイムゾーン/DST に左右されないよう暦日から求める。 */
+function weekIndexOf(weekStart: Date): number {
+  const days = Date.UTC(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate()) / 86_400_000;
+  return Math.floor(days / 7);
+}
+
+/** list から weekIndex に応じて n 件を循環的に取り出す。n 件以下ならそのまま。 */
+function rotate<T>(list: T[], n: number, weekIndex: number): T[] {
+  if (list.length <= n) return list;
+  const start = (weekIndex * n) % list.length;
+  return Array.from({ length: n }, (_, i) => list[(start + i) % list.length]);
+}
+
+/** topFood / newFoods / comebackFoods の候補。Identity を持たない旧形式ログは対象外。 */
+function computeFoodDiscoveries(
+  logs: FoodLog[],
+  range: DateRange,
+  prevRange: DateRange | null,
+): ScoredDiscovery[] {
+  const startKey = formatDateKey(range.start);
+  const endKey = formatDateKey(range.end);
+
+  const firstInWeek = new Map<string, string>();
+  const countInWeek = new Map<string, number>();
+  const lastBefore = new Map<string, string>();
+  let hasPriorHistory = false;
+
+  for (const log of logs) {
+    if (log.date < startKey) hasPriorHistory = true;
+    if (!log.identityId) continue;
+    const id = log.identityId;
+    if (log.date < startKey) {
+      const prev = lastBefore.get(id);
+      if (!prev || log.date > prev) lastBefore.set(id, log.date);
+    } else if (log.date <= endKey) {
+      countInWeek.set(id, (countInWeek.get(id) ?? 0) + 1);
+      const first = firstInWeek.get(id);
+      if (!first || log.date < first) firstInWeek.set(id, log.date);
+    }
+  }
+
+  const toItem = (id: string): WeeklyFoodItem | null => {
+    const identity = getIdentity(id);
+    return identity ? { identityId: id, label: identity.label } : null;
+  };
+
+  const out: ScoredDiscovery[] = [];
+
+  // いちばん多く (同数なら週内で先に出た方)
+  const top = [...countInWeek.entries()]
+    .filter(([, n]) => n >= TOP_FOOD_MIN_COUNT)
+    .sort((a, b) => b[1] - a[1] || firstInWeek.get(a[0])!.localeCompare(firstInWeek.get(b[0])!))[0];
+  const topItem = top ? toItem(top[0]) : null;
+  if (top && topItem) {
+    const prevTop = prevRange ? topIdentityIn(logs, prevRange) : null;
+    out.push({
+      discovery: { kind: 'topFood', item: topItem, count: top[1] },
+      // 前週と同じ食材なら「いつも通り」なので発見としては弱い。
+      score: prevTop === top[0] ? 0.1 : 0.6,
+      cost: 1,
+    });
+  }
+
+  // はじめて (初週は全部が初登場になるので、それ以前の記録があるユーザーのみ)
+  if (hasPriorHistory) {
+    const items = [...firstInWeek.entries()]
+      .filter(([id]) => !lastBefore.has(id))
+      .sort((a, b) => a[1].localeCompare(b[1]))
+      .map(([id]) => toItem(id))
+      .filter((x): x is WeeklyFoodItem => x !== null)
+      .slice(0, MAX_FOOD_ITEMS);
+    if (items.length > 0) out.push({ discovery: { kind: 'newFoods', items }, score: 0.9, cost: 1 });
+  }
+
+  // ひさしぶり (空白の長い順)
+  const comebacks = [...firstInWeek.entries()]
+    .map(([id, first]) => {
+      const last = lastBefore.get(id);
+      if (!last) return null;
+      const gap = diffInDays(new Date(`${first}T00:00:00`), new Date(`${last}T00:00:00`));
+      if (gap < COMEBACK_MIN_GAP_DAYS) return null;
+      const item = toItem(id);
+      return item ? { ...item, weeksSince: Math.floor(gap / 7), gap } : null;
+    })
+    .filter((x): x is WeeklyFoodItem & { weeksSince: number; gap: number } => x !== null)
+    .sort((a, b) => b.gap - a.gap)
+    .slice(0, MAX_FOOD_ITEMS)
+    .map(({ gap: _gap, ...rest }) => rest);
+  if (comebacks.length > 0) {
+    out.push({ discovery: { kind: 'comebackFoods', items: comebacks }, score: 0.8, cost: 1 });
+  }
+
+  return out;
+}
+
+function topIdentityIn(logs: FoodLog[], range: DateRange): string | null {
+  const startKey = formatDateKey(range.start);
+  const endKey = formatDateKey(range.end);
+  const counts = new Map<string, number>();
+  for (const log of logs) {
+    if (!log.identityId || log.date < startKey || log.date > endKey) continue;
+    counts.set(log.identityId, (counts.get(log.identityId) ?? 0) + 1);
+  }
+  const top = [...counts.entries()].filter(([, n]) => n >= TOP_FOOD_MIN_COUNT).sort((a, b) => b[1] - a[1])[0];
+  return top ? top[0] : null;
 }
 
 function densityFor(axis: MacroAxis, macro: { kcal: number; protein: number; fat: number; carbs: number }): number {
@@ -225,6 +486,7 @@ function computeMacroBoost(
   allLogs: FoodLog[],
   insight: WeeklyMacroInsight | null,
   weekKey: string,
+  weekIndex: number,
 ): WeeklyMacroBoost | null {
   if (!insight) return null;
   const { axis, direction } = insight;
@@ -235,27 +497,31 @@ function computeMacroBoost(
     freq.set(log.identityId, (freq.get(log.identityId) ?? 0) + 1);
   }
 
-  if (direction === 'less') {
-    const fromHistory: WeeklyMacroBoostCandidate[] = [...freq.entries()]
-      .map(([identityId, count]): { identityId: string; label: string; count: number } | null => {
-        const identity = getIdentity(identityId);
-        if (!identity || densityFor(axis, identity.defaultMacro) < AXIS_DENSITY_THRESHOLD[axis]) return null;
-        return { identityId, label: identity.label, count };
-      })
-      .filter((c): c is { identityId: string; label: string; count: number } => c !== null)
+  /** 記録履歴のうち条件を満たす Identity を回数順に。 */
+  const historyMatching = (match: (identity: Identity) => boolean): WeeklyMacroBoostCandidate[] =>
+    [...freq.entries()]
+      .map(([identityId, count]) => ({ identity: getIdentity(identityId), count }))
+      .filter((c): c is { identity: Identity; count: number } => !!c.identity && match(c.identity))
       .sort((a, b) => b.count - a.count)
-      .map(({ identityId, label }) => ({ identityId, label, fromHistory: true }));
+      .map(({ identity }) => ({ identityId: identity.id, label: identity.label, fromHistory: true }));
 
-    let candidates = fromHistory.slice(0, MAX_BOOST_CANDIDATES);
+  if (direction === 'less') {
+    const isDense = (identity: Identity) => densityFor(axis, identity.defaultMacro) >= AXIS_DENSITY_THRESHOLD[axis];
+    const fromHistory = historyMatching(isDense);
 
-    if (candidates.length < MAX_BOOST_CANDIDATES) {
-      const seenIds = new Set(candidates.map((c) => c.identityId));
-      const fallback = ALL_IDENTITIES
-        .filter((identity) => !seenIds.has(identity.id) && densityFor(axis, identity.defaultMacro) >= AXIS_DENSITY_THRESHOLD[axis])
+    // 履歴に十分あれば履歴だけを週ごとにローテーション (毎週同じ3品にしない)。
+    // 足りなければ履歴 + カタログ補完。補完側も密度上位の中でローテーションする。
+    let candidates: WeeklyMacroBoostCandidate[];
+    if (fromHistory.length > MAX_BOOST_CANDIDATES) {
+      candidates = rotate(fromHistory, MAX_BOOST_CANDIDATES, weekIndex);
+    } else {
+      const seenIds = new Set(fromHistory.map((c) => c.identityId));
+      const catalogPool = ALL_IDENTITIES
+        .filter((identity) => !seenIds.has(identity.id) && isDense(identity))
         .sort((a, b) => densityFor(axis, b.defaultMacro) - densityFor(axis, a.defaultMacro))
-        .slice(0, MAX_BOOST_CANDIDATES - candidates.length)
+        .slice(0, CATALOG_ROTATION_POOL)
         .map((identity): WeeklyMacroBoostCandidate => ({ identityId: identity.id, label: identity.label, fromHistory: false }));
-      candidates = [...candidates, ...fallback];
+      candidates = [...fromHistory, ...rotate(catalogPool, MAX_BOOST_CANDIDATES - fromHistory.length, weekIndex)];
     }
 
     if (candidates.length === 0) return null;
@@ -275,16 +541,11 @@ function computeMacroBoost(
   }
 
   // direction === 'more': 低密度食材を記録履歴から提示 (カタログ補完なし)
-  const candidates: WeeklyMacroBoostCandidate[] = [...freq.entries()]
-    .map(([identityId, count]): { identityId: string; label: string; count: number } | null => {
-      const identity = getIdentity(identityId);
-      if (!identity || densityFor(axis, identity.defaultMacro) >= AXIS_LOW_DENSITY_THRESHOLD[axis]) return null;
-      return { identityId, label: identity.label, count };
-    })
-    .filter((c): c is { identityId: string; label: string; count: number } => c !== null)
-    .sort((a, b) => b.count - a.count)
-    .slice(0, MAX_BOOST_CANDIDATES)
-    .map(({ identityId, label }) => ({ identityId, label, fromHistory: true }));
+  const candidates = rotate(
+    historyMatching((identity) => densityFor(axis, identity.defaultMacro) < AXIS_LOW_DENSITY_THRESHOLD[axis]),
+    MAX_BOOST_CANDIDATES,
+    weekIndex,
+  );
 
   if (candidates.length === 0) return null;
 
