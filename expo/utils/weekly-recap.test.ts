@@ -7,7 +7,7 @@
 
 import { computeWeeklyRecap, selectDiscoveries } from './weekly-recap';
 import type { FoodLog, UserProfile } from '@/types/nutrition';
-import { getIdentity } from '@/constants/identity';
+import { ALL_IDENTITIES, getIdentity } from '@/constants/identity';
 import { formatDateKey } from '@/utils/nutrition';
 
 // 基準日: 2026-08-03 (月) を「今週」とする。
@@ -531,6 +531,26 @@ describe('computeWeeklyRecap — 栄養素の内訳 (macroSources) と豆知識'
     const d = r?.discoveries.find((x) => x.kind === 'newFoods');
     expect(d && d.kind === 'newFoods' && d.note?.identityId).toBe('egg');
     expect(d && d.kind === 'newFoods' && d.note?.note.source.label).toBeTruthy();
+  });
+});
+
+describe('豆知識データ (nutritionNotes) — 出典必須ルール', () => {
+  it('全ての Identity の豆知識が、出典ラベルとURLを持つ (§10.14 追補-1)', () => {
+    const withNotes = ALL_IDENTITIES.filter((i) => (i.nutritionNotes?.length ?? 0) > 0);
+    expect(withNotes.length).toBeGreaterThan(50);
+    for (const identity of withNotes) {
+      for (const note of identity.nutritionNotes ?? []) {
+        expect(note.text.length).toBeGreaterThan(10);
+        expect(note.source.label.length).toBeGreaterThan(0);
+        expect(note.source.url ?? '').toMatch(/^https:\/\//);
+      }
+    }
+  });
+
+  it('料理 (dishes) にも豆知識がある: ラーメン/カレー/定食 など主要な料理', () => {
+    for (const id of ['ramen_light', 'ramen_heavy', 'soba', 'udon', 'curry_class', 'katsu_curry', 'fried_main', 'teishoku', 'nabe']) {
+      expect(getIdentity(id)?.nutritionNotes?.length ?? 0).toBeGreaterThan(0);
+    }
   });
 });
 

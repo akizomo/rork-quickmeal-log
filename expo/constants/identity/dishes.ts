@@ -9,7 +9,57 @@
  *   - canned_lean_fish 油漬 migration is on the ingredient side
  */
 
-import { Identity } from '@/types/identity';
+import { Identity, NutritionNoteSource } from '@/types/identity';
+
+// ---------------------------------------------------------------------------
+// 豆知識 (nutritionNotes) の出典。方針: docs/US-food-db-design.md §10.14 追補 (出典必須・UI表示・知見の紹介)。
+// 数値は 2026-09-29 に原典で確認したもの。数字を変えるときは原典を必ず再確認すること。
+// ---------------------------------------------------------------------------
+
+/** 麺類のつゆ・汁ものの食塩量 (ラーメン 8.1g→4.7g / そば 6.4g→3.2g / 汁もの 1.5〜2g)。「血圧が高い人の食生活」パンフレット。 */
+const SRC_DOCK: NutritionNoteSource = {
+  label: '日本人間ドック学会 特定健診パンフレット（厚生労働省 検討会資料所収）',
+  url: 'https://www.mhlw.go.jp/stf/shingi/2r9852000001reju-att/2r9852000001rep8.pdf',
+};
+
+/** カレールウ 100g あたり 脂質34.1g・食塩相当量10.6g (八訂 増補2023)。 */
+const SRC_SEIBUN_ROUX: NutritionNoteSource = {
+  label: '文部科学省 日本食品標準成分表（八訂）増補2023 カレールウ',
+  url: 'https://fooddb.mext.go.jp/details/details.pl?ITEM_NO=17_17051_7',
+};
+
+/** 揚げ物100gに使われた衣の粉の量と、調理による脂質の増減 (表17)。 */
+const SRC_SEIBUN_FRY: NutritionNoteSource = {
+  label: '文部科学省 日本食品標準成分表（揚げ物における衣の割合及び脂質量の増減）',
+  url: 'https://www.mext.go.jp/component/a_menu/science/detail/__icsFiles/afieldfile/2016/11/08/1365334_1-0320r3.pdf',
+};
+
+/** 主食・副菜・主菜の区分 (厚生労働省・農林水産省 決定、平成17年6月)。 */
+const SRC_BALANCE_GUIDE: NutritionNoteSource = {
+  label: '農林水産省 食事バランスガイド',
+  url: 'https://www.maff.go.jp/j/syokuiku/kenzensyokuseikatsu/about_b_guide.html',
+};
+
+/** 野菜の目標 350g/日 と平均摂取量 (令和元年 国民健康・栄養調査: 男性約290g・女性約270g)。 */
+const SRC_VEGETABLE: NutritionNoteSource = {
+  label: '厚生労働省 スマート・ライフ・プロジェクト（健康日本21）',
+  url: 'https://kennet.mhlw.go.jp/slp/tools/web_learning/eat.html',
+};
+
+const NOTE_RAMEN = {
+  text: 'ラーメンは、スープを残すかどうかで食塩の量が大きく変わります。日本人間ドック学会のパンフレットでは、汁を全部飲むと約8.1g、残すと約4.7gという目安が示されています。',
+  source: SRC_DOCK,
+};
+
+const NOTE_TEMPURA = {
+  text: 'きすの天ぷら100gあたり、衣の天ぷら粉は約13g、調理で増える脂質は約15gです（成分表の調理例）。素材の外側に、衣と揚げ油の分が足されています。',
+  source: SRC_SEIBUN_FRY,
+};
+
+const NOTE_TONKATSU = {
+  text: '揚げると、脂質の増え方は素材で変わります。成分表の調理例では、とんかつ100gあたり、脂身つきロースで約11g、脂質の少ないヒレで約21g増えています。',
+  source: SRC_SEIBUN_FRY,
+};
 
 // ---------------------------------------------------------------------------
 // Bucket 1: どんぶり (rice_dish) — 5 Identity
@@ -78,6 +128,10 @@ const BUCKET_RICE_DISH: Identity[] = [
     label: 'カツ丼・天丼',
     searchTags: ['かつどん', 'てんどん'],
     primaryHome: { tab: 'dish', bucket: 'rice_dish' },
+    nutritionNotes: [
+      NOTE_TONKATSU,
+      NOTE_TEMPURA,
+    ],
     defaultMacro: { kcal: 850, protein: 27, fat: 29, carbs: 109 },
     referenceDescription: 'ご飯200g + カツ/天ぷら + 卵',
     amount: { unit: 'percent', default: 100, chips: [{ label: '並', value: 100 }, { label: '大盛', value: 150 }] },
@@ -129,6 +183,9 @@ const BUCKET_CURRY: Identity[] = [
     label: 'カレー・シチュー系',
     searchTags: ['カレー', 'シチュー', 'カレーライス'],
     primaryHome: { tab: 'dish', bucket: 'curry' },
+    nutritionNotes: [
+      { text: 'カレーのルウは、重さの約3分の1が脂質、約10分の1が食塩相当量です（市販の固形ルウ100gあたり、脂質34.1g・食塩相当量10.6g）。味の濃さは、ルウの量で大きく変わります。', source: SRC_SEIBUN_ROUX },
+    ],
     defaultMacro: { kcal: 720, protein: 21, fat: 23, carbs: 100 },
     referenceDescription: 'ご飯200g + ルー・具',
     amount: { unit: 'percent', default: 100, chips: [{ label: '並', value: 100 }, { label: '大盛', value: 150 }, { label: '特盛', value: 200 }] },
@@ -146,6 +203,10 @@ const BUCKET_CURRY: Identity[] = [
     id: 'katsu_curry',
     label: 'カツカレー',
     primaryHome: { tab: 'dish', bucket: 'curry' },
+    nutritionNotes: [
+      { text: 'カレーのルウは、重さの約3分の1が脂質、約10分の1が食塩相当量です（市販の固形ルウ100gあたり、脂質34.1g・食塩相当量10.6g）。味の濃さは、ルウの量で大きく変わります。', source: SRC_SEIBUN_ROUX },
+      NOTE_TONKATSU,
+    ],
     defaultMacro: { kcal: 980, protein: 29, fat: 38, carbs: 126 },
     referenceDescription: 'ご飯200g + カツ + ルー',
     amount: { unit: 'percent', default: 100, chips: [{ label: '並', value: 100 }, { label: '大盛', value: 150 }] },
@@ -192,6 +253,9 @@ const BUCKET_CHINESE_NOODLES: Identity[] = [
     label: 'ラーメン (あっさり)',
     searchTags: ['らーめん', 'ラーメン'],
     primaryHome: { tab: 'dish', bucket: 'chinese_noodles' },
+    nutritionNotes: [
+      NOTE_RAMEN,
+    ],
     defaultMacro: { kcal: 560, protein: 25, fat: 10, carbs: 100 },
     referenceDescription: '麺150g + スープ・基本具 (汁残し前提)',
     amount: { unit: 'percent', default: 100, chips: [{ label: '小さめ', value: 75 }, { label: '普通', value: 100 }, { label: '大盛', value: 150 }] },
@@ -211,6 +275,9 @@ const BUCKET_CHINESE_NOODLES: Identity[] = [
     label: 'ラーメン (こってり)',
     searchTags: ['らーめん', 'ラーメン'],
     primaryHome: { tab: 'dish', bucket: 'chinese_noodles' },
+    nutritionNotes: [
+      NOTE_RAMEN,
+    ],
     defaultMacro: { kcal: 820, protein: 32, fat: 29, carbs: 99 },
     referenceDescription: '麺150g + こってりスープ・チャーシュー (汁残し前提)',
     amount: { unit: 'percent', default: 100, chips: [{ label: '小さめ', value: 75 }, { label: '普通', value: 100 }, { label: '大盛', value: 150 }] },
@@ -242,6 +309,9 @@ const BUCKET_CHINESE_NOODLES: Identity[] = [
     label: '二郎系',
     searchTags: ['じろうけい', 'じろう'],
     primaryHome: { tab: 'dish', bucket: 'chinese_noodles' },
+    nutritionNotes: [
+      NOTE_RAMEN,
+    ],
     defaultMacro: { kcal: 1500, protein: 55, fat: 75, carbs: 150 },
     referenceDescription: '麺300g + 大量野菜+豚 (1人前=小)',
     amount: { unit: 'percent', default: 100, chips: [{ label: '麺少', value: 75 }, { label: '小', value: 100 }, { label: '大', value: 150 }] },
@@ -310,6 +380,9 @@ const BUCKET_JAPANESE_NOODLES: Identity[] = [
     id: 'udon',
     label: 'うどん',
     primaryHome: { tab: 'dish', bucket: 'japanese_noodles' },
+    nutritionNotes: [
+      { text: 'うどんなどの麺類は、つゆに食塩が多く含まれます。日本人間ドック学会のパンフレットでは、そばは汁を残すと約6.4gが約3.2gに、ラーメンは約8.1gが約4.7gに減る目安が示されています。', source: SRC_DOCK },
+    ],
     defaultMacro: { kcal: 430, protein: 12, fat: 2, carbs: 85 },
     referenceDescription: '麺250g (生1玉) + 出汁 (トッピングはアドオンで追加)',
     amount: { unit: 'percent', default: 100, chips: [{ label: '小', value: 50 }, { label: '1人前', value: 100 }, { label: '大盛', value: 150 }, { label: '特盛', value: 200 }] },
@@ -329,6 +402,9 @@ const BUCKET_JAPANESE_NOODLES: Identity[] = [
     id: 'soba',
     label: 'そば',
     primaryHome: { tab: 'dish', bucket: 'japanese_noodles' },
+    nutritionNotes: [
+      { text: 'そばは、つゆを残すと食塩が半分ほどになります。日本人間ドック学会のパンフレットでは、つゆまで全部だと約6.4g、残すと約3.2gという目安が示されています。', source: SRC_DOCK },
+    ],
     defaultMacro: { kcal: 410, protein: 15, fat: 2.5, carbs: 79 },
     referenceDescription: '麺250g (生1玉) + つゆ (トッピングはアドオンで追加)',
     amount: { unit: 'percent', default: 100, chips: [{ label: '小', value: 50 }, { label: '1人前', value: 100 }, { label: '大盛', value: 150 }, { label: '特盛', value: 200 }] },
@@ -346,6 +422,9 @@ const BUCKET_JAPANESE_NOODLES: Identity[] = [
     label: '天ぷら麺',
     searchTags: ['てんぷら', 'てんそば', 'てんぷらうどん'],
     primaryHome: { tab: 'dish', bucket: 'japanese_noodles' },
+    nutritionNotes: [
+      NOTE_TEMPURA,
+    ],
     defaultMacro: { kcal: 665, protein: 22, fat: 17, carbs: 98 },
     referenceDescription: '麺250g + 天ぷら2-3個',
     amount: { unit: 'percent', default: 100, chips: [{ label: '1人前', value: 100 }, { label: '大盛', value: 150 }] },
@@ -738,6 +817,9 @@ const BUCKET_MISC_DISH: Identity[] = [
     label: '定食',
     searchTags: ['ていしょく'],
     primaryHome: { tab: 'dish', bucket: 'misc_dish' },
+    nutritionNotes: [
+      { text: 'ごはんとおかず、汁がそろう定食は、食事バランスガイドの「主食・副菜・主菜」をそろえやすい形です。ごはん・麺は主食、野菜・いも・海藻・きのこは副菜、肉・魚・卵・大豆は主菜にあたります。', source: SRC_BALANCE_GUIDE },
+    ],
     quickTapDisabled: true, // Attribute 焼魚/焼肉/唐揚げ/トンカツ/生姜焼き/ハンバーグ: kcal 700-1003, F 18-40
     defaultMacro: { kcal: 850, protein: 32, fat: 30, carbs: 108 },
     referenceDescription: 'ご飯200g+主菜+副菜+味噌汁',
@@ -766,6 +848,9 @@ const BUCKET_MISC_DISH: Identity[] = [
     label: '弁当',
     searchTags: ['べんとう'],
     primaryHome: { tab: 'dish', bucket: 'misc_dish' },
+    nutritionNotes: [
+      { text: 'お弁当は、主食のごはんに、主菜と副菜が詰め合わせになった形です。食事バランスガイドでは、野菜・いも・海藻・きのこの料理が「副菜」、肉・魚・卵・大豆の料理が「主菜」とされています。', source: SRC_BALANCE_GUIDE },
+    ],
     defaultMacro: { kcal: 700, protein: 23, fat: 20, carbs: 98 },
     referenceDescription: 'ご飯+主菜+副菜 (お弁当箱1食)',
     amount: {
@@ -794,6 +879,10 @@ const BUCKET_MISC_DISH: Identity[] = [
     label: '揚げもの単品',
     searchTags: ['からあげ', 'あげもの'],
     primaryHome: { tab: 'dish', bucket: 'misc_dish' },
+    nutritionNotes: [
+      NOTE_TEMPURA,
+      { text: '揚げ物の脂質は、素材で増え方が変わります。成分表の調理例では、若鶏もも（皮つき）のから揚げは肉の脂が油に溶け出して100gあたり約1g減り、皮なしは約5g増えています。', source: SRC_SEIBUN_FRY },
+    ],
     quickTapDisabled: true, // Attribute 唐揚げ/とんかつ/エビフライ/コロッケ/フライドポテト: kcal 200-500, F 12-30
     defaultMacro: { kcal: 350, protein: 18, fat: 20, carbs: 18 },
     referenceDescription: '1個=衣+主菜',
@@ -950,6 +1039,9 @@ const BUCKET_MISC_DISH: Identity[] = [
     label: '鍋もの',
     searchTags: ['なべもの', 'なべ'],
     primaryHome: { tab: 'dish', bucket: 'misc_dish' },
+    nutritionNotes: [
+      { text: '国の目標は、野菜を1日350g以上。令和元年の調査では、平均は男性約290g、女性約270gでした。鍋ものは、野菜を一度に取り入れやすい料理のひとつです。', source: SRC_VEGETABLE },
+    ],
     // こってり系(すき焼き/しゃぶしゃぶ)とあっさり系(寄せ鍋/水炊き/豆乳鍋)を統合。
     // 基準はすき焼き (旧 nabe_heavy)。おでんは具のばらつきが大きすぎるため除外
     // (食材タブから個別記録推奨)。
@@ -1027,6 +1119,9 @@ const BUCKET_MISC_DISH: Identity[] = [
     label: '汁物・スープ',
     searchTags: ['しるもの', 'みそしる'],
     primaryHome: { tab: 'dish', bucket: 'misc_dish' },
+    nutritionNotes: [
+      { text: '汁もの1杯には、食塩相当量が1.5〜2gほど含まれます。血圧が高い人向けの日本人間ドック学会のパンフレットでは、1日1杯までが目安とされています。', source: SRC_DOCK },
+    ],
     // 和風(味噌汁/豚汁)と洋風(コンソメ/クリーム)を統合。基準は味噌汁(具薄)。
     quickTapDisabled: true,
     defaultMacro: { kcal: 40, protein: 2.5, fat: 1, carbs: 4 },
