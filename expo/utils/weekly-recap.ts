@@ -98,7 +98,10 @@ const MAX_STREAK_LOOKBACK = 4;
  * weekKey と identityId を混ぜてハッシュするため、食材ごとに別の周期で回る
  * (同じ週に複数食材が揃って1番目のノートを出す、といった偏りを避ける)。
  */
-function pickNutritionNote(notes: NutritionNote[], identityId: string, weekKey: string): NutritionNote | null {
+function pickNutritionNote(allNotes: NutritionNote[], identityId: string, weekKey: string): NutritionNote | null {
+  // 2系統以上の出典で照合できた (alsoSources を持つ) ノートだけを出す。
+  // 単一出典のノートは、照合が済むまでコードに残しつつ、ユーザーには見せない (§10.14 追補 2026-09-29)。
+  const notes = allNotes.filter((n) => (n.alsoSources?.length ?? 0) > 0);
   if (notes.length === 0) return null;
   const seed = `${weekKey}:${identityId}`;
   let hash = 0;

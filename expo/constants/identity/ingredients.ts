@@ -24,6 +24,60 @@ const SRC_CAA: NutritionNoteSource = {
   url: 'https://www.caa.go.jp/policies/policy/food_labeling/foods_with_nutrient_function_claims',
 };
 
+// ---------------------------------------------------------------------------
+// 豆知識の補強出典 (alsoSources)。方針: docs/US-food-db-design.md §10.14 追補 (2026-09-29)・照合記録: docs/NUTRITION_NOTES_SOURCES.md
+// 2系統以上で照合できたノートだけが UI に出る (utils/weekly-recap.ts の pickNutritionNote)。
+// ---------------------------------------------------------------------------
+
+/** 成分表 (八訂 増補2023) の個別食品ページ。100gあたりの実測値。 */
+const seibun = (label: string, itemNo: string): NutritionNoteSource => ({
+  label: `文部科学省 日本食品標準成分表（八訂）増補2023 ${label}`,
+  url: `https://fooddb.mext.go.jp/details/details.pl?ITEM_NO=${itemNo}`,
+});
+
+const harvard = (label: string, path: string): NutritionNoteSource => ({
+  label: `ハーバード公衆衛生大学院 The Nutrition Source（${label}）`,
+  url: `https://nutritionsource.hsph.harvard.edu/${path}`,
+});
+const H_IRON = harvard('鉄', 'iron/');
+const H_VITK = harvard('ビタミンK', 'vitamin-k/');
+const H_VITC = harvard('ビタミンC', 'vitamin-c/');
+const H_VITA = harvard('ビタミンA', 'vitamin-a/');
+const H_VITE = harvard('ビタミンE', 'vitamin-e/');
+const H_CALCIUM = harvard('カルシウム', 'calcium/');
+const H_POTASSIUM = harvard('カリウム', 'potassium/');
+const H_AVOCADO = harvard('アボカド', 'avocados/');
+
+/** 加工肉の定義 (塩漬け・燻製などで風味や保存性を高めた肉。例: ハム・ソーセージ・ジャーキー)。 */
+const SRC_WHO_PROCESSED_MEAT: NutritionNoteSource = {
+  label: 'WHO 赤肉・加工肉の発がん性に関するQ&A',
+  url: 'https://who.int/news-room/questions-and-answers/item/cancer-carcinogenicity-of-the-consumption-of-red-meat-and-processed-meat',
+};
+
+/** 鶏むね肉(皮なし,生) たんぱく質22.5g・脂質2.62g / 鶏皮のみ(生) 脂質32.4g (USDA SR Legacy)。 */
+const SRC_USDA_CHICKEN: NutritionNoteSource = {
+  label: '米国農務省 USDA FoodData Central（鶏むね肉・鶏皮）',
+  url: 'https://fdc.nal.usda.gov/fdc-app.html#/food-details/171077/nutrients',
+};
+
+/** 卵のDIAAS: ゆで卵110〜135%(年齢の基準による)、FAOの「優れた品質」は100以上。 */
+const SRC_EGG_DIAAS_2024: NutritionNoteSource = {
+  label: 'Journal of Nutritional Science 2024（卵のたんぱく質品質 DIAAS）',
+  url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC11658930/',
+};
+
+/** 卵たんぱくのDIAAS 101±11.7 (17種のたんぱく質源の比較)。 */
+const SRC_EGG_DIAAS_2020: NutritionNoteSource = {
+  label: 'Food Science & Nutrition 2020（たんぱく質源のDIAAS比較）',
+  url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC7590266/',
+};
+
+/** 調理法別のビタミン保持率 (10種の野菜。ビタミンCはゆでるのが最も低い)。 */
+const SRC_COOKING_VITAMINS: NutritionNoteSource = {
+  label: 'Food Science and Biotechnology 2017（調理法とビタミン保持率）',
+  url: 'https://doi.org/10.1007/s10068-017-0281-1',
+};
+
 /** 組成・含有量の記述元。 */
 const SRC_SEIBUN: NutritionNoteSource = {
   label: '文部科学省 日本食品標準成分表',
@@ -244,7 +298,11 @@ const BUCKET_STAPLE: Identity[] = [
     referenceDescription: 'じゃがいも・里芋・長芋・かぼちゃなど、でんぷん質の多い野菜',
     defaultMacro: { kcal: 76, protein: 1.9, fat: 0.1, carbs: 17 },
     nutritionNotes: [
-      { text: 'じゃがいもや里芋に含まれるビタミンCは、皮膚や粘膜の健康維持を助けるとともに、抗酸化作用を持つ栄養素です。', source: SRC_CAA },
+      {
+        text: 'じゃがいもや里芋に含まれるビタミンCは、皮膚や粘膜の健康維持を助けるとともに、抗酸化作用を持つ栄養素です。',
+        source: SRC_CAA,
+        alsoSources: [H_VITC],
+      },
     ],
     amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '小', value: 70 }, { label: '1個', value: 100 }, { label: '大', value: 180 }] },
     styles: [
@@ -357,7 +415,11 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
     primaryHome: { tab: 'ingredient', bucket: 'lean_protein' },
     defaultMacro: { kcal: 105, protein: 23, fat: 1.5, carbs: 0 },
     nutritionNotes: [
-      { text: '鶏むねは、筋肉や臓器の材料になるたんぱく質を多く含み、脂質は控えめな食材です。', source: SRC_SEIBUN },
+      {
+        text: '鶏むね（皮なし）は、たんぱく質が多く脂質が控えめな食材です。成分表では100gあたり、たんぱく質24.4g・脂質1.9gです（米国USDAでは22.5g・2.62g）。',
+        source: seibun('鶏むね（皮なし）', '11_11214_7'),
+        alsoSources: [SRC_USDA_CHICKEN],
+      },
     ],
     amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '100', value: 100 }, { label: '150', value: 150 }, { label: '200', value: 200 }] },
     attributes: [
@@ -472,7 +534,11 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
     // 旧 default 135/21/5 (牛もも基準) → 新 130/22/4 (牛豚もも・ヒレ平均)。
     defaultMacro: { kcal: 130, protein: 22, fat: 4, carbs: 0 },
     nutritionNotes: [
-      { text: '赤身肉に含まれる鉄は、赤血球をつくるのに必要な栄養素です。', source: SRC_CAA },
+      {
+        text: '赤身肉に含まれる鉄は、赤血球をつくるのに必要な栄養素です。',
+        source: SRC_CAA,
+        alsoSources: [H_IRON],
+      },
     ],
     amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '100', value: 100 }, { label: '150', value: 150 }, { label: '200', value: 200 }] },
     attributes: [
@@ -544,7 +610,11 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
     primaryHome: { tab: 'ingredient', bucket: 'lean_protein' },
     defaultMacro: { kcal: 85, protein: 15, fat: 2, carbs: 3.5 },
     nutritionNotes: [
-      { text: 'ジャーキーは水分を抜いてある分、同じ重さでも筋肉の材料になるたんぱく質と塩分がどちらも濃くなります。量が少なく見えても両方とりすぎやすい食品です。', source: SRC_SEIBUN },
+      {
+        text: 'ジャーキーは、水分を抜き、塩で味つけ・保存した加工肉です。成分表では100gあたり、たんぱく質54.8g・食塩相当量4.8gで、生の牛かた肉（16.5g・0.1g）よりどちらも濃くなっています。',
+        source: seibun('ビーフジャーキー', '11_11107_7'),
+        alsoSources: [SRC_WHO_PROCESSED_MEAT],
+      },
     ],
     amount: { unit: 'g', default: 30, step: 10, chips: [{ label: '20', value: 20 }, { label: '30', value: 30 }, { label: '50', value: 50 }] },
     searchTags: ['ビーフジャーキー', 'さきいか', 'あたりめ'],
@@ -556,8 +626,16 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
     primaryHome: { tab: 'ingredient', bucket: 'lean_protein' },
     defaultMacro: { kcal: 130, protein: 20, fat: 3.5, carbs: 2.5 },
     nutritionNotes: [
-      { text: 'レバーは、赤血球をつくる鉄と、夜間の視力の維持に関わるビタミンAが際立って多い食材です。少量でも量的な影響が大きくなります。', source: SRC_SEIBUN },
-      { text: 'レバーに多いビタミンAは、夜間の視力の維持を助けるとともに、皮膚や粘膜の健康維持を助ける栄養素です。', source: SRC_CAA },
+      {
+        text: 'レバーは、赤血球をつくる鉄と、夜間の視力の維持に関わるビタミンAが際立って多い食材です。成分表では鶏レバー100gに、鉄9.0mg・ビタミンA14,000μgRAEが含まれます。',
+        source: seibun('鶏レバー', '11_11232_7'),
+        alsoSources: [H_IRON, H_VITA],
+      },
+      {
+        text: 'レバーに多いビタミンAは、夜間の視力の維持を助けるとともに、皮膚や粘膜の健康維持を助ける栄養素です。',
+        source: SRC_CAA,
+        alsoSources: [H_VITA],
+      },
     ],
     amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '100', value: 100 }, { label: '150', value: 150 }] },
   },
@@ -576,7 +654,11 @@ const BUCKET_EGG: Identity[] = [
     primaryHome: { tab: 'ingredient', bucket: 'egg' },
     defaultMacro: { kcal: 75, protein: 6.2, fat: 5.2, carbs: 0.2 },
     nutritionNotes: [
-      { text: '卵は、体に必要な必須アミノ酸をすべて含む数少ない食品のひとつです。', source: SRC_SEIBUN },
+      {
+        text: '卵のたんぱく質は、FAOの評価法（DIAAS）で最上位の「優れた品質」（100以上）に分類されます。ゆで卵は年齢の基準により110〜135%、卵たんぱくは101%という報告があります。',
+        source: SRC_EGG_DIAAS_2024,
+        alsoSources: [SRC_EGG_DIAAS_2020],
+      },
     ],
     amount: { unit: 'piece', default: 1 },
     attributes: [
@@ -616,7 +698,11 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
     primaryHome: { tab: 'ingredient', bucket: 'fatty_protein' },
     defaultMacro: { kcal: 200, protein: 17, fat: 14, carbs: 0 },
     nutritionNotes: [
-      { text: '鶏の脂質は皮に集まっています。皮を外すと脂質は大きく下がり、むね肉に近い組成になります。', source: SRC_SEIBUN },
+      {
+        text: '鶏の脂質は皮に集まっています。成分表では、むね肉100gの脂質は皮つきが17.2g、皮なしが1.9gです。米国USDAでも、皮のみは32.4g、皮なしのむね肉は2.62gです。',
+        source: seibun('鶏むね（皮つき）', '11_11213_7'),
+        alsoSources: [SRC_USDA_CHICKEN],
+      },
     ],
     amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '100', value: 100 }, { label: '150', value: 150 }, { label: '1枚', value: 250 }] },
     attributes: [
@@ -651,7 +737,11 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
     defaultMacro: { kcal: 230, protein: 17.5, fat: 16.5, carbs: 0 },
     nutritionNotes: [
       { text: '牛肉や豚肉の鉄(ヘム鉄)は、野菜や大豆の鉄(非ヘム鉄)より吸収されやすい形をしています。組み合わせを気にせず、そのままとれるのが特徴です。', source: SRC_SEIBUN },
-      { text: '牛肉や豚肉に含まれる鉄は、赤血球をつくるのに必要な栄養素です。', source: SRC_CAA },
+      {
+        text: '牛肉や豚肉に含まれる鉄は、赤血球をつくるのに必要な栄養素です。',
+        source: SRC_CAA,
+        alsoSources: [H_IRON],
+      },
     ],
     amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '100', value: 100 }, { label: '150', value: 150 }, { label: '200', value: 200 }] },
     attributes: [
@@ -747,7 +837,11 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
     defaultMacro: { kcal: 280, protein: 28, fat: 16, carbs: 0.5 },
     nutritionNotes: [
       { text: '魚の缶詰は加圧加熱で骨まで柔らかくなるため、骨ごと食べられます。生の切り身では残す部分がそのままとれます。', source: SRC_SEIBUN },
-      { text: '骨ごと食べられる魚の缶詰でとれるカルシウムは、骨や歯の形成に必要な栄養素です。', source: SRC_CAA },
+      {
+        text: '骨ごと食べられる魚の缶詰でとれるカルシウムは、骨や歯の形成に必要な栄養素です。',
+        source: SRC_CAA,
+        alsoSources: [H_CALCIUM],
+      },
     ],
     referenceDescription: 'さば缶・いわし缶など。コンビニ個食サイズ(100〜150g)が目安。190g大缶は量を調整',
     amount: { unit: 'piece', default: 1, chips: [{ label: '半缶', value: 0.5 }, { label: '1缶', value: 1 }] },
@@ -768,7 +862,11 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
     primaryHome: { tab: 'ingredient', bucket: 'fatty_protein' },
     defaultMacro: { kcal: 40, protein: 5, fat: 2.5, carbs: 1 },
     nutritionNotes: [
-      { text: 'ハムやベーコンなどの加工肉には、保存と味つけのために塩分が加えられています。', source: SRC_SEIBUN },
+      {
+        text: 'ハムやベーコンなどの加工肉は、塩漬けや燻製などで風味や保存性を高めた肉です。成分表では、ロースハム100gに食塩相当量2.3g、ばらベーコンに2.6gが含まれます。',
+        source: seibun('ロースハム', '11_11176_7'),
+        alsoSources: [SRC_WHO_PROCESSED_MEAT],
+      },
     ],
     amount: { unit: 'piece', default: 2, unitLabel: '枚', chips: [{ label: '2枚', value: 2 }, { label: '4枚', value: 4 }] },
     asAddon: {
@@ -784,7 +882,11 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
     primaryHome: { tab: 'ingredient', bucket: 'fatty_protein' },
     defaultMacro: { kcal: 100, protein: 5, fat: 9, carbs: 0.5 },
     nutritionNotes: [
-      { text: 'ベーコンやソーセージは脂身ごと加工されるため、脂質と塩分をあわせて含みます。', source: SRC_SEIBUN },
+      {
+        text: 'ベーコンやソーセージは、脂質と塩分をあわせて含みます。成分表では100gあたり、ばらベーコンが脂質19.4g・食塩相当量2.6g、ウインナーが脂質30.6g・食塩相当量1.9gです。',
+        source: seibun('ばらベーコン', '11_11183_7'),
+        alsoSources: [SRC_WHO_PROCESSED_MEAT],
+      },
     ],
     amount: { unit: 'piece', default: 2, unitLabel: '枚', chips: [{ label: '2枚', value: 2 }, { label: '1パック', value: 5 }] },
     attributes: [
@@ -823,7 +925,11 @@ const BUCKET_DAIRY_SOY: Identity[] = [
     primaryHome: { tab: 'ingredient', bucket: 'dairy_soy' },
     defaultMacro: { kcal: 134, protein: 6.6, fat: 7.6, carbs: 9.6 },
     nutritionNotes: [
-      { text: '牛乳に多く含まれるカルシウムは、骨や歯の形成に必要な栄養素です。', source: SRC_CAA },
+      {
+        text: '牛乳に多く含まれるカルシウムは、骨や歯の形成に必要な栄養素です。',
+        source: SRC_CAA,
+        alsoSources: [H_CALCIUM],
+      },
     ],
     amount: { unit: 'ml', default: 200, step: 10, chips: [{ label: 'コップ', value: 100 }, { label: '200', value: 200 }, { label: '500', value: 500 }] },
     attributes: [
@@ -864,7 +970,11 @@ const BUCKET_DAIRY_SOY: Identity[] = [
     primaryHome: { tab: 'ingredient', bucket: 'dairy_soy' },
     defaultMacro: { kcal: 80, protein: 5, fat: 6, carbs: 1 },
     nutritionNotes: [
-      { text: 'チーズは牛乳を凝縮してつくるため、少量でも骨や歯の形成に必要なカルシウムがとれます。', source: SRC_SEIBUN },
+      {
+        text: 'チーズは、少量でもカルシウムが多い食品です。成分表では、プロセスチーズ100gに630mg（牛乳は110mg）が含まれます。',
+        source: seibun('プロセスチーズ', '13_13040_7'),
+        alsoSources: [H_CALCIUM],
+      },
     ],
     amount: { unit: 'g', default: 20, chips: [{ label: 'スライス1枚', value: 18 }, { label: '30', value: 30 }, { label: '50', value: 50 }] }, // スライス1枚=18g (実測値。step整合を優先せず精度維持)
     attributes: [
@@ -905,7 +1015,11 @@ const BUCKET_DAIRY_SOY: Identity[] = [
     primaryHome: { tab: 'ingredient', bucket: 'dairy_soy' },
     defaultMacro: { kcal: 92, protein: 7.2, fat: 4, carbs: 6.2 },
     nutritionNotes: [
-      { text: '豆乳は大豆由来のたんぱく質を含みますが、骨や歯の形成に必要なカルシウムは牛乳ほど多くありません。牛乳の代わりに使うときは、カルシウムが添加された製品かどうかが分かれ目になります。', source: SRC_SEIBUN },
+      {
+        text: '豆乳は大豆由来のたんぱく質を含みますが、カルシウムは牛乳ほど多くありません。成分表では、調製豆乳が100gあたり31mg、牛乳は110mgです。牛乳の代わりにするときは、カルシウムが強化された製品かどうかが分かれ目になります。',
+        source: seibun('調製豆乳', '4_04053_7'),
+        alsoSources: [H_CALCIUM],
+      },
     ],
     amount: { unit: 'ml', default: 200, step: 10, chips: [{ label: 'コップ', value: 100 }, { label: '200', value: 200 }] },
     attributes: [
@@ -922,7 +1036,11 @@ const BUCKET_DAIRY_SOY: Identity[] = [
     primaryHome: { tab: 'ingredient', bucket: 'dairy_soy' },
     defaultMacro: { kcal: 83, protein: 7.5, fat: 4.5, carbs: 3 },
     nutritionNotes: [
-      { text: '豆腐は、大豆由来の筋肉や臓器の材料になるたんぱく質と、骨や歯の材料になるカルシウムを含みます。', source: SRC_SEIBUN },
+      {
+        text: '豆腐は、たんぱく質とカルシウムを含む食品です。成分表では、木綿豆腐100gにたんぱく質7.0g・カルシウム93mgが含まれます。',
+        source: seibun('木綿豆腐', '4_04032_7'),
+        alsoSources: [H_CALCIUM],
+      },
     ],
     amount: { unit: 'piece', default: 0.5, unitLabel: '丁', chips: [{ label: '半丁', value: 0.5 }, { label: '1丁', value: 1 }] },
     attributes: [
@@ -956,8 +1074,16 @@ const BUCKET_DAIRY_SOY: Identity[] = [
     primaryHome: { tab: 'ingredient', bucket: 'dairy_soy' },
     defaultMacro: { kcal: 80, protein: 6.6, fat: 4, carbs: 5 },
     nutritionNotes: [
-      { text: '納豆は、大豆にはほとんど無いビタミンKを、納豆菌が発酵させる過程でつくり出す食品です。', source: SRC_SEIBUN },
-      { text: '納豆に多いビタミンKは、正常な血液凝固と骨の健康維持に関わる栄養素です。', source: SRC_CAA },
+      {
+        text: '納豆は、発酵の過程でビタミンKを増やす食品です。成分表では、ゆで大豆100gが7μgなのに対し、納豆は600μgです。',
+        source: seibun('糸引き納豆', '4_04046_7'),
+        alsoSources: [H_VITK],
+      },
+      {
+        text: '納豆に多いビタミンKは、正常な血液凝固と骨の健康維持に関わる栄養素です。',
+        source: SRC_CAA,
+        alsoSources: [H_VITK],
+      },
     ],
     amount: { unit: 'piece', default: 1, unitLabel: 'パック' },
     asAddon: {
@@ -974,7 +1100,11 @@ const BUCKET_DAIRY_SOY: Identity[] = [
     primaryHome: { tab: 'ingredient', bucket: 'dairy_soy' },
     defaultMacro: { kcal: 65, protein: 6, fat: 3, carbs: 4 },
     nutritionNotes: [
-      { text: '大豆や枝豆に含まれる鉄は、赤血球をつくるのに必要な栄養素です。', source: SRC_CAA },
+      {
+        text: '大豆や枝豆に含まれる鉄は、赤血球をつくるのに必要な栄養素です。',
+        source: SRC_CAA,
+        alsoSources: [H_IRON],
+      },
       { text: '大豆の鉄は植物性で、肉や魚の鉄より吸収されにくい形です。ビタミンCを含むものと組み合わせると吸収が高まります。', source: SRC_SEIBUN },
     ],
     amount: { unit: 'g', default: 50, step: 10, chips: [{ label: '小皿', value: 50 }, { label: '100', value: 100 }] },
@@ -1090,7 +1220,11 @@ const BUCKET_VEGGIES: Identity[] = [
     defaultMacro: { kcal: 35, protein: 4.3, fat: 0.4, carbs: 5 },
     nutritionNotes: [
       { text: 'ブロッコリーは、野菜には珍しく、筋肉や臓器の材料になるたんぱく質を含む野菜です。', source: SRC_SEIBUN },
-      { text: 'ブロッコリーに多いビタミンCは、皮膚や粘膜の健康維持を助けるとともに、抗酸化作用を持つ栄養素です。', source: SRC_CAA },
+      {
+        text: 'ブロッコリーに多いビタミンCは、皮膚や粘膜の健康維持を助けるとともに、抗酸化作用を持つ栄養素です。',
+        source: SRC_CAA,
+        alsoSources: [H_VITC],
+      },
     ],
     amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '小', value: 50 }, { label: '普通', value: 100 }, { label: '大', value: 150 }] },
     attributes: [
@@ -1197,7 +1331,11 @@ const BUCKET_VEGGIES: Identity[] = [
     // コンソメ系薄口スープ基準 (野菜 100g + スープ 200ml 程度)。ミネストローネは misc_dish の soup_western へ。
     defaultMacro: { kcal: 35, protein: 1.5, fat: 0.5, carbs: 6 },
     nutritionNotes: [
-      { text: '水に溶けるタイプのビタミンは煮汁のほうに出ていきます。汁ごと食べる料理なら、溶け出した分も一緒にとれます。', source: SRC_SEIBUN },
+      {
+        text: 'ビタミンCは熱で壊れやすく、ゆでると減ります。成分表ではほうれんそう100gが、生で35mg、ゆでて19mgです。10種の野菜の研究でも、ゆでるのはビタミンCの保持率がもっとも低い調理法でした。',
+        source: seibun('ほうれんそう（生）', '6_06267_7'),
+        alsoSources: [H_VITC, SRC_COOKING_VITAMINS],
+      },
     ],
     amount: { unit: 'ml', default: 200, step: 10, chips: [{ label: '小', value: 150 }, { label: '普通', value: 200 }, { label: '大', value: 300 }] },
   },
@@ -1219,7 +1357,11 @@ const BUCKET_FRUIT: Identity[] = [
     defaultMacro: { kcal: 86, protein: 1.1, fat: 0.2, carbs: 22 },
     nutritionNotes: [
       { text: 'バナナは、体内の水分バランスに関わるミネラルのひとつ、カリウムを含みます。', source: SRC_SEIBUN },
-      { text: 'バナナに含まれるカリウムは、正常な血圧の維持に必要な栄養素です。', source: SRC_CAA },
+      {
+        text: 'バナナに含まれるカリウムは、正常な血圧の維持に必要な栄養素です。',
+        source: SRC_CAA,
+        alsoSources: [H_POTASSIUM],
+      },
     ],
     amount: { unit: 'piece', default: 1 },
     asAddon: {
@@ -1253,7 +1395,11 @@ const BUCKET_FRUIT: Identity[] = [
     primaryHome: { tab: 'ingredient', bucket: 'fruit' },
     defaultMacro: { kcal: 50, protein: 0.8, fat: 0.1, carbs: 13 },
     nutritionNotes: [
-      { text: '柑橘に多いビタミンCは水に溶けるタイプで、体にためておけません。まとめてではなく、日々こまめにとりたい栄養素です。', source: SRC_CAA },
+      {
+        text: '柑橘に多いビタミンCは水に溶けるタイプで、体にためておけません。まとめてではなく、日々こまめにとりたい栄養素です。',
+        source: SRC_CAA,
+        alsoSources: [H_VITC],
+      },
     ],
     amount: { unit: 'piece', default: 1 },
   },
@@ -1263,7 +1409,11 @@ const BUCKET_FRUIT: Identity[] = [
     primaryHome: { tab: 'ingredient', bucket: 'fruit' },
     defaultMacro: { kcal: 44, protein: 1.2, fat: 0.1, carbs: 11 }, // 10粒分
     nutritionNotes: [
-      { text: 'いちごに多いビタミンCは、皮膚や粘膜の健康維持を助けるとともに、抗酸化作用を持つ栄養素です。', source: SRC_CAA },
+      {
+        text: 'いちごに多いビタミンCは、皮膚や粘膜の健康維持を助けるとともに、抗酸化作用を持つ栄養素です。',
+        source: SRC_CAA,
+        alsoSources: [H_VITC],
+      },
     ],
     amount: {
       unit: 'piece',
@@ -1392,7 +1542,11 @@ const BUCKET_ADDED_FAT: Identity[] = [
     primaryHome: { tab: 'ingredient', bucket: 'added_fat' },
     defaultMacro: { kcal: 90, protein: 1, fat: 9, carbs: 0.5 },
     nutritionNotes: [
-      { text: 'アボカドは果物ですが、糖質ではなく脂質が主成分という珍しい存在です。', source: SRC_SEIBUN },
+      {
+        text: 'アボカドは果物ですが、糖質ではなく脂質が主成分です。成分表では、100gあたり脂質17.5g・炭水化物7.9gです。',
+        source: seibun('アボカド', '7_07006_7'),
+        alsoSources: [H_AVOCADO],
+      },
     ],
     amount: { unit: 'piece', default: 0.5, chips: [{ label: '1/4個', value: 0.25 }, { label: '半個', value: 0.5 }, { label: '1個', value: 1 }] },
     asAddon: {
@@ -1413,7 +1567,11 @@ const BUCKET_ADDED_FAT: Identity[] = [
     defaultMacro: { kcal: 180, protein: 6, fat: 15, carbs: 5 },
     nutritionNotes: [
       { text: 'ナッツの脂質は不飽和脂肪酸が中心で、常温でも固まりにくく、肉の脂(飽和脂肪酸)とは性質が違います。', source: SRC_SEIBUN },
-      { text: 'ナッツに含まれるビタミンEは、抗酸化作用により、体内の脂質を酸化から守り細胞の健康維持を助ける栄養素です。', source: SRC_CAA },
+      {
+        text: 'ナッツに含まれるビタミンEは、抗酸化作用により、体内の脂質を酸化から守り細胞の健康維持を助ける栄養素です。',
+        source: SRC_CAA,
+        alsoSources: [H_VITE],
+      },
     ],
     amount: { unit: 'g', default: 30, step: 5, chips: [{ label: '一掴み', value: 15 }, { label: '30', value: 30 }, { label: '50', value: 50 }] },
     attributes: [

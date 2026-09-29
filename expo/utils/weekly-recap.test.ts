@@ -291,8 +291,9 @@ describe('computeWeeklyRecap — macroBoost.note (観点A は観点Cに従属)',
   });
 
   it('週が変われば複数ノートのうち別のものが出うる (再会するたび違う角度)', () => {
-    const identity = getIdentity('beef_pork');
-    expect(identity?.nutritionNotes?.length ?? 0).toBeGreaterThan(1);
+    // 表示されるのは補強出典 (alsoSources) のあるノートだけ。natto は2件とも照合済み
+    const identity = getIdentity('natto');
+    expect((identity?.nutritionNotes ?? []).filter((n) => n.alsoSources?.length).length).toBeGreaterThan(1);
 
     // 26週分を回して、出てくるノートが1種類に固定されていないことを確かめる
     const seen = new Set<string>();
@@ -301,8 +302,8 @@ describe('computeWeeklyRecap — macroBoost.note (観点A は観点Cに従属)',
       const weekStart = formatDateKey(new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000));
       const logs = [
         makeLog(weekStart, 2000, { protein: 60, fat: 50, carbs: 200 }),
-        makeLog('2026-06-01', 300, {}, 'beef_pork'),
-        makeLog('2026-06-02', 300, {}, 'beef_pork'),
+        makeLog('2026-06-01', 300, {}, 'natto'),
+        makeLog('2026-06-02', 300, {}, 'natto'),
       ];
       const r = computeWeeklyRecap(logs, makeProfile(2000), [], undefined, now);
       const text = r?.macroBoost?.note?.note.text;
@@ -570,6 +571,25 @@ describe('豆知識データ (nutritionNotes) — 出典必須ルール', () => 
     const salty = dishNotes.filter((n) => /食塩|塩分/.test(n.text));
     expect(dishNotes.length).toBeGreaterThan(20);
     expect(salty.length / dishNotes.length).toBeLessThanOrEqual(0.3);
+  });
+});
+
+describe('豆知識ゲート — 補強出典の無いノートはユーザーに出さない', () => {
+  it('食材の豆知識のうち、照合済み (alsoSources あり) のものが十分な数ある', () => {
+    const verified = ALL_IDENTITIES.filter((i) => i.primaryHome.tab !== 'dish')
+      .flatMap((i) => (i.nutritionNotes ?? []).filter((n) => n.alsoSources?.length));
+    expect(verified.length).toBeGreaterThanOrEqual(25);
+  });
+
+  it('補強出典の無いノートしか持たない食材では、豆知識は出ない (例: ごはん)', () => {
+    const rice = getIdentity('rice');
+    expect((rice?.nutritionNotes ?? []).every((n) => !n.alsoSources?.length)).toBe(true);
+    const r = computeWeeklyRecap(
+      [makeLog('2026-07-01', 500, onTarget, 'egg'), makeLog('2026-07-28', 2000, onTarget, 'rice')],
+      makeProfile(2000), [], undefined, NOW,
+    );
+    const d = r?.discoveries.find((x) => x.kind === 'newFoods');
+    expect(d && d.kind === 'newFoods' && d.note).toBeNull();
   });
 });
 
