@@ -16,6 +16,7 @@ import {
   Identity,
   IdentityRegistry,
   IngredientBucketKey,
+  Preset,
 } from '@/types/identity';
 import type { AppLocale } from '@/types/locale';
 
@@ -26,6 +27,7 @@ import { ALL_MIGRATION_RULES, findMigration, STYLE_MIGRATIONS, ATTRIBUTE_MIGRATI
 import { US_INGREDIENT_IDENTITIES, US_INGREDIENT_IDENTITIES_BY_BUCKET } from './us/ingredients';
 import { US_DISH_IDENTITIES, US_DISH_IDENTITIES_BY_BUCKET } from './us/dishes';
 import { US_PURE_ADDONS_BY_ID, US_IDENTITY_ADDON_REFS } from './us/addons';
+import { JP_PRESETS } from './presets';
 
 // ---------------------------------------------------------------------------
 // Bucket definitions (UI labels & emoji)
@@ -202,6 +204,29 @@ export function resolveAddonRef(
   return undefined;
 }
 
+/** Add-on の表示名 (UI のトッピングチップ・検索結果の組み合わせ表示で共通)。 */
+export function getAddonLabel(refId: string): string {
+  const ref = resolveAddonRef(refId);
+  if (!ref) return refId;
+  if (ref.type === 'addon') return ref.data.label;
+  const identity = getIdentity(ref.identityId);
+  return identity?.asAddon?.defaultLabel ?? identity?.label ?? refId;
+}
+
+/**
+ * Preset の Add-on を IdentityLogSheet が受け取る形 (refType 付き) に変換する。
+ * refType はデータに持たず、ここで resolveAddonRef から導く (二重管理を避ける)。
+ */
+export function presetAddonInputs(
+  preset: Preset,
+): { refId: string; refType: 'identity' | 'addon'; units: number }[] {
+  return preset.addons.map((a) => ({
+    refId: a.refId,
+    refType: resolveAddonRef(a.refId)?.type === 'addon' ? 'addon' : 'identity',
+    units: a.units,
+  }));
+}
+
 // ---------------------------------------------------------------------------
 // Re-exports
 // ---------------------------------------------------------------------------
@@ -215,6 +240,7 @@ export {
   PURE_ADDONS_BY_ID,
   IDENTITY_ADDON_REFS,
   // resolveAddonRef: defined above as global (JP + US)
+  JP_PRESETS,
   ALL_MIGRATION_RULES,
   STYLE_MIGRATIONS,
   ATTRIBUTE_MIGRATIONS,

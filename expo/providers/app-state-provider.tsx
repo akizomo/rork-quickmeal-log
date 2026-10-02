@@ -201,6 +201,10 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     attributeKey?: string;
     /** Pre-select this Style when opening on identityId. */
     styleKey?: string;
+    /** Pre-fill the amount (insert mode only). Used by Preset search results. */
+    initialAmountValue?: number;
+    /** Pre-select these Add-ons (insert mode only). Used by Preset search results. */
+    initialAddons?: { refId: string; refType: 'identity' | 'addon'; units: number }[];
     /** When set, the sheet edits this existing FoodLog instead of creating new. */
     editingLogId?: string;
     /** Which QuickLogSection tab opened this sheet (for tabUsageCounts tracking). Absent for edits. */
@@ -565,6 +569,9 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
         identityId?: string;
         attributeKey?: string;
         styleKey?: string;
+        /** Preset: pre-fill amount / Add-ons (ignored when editingLogId is set). */
+        amountValue?: number;
+        addons?: { refId: string; refType: 'identity' | 'addon'; units: number }[];
         editingLogId?: string;
         sourceTab?: QuickLogTabKey;
         onDismiss?: () => void;
@@ -577,6 +584,8 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
         identityId: opts?.identityId,
         attributeKey: opts?.attributeKey,
         styleKey: opts?.styleKey,
+        initialAmountValue: opts?.amountValue,
+        initialAddons: opts?.addons,
         editingLogId: opts?.editingLogId,
         sourceTab: opts?.sourceTab,
       });

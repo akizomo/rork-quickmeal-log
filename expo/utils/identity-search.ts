@@ -16,11 +16,11 @@
  * 理由は identity-normalize.ts のコメント参照)。
  */
 
-import { ALL_IDENTITIES, ALL_US_IDENTITIES, getBucketDef } from '@/constants/identity';
+import { ALL_IDENTITIES, ALL_US_IDENTITIES, JP_PRESETS, getAddonLabel, getBucketDef } from '@/constants/identity';
 import { DISH_VOCABULARY } from '@/constants/identity/dish-vocabulary';
 import { HEAD_NOUNS, type HeadNounTarget } from '@/constants/identity/head-nouns';
 import { normalize, romajiVariant } from '@/utils/identity-normalize';
-import type { AttributeOption, BucketKey, Identity, StyleOption } from '@/types/identity';
+import type { AttributeOption, BucketKey, Identity, Preset, StyleOption } from '@/types/identity';
 import type { AppLocale } from '@/types/locale';
 import type { QuickLogHistoryMap } from '@/types/quick-log';
 
@@ -28,6 +28,11 @@ export interface SearchEntry {
   identity: Identity;
   attribute?: AttributeOption;
   style?: StyleOption;
+  /**
+   * 「ベース + Add-on」の組み合わせ (IA spec §1.5 判定3)。ある場合 identity/attribute/style は
+   * プリセットが指すベース側の値で、選ぶと Add-on・量が選択済みで開く。
+   */
+  preset?: Preset;
 }
 
 export interface SearchEntryResult {
@@ -147,13 +152,33 @@ function buildSearchIndex(identities: Identity[], genericLabels: Set<string>): S
   void genericLabels; // used in targetsFor below
 }
 
+/** Preset を検索エントリ化する。ベースが解決できないものは握りつぶさず例外にする (presets.test.ts が先に落ちる)。 */
+function buildPresetEntries(presets: Preset[], identities: Identity[]): SearchEntry[] {
+  return presets.map((preset) => {
+    const identity = identities.find((i) => i.id === preset.identityId);
+    if (!identity) throw new Error(`Preset "${preset.id}": unknown identity "${preset.identityId}"`);
+    return {
+      identity,
+      attribute: identity.attributes?.find((a) => a.key === preset.attributeKey),
+      style: identity.styles?.find((st) => st.key === preset.styleKey),
+      preset,
+    };
+  });
+}
+
 const JP_GENERIC_LABELS = buildGenericAttributeLabels(ALL_IDENTITIES);
-const JP_SEARCH_INDEX: SearchEntry[] = buildSearchIndex(ALL_IDENTITIES, JP_GENERIC_LABELS);
+const JP_SEARCH_INDEX: SearchEntry[] = [
+  ...buildSearchIndex(ALL_IDENTITIES, JP_GENERIC_LABELS),
+  ...buildPresetEntries(JP_PRESETS, ALL_IDENTITIES),
+];
 const US_GENERIC_LABELS = buildGenericAttributeLabels(ALL_US_IDENTITIES);
 const US_SEARCH_INDEX: SearchEntry[] = buildSearchIndex(ALL_US_IDENTITIES, US_GENERIC_LABELS);
 
 /** エントリごとの検索対象文字列 (正規化済み)。 */
 function targetsFor(entry: SearchEntry, genericLabels: Set<string>): string[] {
+  if (entry.preset) {
+    return [normalize(entry.preset.label), ...(entry.preset.searchTags ?? []).map(normalize)];
+  }
   if (entry.attribute) {
     const tags = (entry.attribute.searchTags ?? []).map(normalize);
     if (genericLabels.has(entry.attribute.label)) {
@@ -172,7 +197,9 @@ function capPerIdentity(results: SearchEntryResult[], cap: number): SearchEntryR
   const counts = new Map<string, number>();
   const out: SearchEntryResult[] = [];
   for (const r of results) {
-    const id = r.entry.identity.id;
+    // Preset はベース Identity の枠を食わない (「パン」が4件で埋まっても
+    // ガーリックトーストが消えない / その逆も起きない)。
+    const id = r.entry.preset ? `preset:${r.entry.preset.id}` : r.entry.identity.id;
     const n = counts.get(id) ?? 0;
     if (n >= cap) continue;
     counts.set(id, n + 1);
@@ -204,6 +231,9 @@ function frequencyMultiplier(userSelectCount: number): number {
 
 /** SearchEntry を一意に識別するキー (Identity + Attribute + Style)。 */
 function entryFrequencyKey(entry: SearchEntry): string {
+  // Preset は通常のログ (ベース Identity + appliedAddons) として記録されるため履歴上は
+  // ベースと区別できず、頻度学習の対象外にする (ベースの頻度を横取りしない)。
+  if (entry.preset) return `preset:${entry.preset.id}`;
   return `${entry.identity.id}|${entry.attribute?.key ?? ''}|${entry.style?.key ?? ''}`;
 }
 
@@ -275,9 +305,13 @@ export function searchEntriesFuzzy(query: string, opts?: SearchOptions): SearchE
       }
     }
     if (!best) continue;
+    // Preset の途中一致は通常エントリより 0.1 下げる。「ごはん」と打ったときに、タグ
+    // (たまごかけごはん…) へ途中一致した Preset がごはん本体・おにぎり等を押しのけない
+    // ため。完全一致・前方一致 (= 料理名そのものを打った) は割り引かない。
+    const score = entry.preset && best.method === 'substring' ? best.score - 0.1 : best.score;
     results.push({
       entry,
-      score: best.score,
+      score,
       tier: best.method === 'bigram' ? 'maybe' : 'confident',
     });
   }
@@ -286,7 +320,7 @@ export function searchEntriesFuzzy(query: string, opts?: SearchOptions): SearchE
   const finalScore = (r: SearchEntryResult) =>
     r.score * frequencyMultiplier(freqMap.get(entryFrequencyKey(r.entry)) ?? 0);
   const label = (r: SearchEntryResult) =>
-    r.entry.attribute?.label ?? r.entry.style?.label ?? r.entry.identity.label;
+    r.entry.preset?.label ?? r.entry.attribute?.label ?? r.entry.style?.label ?? r.entry.identity.label;
   results.sort((a, b) => finalScore(b) - finalScore(a) || label(a).localeCompare(label(b), sortLocale));
 
   const confident = results.filter((r) => r.tier === 'confident');
@@ -424,9 +458,24 @@ export function describeSearchEntry(entry: SearchEntry): {
   bucketEmoji: string | null;
   bucketLabel: string | null;
 } {
+  const bucket = getBucketDef(entry.identity.primaryHome.bucket);
+  if (entry.preset) {
+    // サブラベルに組み立ての中身を出す (「フランスパン + バター」)。検索結果の段階で
+    // 何が入った状態で開くのかが分かり、選ぶ前に意図と合っているか判断できる。
+    const baseName =
+      entry.attribute && !entry.attribute.isDefault ? entry.attribute.label : entry.identity.label;
+    const parts = [baseName, ...entry.preset.addons.map((a) => getAddonLabel(a.refId))];
+    // 行が長くなりすぎるので3要素までに丸める (コブサラダは6種類のせ)。全部入りは開いた先で見える。
+    const shown = parts.slice(0, 3).join(' + ') + (parts.length > 3 ? ' …' : '');
+    return {
+      label: entry.preset.label,
+      identityLabel: shown,
+      bucketEmoji: bucket?.emoji ?? null,
+      bucketLabel: bucket?.label ?? null,
+    };
+  }
   const label = entry.attribute?.label ?? entry.style?.label ?? entry.identity.label;
   const isSubEntry = !!entry.attribute || !!entry.style;
-  const bucket = getBucketDef(entry.identity.primaryHome.bucket);
   return {
     label,
     identityLabel: isSubEntry ? entry.identity.label : null,

@@ -175,12 +175,10 @@ const BUCKET_STAPLE: Identity[] = [
     id: 'bread',
     label: 'パン',
     // 「トースト」系は Style にしない: 焼いても1枚あたりの kcal はほぼ動かず、マクロの段差が
-    // 無い (IA spec §1.5 分割軸)。ガーリックトーストは 食パン + バター (butter_cream は
-    // default Add-on の先頭) で表現できるため、語彙で着地させるだけで Identity/Style は足さない。
-    searchTags: [
-      'トースト', 'しょくぱん', 'ガーリックトースト', 'ガーリックブレッド', 'ガーリックパン',
-      'バタートースト', 'ジャムトースト',
-    ],
+    // 無い (IA spec §1.5 分割軸)。ガーリックトースト・バタートースト等の「名前のある組み合わせ」
+    // は Preset (constants/identity/presets.ts) が担うため、ここには置かない — 置くと検索結果に
+    // ベースと Preset が二重に出る。ここは総称だけ。
+    searchTags: ['トースト', 'しょくぱん'],
     primaryHome: { tab: 'ingredient', bucket: 'staple' },
     quickTapDisabled: true, // Attribute span too wide (食パン 158 → ナン 320, F 2.5 → 11)
     defaultMacro: { kcal: 158, protein: 5.3, fat: 2.5, carbs: 28 },
@@ -195,7 +193,7 @@ const BUCKET_STAPLE: Identity[] = [
     attributes: [
       { key: 'plain', label: '食パン', isDefault: true },
       { key: 'whole', label: '全粒・ライ麦', factor: { fat: 1.2 } },
-      { key: 'baguette', label: 'フランスパン', factor: { kcal: 1.06, protein: 1.06, fat: 0.32, carbs: 1.23 }, searchTags: ['バゲット', 'ガーリックバゲット'] },
+      { key: 'baguette', label: 'フランスパン', factor: { kcal: 1.06, protein: 1.06, fat: 0.32, carbs: 1.23 }, searchTags: ['バゲット'] },
       // ベーグルは1個単位で扱うのが自然。factor は 60g 食パン基準のスケール済み値。
       {
         key: 'bagel',
@@ -1142,15 +1140,14 @@ const BUCKET_VEGGIES: Identity[] = [
     label: 'サラダ・生野菜',
     // サラダの「派生」は Identity ではなく **base + Add-on の組み合わせ**で表現する
     // (spec §1.5)。本 Identity は 25kcal/100g のほぼ空の器で、カロリーは全て Add-on
-    // 側にあるため、派生名はここへ着地させて中身を Add-on で組ませるのが正しい。
-    //
-    // 一般形 (「ニース風サラダ」等) は `head-nouns.ts` の主辞「サラダ」が層2で拾うので、
-    // **ここへの追加は whitelist ではなく「層2→層1の昇格」**。頻出の派生名だけを
-    // 昇格させ、網羅は主辞辞書に任せる。
+    // 側にある。シーザー/ギリシャ/コブ等の名前のある派生は Preset (presets.ts) が担い、
+    // 選ぶと Add-on 込みで開く。ここには総称と野菜の名前だけを置く (置くとベースと
+    // Preset が二重に出る)。一般形 (「ニース風サラダ」等) は `head-nouns.ts` の主辞
+    // 「サラダ」が層2で拾う。
     // 生食が主の野菜はここにも登録する (veg_cooked と両方に出して選ばせる)。
     // 本 Identity は 25kcal/100g で、トマト(20)・きゅうり(13) は温野菜(35)より近い。
     searchTags: [
-      'なまやさい', '生野菜', 'シーザーサラダ', 'グリーンサラダ', 'ギリシャサラダ', 'ギリシャ風サラダ', 'コブサラダ',
+      'なまやさい', '生野菜', 'グリーンサラダ',
       'とまと', 'トマト', 'きゅうり', '胡瓜', 'きゃべつ', 'キャベツ', 'れたす', 'レタス', 'ベビーリーフ', 'サニーレタス',
     ],
     primaryHome: { tab: 'ingredient', bucket: 'veggies' },
@@ -1168,7 +1165,7 @@ const BUCKET_VEGGIES: Identity[] = [
     allowedAddonIds: [
       'avocado', 'canned_lean_fish', 'nuts', 'dressing', 'salad_chicken',
       'crouton', 'corn_top', 'cheese', 'cheese_low_fat', 'edamame_soy',
-      'bacon_sausage', 'shirasu', 'mayo', 'oil',
+      'bacon_sausage', 'shirasu', 'mayo', 'oil', 'egg',
     ],
   },
   {

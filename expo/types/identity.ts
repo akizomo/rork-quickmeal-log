@@ -274,6 +274,42 @@ export interface AmountSpec {
 }
 
 // ---------------------------------------------------------------------------
+// Preset — 名前で探される「ベース + Add-on」の組み合わせ (IA spec §1.5 判定3)
+// ---------------------------------------------------------------------------
+
+export interface PresetAddon {
+  /** Add-on の id。refType (identity/addon) は resolveAddonRef で解決するので持たない。 */
+  refId: string;
+  units: number;
+}
+
+/**
+ * 「ガーリックトースト = フランスパン + バター」のように、料理名で探されるが
+ * 既存の Identity / Attribute / Style では表現できず、ベース + Add-on で表現できる組み合わせ。
+ *
+ * 検索結果に1行として出て、選ぶと Attribute・Add-on・量が選択済みの状態で
+ * IdentityLogSheet が開く。**マクロの数値は一切持たない** — ベースと Add-on の
+ * 既存値から resolveLog が計算するので、データの二重管理にならない。
+ * 記録は通常のログと同じ形で残り (ベース Identity + appliedAddons)、
+ * 栄養ノートや週次リキャップにもそのまま参加する。
+ */
+export interface Preset {
+  id: string;
+  /** 検索結果に出る名前。 */
+  label: string;
+  /** 別表記。漢字を含む label には、かな形のタグを必ず1つ以上付けること (spec §4.1)。 */
+  searchTags?: string[];
+  /** ベース Identity (実在すること)。 */
+  identityId: string;
+  attributeKey?: string;
+  styleKey?: string;
+  /** 省略時はベース (Attribute 上書きを含む) の既定量。 */
+  amountValue?: number;
+  /** 空にしないこと — Add-on の無い組み合わせは Preset ではなく Attribute/Style の仕事。 */
+  addons: PresetAddon[];
+}
+
+// ---------------------------------------------------------------------------
 // Add-on cross-bucket capability
 // ---------------------------------------------------------------------------
 

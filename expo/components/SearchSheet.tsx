@@ -30,7 +30,7 @@ import {
   useTheme,
 } from '@/design-system';
 import { DirectInputSheet } from '@/components/DirectInputSheet';
-import { buildRegistry, getBucketDef, getIdentity } from '@/constants/identity';
+import { buildRegistry, getBucketDef, getIdentity, presetAddonInputs } from '@/constants/identity';
 import { useAppState } from '@/providers/app-state-provider';
 import { useLocale } from '@/hooks/useLocale';
 import { useT } from '@/hooks/useT';
@@ -56,7 +56,8 @@ type Props = {
 };
 
 function resultKey(result: SearchEntryResult): string {
-  const { identity, attribute, style } = result.entry;
+  const { identity, attribute, style, preset } = result.entry;
+  if (preset) return `preset:${preset.id}`;
   return `${identity.id}:${attribute?.key ?? ''}:${style?.key ?? ''}`;
 }
 
@@ -69,11 +70,15 @@ function SearchResultRow({
 }) {
   const t = useTheme();
   const { label, identityLabel, bucketEmoji, bucketLabel } = describeSearchEntry(result.entry);
+  // Preset のサブラベルは「サラダ・生野菜 + チーズ + クルトン …」と長く、右側に置くと
+  // 名前が「シーザーサラ/ダ」のように途中で折り返される (モバイル幅で実測)。名前の下に出す。
+  const stacked = !!result.entry.preset;
   return (
     <Pressable
       onPress={() => onPress(result.entry)}
       style={({ pressed }) => [
         styles.resultRow,
+        stacked && styles.resultRowStacked,
         {
           paddingVertical: t.spacing['3'],
           paddingHorizontal: t.spacing['2'],
@@ -176,6 +181,10 @@ export function SearchSheet({ visible, onClose, onOpen }: Props) {
         identityId: entry.identity.id,
         attributeKey: entry.attribute?.key,
         styleKey: entry.style?.key,
+        // Preset: 組み合わせ (Add-on・量) を選択済みで開く。ユーザーは量を直して保存するだけ。
+        ...(entry.preset
+          ? { amountValue: entry.preset.amountValue, addons: presetAddonInputs(entry.preset) }
+          : {}),
         onDismiss: onOpen, // re-open search sheet if user cancels
       });
     },
@@ -405,6 +414,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  resultRowStacked: {
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+    gap: 2,
   },
   hintChips: {
     flexDirection: 'row',

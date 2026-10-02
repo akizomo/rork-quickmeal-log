@@ -545,7 +545,8 @@ const BUCKET_JAPANESE_NOODLES: Identity[] = [
     referenceDescription: '麺250g + 天ぷら2-3個',
     amount: { unit: 'percent', default: 100, chips: [{ label: '1人前', value: 100 }, { label: '大盛', value: 150 }] },
     attributes: [
-      { key: 'tempura_soba', label: '天そば', isDefault: true },
+      // 「天ぷらそば」で打つ人が大半で、属性名「天そば」だけでは層1に着地しなかった (語彙の穴)。
+      { key: 'tempura_soba', label: '天そば', isDefault: true, searchTags: ['天ぷらそば', 'てんぷらそば', '天ぷら蕎麦', '天ぷらソバ'] },
       { key: 'tempura_udon', label: '天ぷらうどん' },
       { key: 'nabe_yaki', label: '鍋焼きうどん', factor: { kcal: 1.10, protein: 1.20, fat: 1.15, carbs: 1.05 } },
     ],

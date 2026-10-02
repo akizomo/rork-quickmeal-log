@@ -26,6 +26,7 @@ import { useLocale } from '@/hooks/useLocale';
 import { useT } from '@/hooks/useT';
 import {
   buildRegistry,
+  getAddonLabel,
   getBucketDef,
   getIdentity,
   resolveAddonRef,
@@ -69,14 +70,6 @@ function defaultAttributeKey(identity: Identity | undefined): string | undefined
 function defaultStyleKey(identity: Identity | undefined): string | undefined {
   if (!identity?.styles?.length) return undefined;
   return identity.styles.find((s) => s.isDefault)?.key ?? identity.styles[0].key;
-}
-
-function getAddonLabel(refId: string, refType: 'identity' | 'addon'): string {
-  const ref = resolveAddonRef(refId);
-  if (!ref) return refId;
-  if (ref.type === 'addon') return ref.data.label;
-  const identity = getIdentity(ref.identityId);
-  return identity?.asAddon?.defaultLabel ?? identity?.label ?? refId;
 }
 
 // ---------------------------------------------------------------------------
@@ -234,16 +227,23 @@ export function IdentityLogSheet() {
     setAttributeKey(initAttrKey);
     setStyleKey(requestedStyleKey ?? defaultStyleKey(identity));
     setAmountValue(
-      identity ? getEffectiveAmountSpec(identity, initAttrKey).default : 1,
+      identityLogSheet.initialAmountValue ??
+        (identity ? getEffectiveAmountSpec(identity, initAttrKey).default : 1),
     );
     setAmountModeAlt(false);
-    setAddons([]);
+    // Preset (例: ガーリックトースト = フランスパン + バター) の検索結果は、組み合わせを
+    // 選択済みで開く。編集時の復元 (appliedAddons) と同じ形なので、以降の処理は変わらない。
+    // 種類で隠す Add-on (factor に織り込み済みの具) は二重計上防止のため通さない。
+    const hiddenForInit = identity ? getHiddenAddonIds(identity, initAttrKey) : new Set<string>();
+    setAddons((identityLogSheet.initialAddons ?? []).filter((a) => !hiddenForInit.has(a.refId)));
   }, [
     visible,
     bucketKey,
     identityLogSheet.identityId,
     identityLogSheet.attributeKey,
     identityLogSheet.styleKey,
+    identityLogSheet.initialAmountValue,
+    identityLogSheet.initialAddons,
     identitiesInBucket,
     editingLog,
   ]);
@@ -661,7 +661,7 @@ export function IdentityLogSheet() {
                   return (
                     <Chip
                       key={aid}
-                      label={getAddonLabel(aid, 'identity')}
+                      label={getAddonLabel(aid)}
                       leadingIcon={selected ? 'check' : 'add'}
                       selected={selected}
                       onPress={() => toggleAddon(aid)}
