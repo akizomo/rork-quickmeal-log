@@ -49,6 +49,8 @@ export interface SearchEntryResult {
   entry: SearchEntry;
   score: number;
   tier: 'confident' | 'maybe';
+  /** 一致の方式 (exact / prefix / substring / contains / bigram)。層の調整とベンチマーク用。 */
+  method: MatchMethod;
 }
 
 export interface SearchEntriesResult {
@@ -210,10 +212,26 @@ function compoundHeads(identity: Identity): string[] {
   return [...new Set(names)].filter((n) => n.length >= 1 && n.length <= 10);
 }
 
-/** 複合語の「ベース側」のうち、修飾語 + 主辞 の1方向だけに使うもの: 検索タグ + そのバケットの主辞。 */
+/**
+ * 複合語の「ベース側」のうち、修飾語 + 主辞 の1方向だけに使うもの: 検索タグ + 主辞辞書の語。
+ *
+ * 主辞辞書の語 (寿司・丼・麺・定食…) は、バケット内の全 Identity に配ると広すぎる — ハンバーグ属性に
+ * 「定食」を配ると、定食ではない meat_solo にも「ハンバーグ定食」が完全一致してしまう。
+ * そのため「その Identity が自分の名前の中にその主辞を既に持っている」場合だけ配る
+ * (巻き寿司 ← 「巻き・いなり・手巻き」は寿司バケットの語を名前に持たないので、寿司バケットの
+ * Identity にだけ配る、という意味ではなく、**同じ語を名前に含む Identity 自身**に限る)。
+ * 名前に持たないが主辞が必須の Identity (maki → 寿司) は、タグ側に主辞を足す (データ)。
+ */
 function tailHeadsOf(identity: Identity): string[] {
   const names = (identity.searchTags ?? []).map(toKey);
-  names.push(...(HEADS_BY_BUCKET.get(identity.primaryHome.bucket) ?? []));
+  const own = [
+    toKey(identity.label),
+    ...labelParts(identity.label).map(toKey),
+    ...(identity.attributes ?? []).flatMap((a) => labelParts(a.label).map(toKey)),
+  ];
+  for (const head of HEADS_BY_BUCKET.get(identity.primaryHome.bucket) ?? []) {
+    if (own.some((n) => n.includes(head))) names.push(head);
+  }
   return [...new Set(names)].filter((n) => n.length >= 1 && n.length <= 10);
 }
 
@@ -636,7 +654,7 @@ export function searchEntriesFuzzy(query: string, opts?: SearchOptions): SearchE
     // (たまごかけごはん…) へ途中一致した Preset がごはん本体・おにぎり等を押しのけない
     // ため。完全一致・前方一致 (= 料理名そのものを打った) は割り引かない。
     const score = entry.preset && best.method === 'substring' ? best.net - 0.1 : best.net;
-    results.push({ entry, score, tier: best.tier });
+    results.push({ entry, score, tier: best.tier, method: best.method });
   }
 
   const freqMap = buildUserFrequencyMap(opts?.history);
@@ -666,8 +684,14 @@ export function searchEntriesFuzzy(query: string, opts?: SearchOptions): SearchE
     r.entry.preset?.label ?? r.entry.attribute?.label ?? r.entry.style?.label ?? r.entry.identity.label;
   results.sort((a, b) => finalScore(b) - finalScore(a) || label(a).localeCompare(label(b), sortLocale));
 
-  const confident = results.filter((r) => r.tier === 'confident');
-  const maybe = results.filter((r) => r.tier === 'maybe');
+  // 「含まれる語」(ビーフカレー→カレー) は、確実な一致 (完全・前方・部分) が他に無いときの代替。
+  // 確実な一致があるのに推測の一致を層1に並べると、取り違えが増える
+  // (「ロース」「たい」「ライス」のような短い語が、確実な一致の隣に別物を連れてくる)。
+  // 推測の一致は層2「もしかして」へ回す。
+  const hasSolid = results.some((r) => r.tier === 'confident' && r.method !== 'contains');
+  const demote = (r: SearchEntryResult) => hasSolid && r.method === 'contains';
+  const confident = results.filter((r) => r.tier === 'confident' && !demote(r));
+  const maybe = results.filter((r) => r.tier === 'maybe' || demote(r));
 
   return {
     confident: capPerIdentity(confident, PER_IDENTITY_CAP).slice(0, MAX_RESULTS),
