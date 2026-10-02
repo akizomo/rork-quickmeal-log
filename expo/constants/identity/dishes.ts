@@ -1224,7 +1224,7 @@ const BUCKET_MISC_DISH: Identity[] = [
   {
     id: 'sashimi',
     label: '刺身盛り',
-    searchTags: ['さしみ', 'おさしみ'],
+    searchTags: ['さしみ', '刺身', 'おさしみ', 'お刺身'],
     primaryHome: { tab: 'dish', bucket: 'misc_dish' },
     nutritionNotes: [
       NOTE_TUNA,

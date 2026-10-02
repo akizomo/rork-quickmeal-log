@@ -699,7 +699,7 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
   {
     id: 'chicken_thigh',
     label: '鶏もも・手羽',
-    searchTags: ['とりもも', '鶏もも', '鶏もも肉', 'ももにく', 'てば', '手羽', 'てばさき', '手羽先', 'とりかわ', '鶏皮'],
+    searchTags: ['とりもも', '鶏もも', '鶏もも肉', 'ももにく', 'てば', '手羽', 'てばさき', '手羽先', 'てばもと', '手羽元', 'とりかわ', '鶏皮'],
     primaryHome: { tab: 'ingredient', bucket: 'fatty_protein' },
     defaultMacro: { kcal: 200, protein: 17, fat: 14, carbs: 0 },
     nutritionNotes: [

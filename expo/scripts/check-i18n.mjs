@@ -31,6 +31,7 @@ const EXCLUDE_DIR_NAMES = new Set(['dev', 'legal', '__tests__', 'node_modules', 
 // File names to skip (matched against basename)
 const EXCLUDE_FILES = new Set([
   'identity-normalize.ts',  // romanization table IS the data
+  'identity-search-keys.ts', // 日本語の表記ゆれ・修飾語を畳み込む言語処理ルール (UI 文字列ではない)
   'unit-labels.ts',         // locale data source
   'nutrition.ts',           // legacy quick-log system (pre-Identity, JA-only)
   'nutrition-data.ts',      // legacy quick-log data (pre-Identity, JA-only)

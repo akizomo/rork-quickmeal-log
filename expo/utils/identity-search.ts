@@ -20,6 +20,16 @@ import { ALL_IDENTITIES, ALL_US_IDENTITIES, JP_PRESETS, getAddonLabel, getBucket
 import { DISH_VOCABULARY } from '@/constants/identity/dish-vocabulary';
 import { HEAD_NOUNS, type HeadNounTarget } from '@/constants/identity/head-nouns';
 import { normalize, romajiVariant } from '@/utils/identity-normalize';
+import {
+  labelParts,
+  MODIFIERS,
+  QUANTITY,
+  queryVariants,
+  SINGLE_WORD,
+  SUFFIXES,
+  toKey,
+  type QueryVariant,
+} from '@/utils/identity-search-keys';
 import type { AttributeOption, BucketKey, Identity, Preset, StyleOption } from '@/types/identity';
 import type { AppLocale } from '@/types/locale';
 import type { QuickLogHistoryMap } from '@/types/quick-log';
@@ -86,13 +96,14 @@ function diceSimilarity(q: string, target: string): number {
   return (2 * matches) / (qSet.size + tSet.size);
 }
 
-type MatchMethod = 'exact' | 'prefix' | 'substring' | 'bigram';
+type MatchMethod = 'exact' | 'prefix' | 'substring' | 'contains' | 'bigram';
 
 const METHOD_RANK: Record<MatchMethod, number> = {
   exact: 0,
   prefix: 1,
   substring: 2,
-  bigram: 3,
+  contains: 3,
+  bigram: 4,
 };
 
 function scoreAgainst(q: string, target: string): { score: number; method: MatchMethod } | null {
@@ -137,59 +148,371 @@ function buildGenericAttributeLabels(identities: Identity[]): Set<string> {
   return generic;
 }
 
-function buildSearchIndex(identities: Identity[], genericLabels: Set<string>): SearchEntry[] {
-  const entries: SearchEntry[] = [];
-  for (const identity of identities) {
-    entries.push({ identity });
-    for (const attribute of identity.attributes ?? []) {
-      entries.push({ identity, attribute });
-    }
-    for (const style of identity.styles ?? []) {
-      entries.push({ identity, style });
-    }
-  }
-  return entries;
-  void genericLabels; // used in targetsFor below
+// ---------------------------------------------------------------------------
+// 索引 — 起動時に1回、エントリごとの照合対象 (fold 済みキー + bigram) を作る
+// ---------------------------------------------------------------------------
+
+type TargetKind = 'name' | 'part' | 'tag' | 'compound';
+
+interface Target {
+  /** fold 済みの照合キー。 */
+  s: string;
+  kind: TargetKind;
+  /** bigram 集合。複合語 (compound) と3文字未満は持たない (層2 のノイズを増やさないため)。 */
+  bg: Set<string> | null;
 }
 
-/** Preset を検索エントリ化する。ベースが解決できないものは握りつぶさず例外にする (presets.test.ts が先に落ちる)。 */
-function buildPresetEntries(presets: Preset[], identities: Identity[]): SearchEntry[] {
-  return presets.map((preset) => {
+interface IndexedEntry {
+  entry: SearchEntry;
+  targets: Target[];
+}
+
+function fromKey(s: string, kind: TargetKind): Target | null {
+  if (!s) return null;
+  return { s, kind, bg: kind !== 'compound' && s.length >= 3 ? bigrams(s) : null };
+}
+
+function targetsOf(raws: Array<[string, TargetKind]>): Target[] {
+  const seen = new Set<string>();
+  const out: Target[] = [];
+  for (const [raw, kind] of raws) {
+    const t = fromKey(toKey(raw), kind);
+    if (!t || seen.has(t.s)) continue;
+    seen.add(t.s);
+    out.push(t);
+  }
+  return out;
+}
+
+/**
+ * バケット別の主辞 (寿司 / 丼 / 麺 / パン …)。主辞辞書 (head-nouns.ts) のうち、そのバケットを
+ * 指すもの。Identity のラベルに主辞が入っていなくても (「巻き・いなり・手巻き」に「寿司」は無い)、
+ * 「いなり寿司」「巻き寿司」と打たれるので、複合語のベース名に足す。
+ */
+const HEADS_BY_BUCKET: Map<string, string[]> = (() => {
+  const m = new Map<string, string[]>();
+  for (const entry of HEAD_NOUNS) {
+    for (const target of entry.targets) {
+      const list = m.get(target.bucket) ?? [];
+      for (const head of entry.heads) {
+        const k = toKey(head);
+        if (k.length >= 2 && !list.includes(k)) list.push(k);
+      }
+      m.set(target.bucket, list);
+    }
+  }
+  return m;
+})();
+
+/** 複合語の「ベース側」の名前: Identity のラベルの部分 (両順序で使える)。 */
+function compoundHeads(identity: Identity): string[] {
+  const names = labelParts(identity.label).filter((p) => SINGLE_WORD.test(p)).map(toKey);
+  return [...new Set(names)].filter((n) => n.length >= 1 && n.length <= 10);
+}
+
+/** 複合語の「ベース側」のうち、修飾語 + 主辞 の1方向だけに使うもの: 検索タグ + そのバケットの主辞。 */
+function tailHeadsOf(identity: Identity): string[] {
+  const names = (identity.searchTags ?? []).map(toKey);
+  names.push(...(HEADS_BY_BUCKET.get(identity.primaryHome.bucket) ?? []));
+  return [...new Set(names)].filter((n) => n.length >= 1 && n.length <= 10);
+}
+
+/**
+ * 属性名 × ベース名 の複合語を作る (醤油 × ラーメン → 醤油ラーメン / ラーメン醤油)。
+ *
+ * 「打った語がラベルの一部か」しか見ない照合では、DB に「ラーメン」と属性「醤油」が別々にあっても
+ * 「醤油ラーメン」に着地できない (打った語のほうが長いと一致しない)。ユーザーは属性だけの語
+ * (「醤油」「クリーム」)ではなく、ベース名と組にして打つ。
+ */
+function compoundsFor(attrNames: string[], headNames: string[], tailHeads: string[] = []): string[] {
+  const out = new Set<string>();
+  const redundant = (a: string, h: string) => !a || !h || a === h || a.includes(h) || h.includes(a);
+  for (const a of attrNames) {
+    // ラベルの部分: 属性が修飾語の醤油ラーメン、Identity の語が修飾語の牛タン・豚バラ のどちらもある。
+    for (const h of headNames) {
+      if (redundant(a, h)) continue;
+      out.add(a + h);
+      out.add(h + a);
+    }
+    // 検索タグ・主辞辞書の語 (寿司・丼・麺…)は「修飾語 + 主辞」の1方向だけ。タグは別名の寄せ集めで、
+    // 逆順 (トースト + ナン) は不自然なうえ、前方一致に拾われて無関係な属性を呼び出す。
+    for (const h of tailHeads) {
+      if (redundant(a, h)) continue;
+      out.add(a + h);
+    }
+  }
+  return [...out];
+}
+
+
+function identityTargets(identity: Identity, jp: boolean): Target[] {
+  const raws: Array<[string, TargetKind]> = [[identity.label, 'name']];
+  if (jp) for (const p of labelParts(identity.label)) raws.push([p, 'part']);
+  for (const t of identity.searchTags ?? []) raws.push([t, 'tag']);
+  const targets = targetsOf(raws);
+  if (!jp) return targets;
+
+  // 部分 × そのバケットの主辞 (巻き × 寿司 → 巻き寿司)
+  const seen = new Set(targets.map((t) => t.s));
+  const parts = labelParts(identity.label)
+    .filter((p) => SINGLE_WORD.test(p))
+    .map(toKey)
+    .filter((n) => n.length >= 1 && n.length <= 10);
+  for (const c of compoundsFor(parts, [], tailHeadsOf(identity))) {
+    if (seen.has(c)) continue;
+    seen.add(c);
+    const t = fromKey(c, 'compound');
+    if (t) targets.push(t);
+  }
+  return targets;
+}
+
+function styleTargets(style: StyleOption, jp: boolean): Target[] {
+  const raws: Array<[string, TargetKind]> = [[style.label, 'name']];
+  if (jp) for (const p of labelParts(style.label)) raws.push([p, 'part']);
+  for (const t of style.searchTags ?? []) raws.push([t, 'tag']);
+  return targetsOf(raws);
+}
+
+function attributeTargets(
+  identity: Identity,
+  attribute: AttributeOption,
+  opts: { jp: boolean; generic: boolean; contextBound: (k: string) => boolean; heads: string[]; tailHeads: string[] },
+): Target[] {
+  const tags = (attribute.searchTags ?? []).map((t) => [t, 'tag'] as [string, TargetKind]);
+  if (!opts.jp) {
+    // 英語 (US): 従来どおり。複合語・部分への分解はしない。
+    return targetsOf(
+      opts.generic
+        ? [[`${identity.label}${attribute.label}`, 'name'], ...tags]
+        : [[attribute.label, 'name'], ...tags],
+    );
+  }
+
+  const raws: Array<[string, TargetKind]> = [];
+  if (opts.generic) {
+    raws.push([`${identity.label}${attribute.label}`, 'compound']);
+  } else {
+    // 単独で検索できるのは「その属性が主役の名前」だけ。他の Identity が同名の名詞を持つ
+    // (「たまご」「ツナ」「チーズ」「鮭」は別の食材そのもの) 場合は、単独で打たれたときに
+    // そちらへ着地すべきなので、この属性は複合語 (たまごサンド) 経由でのみ辿り着けるようにする。
+    const bare: Array<[string, TargetKind]> = [[attribute.label, 'name']];
+    for (const p of labelParts(attribute.label)) bare.push([p, 'part']);
+    for (const [raw, kind] of bare) if (!opts.contextBound(toKey(raw))) raws.push([raw, kind]);
+  }
+  raws.push(...tags);
+
+  const attrNames = [
+    ...labelParts(attribute.label).map(toKey),
+    ...(attribute.searchTags ?? []).map(toKey),
+  ].filter((n) => n.length >= 1 && n.length <= 10);
+  // 「バラ（牛）」の括弧内は、ベース側 (牛・豚) のうちどれかを絞る修飾。ベース名を総当たりすると
+  // バラ（牛）と バラ（豚）の両方が「豚バラ」に完全一致してしまうので、括弧内の語だけを相手にする。
+  const qualifier = attribute.label.match(/[(（]([^)）]{1,2})[)）]/)?.[1];
+  const heads = qualifier ? [toKey(qualifier)] : opts.heads;
+  const compounds = compoundsFor([...new Set(attrNames)], heads, qualifier ? [] : opts.tailHeads);
+
+  const seen = new Set<string>();
+  const out: Target[] = [];
+  for (const t of targetsOf(raws)) { seen.add(t.s); out.push(t); }
+  for (const c of compounds) {
+    if (seen.has(c)) continue;
+    seen.add(c);
+    const t = fromKey(c, 'compound');
+    if (t) out.push(t);
+  }
+  return out;
+}
+
+function buildIndex(identities: Identity[], genericLabels: Set<string>, presets: Preset[], jp: boolean): IndexedEntry[] {
+  // 名詞の持ち主: Identity 層の label / 部分 / searchTags → それを名乗る Identity の id 集合。
+  const owners = new Map<string, Set<string>>();
+  // 誘導元 → 誘導先: 属性/スタイルの migration で別の Identity へ移る Identity (牛・豚 → 揚げもの単品)。
+  // 誘導元は誘導先の語を別名として持っている (beef_pork の「メンチカツ」) が、それは「他の食材の名詞」
+  // ではなく誘導先そのものを指す。
+  const redirectsTo = new Map<string, Set<string>>();
+  if (jp) {
+    for (const i of identities) {
+      for (const opt of [...(i.attributes ?? []), ...(i.styles ?? [])]) {
+        const to = opt.migration?.identityKey;
+        if (!to || to === i.id) continue;
+        let set = redirectsTo.get(i.id);
+        if (!set) { set = new Set(); redirectsTo.set(i.id, set); }
+        set.add(to);
+      }
+    }
+    for (const i of identities) {
+      for (const raw of [...labelParts(i.label), ...(i.searchTags ?? [])]) {
+        const k = toKey(raw);
+        if (!k) continue;
+        let set = owners.get(k);
+        if (!set) { set = new Set(); owners.set(k, set); }
+        set.add(i.id);
+      }
+    }
+  }
+
+  const out: IndexedEntry[] = [];
+  for (const identity of identities) {
+    out.push({ entry: { identity }, targets: identityTargets(identity, jp) });
+
+    const heads = jp ? compoundHeads(identity) : [];
+    const tailHeads = jp ? tailHeadsOf(identity) : [];
+    const contextBound = (k: string) => {
+      const o = owners.get(k);
+      if (!o) return false;
+      for (const id of o) {
+        if (id === identity.id) continue;
+        if (redirectsTo.get(id)?.has(identity.id)) continue; // 誘導元の別名は他人の名詞ではない
+        return true;
+      }
+      return false;
+    };
+    for (const attribute of identity.attributes ?? []) {
+      out.push({
+        entry: { identity, attribute },
+        targets: attributeTargets(identity, attribute, { jp, generic: genericLabels.has(attribute.label), contextBound, heads, tailHeads }),
+      });
+    }
+    for (const style of identity.styles ?? []) {
+      out.push({ entry: { identity, style }, targets: styleTargets(style, jp) });
+    }
+  }
+
+  for (const preset of presets) {
     const identity = identities.find((i) => i.id === preset.identityId);
     if (!identity) throw new Error(`Preset "${preset.id}": unknown identity "${preset.identityId}"`);
-    return {
-      identity,
-      attribute: identity.attributes?.find((a) => a.key === preset.attributeKey),
-      style: identity.styles?.find((st) => st.key === preset.styleKey),
-      preset,
-    };
-  });
+    out.push({
+      entry: {
+        identity,
+        attribute: identity.attributes?.find((a) => a.key === preset.attributeKey),
+        style: identity.styles?.find((st) => st.key === preset.styleKey),
+        preset,
+      },
+      targets: targetsOf([[preset.label, 'name'], ...(preset.searchTags ?? []).map((t) => [t, 'tag'] as [string, TargetKind])]),
+    });
+  }
+  return out;
 }
 
 const JP_GENERIC_LABELS = buildGenericAttributeLabels(ALL_IDENTITIES);
-const JP_SEARCH_INDEX: SearchEntry[] = [
-  ...buildSearchIndex(ALL_IDENTITIES, JP_GENERIC_LABELS),
-  ...buildPresetEntries(JP_PRESETS, ALL_IDENTITIES),
-];
+const JP_INDEX: IndexedEntry[] = buildIndex(ALL_IDENTITIES, JP_GENERIC_LABELS, JP_PRESETS, true);
 const US_GENERIC_LABELS = buildGenericAttributeLabels(ALL_US_IDENTITIES);
-const US_SEARCH_INDEX: SearchEntry[] = buildSearchIndex(ALL_US_IDENTITIES, US_GENERIC_LABELS);
+const US_INDEX: IndexedEntry[] = buildIndex(ALL_US_IDENTITIES, US_GENERIC_LABELS, [], false);
 
-/** エントリごとの検索対象文字列 (正規化済み)。 */
-function targetsFor(entry: SearchEntry, genericLabels: Set<string>): string[] {
-  if (entry.preset) {
-    return [normalize(entry.preset.label), ...(entry.preset.searchTags ?? []).map(normalize)];
+// ---------------------------------------------------------------------------
+// 照合
+// ---------------------------------------------------------------------------
+
+interface Hit {
+  score: number;
+  method: MatchMethod;
+  tier: 'confident' | 'maybe';
+}
+
+interface QueryKey extends QueryVariant {
+  bg: Set<string>;
+}
+
+const KANJI2 = /^[\u4e00-\u9fff]{2}$/;
+const KANJI = /[\u4e00-\u9fff]/;
+
+let knownCache: Set<string> | null = null;
+let headCache: Set<string> | null = null;
+
+/** 検索で意味を持つ既知の語 (Identity / 種類 / スタイルの名前・部分・タグ + 料理名辞書 + 主辞)。遅延構築。 */
+function knownTokens(): Set<string> {
+  if (knownCache) return knownCache;
+  const set = new Set<string>();
+  for (const { targets } of JP_INDEX) {
+    for (const t of targets) if (t.kind !== 'compound' && t.s.length >= 2) set.add(t.s);
   }
-  if (entry.attribute) {
-    const tags = (entry.attribute.searchTags ?? []).map(normalize);
-    if (genericLabels.has(entry.attribute.label)) {
-      return [normalize(`${entry.identity.label}${entry.attribute.label}`), ...tags];
+  for (const { key } of DISH_VOCABULARY_INDEX) if (key.length >= 2) set.add(key);
+  for (const { head } of HEAD_NOUNS_INDEX) if (head.length >= 2) set.add(head);
+  knownCache = set;
+  return set;
+}
+
+/** 主辞辞書の語 (ぱん / めん / どん / けき …)。2文字のかなは、これらのときだけ語尾一致を許す。 */
+function headNounSet(): Set<string> {
+  if (headCache) return headCache;
+  headCache = new Set(HEAD_NOUNS_INDEX.map((h) => h.head));
+  return headCache;
+}
+
+function diceSets(a: Set<string>, b: Set<string>): number {
+  if (a.size === 0 || b.size === 0) return 0;
+  let m = 0;
+  a.forEach((x) => { if (b.has(x)) m++; });
+  return (2 * m) / (a.size + b.size);
+}
+
+/**
+ * 1つの照合キーと1つの target の比較。
+ *   exact 4 > prefix 3 > substring 2 > contains (1.5〜1.95) > bigram (1〜2, 常に maybe)
+ *
+ * contains = 「target がクエリの中に含まれる」。ユーザーは修飾語つきで打つ
+ * (「ビーフカレー」「クリームコロッケ」「6枚切り食パン」) が、DB のラベルは修飾語なしの
+ * 名詞なので、打った語のほうが長い。判定は被覆率 (target の長さ / クエリの長さ) で:
+ *   - 0.5 以上 → 層1 (自信を持って出す)
+ *   - 未満     → 層2「もしかして」
+ * 語尾 (主辞) に一致する場合は加点する — 日本語の複合語は主辞が末尾 (チョコ**ケーキ**) なので。
+ * 1〜2文字の target は誤爆が多いため、漢字2文字 (寿司・冷麺) か語尾一致のときだけ許可する。
+ */
+function scoreTarget(q: QueryKey, t: Target, allowContains: boolean, identityLevel: boolean): Hit | null {
+  if (t.s === q.key) return { score: 4, method: 'exact', tier: 'confident' };
+  // 複合語は機械的に作った文字列。前方一致は、ある程度打ち進めた (4文字以上) ときだけ。
+  if (t.s.startsWith(q.key) && (t.kind !== 'compound' || q.key.length >= 4)) {
+    return { score: 3, method: 'prefix', tier: 'confident' };
+  }
+  // 「途中一致」は q が短いと無関係語への誤爆が起きる (例: 「フォー」→「ふぉ」(2文字) が
+  // 「クアトロ・フォルマッジ」に部分一致してしまう)。3文字未満は対象外。
+  // 2文字の漢字語 (寿司・冷麺・餃子) は語として十分に特定的なので例外的に許可する。
+  // 複合語 (温野菜炒め) は機械的に作った文字列なので、部分一致の相手にはしない — 「野菜炒め」と
+  // 打った人に「温野菜」を層1で返してしまう。複合語は完全・前方一致 (= その語を打った) にだけ使う。
+  if (t.kind !== 'compound' && (q.key.length >= 3 || KANJI2.test(q.key)) && t.s.includes(q.key)) {
+    return { score: 2, method: 'substring', tier: 'confident' };
+  }
+
+  if (allowContains && t.s.length < q.key.length && q.key.includes(t.s)) {
+    const head = q.key.endsWith(t.s);
+    // 2文字は漢字2字 (寿司・冷麺) か主辞辞書の語 (ぱん・めん) の語尾一致だけ。「とふ」「たい」のような
+    // 一般のかな2文字は無関係な語に埋もれて誤爆する (ポトフ→豆腐、パッタイ→鯛)。
+    const eligible =
+      t.s.length >= 3 || (t.s.length === 2 && head && (KANJI2.test(t.s) || headNounSet().has(t.s)));
+    if (eligible) {
+      const coverage = t.s.length / q.key.length;
+      // 層1に出す条件:
+      //   (a) 語の大半 (65%以上) を占める … 位置を問わない (低脂肪**乳** / **手羽**元 / **もんじゃ**焼き)
+      //   (b) 語尾 (主辞) に一致し、半分以上を占め、残りが既知の修飾 … ビーフ**カレー** / クリーム**コロッケ**
+      //       日本語の複合語は主辞が末尾にある。残りが未知なら別の語の一部かもしれない (シュー**クリーム**)。
+      // どちらでもなければ層2。先頭側だけの一致 (ロースト**ビーフ**→ロースト) は修飾語に過ぎない。
+      //   (c) 食材そのもの (Identity 層) の語尾一致で、3割以上を占める … ショート**ケーキ** / オレンジ**ジュース**
+      //       分類名 (ケーキ・ジュース・ラーメン) の前に付く修飾語は無数にあり、未知でも分類は確かに合っている。
+      //       漢字を含む語 (団子・寿司・麺) は意味が透明なので、属性ラベルにも同じ扱いをする (みたらし**団子**)。
+      //       かな・カタカナの属性ラベル (クリーム) には許さない — 前に何が付くかで別の物になる (シュー**クリーム**)。
+      let tier: 'confident' | 'maybe' = 'maybe';
+      if (coverage >= 0.65) {
+        tier = 'confident';
+      } else if ((identityLevel || KANJI.test(t.s)) && head && coverage >= 0.3) {
+        tier = 'confident';
+      } else if (q.key.startsWith(t.s) && SUFFIXES.has(q.key.slice(t.s.length))) {
+        tier = 'confident';
+      } else if (head && coverage >= 0.5) {
+        const rest = q.key.slice(0, q.key.length - t.s.length);
+        if (knownTokens().has(rest) || QUANTITY.test(rest) || MODIFIERS.has(rest)) tier = 'confident';
+      }
+      return { score: 1.4 + 0.4 * coverage + (head ? 0.15 : 0), method: 'contains', tier };
     }
-    return [normalize(entry.attribute.label), ...tags];
   }
-  if (entry.style) {
-    return [normalize(entry.style.label), ...(entry.style.searchTags ?? []).map(normalize)];
+
+  // 対称な Dice係数 (§5.2.1)。target が短い (bigram が1個しかない) と、その1個が一致しただけで
+  // Dice が不当に高くなる (例: 「グラタン」→「タン」) ため target 側にも最小3文字を課す。
+  if (t.bg && t.s.length >= 3) {
+    const sim = diceSets(q.bg, t.bg);
+    if (sim >= 0.4) return { score: 1 + sim, method: 'bigram', tier: 'maybe' };
   }
-  return [normalize(entry.identity.label), ...(entry.identity.searchTags ?? []).map(normalize)];
+  return null;
 }
 
 /** 同一 Identity からの件数を PER_IDENTITY_CAP で打ち切る (スコア順は維持)。 */
@@ -274,33 +597,37 @@ export interface SearchOptions {
  * マッチスコアの時点で確定しており、頻度は同じ層の中の並び順にのみ影響する。
  */
 export function searchEntriesFuzzy(query: string, opts?: SearchOptions): SearchEntriesResult {
-  const qBase = normalize(query);
-  if (!qBase) return { confident: [], maybe: [] };
-  const qRomaji = romajiVariant(query);
-  // ascii を含まないクエリでは qRomaji === qBase になるため、その場合は1候補に絞る
-  // (二重採点で bigram スコアが不当に底上げされるのを防ぐ)。
-  const queryVariants = qRomaji !== qBase ? [qBase, qRomaji] : [qBase];
+  const variants: QueryKey[] = queryVariants(query).map((v) => ({ ...v, bg: bigrams(v.key) }));
+  if (variants.length === 0) return { confident: [], maybe: [] };
 
   const isUS = opts?.locale === 'en-US';
-  const searchIndex = isUS ? US_SEARCH_INDEX : JP_SEARCH_INDEX;
-  const genericLabels = isUS ? US_GENERIC_LABELS : JP_GENERIC_LABELS;
+  const index = isUS ? US_INDEX : JP_INDEX;
   const sortLocale = isUS ? 'en' : 'ja';
 
   const results: SearchEntryResult[] = [];
 
-  for (const entry of searchIndex) {
-    const targets = targetsFor(entry, genericLabels);
-    let best: { score: number; method: MatchMethod } | null = null;
-    for (const q of queryVariants) {
-      for (const target of targets) {
-        const m = scoreAgainst(q, target);
-        if (!m) continue;
-        if (
+  for (const { entry, targets } of index) {
+    const identityLevel = !entry.preset && !entry.attribute && !entry.style;
+    let best: (Hit & { net: number }) | null = null;
+    for (const q of variants) {
+      for (const t of targets) {
+        const h = scoreTarget(q, t, !isUS, identityLevel);
+        if (!h) continue;
+        // 名前 (ラベル/部分/複合語) 経由の一致は、同じ強さのタグ経由の一致に勝つ。タグは別名の
+        // 寄せ集めで、他の Identity の属性名を借りていることがある (メンチカツ / そば / まぐろ)。
+        // スタイルの「部分」も同様に弱く扱う — スタイルは調理法・状態の修飾 (「生・刺身」) で、
+        // 素材名の別名ではない。分割した部分が素材そのもの (刺身盛り) と同点になっても素材を先にする。
+        const weak = t.kind === 'tag' || (t.kind === 'part' && !!entry.style && !entry.attribute);
+        const net = h.score - q.penalty - (weak ? 0.05 : 0);
+        // 層1に値する根拠が1つでもあれば、層2の根拠 (bigram は最大 2.0 点) がそれより高得点でも
+        // 層1として扱う。点数だけで選ぶと、含まれる語 (1.5〜1.95) より bigram が勝ち、層2に落ちる。
+        const better =
           !best ||
-          m.score > best.score ||
-          (m.score === best.score && METHOD_RANK[m.method] < METHOD_RANK[best.method])
-        ) {
-          best = m;
+          (h.tier === 'confident' && best.tier !== 'confident') ||
+          (h.tier === best.tier &&
+            (net > best.net || (net === best.net && METHOD_RANK[h.method] < METHOD_RANK[best.method])));
+        if (better) {
+          best = { ...h, net };
         }
       }
     }
@@ -308,17 +635,33 @@ export function searchEntriesFuzzy(query: string, opts?: SearchOptions): SearchE
     // Preset の途中一致は通常エントリより 0.1 下げる。「ごはん」と打ったときに、タグ
     // (たまごかけごはん…) へ途中一致した Preset がごはん本体・おにぎり等を押しのけない
     // ため。完全一致・前方一致 (= 料理名そのものを打った) は割り引かない。
-    const score = entry.preset && best.method === 'substring' ? best.score - 0.1 : best.score;
-    results.push({
-      entry,
-      score,
-      tier: best.method === 'bigram' ? 'maybe' : 'confident',
-    });
+    const score = entry.preset && best.method === 'substring' ? best.net - 0.1 : best.net;
+    results.push({ entry, score, tier: best.tier });
   }
 
   const freqMap = buildUserFrequencyMap(opts?.history);
+
+  // 同点の並び (五十音順で決まっていた頃は「サラダ」→「オイル」、「ホルモン」→食材本体 が先頭に来た):
+  //  - 同じ Identity の中では、より具体的な属性/スタイルを先に。Identity 自身の検索語が属性名と
+  //    同じ (ホルモン / サバ / 団子) とき、打った人の第一希望はその属性。
+  //  - 別の Identity どうしなら、食材そのもの (Identity 層) を先に。属性ラベルは文脈依存
+  //    (サンドイッチの「たまご」) のことが多く、素の名詞を打った人は食材そのものを探している。
+  //  - Preset は料理名を打った結果なので最優先。
+  const isSpecific = (r: SearchEntryResult) => !r.entry.preset && !!(r.entry.attribute || r.entry.style);
+  const bestSpecific = new Map<string, number>();
+  for (const r of results) {
+    if (!isSpecific(r)) continue;
+    const cur = bestSpecific.get(r.entry.identity.id);
+    if (cur === undefined || r.score > cur) bestSpecific.set(r.entry.identity.id, r.score);
+  }
+  const nudge = (r: SearchEntryResult) => {
+    if (r.entry.preset) return 0.03;
+    if (isSpecific(r)) return 0.01;
+    const sibling = bestSpecific.get(r.entry.identity.id);
+    return sibling !== undefined && sibling >= r.score ? 0 : 0.02;
+  };
   const finalScore = (r: SearchEntryResult) =>
-    r.score * frequencyMultiplier(freqMap.get(entryFrequencyKey(r.entry)) ?? 0);
+    (r.score + nudge(r)) * frequencyMultiplier(freqMap.get(entryFrequencyKey(r.entry)) ?? 0);
   const label = (r: SearchEntryResult) =>
     r.entry.preset?.label ?? r.entry.attribute?.label ?? r.entry.style?.label ?? r.entry.identity.label;
   results.sort((a, b) => finalScore(b) - finalScore(a) || label(a).localeCompare(label(b), sortLocale));
@@ -346,7 +689,7 @@ export interface VocabularyMatch {
 /** DISH_VOCABULARY のキーを正規化してインデックス化 (起動時1回)。 */
 const DISH_VOCABULARY_INDEX: Array<{ key: string; bucket: BucketKey }> = Object.entries(
   DISH_VOCABULARY
-).map(([key, bucket]) => ({ key: normalize(key), bucket }));
+).map(([key, bucket]) => ({ key: toKey(key), bucket }));
 
 /**
  * 層3: 料理名辞書との照合。主辞を持たない単一語 (グラタン/ケバブ等) を拾う。
@@ -370,7 +713,7 @@ function matchDishVocabulary(queryVariants: string[]): BucketKey | null {
 /** HEAD_NOUNS の heads を正規化してインデックス化 (起動時1回)。手書きの表記ゆれ
  * (長音符の有無など) が normalize() の挙動と食い違うのを防ぐ。 */
 const HEAD_NOUNS_INDEX: Array<{ head: string; targets: HeadNounTarget[] }> = HEAD_NOUNS.flatMap(
-  (entry) => entry.heads.map((head) => ({ head: normalize(head), targets: entry.targets }))
+  (entry) => entry.heads.map((head) => ({ head: toKey(head), targets: entry.targets }))
 );
 
 /**
@@ -403,15 +746,13 @@ function matchHeadNouns(queryVariants: string[]): HeadNounTarget[] {
 export function getVocabularyMatches(query: string, locale?: AppLocale): VocabularyMatch[] {
   // 主辞辞書・料理名辞書は JP 専用。en-US は英語の Identity ラベルで直接マッチするため不要。
   if (locale === 'en-US') return [];
-  const qBase = normalize(query);
-  if (!qBase) return [];
-  const qRomaji = romajiVariant(query);
-  const queryVariants = qRomaji !== qBase ? [qBase, qRomaji] : [qBase];
+  const keys = queryVariants(query).map((v) => v.key);
+  if (keys.length === 0) return [];
 
-  const dishHit = matchDishVocabulary(queryVariants);
+  const dishHit = matchDishVocabulary(keys);
   if (dishHit) return [{ bucket: dishHit, source: 'dish_vocabulary' }];
 
-  return matchHeadNouns(queryVariants).map((t) => ({ ...t, source: 'head_noun' as const }));
+  return matchHeadNouns(keys).map((t) => ({ ...t, source: 'head_noun' as const }));
 }
 
 // ---------------------------------------------------------------------------
@@ -428,17 +769,15 @@ export function getVocabularyMatches(query: string, locale?: AppLocale): Vocabul
 export function getCategoryHints(query: string, locale?: AppLocale): BucketKey[] {
   // カテゴリヒントは JP 料理名辞書ベース。en-US は将来 US dish vocabulary で対応予定。
   if (locale === 'en-US') return [];
-  const qBase = normalize(query);
-  if (!qBase) return [];
-  const qRomaji = romajiVariant(query);
-  const queryVariants = qRomaji !== qBase ? [qBase, qRomaji] : [qBase];
+  const keys = queryVariants(query).map((v) => v.key);
+  if (keys.length === 0) return [];
 
   const seen = new Set<BucketKey>();
   const hits: BucketKey[] = [];
 
   for (const { key, bucket } of DISH_VOCABULARY_INDEX) {
     if (seen.has(bucket)) continue;
-    const match = queryVariants.some(
+    const match = keys.some(
       (q) => q.includes(key) || key.includes(q) || bigramSimilarity(q, key) >= 0.4
     );
     if (match) {

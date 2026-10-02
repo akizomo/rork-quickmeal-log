@@ -130,7 +130,7 @@ export const TUNING_CORPUS: Item[] = [
     ['natto', 'natto'], ['tamago', 'egg'], ['gohan', 'rice'], ['banana', 'banana'], ['yoguruto', 'yogurt'],
     ['ぎょうざ', 'tenshin/gyoza'], ['ギョーザ', 'tenshin/gyoza'], ['とうふ', 'tofu'], ['なっとう', 'natto'], ['ぶろっこりー', 'veg_dense/broccoli'],
     ['はんばーぐ', 'meat_solo/hamburg'], ['さしみ', 'sashimi'], ['やきとり', 'yakitori'], ['ハンバーガ', ['burger', 'burger_big'], '長音なし'], ['チョコレイト', 'chocolate', '表記ゆれ'],
-    ['てりやきバーガ', 'burger/teriyaki'], ['からあげ定食', 'teishoku/karaage'], ['味噌ラーメン大盛り', 'ramen_heavy/miso', '修飾語つき'], ['セブンのサラダチキン', 'salad_chicken', '店名つき'], ['朝ごはん', [], 'ノイズ'],
+    ['てりやきバーガ', 'burger/teriyaki'], ['からあげ定食', 'teishoku/karaage'], ['味噌ラーメン大盛り', 'ramen_heavy/miso', '修飾語つき'], ['セブンのサラダチキン', 'salad_chicken', '店名つき'], ['朝ごはん', 'rice', '時間帯語 + 主食。ごはんが出るのは妥当'],
   ]),
   ...C('DBに無い料理', 'gap', [
     ['グラタン', ['bucket:misc_dish', 'bucket:pasta']], ['ドリア', ['bucket:rice_dish', 'bucket:misc_dish']], ['フォー', ['bucket:japanese_noodles', 'bucket:chinese_noodles']], ['パッタイ', ['bucket:chinese_noodles']], ['トッポギ', ['bucket:misc_dish', 'bucket:snack_drink']],
