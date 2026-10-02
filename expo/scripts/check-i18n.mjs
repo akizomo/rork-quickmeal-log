@@ -39,8 +39,8 @@ const EXCLUDE_FILES = new Set([
   'dish-master.ts',         // legacy dish system data (pre-Identity, JA-only)
 ]);
 
-// Suffixes to skip (test files contain JA strings that are test fixtures, not UI)
-const EXCLUDE_SUFFIXES = ['.test.ts', '.test.tsx'];
+// Suffixes to skip (test files / test data contain JA strings that are test fixtures, not UI)
+const EXCLUDE_SUFFIXES = ['.test.ts', '.test.tsx', '.test-data.ts'];
 
 function* walkFiles(dir) {
   let entries;
