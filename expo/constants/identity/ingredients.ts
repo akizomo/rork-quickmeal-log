@@ -174,6 +174,13 @@ const BUCKET_STAPLE: Identity[] = [
   {
     id: 'bread',
     label: 'パン',
+    // 「トースト」系は Style にしない: 焼いても1枚あたりの kcal はほぼ動かず、マクロの段差が
+    // 無い (IA spec §1.5 分割軸)。ガーリックトーストは 食パン + バター (butter_cream は
+    // default Add-on の先頭) で表現できるため、語彙で着地させるだけで Identity/Style は足さない。
+    searchTags: [
+      'トースト', 'しょくぱん', 'ガーリックトースト', 'ガーリックブレッド', 'ガーリックパン',
+      'バタートースト', 'ジャムトースト',
+    ],
     primaryHome: { tab: 'ingredient', bucket: 'staple' },
     quickTapDisabled: true, // Attribute span too wide (食パン 158 → ナン 320, F 2.5 → 11)
     defaultMacro: { kcal: 158, protein: 5.3, fat: 2.5, carbs: 28 },
@@ -188,7 +195,7 @@ const BUCKET_STAPLE: Identity[] = [
     attributes: [
       { key: 'plain', label: '食パン', isDefault: true },
       { key: 'whole', label: '全粒・ライ麦', factor: { fat: 1.2 } },
-      { key: 'baguette', label: 'フランスパン', factor: { kcal: 1.06, protein: 1.06, fat: 0.32, carbs: 1.23 } },
+      { key: 'baguette', label: 'フランスパン', factor: { kcal: 1.06, protein: 1.06, fat: 0.32, carbs: 1.23 }, searchTags: ['バゲット', 'ガーリックバゲット'] },
       // ベーグルは1個単位で扱うのが自然。factor は 60g 食パン基準のスケール済み値。
       {
         key: 'bagel',

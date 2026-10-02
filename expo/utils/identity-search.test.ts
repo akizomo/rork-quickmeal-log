@@ -12,6 +12,7 @@
  *   - 層1 (confident): `searchTags` による直接ヒット。頻出の派生名を昇格させる
  *   - 層2 (もしかして): `head-nouns.ts` の主辞「サラダ」による一般形の受け皿
  */
+import { IDENTITY_REGISTRY } from '@/constants/identity';
 import { getVocabularyMatches, searchEntriesFuzzy } from './identity-search';
 
 const search = (q: string) => searchEntriesFuzzy(q, { locale: 'ja' });
@@ -54,5 +55,30 @@ describe('低脂チーズの着地', () => {
   it('「低脂質チーズ」(漢字) も cheese_low_fat に着地する', () => {
     const ids = search('低脂質チーズ').confident.map((r) => r.entry.identity.id);
     expect(ids).toContain('cheese_low_fat');
+  });
+});
+
+describe('パン系の着地 (ガーリックトースト)', () => {
+  // `bread` は searchTags が1つも無く、「トースト」「ガーリック〜」が全層で 0 件だった。
+  // ガーリックトーストは 食パン + バター (butter_cream は bread の default Add-on 先頭) で
+  // 表現できるため Identity は足さず、語彙だけで層1に着地させる (IA spec §1.5 判定1)。
+  it.each(['ガーリックトースト', 'ガーリックブレッド', 'ガーリックパン', 'トースト'])(
+    '「%s」は層1で bread に着地する',
+    (query) => {
+      const ids = search(query).confident.map((r) => r.entry.identity.id);
+      expect(ids).toContain('bread');
+    }
+  );
+
+  it.each(['バゲット', 'ガーリックバゲット'])('「%s」は bread のバゲット属性に着地する', (query) => {
+    const hit = search(query).confident.find(
+      (r) => r.entry.identity.id === 'bread' && r.entry.attribute?.key === 'baguette'
+    );
+    expect(hit).toBeDefined();
+  });
+
+  it('bread の default Add-on の先頭が butter_cream (ガーリックトーストの「バター」を1タップで足せる)', () => {
+    // 並びを変えるとこの動線が崩れる。ガーリックトーストの脂質はほぼバター由来。
+    expect(IDENTITY_REGISTRY.byId['bread']?.defaultAddonIds?.[0]).toBe('butter_cream');
   });
 });
