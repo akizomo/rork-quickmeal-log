@@ -6,36 +6,6 @@
   --border: #e5e5e5;
   --accent: #2563eb;
   --max-width: 720px;
-
-  /* LP palette — Hachibu design system semantic tokens
-     (ivory = surface, stone = content, sage = brand/action) */
-  --paper: #F6F3EC;          /* ivory[200] — surface.default */
-  --paper-soft: #FBF8F2;     /* ivory[100] — legacy palette.surface */
-  --paper-sub: #F3EEE4;      /* ivory[300] — surface.overlay */
-  --paper-sub-2: #EFE9DD;    /* ivory[400] — surface.raised */
-  --ink: #1C1C1A;            /* stone[900] — content.primary */
-  --ink-soft: #4C534B;       /* stone[700] — content.secondary */
-  --ink-mute: #6E776E;       /* stone[600] — content.tertiary */
-  --ink-fade: #80817A;       /* stone[500] */
-  --sage: #355E52;           /* sage[800] — action.primary.default */
-  --sage-dark: #264F44;      /* sage[900] — action.primary.pressed */
-  --sage-mid: #54736C;       /* sage[700] — action.text.default */
-  --sage-soft: #C9D8C2;      /* sage[200] */
-  --sage-bg: #E1EADD;        /* sage[100] — action.primary.container */
-  --on-action: #FFFDF7;      /* ivory[50] — content.onAction */
-  --border-soft: #DDD5C7;    /* ivory[600] — border.default */
-  --border-subtle: #E2DCCF;  /* ivory[500] — border.subtle */
-
-  /* Typography system (3 families):
-     - Lato: 英字ディスプレイ / ワードマーク / KPI 数値
-     - Noto Sans JP: 日本語見出し・本文
-     - JetBrains Mono: eyebrow / セクション番号 / 技術ラベル */
-  --font-latin: 'Lato', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
-  --font-jp: 'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic UI', 'Meiryo', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', 'SF Mono', Menlo, Monaco, Consolas, monospace;
-  /* 多言語混在テキスト用: Latin は Lato で描画され、グリフがない日本語文字は
-     自動で Noto Sans JP にフォールバック (CSS font fallback の per-glyph 動作) */
-  --font-text: var(--font-latin), var(--font-jp);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -183,15 +153,203 @@ footer.page-footer nav a {
    LP (Orthodox v5) — Hachibu landing page
    Legal pages (privacy/terms) are NOT affected by anything
    below this line; LP scope is bounded to body.lp-body.
+
+   Token layers (上から下へ参照する。コンポーネント規則では raw 値を書かない):
+     1. Scales      — spacing / radius / type / motion / elevation (テーマ非依存)
+     2. Semantic    — surface / content / border / action (ライト既定)
+     3. Dark        — semantic のみを :root で差し替える。セレクター単位の上書きは書かない
+   ブレークポイントは var() が使えないため 768px (why-deck) / 760px (layout) / 480px (modal) を直書き。
    ========================================================= */
 
+:root {
+  /* ---------- 1. Scales ---------- */
+
+  /* Typography families
+     - Lato: 英字ディスプレイ / ワードマーク / KPI 数値
+     - Noto Sans JP: 日本語見出し・本文
+     - JetBrains Mono: eyebrow / セクション番号 / 技術ラベル */
+  --font-latin: 'Lato', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
+  --font-jp: 'Noto Sans JP', 'Hiragino Sans', 'Yu Gothic UI', 'Meiryo', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', Menlo, Monaco, Consolas, monospace;
+  /* 多言語混在テキスト用: Latin は Lato、グリフのない日本語は Noto Sans JP に自動フォールバック */
+  --font-text: var(--font-latin), var(--font-jp);
+
+  /* Font size — 役割で選ぶ */
+  --fs-caption: 11px;
+  --fs-meta: 12px;
+  --fs-label: 13px;
+  --fs-body-sm: 14px;
+  --fs-body: 15px;
+  --fs-base: 16px;
+  --fs-subhead: 17px;
+  --fs-title-sm: 20px;
+  --fs-title: 22px;
+  --fs-icon: 24px;
+  --fs-lead: clamp(20px, 2vw, 26px);
+  --fs-hero-sub: clamp(20px, 2.4vw, 26px);
+  --fs-stat: clamp(28px, 3vw, 40px);
+  --fs-stat-lg: clamp(40px, 4vw, 56px);
+  --fs-h2: clamp(28px, 4vw, 44px);
+  --fs-display: clamp(34px, 7vw, 76px);
+  --fs-h2-xl: clamp(32px, 5vw, 56px);
+
+  /* Line height */
+  --lh-stat: 1.05;
+  --lh-display: 1.18;
+  --lh-heading: 1.35;
+  --lh-snug: 1.45;
+  --lh-compact: 1.5;
+  --lh-relaxed: 1.7;
+  --lh-body: 1.75;
+
+  /* Letter spacing */
+  --ls-stat: -0.015em;
+  --ls-display: -0.01em;
+  --ls-heading: 0.005em;
+  --ls-ui: 0.02em;
+  --ls-label: 0.04em;
+  --ls-caps: 0.08em;
+  --ls-eyebrow: 0.1em;
+
+  /* Spacing — 4px グリッド (--space-N = N × 4px) */
+  --space-half: 2px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 28px;
+  --space-8: 32px;
+  --space-9: 36px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-14: 56px;
+  --space-16: 64px;
+  --space-18: 72px;
+  --space-20: 80px;
+  --space-24: 96px;
+  --space-28: 112px;
+  --space-32: 128px;
+
+  /* Radius */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+  --radius-control: 6px; /* ボタン/バッジ (pill は使わない) */
+  --radius-phone: 36px;
+  --phone-bezel: 6px;
+
+  /* Layout */
+  --container: 1080px;
+  --measure: 640px;
+  --modal-w: 460px;
+  --sticky-offset: 72px;
+  --media-xl: 360px;
+  --media-lg: 320px;
+  --media-md: 280px;
+  --media-sm: 240px;
+  --media-xs: 200px;
+  --cta-height: 56px;
+  --cta-min-width: 192px;
+  --z-header: 10;
+
+  /* Motion */
+  --dur-fast: 0.15s;
+  --dur-base: 0.2s;
+  --dur-modal: 0.18s;
+  --dur-slow: 0.4s;
+  --ease-standard: ease;
+  --ease-out: ease-out;
+  --dur-reveal: 0.6s;
+  --ease-reveal: cubic-bezier(0.16, 1, 0.3, 1);
+  --reveal-shift: var(--space-3);
+  --reveal-stagger: 80ms;
+
+  /* Elevation — 影は「覆いかぶさるもの」にだけ付ける */
+  --shadow-figure-sm: 0 8px 16px rgba(28, 28, 26, 0.1);
+  --shadow-figure: 0 10px 24px rgba(28, 28, 26, 0.11);
+  --shadow-card-front: 0 8px 32px rgba(28, 28, 26, 0.14);
+  --shadow-modal: 0 24px 64px rgba(28, 28, 26, 0.24);
+  --shadow-action: 0 8px 24px -10px rgba(53, 94, 82, 0.55);
+  --shadow-phone: 0 0 0 1px rgba(255, 255, 255, 0.06), inset 0 0 0 1px rgba(0, 0, 0, 0.25),
+    0 14px 32px rgba(0, 0, 0, 0.28);
+
+  /* ---------- 2. Semantic color (light) ----------
+     Hachibu design system と対応: ivory = surface, stone = content, sage = brand/action */
+
+  /* Surface */
+  --paper: #f6f3ec; /* surface.default — ページの地 */
+  --paper-soft: #fbf8f2; /* surface.raised — モーダル */
+  --paper-sub: #f3eee4; /* surface.sunken — カード/図版の地 */
+  --hover-bg: #f3eee4; /* 押せる面の hover */
+  --header-bg: rgba(250, 250, 247, 0.85);
+  --scrim: rgba(28, 28, 26, 0.55);
+
+  /* Content */
+  --ink: #1c1c1a; /* content.primary */
+  --ink-soft: #4c534b; /* content.secondary */
+  --ink-mute: #6e776e; /* content.tertiary (補助。本文の色には使わない) */
+
+  /* Border */
+  --border-soft: #ddd5c7; /* border.default */
+
+  /* Action — fill (ボタン地) とテキスト/アクセントを分ける */
+  --sage: #355e52; /* action.primary.default (fill) */
+  --sage-dark: #264f44; /* action.primary.pressed (fill hover) */
+  --on-action: #fffdf7; /* fill 上の文字 */
+  --action-text: #355e52; /* 面の上に載せる action 色のテキスト/アイコン */
+  --action-container: #e1eadd; /* action.primary.container */
+  --action-container-border: #c9d8c2;
+  --action-on-container: #264f44;
+  --highlight: #e1eadd; /* 見出し強調の蛍光ペン下線 */
+  --focus-ring: #e1eadd;
+  --danger-text: #9f2f2d;
+  --glow: rgba(53, 94, 82, 0.07); /* Hero の ambient glow */
+
+  /* 非スワップ: canvas アニメーションは常に IVORY で描画される (lp/why-animation.js) */
+  --canvas-ivory: #f6f3ec;
+  --phone-border: rgba(255, 255, 255, 0.15);
+  --phone-body: #000;
+}
+
+/* ---------- 3. Dark (warm near-black) — トークン差し替えのみ ---------- */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #1d1913; /* ivory[900] */
+    --paper-soft: #2a2520;
+    --paper-sub: #2a2520;
+    --hover-bg: #403a2e; /* ivory[800] */
+    --header-bg: rgba(29, 25, 19, 0.85);
+    --scrim: rgba(0, 0, 0, 0.7);
+
+    --ink: #f7f7f6; /* stone[50] */
+    --ink-soft: #bfbfb9; /* stone[300] */
+    --ink-mute: #adaba5;
+
+    --border-soft: #403a2e;
+
+    --action-text: #9ab594; /* sage[400] — 暗い地での可読性 */
+    --action-container: rgba(154, 181, 148, 0.12);
+    --action-container-border: rgba(154, 181, 148, 0.4);
+    --action-on-container: #c9d8c2; /* sage[200] */
+    --highlight: rgba(53, 94, 82, 0.45);
+    --focus-ring: rgba(154, 181, 148, 0.2);
+    --danger-text: #e8a19e;
+    --glow: rgba(154, 181, 148, 0.07);
+  }
+}
+
+/* ---------- Base ---------- */
 body.lp-body {
   margin: 0;
   background: var(--paper);
   color: var(--ink);
   font-family: var(--font-text);
-  font-size: 16px;
-  line-height: 1.75;
+  font-size: var(--fs-base);
+  line-height: var(--lh-body);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -204,44 +362,58 @@ body.lp-body {
   box-sizing: border-box;
 }
 
+/* キーボード操作のフォーカス表示 */
+.lp-body :focus-visible {
+  outline: 2px solid var(--action-text);
+  outline-offset: 2px;
+}
+
+/* 言語切替: body[lang] で .ja / .en を出し分け */
+body[lang="en"] .ja {
+  display: none;
+}
+
+body[lang="ja"] .en {
+  display: none;
+}
+
 /* ---------- Header ---------- */
 .lp-header {
   position: sticky;
   top: 0;
-  z-index: 10;
-  background: rgba(250, 250, 247, 0.85);
+  z-index: var(--z-header);
+  background: var(--header-bg);
   backdrop-filter: saturate(140%) blur(10px);
   -webkit-backdrop-filter: saturate(140%) blur(10px);
   border-bottom: 1px solid var(--border-soft);
 }
 
 .lp-header-inner {
-  max-width: 1080px;
+  max-width: var(--container);
   margin: 0 auto;
-  padding: 16px 24px;
+  padding: var(--space-4) var(--space-6);
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: var(--space-6);
 }
 
 .lp-brand {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-3);
   font-family: var(--font-latin);
   font-weight: 400;
-  letter-spacing: 0.02em;
-  font-size: 16px;
+  letter-spacing: var(--ls-ui);
+  font-size: var(--fs-base);
   color: var(--ink);
   text-decoration: none;
 }
 
 .lp-brand-mark {
-  width: 20px;
-  height: 20px;
+  width: var(--space-5);
+  height: var(--space-5);
   flex-shrink: 0;
-  /* fill="currentColor" → .lp-brand の color を継承
-     (ライト: --ink, ダーク: #F7F7F6 をダークモードルールで上書き) */
+  /* fill="currentColor" → .lp-brand の color を継承 */
 }
 
 .lp-brand-text {
@@ -250,35 +422,74 @@ body.lp-body {
 
 .lp-nav {
   display: flex;
-  gap: 24px;
+  gap: var(--space-6);
   margin-left: auto;
 }
 
 .lp-nav a {
   color: var(--ink-soft);
   text-decoration: none;
-  font-size: 13px;
-  letter-spacing: 0.04em;
+  font-size: var(--fs-label);
+  letter-spacing: var(--ls-label);
+  transition: color var(--dur-base) var(--ease-standard);
 }
 
 .lp-nav a:hover {
-  color: var(--sage);
+  color: var(--action-text);
+}
+
+.lp-lang-switch {
+  display: flex;
+  align-items: center;
+  gap: var(--space-half);
+  margin-right: var(--space-2);
+}
+
+.lp-lang-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: var(--fs-meta);
+  font-weight: 500;
+  padding: var(--space-1) var(--space-2);
+  border-bottom: 2px solid transparent;
+  color: inherit;
+  opacity: 0.4;
+  transition: opacity var(--dur-fast) var(--ease-standard);
+  letter-spacing: var(--ls-label);
+}
+
+.lp-lang-btn:hover {
+  opacity: 0.7;
+}
+
+.lp-lang-btn.active {
+  opacity: 1;
+  font-weight: 700;
+  border-bottom-color: currentColor;
+}
+
+.lp-lang-sep {
+  opacity: 0.2;
+  font-size: var(--fs-meta);
 }
 
 .lp-header-cta {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 36px;
-  padding: 0 18px;
-  border-radius: 999px;
+  height: var(--space-9);
+  padding: 0 var(--space-5);
+  border-radius: var(--radius-control);
   background: var(--sage);
   color: var(--on-action);
-  font-size: 13px;
+  font-size: var(--fs-label);
   font-weight: 600;
-  letter-spacing: 0.02em;
+  letter-spacing: var(--ls-ui);
   text-decoration: none;
-  transition: background-color 0.2s ease, transform 0.15s ease;
+  transition: background-color var(--dur-base) var(--ease-standard),
+    transform var(--dur-fast) var(--ease-standard);
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -293,13 +504,13 @@ body.lp-body {
 
 /* ---------- Main / Sections ---------- */
 .lp-main {
-  max-width: 1080px;
+  max-width: var(--container);
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0 var(--space-6);
 }
 
 .lp-section {
-  padding: 96px 0;
+  padding: var(--space-24) 0;
   border-bottom: 1px solid var(--border-soft);
   position: relative;
 }
@@ -311,55 +522,68 @@ body.lp-body {
 .lp-section-num {
   font-family: var(--font-mono);
   font-style: normal;
-  font-size: 12px;
+  font-size: var(--fs-meta);
   font-weight: 400;
-  letter-spacing: 0.08em;
+  letter-spacing: var(--ls-caps);
   text-transform: uppercase;
   color: var(--ink-soft);
-  margin: 0 0 24px;
+  margin: 0 0 var(--space-6);
 }
 
 .lp-section-head {
-  margin-bottom: 56px;
+  margin-bottom: var(--space-14);
 }
 
 .lp-section-h {
-  font-size: clamp(28px, 4vw, 44px);
+  font-size: var(--fs-h2);
   font-weight: 700;
-  letter-spacing: 0.005em;
-  line-height: 1.35;
+  letter-spacing: var(--ls-heading);
+  line-height: var(--lh-heading);
   margin: 0;
   color: var(--ink);
 }
 
 .lp-section-h em {
   font-style: normal;
-  background: linear-gradient(to top, var(--sage-bg) 40%, transparent 40%);
-  padding: 0 4px;
+  background: linear-gradient(to top, var(--highlight) 40%, transparent 40%);
+  padding: 0 var(--space-1);
 }
 
 .lp-section-body {
-  font-size: 16px;
+  font-size: var(--fs-base);
   color: var(--ink);
-  margin: 24px 0 0;
-  max-width: 640px;
+  margin: var(--space-6) 0 0;
+  max-width: var(--measure);
 }
 
 /* ---------- Hero ---------- */
 .lp-hero {
-  padding: 96px 0 112px;
+  position: relative;
+  padding: var(--space-24) 0 var(--space-28);
   border-bottom: 1px solid var(--border-soft);
+}
+
+.lp-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 70% 60% at 72% 42%, var(--glow), transparent 70%);
+  pointer-events: none;
+}
+
+.lp-hero-grid {
+  position: relative;
 }
 
 .lp-hero-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
   align-items: center;
-  gap: 64px;
+  gap: var(--space-16);
 }
 
 .lp-hero-copy {
-  max-width: 640px;
+  max-width: var(--measure);
 }
 
 .lp-hero-figure {
@@ -371,54 +595,54 @@ body.lp-body {
 
 .lp-hero-figure img {
   width: 100%;
-  max-width: 360px;
+  max-width: var(--media-xl);
   height: auto;
-  filter: drop-shadow(0 10px 24px rgba(28, 28, 26, 0.11));
+  filter: drop-shadow(var(--shadow-figure));
 }
 
 .lp-eyebrow {
   display: inline-block;
   font-family: var(--font-mono);
-  font-size: 12px;
-  letter-spacing: 0.1em;
-  color: var(--sage-dark);
-  background: var(--sage-bg);
-  border: 1px solid var(--sage-soft);
-  padding: 6px 14px;
-  border-radius: 999px;
-  margin: 0 0 32px;
+  font-size: var(--fs-meta);
+  letter-spacing: var(--ls-eyebrow);
+  color: var(--action-on-container);
+  background: var(--action-container);
+  border: 1px solid var(--action-container-border);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-control);
+  margin: 0 0 var(--space-8);
   text-transform: uppercase;
   font-weight: 500;
 }
 
 .lp-hero-title {
-  font-size: clamp(34px, 7vw, 76px);
+  font-size: var(--fs-display);
   font-weight: 700;
-  letter-spacing: -0.01em;
-  line-height: 1.18;
-  margin: 0 0 24px;
+  letter-spacing: var(--ls-display);
+  line-height: var(--lh-display);
+  margin: 0 0 var(--space-6);
   color: var(--ink);
 }
 
 .lp-hero-sub {
-  font-size: clamp(20px, 2.4vw, 26px);
+  font-size: var(--fs-hero-sub);
   font-weight: 500;
   color: var(--ink);
-  margin: 0 0 12px;
+  margin: 0 0 var(--space-3);
 }
 
 .lp-hero-tagline {
-  font-size: 15px;
-  color: var(--ink-soft);
-  margin: 0 0 48px;
-  letter-spacing: 0.04em;
+  font-size: var(--fs-subhead);
+  color: var(--ink);
+  margin: 0 0 var(--space-12);
+  letter-spacing: var(--ls-ui);
 }
 
 /* ---------- CTA ---------- */
 .lp-cta-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 16px;
+  gap: var(--space-4);
   align-items: flex-start;
 }
 
@@ -426,32 +650,38 @@ body.lp-body {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 8px;
+  gap: var(--space-2);
 }
 
 .lp-cta-note {
-  font-size: 12px;
+  font-size: var(--fs-meta);
   color: var(--ink-mute);
   margin: 0;
-  letter-spacing: 0.02em;
-  padding: 0 4px;
-  line-height: 1.4;
+  letter-spacing: var(--ls-ui);
+  padding: 0 var(--space-1);
+  line-height: var(--lh-heading);
 }
 
 .cta {
   display: inline-flex;
   flex-direction: column;
   justify-content: center;
-  min-height: 56px;
-  padding: 12px 28px;
-  border-radius: 999px;
-  font-size: 15px;
+  min-height: var(--cta-height);
+  min-width: var(--cta-min-width);
+  align-items: center;
+  text-align: center;
+  padding: var(--space-3) var(--space-7);
+  border-radius: var(--radius-control);
+  font-size: var(--fs-body);
   font-weight: 600;
   text-decoration: none;
-  letter-spacing: 0.02em;
-  transition: transform 0.15s ease, box-shadow 0.2s ease,
-    background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
-  line-height: 1.3;
+  letter-spacing: var(--ls-ui);
+  transition: transform var(--dur-fast) var(--ease-standard),
+    box-shadow var(--dur-base) var(--ease-standard),
+    background-color var(--dur-base) var(--ease-standard),
+    border-color var(--dur-base) var(--ease-standard),
+    color var(--dur-base) var(--ease-standard);
+  line-height: var(--lh-heading);
 }
 
 .cta:active {
@@ -462,7 +692,7 @@ body.lp-body {
   background: var(--sage);
   color: var(--on-action);
   border: 1px solid var(--sage);
-  box-shadow: 0 8px 24px -10px rgba(53, 94, 82, 0.55);
+  box-shadow: var(--shadow-action);
 }
 
 .cta-primary:hover {
@@ -474,8 +704,7 @@ body.lp-body {
   background: transparent;
   color: var(--ink);
   border: 1px solid var(--ink);
-  padding: 10px 24px;
-  align-items: flex-start;
+  padding: var(--space-2) var(--space-6);
 }
 
 .cta-secondary:hover {
@@ -484,11 +713,11 @@ body.lp-body {
 }
 
 .cta-secondary .cta-mute {
-  font-size: 11px;
+  font-size: var(--fs-caption);
   font-weight: 400;
   color: var(--ink-mute);
-  letter-spacing: 0.08em;
-  margin-bottom: 2px;
+  letter-spacing: var(--ls-caps);
+  margin-bottom: var(--space-half);
 }
 
 .cta-secondary:hover .cta-mute {
@@ -496,7 +725,7 @@ body.lp-body {
 }
 
 .cta-secondary .cta-strong {
-  font-size: 15px;
+  font-size: var(--fs-body);
   font-weight: 600;
 }
 
@@ -505,25 +734,56 @@ body.lp-body {
   text-align: left;
 }
 
-/* ---------- §02 Features ---------- */
+.lp-concept .lp-section-h {
+  font-size: var(--fs-h2-xl);
+  line-height: var(--lh-snug);
+}
+
+.lp-concept .lp-section-body {
+  font-size: var(--fs-subhead);
+}
+
+/* ---------- Phone frame ---------- */
+.lp-phone-frame {
+  position: relative;
+  display: block;
+  width: 100%;
+  max-width: var(--media-md);
+  margin: 0 auto;
+  border-radius: var(--radius-phone);
+  border: var(--phone-bezel) solid var(--phone-border);
+  box-shadow: var(--shadow-phone);
+  overflow: hidden;
+  background: var(--phone-body);
+  line-height: 0;
+}
+
+.lp-phone-frame video,
+.lp-phone-frame img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: calc(var(--radius-phone) - var(--phone-bezel));
+  filter: none;
+  max-width: none;
+}
+
+/* ---------- §03 Features ---------- */
 .lp-feature-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 48px;
+  gap: var(--space-12);
 }
 
 .lp-feature {
-  padding-top: 24px;
+  padding-top: var(--space-6);
   display: flex;
   flex-direction: column;
 }
 
 .lp-feature-figure {
-  margin: 0 0 32px;
-  background: var(--paper-sub);
-  border: 1px solid var(--border-subtle);
-  border-radius: 16px;
-  padding: 36px 24px 28px;
+  margin: 0 0 var(--space-8);
+  padding: var(--space-6) 0;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -531,68 +791,67 @@ body.lp-body {
 
 .lp-feature-figure img {
   width: 100%;
-  max-width: 280px;
+  max-width: var(--media-md);
   height: auto;
   display: block;
-  filter: drop-shadow(0 8px 16px rgba(28, 28, 26, 0.10));
+  filter: drop-shadow(var(--shadow-figure-sm));
 }
 
 .lp-feature-num {
   font-family: var(--font-mono);
   font-style: normal;
-  font-size: 12px;
+  font-size: var(--fs-meta);
   font-weight: 500;
-  letter-spacing: 0.08em;
+  letter-spacing: var(--ls-caps);
   color: var(--ink-soft);
-  margin: 0 0 16px;
+  margin: 0 0 var(--space-4);
 }
 
 .lp-feature-title {
   font-family: var(--font-latin);
   font-style: italic;
-  font-size: 22px;
+  font-size: var(--fs-title);
   font-weight: 700;
-  color: var(--sage);
-  margin: 0 0 20px;
+  color: var(--action-text);
+  margin: 0 0 var(--space-5);
   letter-spacing: -0.005em;
 }
 
 .lp-feature-lead {
-  font-size: clamp(20px, 2vw, 26px);
+  font-size: var(--fs-lead);
   font-weight: 700;
-  line-height: 1.45;
+  line-height: var(--lh-snug);
   color: var(--ink);
-  margin: 0 0 16px;
+  margin: 0 0 var(--space-4);
 }
 
 .lp-feature-lead strong {
-  background: linear-gradient(to top, var(--sage-bg) 40%, transparent 40%);
-  padding: 0 4px;
+  background: linear-gradient(to top, var(--highlight) 40%, transparent 40%);
+  padding: 0 var(--space-1);
   font-weight: 700;
 }
 
 .lp-feature-body {
-  font-size: 15px;
+  font-size: var(--fs-body);
   color: var(--ink-soft);
-  margin: 0 0 32px;
+  margin: 0 0 var(--space-8);
 }
 
 .lp-feature-meta {
   display: grid;
-  gap: 14px;
+  gap: var(--space-4);
   margin: 0;
-  padding: 0;
   border-top: 1px solid var(--border-soft);
-  padding-top: 20px;
+  padding: var(--space-5) 0 0;
 }
 
 .lp-feature-meta > div {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  gap: 16px;
+  gap: var(--space-4);
   border-bottom: 1px dotted var(--border-soft);
-  padding-bottom: 14px;
+  padding-bottom: var(--space-4);
 }
 
 .lp-feature-meta > div:last-child {
@@ -601,31 +860,31 @@ body.lp-body {
 }
 
 .lp-feature-meta dt {
-  font-size: 13px;
+  font-size: var(--fs-label);
   color: var(--ink);
   font-weight: 600;
   margin: 0;
 }
 
 .lp-feature-meta dd {
-  font-size: 13px;
+  font-size: var(--fs-label);
   color: var(--ink-soft);
   margin: 0;
   text-align: right;
 }
 
-/* ---------- §03 Why — layout ---------- */
+/* ---------- §02 Why — layout ---------- */
 .lp-why-layout {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 32px;
+  gap: var(--space-8);
   align-items: start;
 }
 
 .lp-why-anim {
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   overflow: hidden;
-  background: #F6F3EC;
+  background: var(--canvas-ivory);
 }
 
 .lp-why-anim canvas {
@@ -637,14 +896,14 @@ body.lp-body {
 .lp-why-cards {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--space-4);
 }
 
 .lp-why-card {
   background: var(--paper-sub);
   border: 1px solid var(--border-soft);
-  border-radius: 16px;
-  padding: 24px;
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
   display: flex;
   flex-direction: column;
 }
@@ -657,10 +916,10 @@ body.lp-body {
 
   .lp-why-sticky {
     position: sticky;
-    top: 72px;
+    top: var(--sticky-offset);
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: var(--space-6);
   }
 
   .lp-why-sticky .lp-section-head {
@@ -679,22 +938,23 @@ body.lp-body {
   .lp-why-scroll-track[data-scroll-ready] .lp-why-card {
     grid-area: 1 / 1;
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(var(--space-5));
     pointer-events: none;
-    transition: opacity 0.4s ease, transform 0.4s ease;
+    transition: opacity var(--dur-slow) var(--ease-standard),
+      transform var(--dur-slow) var(--ease-standard);
     z-index: 0;
   }
 
   /* 2 cards behind front, peeking out below */
   .lp-why-scroll-track[data-scroll-ready] .lp-why-card.is-back {
     opacity: 0.4;
-    transform: translateY(28px) scaleX(0.92);
+    transform: translateY(var(--space-7)) scaleX(0.92);
     z-index: 1;
   }
 
   .lp-why-scroll-track[data-scroll-ready] .lp-why-card.is-mid {
     opacity: 0.65;
-    transform: translateY(14px) scaleX(0.96);
+    transform: translateY(var(--space-4)) scaleX(0.96);
     z-index: 2;
   }
 
@@ -704,39 +964,39 @@ body.lp-body {
     transform: translateY(0) scale(1);
     pointer-events: auto;
     z-index: 3;
-    box-shadow: 0 8px 32px rgba(28, 28, 26, 0.14);
+    box-shadow: var(--shadow-card-front);
   }
 
   /* Dismissed: slide up and out */
   .lp-why-scroll-track[data-scroll-ready] .lp-why-card.is-gone {
     opacity: 0;
-    transform: translateY(-24px);
+    transform: translateY(calc(var(--space-6) * -1));
     z-index: 0;
     pointer-events: none;
   }
 
   /* Larger padding + justify top-half on tall square card */
   .lp-why-card {
-    padding: 36px 32px;
+    padding: var(--space-9) var(--space-8);
     justify-content: center;
   }
 
   .lp-why-num {
-    margin-bottom: 16px;
+    margin-bottom: var(--space-4);
   }
 
   .lp-why-stat {
-    font-size: clamp(40px, 4vw, 56px);
-    margin-bottom: 8px;
+    font-size: var(--fs-stat-lg);
+    margin-bottom: var(--space-2);
   }
 
   .lp-why-label {
-    margin-bottom: 24px;
-    padding-bottom: 20px;
+    margin-bottom: var(--space-6);
+    padding-bottom: var(--space-5);
   }
 
   .lp-why-h {
-    margin-bottom: 12px;
+    margin-bottom: var(--space-3);
   }
 }
 
@@ -744,56 +1004,60 @@ body.lp-body {
 @media (max-width: 768px) {
   .lp-why-layout {
     grid-template-columns: 1fr;
-    gap: 24px;
+    gap: var(--space-6);
   }
 }
 
 .lp-why-num {
   font-family: var(--font-mono);
   font-style: normal;
-  font-size: 12px;
+  font-size: var(--fs-meta);
   font-weight: 500;
-  letter-spacing: 0.08em;
+  letter-spacing: var(--ls-caps);
   color: var(--ink-mute);
-  margin: 0 0 12px;
+  margin: 0 0 var(--space-3);
 }
 
 .lp-why-stat {
   font-family: var(--font-text);
   font-style: normal;
-  font-size: clamp(28px, 3vw, 40px);
+  font-size: var(--fs-stat);
   font-weight: 700;
-  color: var(--sage);
-  margin: 0 0 6px;
-  letter-spacing: -0.015em;
-  line-height: 1.05;
+  color: var(--action-text);
+  margin: 0 0 var(--space-2);
+  letter-spacing: var(--ls-stat);
+  line-height: var(--lh-stat);
 }
 
 .lp-why-label {
-  font-size: 12px;
+  font-size: var(--fs-meta);
   color: var(--ink-mute);
-  letter-spacing: 0.06em;
-  margin: 0 0 16px;
-  padding-bottom: 12px;
+  letter-spacing: var(--ls-caps);
+  margin: 0 0 var(--space-4);
+  padding-bottom: var(--space-3);
   border-bottom: 1px solid var(--border-soft);
 }
 
 .lp-why-h {
-  font-size: 17px;
+  font-size: var(--fs-subhead);
   font-weight: 700;
   color: var(--ink);
-  margin: 0 0 8px;
-  line-height: 1.5;
+  margin: 0 0 var(--space-2);
+  line-height: var(--lh-compact);
 }
 
 .lp-why-body {
-  font-size: 14px;
+  font-size: var(--fs-body-sm);
   color: var(--ink-soft);
   margin: 0;
-  line-height: 1.7;
+  line-height: var(--lh-relaxed);
 }
 
 /* ---------- §04 FAQ ---------- */
+/* 最後の項目の下罫線と二重になり「空の1行」に見えるため、セクション罫線は外す */
+.lp-faq {
+  border-bottom: none;
+}
 
 .lp-faq-list {
   display: grid;
@@ -802,7 +1066,7 @@ body.lp-body {
 
 .lp-faq-item {
   border-bottom: 1px solid var(--border-soft);
-  padding: 24px 0;
+  padding: var(--space-6) 0;
 }
 
 .lp-faq-item:first-child {
@@ -810,7 +1074,7 @@ body.lp-body {
 }
 
 .lp-faq-item summary {
-  font-size: 17px;
+  font-size: var(--fs-subhead);
   font-weight: 600;
   color: var(--ink);
   cursor: pointer;
@@ -818,7 +1082,7 @@ body.lp-body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 16px;
+  gap: var(--space-4);
 }
 
 .lp-faq-item summary::-webkit-details-marker {
@@ -828,10 +1092,10 @@ body.lp-body {
 .lp-faq-item summary::after {
   content: "+";
   font-family: var(--font-mono);
-  font-size: 20px;
-  color: var(--sage);
+  font-size: var(--fs-title-sm);
+  color: var(--action-text);
   font-weight: 400;
-  transition: transform 0.2s ease;
+  transition: transform var(--dur-base) var(--ease-standard);
   line-height: 1;
 }
 
@@ -840,16 +1104,16 @@ body.lp-body {
 }
 
 .lp-faq-item p {
-  margin: 16px 0 0;
-  font-size: 15px;
+  margin: var(--space-4) 0 0;
+  font-size: var(--fs-body);
   color: var(--ink-soft);
-  line-height: 1.75;
+  line-height: var(--lh-body);
 }
 
 /* ---------- §05 Start ---------- */
 .lp-start {
   text-align: left;
-  padding-bottom: 128px;
+  padding-bottom: var(--space-32);
 }
 
 /* 2-column grid: text/CTA on left, phone mockup on right
@@ -858,11 +1122,11 @@ body.lp-body {
   display: grid;
   grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
   align-items: center;
-  gap: 64px;
+  gap: var(--space-16);
 }
 
 .lp-start-copy {
-  max-width: 640px;
+  max-width: var(--measure);
 }
 
 .lp-start-figure {
@@ -874,56 +1138,56 @@ body.lp-body {
 
 .lp-start-figure img {
   width: 100%;
-  max-width: 320px;
+  max-width: var(--media-lg);
   height: auto;
-  filter: drop-shadow(0 10px 24px rgba(28, 28, 26, 0.11));
+  filter: drop-shadow(var(--shadow-figure));
 }
 
 .lp-start-h {
-  margin-bottom: 24px;
+  margin-bottom: var(--space-6);
 }
 
 .lp-start-sub {
-  font-size: 16px;
+  font-size: var(--fs-base);
   color: var(--ink-soft);
-  margin: 0 0 32px;
+  margin: 0 0 var(--space-8);
 }
 
 .lp-start-bullets {
   list-style: none;
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 20px;
+  gap: var(--space-2) var(--space-5);
   padding: 0;
-  margin: 0 0 40px;
+  margin: 0 0 var(--space-10);
 }
 
 .lp-start-bullets li {
-  font-size: 13px;
+  font-size: var(--fs-label);
   color: var(--ink-soft);
-  letter-spacing: 0.04em;
+  letter-spacing: var(--ls-label);
   position: relative;
-  padding-left: 16px;
+  padding-left: var(--space-5);
 }
 
 .lp-start-bullets li::before {
-  content: "·";
+  content: "✓";
   position: absolute;
-  left: 4px;
-  color: var(--sage);
+  left: 0;
+  color: var(--action-text);
   font-weight: 700;
 }
 
-/* ---------- Subscribe Modal (iOS notify) ---------- */
+/* ---------- Modal (iOS notify / Android steps) ---------- */
 .lp-modal {
   border: none;
   padding: 0;
   background: var(--paper-soft);
   color: var(--ink);
-  border-radius: 16px;
-  max-width: 460px;
-  width: calc(100% - 40px);
-  box-shadow: 0 24px 64px rgba(28, 28, 26, 0.24);
+  border-radius: var(--radius-lg);
+  max-width: var(--modal-w);
+  width: calc(100% - var(--space-10));
+  box-shadow: var(--shadow-modal);
   overflow: visible;
   position: fixed;
   inset: 0;
@@ -931,19 +1195,19 @@ body.lp-body {
 }
 
 .lp-modal::backdrop {
-  background: rgba(28, 28, 26, 0.55);
+  background: var(--scrim);
   backdrop-filter: blur(2px);
   -webkit-backdrop-filter: blur(2px);
 }
 
 .lp-modal[open] {
-  animation: lp-modal-in 0.18s ease-out;
+  animation: lp-modal-in var(--dur-modal) var(--ease-out);
 }
 
 @keyframes lp-modal-in {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(var(--space-2));
   }
   to {
     opacity: 1;
@@ -953,102 +1217,103 @@ body.lp-body {
 
 .lp-modal-close {
   position: absolute;
-  top: 14px;
-  right: 14px;
-  width: 32px;
-  height: 32px;
+  top: var(--space-4);
+  right: var(--space-4);
+  width: var(--space-8);
+  height: var(--space-8);
   border: none;
   background: transparent;
-  font-size: 24px;
+  font-size: var(--fs-icon);
   line-height: 1;
   color: var(--ink-mute);
   cursor: pointer;
-  border-radius: 50%;
+  border-radius: var(--radius-full);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .lp-modal-close:hover {
-  background: var(--paper-sub);
+  background: var(--hover-bg);
   color: var(--ink);
 }
 
 .lp-modal-body,
 .lp-modal-thanks {
-  padding: 40px 32px 32px;
+  padding: var(--space-10) var(--space-8) var(--space-8);
 }
 
 .lp-modal-title {
-  font-size: 22px;
+  font-size: var(--fs-title);
   font-weight: 700;
-  line-height: 1.45;
-  margin: 0 0 12px;
+  line-height: var(--lh-snug);
+  margin: 0 0 var(--space-3);
   color: var(--ink);
-  letter-spacing: 0.005em;
+  letter-spacing: var(--ls-heading);
 }
 
 .lp-modal-sub {
-  font-size: 14px;
+  font-size: var(--fs-body-sm);
   color: var(--ink-soft);
-  margin: 0 0 24px;
-  line-height: 1.7;
+  margin: 0 0 var(--space-6);
+  line-height: var(--lh-relaxed);
 }
 
 .lp-modal-field {
   display: block;
-  margin-bottom: 20px;
+  margin-bottom: var(--space-5);
 }
 
 .lp-modal-label {
   display: block;
-  font-size: 12px;
+  font-size: var(--fs-meta);
   font-weight: 600;
   color: var(--ink-soft);
-  letter-spacing: 0.04em;
-  margin-bottom: 8px;
+  letter-spacing: var(--ls-label);
+  margin-bottom: var(--space-2);
 }
 
 .lp-modal-input {
   width: 100%;
-  padding: 14px 16px;
+  padding: var(--space-4);
   border: 1px solid var(--border-soft);
-  border-radius: 10px;
-  font-size: 16px;
+  border-radius: var(--radius-md);
+  font-size: var(--fs-base);
   color: var(--ink);
   background: var(--paper);
   font-family: inherit;
   box-sizing: border-box;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: border-color var(--dur-fast) var(--ease-standard),
+    box-shadow var(--dur-fast) var(--ease-standard);
 }
 
 .lp-modal-input:focus {
   outline: none;
-  border-color: var(--sage);
-  box-shadow: 0 0 0 3px var(--sage-bg);
+  border-color: var(--action-text);
+  box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
 .lp-modal-bullets {
   list-style: none;
   padding: 0;
-  margin: 0 0 24px;
+  margin: 0 0 var(--space-6);
   display: grid;
-  gap: 6px;
+  gap: var(--space-2);
 }
 
 .lp-modal-bullets li {
-  font-size: 12px;
+  font-size: var(--fs-meta);
   color: var(--ink-soft);
-  padding-left: 18px;
+  padding-left: var(--space-5);
   position: relative;
-  line-height: 1.6;
+  line-height: var(--lh-compact);
 }
 
 .lp-modal-bullets li::before {
   content: "✓";
   position: absolute;
   left: 0;
-  color: var(--sage);
+  color: var(--action-text);
   font-weight: 700;
 }
 
@@ -1056,29 +1321,29 @@ body.lp-body {
 .lp-modal-steps {
   list-style: none;
   padding: 0;
-  margin: 0 0 28px;
+  margin: 0 0 var(--space-7);
   display: grid;
-  gap: 16px;
+  gap: var(--space-4);
 }
 
 .lp-modal-steps li {
   display: flex;
   align-items: flex-start;
-  gap: 14px;
+  gap: var(--space-4);
 }
 
 .lp-modal-step-num {
   flex-shrink: 0;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
+  width: var(--space-7);
+  height: var(--space-7);
+  border-radius: var(--radius-full);
   background: var(--sage);
-  color: #fff;
+  color: var(--on-action);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: var(--fs-label);
   font-weight: 500;
   line-height: 1;
 }
@@ -1086,35 +1351,35 @@ body.lp-body {
 .lp-modal-step-text {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--space-half);
   flex: 1;
   min-width: 0;
 }
 
 .lp-modal-step-text strong {
-  font-size: 14px;
+  font-size: var(--fs-body-sm);
   font-weight: 700;
   color: var(--ink);
-  line-height: 1.4;
+  line-height: var(--lh-heading);
 }
 
 .lp-modal-step-text span {
-  font-size: 13px;
+  font-size: var(--fs-label);
   color: var(--ink-soft);
-  line-height: 1.5;
+  line-height: var(--lh-compact);
 }
 
 .lp-modal-submit {
   width: 100%;
-  margin-top: 4px;
+  margin-top: var(--space-1);
 }
 
 .lp-modal-finep {
-  font-size: 11px;
+  font-size: var(--fs-caption);
   color: var(--ink-mute);
-  margin: 16px 0 0;
+  margin: var(--space-4) 0 0;
   text-align: center;
-  line-height: 1.6;
+  line-height: var(--lh-compact);
 }
 
 .lp-modal-finep a {
@@ -1130,53 +1395,49 @@ body.lp-body {
 @media (max-width: 480px) {
   .lp-modal-body,
   .lp-modal-thanks {
-    padding: 32px 22px 24px;
+    padding: var(--space-8) var(--space-5) var(--space-6);
   }
+
   .lp-modal-title {
-    font-size: 20px;
+    font-size: var(--fs-title-sm);
   }
 }
 
-/* Dark mode modal */
-@media (prefers-color-scheme: dark) {
-  .lp-modal {
-    background: #2A2520;
-    color: #F7F7F6;
+/* ---------- Form error (inline) ---------- */
+.lp-form-error {
+  font-size: var(--fs-label);
+  color: var(--danger-text);
+  margin: 0 0 var(--space-4);
+  line-height: var(--lh-compact);
+}
+
+.lp-form-error[hidden] {
+  display: none;
+}
+
+/* ---------- Scroll reveal ----------
+   html.js のときだけ初期状態を隠す (JS 無効なら常時表示)。transform / opacity のみ使用。 */
+.js [data-reveal] {
+  opacity: 0;
+  transform: translateY(var(--reveal-shift));
+}
+
+.js [data-reveal].is-visible {
+  opacity: 1;
+  transform: none;
+  transition: opacity var(--dur-reveal) var(--ease-reveal),
+    transform var(--dur-reveal) var(--ease-reveal);
+  transition-delay: calc(var(--i, 0) * var(--reveal-stagger));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .js [data-reveal] {
+    opacity: 1;
+    transform: none;
   }
-  .lp-modal::backdrop {
-    background: rgba(0, 0, 0, 0.7);
-  }
-  .lp-modal-close {
-    color: #BFBFB9;
-  }
-  .lp-modal-close:hover {
-    background: #403A2E;
-    color: #F7F7F6;
-  }
-  .lp-modal-title {
-    color: #F7F7F6;
-  }
-  .lp-modal-sub,
-  .lp-modal-label,
-  .lp-modal-bullets li,
-  .lp-modal-step-text span {
-    color: #BFBFB9;
-  }
-  .lp-modal-step-text strong {
-    color: #F7F7F6;
-  }
-  .lp-modal-input {
-    background: #1D1913;
-    border-color: #403A2E;
-    color: #F7F7F6;
-  }
-  .lp-modal-input:focus {
-    border-color: #9AB594;
-    box-shadow: 0 0 0 3px rgba(154, 181, 148, 0.2);
-  }
-  .lp-modal-finep,
-  .lp-modal-finep a {
-    color: #ADABA5;
+
+  .js [data-reveal].is-visible {
+    transition: none;
   }
 }
 
@@ -1187,37 +1448,38 @@ body.lp-body {
 }
 
 .lp-footer-inner {
-  max-width: 1080px;
+  max-width: var(--container);
   margin: 0 auto;
-  padding: 32px 24px;
+  padding: var(--space-8) var(--space-6);
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: var(--space-6);
   flex-wrap: wrap;
   color: var(--ink-soft);
-  font-size: 13px;
+  font-size: var(--fs-label);
 }
 
 .lp-footer-brand {
   font-family: var(--font-latin);
   font-weight: 500;
-  letter-spacing: 0.02em;
+  letter-spacing: var(--ls-ui);
   color: var(--ink);
 }
 
 .lp-footer-nav {
   display: flex;
-  gap: 20px;
+  gap: var(--space-5);
   margin-left: auto;
 }
 
 .lp-footer-nav a {
   color: var(--ink-soft);
   text-decoration: none;
+  transition: color var(--dur-base) var(--ease-standard);
 }
 
 .lp-footer-nav a:hover {
-  color: var(--sage);
+  color: var(--action-text);
 }
 
 .lp-footer-copy {
@@ -1225,15 +1487,15 @@ body.lp-body {
   font-style: normal;
   font-weight: 400;
   color: var(--ink-mute);
-  font-size: 12px;
-  letter-spacing: 0.04em;
+  font-size: var(--fs-meta);
+  letter-spacing: var(--ls-label);
 }
 
 /* ---------- Responsive ---------- */
 @media (max-width: 760px) {
   .lp-header-inner {
-    padding: 12px 20px;
-    gap: 12px;
+    padding: var(--space-3) var(--space-5);
+    gap: var(--space-3);
   }
 
   /* Mobile: ナビ非表示でロゴ + CTA のみに集約 */
@@ -1243,49 +1505,48 @@ body.lp-body {
 
   .lp-header-cta {
     margin-left: auto;
-    height: 32px;
-    padding: 0 14px;
-    font-size: 12px;
+    height: var(--space-8);
+    padding: 0 var(--space-4);
+    font-size: var(--fs-meta);
   }
 
   .lp-main {
-    padding: 0 20px;
+    padding: 0 var(--space-5);
   }
 
   .lp-section,
   .lp-hero {
-    padding: 48px 0;
+    padding: var(--space-12) 0;
   }
 
   .lp-hero {
-    padding-top: 40px;
-    padding-bottom: 56px;
+    padding-top: var(--space-10);
+    padding-bottom: var(--space-14);
   }
 
   .lp-section-head {
-    margin-bottom: 28px;
+    margin-bottom: var(--space-7);
   }
 
   .lp-hero-title {
-    line-height: 1.18;
-    margin-bottom: 16px;
+    margin-bottom: var(--space-4);
   }
 
   .lp-hero-sub {
-    margin-bottom: 8px;
+    margin-bottom: var(--space-2);
   }
 
   .lp-hero-tagline {
-    margin-bottom: 32px;
+    margin-bottom: var(--space-8);
   }
 
   .lp-eyebrow {
-    margin-bottom: 24px;
+    margin-bottom: var(--space-6);
   }
 
   .lp-hero-grid {
     grid-template-columns: 1fr;
-    gap: 32px;
+    gap: var(--space-8);
   }
 
   /* Mobile: text first, phone as proof below CTAs */
@@ -1294,16 +1555,20 @@ body.lp-body {
   }
 
   .lp-hero-figure img {
-    max-width: 200px;
+    max-width: var(--media-xs);
+  }
+
+  .lp-phone-frame {
+    max-width: var(--media-xs);
   }
 
   .lp-feature-figure {
-    padding: 24px 16px 16px;
-    margin-bottom: 20px;
+    padding: var(--space-4) 0;
+    margin-bottom: var(--space-5);
   }
 
   .lp-feature-figure img {
-    max-width: 200px;
+    max-width: var(--media-xs);
   }
 
   .lp-cta-row {
@@ -1332,25 +1597,25 @@ body.lp-body {
 
   .lp-feature-grid {
     grid-template-columns: 1fr;
-    gap: 40px;
+    gap: var(--space-10);
   }
 
   .lp-faq-item {
-    padding: 20px 0;
+    padding: var(--space-5) 0;
   }
 
   .lp-faq-item summary {
-    font-size: 16px;
+    font-size: var(--fs-base);
   }
 
   .lp-start {
-    padding-bottom: 80px;
+    padding-bottom: var(--space-20);
   }
 
   /* Mobile: §05 を 1 列スタック、phone は CTA の下 */
   .lp-start-grid {
     grid-template-columns: 1fr;
-    gap: 40px;
+    gap: var(--space-10);
   }
 
   .lp-start-figure {
@@ -1358,27 +1623,25 @@ body.lp-body {
   }
 
   .lp-start-figure img {
-    max-width: 240px;
+    max-width: var(--media-sm);
   }
 
   /* Mobile: Modal ステップを少し圧縮 */
   .lp-modal-steps {
-    gap: 14px;
-    margin-bottom: 24px;
+    gap: var(--space-3);
+    margin-bottom: var(--space-6);
   }
 
   .lp-modal-step-num {
-    width: 26px;
-    height: 26px;
-    font-size: 12px;
+    font-size: var(--fs-meta);
   }
 
   .lp-footer-inner {
-    padding: 24px 20px;
+    padding: var(--space-6) var(--space-5);
     flex-direction: column;
     align-items: center;
     text-align: center;
-    gap: 12px;
+    gap: var(--space-3);
   }
 
   .lp-footer-nav {
@@ -1387,113 +1650,6 @@ body.lp-body {
     order: 3;
     justify-content: center;
     flex-wrap: wrap;
-    gap: 16px;
-  }
-}
-
-/* ---------- Dark mode (warm near-black per design system) ---------- */
-@media (prefers-color-scheme: dark) {
-  body.lp-body {
-    background: #1D1913;          /* ivory[900] */
-    color: #F7F7F6;               /* stone[50] */
-  }
-
-  .lp-header {
-    background: rgba(29, 25, 19, 0.85);
-    border-bottom-color: #403A2E; /* ivory[800] */
-  }
-
-  .lp-brand,
-  .lp-section-h,
-  .lp-hero-title,
-  .lp-hero-sub,
-  .lp-feature-lead,
-  .lp-why-h,
-  .lp-faq-item summary,
-  .lp-footer-brand {
-    color: #F7F7F6;
-  }
-
-  .lp-faq-item summary::after {
-    color: #9AB594;               /* sage[400] for dark contrast */
-  }
-
-  .lp-nav a,
-  .lp-section-body,
-  .lp-feature-body,
-  .lp-why-body,
-  .lp-start-sub,
-  .lp-faq-item p,
-  .lp-footer-inner,
-  .lp-footer-nav a {
-    color: #BFBFB9;               /* stone[300] */
-  }
-
-  .lp-section,
-  .lp-hero,
-  .lp-footer {
-    border-color: #403A2E;
-  }
-
-  .lp-footer {
-    background: #1D1913;
-  }
-
-  .lp-footer-copy {
-    color: #80817A;
-  }
-
-  .lp-footer-nav a:hover {
-    color: #9AB594;
-  }
-
-  .lp-faq-item:first-child {
-    border-top-color: #403A2E;
-  }
-
-  .lp-faq-item,
-  .lp-feature-meta,
-  .lp-feature-meta > div {
-    border-color: #403A2E;
-  }
-
-  .lp-feature-figure,
-  .lp-why-card {
-    background: #2A2520;
-    border-color: #403A2E;
-  }
-
-  .lp-why-label {
-    border-color: #403A2E;
-  }
-
-  .lp-feature-meta dt {
-    color: #F7F7F6;
-  }
-
-  .lp-feature-title,
-  .lp-why-stat {
-    color: #9AB594;               /* sage[400] — readable on dark */
-  }
-
-  .lp-eyebrow {
-    background: rgba(154, 181, 148, 0.12);
-    border-color: rgba(154, 181, 148, 0.4);
-    color: #C9D8C2;               /* sage[200] */
-  }
-
-  .cta-secondary {
-    color: #F7F7F6;
-    border-color: #F7F7F6;
-  }
-
-  .cta-secondary:hover {
-    background: #F7F7F6;
-    color: #1D1913;
-  }
-
-  .lp-section-h em,
-  .lp-feature-lead strong {
-    background: linear-gradient(to top, rgba(53, 94, 82, 0.45) 40%, transparent 40%);
+    gap: var(--space-4);
   }
 }

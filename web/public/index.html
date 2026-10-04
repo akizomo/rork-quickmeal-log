@@ -25,6 +25,7 @@
       href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Lato:ital,wght@0,300;0,400;0,700;1,400;1,700&family=Noto+Sans+JP:wght@300;400;500;700&display=swap"
     />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <script>document.documentElement.classList.add("js");</script>
     <link rel="stylesheet" href="/style.css" />
     <!-- TALLY_SCRIPT: Tally Form ID 確定後にこの行のコメントを外す -->
     <!-- <script async src="https://tally.so/widgets/embed.js"></script> -->
@@ -37,63 +38,6 @@
         };
     </script>
     <script defer src="/_vercel/insights/script.js"></script>
-    <style>
-      body[lang="en"] .ja { display: none; }
-      body[lang="ja"] .en { display: none; }
-
-      /* Phone frame */
-      .lp-phone-frame {
-        position: relative;
-        display: block;
-        width: 100%;
-        max-width: 280px;
-        margin: 0 auto;
-        border-radius: 36px;
-        border: 6px solid rgba(255,255,255,0.15);
-        box-shadow:
-          0 0 0 1px rgba(255,255,255,0.06),
-          inset 0 0 0 1px rgba(0,0,0,0.25),
-          0 14px 32px rgba(0,0,0,0.28);
-        overflow: hidden;
-        background: #000;
-        line-height: 0;
-      }
-      .lp-phone-frame video,
-      .lp-phone-frame img {
-        display: block;
-        width: 100%;
-        height: auto;
-        border-radius: 30px;
-        filter: none;
-        max-width: none;
-      }
-      @media (max-width: 600px) {
-        .lp-phone-frame { max-width: 200px; }
-      }
-
-      .lp-lang-switch {
-        display: flex;
-        align-items: center;
-        gap: 2px;
-        margin-right: 8px;
-      }
-      .lp-lang-btn {
-        background: none;
-        border: none;
-        cursor: pointer;
-        font-family: inherit;
-        font-size: 0.8rem;
-        font-weight: 500;
-        padding: 4px 6px;
-        color: inherit;
-        opacity: 0.4;
-        transition: opacity 0.15s;
-        letter-spacing: 0.05em;
-      }
-      .lp-lang-btn:hover { opacity: 0.7; }
-      .lp-lang-btn.active { opacity: 1; font-weight: 700; }
-      .lp-lang-sep { opacity: 0.2; font-size: 0.75rem; }
-    </style>
   </head>
   <body lang="ja" class="lp-body">
     <header class="lp-header" aria-label="サイトヘッダー">
@@ -139,7 +83,7 @@
       <!-- HERO -->
       <section class="lp-hero" aria-labelledby="hero-title">
         <div class="lp-hero-grid">
-          <div class="lp-hero-copy">
+          <div class="lp-hero-copy" data-reveal>
             <p class="lp-eyebrow">
               <span class="ja">Android クローズドテスト 募集中</span>
               <span class="en">Android Closed Beta — Join Now</span>
@@ -194,7 +138,7 @@
               </div>
             </div>
           </div>
-          <figure class="lp-hero-figure" aria-hidden="true">
+          <figure class="lp-hero-figure" aria-hidden="true" data-reveal style="--i:2">
             <div class="lp-phone-frame">
               <img
                 class="ja"
@@ -220,7 +164,7 @@
       </section>
 
       <!-- §01 CONCEPT -->
-      <section id="concept" class="lp-section lp-concept" aria-labelledby="concept-title">
+      <section id="concept" class="lp-section lp-concept" aria-labelledby="concept-title" data-reveal>
         <p class="lp-section-num">§ 01 — Concept</p>
         <h2 id="concept-title" class="lp-section-h">
           <span class="ja">食事記録のいちばんの敵は、<br /><em>「ちゃんと書こう」</em>という気持ち。</span>
@@ -328,7 +272,7 @@
 
       <!-- §03 FEATURES -->
       <section id="features" class="lp-section lp-features" aria-labelledby="features-title">
-        <div class="lp-section-head">
+        <div class="lp-section-head" data-reveal>
           <p class="lp-section-num">§ 03 — Features</p>
           <h2 id="features-title" class="lp-section-h">
             <span class="ja">急ぐ日も、しっかり残したい日も。</span>
@@ -337,7 +281,7 @@
         </div>
 
         <div class="lp-feature-grid">
-          <article class="lp-feature">
+          <article class="lp-feature" data-reveal style="--i:0">
             <figure class="lp-feature-figure" aria-hidden="true">
               <div class="lp-phone-frame">
                 <video
@@ -388,7 +332,7 @@
             </dl>
           </article>
 
-          <article class="lp-feature">
+          <article class="lp-feature" data-reveal style="--i:1">
             <figure class="lp-feature-figure" aria-hidden="true">
               <div class="lp-phone-frame">
                 <video
@@ -443,7 +387,7 @@
 
       <!-- §04 FAQ -->
       <section id="faq" class="lp-section lp-faq" aria-labelledby="faq-title">
-        <div class="lp-section-head">
+        <div class="lp-section-head" data-reveal>
           <p class="lp-section-num">§ 04 — FAQ</p>
           <h2 id="faq-title" class="lp-section-h">
             <span class="ja">よくある質問。</span>
@@ -452,7 +396,7 @@
         </div>
 
         <div class="lp-faq-list">
-          <details class="lp-faq-item">
+          <details class="lp-faq-item" data-reveal style="--i:0">
             <summary>
               <span class="ja">量がぴったりじゃないけど大丈夫?</span>
               <span class="en">What if my portion doesn't match exactly?</span>
@@ -464,7 +408,7 @@
               Hachibu logs a standard single serving. After tapping, you can switch to large or small. We prioritize keeping it easy over getting it perfect.
             </p>
           </details>
-          <details class="lp-faq-item">
+          <details class="lp-faq-item" data-reveal style="--i:1">
             <summary>
               <span class="ja">1ボタンに何種類も入っていて、ざっくりすぎない?</span>
               <span class="en">Isn't one button for multiple foods too rough?</span>
@@ -476,7 +420,7 @@
               Foods within a button are grouped by nutritional similarity, so the calorie range stays tight for everyday eating. The rare outliers get their own button.
             </p>
           </details>
-          <details class="lp-faq-item">
+          <details class="lp-faq-item" data-reveal style="--i:2">
             <summary>
               <span class="ja">写真で記録できないの?</span>
               <span class="en">Why no photo logging?</span>
@@ -488,7 +432,7 @@
               Photo → scan → confirm adds more steps than it looks. It's one of the most common reasons people stop. A few taps and you're done — every day.
             </p>
           </details>
-          <details class="lp-faq-item">
+          <details class="lp-faq-item" data-reveal style="--i:3">
             <summary>
               <span class="ja">もっと厳密に計算したい場合は?</span>
               <span class="en">What if I want to track more precisely?</span>
@@ -506,7 +450,7 @@
       <!-- §05 START -->
       <section id="start" class="lp-section lp-start" aria-labelledby="start-title">
         <div class="lp-start-grid">
-          <div class="lp-start-copy">
+          <div class="lp-start-copy" data-reveal>
             <p class="lp-section-num">§ 05 — Start</p>
             <h2 id="start-title" class="lp-section-h lp-start-h">
               <span class="ja">ざっくり記録、<br />はじめてみる。</span>
@@ -563,7 +507,7 @@
               </div>
             </div>
           </div>
-          <figure class="lp-start-figure" aria-hidden="true">
+          <figure class="lp-start-figure" aria-hidden="true" data-reveal style="--i:2">
             <div class="lp-phone-frame">
               <img
                 class="ja"
@@ -660,6 +604,11 @@
               <span class="en">Never shared or sold</span>
             </li>
           </ul>
+
+          <p class="lp-form-error" id="subscribe-error" role="alert" hidden>
+            <span class="ja">送信に失敗しました。時間をおいて、もう一度お試しください。</span>
+            <span class="en">Submission failed. Please try again in a moment.</span>
+          </p>
 
           <button type="submit" class="cta cta-primary lp-modal-submit">
             <span class="ja">登録する</span>
@@ -854,6 +803,8 @@
           e.preventDefault();
           var btn = form.querySelector('button[type="submit"]');
           var isEn = document.body.lang === 'en';
+          var errorEl = document.getElementById('subscribe-error');
+          errorEl.hidden = true;
           btn.disabled = true;
           btn.innerHTML = isEn
             ? '<span class="en">Sending…</span>'
@@ -873,13 +824,35 @@
               btn.innerHTML = isEn
                 ? '<span class="en">Subscribe</span>'
                 : '<span class="ja">登録する</span>';
-              alert(
-                isEn
-                  ? 'Submission failed. Please try again later.'
-                  : '送信に失敗しました。お手数ですが時間をおいて再度お試しください。'
-              );
+              errorEl.hidden = false;
             });
         });
+      })();
+
+      // Scroll reveal (IntersectionObserver)
+      (function () {
+        var els = document.querySelectorAll('[data-reveal]');
+        if (!els.length) return;
+        if (!('IntersectionObserver' in window)) {
+          els.forEach(function (el) { el.classList.add('is-visible'); });
+          return;
+        }
+        var pending = Array.prototype.slice.call(els);
+        function show(el) {
+          el.classList.add('is-visible');
+          io.unobserve(el);
+          pending.splice(pending.indexOf(el), 1);
+        }
+        var io = new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) {
+            if (entry.isIntersecting) show(entry.target);
+          });
+          // アンカージャンプ等で追い越された (交差せず画面の上に抜けた) 要素は隠れたままにしない
+          pending.slice().forEach(function (el) {
+            if (el.getBoundingClientRect().bottom < 0) show(el);
+          });
+        }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+        els.forEach(function (el) { io.observe(el); });
       })();
 
       // §03 Why — scroll-driven card deck (desktop only)
