@@ -652,8 +652,17 @@
     },
     "info": {
       "title": "Info",
-      "aboutApp": "About Hachibu",
-      "searchMisses": "Foods not found"
+      "aboutApp": "About Hachibu"
+    },
+    "feedback": {
+      "title": "Feedback",
+      "searchMisses": "Foods not found",
+      "searchMissesCount": "{{count}} words",
+      "mail": "Report a problem or idea",
+      "mailSub": "Opens your email app",
+      "mailSubject": "Feedback on Hachibu",
+      "mailFallbackTitle": "Please email us at",
+      "review": "Rate on the store"
     },
     "region": {
       "title": "Food Region",
