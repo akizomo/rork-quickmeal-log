@@ -136,7 +136,7 @@ const BUCKET_STAPLE: Identity[] = [
       'natto', 'egg', 'kimchi_top', 'salmon_flake', 'mentaiko', 'nori_furikake',
       'butter_cream', 'shirasu', 'katsuobushi',
     ], // cheese / rayu は白米には不自然なので除外
-    searchTags: ['ごはん', 'ご飯', '白米', 'はくまい', '玄米', 'げんまい', '米', 'こめ', '赤飯', 'せきはん'],
+    searchTags: ['ごはん', 'ご飯', '白米', 'はくまい', '玄米', 'げんまい', '米', 'こめ', '赤飯', 'せきはん', 'ライス'],
   },
   {
     id: 'onigiri',
@@ -178,7 +178,7 @@ const BUCKET_STAPLE: Identity[] = [
     // 無い (IA spec §1.5 分割軸)。ガーリックトースト・バタートースト等の「名前のある組み合わせ」
     // は Preset (constants/identity/presets.ts) が担うため、ここには置かない — 置くと検索結果に
     // ベースと Preset が二重に出る。ここは総称だけ。
-    searchTags: ['トースト', 'しょくぱん'],
+    searchTags: ['トースト', 'しょくぱん', 'ブレッド'],
     primaryHome: { tab: 'ingredient', bucket: 'staple' },
     quickTapDisabled: true, // Attribute span too wide (食パン 158 → ナン 320, F 2.5 → 11)
     defaultMacro: { kcal: 158, protein: 5.3, fat: 2.5, carbs: 28 },
@@ -374,7 +374,7 @@ const BUCKET_STAPLE: Identity[] = [
   {
     id: 'noodle_pasta',
     label: 'パスタ麺',
-    searchTags: ['パスタ', 'スパゲティ', 'すぱげてぃ'],
+    searchTags: ['パスタ', 'スパゲティ', 'すぱげてぃ', 'マカロニ'],
     primaryHome: { tab: 'ingredient', bucket: 'staple' },
     defaultMacro: { kcal: 284, protein: 10.2, fat: 1.4, carbs: 59 }, // 乾燥パスタ 80g
     amount: {
@@ -1645,7 +1645,7 @@ const BUCKET_SNACK_DRINK: Identity[] = [
     searchTags: ['プリン', 'ゼリー', 'カスタード'],
     attributes: [
       { key: 'custard', label: 'プリン', isDefault: true },
-      { key: 'jelly', label: 'ゼリー・杏仁', factor: { kcal: 0.41, protein: 0.35, fat: 0.06, carbs: 0.62 } },
+      { key: 'jelly', label: 'ゼリー・杏仁', searchTags: ['杏仁豆腐', 'あんにんどうふ', 'ゼリー'], factor: { kcal: 0.41, protein: 0.35, fat: 0.06, carbs: 0.62 } },
     ],
   },
   {
@@ -1798,7 +1798,7 @@ const BUCKET_SNACK_DRINK: Identity[] = [
       {
         key: 'chuhai',
         label: 'チューハイ・ハイボール',
-        searchTags: ['ちゅーはい', 'はいぼーる', '酎ハイ', 'サワー', 'レモンサワー'],
+        searchTags: ['ちゅーはい', 'はいぼーる', '酎ハイ', 'サワー', 'レモンサワー', 'カクテル', 'カシスオレンジ'],
         factor: { kcal: 1.279, protein: 0, carbs: 1.009 }, // 350ml ≒ 179kcal/C11
       },
     ],

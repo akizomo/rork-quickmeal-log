@@ -132,6 +132,14 @@ export const TUNING_CORPUS: Item[] = [
     ['はんばーぐ', 'meat_solo/hamburg'], ['さしみ', 'sashimi'], ['やきとり', 'yakitori'], ['ハンバーガ', ['burger', 'burger_big'], '長音なし'], ['チョコレイト', 'chocolate', '表記ゆれ'],
     ['てりやきバーガ', 'burger/teriyaki'], ['からあげ定食', 'teishoku/karaage'], ['味噌ラーメン大盛り', 'ramen_heavy/miso', '修飾語つき'], ['セブンのサラダチキン', 'salad_chicken', '店名つき'], ['朝ごはん', 'rice', '時間帯語 + 主食。ごはんが出るのは妥当'],
   ]),
+  ...C('取り違えの調査で移した語', 'base', [
+    ['ロース', ['beef_pork', 'red_meat', 'fried_main/tonkatsu'], '曖昧語 (豚か牛か、ロースかつか)。どれも妥当'],
+    ['かれい', ['white_fish', 'curry_class'], '鰈 / カレー (長音の畳み込みで同じキー)。打った形そのままを優先'],
+    ['たい', ['white_fish', 'gapao_rice'], '鯛 / タイ料理。ひらがなでは鯛が自然だが両方妥当'],
+    ['とろけるチーズ', ['cheese/slice', 'cheese']], ['チキンカレー', ['curry_class/curry', 'curry_class', 'butter_chicken']],
+    ['かけそば', 'soba/kake'], ['ハンバーグ定食', 'teishoku/hamburg'], ['ライス', ['rice', 'rice/white']], ['マカロニ', ['noodle_pasta', 'side_creamy/macaroni'], '麺としてもサラダとしても妥当だが麺が第一'],
+    ['ブレッド', 'bread'], ['杏仁豆腐', 'pudding/jelly'], ['カシスオレンジ', 'alcohol'], ['マーボー豆腐', 'chuka_okazu/mapo_tofu'],
+  ]),
   ...C('DBに無い料理', 'gap', [
     ['グラタン', ['bucket:misc_dish', 'bucket:pasta']], ['ドリア', ['bucket:rice_dish', 'bucket:misc_dish']], ['フォー', ['bucket:japanese_noodles', 'bucket:chinese_noodles']], ['パッタイ', ['bucket:chinese_noodles']], ['トッポギ', ['bucket:misc_dish', 'bucket:snack_drink']],
     ['サムゲタン', ['bucket:misc_dish']], ['チリコンカン', ['bucket:misc_dish', 'bucket:curry']], ['ロコモコ', ['bucket:rice_dish']], ['カオマンガイ', ['bucket:rice_dish']], ['ケバブ', ['bucket:sandwich', 'bucket:misc_dish']],

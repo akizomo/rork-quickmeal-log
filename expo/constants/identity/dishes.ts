@@ -1178,7 +1178,7 @@ const BUCKET_MISC_DISH: Identity[] = [
     referenceDescription: '主菜のみ (ご飯なし)。100% = 外食1人前',
     amount: { unit: 'percent', default: 100, chips: [{ label: '軽め', value: 70 }, { label: '1人前', value: 100 }, { label: 'しっかり', value: 150 }] },
     attributes: [
-      { key: 'mapo_tofu', label: '麻婆豆腐', isDefault: true, searchTags: ['まーぼーどうふ', 'まぼどうふ'] },
+      { key: 'mapo_tofu', label: '麻婆豆腐', isDefault: true, searchTags: ['まーぼーどうふ', 'まぼどうふ', 'マーボー豆腐'] },
       { key: 'mapo_nasu', label: '麻婆茄子', searchTags: ['まーぼーなす', 'まぼなす'], factor: { kcal: 0.895, protein: 0.556, fat: 0.974, carbs: 1.045 } }, // ≒485kcal/P15/F37/C23
       // 炒め物系 (旧 stir_fry_meat を統合)。レバニラ=日高屋482kcal 基準。
       { key: 'reba_nira', label: 'レバニラ', factor: { kcal: 0.889, protein: 0.889, fat: 0.782, carbs: 1.591 } }, // ≒482kcal/P24/F30/C35

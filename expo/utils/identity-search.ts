@@ -159,6 +159,8 @@ type TargetKind = 'name' | 'part' | 'tag' | 'compound';
 interface Target {
   /** fold 済みの照合キー。 */
   s: string;
+  /** 畳み込み前 (normalize のみ) の形。 */
+  plain: string;
   kind: TargetKind;
   /** bigram 集合。複合語 (compound) と3文字未満は持たない (層2 のノイズを増やさないため)。 */
   bg: Set<string> | null;
@@ -169,16 +171,16 @@ interface IndexedEntry {
   targets: Target[];
 }
 
-function fromKey(s: string, kind: TargetKind): Target | null {
+function fromKey(s: string, kind: TargetKind, plain: string = s): Target | null {
   if (!s) return null;
-  return { s, kind, bg: kind !== 'compound' && s.length >= 3 ? bigrams(s) : null };
+  return { s, plain, kind, bg: kind !== 'compound' && s.length >= 3 ? bigrams(s) : null };
 }
 
 function targetsOf(raws: Array<[string, TargetKind]>): Target[] {
   const seen = new Set<string>();
   const out: Target[] = [];
   for (const [raw, kind] of raws) {
-    const t = fromKey(toKey(raw), kind);
+    const t = fromKey(toKey(raw), kind, normalize(raw));
     if (!t || seen.has(t.s)) continue;
     seen.add(t.s);
     out.push(t);
@@ -636,7 +638,10 @@ export function searchEntriesFuzzy(query: string, opts?: SearchOptions): SearchE
         // スタイルの「部分」も同様に弱く扱う — スタイルは調理法・状態の修飾 (「生・刺身」) で、
         // 素材名の別名ではない。分割した部分が素材そのもの (刺身盛り) と同点になっても素材を先にする。
         const weak = t.kind === 'tag' || (t.kind === 'part' && !!entry.style && !entry.attribute);
-        const net = h.score - q.penalty - (weak ? 0.05 : 0);
+        // 畳み込み前の形でも完全一致なら加点。畳み込みで同じキーになる別の語 (かれい=鰈 / カレー) は、
+        // 打った形そのままの方を先にする。
+        const exactPlain = h.method === 'exact' && t.plain === q.plain ? 0.1 : 0;
+        const net = h.score - q.penalty - (weak ? 0.05 : 0) + exactPlain;
         // 層1に値する根拠が1つでもあれば、層2の根拠 (bigram は最大 2.0 点) がそれより高得点でも
         // 層1として扱う。点数だけで選ぶと、含まれる語 (1.5〜1.95) より bigram が勝ち、層2に落ちる。
         const better =
@@ -653,7 +658,12 @@ export function searchEntriesFuzzy(query: string, opts?: SearchOptions): SearchE
     // Preset の途中一致は通常エントリより 0.1 下げる。「ごはん」と打ったときに、タグ
     // (たまごかけごはん…) へ途中一致した Preset がごはん本体・おにぎり等を押しのけない
     // ため。完全一致・前方一致 (= 料理名そのものを打った) は割り引かない。
-    const score = entry.preset && best.method === 'substring' ? best.net - 0.1 : best.net;
+    // 前方一致 (料理名の前半を打っただけ。とろけるチーズ→とろけるチーズトースト) の Preset は、
+    // 食材そのものの推測一致 (contains, 約1.7) より下に置く。
+    const score =
+      entry.preset && best.method === 'substring' ? best.net - 0.1
+      : entry.preset && best.method === 'prefix' ? best.net - 1.5
+      : best.net;
     results.push({ entry, score, tier: best.tier, method: best.method });
   }
 
@@ -673,7 +683,9 @@ export function searchEntriesFuzzy(query: string, opts?: SearchOptions): SearchE
     if (cur === undefined || r.score > cur) bestSpecific.set(r.entry.identity.id, r.score);
   }
   const nudge = (r: SearchEntryResult) => {
-    if (r.entry.preset) return 0.03;
+    // Preset の優遇は、料理名そのもの (完全一致) を打ったときだけ。名前の一部 (とろけるチーズ) を
+    // 打っただけの前方一致で、食材そのものより先に出さない。
+    if (r.entry.preset) return r.method === 'exact' ? 0.03 : 0;
     if (isSpecific(r)) return 0.01;
     const sibling = bestSpecific.get(r.entry.identity.id);
     return sibling !== undefined && sibling >= r.score ? 0 : 0.02;
@@ -688,7 +700,11 @@ export function searchEntriesFuzzy(query: string, opts?: SearchOptions): SearchE
   // 確実な一致があるのに推測の一致を層1に並べると、取り違えが増える
   // (「ロース」「たい」「ライス」のような短い語が、確実な一致の隣に別物を連れてくる)。
   // 推測の一致は層2「もしかして」へ回す。
-  const hasSolid = results.some((r) => r.tier === 'confident' && r.method !== 'contains');
+  // Preset は完全一致だけを「確実」に数える。料理名の前半を打っただけの前方一致 (とろけるチーズ→
+  // とろけるチーズトースト) で、食材そのものの推測一致を層2へ追いやらない。
+  const hasSolid = results.some(
+    (r) => r.tier === 'confident' && r.method !== 'contains' && (!r.entry.preset || r.method === 'exact'),
+  );
   const demote = (r: SearchEntryResult) => hasSolid && r.method === 'contains';
   const confident = results.filter((r) => r.tier === 'confident' && !demote(r));
   const maybe = results.filter((r) => r.tier === 'maybe' || demote(r));

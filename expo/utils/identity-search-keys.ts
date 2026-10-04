@@ -76,6 +76,8 @@ export function stripHonorific(normalized: string): string | null {
 export interface QueryVariant {
   /** fold 済みの照合キー。 */
   key: string;
+  /** 畳み込み前 (normalize のみ) の形。畳み込みで同じになる別の語 (かれい / カレー) を見分ける。 */
+  plain: string;
   /** この変種で一致した場合に引くスコア (変換を重ねるほど確度が下がるため)。 */
   penalty: number;
 }
@@ -87,21 +89,21 @@ export interface QueryVariant {
 export function queryVariants(raw: string): QueryVariant[] {
   const out: QueryVariant[] = [];
   const seen = new Set<string>();
-  const add = (k: string, penalty: number) => {
+  const add = (k: string, penalty: number, plain: string = k) => {
     if (!k || seen.has(k)) return;
     seen.add(k);
-    out.push({ key: k, penalty });
+    out.push({ key: k, plain, penalty });
   };
 
   const base = toKey(raw);
   if (!base) return out;
-  add(base, 0);
+  add(base, 0, normalize(raw));
 
   const cleaned = stripNoise(raw);
-  if (cleaned !== raw.normalize('NFKC').trim()) add(toKey(cleaned), 0);
+  if (cleaned !== raw.normalize('NFKC').trim()) add(toKey(cleaned), 0, normalize(cleaned));
 
   const romaji = fold(romajiVariant(cleaned));
-  add(romaji, 0);
+  add(romaji, 0, romajiVariant(cleaned));
 
   for (const v of [...out]) {
     const h = stripHonorific(v.key);
