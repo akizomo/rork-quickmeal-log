@@ -7,6 +7,9 @@
 
 import {
   buildSearchMissShareText,
+  editSearchMiss,
+  MAX_MISS_COUNT,
+  removeSearchMiss,
   bumpDiagnosticCounter,
   castDiagnostics,
   emptyDiagnostics,
@@ -294,5 +297,58 @@ describe('buildSearchMissShareText — 共有する本文', () => {
 
   it('記録が無ければ見出しだけ', () => {
     expect(buildSearchMissShareText(undefined, '2026-10-04T09:00:00.000Z').split('\n')).toHaveLength(2);
+  });
+});
+
+describe('editSearchMiss / removeSearchMiss — 共有前に一覧を整える', () => {
+  const base = () => ({
+    ...castDiagnostics(undefined),
+    searchMisses: [
+      { q: 'ちゃんぽ', count: 2, lastAtISO: '2026-10-01T00:00:00.000Z', hadHints: false },
+      { q: 'ちゃんぽん', count: 3, lastAtISO: '2026-10-03T00:00:00.000Z', hadHints: true },
+      { q: 'パッタイ', count: 1, lastAtISO: '2026-10-02T00:00:00.000Z', hadHints: false },
+    ],
+  });
+
+  it('言葉と回数を直す。他の行は変えない', () => {
+    const r = editSearchMiss(base(), 'パッタイ', { q: 'パッタイ ', count: 5 });
+    expect(r.searchMisses.find((m) => m.q === 'パッタイ')).toMatchObject({ count: 5 });
+    expect(r.searchMisses).toHaveLength(3);
+    expect(r.searchMisses.find((m) => m.q === 'ちゃんぽん')?.count).toBe(3);
+  });
+
+  it('別の既存の語に直したら統合する (回数は合算、最終発生は新しい方、同じ言葉が2行にならない)', () => {
+    const r = editSearchMiss(base(), 'ちゃんぽ', { q: 'ちゃんぽん', count: 2 });
+    expect(r.searchMisses).toHaveLength(2);
+    const merged = r.searchMisses.find((m) => m.q === 'ちゃんぽん')!;
+    expect(merged.count).toBe(5);
+    expect(merged.lastAtISO).toBe('2026-10-03T00:00:00.000Z');
+    expect(merged.hadHints).toBe(false); // どちらかが「手がかり無し」なら、手がかり無しとして残す
+  });
+
+  it('回数は 1〜MAX に丸める (0 や負にしたいときは削除を使う)', () => {
+    expect(editSearchMiss(base(), 'パッタイ', { q: 'パッタイ', count: 0 }).searchMisses.find((m) => m.q === 'パッタイ')?.count).toBe(1);
+    expect(editSearchMiss(base(), 'パッタイ', { q: 'パッタイ', count: -4 }).searchMisses.find((m) => m.q === 'パッタイ')?.count).toBe(1);
+    expect(editSearchMiss(base(), 'パッタイ', { q: 'パッタイ', count: 99999 }).searchMisses.find((m) => m.q === 'パッタイ')?.count).toBe(MAX_MISS_COUNT);
+    expect(editSearchMiss(base(), 'パッタイ', { q: 'パッタイ', count: Number.NaN }).searchMisses.find((m) => m.q === 'パッタイ')?.count).toBe(1);
+  });
+
+  it('短すぎる言葉・存在しない行への編集は無効 (入力をそのまま返す)', () => {
+    const b = base();
+    expect(editSearchMiss(b, 'パッタイ', { q: 'あ', count: 2 })).toBe(b);
+    expect(editSearchMiss(b, 'パッタイ', { q: '   ', count: 2 })).toBe(b);
+    expect(editSearchMiss(b, 'ない語', { q: 'あるよ', count: 2 })).toBe(b);
+  });
+
+  it('削除: 1件だけ消す。無ければそのまま', () => {
+    const r = removeSearchMiss(base(), 'ちゃんぽ');
+    expect(r.searchMisses.map((m) => m.q)).toEqual(['ちゃんぽん', 'パッタイ']);
+    const b = base();
+    expect(removeSearchMiss(b, 'ない語')).toBe(b);
+  });
+
+  it('編集は共有本文に反映される', () => {
+    const r = editSearchMiss(base(), 'パッタイ', { q: 'パッタイ', count: 7 });
+    expect(buildSearchMissShareText(r, '2026-10-04T00:00:00.000Z')).toContain('7\tパッタイ');
   });
 });

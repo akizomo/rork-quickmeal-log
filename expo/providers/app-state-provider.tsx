@@ -21,7 +21,13 @@ import { adjustedTargetKcal, calcBaselineActiveKcal, calcExerciseGrossKcal, calc
 import { isSameDay } from '@/utils/history';
 import { castHistoryMap, deriveDefaultTab, rankFrequentSelections, recordDishSelection, recordSelection, recordTabUsage, selectionFromDraft } from '@/utils/quick-log-history';
 import { computeQuickLogMacro } from '@/utils/quick-log-macro';
-import { bumpDiagnosticCounter, castDiagnostics, recordSearchMiss } from '@/utils/diagnostics';
+import {
+  bumpDiagnosticCounter,
+  castDiagnostics,
+  editSearchMiss,
+  recordSearchMiss,
+  removeSearchMiss,
+} from '@/utils/diagnostics';
 import { beginSpan } from '@/utils/perf';
 import { widgetUpdateKcal, widgetDrainPendingQueue, widgetUpdateCategories, widgetUpdateUiLanguage } from '@/utils/widget-bridge';
 import { resolveLog, ResolveInput, ResolveResult } from '@/utils/identity-resolver';
@@ -980,6 +986,20 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     applyDiagnostics(() => castDiagnostics(undefined));
   }, [applyDiagnostics]);
 
+  /** 未ヒット語の編集・削除 (共有前に打ち間違いを整える)。 */
+  const editSearchMissEvent = useCallback(
+    (originalQ: string, edit: { q: string; count: number }) => {
+      applyDiagnostics((d) => editSearchMiss(d, originalQ, edit));
+    },
+    [applyDiagnostics]
+  );
+  const removeSearchMissEvent = useCallback(
+    (q: string) => {
+      applyDiagnostics((d) => removeSearchMiss(d, q));
+    },
+    [applyDiagnostics]
+  );
+
   const markIntroSeen = useCallback(
     (version: number) => {
       const next: AppSettings = { ...settings, introSeenVersion: version };
@@ -1790,6 +1810,8 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     recordSearchMissEvent,
     bumpDiagnostic,
     resetDiagnostics,
+    editSearchMissEvent,
+    removeSearchMissEvent,
     yesterdayOvershootKcal,
     showCarryoverBanner,
     showNewPlanBanner,

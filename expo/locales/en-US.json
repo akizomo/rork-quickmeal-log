@@ -999,6 +999,13 @@
     "share": "Share",
     "reset": "Clear",
     "resetTitle": "Clear this list",
-    "resetMessage": "Your meal logs are not affected."
+    "resetMessage": "Your meal logs are not affected.",
+    "editHint": "Tap a word to fix or remove it.",
+    "editTitle": "Edit word",
+    "editWord": "Word",
+    "editCount": "Times",
+    "editSave": "Save",
+    "countUnit": "×",
+    "editDelete": "Remove this word"
   }
 }

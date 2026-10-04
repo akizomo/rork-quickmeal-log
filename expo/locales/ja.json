@@ -999,6 +999,13 @@
     "share": "共有する",
     "reset": "消去",
     "resetTitle": "この一覧を消去",
-    "resetMessage": "食事の記録には影響しません。"
+    "resetMessage": "食事の記録には影響しません。",
+    "editHint": "言葉をタップすると、直したり消したりできます。",
+    "editTitle": "言葉を直す",
+    "editWord": "言葉",
+    "editCount": "回数",
+    "editSave": "保存",
+    "countUnit": "回",
+    "editDelete": "この言葉を消す"
   }
 }

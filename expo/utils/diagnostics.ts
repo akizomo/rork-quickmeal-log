@@ -137,3 +137,50 @@ export function buildSearchMissShareText(data: DiagnosticsData | undefined, date
   const lines = misses.map((m) => `${m.count}\t${m.q}`);
   return [`Hachibu search-misses ${dateISO.slice(0, 10)}`, 'count\tword', ...lines].join('\n');
 }
+
+/** 回数の上限。手入力の桁あふれ (共有本文が読めなくなる) を防ぐだけで、実用では届かない値。 */
+export const MAX_MISS_COUNT = 999;
+
+/**
+ * 未ヒット語の1件を直す (言葉・回数)。共有前に打ち間違い・打鍵途中の語を整えるための操作。
+ *
+ * - 言葉は trim し、`MIN_MISS_QUERY_LENGTH` 未満になる編集は無効 (入力をそのまま返す)
+ * - 回数は 1〜`MAX_MISS_COUNT` に丸める。0 以下にしたいときは削除 (`removeSearchMiss`) を使う
+ * - 別の既存の語に直した場合は**統合**する (回数は合算、最終発生は新しい方)。同じ言葉が2行にならない
+ */
+export function editSearchMiss(
+  data: DiagnosticsData | undefined,
+  originalQ: string,
+  edit: { q: string; count: number },
+): DiagnosticsData {
+  const base = data ?? emptyDiagnostics();
+  const target = base.searchMisses.find((m) => m.q === originalQ);
+  const q = edit.q.trim();
+  if (!target || q.length < MIN_MISS_QUERY_LENGTH) return base;
+
+  const count = Math.min(MAX_MISS_COUNT, Math.max(1, Math.round(edit.count) || 1));
+  const rest = base.searchMisses.filter((m) => m.q !== originalQ);
+  const merged = rest.find((m) => m.q === q);
+
+  const next: SearchMissEntry[] = merged
+    ? rest.map((m) =>
+        m.q === q
+          ? {
+              ...m,
+              count: Math.min(MAX_MISS_COUNT, m.count + count),
+              lastAtISO: m.lastAtISO > target.lastAtISO ? m.lastAtISO : target.lastAtISO,
+              hadHints: m.hadHints && target.hadHints,
+            }
+          : m,
+      )
+    : base.searchMisses.map((m) => (m.q === originalQ ? { ...m, q, count } : m));
+
+  return { ...base, searchMisses: next };
+}
+
+/** 未ヒット語を1件削除する。無ければ入力をそのまま返す。 */
+export function removeSearchMiss(data: DiagnosticsData | undefined, q: string): DiagnosticsData {
+  const base = data ?? emptyDiagnostics();
+  if (!base.searchMisses.some((m) => m.q === q)) return base;
+  return { ...base, searchMisses: base.searchMisses.filter((m) => m.q !== q) };
+}
