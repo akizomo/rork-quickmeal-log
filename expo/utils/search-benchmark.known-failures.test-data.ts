@@ -13,7 +13,7 @@ export const KNOWN_FAILURES: string[] = [
   "鶏肉", // vocab-only
   "ラム肉", // vocab-only
   "まぐろ", // top3
-  "しらす", // zero
+  "しらす", // vocab-only
   "温泉卵", // vocab-only
   "オムレツ", // vocab-only
   "冷奴", // zero
@@ -23,7 +23,7 @@ export const KNOWN_FAILURES: string[] = [
   "レーズン", // zero
   "もずく", // zero
   "わかめ", // zero
-  "シュークリーム", // wrong
+  "シュークリーム", // vocab-only
   "ドーナツ", // vocab-only
   "カフェラテ", // vocab-only
   "スムージー", // vocab-only
@@ -57,15 +57,4 @@ export const KNOWN_FAILURES: string[] = [
   "ハンバーク", // l2-only
   "ヨーグルド", // l2-only
   "スパゲッティー", // l2-only
-  "パッタイ", // gap-silent
-  "チリコンカン", // gap-silent
-  "ロコモコ", // gap-silent
-  "ケバブ", // gap-silent
-  "クラムチャウダー", // gap-misleading
-  "ポトフ", // gap-misleading
-  "お茶漬け", // gap-silent
-  "ガレット", // gap-silent
-  "かき氷", // gap-silent
-  "ちゃんぽん", // gap-silent
-  "皿うどん", // gap-misleading
 ];

@@ -142,8 +142,8 @@ export const TUNING_CORPUS: Item[] = [
   ]),
   ...C('DBに無い料理', 'gap', [
     ['グラタン', ['bucket:misc_dish', 'bucket:pasta']], ['ドリア', ['bucket:rice_dish', 'bucket:misc_dish']], ['フォー', ['bucket:japanese_noodles', 'bucket:chinese_noodles']], ['パッタイ', ['bucket:chinese_noodles']], ['トッポギ', ['bucket:misc_dish', 'bucket:snack_drink']],
-    ['サムゲタン', ['bucket:misc_dish']], ['チリコンカン', ['bucket:misc_dish', 'bucket:curry']], ['ロコモコ', ['bucket:rice_dish']], ['カオマンガイ', ['bucket:rice_dish']], ['ケバブ', ['bucket:sandwich', 'bucket:misc_dish']],
-    ['ラザニア', ['bucket:pasta']], ['パエリア', ['bucket:rice_dish']], ['リゾット', ['bucket:rice_dish', 'bucket:pasta']], ['クラムチャウダー', ['bucket:misc_dish']], ['ポトフ', ['bucket:misc_dish']],
+    ['サムゲタン', ['bucket:misc_dish']], ['チリコンカン', ['bucket:misc_dish', 'bucket:curry']], ['ロコモコ', ['bucket:rice_dish']], ['カオマンガイ', ['bucket:rice_dish']], ['ケバブ', ['bucket:sandwich', 'bucket:misc_dish', 'bucket:fatty_protein']],
+    ['ラザニア', ['bucket:pasta']], ['パエリア', ['bucket:rice_dish']], ['リゾット', ['bucket:rice_dish', 'bucket:pasta']], ['クラムチャウダー', ['bucket:misc_dish', 'soup/creamy']], ['ポトフ', ['bucket:misc_dish', 'soup/western']],
     ['ロールキャベツ', ['bucket:misc_dish']], ['茶碗蒸し定食', ['bucket:misc_dish']], ['お茶漬け', ['rice', 'okayu', 'bucket:staple']], ['冷やしうどん', ['udon', 'noodle_udon/udon']], ['焼きおにぎり', ['onigiri']],
     ['ガレット', ['bucket:snack_drink', 'bucket:misc_dish']], ['パンケーキ', ['bucket:snack_drink']], ['フレンチトースト', ['bucket:snack_drink']], ['ワッフル', ['bucket:snack_drink']], ['かき氷', ['bucket:snack_drink']],
     ['ちゃんぽん', ['bucket:chinese_noodles']], ['皿うどん', ['bucket:chinese_noodles']], ['もつ鍋', ['nabe']], ['ちゃんこ鍋', ['nabe']], ['湯豆腐', ['tofu', 'nabe']],
