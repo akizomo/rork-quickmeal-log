@@ -438,6 +438,7 @@
     "deleteMessage": "この記録を削除しますか？",
     "switchToG": "gに切り替え",
     "switchToCount": "個数に切り替え",
+    "usualAmount": "いつもの",
     "amountRefPrefix": "目安"
   },
   "logEditor": {

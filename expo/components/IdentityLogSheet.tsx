@@ -8,7 +8,7 @@
  * トリガーのみを担う。
  */
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import {
@@ -32,6 +32,7 @@ import {
   resolveAddonRef,
 } from '@/constants/identity';
 import {
+  AmountChip,
   AmountSpec,
   AmountUnit,
   Identity,
@@ -42,6 +43,7 @@ import {
   ResolveResult,
 } from '@/utils/identity-resolver';
 import { migrateAmountValueForUnit } from '@/utils/amount-migration';
+import { usualAmountForIdentity } from '@/utils/usual-amount';
 import {
   getEffectiveAltAmountSpec,
   getEffectiveAmountSpec,
@@ -60,6 +62,20 @@ const NUMERIC_RE = /^\d+(\.\d+)?$/;
 
 function chipDisplayLabel(label: string, unitLabel: string): string {
   return NUMERIC_RE.test(label.trim()) ? `${label}${unitLabel}` : label;
+}
+
+/**
+ * 量チップ列に「いつもの」を量の大小順の位置へ差し込む。いつもの量が既存チップと
+ * 同じ値ならそのチップが選択済みになるので、重複させない (PRD §6.5.1)。
+ */
+function withUsualChip(
+  chips: readonly AmountChip[],
+  usual: number | undefined,
+): (AmountChip & { isUsual?: boolean })[] {
+  if (usual === undefined || chips.some((c) => c.value === usual)) return [...chips];
+  const idx = chips.findIndex((c) => c.value > usual);
+  const usualChip = { label: '', value: usual, isUsual: true };
+  return idx === -1 ? [...chips, usualChip] : [...chips.slice(0, idx), usualChip, ...chips.slice(idx)];
 }
 
 function defaultAttributeKey(identity: Identity | undefined): string | undefined {
@@ -129,6 +145,10 @@ export function IdentityLogSheet() {
   } = useAppState();
 
   const visible = identityLogSheet.visible;
+  // いつもの量 (PRD §6.5.1) の学習元。シートを開いている間にログが増減しても
+  // 初期化 effect を再実行させないよう ref で読む。
+  const logsRef = useRef(logs);
+  logsRef.current = logs;
   const bucketKey = identityLogSheet.bucketKey;
   const registry = useMemo(() => buildRegistry(locale, uiLanguage), [locale, uiLanguage]);
   const bucket = bucketKey ? (registry.buckets.find((b) => b.key === bucketKey) ?? getBucketDef(bucketKey)) : undefined;
@@ -228,7 +248,10 @@ export function IdentityLogSheet() {
     setStyleKey(requestedStyleKey ?? defaultStyleKey(identity));
     setAmountValue(
       identityLogSheet.initialAmountValue ??
-        (identity ? getEffectiveAmountSpec(identity, initAttrKey).default : 1),
+        (identity
+          ? usualAmountForIdentity(logsRef.current, identity, initAttrKey) ??
+            getEffectiveAmountSpec(identity, initAttrKey).default
+          : 1),
     );
     setAmountModeAlt(false);
     // Preset (例: ガーリックトースト = フランスパン + バター) の検索結果は、組み合わせを
@@ -255,7 +278,10 @@ export function IdentityLogSheet() {
     setOriginIdentityId(identity.id);
     setAttributeKey(attrKey);
     setStyleKey(defaultStyleKey(identity));
-    setAmountValue(getEffectiveAmountSpec(identity, attrKey).default);
+    setAmountValue(
+      usualAmountForIdentity(logsRef.current, identity, attrKey) ??
+        getEffectiveAmountSpec(identity, attrKey).default,
+    );
     setAmountModeAlt(false);
     setAddons([]);
   }, []);
@@ -306,7 +332,11 @@ export function IdentityLogSheet() {
           // 通常の種類切替は常に新しい種類の既定量にリセットする。
           // unit が同じでも default が違う (春巻=2本 vs 餃子=5個 等) ため、
           // 種類切替 = 「1人前の基準が変わった」として常にリセットするのが正しい。
-          setAmountValue(nextSpec.default);
+          // リセット先は その種類のいつもの量 があればそれ (PRD §6.5.1)。
+          setAmountValue(
+            usualAmountForIdentity(logsRef.current, nextBasis.identity, nextBasis.attributeKey) ??
+              nextSpec.default,
+          );
         }
       }
       return key;
@@ -378,6 +408,16 @@ export function IdentityLogSheet() {
   const displayAmountValue = isAltMode && altAmountSpec
     ? Math.round((amountValue / altAmountSpec.gramsPerUnit) * 4) / 4
     : amountValue;
+
+  // 量チップ「いつもの」(PRD §6.5.1)。主単位表示のときだけ出す (g⇔個 の表示切替中は
+  // チップが別単位になるため)。編集中のログ自身は学習から外す。
+  const usualAmount = useMemo(
+    () =>
+      amountBasis?.identity
+        ? usualAmountForIdentity(logs, amountBasis.identity, amountBasis.attributeKey, editingLog?.id)
+        : undefined,
+    [logs, amountBasis, editingLog?.id],
+  );
 
   const handleSelectAmountChip = useCallback((value: number) => {
     setAmountValue(isAltMode && altAmountSpec ? value * altAmountSpec.gramsPerUnit : value);
@@ -593,20 +633,33 @@ export function IdentityLogSheet() {
             const amtUnitLabel = amt.unitLabel ?? UNIT_LABELS[uiLanguage][amt.unit];
             const amountRefIdentity = amountBasis?.identity ?? origin;
             const toggleLabel = isAltMode ? tr('identityLog.switchToG') : tr('identityLog.switchToCount');
+            const visibleUsual = isAltMode ? undefined : usualAmount;
+            const hasChipRow = (amt.chips && amt.chips.length > 0) || visibleUsual !== undefined || !!altAmountSpec;
             return (
           <Section title={tr('identityLog.sections.amount')}>
-            {(amt.chips && amt.chips.length > 0) || altAmountSpec ? (
+            {hasChipRow ? (
               <ChipRow>
-                {(amt.chips ?? []).map((c) => (
-                  <Chip
-                    key={`${c.label}-${c.value}`}
-                    label={chipDisplayLabel(c.label, amtUnitLabel)}
-                    selected={displayAmountValue === c.value}
-                    onPress={() => handleSelectAmountChip(c.value)}
-                    size="sm"
-                    testID={`ils-amount-${c.value}`}
-                  />
-                ))}
+                {withUsualChip(amt.chips ?? [], visibleUsual).map((c) =>
+                  c.isUsual ? (
+                    <Chip
+                      key="usual"
+                      label={tr('identityLog.usualAmount')}
+                      selected={displayAmountValue === c.value}
+                      onPress={() => handleSelectAmountChip(c.value)}
+                      size="sm"
+                      testID="ils-amount-usual"
+                    />
+                  ) : (
+                    <Chip
+                      key={`${c.label}-${c.value}`}
+                      label={chipDisplayLabel(c.label, amtUnitLabel)}
+                      selected={displayAmountValue === c.value}
+                      onPress={() => handleSelectAmountChip(c.value)}
+                      size="sm"
+                      testID={`ils-amount-${c.value}`}
+                    />
+                  ),
+                )}
                 {altAmountSpec ? (
                   <Pressable
                     onPress={handleToggleAmountMode}
@@ -626,7 +679,7 @@ export function IdentityLogSheet() {
               style={[
                 ilsStyles.amountRow,
                 {
-                  marginTop: (amt.chips && amt.chips.length > 0) || altAmountSpec ? t.spacing['2'] : 0,
+                  marginTop: hasChipRow ? t.spacing['2'] : 0,
                   backgroundColor: t.colors.surface.raised,
                   borderRadius: t.radius.lg,
                 },

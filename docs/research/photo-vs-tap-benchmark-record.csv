@@ -1,0 +1,2 @@
+participant_id,session_date,app_order,app,round,trial_no,meal_id,start_ts,end_ts,duration_sec,edited,logged_kcal,truth_kcal,abs_error_pct,path_note,excluded,exclude_reason
+EXAMPLE,2026-10-XX,hachibu_first,hachibu,R1,1,M07,00:01:12.40,00:01:18.90,6.5,n/a,520,560,7.1,(記入例) 操作経路を短く書く,FALSE,

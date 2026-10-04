@@ -1,0 +1,2 @@
+participant_id,app,round,perceived_sec_per_item,seq_1to7,preferred_app,preference_reason,notes
+EXAMPLE,photo,R1,5,6,,,(記入例) 体感時間と SEQ はラウンドの直後に聞く。preferred_app と preference_reason は最後に1行だけ記入する

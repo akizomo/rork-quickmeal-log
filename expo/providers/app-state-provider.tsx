@@ -15,6 +15,7 @@ import { AppSettings, BodyFatEntry, DailyActivitySummary, DishDraft, DishQuickEn
 import type { DiagnosticsData } from '@/types/diagnostics';
 import { ENTITLEMENT_ID } from '@/constants/iap';
 import { addCustomerInfoListener, getCustomerInfo, restorePurchases as iapRestore } from '@/utils/iap';
+import { usualAmountForIdentity } from '@/utils/usual-amount';
 import { IngredientQuickDraft, QuickLogHistoryMap, QuickLogSelection, QuickLogTabKey } from '@/types/quick-log';
 import { buildDishMacro, clampPortion, computeIngredient, createFoodLogFromDish, createFoodLogFromDishQuickEntry, createFoodLogFromIngredient, formatDateKey, generateId, getDefaultModeByTime, getMealSlot, getQuickCategories, getSubType, sumToday } from '@/utils/nutrition';
 import { adjustedTargetKcal, calcBaselineActiveKcal, calcExerciseGrossKcal, calcExerciseNetKcal, EXERCISE_TYPES, minCarryoverDays, stepsToActiveKcal } from '@/utils/goals';
@@ -709,11 +710,15 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
         console.log('[app-state] quickLogIdentity: unknown identity', identityId);
         return null;
       }
-      const input: ResolveInput = { originIdentityId: identityId };
+      // 量はシートと同じく いつもの量 → 既定値 の順 (PRD §6.5.1)
+      const input: ResolveInput = {
+        originIdentityId: identityId,
+        amountValue: usualAmountForIdentity(logs, identity, undefined),
+      };
       const resolved = resolveLog(input);
       return submitIdentityLog(resolved, { sourceTab });
     },
-    [submitIdentityLog]
+    [logs, submitIdentityLog]
   );
 
   const submitDishQuickEntry = useCallback(
