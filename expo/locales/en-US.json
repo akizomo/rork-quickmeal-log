@@ -658,10 +658,6 @@
       "title": "Feedback",
       "searchMisses": "Foods not found",
       "searchMissesCount": "{{count}} words",
-      "mail": "Report a problem or idea",
-      "mailSub": "Opens your email app",
-      "mailSubject": "Feedback on Hachibu",
-      "mailFallbackTitle": "Please email us at",
       "review": "Rate on the store"
     },
     "region": {

@@ -658,10 +658,6 @@
       "title": "フィードバック",
       "searchMisses": "見つからなかった食品",
       "searchMissesCount": "{{count}}語",
-      "mail": "不具合・要望を送る",
-      "mailSub": "メールが開きます",
-      "mailSubject": "Hachibu へのフィードバック",
-      "mailFallbackTitle": "こちらのアドレスに送ってください",
       "review": "ストアで評価する"
     },
     "region": {

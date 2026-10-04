@@ -1,4 +1,3 @@
-import Constants from 'expo-constants';
 import { Stack, useRouter } from 'expo-router';
 import React from 'react';
 import { Alert, Linking, Platform, ScrollView, StyleSheet, Switch, View } from 'react-native';
@@ -11,7 +10,7 @@ import { useAppState } from '@/providers/app-state-provider';
 import { useLocale } from '@/hooks/useLocale';
 import { useUnitSystem } from '@/hooks/useUnitSystem';
 import { widgetRequestPin } from '@/utils/widget-bridge';
-import { buildFeedbackMailto, FEEDBACK_EMAIL, PLAY_STORE_URLS } from '@/utils/feedback';
+import { PLAY_STORE_URLS } from '@/utils/feedback';
 
 const THEME_OPTION_KEYS: ('system' | 'light' | 'dark')[] = ['system', 'light', 'dark'];
 const LANGUAGE_OPTIONS: { key: 'ja' | 'en-US'; label: string }[] = [
@@ -37,22 +36,6 @@ export default function SettingsRoute() {
   }));
 
   const missCount = settings.diagnostics?.searchMisses.length ?? 0;
-
-  // 不具合・要望: メールアプリを開く。開けない端末 (メール未設定) では宛先を見せる
-  const openFeedbackMail = () => {
-    const url = buildFeedbackMailto(t('settings.feedback.mailSubject'), {
-      appVersion: Constants.expoConfig?.version ?? '',
-      buildNumber:
-        Platform.OS === 'ios'
-          ? Constants.expoConfig?.ios?.buildNumber ?? ''
-          : String(Constants.expoConfig?.android?.versionCode ?? ''),
-      os: Platform.OS,
-      osVersion: Platform.Version,
-    });
-    Linking.openURL(url).catch(() => {
-      Alert.alert(t('settings.feedback.mailFallbackTitle'), FEEDBACK_EMAIL);
-    });
-  };
 
   // ストアで評価: ストアアプリ → ブラウザの順。自動でお願いを出すことはしない (押したときだけ)
   const openStoreReview = async () => {
@@ -254,13 +237,6 @@ export default function SettingsRoute() {
                   sub={missCount > 0 ? t('settings.feedback.searchMissesCount', { count: missCount }) : undefined}
                   onPress={() => router.push('/search-misses')}
                   testID="settings-link-search-misses"
-                />
-                <SettingsDivider />
-                <SettingsLinkRow
-                  label={t('settings.feedback.mail')}
-                  sub={t('settings.feedback.mailSub')}
-                  onPress={openFeedbackMail}
-                  testID="settings-feedback-mail"
                 />
                 {Platform.OS === 'android' && (
                   <>
