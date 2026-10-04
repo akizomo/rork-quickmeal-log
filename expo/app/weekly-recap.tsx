@@ -49,8 +49,6 @@ interface Card {
   render: (t: Theme) => React.ReactNode;
 }
 
-const M3_EASE = Easing.bezier(...easing.enter);
-
 export default function WeeklyRecapScreen() {
   const t = useTheme();
   const tr = useT();
@@ -81,7 +79,7 @@ export default function WeeklyRecapScreen() {
     Animated.timing(fade, {
       toValue: 1,
       duration: duration.long,
-      easing: M3_EASE,
+      easing: Easing.bezier(...easing.enter),
       useNativeDriver: true,
     }).start();
   }, [index, fade]);

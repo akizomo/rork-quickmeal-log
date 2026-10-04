@@ -19,7 +19,6 @@ type MealsTab = 'week' | 'month';
 // M3 fade through: 100ms out → swap → 200ms(duration.short) in
 const FADE_OUT_DURATION = 100;
 const FADE_IN_DURATION = duration.short;
-const M3_EMPHASIZED = Easing.bezier(...easing.standard);
 
 export default function StatsScreen() {
   const theme = useTheme();
@@ -47,14 +46,14 @@ export default function StatsScreen() {
     Animated.timing(contentOpacity, {
       toValue: 0,
       duration: FADE_OUT_DURATION,
-      easing: M3_EMPHASIZED,
+      easing: Easing.bezier(...easing.standard),
       useNativeDriver: true,
     }).start(() => {
       setTopTab(tab);
       Animated.timing(contentOpacity, {
         toValue: 1,
         duration: FADE_IN_DURATION,
-        easing: M3_EMPHASIZED,
+        easing: Easing.bezier(...easing.standard),
         useNativeDriver: true,
       }).start();
     });

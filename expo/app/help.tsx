@@ -62,8 +62,8 @@ const DISH_BUCKETS: BucketKey[] = [
 // 以下の2つは、このステップページャー専用に少し強めにチューニングした
 // 固有カーブ。motion.ts の easing.enter/exit とは別物なので個別に保持する
 // (安易に汎用トークンへ差し替えると見た目が変わるため)。
-const MD3_DECELERATE = Easing.bezier(0.05, 0.7, 0.1, 1.0); // screen enter
-const MD3_ACCELERATE = Easing.bezier(0.3, 0, 0.8, 0.15);   // screen exit
+const STEP_PAGER_ENTER = Easing.bezier(0.05, 0.7, 0.1, 1.0); // decelerate: screen enter
+const STEP_PAGER_EXIT  = Easing.bezier(0.3, 0, 0.8, 0.15);   // accelerate: screen exit
 
 export default function HelpRoute() {
   const [step, setStep] = useState(0);
@@ -99,36 +99,36 @@ export default function HelpRoute() {
     const direction = next > stepRef.current ? 1 : -1;
     stepRef.current = next;
 
-    // Exit: MD3 Accelerate (150ms)
+    // Exit: step pager accelerate (150ms)
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 0,
         duration: 150,
-        easing: MD3_ACCELERATE,
+        easing: STEP_PAGER_EXIT,
         useNativeDriver: true,
       }),
       Animated.timing(slideAnim, {
         toValue: -16 * direction,
         duration: 150,
-        easing: MD3_ACCELERATE,
+        easing: STEP_PAGER_EXIT,
         useNativeDriver: true,
       }),
     ]).start(() => {
       setStep(next);
       slideAnim.setValue(16 * direction);
 
-      // Enter: MD3 Decelerate (200ms)
+      // Enter: step pager decelerate (200ms)
       Animated.parallel([
         Animated.timing(fadeAnim, {
           toValue: 1,
           duration: 200,
-          easing: MD3_DECELERATE,
+          easing: STEP_PAGER_ENTER,
           useNativeDriver: true,
         }),
         Animated.timing(slideAnim, {
           toValue: 0,
           duration: 200,
-          easing: MD3_DECELERATE,
+          easing: STEP_PAGER_ENTER,
           useNativeDriver: true,
         }),
       ]).start(() => {

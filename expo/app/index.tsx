@@ -16,7 +16,6 @@ export default function HomeRoute() {
   useEffect(() => {
     if (isHydrating || redirectedRef.current) return;
     const route = decideInitialRoute(settings);
-    console.log('[index] decideInitialRoute →', route);
     // home でも true にセット: 後続の settings 変更 (RC リスナー遅延など) で
     // paywall へ再リダイレクトされるのを防ぐ。
     redirectedRef.current = true;
