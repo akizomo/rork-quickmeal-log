@@ -125,3 +125,15 @@ export function sortedSearchMisses(data: DiagnosticsData | undefined): SearchMis
     return b.lastAtISO.localeCompare(a.lastAtISO);
   });
 }
+
+/**
+ * 共有用の本文を作る (ユーザーが「共有する」を押したときだけ使う)。
+ *
+ * **含めるのは、検索で見つからなかった言葉と回数だけ。** 食事の記録・体重・設定など、個人を特定しうる
+ * ものは一切含めない。ユーザーが実際に打った文字列なので、画面にも同じ内容を見せてから共有させる。
+ */
+export function buildSearchMissShareText(data: DiagnosticsData | undefined, dateISO: string): string {
+  const misses = sortedSearchMisses(data);
+  const lines = misses.map((m) => `${m.count}\t${m.q}`);
+  return [`Hachibu search-misses ${dateISO.slice(0, 10)}`, 'count\tword', ...lines].join('\n');
+}

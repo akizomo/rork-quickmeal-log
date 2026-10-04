@@ -60,6 +60,7 @@ function RootLayoutNav() {
       <Stack.Screen name="legal/privacy" options={{ title: tr('nav.privacy') }} />
       <Stack.Screen name="legal/terms" options={{ title: tr('nav.terms') }} />
       <Stack.Screen name="settings" options={{ title: tr('nav.settings') }} />
+      <Stack.Screen name="search-misses" options={{ title: tr('nav.searchMisses') }} />
       <Stack.Screen name="modal" options={{ presentation: 'modal', title: tr('nav.modal') }} />
       {__DEV__ ? <Stack.Screen name="dev" options={{ headerShown: false }} /> : null}
     </Stack>

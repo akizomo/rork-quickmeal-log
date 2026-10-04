@@ -2,6 +2,7 @@
   "nav": {
     "back": "戻る",
     "about": "アプリについて",
+    "searchMisses": "見つからなかった食品",
     "goalEdit": "目標を変更",
     "help": "Hachibu の使い方",
     "privacy": "プライバシーポリシー",
@@ -650,7 +651,8 @@
     },
     "info": {
       "title": "情報",
-      "aboutApp": "アプリについて"
+      "aboutApp": "アプリについて",
+      "searchMisses": "見つからなかった食品"
     },
     "region": {
       "title": "食事DB地域",
@@ -988,5 +990,15 @@
     "notFoundPrompt": "食品が見つかりませんか？",
     "enterManuallyA11y": "数値で直接入力する",
     "enterManually": "数値で入力する"
+  },
+  "searchMisses": {
+    "lead": "検索で見つからなかった言葉が、この端末に貯まっています。共有すると、次の更新で足す食品の参考になります。",
+    "empty": "まだありません。",
+    "count": "{{count}}回",
+    "privacy": "共有されるのは、上の言葉と回数だけです。食事の記録は含まれません。共有するかどうかは、そのつど選べます。",
+    "share": "共有する",
+    "reset": "消去",
+    "resetTitle": "この一覧を消去",
+    "resetMessage": "食事の記録には影響しません。"
   }
 }

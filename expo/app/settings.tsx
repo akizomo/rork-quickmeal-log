@@ -222,6 +222,12 @@ export default function SettingsRoute() {
                   onPress={() => router.push('/about')}
                   testID="settings-link-about"
                 />
+                <SettingsDivider />
+                <SettingsLinkRow
+                  label={t('settings.info.searchMisses')}
+                  onPress={() => router.push('/search-misses')}
+                  testID="settings-link-search-misses"
+                />
               </SettingsListCard>
             </View>
 

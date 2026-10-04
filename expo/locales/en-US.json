@@ -2,6 +2,7 @@
   "nav": {
     "back": "Back",
     "about": "About",
+    "searchMisses": "Foods not found",
     "goalEdit": "Edit Goals",
     "help": "How to Use Hachibu",
     "privacy": "Privacy Policy",
@@ -650,7 +651,8 @@
     },
     "info": {
       "title": "Info",
-      "aboutApp": "About Hachibu"
+      "aboutApp": "About Hachibu",
+      "searchMisses": "Foods not found"
     },
     "region": {
       "title": "Food Region",
@@ -988,5 +990,15 @@
     "notFoundPrompt": "Can't find your food?",
     "enterManuallyA11y": "Enter values manually",
     "enterManually": "Enter manually"
+  },
+  "searchMisses": {
+    "lead": "Words you searched for but didn't find are saved on this device. Sharing them helps decide which foods to add next.",
+    "empty": "Nothing yet.",
+    "count": "{{count}}×",
+    "privacy": "Only the words and counts above are shared. Your meal logs are not included. You choose each time.",
+    "share": "Share",
+    "reset": "Clear",
+    "resetTitle": "Clear this list",
+    "resetMessage": "Your meal logs are not affected."
   }
 }

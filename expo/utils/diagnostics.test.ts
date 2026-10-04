@@ -6,6 +6,7 @@
  */
 
 import {
+  buildSearchMissShareText,
   bumpDiagnosticCounter,
   castDiagnostics,
   emptyDiagnostics,
@@ -260,5 +261,38 @@ describe('sortedSearchMisses', () => {
     const before = [...d.searchMisses].map((m) => m.q);
     sortedSearchMisses(d);
     expect(d.searchMisses.map((m) => m.q)).toEqual(before);
+  });
+});
+
+describe('buildSearchMissShareText — 共有する本文', () => {
+  const data = {
+    ...castDiagnostics(undefined),
+    searchMisses: [
+      { q: 'パッタイ', count: 1, lastAtISO: '2026-10-01T00:00:00.000Z', hadHints: false },
+      { q: 'ちゃんぽん', count: 3, lastAtISO: '2026-10-02T00:00:00.000Z', hadHints: true },
+    ],
+    searchOpenCount: 40,
+    directInputOpenCount: 7,
+    widgetLogCount: 12,
+  };
+
+  it('回数の多い順に、回数と言葉だけを並べる', () => {
+    const text = buildSearchMissShareText(data, '2026-10-04T09:00:00.000Z');
+    expect(text.split('\n')).toEqual([
+      'Hachibu search-misses 2026-10-04',
+      'count\tword',
+      '3\tちゃんぽん',
+      '1\tパッタイ',
+    ]);
+  });
+
+  it('言葉と回数以外 (利用回数・ウィジェット・日時) は含めない — 共有する内容はユーザーが画面で確認したものだけ', () => {
+    const text = buildSearchMissShareText(data, '2026-10-04T09:00:00.000Z');
+    expect(text).not.toMatch(/40|12|widget|search-open|lastAt/i);
+    expect(text).not.toContain('2026-10-01');
+  });
+
+  it('記録が無ければ見出しだけ', () => {
+    expect(buildSearchMissShareText(undefined, '2026-10-04T09:00:00.000Z').split('\n')).toHaveLength(2);
   });
 });
