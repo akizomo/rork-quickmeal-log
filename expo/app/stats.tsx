@@ -16,8 +16,8 @@ import { duration, easing } from '@/design-system/tokens/primitives/motion';
 type TopTab = 'meals' | 'body';
 type MealsTab = 'week' | 'month';
 
-// M3 fade through: 100ms out → swap → 200ms(duration.short) in
-const FADE_OUT_DURATION = 100;
+// M3 fade through: fast out → swap → short in
+const FADE_OUT_DURATION = duration.fast;
 const FADE_IN_DURATION = duration.short;
 
 export default function StatsScreen() {

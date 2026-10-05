@@ -17,6 +17,7 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { useTheme } from '@/design-system';
+import { radius } from '@/design-system/tokens/primitives/radius';
 import { fontSize as fs, letterSpacing as ls } from '@/design-system/tokens/primitives/typography';
 import { useT } from '@/hooks/useT';
 import { useLocale } from '@/hooks/useLocale';
@@ -258,7 +259,7 @@ function clamp01(x: number): number {
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 14,
+    borderRadius: radius.md,
     paddingVertical: 12,
     paddingHorizontal: 16,
     gap: 0,

@@ -14,6 +14,7 @@ import Svg, { Circle, Line, Polyline, Text as SvgText } from 'react-native-svg';
 
 import { BottomSheet, useTheme } from '@/design-system';
 import { useT } from '@/hooks/useT';
+import { radius } from '@/design-system/tokens/primitives/radius';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { useAppState } from '@/providers/app-state-provider';
 import { useUnitSystem } from '@/hooks/useUnitSystem';
@@ -557,7 +558,7 @@ function TrendChart({
             style={{
               fontSize: t.typography.fontSize.xs,
               lineHeight: t.typography.lineHeight.xs,
-              color: t.colors.content.tertiary,
+              color: t.colors.content.secondary,
               fontWeight: t.typography.fontWeight.medium as TextStyle['fontWeight'],
             }}
           >
@@ -905,7 +906,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    borderRadius: 14,
+    borderRadius: radius.md,
     paddingHorizontal: 16,
     paddingVertical: 16,
   },

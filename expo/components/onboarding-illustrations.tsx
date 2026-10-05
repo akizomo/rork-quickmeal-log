@@ -817,7 +817,7 @@ const gestureStyles = StyleSheet.create({
     left: 17,
     width: 56,
     height: 56,
-    borderRadius: 28,
+    borderRadius: radius.full,
     borderWidth: 1.5,
   },
   // タッチインジケータ — ボタン中央: left=(90-30)/2=30, top=(56-30)/2=13
@@ -934,14 +934,14 @@ const progressStyles = StyleSheet.create({
   card: {
     width: 300,
     borderRadius: radius.xl,
-    padding: 14,
+    padding: 16,
   },
   // 3カラムリング行 (StatusCard.ringRow 相当)
   ringRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 14,
+    marginBottom: 16,
   },
   sideCol: {
     flex: 1,

@@ -416,7 +416,7 @@ export default function GoalEditRoute() {
                   <View style={[styles.hr, { backgroundColor: theme.colors.border.subtle }]} />
                   <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8 }}>
                     <Heading size="3xl">{card.targetKcal}</Heading>
-                    <Caption tone="secondary" style={{ marginBottom: 6 }}>{t('common.unit.kcalPerDay')}</Caption>
+                    <Caption tone="secondary" style={{ marginBottom: 8 }}>{t('common.unit.kcalPerDay')}</Caption>
                   </View>
                   <View style={{ flexDirection: 'row', gap: 8 }}>
                     <MacroCard kind="protein" value={card.proteinG} />
@@ -472,7 +472,7 @@ function MetricBlock({ label, value, unit }: { label: string; value: string; uni
       <Label size="sm" tone="secondary">{label}</Label>
       <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 3 }}>
         <Heading size="2xl">{value}</Heading>
-        <Caption tone="secondary" style={{ color: theme.colors.content.tertiary }}>
+        <Caption tone="secondary">
           {unit}
         </Caption>
       </View>
@@ -535,7 +535,7 @@ function EditableMetricBlock({
           testID={testID}
           accessibilityLabel={accessibilityLabel}
         />
-        <Caption tone="secondary" style={{ marginBottom: 3, color: theme.colors.content.tertiary }}>
+        <Caption tone="secondary" style={{ marginBottom: 3 }}>
           {unit}
         </Caption>
       </View>
@@ -605,8 +605,8 @@ const styles = StyleSheet.create({
     alignItems: 'baseline',
     gap: 3,
     alignSelf: 'flex-start',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
   metricInput: {
     fontSize: fs['2xl'],

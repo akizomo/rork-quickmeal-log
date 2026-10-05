@@ -32,6 +32,7 @@ import {
 
 import { Chip, Dialog, useTheme } from '@/design-system';
 import { useT } from '@/hooks/useT';
+import { radius } from '@/design-system/tokens/primitives/radius';
 import { fontSize as fs, letterSpacing as ls } from '@/design-system/tokens/primitives/typography';
 import {
   type AmountEditConfig,
@@ -343,7 +344,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderRadius: 14,
+    borderRadius: radius.md,
     height: STEPPER_SIZE,
     paddingHorizontal: 12,
     gap: 4,

@@ -751,7 +751,7 @@ function StepCurrentBody({
                   <Text
                     style={{
                       fontSize: theme.typography.fontSize.xs,
-                      color: theme.colors.content.tertiary,
+                      color: theme.colors.content.secondary,
                       fontWeight: theme.typography.fontWeight.medium as TextStyle['fontWeight'],
                     }}
                   >

@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { SettingsDivider, SettingsLinkRow, SettingsListCard, SettingsSectionLabel } from '@/design-system';
 import { TRIAL_DURATION_DAYS } from '@/constants/onboarding';
 import { Body, BottomSheet, Caption, Card, Heading, Icon, Label, MacroCard, useTheme } from '@/design-system';
+import { radius } from '@/design-system/tokens/primitives/radius';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { useHealthSyncContext } from '@/providers/health-sync-provider';
 import type { HealthSyncStatus } from '@/utils/health-sync';
@@ -395,7 +396,7 @@ function BodyFatSheet({
           autoFocus
           testID="bf-input"
         />
-        <Text style={[styles.weightInputSuffix, { color: theme.colors.content.tertiary }]}>%</Text>
+        <Text style={[styles.weightInputSuffix, { color: theme.colors.content.secondary }]}>%</Text>
       </View>
       {diff !== null && Number.isFinite(diff) ? (
         <Caption tone="secondary">
@@ -441,7 +442,7 @@ function WeightSheet({
           autoFocus
           testID="weight-input"
         />
-        <Text style={[styles.weightInputSuffix, { color: theme.colors.content.tertiary }]}>kg</Text>
+        <Text style={[styles.weightInputSuffix, { color: theme.colors.content.secondary }]}>kg</Text>
       </View>
     </BottomSheet>
   );
@@ -462,7 +463,7 @@ const styles = StyleSheet.create({
   kcalRow: { flexDirection: 'row', alignItems: 'flex-end' },
   pfcRow: { flexDirection: 'row', gap: 8 },
   section: { gap: 8 },
-  weightInputWrap: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 16 },
+  weightInputWrap: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: radius.md, paddingHorizontal: 16, paddingVertical: 16 },
   weightInput: { flex: 1, fontSize: fs['3xl'], fontWeight: '700' },
   weightInputSuffix: { fontSize: fs.md, fontWeight: '700' },
 });
