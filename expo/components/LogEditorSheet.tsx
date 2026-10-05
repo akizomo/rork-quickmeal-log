@@ -2,7 +2,7 @@ import React, { memo, useMemo, useState } from 'react';
 import { PanResponder, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { additionPresets, portionSnapPoints, sizeOptions } from '@/constants/nutrition-data';
-import { Badge, BottomSheet, Caption, Icon, useTheme, type Theme } from '@/design-system';
+import { Badge, BottomSheet, Caption, Chip, Icon, useTheme, type Theme } from '@/design-system';
 import { useT } from '@/hooks/useT';
 import { radius } from '@/design-system/tokens/primitives/radius';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
@@ -169,10 +169,10 @@ function IngredientEditorContent({ draft, onChange }: { draft: IngredientDraft; 
           <Caption tone="secondary" style={styles.editorSectionTitle}>{tr('logEditor.typeSection')}</Caption>
           <View style={styles.optionWrap}>
             {subtypeDefs.map((item) => (
-              <LocalChip
+              <Chip
                 key={item.key}
                 label={item.label}
-                active={draft.subTypeKey === item.key}
+                selected={draft.subTypeKey === item.key}
                 onPress={() => handleSubtypeChange(item.key)}
               />
             ))}
@@ -197,10 +197,10 @@ function IngredientEditorContent({ draft, onChange }: { draft: IngredientDraft; 
           <Caption tone="secondary" style={styles.editorSectionTitle}>{tr('logEditor.toppingSection')}</Caption>
           <View style={styles.optionWrap}>
             {toppings.map((item) => (
-              <LocalChip
+              <Chip
                 key={item.key}
                 label={item.label}
-                active={draft.toppingKeys.includes(item.key)}
+                selected={draft.toppingKeys.includes(item.key)}
                 onPress={() => handleToggleTopping(item.key)}
               />
             ))}
@@ -342,7 +342,7 @@ function DishEditorContent({ draft, onChange }: { draft: DishDraft; onChange: (d
       <Caption tone="secondary" style={styles.editorSectionTitle}>{tr('logEditor.typeSection')}</Caption>
       <View style={styles.optionWrap}>
         {categories.map((item) => (
-          <LocalChip key={item.key} label={`${item.emoji} ${item.label}`} active={draft.categoryKey === item.key} onPress={() => onChange({ ...draft, categoryKey: item.key, subTypeKey: undefined })} />
+          <Chip key={item.key} label={`${item.emoji} ${item.label}`} selected={draft.categoryKey === item.key} onPress={() => onChange({ ...draft, categoryKey: item.key, subTypeKey: undefined })} />
         ))}
       </View>
       {subtypes.length > 0 ? (
@@ -350,7 +350,7 @@ function DishEditorContent({ draft, onChange }: { draft: DishDraft; onChange: (d
           <Caption tone="secondary" style={styles.editorSectionTitle}>{tr('logEditor.flavorSection')}</Caption>
           <View style={styles.optionWrap}>
             {subtypes.map((item) => (
-              <LocalChip key={item.key} label={item.label} active={draft.subTypeKey === item.key} onPress={() => onChange({ ...draft, subTypeKey: item.key })} />
+              <Chip key={item.key} label={item.label} selected={draft.subTypeKey === item.key} onPress={() => onChange({ ...draft, subTypeKey: item.key })} />
             ))}
           </View>
         </>
@@ -360,10 +360,10 @@ function DishEditorContent({ draft, onChange }: { draft: DishDraft; onChange: (d
         {additionPresets.map((item) => {
           const active = draft.additions.includes(item.key);
           return (
-            <LocalChip
+            <Chip
               key={item.key}
               label={item.label}
-              active={active}
+              selected={active}
               onPress={() => {
                 if (active) {
                   onChange({ ...draft, additions: draft.additions.filter((value) => value !== item.key) });
@@ -381,7 +381,7 @@ function DishEditorContent({ draft, onChange }: { draft: DishDraft; onChange: (d
       <Caption tone="secondary" style={styles.editorSectionTitle}>{tr('logEditor.sizeSection')}</Caption>
       <View style={styles.optionWrap}>
         {sizeOptions.map((size) => (
-          <LocalChip key={size} label={size} active={draft.size === size} onPress={() => onChange({ ...draft, size: size as DishSize })} />
+          <Chip key={size} label={size} selected={draft.size === size} onPress={() => onChange({ ...draft, size: size as DishSize })} />
         ))}
       </View>
       <PreviewCard macro={preview} />
@@ -418,16 +418,6 @@ function PreviewCard({ macro }: { macro: Macro }) {
   );
 }
 
-function LocalChip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
-  const t = useTheme();
-  const styles = useMemo(() => makeStyles(t), [t]);
-  return (
-    <Pressable onPress={onPress} style={[styles.chip, active ? styles.chipActive : null]}>
-      <Text style={[styles.chipText, active ? styles.chipTextActive : null]}>{label}</Text>
-    </Pressable>
-  );
-}
-
 void PreviewCard;
 void getSubtypes;
 
@@ -435,10 +425,6 @@ const makeStyles = (t: Theme) => StyleSheet.create({
   editorSection: { gap: 12 },
   editorSectionTitle: { fontSize: fs.md, fontWeight: '700', color: t.colors.content.primary },
   optionWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: { paddingHorizontal: 16, paddingVertical: 12, borderRadius: radius.full, backgroundColor: t.colors.surface.raised },
-  chipActive: { backgroundColor: t.colors.action.primary.default },
-  chipText: { fontSize: fs.sm, color: t.colors.content.primary, fontWeight: '600' },
-  chipTextActive: { color: t.colors.content.onAction },
   previewCard: { backgroundColor: t.colors.surface.raised, borderRadius: radius['2xl'], padding: 16, gap: 12 },
   previewTitle: { fontSize: fs.sm, color: t.colors.content.secondary },
   previewSummaryText: { fontSize: fs.md, color: t.colors.content.primary, fontWeight: '600', lineHeight: 20 },

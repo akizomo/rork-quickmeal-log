@@ -258,7 +258,6 @@ const makeStyles = (t: Theme) => StyleSheet.create({
   page: { flex: 1, backgroundColor: t.colors.surface.default },
   safe: { flex: 1 },
   closeRow: { flexDirection: 'row', justifyContent: 'flex-end', paddingHorizontal: 20, paddingTop: 4 },
-  closeButton: { width: 36, height: 36, borderRadius: radius.full, backgroundColor: t.colors.surface.raised, alignItems: 'center', justifyContent: 'center' },
   scroll: { paddingHorizontal: 24, paddingTop: 8, paddingBottom: 20, gap: 20 },
   title: { fontSize: fs['3xl'], fontWeight: '700', color: t.colors.content.primary, lineHeight: 36 },
   subtitle: { fontSize: fs.md, lineHeight: 22, color: t.colors.content.secondary },

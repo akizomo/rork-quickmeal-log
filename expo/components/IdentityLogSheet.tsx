@@ -577,7 +577,7 @@ export function IdentityLogSheet() {
                   label={id.label}
                   selected={origin.id === id.id}
                   onPress={() => handleSelectIdentity(id)}
-                  size="sm"
+                  size="md"
                   testID={`ils-identity-${id.id}`}
                 />
               ))}
@@ -594,7 +594,7 @@ export function IdentityLogSheet() {
                     label={opt.label}
                     selected={attributeKey === opt.key}
                     onPress={() => handleSelectAttribute(opt.key)}
-                    size="sm"
+                    size="md"
                     testID={`ils-attr-${opt.key}`}
                   />
                 ))}
@@ -619,7 +619,7 @@ export function IdentityLogSheet() {
                     }
                     selected={styleKey === opt.key}
                     onPress={() => handleSelectStyle(opt.key)}
-                    size="sm"
+                    size="md"
                     testID={`ils-style-${opt.key}`}
                   />
                 ))}
@@ -646,7 +646,7 @@ export function IdentityLogSheet() {
                       label={tr('identityLog.usualAmount')}
                       selected={displayAmountValue === c.value}
                       onPress={() => handleSelectAmountChip(c.value)}
-                      size="sm"
+                      size="md"
                       testID="ils-amount-usual"
                     />
                   ) : (
@@ -655,7 +655,7 @@ export function IdentityLogSheet() {
                       label={chipDisplayLabel(c.label, amtUnitLabel)}
                       selected={displayAmountValue === c.value}
                       onPress={() => handleSelectAmountChip(c.value)}
-                      size="sm"
+                      size="md"
                       testID={`ils-amount-${c.value}`}
                     />
                   ),
@@ -718,7 +718,7 @@ export function IdentityLogSheet() {
                       leadingIcon={selected ? 'check' : 'add'}
                       selected={selected}
                       onPress={() => toggleAddon(aid)}
-                      size="sm"
+                      size="md"
                       testID={`ils-addon-${aid}`}
                     />
                   );
