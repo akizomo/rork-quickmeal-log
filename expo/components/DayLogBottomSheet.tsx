@@ -334,7 +334,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   title: {
-    fontSize: fs.md,
+    fontSize: fs.lg,
     fontWeight: '700',
   },
   subtitle: {
