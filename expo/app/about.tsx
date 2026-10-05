@@ -7,7 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Logo } from '@/components/Logo';
 import { SettingsDivider, SettingsLinkRow, SettingsListCard, SettingsSectionLabel } from '@/design-system';
 import { LEGAL_LINKS } from '@/constants/onboarding';
-import { Body, Caption, useTheme } from '@/design-system';
+import { Body, useTheme } from '@/design-system';
 import { useT } from '@/hooks/useT';
 
 export default function AboutRoute() {
@@ -42,7 +42,7 @@ export default function AboutRoute() {
             <View style={styles.brandHeader}>
               <Logo size={48} color={theme.colors.action.primary.default} />
               <Body style={{ fontWeight: '700' }}>Hachibu</Body>
-              <Caption tone="secondary">Eight Tenths is Enough.</Caption>
+              <Body size="sm" tone="secondary">Eight Tenths is Enough.</Body>
             </View>
 
             {/* §法的情報 */}

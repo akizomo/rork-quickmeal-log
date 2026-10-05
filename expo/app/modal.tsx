@@ -2,7 +2,7 @@ import { router, Stack } from 'expo-router';
 import React from 'react';
 import { StyleSheet, Text } from 'react-native';
 
-import { Dialog, Overline, useTheme } from '@/design-system';
+import { Dialog, Label, useTheme } from '@/design-system';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { useT } from '@/hooks/useT';
 
@@ -18,7 +18,7 @@ export default function AboutModalRoute() {
         primaryAction={{ label: tr('modal.close'), onPress: () => router.back() }}
         testID="about-modal"
       >
-        <Overline tone="link" style={styles.eyebrow}>Hachibu</Overline>
+        <Label tone="link" style={styles.eyebrow}>Hachibu</Label>
         <Text style={[styles.title, { color: t.colors.content.primary }]}>{tr('modal.title')}</Text>
         <Text style={[styles.description, { color: t.colors.content.secondary }]}>{tr('modal.description')}</Text>
       </Dialog>
@@ -27,7 +27,7 @@ export default function AboutModalRoute() {
 }
 
 const styles = StyleSheet.create({
-  // ブランド名の1語だけ強調するための uppercase 付与。letterSpacing/fontSize/weight は Overline 既定に委ねる。
+  // ブランド名の uppercase 付与。Label(single element name) が正しい役割。
   eyebrow: {
     textTransform: 'uppercase',
   },

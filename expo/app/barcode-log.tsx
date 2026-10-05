@@ -202,9 +202,9 @@ export default function BarcodLogRoute() {
           )}
           <View style={styles.scanFrame} pointerEvents="none">
             <View style={[styles.scanBox, { borderColor: colors.action.primary.default }]} />
-            <Caption style={{ color: primitiveColors.white, marginTop: 12, textAlign: 'center' }}>
+            <Body size="sm" style={{ color: primitiveColors.white, marginTop: 12, textAlign: 'center' }}>
               {tr('barcode.scanHint')}
-            </Caption>
+            </Body>
           </View>
           <View style={[styles.manualBar, { backgroundColor: colors.surface.default }]}>
             <Pressable
@@ -239,9 +239,9 @@ export default function BarcodLogRoute() {
                   colors={colors}
                 />
               )}
-              <Caption tone="secondary" style={{ marginBottom: 8 }}>
+              <Body size="sm" tone="secondary" style={{ marginBottom: 8 }}>
                 {draft.per100g ? tr('barcode.fields.per100gHint') : tr('barcode.fields.perServingHint')}
-              </Caption>
+              </Body>
               <MacroField label="kcal" value={draft.kcal} onChangeText={(v) => setDraft((d) => ({ ...d, kcal: v }))} keyboardType="decimal-pad" colors={colors} />
               <MacroField label={tr('barcode.fields.protein')} value={draft.protein} onChangeText={(v) => setDraft((d) => ({ ...d, protein: v }))} keyboardType="decimal-pad" colors={colors} />
               <MacroField label={tr('barcode.fields.fat')} value={draft.fat} onChangeText={(v) => setDraft((d) => ({ ...d, fat: v }))} keyboardType="decimal-pad" colors={colors} />

@@ -300,9 +300,9 @@ export default function OnboardingRoute() {
                 }}
               />
             </View>
-            <Caption weight="semibold">
+            <Label size="sm" tone="secondary">
               {displayStep}/{totalDisplaySteps}
-            </Caption>
+            </Label>
           </View>
 
           <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
