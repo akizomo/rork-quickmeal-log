@@ -19,7 +19,7 @@ import {
 import { useTheme } from '../theme';
 import { Icon, type IconName } from './Icon';
 
-export type ChipSize = 'sm' | 'md';
+export type ChipSize = 'sm' | 'compact' | 'md';
 
 export type ChipProps = {
   label: string;
@@ -49,10 +49,11 @@ export function Chip({
 }: ChipProps) {
   const t = useTheme();
   const isSm = size === 'sm';
+  const isCompact = size === 'compact';
   const textColor = selected
     ? t.colors.action.primary.onContainer
     : t.colors.content.primary;
-  const iconSize = isSm ? 12 : 14;
+  const iconSize = (isSm || isCompact) ? 12 : 14;
 
   return (
     <Pressable
@@ -63,8 +64,9 @@ export function Chip({
       testID={testID}
       style={({ pressed }) => [
         {
-          paddingHorizontal: isSm ? t.spacing['3'] : t.spacing['4'],
-          paddingVertical: isSm ? t.spacing['1'] : t.spacing['2'],
+          paddingHorizontal: isSm ? t.spacing['3'] : isCompact ? t.spacing['3'] : t.spacing['4'],
+          // compact: 6px は 4px グリッドの中間点。シート内チップ密度の意図的な調整値
+          paddingVertical: isSm ? t.spacing['1'] : isCompact ? 6 : t.spacing['2'],
           borderRadius: t.radius.full,
           borderWidth: 1,
           borderColor: selected
@@ -88,7 +90,7 @@ export function Chip({
         <Text
           style={{
             fontSize: isSm ? t.typography.fontSize.xs : t.typography.fontSize.sm,
-            lineHeight: isSm ? t.typography.lineHeight.xs : t.typography.lineHeight.sm,
+            lineHeight: isSm ? t.typography.lineHeight.xs : t.typography.lineHeight.sm,  // compact も sm フォント
             fontWeight: t.typography.fontWeight.semibold as TextStyle['fontWeight'],
             color: textColor,
           }}

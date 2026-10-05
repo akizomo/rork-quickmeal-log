@@ -342,7 +342,7 @@ function DishEditorContent({ draft, onChange }: { draft: DishDraft; onChange: (d
       <Caption tone="secondary" style={styles.editorSectionTitle}>{tr('logEditor.typeSection')}</Caption>
       <View style={styles.optionWrap}>
         {categories.map((item) => (
-          <Chip key={item.key} label={`${item.emoji} ${item.label}`} selected={draft.categoryKey === item.key} onPress={() => onChange({ ...draft, categoryKey: item.key, subTypeKey: undefined })} />
+          <Chip key={item.key} label={`${item.emoji} ${item.label}`} selected={draft.categoryKey === item.key} onPress={() => onChange({ ...draft, categoryKey: item.key, subTypeKey: undefined })} size="compact" />
         ))}
       </View>
       {subtypes.length > 0 ? (
@@ -350,7 +350,7 @@ function DishEditorContent({ draft, onChange }: { draft: DishDraft; onChange: (d
           <Caption tone="secondary" style={styles.editorSectionTitle}>{tr('logEditor.flavorSection')}</Caption>
           <View style={styles.optionWrap}>
             {subtypes.map((item) => (
-              <Chip key={item.key} label={item.label} selected={draft.subTypeKey === item.key} onPress={() => onChange({ ...draft, subTypeKey: item.key })} />
+              <Chip key={item.key} label={item.label} selected={draft.subTypeKey === item.key} onPress={() => onChange({ ...draft, subTypeKey: item.key })} size="compact" />
             ))}
           </View>
         </>
@@ -364,6 +364,7 @@ function DishEditorContent({ draft, onChange }: { draft: DishDraft; onChange: (d
               key={item.key}
               label={item.label}
               selected={active}
+              size="compact"
               onPress={() => {
                 if (active) {
                   onChange({ ...draft, additions: draft.additions.filter((value) => value !== item.key) });
@@ -381,7 +382,7 @@ function DishEditorContent({ draft, onChange }: { draft: DishDraft; onChange: (d
       <Caption tone="secondary" style={styles.editorSectionTitle}>{tr('logEditor.sizeSection')}</Caption>
       <View style={styles.optionWrap}>
         {sizeOptions.map((size) => (
-          <Chip key={size} label={size} selected={draft.size === size} onPress={() => onChange({ ...draft, size: size as DishSize })} />
+          <Chip key={size} label={size} selected={draft.size === size} onPress={() => onChange({ ...draft, size: size as DishSize })} size="compact" />
         ))}
       </View>
       <PreviewCard macro={preview} />
