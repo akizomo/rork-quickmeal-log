@@ -1241,6 +1241,10 @@ body[lang="ja"] .en {
 .lp-modal-body,
 .lp-modal-thanks {
   padding: var(--space-10) var(--space-8) var(--space-8);
+  /* 低い画面でもボタンがはみ出さないよう、本体側でスクロールさせる */
+  max-height: calc(100dvh - var(--space-10));
+  overflow-y: auto;
+  border-radius: var(--radius-lg);
 }
 
 .lp-modal-title {
@@ -1394,7 +1398,7 @@ body[lang="ja"] .en {
 .lp-modal-note-img {
   display: block;
   width: 100%;
-  max-width: 220px;
+  max-width: 180px;
   height: auto;
   margin: 0 auto;
   border-radius: var(--radius-sm);
