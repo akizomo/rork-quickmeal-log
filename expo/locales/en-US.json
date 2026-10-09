@@ -253,7 +253,8 @@
       "buyInactive": "Start Premium",
       "restore": "Restore Purchase",
       "manage": "Manage Subscription",
-      "manageSub": "Opens your App Store subscription settings"
+      "manageSub": "Opens your App Store subscription settings",
+      "manageSubAndroid": "Opens your Google Play subscription settings"
     },
     "alerts": {
       "restoreSuccess": "Purchase restored",

@@ -1,6 +1,6 @@
 import { Stack, useRouter } from 'expo-router';
 import React from 'react';
-import { Alert, Linking, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Linking, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { SettingsDivider, SettingsLinkRow, SettingsListCard, SettingsSectionLabel } from '@/design-system';
@@ -57,7 +57,9 @@ export default function SubscriptionRoute() {
   };
 
   const openManage = () => {
-    Linking.openURL(LEGAL_LINKS.manageSubscription).catch((e) =>
+    Linking.openURL(
+      Platform.OS === 'android' ? LEGAL_LINKS.manageSubscriptionAndroid : LEGAL_LINKS.manageSubscription,
+    ).catch((e) =>
       console.log('[subscription] manage', e)
     );
   };
@@ -129,7 +131,11 @@ export default function SubscriptionRoute() {
                 <SettingsDivider />
                 <SettingsLinkRow
                   label={t('subscription.planActions.manage')}
-                  sub={t('subscription.planActions.manageSub')}
+                  sub={t(
+                    Platform.OS === 'android'
+                      ? 'subscription.planActions.manageSubAndroid'
+                      : 'subscription.planActions.manageSub',
+                  )}
                   onPress={openManage}
                   testID="subscription-link-manage"
                 />

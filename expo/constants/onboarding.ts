@@ -178,7 +178,8 @@ export const TRIAL_DURATION_DAYS = 7;
 /**
  * 法的情報へのアクセス URL。すべて外部リンク (Linking.openURL で開く)。
  * - terms / privacy: Vercel ホスティング (https://hachibu.vercel.app)
- * - manageSubscription: Apple のサブスク管理画面
+ * - manageSubscription: Apple のサブスク管理画面 (iOS)
+ * - manageSubscriptionAndroid: Google Play のサブスク管理画面 (Android)
  *
  * App Store Connect / Play Console のメタデータにも同 URL を登録すること。
  */
@@ -186,4 +187,5 @@ export const LEGAL_LINKS = {
   terms: 'https://hachibu.vercel.app/terms',
   privacy: 'https://hachibu.vercel.app/privacy',
   manageSubscription: 'https://apps.apple.com/account/subscriptions',
+  manageSubscriptionAndroid: 'https://play.google.com/store/account/subscriptions?package=app.akizony.hachibu',
 } as const;

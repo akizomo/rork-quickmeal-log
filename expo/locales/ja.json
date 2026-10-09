@@ -253,7 +253,8 @@
       "buyInactive": "購入してプレミアムを開始",
       "restore": "購入を復元",
       "manage": "サブスクリプションを管理",
-      "manageSub": "App Store のサブスクリプション設定を開きます"
+      "manageSub": "App Store のサブスクリプション設定を開きます",
+      "manageSubAndroid": "Google Play のサブスクリプション設定を開きます"
     },
     "alerts": {
       "restoreSuccess": "購入を復元しました",
