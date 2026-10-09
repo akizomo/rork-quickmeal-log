@@ -13,7 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { SettingsDivider, SettingsLinkRow, SettingsListCard, SettingsSectionLabel } from '@/design-system';
-import { TRIAL_DURATION_DAYS } from '@/constants/onboarding';
+import { TRIAL_DURATION_DAYS, TRIAL_REMINDER_DAYS } from '@/constants/onboarding';
 import { Body, BottomSheet, Caption, Card, Heading, Icon, Label, MacroCard, useTheme } from '@/design-system';
 import { radius } from '@/design-system/tokens/primitives/radius';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
@@ -93,7 +93,7 @@ export default function StatusRoute() {
           <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} testID="status-screen">
 
             {/* TRIAL STATUS — トライアル中のみ表示 (PRD §6.1) */}
-            {effectiveStatus === 'trialing' && trialDays > 0 ? (
+            {effectiveStatus === 'trialing' && trialDays > 0 && trialDays <= TRIAL_REMINDER_DAYS ? (
               <Pressable
                 onPress={() => router.push('/subscription')}
                 testID="status-trial-card"
@@ -106,9 +106,7 @@ export default function StatusRoute() {
                   style={{
                     gap: theme.spacing['1'],
                     borderLeftWidth: 3,
-                    borderLeftColor: trialDays <= 2
-                      ? theme.colors.status.warning.default
-                      : theme.colors.action.primary.default,
+                    borderLeftColor: theme.colors.status.warning.default,
                   }}
                 >
                   <View style={styles.trialRow}>
@@ -120,9 +118,7 @@ export default function StatusRoute() {
                     <Icon name="chevronRight" size={14} color={theme.colors.content.tertiary} />
                   </View>
                   <Body size="sm" tone="secondary">
-                    {trialDays <= 2
-                      ? t('status.trialCard.ending', { days: trialDays })
-                      : t('status.trialCard.ongoing')}
+                    {t('status.trialCard.ending', { days: trialDays })}
                   </Body>
                 </Card>
               </Pressable>

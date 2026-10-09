@@ -16,7 +16,7 @@ import { radius } from '@/design-system/tokens/primitives/radius';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { useAppState } from '@/providers/app-state-provider';
 import { useHealthSyncContext } from '@/providers/health-sync-provider';
-import { TRIAL_DURATION_DAYS } from '@/constants/onboarding';
+import { TRIAL_DURATION_DAYS, TRIAL_REMINDER_DAYS } from '@/constants/onboarding';
 import { getEffectiveSubscriptionStatus, trialDaysRemaining, adjustedTargetKcal, calcBaselineActiveKcal, stepsToActiveKcal } from '@/utils/goals';
 import { formatDateKey } from '@/utils/nutrition';
 import { formatDayLabel, sumForDate } from '@/utils/history';
@@ -47,7 +47,7 @@ const Header = memo(function Header({ viewedDate }: { viewedDate?: Date }) {
   const showTrialBadge = useMemo(() => {
     if (getEffectiveSubscriptionStatus(settings, TRIAL_DURATION_DAYS) !== 'trialing') return false;
     const remaining = trialDaysRemaining(settings.trialStartedAtISO, TRIAL_DURATION_DAYS);
-    return remaining > 0 && remaining <= 2;
+    return remaining > 0 && remaining <= TRIAL_REMINDER_DAYS;
   }, [settings]);
 
   return (

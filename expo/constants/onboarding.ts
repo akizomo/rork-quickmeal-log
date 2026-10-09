@@ -175,6 +175,9 @@ export const DEFAULT_MEAL_STYLE_BY_SLOT: Record<MealSlotKey, MealStyle> = {
 
 export const TRIAL_DURATION_DAYS = 7;
 
+/** トライアル残り日数がこの値以下になったらバナー/バッジで知らせる (それまでは出さない) */
+export const TRIAL_REMINDER_DAYS = 3;
+
 /**
  * 法的情報へのアクセス URL。すべて外部リンク (Linking.openURL で開く)。
  * - terms / privacy: Vercel ホスティング (https://hachibu.vercel.app)
