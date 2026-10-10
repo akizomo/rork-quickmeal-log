@@ -18,8 +18,9 @@ import { addCustomerInfoListener, getCustomerInfo, restorePurchases as iapRestor
 import { usualAmountForIdentity } from '@/utils/usual-amount';
 import { IngredientQuickDraft, QuickLogHistoryMap, QuickLogSelection, QuickLogTabKey } from '@/types/quick-log';
 import { buildDishMacro, clampPortion, computeIngredient, createFoodLogFromDish, createFoodLogFromDishQuickEntry, createFoodLogFromIngredient, formatDateKey, generateId, getDefaultModeByTime, getMealSlot, getQuickCategories, getSubType, sumToday } from '@/utils/nutrition';
-import { adjustedTargetKcal, calcBaselineActiveKcal, calcExerciseGrossKcal, calcExerciseNetKcal, EXERCISE_TYPES, minCarryoverDays, stepsToActiveKcal } from '@/utils/goals';
-import { isSameDay } from '@/utils/history';
+import { adjustedTargetKcal, calcBaselineActiveKcal, calcExerciseGrossKcal, calcExerciseNetKcal, EXERCISE_TYPES, stepsToActiveKcal } from '@/utils/goals';
+import { computeWeeklyBalance, isWeeklyBalanceWorthProposing } from '@/utils/weekly-balance';
+import { getWeekRange, isSameDay } from '@/utils/history';
 import { castHistoryMap, deriveDefaultTab, rankFrequentSelections, recordDishSelection, recordSelection, recordTabUsage, selectionFromDraft } from '@/utils/quick-log-history';
 import { computeQuickLogMacro } from '@/utils/quick-log-macro';
 import {
@@ -1571,66 +1572,63 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
   const todayLogs = useMemo(() => logs.filter((item) => item.date === todayKey), [logs, todayKey]);
   const todayMacro = useMemo(() => sumToday(logs, todayKey), [logs, todayKey]);
 
-  // 前日キー
-  const yesterdayKey = useMemo(() => {
-    const d = new Date(todayKey);
-    d.setDate(d.getDate() - 1);
-    return formatDateKey(d);
-  }, [todayKey]);
-
-  // 前日のkcal実績と目標を計算し、オーバー分（帳尻調整候補）を算出。
-  const yesterdayOvershootKcal = useMemo(() => {
-    const yesterdayConsumed = sumToday(logs, yesterdayKey).kcal;
-    const baseline = calcBaselineActiveKcal(profile);
-    const da = dailyActivities.find((d) => d.date === yesterdayKey);
+  // ── 今週の収支を合わせる (PRD §6.4.5) ─────────────────────────────────────
+  // その日の目標 (ベース + 活動・運動の加算, §6.4.3)。調整分は含めない。
+  const dayTargetKcal = useCallback((dateKey: string) => {
+    const da = dailyActivities.find((d) => d.date === dateKey);
     const measured = da
       ? da.activeKcal > 0
         ? da.activeKcal
         : stepsToActiveKcal(da.steps, profile.currentWeightKg)
       : null;
-    const yesterdayTarget = adjustedTargetKcal(profile.targetCalories, exerciseLogs, yesterdayKey, {
+    return adjustedTargetKcal(profile.targetCalories, exerciseLogs, dateKey, {
       measuredActiveKcal: measured,
-      baselineActiveKcal: baseline,
+      baselineActiveKcal: calcBaselineActiveKcal(profile),
     });
-    return Math.max(0, Math.round(yesterdayConsumed - yesterdayTarget));
-  }, [logs, yesterdayKey, profile, dailyActivities, exerciseLogs]);
+  }, [dailyActivities, profile, exerciseLogs]);
 
-  // ── 帳尻調整プラン ──────────────────────────────────────────────────────────
+  const weekKey = useMemo(() => formatDateKey(getWeekRange(new Date(todayKey + 'T00:00:00')).start), [todayKey]);
 
-  // 現在のプランが有効か、今日は何日目かを算出
-  const carryoverDayIndex = useMemo(() => {
-    if (!settings.kcalCarryoverStartDate) return 0;
-    const start = new Date(settings.kcalCarryoverStartDate + 'T00:00:00');
-    const today = new Date(todayKey + 'T00:00:00');
-    return Math.round((today.getTime() - start.getTime()) / 86400000) + 1; // 1-indexed
-  }, [settings.kcalCarryoverStartDate, todayKey]);
+  const weeklyBalance = useMemo(() => {
+    const pastDays = [];
+    const cursor = new Date(weekKey + 'T00:00:00');
+    while (formatDateKey(cursor) < todayKey) {
+      const dk = formatDateKey(cursor);
+      pastDays.push({ dateKey: dk, consumedKcal: sumToday(logs, dk).kcal, targetKcal: dayTargetKcal(dk) });
+      cursor.setDate(cursor.getDate() + 1);
+    }
+    return computeWeeklyBalance(pastDays, 7 - pastDays.length, dayTargetKcal(todayKey), profile.targetCalories, profile.biologicalBasis);
+  }, [weekKey, todayKey, logs, dayTargetKcal, profile.targetCalories, profile.biologicalBasis]);
 
-  const carryoverPlanActive = useMemo(() =>
-    settings.kcalCarryoverStartDate !== undefined &&
-    carryoverDayIndex >= 1 &&
-    carryoverDayIndex <= (settings.kcalCarryoverDaysTotal ?? 0),
-  [settings.kcalCarryoverStartDate, settings.kcalCarryoverDaysTotal, carryoverDayIndex]);
+  // 旧「帳尻調整」プラン (kcalCarryoverStartDate) が今週始まって今日も期間内なら、
+  // 今週の調整として引き継ぐ。翌週には自然に切れる。
+  const legacyPlanActiveThisWeek = useMemo(() => {
+    const start = settings.kcalCarryoverStartDate;
+    if (!start || start < weekKey) return false;
+    const end = new Date(start + 'T00:00:00');
+    end.setDate(end.getDate() + (settings.kcalCarryoverDaysTotal ?? 0) - 1);
+    return todayKey <= formatDateKey(end);
+  }, [settings.kcalCarryoverStartDate, settings.kcalCarryoverDaysTotal, weekKey, todayKey]);
 
-  // 今日の差し引き額
-  const carryoverDeductionKcal = carryoverPlanActive
-    ? (settings.kcalCarryoverDailyAmount ?? 0)
-    : 0;
+  const weeklyBalanceActive = settings.kcalWeeklyBalanceWeekKey === weekKey || legacyPlanActiveThisWeek;
 
-  // 提案バナー: プランがなく、朝で、前日が閾値超で、未dismissのとき
-  const showNewPlanBanner = useMemo(() => {
-    if (carryoverPlanActive) return false;
-    const hour = new Date().getHours();
-    const isMorning = hour < 12;
-    const isPastTolerance = yesterdayOvershootKcal > Math.round(profile.targetCalories * 0.15);
-    const dismissed = settings.kcalCarryoverDismissedDate === todayKey;
-    return isMorning && isPastTolerance && !dismissed;
-  }, [carryoverPlanActive, yesterdayOvershootKcal, profile.targetCalories, settings.kcalCarryoverDismissedDate, todayKey]);
+  /** 今日の目標への加減 (+ = ゆとり, − = 控えめ)。オプション未使用時は 0 */
+  const weeklyAdjustmentKcal = weeklyBalanceActive ? weeklyBalance.todayAdjustmentKcal : 0;
 
-  // 進捗バナー: プラン実行中で、今日まだdismissしていない
-  const showProgressBanner = carryoverPlanActive &&
+  // 提案バナー: 調整しておらず、朝で、週の差が閾値超で、今日まだ閉じていないとき
+  const showWeeklyBalanceProposal = useMemo(() => {
+    if (weeklyBalanceActive) return false;
+    const isMorning = new Date().getHours() < 12;
+    return isMorning &&
+      isWeeklyBalanceWorthProposing(weeklyBalance.balanceKcal, profile.targetCalories) &&
+      settings.kcalCarryoverDismissedDate !== todayKey;
+  }, [weeklyBalanceActive, weeklyBalance.balanceKcal, profile.targetCalories, settings.kcalCarryoverDismissedDate, todayKey]);
+
+  // 進捗バナー: 調整中で、今日まだ閉じていないとき
+  const showWeeklyBalanceProgress = weeklyBalanceActive &&
     settings.kcalCarryoverDismissedDate !== todayKey;
 
-  const showCarryoverBanner = showNewPlanBanner || showProgressBanner;
+  const showWeeklyBalanceBanner = showWeeklyBalanceProposal || showWeeklyBalanceProgress;
   const todayExerciseLogs = useMemo(() => exerciseLogs.filter((e) => e.date === todayKey), [exerciseLogs, todayKey]);
   const todayGrossExerciseKcal = useMemo(() => todayExerciseLogs.reduce((s, e) => s + e.grossKcal, 0), [todayExerciseLogs]);
   const todayNetExerciseKcal = useMemo(() => todayExerciseLogs.reduce((s, e) => s + e.netKcal, 0), [todayExerciseLogs]);
@@ -1646,8 +1644,8 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       measuredActiveKcal: measured,
       baselineActiveKcal: baseline,
     });
-    return base - carryoverDeductionKcal;
-  }, [exerciseLogs, profile, dailyActivities, todayKey, carryoverDeductionKcal]);
+    return base + weeklyAdjustmentKcal;
+  }, [exerciseLogs, profile, dailyActivities, todayKey, weeklyAdjustmentKcal]);
 
   // ── ウィジェット: kcal 同期 ───────────────────────────────────────────────
   // todayMacro.kcal または todayAdjustedTargetKcal が変わるたびにウィジェットリングを更新。
@@ -1719,37 +1717,32 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
   const editorLog = useMemo(() => logs.find((item) => item.id === editorLogId) ?? null, [editorLogId, logs]);
   const editorIsPending = useMemo(() => (editorLogId ? pendingLogIds.includes(editorLogId) : false), [editorLogId, pendingLogIds]);
 
-  // プランを開始/更新する。daysOverride で日数、surplusOverride で余剰額を上書き可能。
-  // edit時は surplusOverride に残余負債 (残り日数 × 現在日割り額) を渡すこと。
-  const applyCarryover = useCallback((daysOverride?: number, surplusOverride?: number) => {
-    const surplus = surplusOverride ?? yesterdayOvershootKcal;
-    const safeMin = minCarryoverDays(profile.targetCalories, surplus, 14);
-    const daysTotal = daysOverride ?? Math.min(14, Math.max(safeMin, 7));
-    const dailyAmount = Math.ceil(surplus / daysTotal);
+  // 今週の調整を始める。日曜が終わると weekKey が変わり自動で切れる。
+  const startWeeklyBalance = useCallback(() => {
     const next: AppSettings = {
       ...settings,
-      kcalCarryoverStartDate: todayKey,
-      kcalCarryoverDailyAmount: dailyAmount,
-      kcalCarryoverDaysTotal: daysTotal,
+      kcalWeeklyBalanceWeekKey: weekKey,
       kcalCarryoverDismissedDate: todayKey,
     };
     setSettings(next);
     persist(profile, logs, next, weights, bodyFatEntries);
-  }, [settings, todayKey, yesterdayOvershootKcal, profile, logs, weights, bodyFatEntries, persist]);
+  }, [settings, weekKey, todayKey, profile, logs, weights, bodyFatEntries, persist]);
 
-  // プランをキャンセルする（BalanceModal のトグルOFF）
-  const cancelCarryoverPlan = useCallback(() => {
+  // 今週の調整をやめる (旧プランのフィールドもここで掃除する)
+  const stopWeeklyBalance = useCallback(() => {
     const next: AppSettings = {
       ...settings,
+      kcalWeeklyBalanceWeekKey: undefined,
       kcalCarryoverStartDate: undefined,
       kcalCarryoverDailyAmount: undefined,
       kcalCarryoverDaysTotal: undefined,
+      kcalCarryoverDismissedDate: todayKey,
     };
     setSettings(next);
     persist(profile, logs, next, weights, bodyFatEntries);
-  }, [settings, profile, logs, weights, bodyFatEntries, persist]);
+  }, [settings, todayKey, profile, logs, weights, bodyFatEntries, persist]);
 
-  const dismissCarryoverBanner = useCallback(() => {
+  const dismissWeeklyBalanceBanner = useCallback(() => {
     const next: AppSettings = { ...settings, kcalCarryoverDismissedDate: todayKey };
     setSettings(next);
     persist(profile, logs, next, weights, bodyFatEntries);
@@ -1817,16 +1810,13 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     resetDiagnostics,
     editSearchMissEvent,
     removeSearchMissEvent,
-    yesterdayOvershootKcal,
-    showCarryoverBanner,
-    showNewPlanBanner,
-    showProgressBanner,
-    carryoverPlanActive,
-    carryoverDayIndex,
-    carryoverDeductionKcal,
-    applyCarryover,
-    cancelCarryoverPlan,
-    dismissCarryoverBanner,
+    weeklyBalance,
+    weeklyBalanceActive,
+    weeklyAdjustmentKcal,
+    showWeeklyBalanceBanner,
+    startWeeklyBalance,
+    stopWeeklyBalance,
+    dismissWeeklyBalanceBanner,
     addWeightEntry,
     addBodyFatEntry,
     getMealSlot,

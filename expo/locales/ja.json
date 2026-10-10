@@ -918,53 +918,51 @@
       "baseGoal": "ベース目標",
       "activityIncluded": "普段の活動「{{level}}」を含む",
       "todayGoal": "今日の目標",
-      "adjusting": "調整中（{{index}}/{{total}}日目）",
       "meals": "食事",
-      "addedActivity": "活動・運動"
-    },
-    "carryover": {
-      "activePlan": "調整中（{{days}}日間）",
-      "changePlanA11y": "プランを変更する",
-      "change": "変更",
-      "stop": "やめる",
-      "stopAdjustingA11y": "調整をやめる",
-      "startAdjustingA11y": "食事の調整をはじめる",
-      "yesterdayOverBanner": "昨日の食事、少し多めでした — 調整する",
-      "stopDialogTitle": "調整プランをやめますか？",
-      "stopDialogBody": "残りの調整がキャンセルされ、毎日の目標カロリーが通常に戻ります。",
-      "continue": "続ける"
-    },
-    "carryoverSheet": {
-      "titleStart": "帳尻調整プランを設定",
-      "titleEdit": "調整プランを変更",
-      "confirmStart": "開始",
-      "confirmEdit": "変更",
-      "stopPlan": "プランをやめる",
-      "remainingAdjustment": "残り調整分",
-      "surplusCalories": "余剰カロリー",
-      "daysToSplit": "分割する日数",
-      "days": "日間",
-      "perDaySummary": "1日あたり{{perDay}} kcalずつ差し引き",
-      "decreaseDaysA11y": "日数を減らす",
-      "increaseDaysA11y": "日数を増やす",
-      "hardError": "1日 {{kcal}} kcal は健康的な目安を大きく下回るため設定できません",
-      "softWarn": "1日 {{kcal}} kcal — 推奨される最低ライン（{{floor}} kcal）を下回ります",
-      "summary": "{{start}}から{{days}}日間、毎日の目標から{{perDay}} kcalを差し引きます。",
-      "startToday": "今日",
-      "startTomorrow": "明日"
-    },
-    "carryoverBanner": {
-      "newPlan": "余剰カロリーを調整する",
-      "activePlan": "調整プラン 実行中 · 残り {{days}} 日",
-      "newPlanBody": "昨日+{{surplus}}kcal超過。調整を始めますか？",
-      "setUp": "設定する",
-      "change": "変更",
-      "setUpA11y": "調整プランを設定する",
-      "changeA11y": "調整プランを変更する"
+      "addedActivity": "活動・運動",
+      "weeklyAdjustment": "今週の調整（残り{{days}}日）"
     },
     "weeklyRecap": {
       "title": "先週の振り返り",
       "a11y": "先週の振り返りを見る"
+    },
+    "weeklyBalance": {
+      "modalActive": "今週の残りで調整中",
+      "modalProposeOver": "今週は少し多め — 残りの日で合わせる",
+      "modalProposeUnder": "今週は少し少なめ — 残りの日で合わせる",
+      "details": "くわしく",
+      "detailsA11y": "今週の調整をくわしく見る",
+      "stop": "やめる",
+      "stopA11y": "今週の調整をやめる",
+      "startA11y": "今週の収支を合わせる",
+      "stopDialogTitle": "今週の調整をやめますか？",
+      "stopDialogBody": "今日から通常の目標に戻ります。",
+      "continue": "続ける"
+    },
+    "weeklyBalanceBanner": {
+      "proposeOver": "今週の食事、ここまで少し多めです",
+      "proposeUnder": "今週の食事、ここまで少し少なめです",
+      "proposeBody": "残りの{{days}}日で合わせることもできます。",
+      "look": "見てみる",
+      "active": "今週の調整中 · 今日 {{kcal}} kcal",
+      "activeEven": "今週の調整中 · 今日はそのまま"
+    },
+    "weeklyBalanceSheet": {
+      "title": "今週の収支を合わせる",
+      "soFar": "今週ここまで",
+      "over": "+{{kcal}} kcal 多め",
+      "under": "−{{kcal}} kcal 少なめ",
+      "even": "±0 kcal",
+      "countedDays": "記録した{{days}}日ぶん",
+      "remaining": "残りの日数",
+      "remainingValue": "日曜まで{{days}}日",
+      "today": "今日の調整",
+      "todayGoal": "今日の目標 {{kcal}} kcal",
+      "floorNote": "1日の目標が{{floor}} kcalを下回らないよう、今日の調整は{{kcal}} kcalまでにしています。",
+      "softWarn": "今日の目標は{{kcal}} kcal。目安の最低ライン（{{floor}} kcal）を下回ります。",
+      "capNote": "ゆとりは1日{{kcal}} kcalまでにしています。記録しきれていない日があっても、大きくずれないように。",
+      "note": "記録していない日は計算に入れません。毎日計算し直し、日曜が終わると通常の目標に戻ります。",
+      "confirm": "はじめる"
     }
   },
   "weeklyStats": {

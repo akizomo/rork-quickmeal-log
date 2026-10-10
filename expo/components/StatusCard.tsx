@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { memo, useCallback, useMemo, useState } from 'react';
 import Svg, { Circle } from 'react-native-svg';
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
@@ -12,7 +12,8 @@ import { radius } from '@/design-system/tokens/primitives/radius';
 import { fontSize as fs, letterSpacing as ls } from '@/design-system/tokens/primitives/typography';
 import { useAppState } from '@/providers/app-state-provider';
 import { useRouter } from 'expo-router';
-import { adjustedTargetKcal, calcBaselineActiveKcal, carryoverSoftFloorKcal, classifyCarryoverDeduction, getAdjustedPfcForDate, getEffectiveSubscriptionStatus, getTdeeExerciseKcalForDate, minCarryoverDays, stepsToActiveKcal, trialDaysRemaining } from '@/utils/goals';
+import { adjustedTargetKcal, calcBaselineActiveKcal, CARRYOVER_HARD_FLOOR_KCAL, carryoverSoftFloorKcal, getAdjustedPfcForDate, getEffectiveSubscriptionStatus, getTdeeExerciseKcalForDate, stepsToActiveKcal, trialDaysRemaining } from '@/utils/goals';
+import { isWeeklyBalanceWorthProposing, type WeeklyBalance } from '@/utils/weekly-balance';
 import { formatDateKey, formatMacroText } from '@/utils/nutrition';
 import { isSameDay, sumForDate } from '@/utils/history';
 import { computeWeeklyRecap } from '@/utils/weekly-recap';
@@ -58,13 +59,12 @@ const BalanceModal = memo(function BalanceModal({
   exerciseAdded,
   addedLabel,
   activityLevelLabel,
-  carryoverPlanActive,
-  carryoverDeductionKcal,
-  carryoverDaysTotal,
-  carryoverDayIndex,
-  yesterdayOvershootKcal,
-  onApplyCarryover,
-  onCancelCarryoverPlan,
+  weeklyBalanceActive,
+  weeklyAdjustmentKcal,
+  weeklyRemainingDays,
+  weeklyProposal,
+  onOpenWeeklyBalance,
+  onStopWeeklyBalance,
 }: {
   visible: boolean;
   onClose: () => void;
@@ -74,14 +74,15 @@ const BalanceModal = memo(function BalanceModal({
   exerciseAdded: number;
   addedLabel: string;
   activityLevelLabel: string | null;
-  carryoverPlanActive: boolean;
-  carryoverDeductionKcal: number;
-  carryoverDaysTotal: number;
-  carryoverDayIndex: number;
-  /** 前日オーバー量。0 のとき帳尻行を非表示 */
-  yesterdayOvershootKcal: number;
-  onApplyCarryover: () => void;
-  onCancelCarryoverPlan: () => void;
+  /** 今週の収支を合わせる (PRD §6.4.5) を今週有効にしているか */
+  weeklyBalanceActive: boolean;
+  /** 今日の目標への加減 (+ = ゆとり, − = 控えめ)。adjustedTargetKcal に含まれている */
+  weeklyAdjustmentKcal: number;
+  weeklyRemainingDays: number;
+  /** 未使用時に提案する向き。null なら提案しない */
+  weeklyProposal: 'over' | 'under' | null;
+  onOpenWeeklyBalance: () => void;
+  onStopWeeklyBalance: () => void;
 }) {
   const t = useTheme();
   const tr = useT();
@@ -98,8 +99,6 @@ const BalanceModal = memo(function BalanceModal({
       ? t.colors.nutrition.calorie.severeExceed.graphic
       : t.colors.nutrition.calorie.within.text;
   const hasExercise = exerciseAdded > 0;
-  const showCarryoverSection = carryoverPlanActive ||
-    yesterdayOvershootKcal > Math.round(baseTargetKcal * 0.15);
   const [cancelDialogVisible, setCancelDialogVisible] = useState(false);
   return (
     <>
@@ -142,14 +141,15 @@ const BalanceModal = memo(function BalanceModal({
         {hasExercise ? (
           <BalanceMathRow label={addedLabel} value={exerciseAdded} sign="+" tone="positive" />
         ) : null}
-        {(hasExercise || carryoverPlanActive) ? (
-          <BalanceMathRow label={tr('statusCard.balance.todayGoal')} value={adjustedTargetKcal + carryoverDeductionKcal} emphasis="mid" />
+        {(hasExercise || weeklyBalanceActive) ? (
+          <BalanceMathRow label={tr('statusCard.balance.todayGoal')} value={adjustedTargetKcal - weeklyAdjustmentKcal} emphasis="mid" />
         ) : null}
-        {carryoverPlanActive ? (
+        {weeklyBalanceActive ? (
           <BalanceMathRow
-            label={tr('statusCard.balance.adjusting', { index: carryoverDayIndex, total: carryoverDaysTotal })}
-            value={carryoverDeductionKcal}
-            sign="-"
+            label={tr('statusCard.balance.weeklyAdjustment', { days: weeklyRemainingDays })}
+            value={weeklyAdjustmentKcal}
+            sign={weeklyAdjustmentKcal > 0 ? '+' : weeklyAdjustmentKcal < 0 ? '-' : undefined}
+            tone={weeklyAdjustmentKcal > 0 ? 'positive' : undefined}
           />
         ) : null}
         <BalanceMathRow label={tr('statusCard.balance.meals')} value={consumedKcal} sign="-" />
@@ -162,7 +162,7 @@ const BalanceModal = memo(function BalanceModal({
         />
       </View>
 
-      {showCarryoverSection && carryoverPlanActive ? (
+      {weeklyBalanceActive ? (
         <View style={[styles.carryoverToggle, {
           backgroundColor: t.colors.action.primary.container,
           borderColor: t.colors.border.selected,
@@ -172,31 +172,33 @@ const BalanceModal = memo(function BalanceModal({
           <View style={styles.carryoverToggleLeft}>
             <Text style={{ fontSize: fs.sm }}>🍽️</Text>
             <Text style={[styles.carryoverToggleLabel, { color: t.colors.action.primary.onContainer }]}>
-              {tr('statusCard.carryover.activePlan', { days: carryoverDaysTotal })}
+              {tr('statusCard.weeklyBalance.modalActive')}
             </Text>
           </View>
-          <Pressable onPress={onApplyCarryover} hitSlop={8} accessibilityRole="button" accessibilityLabel={tr('statusCard.carryover.changePlanA11y')}>
-            <Label size="sm" tone="link">{tr('statusCard.carryover.change')}</Label>
+          <Pressable onPress={onOpenWeeklyBalance} hitSlop={8} accessibilityRole="button" accessibilityLabel={tr('statusCard.weeklyBalance.detailsA11y')}>
+            <Label size="sm" tone="link">{tr('statusCard.weeklyBalance.details')}</Label>
           </Pressable>
           <Text style={{ color: t.colors.border.default, marginHorizontal: t.spacing['2'] }}>|</Text>
-          <Pressable onPress={() => setCancelDialogVisible(true)} hitSlop={8} accessibilityRole="button" accessibilityLabel={tr('statusCard.carryover.stopAdjustingA11y')}>
-            <Label size="sm" style={{ color: t.colors.status.danger.default }}>{tr('statusCard.carryover.stop')}</Label>
+          <Pressable onPress={() => setCancelDialogVisible(true)} hitSlop={8} accessibilityRole="button" accessibilityLabel={tr('statusCard.weeklyBalance.stopA11y')}>
+            <Label size="sm" style={{ color: t.colors.status.danger.default }}>{tr('statusCard.weeklyBalance.stop')}</Label>
           </Pressable>
         </View>
-      ) : showCarryoverSection ? (
+      ) : weeklyProposal ? (
         <Pressable
-          onPress={onApplyCarryover}
+          onPress={onOpenWeeklyBalance}
           style={[styles.carryoverToggle, {
             backgroundColor: t.colors.surface.sunken,
             borderColor: t.colors.border.interactive,
           }]}
           accessibilityRole="button"
-          accessibilityLabel={tr('statusCard.carryover.startAdjustingA11y')}
+          accessibilityLabel={tr('statusCard.weeklyBalance.startA11y')}
         >
           <View style={styles.carryoverToggleLeft}>
             <Text style={{ fontSize: fs.sm }}>🍽️</Text>
             <Text style={[styles.carryoverToggleLabel, { color: t.colors.content.secondary }]}>
-              {tr('statusCard.carryover.yesterdayOverBanner')}
+              {weeklyProposal === 'over'
+                ? tr('statusCard.weeklyBalance.modalProposeOver')
+                : tr('statusCard.weeklyBalance.modalProposeUnder')}
             </Text>
           </View>
         </Pressable>
@@ -205,18 +207,18 @@ const BalanceModal = memo(function BalanceModal({
     <Dialog
       visible={cancelDialogVisible}
       onClose={() => setCancelDialogVisible(false)}
-      title={tr('statusCard.carryover.stopDialogTitle')}
+      title={tr('statusCard.weeklyBalance.stopDialogTitle')}
       primaryAction={{
-        label: tr('statusCard.carryover.stop'),
-        onPress: () => { setCancelDialogVisible(false); onClose(); onCancelCarryoverPlan(); },
+        label: tr('statusCard.weeklyBalance.stop'),
+        onPress: () => { setCancelDialogVisible(false); onClose(); onStopWeeklyBalance(); },
       }}
       secondaryAction={{
-        label: tr('statusCard.carryover.continue'),
+        label: tr('statusCard.weeklyBalance.continue'),
         onPress: () => setCancelDialogVisible(false),
       }}
     >
       <Body size="sm" tone="secondary">
-        {tr('statusCard.carryover.stopDialogBody')}
+        {tr('statusCard.weeklyBalance.stopDialogBody')}
       </Body>
     </Dialog>
     </>
@@ -273,203 +275,167 @@ function BalanceMathRow({
   );
 }
 
-function CarryoverDaySheet({
+function formatSignedKcal(kcal: number): string {
+  if (kcal > 0) return `+${kcal.toLocaleString()}`;
+  if (kcal < 0) return `−${Math.abs(kcal).toLocaleString()}`;
+  return '±0';
+}
+
+function SheetRow({ label, value, caption }: { label: string; value: string; caption?: string }) {
+  const t = useTheme();
+  return (
+    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', paddingVertical: t.spacing['2'] }}>
+      <Label size="sm" tone="secondary">{label}</Label>
+      <View style={{ alignItems: 'flex-end' }}>
+        <Body size="sm" weight="semibold">{value}</Body>
+        {caption ? <Caption tone="secondary">{caption}</Caption> : null}
+      </View>
+    </View>
+  );
+}
+
+/**
+ * 今週の収支を合わせる (PRD §6.4.5) の確認シート。
+ * 日数などの選択肢は持たない — 残り日数は日曜までで決まり、毎日計算し直すため。
+ */
+function WeeklyBalanceSheet({
   visible,
   onClose,
-  onConfirm,
-  onCancel,
-  surplusKcal,
-  mode = 'start',
-  initialDays,
+  onStart,
+  onStop,
+  active,
+  balance,
+  todayTargetKcal,
 }: {
   visible: boolean;
   onClose: () => void;
-  onConfirm: (days: number) => void;
-  onCancel?: () => void;
-  surplusKcal: number;
-  mode?: 'start' | 'edit';
-  initialDays?: number;
+  onStart: () => void;
+  onStop: () => void;
+  active: boolean;
+  balance: WeeklyBalance;
+  /** 調整前の今日の目標 (ベース + 活動加算) */
+  todayTargetKcal: number;
 }) {
   const t = useTheme();
   const tr = useT();
   const { profile } = useAppState();
-  const maxDays = 14;
-  const hardMinDays = minCarryoverDays(profile.targetCalories, surplusKcal, maxDays);
-  const defaultDays = initialDays != null
-    ? Math.min(Math.max(hardMinDays, initialDays), maxDays)
-    : Math.min(Math.max(hardMinDays, 7), maxDays);
-  const [days, setDays] = useState(() => defaultDays);
-  const [showHardError, setShowHardError] = useState(false);
-  const [cancelDialogVisible, setCancelDialogVisible] = useState(false);
+  const [stopDialogVisible, setStopDialogVisible] = useState(false);
 
-  useEffect(() => {
-    if (visible) {
-      setDays(initialDays != null
-        ? Math.min(Math.max(hardMinDays, initialDays), maxDays)
-        : Math.min(Math.max(hardMinDays, 7), maxDays));
-      setShowHardError(false);
-    }
-  }, [visible, hardMinDays, maxDays, initialDays]);
+  const adj = balance.todayAdjustmentKcal;
+  const soFarValue = balance.balanceKcal > 0
+    ? tr('statusCard.weeklyBalanceSheet.over', { kcal: balance.balanceKcal.toLocaleString() })
+    : balance.balanceKcal < 0
+      ? tr('statusCard.weeklyBalanceSheet.under', { kcal: Math.abs(balance.balanceKcal).toLocaleString() })
+      : tr('statusCard.weeklyBalanceSheet.even');
 
-  const perDay = Math.ceil(surplusKcal / days);
-  const verdict = classifyCarryoverDeduction(profile.targetCalories, perDay, profile.biologicalBasis);
-
-  const handleDecrement = useCallback(() => {
-    if (days <= 1) return;
-    const newDays = days - 1;
-    const newPerDay = Math.ceil(surplusKcal / newDays);
-    const newVerdict = classifyCarryoverDeduction(profile.targetCalories, newPerDay, profile.biologicalBasis);
-    if (newVerdict === 'hard') {
-      setShowHardError(true);
-      return;
-    }
-    setShowHardError(false);
-    setDays(newDays);
-  }, [days, surplusKcal, profile.targetCalories, profile.biologicalBasis]);
-
-  const handleIncrement = useCallback(() => {
-    if (days >= maxDays) return;
-    setShowHardError(false);
-    setDays((d) => Math.min(maxDays, d + 1));
-  }, [days, maxDays]);
-
-  let warnText: string | null = null;
-  let warnColor = t.colors.status.warning.default;
-  if (showHardError) {
-    const blocked = profile.targetCalories - Math.ceil(surplusKcal / (days - 1));
-    warnText = tr('statusCard.carryoverSheet.hardError', { kcal: blocked.toLocaleString() });
-    warnColor = t.colors.status.danger.default;
-  } else if (verdict === 'soft') {
-    const effective = profile.targetCalories - perDay;
-    const softFloor = carryoverSoftFloorKcal(profile.biologicalBasis);
-    warnText = tr('statusCard.carryoverSheet.softWarn', { kcal: effective.toLocaleString(), floor: softFloor.toLocaleString() });
+  let note: string | null = null;
+  let noteColor = t.colors.content.secondary;
+  if (balance.limitedBy === 'floor') {
+    note = tr('statusCard.weeklyBalanceSheet.floorNote', { floor: CARRYOVER_HARD_FLOOR_KCAL.toLocaleString(), kcal: Math.abs(adj).toLocaleString() });
+    noteColor = t.colors.status.warning.default;
+  } else if (balance.verdict === 'soft') {
+    note = tr('statusCard.weeklyBalanceSheet.softWarn', {
+      kcal: (todayTargetKcal + adj).toLocaleString(),
+      floor: carryoverSoftFloorKcal(profile.biologicalBasis).toLocaleString(),
+    });
+    noteColor = t.colors.status.warning.default;
+  } else if (balance.limitedBy === 'creditCap') {
+    note = tr('statusCard.weeklyBalanceSheet.capNote', { kcal: adj.toLocaleString() });
   }
-
-  const canDecrease = days > 1;
-  const canIncrease = days < maxDays;
 
   return (
     <>
     <BottomSheet
       visible={visible}
       onClose={onClose}
-      title={mode === 'edit' ? tr('statusCard.carryoverSheet.titleEdit') : tr('statusCard.carryoverSheet.titleStart')}
-      primaryAction={{
-        label: mode === 'edit' ? tr('statusCard.carryoverSheet.confirmEdit') : tr('statusCard.carryoverSheet.confirmStart'),
-        onPress: () => { onClose(); onConfirm(days); },
-        disabled: verdict === 'hard',
+      title={tr('statusCard.weeklyBalanceSheet.title')}
+      primaryAction={active ? {
+        label: tr('common.close'),
+        onPress: onClose,
+      } : {
+        label: tr('statusCard.weeklyBalanceSheet.confirm'),
+        onPress: () => { onClose(); onStart(); },
       }}
-      secondaryAction={mode === 'edit' && onCancel ? {
-        label: tr('statusCard.carryoverSheet.stopPlan'),
-        onPress: () => setCancelDialogVisible(true),
+      secondaryAction={active ? {
+        label: tr('statusCard.weeklyBalance.stop'),
+        onPress: () => setStopDialogVisible(true),
         destructive: true,
       } : undefined}
       scrollable={false}
     >
-      <View style={{ gap: t.spacing['1'] }}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: t.spacing['2'] }}>
-          <Label size="sm" tone="secondary">{mode === 'edit' ? tr('statusCard.carryoverSheet.remainingAdjustment') : tr('statusCard.carryoverSheet.surplusCalories')}</Label>
-          <Body size="sm" weight="semibold">+{surplusKcal} kcal</Body>
-        </View>
+      <View>
+        <SheetRow
+          label={tr('statusCard.weeklyBalanceSheet.soFar')}
+          value={soFarValue}
+          caption={tr('statusCard.weeklyBalanceSheet.countedDays', { days: balance.countedDays })}
+        />
         <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: t.colors.border.subtle }} />
-        <View style={{ paddingVertical: t.spacing['4'], alignItems: 'center', gap: t.spacing['2'] }}>
-          <Label size="sm" tone="secondary">{tr('statusCard.carryoverSheet.daysToSplit')}</Label>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.spacing['6'] }}>
-            <Pressable
-              onPress={handleDecrement}
-              hitSlop={12}
-              disabled={!canDecrease}
-              style={({ pressed }) => ({
-                width: 40, height: 40,
-                borderRadius: t.radius.full,
-                backgroundColor: !canDecrease ? t.colors.surface.sunken : pressed ? t.colors.surface.sunken : t.colors.surface.raised,
-                alignItems: 'center', justifyContent: 'center',
-              })}
-              accessibilityLabel={tr('statusCard.carryoverSheet.decreaseDaysA11y')}
-            >
-              <Icon name="remove" size={20} color={!canDecrease ? t.colors.content.disabled : t.colors.content.primary} />
-            </Pressable>
-            <View style={{ alignItems: 'center' }}>
-              <Text style={{
-                fontSize: t.typography.fontSize['4xl'],
-                fontWeight: t.typography.fontWeight.semibold as import('react-native').TextStyle['fontWeight'],
-                color: t.colors.content.primary,
-                lineHeight: t.typography.lineHeight['4xl'],
-              }}>
-                {days}
-              </Text>
-              <Caption tone="secondary">{tr('statusCard.carryoverSheet.days')}</Caption>
-            </View>
-            <Pressable
-              onPress={handleIncrement}
-              hitSlop={12}
-              disabled={!canIncrease}
-              style={({ pressed }) => ({
-                width: 40, height: 40,
-                borderRadius: t.radius.full,
-                backgroundColor: !canIncrease ? t.colors.surface.sunken : pressed ? t.colors.surface.sunken : t.colors.surface.raised,
-                alignItems: 'center', justifyContent: 'center',
-              })}
-              accessibilityLabel={tr('statusCard.carryoverSheet.increaseDaysA11y')}
-            >
-              <Icon name="add" size={20} color={!canIncrease ? t.colors.content.disabled : t.colors.content.primary} />
-            </Pressable>
-          </View>
-          <Body size="sm" tone="secondary">
-            {tr('statusCard.carryoverSheet.perDaySummary', { perDay })}
+        <SheetRow
+          label={tr('statusCard.weeklyBalanceSheet.remaining')}
+          value={tr('statusCard.weeklyBalanceSheet.remainingValue', { days: balance.remainingDays })}
+        />
+        <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: t.colors.border.subtle }} />
+        <SheetRow
+          label={tr('statusCard.weeklyBalanceSheet.today')}
+          value={`${formatSignedKcal(adj)} kcal`}
+          caption={tr('statusCard.weeklyBalanceSheet.todayGoal', { kcal: (todayTargetKcal + adj).toLocaleString() })}
+        />
+        {note ? (
+          <Body size="sm" style={{ color: noteColor, paddingTop: t.spacing['2'] }}>
+            {note}
           </Body>
-          {warnText ? (
-            <Body size="sm" style={{ color: warnColor, textAlign: 'center', paddingHorizontal: t.spacing['4'] }}>
-              {warnText}
-            </Body>
-          ) : null}
-        </View>
-        <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: t.colors.border.subtle }} />
-        <Body size="sm" tone="secondary" style={{ paddingTop: t.spacing['2'] }}>
-          {tr('statusCard.carryoverSheet.summary', {
-            start: mode === 'edit' ? tr('statusCard.carryoverSheet.startToday') : tr('statusCard.carryoverSheet.startTomorrow'),
-            perDay,
-            days,
-          })}
+        ) : null}
+        <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: t.colors.border.subtle, marginTop: t.spacing['2'] }} />
+        <Body size="sm" tone="secondary" style={{ paddingTop: t.spacing['3'] }}>
+          {tr('statusCard.weeklyBalanceSheet.note')}
         </Body>
       </View>
     </BottomSheet>
     <Dialog
-      visible={cancelDialogVisible}
-      onClose={() => setCancelDialogVisible(false)}
-      title={tr('statusCard.carryover.stopDialogTitle')}
+      visible={stopDialogVisible}
+      onClose={() => setStopDialogVisible(false)}
+      title={tr('statusCard.weeklyBalance.stopDialogTitle')}
       primaryAction={{
-        label: tr('statusCard.carryover.stop'),
-        onPress: () => { setCancelDialogVisible(false); onClose(); onCancel?.(); },
+        label: tr('statusCard.weeklyBalance.stop'),
+        onPress: () => { setStopDialogVisible(false); onClose(); onStop(); },
       }}
       secondaryAction={{
-        label: tr('statusCard.carryover.continue'),
-        onPress: () => setCancelDialogVisible(false),
+        label: tr('statusCard.weeklyBalance.continue'),
+        onPress: () => setStopDialogVisible(false),
       }}
     >
       <Body size="sm" tone="secondary">
-        {tr('statusCard.carryover.stopDialogBody')}
+        {tr('statusCard.weeklyBalance.stopDialogBody')}
       </Body>
     </Dialog>
     </>
   );
 }
 
-function CarryoverBanner({
-  isNewPlan,
-  surplusKcal,
-  daysRemaining,
+function WeeklyBalanceBanner({
+  active,
+  balanceKcal,
+  remainingDays,
+  todayAdjustmentKcal,
   onOpenSheet,
   onDismiss,
 }: {
-  isNewPlan: boolean;
-  surplusKcal: number;
-  daysRemaining: number;
+  active: boolean;
+  balanceKcal: number;
+  remainingDays: number;
+  todayAdjustmentKcal: number;
   onOpenSheet: () => void;
   onDismiss: () => void;
 }) {
   const t = useTheme();
   const tr = useT();
+  const title = active
+    ? todayAdjustmentKcal === 0
+      ? tr('statusCard.weeklyBalanceBanner.activeEven')
+      : tr('statusCard.weeklyBalanceBanner.active', { kcal: formatSignedKcal(todayAdjustmentKcal) })
+    : balanceKcal > 0
+      ? tr('statusCard.weeklyBalanceBanner.proposeOver')
+      : tr('statusCard.weeklyBalanceBanner.proposeUnder');
   return (
     <View
       style={{
@@ -485,14 +451,10 @@ function CarryoverBanner({
       <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: t.spacing['2'] }}>
         <Text style={{ fontSize: 14, lineHeight: 16 }}>🍽️</Text>
         <View style={{ flex: 1, gap: t.spacing['0.5'] }}>
-          <Label tone="primary">
-            {isNewPlan
-              ? tr('statusCard.carryoverBanner.newPlan')
-              : tr('statusCard.carryoverBanner.activePlan', { days: daysRemaining })}
-          </Label>
-          {isNewPlan ? (
+          <Label tone="primary">{title}</Label>
+          {!active ? (
             <Body size="sm" tone="secondary">
-              {tr('statusCard.carryoverBanner.newPlanBody', { surplus: surplusKcal })}
+              {tr('statusCard.weeklyBalanceBanner.proposeBody', { days: remainingDays })}
             </Body>
           ) : null}
           <Pressable
@@ -500,10 +462,10 @@ function CarryoverBanner({
             hitSlop={8}
             style={({ pressed }) => ({ alignSelf: 'flex-start', opacity: pressed ? 0.5 : 1, marginTop: t.spacing['0.5'] })}
             accessibilityRole="button"
-            accessibilityLabel={isNewPlan ? tr('statusCard.carryoverBanner.setUpA11y') : tr('statusCard.carryoverBanner.changeA11y')}
+            accessibilityLabel={active ? tr('statusCard.weeklyBalance.detailsA11y') : tr('statusCard.weeklyBalance.startA11y')}
           >
             <Label size="sm" tone="link">
-              {isNewPlan ? tr('statusCard.carryoverBanner.setUp') : tr('statusCard.carryoverBanner.change')}
+              {active ? tr('statusCard.weeklyBalance.details') : tr('statusCard.weeklyBalanceBanner.look')}
             </Label>
           </Pressable>
         </View>
@@ -514,7 +476,7 @@ function CarryoverBanner({
 }
 
 /**
- * 週次振り返り (旧称「週次リカップ」) の teaser カード。CarryoverBanner と同じスロット・同じ構造。
+ * 週次振り返り (旧称「週次リカップ」) の teaser カード。WeeklyBalanceBanner と同じスロット・同じ構造。
  * データ (kcal/PFC等) はここでは出さない — 中身はタップ後のストーリー側に委ねる。
  * dismiss は「見た」を意味し、週が変わると自然に再度表示対象になる
  * (weeklyRecapDismissedWeekKey は振り返り画面を開いた時点でも更新される)。
@@ -594,11 +556,10 @@ export const StatusCard = memo(function StatusCard({
   onFoodPress?: () => void;
 }) {
   const {
-    profile, todayMacro, logs, exerciseLogs, dailyActivities, settings,
-    yesterdayOvershootKcal,
-    showCarryoverBanner, showNewPlanBanner,
-    carryoverPlanActive, carryoverDayIndex, carryoverDeductionKcal,
-    applyCarryover, cancelCarryoverPlan, dismissCarryoverBanner,
+    profile, todayMacro, logs, exerciseLogs, dailyActivities,
+    weeklyBalance, weeklyBalanceActive, weeklyAdjustmentKcal,
+    showWeeklyBalanceBanner,
+    startWeeklyBalance, stopWeeklyBalance, dismissWeeklyBalanceBanner,
   } = useAppState();
   const t = useTheme();
   const tr = useT();
@@ -606,7 +567,7 @@ export const StatusCard = memo(function StatusCard({
   const { width: screenWidth } = useWindowDimensions();
   const [exerciseSheetVisible, setExerciseSheetVisible] = useState(false);
   const [balanceVisible, setBalanceVisible] = useState(false);
-  const [daySheetVisible, setDaySheetVisible] = useState(false);
+  const [weeklySheetVisible, setWeeklySheetVisible] = useState(false);
 
   const today = useMemo(() => new Date(), []);
   const targetDate = viewedDate ?? today;
@@ -634,8 +595,8 @@ export const StatusCard = memo(function StatusCard({
 
   const effectiveTarget = useMemo(
     () => adjustedTargetKcal(profile.targetCalories, exerciseLogs, dateKey, activityCtx)
-      - (isToday ? carryoverDeductionKcal : 0),
-    [profile.targetCalories, exerciseLogs, dateKey, activityCtx, isToday, carryoverDeductionKcal]
+      + (isToday ? weeklyAdjustmentKcal : 0),
+    [profile.targetCalories, exerciseLogs, dateKey, activityCtx, isToday, weeklyAdjustmentKcal]
   );
   const effectiveExerciseKcal = useMemo(
     () => Math.round(
@@ -658,34 +619,35 @@ export const StatusCard = memo(function StatusCard({
   const openExerciseSheet = useCallback(() => setExerciseSheetVisible(true), []);
   const closeExerciseSheet = useCallback(() => setExerciseSheetVisible(false), []);
 
-  const carryoverRemainingDays = carryoverPlanActive
-    ? Math.max(1, (settings.kcalCarryoverDaysTotal ?? 0) - carryoverDayIndex + 1)
-    : 0;
-  const carryoverEditSurplus = (settings.kcalCarryoverDailyAmount ?? 0) * carryoverRemainingDays;
+  const weeklyProposal: 'over' | 'under' | null =
+    !weeklyBalanceActive && isWeeklyBalanceWorthProposing(weeklyBalance.balanceKcal, profile.targetCalories)
+      ? (weeklyBalance.balanceKcal > 0 ? 'over' : 'under')
+      : null;
 
   const ringSize = Math.round(Math.min(180, Math.max(120, screenWidth * 0.38)));
   const ringStroke = Math.round(ringSize * 0.11);
 
   return (
     <View style={styles.statusCard}>
-      {isToday && showCarryoverBanner ? (
-        <CarryoverBanner
-          isNewPlan={showNewPlanBanner}
-          surplusKcal={yesterdayOvershootKcal}
-          daysRemaining={(settings.kcalCarryoverDaysTotal ?? 0) - carryoverDayIndex}
-          onOpenSheet={() => setDaySheetVisible(true)}
-          onDismiss={dismissCarryoverBanner}
+      {isToday && showWeeklyBalanceBanner ? (
+        <WeeklyBalanceBanner
+          active={weeklyBalanceActive}
+          balanceKcal={weeklyBalance.balanceKcal}
+          remainingDays={weeklyBalance.remainingDays}
+          todayAdjustmentKcal={weeklyAdjustmentKcal}
+          onOpenSheet={() => setWeeklySheetVisible(true)}
+          onDismiss={dismissWeeklyBalanceBanner}
         />
       ) : null}
       {isToday ? <WeeklyRecapTeaser /> : null}
-      <CarryoverDaySheet
-        visible={daySheetVisible}
-        onClose={() => setDaySheetVisible(false)}
-        onConfirm={(days) => applyCarryover(days, carryoverPlanActive ? carryoverEditSurplus : undefined)}
-        onCancel={cancelCarryoverPlan}
-        surplusKcal={carryoverPlanActive ? carryoverEditSurplus : yesterdayOvershootKcal}
-        mode={carryoverPlanActive ? 'edit' : 'start'}
-        initialDays={carryoverPlanActive ? carryoverRemainingDays : undefined}
+      <WeeklyBalanceSheet
+        visible={weeklySheetVisible}
+        onClose={() => setWeeklySheetVisible(false)}
+        onStart={startWeeklyBalance}
+        onStop={stopWeeklyBalance}
+        active={weeklyBalanceActive}
+        balance={weeklyBalance}
+        todayTargetKcal={isToday ? effectiveTarget - weeklyAdjustmentKcal : effectiveTarget}
       />
       {/* 3-column: 食事 | Ring(残り) | 消費 */}
       <View style={styles.ringRow}>
@@ -785,18 +747,17 @@ export const StatusCard = memo(function StatusCard({
         baseTargetKcal={profile.targetCalories}
         adjustedTargetKcal={effectiveTarget}
         consumedKcal={Math.round(dayMacro.kcal)}
-        exerciseAdded={Math.max(0, effectiveTarget + carryoverDeductionKcal - profile.targetCalories)}
+        exerciseAdded={Math.max(0, effectiveTarget - (isToday ? weeklyAdjustmentKcal : 0) - profile.targetCalories)}
         addedLabel={tr('statusCard.balance.addedActivity')}
         activityLevelLabel={
           profile.activityLevel ? tr(`onboarding.activity.${ACTIVITY_LEVEL_I18N_KEY[profile.activityLevel]}.label`) : null
         }
-        carryoverPlanActive={isToday && carryoverPlanActive}
-        carryoverDeductionKcal={isToday ? carryoverDeductionKcal : 0}
-        carryoverDaysTotal={isToday ? (settings.kcalCarryoverDaysTotal ?? 0) : 0}
-        carryoverDayIndex={isToday ? carryoverDayIndex : 0}
-        yesterdayOvershootKcal={isToday ? yesterdayOvershootKcal : 0}
-        onApplyCarryover={() => { setBalanceVisible(false); setDaySheetVisible(true); }}
-        onCancelCarryoverPlan={cancelCarryoverPlan}
+        weeklyBalanceActive={isToday && weeklyBalanceActive}
+        weeklyAdjustmentKcal={isToday ? weeklyAdjustmentKcal : 0}
+        weeklyRemainingDays={weeklyBalance.remainingDays}
+        weeklyProposal={isToday ? weeklyProposal : null}
+        onOpenWeeklyBalance={() => { setBalanceVisible(false); setWeeklySheetVisible(true); }}
+        onStopWeeklyBalance={stopWeeklyBalance}
       />
     </View>
   );

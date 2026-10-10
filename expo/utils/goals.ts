@@ -337,13 +337,13 @@ export function classifyTargetWeight(
 }
 
 // ---------------------------------------------------------------------------
-// 帳尻調整プラン (carryover) の安全ガード
+// 今週の収支を合わせる (PRD §6.4.5, 旧「帳尻調整」) の安全ガード
 // ---------------------------------------------------------------------------
 
 /**
- * 帳尻調整で「その日の実効目標」が下回ってはいけない絶対床。
+ * 今週の調整で「その日の実効目標」が下回ってはいけない絶対床。
  * 臨床的な VLCD (very low calorie diet) の定義が 800kcal/日未満・医学管理下前提のため、
- * その手前に保守的に置いた値。ここを割る日数は選ばせない。
+ * その手前に保守的に置いた値。調整額はここで止める。
  */
 export const CARRYOVER_HARD_FLOOR_KCAL = 1000;
 
@@ -378,23 +378,6 @@ export function classifyCarryoverDeduction(
   if (effective < CARRYOVER_HARD_FLOOR_KCAL) return 'hard';
   if (effective < carryoverSoftFloorKcal(basis)) return 'soft';
   return 'ok';
-}
-
-/**
- * hard 床を割らない最小の分割日数。`CarryoverDaySheet` の「−」下限に使う。
- * 1日あたり = ceil(surplus / days) なので、これが (targetKcal - hardFloor) 以下に
- * 収まる最小の days を求める。maxDays まで伸ばしても足りない場合は maxDays を返す
- * (それ以上分割しようがないため、その時は soft 警告のみで通す)。
- */
-export function minCarryoverDays(
-  targetKcal: number,
-  surplusKcal: number,
-  maxDays: number
-): number {
-  if (!targetKcal || targetKcal <= 0 || surplusKcal <= 0) return 1;
-  const maxPerDay = targetKcal - CARRYOVER_HARD_FLOOR_KCAL;
-  if (maxPerDay <= 0) return maxDays; // 目標自体が床以下 (通常起きない) — 最大分割に倒す
-  return Math.min(maxDays, Math.max(1, Math.ceil(surplusKcal / maxPerDay)));
 }
 
 /**

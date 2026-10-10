@@ -97,7 +97,7 @@ function WeeklyRingsRow({
   baseTargetKcal,
   profile,
   dailyActivities,
-  carryoverDeductionKcal,
+  weeklyAdjustmentKcal,
   onDayPress,
 }: {
   today: Date;
@@ -107,7 +107,7 @@ function WeeklyRingsRow({
   baseTargetKcal: number;
   profile: import('@/types/nutrition').UserProfile;
   dailyActivities?: import('@/types/nutrition').DailyActivitySummary[];
-  carryoverDeductionKcal: number;
+  weeklyAdjustmentKcal: number;
   onDayPress?: (dateKey: string) => void;
 }) {
   const t = useTheme();
@@ -151,7 +151,7 @@ function WeeklyRingsRow({
           rawActiveKcal: da?.activeKcal ?? 0,
         };
         const target = adjustedTargetKcal(baseTargetKcal, exerciseLogs, dk, activityCtx)
-          - (isToday ? carryoverDeductionKcal : 0);
+          + (isToday ? weeklyAdjustmentKcal : 0);
 
         const size = 36;
         const stroke = 5;
@@ -239,7 +239,7 @@ export function HomeScreen() {
   const openDayLogSheet = useCallback(() => {
     dayLogSheetRef.current?.snapToHalf();
   }, []);
-  const { logs, exerciseLogs, profile, dailyActivities, carryoverDeductionKcal } = useAppState();
+  const { logs, exerciseLogs, profile, dailyActivities, weeklyAdjustmentKcal } = useAppState();
   const today = useMemo(() => new Date(), []);
   const handleDayPress = useCallback((dateKey: string) => {
     homeDatePagerRef.current?.jumpToDate(new Date(dateKey));
@@ -265,7 +265,7 @@ export function HomeScreen() {
             baseTargetKcal={profile.targetCalories}
             profile={profile}
             dailyActivities={dailyActivities}
-            carryoverDeductionKcal={carryoverDeductionKcal}
+            weeklyAdjustmentKcal={weeklyAdjustmentKcal}
             onDayPress={handleDayPress}
           />
         </View>

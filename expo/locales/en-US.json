@@ -918,53 +918,51 @@
       "baseGoal": "Base goal",
       "activityIncluded": "Includes your usual activity level (\"{{level}}\")",
       "todayGoal": "Today's goal",
-      "adjusting": "Adjusting (day {{index}}/{{total}})",
       "meals": "Meals",
-      "addedActivity": "Activity & exercise"
-    },
-    "carryover": {
-      "activePlan": "Adjusting ({{days}} days)",
-      "changePlanA11y": "Change plan",
-      "change": "Change",
-      "stop": "Stop",
-      "stopAdjustingA11y": "Stop adjusting",
-      "startAdjustingA11y": "Start adjusting meals",
-      "yesterdayOverBanner": "Yesterday's meals were a bit much — adjust?",
-      "stopDialogTitle": "Stop the adjustment plan?",
-      "stopDialogBody": "Remaining adjustments will be canceled and your daily goal will return to normal.",
-      "continue": "Continue"
-    },
-    "carryoverSheet": {
-      "titleStart": "Set up an adjustment plan",
-      "titleEdit": "Change adjustment plan",
-      "confirmStart": "Start",
-      "confirmEdit": "Change",
-      "stopPlan": "Stop plan",
-      "remainingAdjustment": "Remaining adjustment",
-      "surplusCalories": "Surplus calories",
-      "daysToSplit": "Days to split across",
-      "days": "days",
-      "perDaySummary": "Deducting {{perDay}} kcal per day",
-      "decreaseDaysA11y": "Decrease days",
-      "increaseDaysA11y": "Increase days",
-      "hardError": "{{kcal}} kcal/day is well below a healthy minimum, so this can't be set",
-      "softWarn": "{{kcal}} kcal/day — below the recommended minimum ({{floor}} kcal)",
-      "summary": "Starting {{start}}, {{perDay}} kcal will be deducted from your daily goal for {{days}} days.",
-      "startToday": "today",
-      "startTomorrow": "tomorrow"
-    },
-    "carryoverBanner": {
-      "newPlan": "Adjust surplus calories",
-      "activePlan": "Adjustment plan active · {{days}} days left",
-      "newPlanBody": "Yesterday +{{surplus}}kcal over. Start adjusting?",
-      "setUp": "Set up",
-      "change": "Change",
-      "setUpA11y": "Set up adjustment plan",
-      "changeA11y": "Change adjustment plan"
+      "addedActivity": "Activity & exercise",
+      "weeklyAdjustment": "This week's balance ({{days}} days left)"
     },
     "weeklyRecap": {
       "title": "Last week's recap",
       "a11y": "View last week's recap"
+    },
+    "weeklyBalance": {
+      "modalActive": "Evening out this week",
+      "modalProposeOver": "A bit high this week — even it out",
+      "modalProposeUnder": "A bit low this week — even it out",
+      "details": "Details",
+      "detailsA11y": "See this week's balance",
+      "stop": "Stop",
+      "stopA11y": "Stop evening out this week",
+      "startA11y": "Even out this week",
+      "stopDialogTitle": "Stop evening out this week?",
+      "stopDialogBody": "Your goal goes back to normal starting today.",
+      "continue": "Continue"
+    },
+    "weeklyBalanceBanner": {
+      "proposeOver": "This week is running a bit high so far",
+      "proposeUnder": "This week is running a bit low so far",
+      "proposeBody": "You can even it out over the remaining {{days}} days.",
+      "look": "Take a look",
+      "active": "Evening out this week · today {{kcal}} kcal",
+      "activeEven": "Evening out this week · no change today"
+    },
+    "weeklyBalanceSheet": {
+      "title": "Even out this week",
+      "soFar": "This week so far",
+      "over": "+{{kcal}} kcal over",
+      "under": "−{{kcal}} kcal under",
+      "even": "±0 kcal",
+      "countedDays": "From {{days}} logged days",
+      "remaining": "Days left",
+      "remainingValue": "{{days}} through Sunday",
+      "today": "Today's adjustment",
+      "todayGoal": "Today's goal {{kcal}} kcal",
+      "floorNote": "To keep your daily goal above {{floor}} kcal, today's adjustment is limited to {{kcal}} kcal.",
+      "softWarn": "Today's goal is {{kcal}} kcal — below the recommended minimum ({{floor}} kcal).",
+      "capNote": "Extra room is limited to {{kcal}} kcal a day, so days you didn't fully log don't skew it.",
+      "note": "Days you didn't log aren't counted. This is recalculated daily and goes back to normal after Sunday.",
+      "confirm": "Start"
     }
   },
   "weeklyStats": {

@@ -17,7 +17,6 @@ import {
   estimateMonthsToTarget,
   formatGoalDuration,
   healthyWeightRange,
-  minCarryoverDays,
   projectBodyFatAtWeight,
   weightForBmi,
 } from './goals';
@@ -187,38 +186,6 @@ describe('classifyCarryoverDeduction', () => {
 
   it('skips judgement when the target is not set yet', () => {
     expect(classifyCarryoverDeduction(0, 500, 'male_basis')).toBe('ok');
-  });
-});
-
-describe('minCarryoverDays', () => {
-  const MAX = 14;
-
-  it('allows 1 day when the deduction stays above the hard floor', () => {
-    // 目標2400・余剰600 → 1日でも実効1800なので分割不要
-    expect(minCarryoverDays(2400, 600, MAX)).toBe(1);
-  });
-
-  it('forces more days when a single day would breach the hard floor', () => {
-    // 目標1270・余剰600 → 1日=実効670(NG) / 2日=300で実効970(NG) / 3日=200で実効1070(OK)
-    expect(minCarryoverDays(1270, 600, MAX)).toBe(3);
-  });
-
-  it('is consistent with classifyCarryoverDeduction at the returned minimum', () => {
-    const target = 1270;
-    const surplus = 600;
-    const days = minCarryoverDays(target, surplus, MAX);
-    expect(classifyCarryoverDeduction(target, Math.ceil(surplus / days), 'female_basis')).not.toBe('hard');
-    // 1日でも減らすと hard に落ちる = 真の境界であること
-    expect(classifyCarryoverDeduction(target, Math.ceil(surplus / (days - 1)), 'female_basis')).toBe('hard');
-  });
-
-  it('caps at maxDays when even full splitting cannot clear the floor', () => {
-    expect(minCarryoverDays(1100, 5000, MAX)).toBe(MAX);
-  });
-
-  it('returns 1 for degenerate inputs', () => {
-    expect(minCarryoverDays(0, 600, MAX)).toBe(1);
-    expect(minCarryoverDays(2000, 0, MAX)).toBe(1);
   });
 });
 

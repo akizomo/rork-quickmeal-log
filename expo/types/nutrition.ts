@@ -231,18 +231,25 @@ export interface AppSettings {
    */
   iaSchemaVersion?: number;
   /**
-   * 帳尻調整バナーを dismiss した日付 (dateKey "YYYY-MM-DD")。
+   * 「今週の収支を合わせる」バナーを閉じた日付 (dateKey "YYYY-MM-DD")。
    * 当日に一致するとき、その日のバナーを表示しない。
+   * (旧「帳尻調整」から名前を引き継いでいる。永続データの互換のため改名しない)
    */
   kcalCarryoverDismissedDate?: string;
   /**
-   * 帳尻調整プランの開始日 (dateKey)。
-   * 設定されているとき、今日がプラン期間内なら目標を減算する。
+   * 「今週の収支を合わせる」(PRD §6.4.5) を有効にした週の月曜の dateKey。
+   * 今週の月曜と一致するときだけ有効。週が変わると自動で切れる。
+   */
+  kcalWeeklyBalanceWeekKey?: string;
+  /**
+   * @deprecated 旧「帳尻調整」プラン (前日のオーバー分を N 日に割って差し引く)。
+   * v1.13 で今週の収支方式に置き換え。開始週の間だけ今週の調整として引き継ぎ、
+   * やめる操作で消す。新規に書き込まない。
    */
   kcalCarryoverStartDate?: string;
-  /** 1日あたりの差し引き額 (kcal)。均等割り。 */
+  /** @deprecated 旧帳尻調整プランの 1日あたりの差し引き額。読まない。 */
   kcalCarryoverDailyAmount?: number;
-  /** プランの総日数。 */
+  /** @deprecated 旧帳尻調整プランの総日数。引き継ぎ判定にのみ使う。 */
   kcalCarryoverDaysTotal?: number;
   /**
    * Android ホーム画面ウィジェット追加を促すバナーを dismiss した時刻 (ISO)。
