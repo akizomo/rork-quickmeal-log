@@ -10,6 +10,7 @@ import {
   castHistoryMap,
   deriveDefaultTab,
   FREQUENT_TAB_MIN_LOGS,
+  rankFrequentIdentities,
   rankFrequentSelections,
   recordDishSelection,
   recordSelection,
@@ -390,5 +391,53 @@ describe('recordTabUsage', () => {
   it('既存カウントの対象タブだけを +1 する (他は不変)', () => {
     const counts = { ingredient: 3, dish: 1, frequent: 5 };
     expect(recordTabUsage(counts, 'frequent')).toEqual({ ingredient: 3, dish: 1, frequent: 6 });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// rankFrequentIdentities (⭐️ タブのピル一覧)
+// ---------------------------------------------------------------------------
+
+describe('rankFrequentIdentities', () => {
+  const NOW = new Date().toISOString();
+
+  it('history が undefined/空のとき空配列を返す', () => {
+    expect(rankFrequentIdentities(undefined, { nowISO: NOW, limit: 12 })).toEqual([]);
+    expect(rankFrequentIdentities({}, { nowISO: NOW, limit: 12 })).toEqual([]);
+  });
+
+  it('種類・量が違っても同じ Identity は1件にまとめ、スコアを合算する', () => {
+    const history: QuickLogHistoryMap = {
+      japanese_noodles: [
+        makeSel('japanese_noodles', 'udon', 0, { amountLabel: '1玉', amountCandidateKey: 'one' }),
+        makeSel('japanese_noodles', 'udon', 1, { amountLabel: '大盛', amountCandidateKey: 'large' }),
+        makeSel('japanese_noodles', 'udon', 2, { amountLabel: '320g', amountCandidateKey: 'usual' }),
+      ],
+      staple: [makeSel('staple', 'rice', 0)],
+    };
+    const result = rankFrequentIdentities(history, { nowISO: NOW, limit: 12 });
+    expect(result.map((r) => r.identityId)).toEqual(['udon', 'rice']);
+    expect(result[0].score).toBeGreaterThan(result[1].score);
+    expect(result[0].label).toBe('うどん');
+    expect(result[0].bucketKey).toBe('japanese_noodles');
+  });
+
+  it('Identity を持たない旧履歴は除外する', () => {
+    const history: QuickLogHistoryMap = {
+      lean_protein: [makeSel('lean_protein', 'legacy_unknown_sub', 0)],
+      staple: [makeSel('staple', 'rice', 3)],
+    };
+    const result = rankFrequentIdentities(history, { nowISO: NOW, limit: 12 });
+    expect(result.map((r) => r.identityId)).toEqual(['rice']);
+  });
+
+  it('頻度が同程度なら新しいほうが上、limit で打ち切る', () => {
+    const history: QuickLogHistoryMap = {
+      staple: [makeSel('staple', 'rice', 20)],
+      dairy_soy: [makeSel('dairy_soy', 'natto', 0)],
+      lean_protein: [makeSel('lean_protein', 'chicken_lean', 5)],
+    };
+    const result = rankFrequentIdentities(history, { nowISO: NOW, limit: 2 });
+    expect(result.map((r) => r.identityId)).toEqual(['natto', 'chicken_lean']);
   });
 });

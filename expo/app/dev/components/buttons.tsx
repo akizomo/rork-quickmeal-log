@@ -46,7 +46,7 @@ function ButtonSection({
   counter: number;
   onPress: () => void;
 }) {
-  const variants: ButtonVariant[] = ['primary', 'secondary', 'ghost'];
+  const variants: ButtonVariant[] = ['primary', 'secondary', 'ghost', 'raised'];
   const sizes: ButtonSize[] = ['sm', 'md', 'lg'];
 
   return (

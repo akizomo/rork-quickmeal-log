@@ -285,6 +285,58 @@ export function rankFrequentSelections(
     .map(({ item, score }) => ({ ...item, score }));
 }
 
+/** ⭐️ タブのピル1件。Identity 単位に集約したランキング結果。 */
+export interface RankedIdentity {
+  identityId: string;
+  /** 長押しで開く量シートのバケット (Identity の primaryHome) */
+  bucketKey: string;
+  label: string;
+  /** 頻度 × recency 減衰の合計 */
+  score: number;
+}
+
+/**
+ * ⭐️ タブ用 (2026-10-10〜)。rankFrequentSelections と同じスコアを
+ * **Identity 単位** に集約して上位 limit 件を返す。
+ *
+ * 種類・調理法・量の違いは区別しない。⭐️のタップは quickLogIdentity
+ * (Identity + いつもの量) で記録するので、組み合わせ単位で並べると
+ * 表示と記録内容が食い違い、同じ Identity が量違いで複数枠を占めていた。
+ * Identity を持たない旧履歴 (legacy master 由来) は除外する。
+ */
+export function rankFrequentIdentities(
+  history: QuickLogHistoryMap | undefined,
+  opts: { nowISO: string; limit: number },
+): RankedIdentity[] {
+  if (!history) return [];
+
+  const nowMs = new Date(opts.nowISO).getTime();
+  const scoreMap = new Map<string, RankedIdentity>();
+
+  for (const selections of Object.values(history)) {
+    for (const sel of selections) {
+      const identity = getIdentity(sel.subcategoryKey);
+      if (!identity) continue;
+      const score = decayScore(sel.loggedAtISO, nowMs);
+      const existing = scoreMap.get(identity.id);
+      if (existing) {
+        existing.score += score;
+      } else {
+        scoreMap.set(identity.id, {
+          identityId: identity.id,
+          bucketKey: identity.primaryHome.bucket,
+          label: identity.label,
+          score,
+        });
+      }
+    }
+  }
+
+  return [...scoreMap.values()]
+    .sort((a, b) => b.score - a.score)
+    .slice(0, opts.limit);
+}
+
 /**
  * RankedLogItem を QuickLogSelection + mode + categoryKey から構築する。
  * カテゴリ/サブカテゴリが master に存在しない場合 (stale データ) も

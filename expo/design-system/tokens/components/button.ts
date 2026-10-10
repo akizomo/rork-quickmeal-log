@@ -8,7 +8,7 @@
 import { radius, spacing, fontSize, fontWeight, lineHeight } from '../primitives';
 import type { SemanticColors } from '../semantic/types';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'ghost';
+export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'raised';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
 export type ButtonTokens = {
@@ -79,6 +79,25 @@ export const makeButtonTokens = (sc: SemanticColors): ButtonTokens => ({
       label: {
         default: sc.content.primary,
         disabled: sc.action.ghost.onDisabled,
+      },
+      border: {
+        default: 'transparent',
+        pressed: 'transparent',
+      },
+    },
+    // 押せる面として地から持ち上げる variant (2026-10-10追加)。
+    // クイックログの9ボタンと同じ「surface.raised + elevation.xs、枠線なし」の表現。
+    // 影は Button.tsx 側で付ける (色トークンのテーブルには載らないため)。
+    // pressed に surface.sunken を流用しない (sunken は高さの軸で状態ではない)。
+    raised: {
+      background: {
+        default: sc.surface.raised,
+        pressed: sc.action.ghost.pressed,
+        disabled: sc.action.secondary.disabled,
+      },
+      label: {
+        default: sc.content.primary,
+        disabled: sc.action.secondary.onDisabled,
       },
       border: {
         default: 'transparent',

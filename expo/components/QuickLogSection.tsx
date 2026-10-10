@@ -1,6 +1,7 @@
-import React, { memo, useCallback, useMemo, useRef, useState } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
+  type LayoutChangeEvent,
   Platform,
   Pressable,
   StyleSheet,
@@ -10,8 +11,7 @@ import {
 } from 'react-native';
 import { useT } from '@/hooks/useT';
 
-import { Body, Icon, IconButton, Label, useTheme } from '@/design-system';
-import { fontSize } from '@/design-system/tokens/primitives/typography';
+import { Body, Button, Icon, IconButton, Label, useTheme } from '@/design-system';
 import { duration } from '@/design-system/tokens/primitives/motion';
 import { radius } from '@/design-system/tokens/primitives/radius';
 import { SegmentedControl } from '@/design-system';
@@ -19,8 +19,8 @@ import { useAppState } from '@/providers/app-state-provider';
 import { useLocale } from '@/hooks/useLocale';
 import type { BucketDef, BucketKey } from '@/types/identity';
 import { buildRegistry } from '@/constants/identity';
-import { deriveDefaultTab, FREQUENT_TAB_MIN_LOGS, rankFrequentSelections } from '@/utils/quick-log-history';
-import type { QuickLogTabKey, RankedLogItem } from '@/types/quick-log';
+import { deriveDefaultTab, FREQUENT_TAB_MIN_LOGS, rankFrequentIdentities, type RankedIdentity } from '@/utils/quick-log-history';
+import type { QuickLogTabKey } from '@/types/quick-log';
 import { widgetRequestPin } from '@/utils/widget-bridge';
 import { SearchSheet } from '@/components/SearchSheet';
 
@@ -231,145 +231,77 @@ function QuickLogButton({
 
 const FREQUENT_TAB_OPTION = { key: 'frequent' as const, label: '⭐️' };
 
-const FREQUENT_GRID_SLOTS = 9;
+/**
+ * ⭐️ の候補数の上限。実際に並ぶ数は「9ボタングリッドの高さに収まる行まで」で、
+ * 画面幅と名前の長さで変わる (ROADMAP §3.0 2026-10-10)。
+ */
+const FREQUENT_PILL_CANDIDATES = 20;
 
-/** ⭐️ グリッド: ランキング上位9件を通常グリッドと同じ操作モデルで表示 */
-const FrequentGrid = memo(function FrequentGrid({
+/**
+ * ⭐️ タブ: よく選ぶ Identity を名前だけのピルで並べる。
+ * 大きさは全部同じで、並び順が順位 (位置を覚えて押せるように)。
+ * タップ = いつもの量で記録 / 長押し = 量シート。
+ * 高さは通常グリッドに揃え、収まりきらない行のピルは出さない
+ * (タブ切り替えで下のコンテンツが跳ねず、空白も残さない)。
+ */
+const FrequentPills = memo(function FrequentPills({
   items,
-  buttonHeight,
-  labelFontSize,
-  gridGap,
-  gridColumns,
+  height,
 }: {
-  items: RankedLogItem[];
-  buttonHeight: number;
-  labelFontSize: number;
-  gridGap: number;
-  gridColumns: number;
+  items: RankedIdentity[];
+  height: number;
 }) {
-  const {
-    quickLog,
-    submitQuickIngredient,
-    openIdentityLogSheet,
-    setDishQuickEntryKey,
-    quickLogIdentity,
-  } = useAppState();
+  const { quickLogIdentity, openIdentityLogSheet } = useAppState();
   const t = useTheme();
+  // 各ピルの下端 (container 内の y + 高さ)。測り終えたら収まる数で切る。
+  // 折り返しは左から順に詰まるので、後ろを消しても前のピルの位置は動かない。
+  const bottomsRef = useRef<number[]>([]);
+  // items / height が変わったら測り直す。親が key で作り直すので、ここでは初期値だけ持つ。
+  const [visibleCount, setVisibleCount] = useState<number | null>(null);
 
-  const rows: (RankedLogItem | null)[][] = [];
-  const padded = [...items, ...Array(Math.max(0, FREQUENT_GRID_SLOTS - items.length)).fill(null)];
-  for (let i = 0; i < padded.length; i += gridColumns) {
-    rows.push(padded.slice(i, i + gridColumns));
-  }
+  const handlePillLayout = (index: number, e: LayoutChangeEvent) => {
+    if (visibleCount !== null) return;
+    const { y, height: h } = e.nativeEvent.layout;
+    bottomsRef.current[index] = y + h;
+    const measured = bottomsRef.current.filter((b) => b !== undefined).length;
+    if (measured < items.length) return;
+    const firstOverflow = bottomsRef.current.findIndex((b) => b > height);
+    setVisibleCount(firstOverflow === -1 ? items.length : firstOverflow);
+  };
+
+  const shown = visibleCount === null ? items : items.slice(0, visibleCount);
 
   return (
-    <View style={styles.grid}>
-      {rows.map((row, rowIndex) => (
+    <View
+      style={[styles.pillWrap, { gap: t.spacing['2'], height }]}
+      testID="frequent-pills"
+    >
+      {shown.map((item, index) => (
         <View
-          key={`freq-row-${rowIndex}`}
-          style={[styles.row, rowIndex < rows.length - 1 ? { marginBottom: gridGap } : null]}
+          key={item.identityId}
+          onLayout={(e) => handlePillLayout(index, e)}
+          // 測定中は見せない (はみ出す行が一瞬見えるのを防ぐ)
+          style={visibleCount === null ? styles.pillMeasuring : null}
         >
-          {row.map((item, colIndex) => {
-            if (!item) {
-              return (
-                <View
-                  key={`empty-${colIndex}`}
-                  style={[
-                    styles.cellWrap,
-                    colIndex < row.length - 1 ? { marginRight: gridGap } : null,
-                  ]}
-                >
-                  <View style={[styles.frequentEmptySlot, { height: buttonHeight, backgroundColor: t.colors.surface.sunken, borderColor: t.colors.border.subtle }]} />
-                </View>
-              );
+          <Button
+            label={item.label}
+            variant="raised"
+            size="sm"
+            onPress={() => void quickLogIdentity(item.identityId, 'frequent')}
+            onLongPress={() =>
+              openIdentityLogSheet(item.bucketKey as BucketKey, {
+                identityId: item.identityId,
+                sourceTab: 'frequent',
+              })
             }
-
-            const handleLog = () => {
-              if (item.identityId) {
-                void quickLogIdentity(item.identityId, 'frequent');
-              } else if (item.mode === 'ingredient' && item.draft) {
-                void submitQuickIngredient(item.draft);
-              } else {
-                void quickLog(item.categoryKey, item.mode);
-              }
-            };
-
-            const handleLongPress = () => {
-              if (item.identityId) {
-                openIdentityLogSheet(item.categoryKey as BucketKey, {
-                  identityId: item.identityId,
-                  sourceTab: 'frequent',
-                });
-              } else if (item.mode === 'ingredient') {
-                openIdentityLogSheet(item.categoryKey as BucketKey, { sourceTab: 'frequent' });
-              } else {
-                setDishQuickEntryKey(item.categoryKey);
-              }
-            };
-
-            return (
-              <View
-                key={`${item.categoryKey}-${colIndex}`}
-                style={[
-                  styles.cellWrap,
-                  colIndex < row.length - 1 ? { marginRight: gridGap } : null,
-                ]}
-              >
-                <FrequentButton
-                  item={item}
-                  height={buttonHeight}
-                  labelFontSize={labelFontSize}
-                  onLog={handleLog}
-                  onLongPress={handleLongPress}
-                />
-              </View>
-            );
-          })}
+            delayLongPress={320}
+            testID={`frequent-pill-${item.identityId}`}
+          />
         </View>
       ))}
     </View>
   );
 });
-
-/** ⭐️ グリッドの個別ボタン */
-function FrequentButton({
-  item,
-  height,
-  labelFontSize,
-  onLog,
-  onLongPress,
-}: {
-  item: RankedLogItem;
-  height: number;
-  labelFontSize: number;
-  onLog: () => void;
-  onLongPress: () => void;
-}) {
-  const t = useTheme();
-  return (
-    <Pressable
-      onPress={onLog}
-      onLongPress={onLongPress}
-      delayLongPress={320}
-      accessibilityRole="button"
-      accessibilityLabel={item.label}
-      style={({ pressed }) => [
-        styles.frequentButton,
-        { ...t.elevation.xs, minHeight: height, backgroundColor: t.colors.surface.raised },
-        pressed && styles.frequentButtonPressed,
-      ]}
-    >
-      <Text style={[styles.frequentLabel, { fontSize: labelFontSize, color: t.colors.content.primary }]} numberOfLines={1}>
-        {item.label}
-      </Text>
-      {/* 種類・調理・量をまとめた副テキスト。fontSize.xs(11) を下回らせず、
-          収まらない場合は省略せず2行まで折り返す。 */}
-      <Text style={[styles.frequentAmount, { color: t.colors.content.secondary }]} numberOfLines={2}>
-        {item.amountLabel}
-      </Text>
-    </Pressable>
-  );
-}
 
 export const QuickLogSection = memo(function QuickLogSection() {
   const { selectedMode, setSelectedMode, settings, quickLog, bumpDiagnostic } = useAppState();
@@ -407,12 +339,20 @@ export const QuickLogSection = memo(function QuickLogSection() {
     return showFrequentTab ? [...base, FREQUENT_TAB_OPTION] : base;
   }, [showFrequentTab, tr]);
 
-  const rankedItems = useMemo(() => {
-    if (selectedTab !== 'frequent' || !history) return [];
-    return rankFrequentSelections(history, {
-      nowISO: new Date().toISOString(),
-      limit: FREQUENT_GRID_SLOTS,
-    });
+  // ⭐️ の並びはタブを開いたときに確定させ、表示中は固定する。
+  // 記録のたびに並べ替えると、押したピルが指の下で動いてしまう。
+  // 空のときだけ history の更新を待って取り直す (起動直後の settings 読み込み待ち)。
+  const [frequentItems, setFrequentItems] = useState<RankedIdentity[]>([]);
+  useEffect(() => {
+    if (selectedTab !== 'frequent') {
+      setFrequentItems((prev) => (prev.length === 0 ? prev : []));
+      return;
+    }
+    setFrequentItems((prev) =>
+      prev.length > 0
+        ? prev
+        : rankFrequentIdentities(history, { nowISO: new Date().toISOString(), limit: FREQUENT_PILL_CANDIDATES }),
+    );
   }, [selectedTab, history]);
 
   const effectiveMode = selectedTab === 'frequent' ? selectedMode : selectedTab;
@@ -459,12 +399,10 @@ export const QuickLogSection = memo(function QuickLogSection() {
       />
 
       {selectedTab === 'frequent' ? (
-        <FrequentGrid
-          items={rankedItems}
-          buttonHeight={buttonHeight}
-          labelFontSize={labelFontSize}
-          gridGap={gridGap}
-          gridColumns={gridColumns}
+        <FrequentPills
+          key={`${frequentItems.map((i) => i.identityId).join(',')}@${buttonHeight}`}
+          items={frequentItems}
+          height={buttonHeight * 3 + gridGap * 2}
         />
       ) : (
         <View style={styles.grid}>
@@ -524,30 +462,14 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
   },
-  frequentButton: {
-    width: '100%',
-    borderRadius: QUICK_LOG_TOKENS.buttonRadius,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 4,
-    gap: 2,
+  pillWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignContent: 'flex-start',
+    // 影 (elevation.xs) が切れないよう overflow は既定のまま。はみ出しは visibleCount で落とす
   },
-  frequentButtonPressed: {
-    opacity: 0.7,
-  },
-  frequentLabel: {
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  frequentAmount: {
-    textAlign: 'center',
-    fontSize: fontSize.xs,
-  },
-  frequentEmptySlot: {
-    width: '100%',
-    borderRadius: QUICK_LOG_TOKENS.buttonRadius,
-    borderWidth: 1,
-    borderStyle: 'dashed',
+  pillMeasuring: {
+    opacity: 0,
   },
   cell: {
     width: '100%',

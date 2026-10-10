@@ -1,7 +1,7 @@
 /**
  * Button — DS PoC コンポーネント。
  *
- * - variant: primary / secondary / ghost
+ * - variant: primary / secondary / ghost / raised (押せる面。surface.raised + elevation.xs)
  * - size: sm / md / lg
  * - C-2 方針: Platform 分岐はコンポーネント層で行う (iOS は active opacity、
  *   Android は ripple 相当の pressed color) — React Native Pressable が
@@ -25,6 +25,8 @@ import type { ButtonSize, ButtonVariant } from '../tokens/components';
 export type ButtonProps = {
   label: string;
   onPress?: () => void;
+  onLongPress?: () => void;
+  delayLongPress?: number;
   variant?: ButtonVariant;
   size?: ButtonSize;
   disabled?: boolean;
@@ -41,6 +43,8 @@ export type ButtonProps = {
 export function Button({
   label,
   onPress,
+  onLongPress,
+  delayLongPress,
   variant = 'primary',
   size = 'md',
   disabled = false,
@@ -70,6 +74,7 @@ export function Button({
       const borderColor = pressed ? v.border.pressed : v.border.default;
       return [
         styles.base,
+        variant === 'raised' && !isDisabled ? theme.elevation.xs : null,
         {
           backgroundColor: bg,
           borderColor,
@@ -86,7 +91,7 @@ export function Button({
         style,
       ];
     },
-    [v, s, variant, isDisabled, fullWidth, style],
+    [v, s, variant, isDisabled, fullWidth, style, theme.elevation.xs],
   );
 
   const textColor = isDisabled ? v.label.disabled : v.label.default;
@@ -94,6 +99,8 @@ export function Button({
   return (
     <Pressable
       onPress={onPress}
+      onLongPress={onLongPress}
+      delayLongPress={delayLongPress}
       disabled={isDisabled}
       style={getContainerStyle}
       accessibilityRole="button"
