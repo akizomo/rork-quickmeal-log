@@ -41,7 +41,6 @@ export const KNOWN_FAILURES: string[] = [
   "手巻き寿司", // zero
   "とんかつ", // vocab-only
   "天ぷら", // top3
-  "おでん", // vocab-only
   "ナポリタン", // zero
   "ジェノベーゼ", // zero
   "明太子パスタ", // l2-only

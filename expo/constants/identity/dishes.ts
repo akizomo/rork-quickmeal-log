@@ -1215,8 +1215,8 @@ const BUCKET_MISC_DISH: Identity[] = [
       },
     ],
     // こってり系(すき焼き/しゃぶしゃぶ)とあっさり系(寄せ鍋/水炊き/豆乳鍋)を統合。
-    // 基準はすき焼き (旧 nabe_heavy)。おでんは具のばらつきが大きすぎるため除外
-    // (食材タブから個別記録推奨)。
+    // 基準はすき焼き (旧 nabe_heavy)。おでんは具のばらつきが大きすぎるため除外し、
+    // 「大根+つゆの器 + 具を Add-on で選ぶ」別 Identity (`oden`) で表す (IA spec v1.8)。
     quickTapDisabled: true,
     defaultMacro: { kcal: 700, protein: 33, fat: 35, carbs: 41 },
     referenceDescription: '肉150g+野菜+つゆ (1人前)',
@@ -1228,6 +1228,27 @@ const BUCKET_MISC_DISH: Identity[] = [
       { key: 'yose', label: '寄せ鍋', searchTags: ['よせなべ'], factor: { kcal: 0.643, protein: 0.848, fat: 0.4, carbs: 1.024 } },
       { key: 'mizutaki', label: '水炊き', searchTags: ['みずたき'], factor: { kcal: 0.611, protein: 0.848, fat: 0.4, carbs: 1.024 } },
       { key: 'tonyu_nabe', label: '豆乳鍋', searchTags: ['とうにゅうなべ'], factor: { kcal: 0.675, protein: 0.848, fat: 0.4, carbs: 1.024 } },
+    ],
+  },
+  {
+    // おでんは具の組み合わせがすべてで、平均値の Identity にしても誤差しか残らない
+    // (nabe から除外した理由)。salad_raw と同じく**ほぼ空の器 + Add-on** で表す:
+    // base = 大根1切 + しみたつゆ、具は注文するときの名前で Add-on に並べる。
+    // こんにゃく・昆布・しらたきは1個で P/F/C が ±3g 動かないため Add-on にしない (§5.5)。
+    // 旧状態は「おでん」が語彙辞書で misc_dish バケットに着地するだけで、記録先が無かった。
+    id: 'oden',
+    label: 'おでん',
+    searchTags: ['おでん', 'かんとうだき', '関東煮'],
+    primaryHome: { tab: 'dish', bucket: 'misc_dish' },
+    quickTapDisabled: true, // 中身は Add-on 次第で、器だけでは記録にならない
+    // 大根(ゆで) 100g 15/0.5/0.1/3.4 (八訂) + つゆ少量
+    defaultMacro: { kcal: 20, protein: 0.8, fat: 0.1, carbs: 4 },
+    referenceDescription: '大根1切+つゆ。ほかの具はトッピングで選ぶ (こんにゃく・昆布は記録しなくて大丈夫)',
+    amount: { unit: 'piece', default: 1, unitLabel: '切', chips: [{ label: '1切', value: 1 }, { label: '2切', value: 2 }] },
+    defaultAddonIds: ['egg', 'oden_chikuwa', 'oden_hanpen', 'oden_satsuma', 'oden_atsuage', 'oden_gyusuji'],
+    allowedAddonIds: [
+      'egg', 'oden_chikuwa', 'oden_hanpen', 'oden_satsuma', 'oden_atsuage', 'oden_gyusuji',
+      'oden_mochikinchaku', 'oden_chikuwabu',
     ],
   },
   {

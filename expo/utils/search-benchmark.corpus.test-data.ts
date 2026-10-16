@@ -44,7 +44,7 @@ export const TUNING_CORPUS: Item[] = [
     ['鮭', 'fatty_fish/salmon'], ['サーモン', ['fatty_fish/salmon', 'sashimi/salmon']], ['サバ', 'fatty_fish/saba'], ['さばの味噌煮', ['fatty_fish[nizuke]', 'fatty_fish/saba', 'canned_fatty_fish/miso']], ['ぶり', 'fatty_fish/buri'],
     ['ぶり大根', ['fatty_fish[nizuke]', 'fatty_fish/buri']], ['焼き魚', ['fatty_fish[grilled]', 'white_fish', 'teishoku/yakizakana']], ['刺身', 'sashimi'], ['まぐろ', ['white_fish/tuna_red', 'sashimi/maguro_lean']], ['ツナ', 'canned_lean_fish'],
     ['ツナ缶', 'canned_lean_fish'], ['サバ缶', 'canned_fatty_fish'], ['タラ', 'white_fish'], ['エビ', 'seafood_lean'], ['イカ', 'seafood_lean'],
-    ['タコ', 'seafood_lean'], ['ホタテ', 'seafood_lean'], ['うなぎ', 'fatty_fish/unagi'], ['しらす', 'white_fish', 'shirasu は Add-on 専用で Identity ではない。単独記録は白身魚で近似'], ['卵', 'egg'],
+    ['タコ', 'seafood_lean'], ['ホタテ', 'seafood_lean'], ['ちくわ', 'nerimono'], ['かまぼこ', 'nerimono'], ['はんぺん', 'nerimono'], ['さつま揚げ', 'nerimono/fried'], ['ごぼう天', 'nerimono/fried'], ['うなぎ', 'fatty_fish/unagi'], ['しらす', 'white_fish', 'shirasu は Add-on 専用で Identity ではない。単独記録は白身魚で近似'], ['卵', 'egg'],
     ['たまご', 'egg'], ['ゆで卵', ['egg[boiled]', 'egg']], ['目玉焼き', 'egg[fried]'], ['卵焼き', 'egg[omelet]'], ['スクランブルエッグ', 'egg[omelet]'],
     ['温泉卵', 'egg'], ['オムレツ', 'egg[omelet]'], ['茶碗蒸し', 'egg[chawan]'], ['豆腐', 'tofu'], ['冷奴', 'tofu'],
     ['厚揚げ', 'aburaage/thick'], ['油揚げ', 'aburaage/thin'], ['納豆', 'natto'], ['枝豆', 'edamame_soy/edamame'], ['ハム', 'ham'],
@@ -97,7 +97,7 @@ export const TUNING_CORPUS: Item[] = [
     ['幕の内弁当', 'bento/makunouchi'], ['唐揚げ', KARAAGE], ['とんかつ', 'fried_main/tonkatsu'], ['ヒレカツ', 'fried_main/tonkatsu_hire'], ['メンチカツ', 'fried_main/menchi'],
     ['エビフライ', 'fried_main/ebi_fry'], ['コロッケ', 'fried_main/korokke'], ['天ぷら', 'fried_main/tempura'], ['フライドポテト', 'fried_main/fries'], ['焼き鳥', 'yakitori'],
     ['ハンバーグ', 'meat_solo/hamburg'], ['肉じゃが', 'washoku_okazu/nikujaga'], ['肉豆腐', 'washoku_okazu/niku_dofu'], ['筑前煮', 'side_seasoned'], ['すき焼き', 'nabe/sukiyaki'],
-    ['しゃぶしゃぶ', 'nabe/shabu'], ['鍋', 'nabe'], ['おでん', ['nabe', 'side_seasoned']], ['刺身盛り合わせ', 'sashimi/mixed'], ['お好み焼き', 'okonomi/okonomiyaki'],
+    ['しゃぶしゃぶ', 'nabe/shabu'], ['鍋', 'nabe'], ['おでん', 'oden'], ['刺身盛り合わせ', 'sashimi/mixed'], ['お好み焼き', 'okonomi/okonomiyaki'],
     ['たこ焼き', 'okonomi/takoyaki'], ['もんじゃ焼き', 'okonomi/monjayaki'], ['焼肉', ['teishoku/yakiniku', 'bento/yakiniku', 'beef_pork_fatty', 'red_meat', 'beef_pork']], ['卵かけご飯', 'preset:tkg'], ['納豆ご飯', 'preset:natto_gohan'],
   ]),
   ...C('洋食', 'base', [

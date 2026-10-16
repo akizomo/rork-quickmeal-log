@@ -136,4 +136,17 @@ describe('Add-on 参照の健全性', () => {
     expect(identity?.defaultAddonIds).toEqual(expect.arrayContaining(['egg', 'mayo']));
     expect(identity?.defaultAddonIds?.length).toBeLessThanOrEqual(6);
   });
+
+  // IA spec v1.8 ユーザー指摘: おでんの入れ方が分からない / 練り物が無い
+  it('oden の default / allowed Add-on がすべて解決でき、6 枠以内', () => {
+    const oden = IDENTITY_REGISTRY.byId['oden'];
+    const ids = [...(oden?.defaultAddonIds ?? []), ...(oden?.allowedAddonIds ?? [])];
+    expect(ids.filter((refId) => !resolveAddonRef(refId))).toEqual([]);
+    expect(oden?.defaultAddonIds?.length).toBeLessThanOrEqual(6);
+    expect(oden?.defaultAddonIds).toEqual(expect.arrayContaining(['egg', 'oden_chikuwa']));
+  });
+
+  it('練り物は炭水化物を持つ (白身魚で代用すると C が 0 になる)', () => {
+    expect(IDENTITY_REGISTRY.byId['nerimono']?.defaultMacro.carbs).toBeGreaterThan(3);
+  });
 });
