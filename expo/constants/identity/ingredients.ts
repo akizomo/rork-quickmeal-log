@@ -1161,7 +1161,10 @@ const BUCKET_VEGGIES: Identity[] = [
     // 脂質の主役である `cheese` (80kcal/F6.0) を昇格**させた。サラダの記録が過小に
     // なる主因はチーズと油であり、それが default に無いのが v1.3 までの実害だった。
     // crouton は allowed に残るため選択不能になるわけではない。
-    defaultAddonIds: ['avocado', 'canned_lean_fish', 'nuts', 'dressing', 'salad_chicken', 'cheese'],
+    // IA spec v1.7: 同じ基準で `canned_lean_fish` (25kcal/F0.3) を外し `oil` (110kcal/F12) を
+    // 昇格。オリーブオイル+塩だけで食べるサラダが default から記録できなかった
+    // (ユーザー指摘)。ツナは allowed に残り「その他」から選べる。
+    defaultAddonIds: ['avocado', 'oil', 'nuts', 'dressing', 'salad_chicken', 'cheese'],
     allowedAddonIds: [
       'avocado', 'canned_lean_fish', 'nuts', 'dressing', 'salad_chicken',
       'crouton', 'corn_top', 'cheese', 'cheese_low_fat', 'edamame_soy',

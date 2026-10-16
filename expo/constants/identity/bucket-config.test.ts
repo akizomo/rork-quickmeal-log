@@ -115,4 +115,25 @@ describe('Add-on 参照の健全性', () => {
     const ids = [...(identity?.defaultAddonIds ?? []), ...(identity?.allowedAddonIds ?? [])];
     expect(ids.filter((refId) => !resolveAddonRef(refId))).toEqual([]);
   });
+
+  // IA spec v1.7 ユーザー指摘: サラダにオイルが無い / パスタに麺大盛りが無い / バーガーの中身を再現できない
+  it('salad_raw の default にオイルが出る', () => {
+    expect(IDENTITY_REGISTRY.byId['salad_raw']?.defaultAddonIds).toContain('oil');
+  });
+
+  it.each(['pasta_tomato', 'pasta_oil', 'pasta_cream', 'pasta_meat', 'pasta_japanese'])(
+    '%s の default に麺大盛りが出る',
+    (id) => {
+      expect(IDENTITY_REGISTRY.byId[id]?.defaultAddonIds).toContain('pasta_omori');
+      expect(resolveAddonRef('pasta_omori')).toBeDefined();
+    },
+  );
+
+  it.each(['burger', 'burger_big'])('%s の default / allowed Add-on がすべて解決でき、卵とマヨを含む', (id) => {
+    const identity = IDENTITY_REGISTRY.byId[id];
+    const ids = [...(identity?.defaultAddonIds ?? []), ...(identity?.allowedAddonIds ?? [])];
+    expect(ids.filter((refId) => !resolveAddonRef(refId))).toEqual([]);
+    expect(identity?.defaultAddonIds).toEqual(expect.arrayContaining(['egg', 'mayo']));
+    expect(identity?.defaultAddonIds?.length).toBeLessThanOrEqual(6);
+  });
 });

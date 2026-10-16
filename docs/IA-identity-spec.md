@@ -1,8 +1,15 @@
-# 食事入力IA — Identity辞書 仕様 v1.6
+# 食事入力IA — Identity辞書 仕様 v1.7
 
 > 関連: [PRD.md](./PRD.md) / [IA-catalog.xlsx](./IA-catalog.xlsx)
 > ステータス: 確定版
-> 最終更新: 2026-10-02
+> 最終更新: 2026-10-15
+>
+> **v1.7 変更点 (2026-10-15) — allowed Add-on を到達可能にする + サラダ/パスタ/バーガー拡充**
+>
+> - **`allowedAddonIds` は UI に出ていなかった** — 記録シートは default しか描画しておらず、§5.4 の「allowed に残るため選択不能ではない」は実装と食い違っていた。**allowed をすべて表示し、default はその先頭に並ぶ優先枠**とする (default = 並び順 / allowed = 表示範囲)。「その他」チップで畳む案は、隠れる件数が大半 1〜3 件で畳むチップ自体が1枠を食い、「あるのに見えない」を再発させるため不採用。**一覧が長すぎる Identity は UI で畳まず allowed を絞る**。
+> - `salad_raw`: default の `canned_lean_fish` → `oil` (§5.4 誤差寄与基準)。
+> - 新 Add-on `pasta_omori` (麺大盛り +100g ゆで) を `pasta_*` 全5種の default に。量チップの「大盛」はソースごと増える。
+> - `burger` / `burger_big`: default に `egg`・`mayo`、allowed に `tartar`・`ham`。種類 factor に織り込み済みの Add-on は `hiddenAddonIds` で隠す (チーズ→cheese / フィッシュ→tartar / てりやき→mayo)。
 >
 > **v1.6 変更点 (2026-10-02) — Preset (名前のある組み合わせ) の導入**
 >
@@ -542,7 +549,7 @@ primary Home以外のバケットからも検索ヒットさせる Identity 一�
 | `bacon_sausage` (1枚) | 10g | 40/2/3.5/0.2 | bread, salad_raw, sandwich, breakfast |
 | `ham` (2枚) | 20g | 40/5/2.5/1 | bread, sandwich |
 | `kanikama` (※将来追加) | 5本50g | 45/6/0.4/5 | salad_raw |
-| `oil` (オイル) | 大さじ1 14g | 110/0/12/0 | salad_raw, pasta_* |
+| `oil` (オイル) | 大さじ1 14g | 110/0/12/0 | salad_raw (default, v1.7), pasta_oil |
 | `dressing` | 大さじ1 15ml | 60/0.1/5/2 | salad_raw |
 | `apple_pear` / `banana` / `berry` (フルーツ追加) | 50g | 25-45/0.4-1/0.1-0.2/6-11 | yogurt, oatmeal |
 
@@ -571,6 +578,7 @@ primary Home以外のバケットからも検索ヒットさせる Identity 一�
 | `tempura_top` | 天ぷら追加 | 1個 | 140/4/9/11 | udon, soba, gyudon_class |
 | `kitsune_top` | きつね (油揚げ) | 1枚 | 110/5/7/8 | udon, soba |
 | `katsu_add` | カツ追加 | 1枚 | 250/14/16/14 | curry_class, gyudon_class, udon |
+| `pasta_omori` | 麺大盛り (パスタ) | +100g ゆで | 150/5.8/0.9/32 | pasta_* (v1.7) |
 | `karaage_add` | 唐揚げ追加 | 2個 | 180/11/10/7 | gyudon_class, set_meal |
 | `berry_top` | ベリー追加 | 50g | 25/0.4/0.2/6 | yogurt, oatmeal |
 | `banana_slice` | バナナ追加 | 1/2本 50g | 45/0.5/0.1/11 | oatmeal, yogurt |
@@ -578,6 +586,8 @@ primary Home以外のバケットからも検索ヒットさせる Identity 一�
 ### 5.4 セット提案ロジック (defaultAddonIds)
 
 各 Identity に **頻出 Add-on を 4-6個** プリセットする (初期固定)。利用ログ蓄積後は頻度学習で並び替え。
+
+**v1.7 以降の default の意味**: allowed はすべて表示されるため、default は「表示されるか」ではなく**「先頭に並ぶか」**を決める。6 枠上限と以下の入れ替え基準は、先頭行の優先順位としてそのまま有効。
 
 **枠が埋まっているときの入れ替え基準 (v1.4)**: default は 6 枠が上限のため、追加は実質
 **入れ替え**になる。優先順位は頻度ではなく「**記録誤差への寄与**」= 1単位で動く
@@ -602,9 +612,9 @@ rice:
   defaultAddonIds: [natto, egg, kimchi, salmon_flake, mentaiko, nori_furikake]
   allowedAddonIds: [全許可Add-on...]
 
-salad_raw:                                                    # v1.4 で cheese を昇格
-  defaultAddonIds: [avocado, canned_lean_fish, nuts, dressing, salad_chicken, cheese]
-  allowedAddonIds: [..., crouton, cheese_low_fat, edamame_soy]
+salad_raw:                                    # v1.4 で cheese を昇格 / v1.7 で tuna→oil
+  defaultAddonIds: [avocado, oil, nuts, dressing, salad_chicken, cheese]
+  allowedAddonIds: [..., canned_lean_fish, crouton, cheese_low_fat, edamame_soy]
 
 bread:
   defaultAddonIds: [butter_cream, jam, honey, peanut_butter, cheese, avocado]

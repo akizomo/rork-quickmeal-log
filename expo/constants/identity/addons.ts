@@ -168,7 +168,7 @@ export const PURE_ADDONS: Addon[] = [
     unitAmount: 15,
     unitLabel: '大さじ1',
     addedMacro: { kcal: 70, protein: 0.4, fat: 7, carbs: 2 },
-    allowedIdentityIds: ['fried_main', 'white_fish', 'seafood_lean'],
+    allowedIdentityIds: ['fried_main', 'white_fish', 'seafood_lean', 'burger', 'burger_big'],
   },
   {
     id: 'menma',
@@ -328,6 +328,18 @@ export const PURE_ADDONS: Addon[] = [
     // そば(ゆで) 200g: 文部科学省食品成分データベース準拠
     addedMacro: { kcal: 260, protein: 11, fat: 2, carbs: 49 },
     allowedIdentityIds: ['soba', 'tempura_noodle'],
+  },
+  {
+    id: 'pasta_omori',
+    label: '麺大盛り',
+    unit: 'g',
+    unitAmount: 100,
+    unitLabel: '+100g(ゆで)',
+    // スパゲッティ(ゆで) 100g: 日本食品標準成分表(八訂) 150kcal/P5.8/F0.9/C32.2。
+    // 乾麺 約40g 分 = 店の「大盛り(+50%)」の目安。量チップの「大盛」はソースごと
+    // 1.5倍になるため、麺だけ増える実態はこちらで表す (ramen の men_omori と同じ考え方)。
+    addedMacro: { kcal: 150, protein: 5.8, fat: 0.9, carbs: 32 },
+    allowedIdentityIds: ['pasta_tomato', 'pasta_oil', 'pasta_cream', 'pasta_meat', 'pasta_japanese'],
   },
   {
     id: 'katsu_add',

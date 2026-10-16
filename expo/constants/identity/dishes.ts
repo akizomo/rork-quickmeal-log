@@ -592,8 +592,8 @@ const BUCKET_PASTA: Identity[] = [
     defaultMacro: { kcal: 680, protein: 22, fat: 19, carbs: 102 },
     referenceDescription: '麺250g (茹で) + トマトソース・基本具',
     amount: { unit: 'percent', default: 100, chips: [{ label: '小', value: 50 }, { label: '1皿', value: 100 }, { label: '大盛', value: 150 }, { label: '特盛', value: 200 }] },
-    defaultAddonIds: ['cheese', 'bacon_sausage'],
-    allowedAddonIds: ['cheese', 'bacon_sausage', 'egg'],
+    defaultAddonIds: ['pasta_omori', 'cheese', 'bacon_sausage'],
+    allowedAddonIds: ['pasta_omori', 'cheese', 'bacon_sausage', 'egg'],
   },
   {
     id: 'pasta_oil',
@@ -606,8 +606,8 @@ const BUCKET_PASTA: Identity[] = [
     defaultMacro: { kcal: 700, protein: 20, fat: 28, carbs: 88 },
     referenceDescription: '麺250g + オイル+ガーリック・少量具',
     amount: { unit: 'percent', default: 100, chips: [{ label: '小', value: 50 }, { label: '1皿', value: 100 }, { label: '大盛', value: 150 }, { label: '特盛', value: 200 }] },
-    defaultAddonIds: ['cheese'], // oil 重複は冗長なので allowed のみに
-    allowedAddonIds: ['cheese', 'oil', 'bacon_sausage'],
+    defaultAddonIds: ['pasta_omori', 'cheese'], // oil 重複は冗長なので allowed のみに
+    allowedAddonIds: ['pasta_omori', 'cheese', 'oil', 'bacon_sausage'],
   },
   {
     id: 'pasta_cream',
@@ -620,8 +620,8 @@ const BUCKET_PASTA: Identity[] = [
     defaultMacro: { kcal: 780, protein: 24, fat: 36, carbs: 86 },
     referenceDescription: '麺250g + クリームソース・チーズ',
     amount: { unit: 'percent', default: 100, chips: [{ label: '小', value: 50 }, { label: '1皿', value: 100 }, { label: '大盛', value: 150 }, { label: '特盛', value: 200 }] },
-    defaultAddonIds: ['cheese', 'bacon_sausage'],
-    allowedAddonIds: ['cheese', 'bacon_sausage', 'egg'],
+    defaultAddonIds: ['pasta_omori', 'cheese', 'bacon_sausage'],
+    allowedAddonIds: ['pasta_omori', 'cheese', 'bacon_sausage', 'egg'],
   },
   {
     id: 'pasta_meat',
@@ -634,8 +634,8 @@ const BUCKET_PASTA: Identity[] = [
     defaultMacro: { kcal: 690, protein: 26, fat: 22, carbs: 96 },
     referenceDescription: '麺250g + ミートソース',
     amount: { unit: 'percent', default: 100, chips: [{ label: '小', value: 50 }, { label: '1皿', value: 100 }, { label: '大盛', value: 150 }, { label: '特盛', value: 200 }] },
-    defaultAddonIds: ['cheese'],
-    allowedAddonIds: ['cheese', 'bacon_sausage', 'egg'],
+    defaultAddonIds: ['pasta_omori', 'cheese'],
+    allowedAddonIds: ['pasta_omori', 'cheese', 'bacon_sausage', 'egg'],
   },
   {
     id: 'pasta_japanese',
@@ -648,8 +648,8 @@ const BUCKET_PASTA: Identity[] = [
     defaultMacro: { kcal: 620, protein: 20, fat: 20, carbs: 88 },
     referenceDescription: '麺250g + 醤油・和風具',
     amount: { unit: 'percent', default: 100, chips: [{ label: '小', value: 50 }, { label: '1皿', value: 100 }, { label: '大盛', value: 150 }, { label: '特盛', value: 200 }] },
-    defaultAddonIds: ['egg', 'nori_furikake'],
-    allowedAddonIds: ['egg', 'nori_furikake', 'cheese'],
+    defaultAddonIds: ['pasta_omori', 'egg', 'nori_furikake'],
+    allowedAddonIds: ['pasta_omori', 'egg', 'nori_furikake', 'cheese'],
   },
 ];
 
@@ -781,18 +781,26 @@ const BUCKET_SANDWICH: Identity[] = [
     attributes: [
       { key: 'beef', label: 'ビーフ', isDefault: true },
       // モスチーズバーガー 425/18.2/21.4/40.4
-      { key: 'cheese', label: 'チーズ', factor: { kcal: 1.12, protein: 1.21, fat: 1.19, carbs: 1.01 } },
+      // factor にスライスチーズが織り込み済みなので cheese Add-on は隠す (二重計上防止)。
+      { key: 'cheese', label: 'チーズ', factor: { kcal: 1.12, protein: 1.21, fat: 1.19, carbs: 1.01 }, hiddenAddonIds: ['cheese'] },
       // フィレオフィッシュ 338/15.1/14.2/37.4・モスフィッシュ 381/16.2/18.8/37.0
-      { key: 'fish', label: 'フィッシュ', searchTags: ['フィレオフィッシュ', 'さかな'], factor: { kcal: 0.95, protein: 1.04, fat: 0.92, carbs: 0.93 } },
+      // フィレオフィッシュ等はタルタル込みの実測値なので tartar を隠す。
+      { key: 'fish', label: 'フィッシュ', searchTags: ['フィレオフィッシュ', 'さかな'], factor: { kcal: 0.95, protein: 1.04, fat: 0.92, carbs: 0.93 }, hiddenAddonIds: ['tartar'] },
       // マックチキン 386/13.5/19.6/39.5・モスチキン 386/15.0/18.5/40.0
       { key: 'chicken', label: 'チキン', searchTags: ['とり', 'チキンフィレオ'], factor: { kcal: 1.02, protein: 0.95, fat: 1.06, carbs: 0.99 } },
       // てりやきは脂質が突出しタンパク質が低い (マックてりやき 485/P14.2/F31.3)。
       // 旧「こってり」ではこのPFCの偏りを表現できなかったため独立させる。
-      { key: 'teriyaki', label: 'てりやき', searchTags: ['テリヤキ', '照り焼き'], factor: { kcal: 1.14, protein: 0.95, fat: 1.38, carbs: 0.98 } },
+      // マック/モスのてりやきはマヨ込みの実測値なので mayo を隠す。
+      { key: 'teriyaki', label: 'てりやき', searchTags: ['テリヤキ', '照り焼き'], factor: { kcal: 1.14, protein: 0.95, fat: 1.38, carbs: 0.98 }, hiddenAddonIds: ['mayo'] },
       // モスロースカツ 410/16.6/16.3/49.7・えびフィレオ 408/11.4/18.6/49.5
       { key: 'katsu', label: 'カツ・エビカツ', searchTags: ['かつばーがー', 'えびかつ'], factor: { kcal: 1.08, protein: 0.93, fat: 0.97, carbs: 1.24 } },
     ],
-    defaultAddonIds: ['cheese', 'patty_add', 'bacon_sausage', 'avocado'],
+    // 中身の再現性のため、1単位で kcal/脂質が大きく動くものを default に出す (§5.4)。
+    // 目玉焼き (月見・ロコモコ系) とマヨ/タルタル (ソースで脂質が大きく動く) が無く、
+    // 「食べたバーガーの中身を再現できない」指摘を受けて拡充 (IA spec v1.7)。
+    // トマト・レタス・ピクルス等は ±3g 未満で Add-on 対象外 (§5.5)。
+    defaultAddonIds: ['cheese', 'patty_add', 'bacon_sausage', 'egg', 'avocado', 'mayo'],
+    allowedAddonIds: ['cheese', 'patty_add', 'bacon_sausage', 'egg', 'avocado', 'mayo', 'tartar', 'ham'],
   },
   {
     // 専門店・大型バーガー帯。ワッパー(672)・ぜいたくモスチーズ(685)・
@@ -816,7 +824,8 @@ const BUCKET_SANDWICH: Identity[] = [
       // BBQステーキワッパー 811/33.3/52.6/51.9
       { key: 'heavy', label: '特盛・BBQ系', factor: { kcal: 1.16, protein: 1.15, fat: 1.32, carbs: 1.02 } },
     ],
-    defaultAddonIds: ['cheese', 'patty_add', 'bacon_sausage', 'avocado'],
+    defaultAddonIds: ['cheese', 'patty_add', 'bacon_sausage', 'egg', 'avocado', 'mayo'],
+    allowedAddonIds: ['cheese', 'patty_add', 'bacon_sausage', 'egg', 'avocado', 'mayo', 'tartar', 'ham'],
   },
   {
     id: 'burrito_taco',

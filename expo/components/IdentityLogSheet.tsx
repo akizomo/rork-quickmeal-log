@@ -47,6 +47,7 @@ import { usualAmountForIdentity } from '@/utils/usual-amount';
 import {
   getEffectiveAltAmountSpec,
   getEffectiveAmountSpec,
+  getEffectiveAllowedAddonIds,
   getEffectiveDefaultAddonIds,
   getHiddenAddonIds,
 } from '@/utils/identity-attribute';
@@ -514,14 +515,24 @@ export function IdentityLogSheet() {
   // 種類連動のトッピング既定リスト。振替が発生している場合は振替先 Identity の
   // トッピング (例: 唐揚げ=レモン/マヨ) を表示する。選択中の Add-on は (既定外でも)
   // 常に表示し続け、編集再開時や種類切替時に選択済みチップが消えないようにする。
+  //
+  // default を先頭に、残りの allowed を後ろに並べて**すべて表示**する (default は
+  // 並び順の優先枠であって表示の上限ではない。IA spec §5.4)。以前は allowed が UI の
+  // どこにも出ず、サラダのオイル等「許可済みなのに選べない」Add-on が生じていた。
+  // 「その他」で畳む案も試したが、隠れる件数は大半の Identity で 1〜3 件で、
+  // 畳むチップ自体が1枠を食う上に「あるのに見えない」を再発させるため採らない。
   const visibleAddonIds = useMemo(() => {
     if (!amountBasis?.identity) return [];
     const base = getEffectiveDefaultAddonIds(amountBasis.identity, amountBasis.attributeKey);
     const hidden = getHiddenAddonIds(amountBasis.identity, amountBasis.attributeKey);
+    // 並びは選択状態に依存させない (タップでチップが跳ねないように)。
+    const rest = getEffectiveAllowedAddonIds(amountBasis.identity, amountBasis.attributeKey)
+      .filter((id) => !base.includes(id) && !!resolveAddonRef(id));
+    const listed = [...base, ...rest];
     const selectedExtra = addons
       .map((a) => a.refId)
-      .filter((id) => !base.includes(id) && !hidden.has(id));
-    return [...base, ...selectedExtra];
+      .filter((id) => !listed.includes(id) && !hidden.has(id));
+    return [...listed, ...selectedExtra];
   }, [amountBasis, addons]);
 
   return (
