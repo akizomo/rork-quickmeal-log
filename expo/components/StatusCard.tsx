@@ -203,23 +203,24 @@ const BalanceModal = memo(function BalanceModal({
           </View>
         </Pressable>
       ) : null}
-    </Dialog>
-    <Dialog
-      visible={cancelDialogVisible}
-      onClose={() => setCancelDialogVisible(false)}
-      title={tr('statusCard.weeklyBalance.stopDialogTitle')}
-      primaryAction={{
-        label: tr('statusCard.weeklyBalance.stop'),
-        onPress: () => { setCancelDialogVisible(false); onClose(); onStopWeeklyBalance(); },
-      }}
-      secondaryAction={{
-        label: tr('statusCard.weeklyBalance.continue'),
-        onPress: () => setCancelDialogVisible(false),
-      }}
-    >
-      <Body size="sm" tone="secondary">
-        {tr('statusCard.weeklyBalance.stopDialogBody')}
-      </Body>
+      {/* iOS は表示中の Modal の兄弟として別の Modal を出せないため、子として描画する */}
+      <Dialog
+        visible={cancelDialogVisible}
+        onClose={() => setCancelDialogVisible(false)}
+        title={tr('statusCard.weeklyBalance.stopDialogTitle')}
+        primaryAction={{
+          label: tr('statusCard.weeklyBalance.stop'),
+          onPress: () => { setCancelDialogVisible(false); onClose(); onStopWeeklyBalance(); },
+        }}
+        secondaryAction={{
+          label: tr('statusCard.weeklyBalance.continue'),
+          onPress: () => setCancelDialogVisible(false),
+        }}
+      >
+        <Body size="sm" tone="secondary">
+          {tr('statusCard.weeklyBalance.stopDialogBody')}
+        </Body>
+      </Dialog>
     </Dialog>
     </>
   );
@@ -390,24 +391,25 @@ function WeeklyBalanceSheet({
           {tr('statusCard.weeklyBalanceSheet.note')}
         </Body>
       </View>
+      {/* iOS は表示中の Modal の兄弟として別の Modal を出せないため、子として描画する */}
+      <Dialog
+        visible={stopDialogVisible}
+        onClose={() => setStopDialogVisible(false)}
+        title={tr('statusCard.weeklyBalance.stopDialogTitle')}
+        primaryAction={{
+          label: tr('statusCard.weeklyBalance.stop'),
+          onPress: () => { setStopDialogVisible(false); onClose(); onStop(); },
+        }}
+        secondaryAction={{
+          label: tr('statusCard.weeklyBalance.continue'),
+          onPress: () => setStopDialogVisible(false),
+        }}
+      >
+        <Body size="sm" tone="secondary">
+          {tr('statusCard.weeklyBalance.stopDialogBody')}
+        </Body>
+      </Dialog>
     </BottomSheet>
-    <Dialog
-      visible={stopDialogVisible}
-      onClose={() => setStopDialogVisible(false)}
-      title={tr('statusCard.weeklyBalance.stopDialogTitle')}
-      primaryAction={{
-        label: tr('statusCard.weeklyBalance.stop'),
-        onPress: () => { setStopDialogVisible(false); onClose(); onStop(); },
-      }}
-      secondaryAction={{
-        label: tr('statusCard.weeklyBalance.continue'),
-        onPress: () => setStopDialogVisible(false),
-      }}
-    >
-      <Body size="sm" tone="secondary">
-        {tr('statusCard.weeklyBalance.stopDialogBody')}
-      </Body>
-    </Dialog>
     </>
   );
 }

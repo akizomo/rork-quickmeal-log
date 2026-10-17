@@ -568,16 +568,17 @@ export const DishQuickEntrySheet = memo(function DishQuickEntrySheet() {
             ) : null}
           </>
         ) : null}
+        {/* iOS は表示中の Modal の「兄弟」として別の Modal を出せないため、シートの子として描画する */}
+        {amountEditor ? (
+          <AmountEditDialog
+            visible
+            config={amountEditor.config}
+            initialValue={amountEditor.initialValue}
+            onClose={handleAmountEditorClose}
+            testID="dqe-amount-dialog"
+          />
+        ) : null}
       </BottomSheet>
-      {amountEditor ? (
-        <AmountEditDialog
-          visible
-          config={amountEditor.config}
-          initialValue={amountEditor.initialValue}
-          onClose={handleAmountEditorClose}
-          testID="dqe-amount-dialog"
-        />
-      ) : null}
     </>
   );
 });

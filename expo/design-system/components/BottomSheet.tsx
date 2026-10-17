@@ -41,6 +41,7 @@ import {
   Animated,
   Easing,
   Keyboard,
+  LayoutAnimation,
   Modal,
   PanResponder,
   Platform,
@@ -48,6 +49,7 @@ import {
   StyleSheet,
   TouchableWithoutFeedback,
   View,
+  useWindowDimensions,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
@@ -73,7 +75,6 @@ const OPEN_SPRING = spring.enter;
 // M3 Emphasized Accelerate — motion.ts の duration.short / easing.exit と同一。
 const CLOSE_DURATION = duration.short;
 const CLOSE_EASING = Easing.bezier(...easing.exit);
-const KB_EASING = Easing.bezier(...easing.standard);
 const TRANSLATE_OFFSCREEN = 800;      // off-screen distance for drag-released close
 const FALLBACK_SHEET_HEIGHT = 600;    // sheetHeight が onLayout 前のときの暫定値
 
@@ -142,9 +143,10 @@ export type BottomSheetProps = {
   showHandle?: boolean;
 
   /**
-   * When true, the sheet slides up when the software keyboard appears so the
-   * content above the keyboard remains visible. Use for sheets that contain
-   * TextInput fields. Default: false.
+   * When true, the sheet's bottom edge follows the software keyboard (iOS) and
+   * its max height shrinks to the space left above it, so tall sheets never
+   * slide off the top of the screen. Use for sheets that contain TextInput
+   * fields. Default: false.
    */
   keyboardAware?: boolean;
 
@@ -195,6 +197,7 @@ export function BottomSheet({
 }: BottomSheetProps) {
   const t = useTheme();
   const insets = useSafeAreaInsets();
+  const { height: windowHeight } = useWindowDimensions();
 
   // mounted state — keep Modal visible until close animation completes.
   const [mounted, setMounted] = useState(visible);
@@ -214,8 +217,9 @@ export function BottomSheet({
   const openProgress = useRef(new Animated.Value(visible ? 1 : 0)).current;
   // dragY: user drag offset from rest position (positive = downward).
   const dragY = useRef(new Animated.Value(0)).current;
-  // keyboardY: negative when keyboard is visible (moves sheet upward).
-  const keyboardY = useRef(new Animated.Value(0)).current;
+  // keyboardHeight: 0 when hidden. The sheet's bottom edge sits on top of the
+  // keyboard and its max height shrinks to the remaining space (see render).
+  const [keyboardHeight, setKeyboardHeight] = useState<number>(0);
 
   // Keep the latest onClose available without re-creating panResponder.
   const onCloseRef = useRef(onClose);
@@ -246,39 +250,37 @@ export function BottomSheet({
     });
   }, [dragY, openProgress]);
 
-  // Keyboard avoidance: slide sheet up when software keyboard appears.
-  // iOS: keyboardWillShow/Hide で translateY を動かして完全に機能する。
+  // Keyboard avoidance (iOS):
+  //   以前は translateY でシート全体を keyboard 高さぶん持ち上げていたが、
+  //   expandToFull の背の高いシート (検索など) は上端が画面外へはみ出していた。
+  //   いまは「シートの下端 = キーボードの上端」にし、max height を残り領域に縮める。
+  //   動きは KeyboardAvoidingView と同じく LayoutAnimation(type: keyboard) で
+  //   キーボード自身の duration に同期させる (OS のキーボードに合わせるため motion token は使わない)。
   // Android: Modal は Activity の windowSoftInputMode="adjustResize" を継承しない
-  //   別 Window で動くため、キーボードが Modal コンテンツに被るケースがある。
-  //   ここに Android の translateY 補正を追加しても、一部デバイスで二重補正になる
-  //   可能性があるため、現状 iOS 限定としている。Android 対応は未解決の既知制限。
+  //   別 Window で動くため JS 側の補正も効かない。未解決の既知制限 (CLAUDE.md 参照)。
   useEffect(() => {
     if (!keyboardAware || Platform.OS !== 'ios') return;
 
-    const showEvent = 'keyboardWillShow';
-    const hideEvent = 'keyboardWillHide';
-
-    const showSub = Keyboard.addListener(showEvent, (e) => {
-      Animated.timing(keyboardY, {
-        toValue: -e.endCoordinates.height,
-        duration: Platform.OS === 'ios' ? e.duration : 200,
-        easing: KB_EASING,
-        useNativeDriver: true,
-      }).start();
+    const animateWith = (kbDuration: number) => {
+      if (kbDuration <= 0) return;
+      LayoutAnimation.configureNext({
+        duration: kbDuration,
+        update: { type: LayoutAnimation.Types.keyboard },
+      });
+    };
+    const showSub = Keyboard.addListener('keyboardWillShow', (e) => {
+      animateWith(e.duration);
+      setKeyboardHeight(e.endCoordinates.height);
     });
-    const hideSub = Keyboard.addListener(hideEvent, (e) => {
-      Animated.timing(keyboardY, {
-        toValue: 0,
-        duration: Platform.OS === 'ios' ? e.duration : 200,
-        easing: KB_EASING,
-        useNativeDriver: true,
-      }).start();
+    const hideSub = Keyboard.addListener('keyboardWillHide', (e) => {
+      animateWith(e.duration);
+      setKeyboardHeight(0);
     });
     return () => {
       showSub.remove();
       hideSub.remove();
     };
-  }, [keyboardAware, keyboardY]);
+  }, [keyboardAware]);
 
   // Open / close lifecycle
   useEffect(() => {
@@ -292,8 +294,7 @@ export function BottomSheet({
         useNativeDriver: true,
       }).start();
     } else if (mounted) {
-      // External request to close — reset keyboard offset then animate out.
-      keyboardY.setValue(0);
+      // External request to close — animate out (keyboard dismissal fires its own hide event).
       Animated.timing(openProgress, {
         toValue: 0,
         duration: CLOSE_DURATION,
@@ -308,7 +309,7 @@ export function BottomSheet({
     }
     // mounted is intentionally excluded to avoid re-running on internal mount toggle.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visible, dragY, keyboardY, openProgress]);
+  }, [visible, dragY, openProgress]);
 
   // Shared drag handling — used by both panResponder (handle/header/footer,
   // always active) and contentPanResponder (scrollable content, only active
@@ -407,15 +408,23 @@ export function BottomSheet({
   // openProgress 1 → translateY = 0 (rest position)
   const baseTranslateY = openProgress.interpolate({
     inputRange: [0, 1],
-    outputRange: [sheetHeight, 0],
+    // キーボード表示中に閉じても画面下まで抜けるよう、その高さぶんも下げる
+    outputRange: [sheetHeight + keyboardHeight, 0],
   });
-  const sheetTranslateY = Animated.add(Animated.add(baseTranslateY, dragY), keyboardY);
+  const sheetTranslateY = Animated.add(baseTranslateY, dragY);
   const scrimOpacity = openProgress.interpolate({
     inputRange: [0, 1],
     outputRange: [0, 1],
   });
 
-  const bottomInset = Math.max(insets.bottom, t.spacing['4']);
+  const keyboardVisible = keyboardHeight > 0;
+  // キーボード表示中はホームインジケータがキーボードに隠れるので safe area 分の余白は不要
+  const bottomInset = keyboardVisible ? t.spacing['3'] : Math.max(insets.bottom, t.spacing['4']);
+  // キーボード表示中は「キーボード上端〜ステータスバー下」に収まる高さまで縮める
+  const ratioHeight = Math.round(maxHeightRatio * windowHeight);
+  const sheetMaxHeight = keyboardVisible
+    ? Math.min(ratioHeight, windowHeight - keyboardHeight - insets.top - t.spacing['2'])
+    : ratioHeight;
   const hasFooter = !!(cached.primaryAction || cached.secondaryAction || cached.footerLeft);
 
   // Built-in × button (overridable via headerRight)
@@ -501,13 +510,12 @@ export function BottomSheet({
               borderTopLeftRadius: SHEET_RADIUS,
               borderTopRightRadius: SHEET_RADIUS,
               transform: [{ translateY: sheetTranslateY }],
-              maxHeight: `${Math.round(maxHeightRatio * 100)}%`,
-              // expandToFull: anchor the sheet at both top and bottom so it
-              // always occupies the full `maxHeightRatio` window. Without it
-              // the sheet shrinks to its intrinsic content height.
-              ...(expandToFull
-                ? { height: `${Math.round(maxHeightRatio * 100)}%` }
-                : null),
+              bottom: keyboardHeight,
+              maxHeight: sheetMaxHeight,
+              // expandToFull: always occupy the full available height so the
+              // footer position stays stable. Without it the sheet shrinks to
+              // its intrinsic content height.
+              ...(expandToFull ? { height: sheetMaxHeight } : null),
             },
           ]}
           accessibilityLabel={accessibilityLabel}

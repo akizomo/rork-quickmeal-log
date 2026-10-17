@@ -756,19 +756,21 @@ export function IdentityLogSheet() {
               via `footerLeft={<FooterPreview ... />}`, EC-cart style. */}
         </>
       ) : null}
+      {/* iOS は表示中の Modal の「兄弟」として別の Modal を出せない (何も表示されず黙って失敗する)。
+          シートの子として描画し、ネストした Modal として上に重ねる。 */}
+      {amountConfig ? (
+        <AmountEditDialog
+          visible={amountEditorOpen}
+          config={amountConfig}
+          initialValue={displayAmountValue}
+          onClose={(next) => {
+            setAmountEditorOpen(false);
+            if (next !== null) setAmountValue(isAltMode && altAmountSpec ? next * altAmountSpec.gramsPerUnit : next);
+          }}
+          testID="ils-amount-dialog"
+        />
+      ) : null}
     </BottomSheet>
-    {amountConfig ? (
-      <AmountEditDialog
-        visible={amountEditorOpen}
-        config={amountConfig}
-        initialValue={displayAmountValue}
-        onClose={(next) => {
-          setAmountEditorOpen(false);
-          if (next !== null) setAmountValue(isAltMode && altAmountSpec ? next * altAmountSpec.gramsPerUnit : next);
-        }}
-        testID="ils-amount-dialog"
-      />
-    ) : null}
     </>
   );
 }

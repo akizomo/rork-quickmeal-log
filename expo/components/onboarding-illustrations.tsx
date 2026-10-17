@@ -39,7 +39,11 @@ function BucketRevealAnimation() {
   return (
     <WebView
       source={{ html: BUCKET_REVEAL_HTML }}
-      style={{ flex: 1 }}
+      // 親 (intro の heroWrap) は alignItems: 'center'。WebView は固有幅を持たないため
+      // iOS では幅 0 に潰れて何も描画されなかった (Android はネイティブ側が幅を取るので表示されていた)。
+      // ラッパーごと親いっぱいに引き伸ばす。
+      containerStyle={{ flex: 1, alignSelf: 'stretch', width: '100%' }}
+      style={{ flex: 1, backgroundColor: 'transparent' }}
       scrollEnabled={false}
       bounces={false}
       showsVerticalScrollIndicator={false}
