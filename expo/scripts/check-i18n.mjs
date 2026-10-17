@@ -26,7 +26,8 @@ const JP_RE = /[　-鿿豈-﫿゠-ヿ぀-ゟ]/;
 const SCAN_DIRS = ['app', 'components', 'utils', 'hooks', 'providers'];
 
 // Directories to skip entirely (matched against each path segment)
-const EXCLUDE_DIR_NAMES = new Set(['dev', 'legal', '__tests__', 'node_modules', '.expo']);
+// spike: docs/SHEET_MIGRATION.md Phase 0 の使い捨て検証画面 (移行完了時に削除)
+const EXCLUDE_DIR_NAMES = new Set(['dev', 'spike', 'legal', '__tests__', 'node_modules', '.expo']);
 
 // File names to skip (matched against basename)
 const EXCLUDE_FILES = new Set([

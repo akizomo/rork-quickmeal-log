@@ -5,17 +5,24 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import React, { useEffect } from 'react';
-import { Platform } from 'react-native';
+import { LogBox, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { DishQuickEntrySheet } from '@/components/DishQuickEntrySheet';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { IdentityLogSheet } from '@/components/IdentityLogSheet';
-import { ThemeProvider, darkTheme, lightTheme, useTheme } from '@/design-system';
+import { ThemeProvider, darkTheme, formSheetOptions, lightTheme, useTheme } from '@/design-system';
 import { useT } from '@/hooks/useT';
 import { AppStateProvider, useAppState } from '@/providers/app-state-provider';
 import { HealthSyncProvider } from '@/providers/health-sync-provider';
 import { initIap } from '@/utils/iap';
 import { initSentry } from '@/utils/sentry';
+
+// エミュレータ等で課金が使えず RevenueCat のエラー toast が出続け、画面下部のボタンを覆って
+// 操作できなくなるため、Metro を EXPO_PUBLIC_SILENCE_LOGBOX=1 付きで起動したときだけ LogBox を黙らせる。
+// (ログ自体は Metro のターミナルに出続ける。開発ビルド以外では何もしない)
+if (__DEV__ && process.env.EXPO_PUBLIC_SILENCE_LOGBOX === '1') {
+  LogBox.ignoreAllLogs(true);
+}
 
 void SplashScreen.preventAutoHideAsync();
 
@@ -62,7 +69,37 @@ function RootLayoutNav() {
       <Stack.Screen name="settings" options={{ title: tr('nav.settings') }} />
       <Stack.Screen name="search-misses" options={{ title: tr('nav.searchMisses') }} />
       <Stack.Screen name="modal" options={{ presentation: 'modal', title: tr('nav.modal') }} />
+      {/* ネイティブ formSheet (docs/SHEET_MIGRATION.md 方針 B: 中身の高さで収まる小さいシートのみ) */}
+      <Stack.Screen name="record-body" options={formSheetOptions(t)} />
       {__DEV__ ? <Stack.Screen name="dev" options={{ headerShown: false }} /> : null}
+      {/* SHEET_MIGRATION.md Phase 0 スパイク (使い捨て)。テストビルドの設定画面からのみ導線あり */}
+      <Stack.Screen name="spike/index" />
+      <Stack.Screen name="spike/search" />
+      <Stack.Screen
+        name="spike/small-sheet"
+        options={{
+          presentation: 'formSheet',
+          headerShown: false,
+          sheetAllowedDetents: 'fitToContents',
+          sheetGrabberVisible: true,
+          sheetCornerRadius: 28,
+          contentStyle: { backgroundColor: t.colors.surface.default },
+        }}
+      />
+      <Stack.Screen
+        name="spike/tall-sheet"
+        options={{
+          presentation: 'formSheet',
+          headerShown: false,
+          sheetAllowedDetents: [0.5, 1.0],
+          sheetInitialDetentIndex: 1,
+          // 実験: シートが中の ScrollView を追跡して内容を約46pt ずらす現象の切り分け
+          sheetExpandsWhenScrolledToEdge: false,
+          sheetGrabberVisible: true,
+          sheetCornerRadius: 28,
+          contentStyle: { backgroundColor: t.colors.surface.default },
+        }}
+      />
     </Stack>
   );
 }

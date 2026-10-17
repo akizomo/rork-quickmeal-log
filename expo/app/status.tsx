@@ -1,21 +1,18 @@
 import { Stack, useRouter } from 'expo-router';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import {
   ActivityIndicator,
   Alert,
   Pressable,
   ScrollView,
   StyleSheet,
-  Text,
-  TextInput,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { SettingsDivider, SettingsLinkRow, SettingsListCard, SettingsSectionLabel } from '@/design-system';
 import { TRIAL_DURATION_DAYS, TRIAL_REMINDER_DAYS } from '@/constants/onboarding';
-import { Body, BottomSheet, Caption, Card, Heading, Icon, Label, MacroCard, useTheme } from '@/design-system';
-import { radius } from '@/design-system/tokens/primitives/radius';
+import { Body, Caption, Card, Heading, Icon, Label, MacroCard, useTheme } from '@/design-system';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { useHealthSyncContext } from '@/providers/health-sync-provider';
 import type { HealthSyncStatus } from '@/utils/health-sync';
@@ -29,12 +26,8 @@ export default function StatusRoute() {
   const router = useRouter();
   const theme = useTheme();
   const t = useT();
-  const { profile, settings, weights, addWeightEntry, addBodyFatEntry } = useAppState();
+  const { profile, settings, weights } = useAppState();
   const healthSync = useHealthSyncContext();
-  const [weightSheetVisible, setWeightSheetVisible] = useState<boolean>(false);
-  const [weightInput, setWeightInput] = useState<string>('');
-  const [bfSheetVisible, setBfSheetVisible] = useState<boolean>(false);
-  const [bfInput, setBfInput] = useState<string>('');
 
   const { unitSystem } = useUnitSystem();
   const trialDays = trialDaysRemaining(settings.trialStartedAtISO, TRIAL_DURATION_DAYS);
@@ -45,22 +38,6 @@ export default function StatusRoute() {
       : effectiveStatus === 'active'
       ? t('status.subscriptionSub.active')
       : t('status.subscriptionSub.inactive');
-
-  const submitWeight = () => {
-    const v = Number(weightInput);
-    if (!Number.isFinite(v) || v <= 0) return;
-    addWeightEntry(v);
-    setWeightInput('');
-    setWeightSheetVisible(false);
-  };
-
-  const submitBodyFat = () => {
-    const v = Number(bfInput);
-    if (!Number.isFinite(v) || v <= 0 || v > 60) return;
-    addBodyFatEntry(v);
-    setBfInput('');
-    setBfSheetVisible(false);
-  };
 
   const paceLabel = useMemo(() => {
     if (!profile.goalDirection || profile.goalDirection === 'maintain' || profile.goalDirection === 'recomp') return null;
@@ -134,7 +111,7 @@ export default function StatusRoute() {
               <View style={styles.recordButtonRow}>
                 <Pressable
                   style={styles.textButton}
-                  onPress={() => setWeightSheetVisible(true)}
+                  onPress={() => router.push({ pathname: '/record-body', params: { kind: 'weight' } })}
                   testID="status-update-weight"
                   accessibilityRole="button"
                   accessibilityLabel={t('status.recordWeight')}
@@ -143,7 +120,7 @@ export default function StatusRoute() {
                 </Pressable>
                 <Pressable
                   style={styles.textButton}
-                  onPress={() => setBfSheetVisible(true)}
+                  onPress={() => router.push({ pathname: '/record-body', params: { kind: 'bodyFat' } })}
                   testID="status-update-bf"
                   accessibilityRole="button"
                   accessibilityLabel={t('status.recordBodyFat')}
@@ -258,22 +235,6 @@ export default function StatusRoute() {
         </SafeAreaView>
       </View>
 
-      <WeightSheet
-        visible={weightSheetVisible}
-        onClose={() => setWeightSheetVisible(false)}
-        value={weightInput}
-        onChange={setWeightInput}
-        onSubmit={submitWeight}
-      />
-
-      <BodyFatSheet
-        visible={bfSheetVisible}
-        onClose={() => setBfSheetVisible(false)}
-        value={bfInput}
-        onChange={setBfInput}
-        onSubmit={submitBodyFat}
-        currentBfPct={profile.currentBodyFatPct ?? null}
-      />
     </>
   );
 }
@@ -353,97 +314,6 @@ function HeroMetric({ label, value, target, t }: { label: string; value: string;
   );
 }
 
-function BodyFatSheet({
-  visible,
-  onClose,
-  value,
-  onChange,
-  onSubmit,
-  currentBfPct,
-}: {
-  visible: boolean;
-  onClose: () => void;
-  value: string;
-  onChange: (v: string) => void;
-  onSubmit: () => void;
-  currentBfPct: number | null;
-}) {
-  const theme = useTheme();
-  const t = useT();
-  const diff =
-    currentBfPct !== null && value !== '' ? Number((Number(value) - currentBfPct).toFixed(1)) : null;
-  return (
-    <BottomSheet
-      visible={visible}
-      onClose={onClose}
-      title={t('status.bfSheet.title')}
-      scrollable={false}
-      primaryAction={{ label: t('common.save'), onPress: onSubmit }}
-      testID="bf-sheet"
-    >
-      <View style={[styles.weightInputWrap, { backgroundColor: theme.colors.surface.sunken }]}>
-        <TextInput
-          style={[styles.weightInput, { color: theme.colors.content.primary }]}
-          value={value}
-          onChangeText={onChange}
-          keyboardType="numeric"
-          placeholder="18.5"
-          placeholderTextColor={theme.colors.content.tertiary}
-          autoFocus
-          testID="bf-input"
-        />
-        <Text style={[styles.weightInputSuffix, { color: theme.colors.content.secondary }]}>%</Text>
-      </View>
-      {diff !== null && Number.isFinite(diff) ? (
-        <Caption tone="secondary">
-          {t('status.bfSheet.diff', { diff: `${diff > 0 ? '+' : ''}${diff}` })}
-        </Caption>
-      ) : null}
-    </BottomSheet>
-  );
-}
-
-function WeightSheet({
-  visible,
-  onClose,
-  value,
-  onChange,
-  onSubmit,
-}: {
-  visible: boolean;
-  onClose: () => void;
-  value: string;
-  onChange: (v: string) => void;
-  onSubmit: () => void;
-}) {
-  const theme = useTheme();
-  const t = useT();
-  return (
-    <BottomSheet
-      visible={visible}
-      onClose={onClose}
-      title={t('status.weightSheet.title')}
-      scrollable={false}
-      primaryAction={{ label: t('common.save'), onPress: onSubmit }}
-      testID="weight-sheet"
-    >
-      <View style={[styles.weightInputWrap, { backgroundColor: theme.colors.surface.sunken }]}>
-        <TextInput
-          style={[styles.weightInput, { color: theme.colors.content.primary }]}
-          value={value}
-          onChangeText={onChange}
-          keyboardType="numeric"
-          placeholder="56.4"
-          placeholderTextColor={theme.colors.content.tertiary}
-          autoFocus
-          testID="weight-input"
-        />
-        <Text style={[styles.weightInputSuffix, { color: theme.colors.content.secondary }]}>kg</Text>
-      </View>
-    </BottomSheet>
-  );
-}
-
 const styles = StyleSheet.create({
   page: { flex: 1 },
   scroll: { padding: 20, gap: 24, paddingBottom: 40 },
@@ -459,7 +329,4 @@ const styles = StyleSheet.create({
   kcalRow: { flexDirection: 'row', alignItems: 'flex-end' },
   pfcRow: { flexDirection: 'row', gap: 8 },
   section: { gap: 8 },
-  weightInputWrap: { flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: radius.md, paddingHorizontal: 16, paddingVertical: 16 },
-  weightInput: { flex: 1, fontSize: fs['3xl'], fontWeight: '700' },
-  weightInputSuffix: { fontSize: fs.md, fontWeight: '700' },
 });

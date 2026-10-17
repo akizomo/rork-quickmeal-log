@@ -7,6 +7,7 @@ import { useT } from '@/hooks/useT';
 import { SettingsDivider, SettingsLinkRow, SettingsListCard, SettingsSectionLabel } from '@/design-system';
 import { Body, Icon, Label, useTheme } from '@/design-system';
 import { useAppState } from '@/providers/app-state-provider';
+import { PAYWALL_SKIP_ENABLED } from '@/constants/iap';
 import { useLocale } from '@/hooks/useLocale';
 import { useUnitSystem } from '@/hooks/useUnitSystem';
 import { widgetRequestPin } from '@/utils/widget-bridge';
@@ -250,6 +251,20 @@ export default function SettingsRoute() {
                 )}
               </SettingsListCard>
             </View>
+
+            {/* テストビルド限定 (testflight / preview / dev)。SHEET_MIGRATION.md Phase 0 スパイク */}
+            {PAYWALL_SKIP_ENABLED ? (
+              <View style={styles.section}>
+                <SettingsSectionLabel>開発者向け {/* i18n-ignore: test-build only */}</SettingsSectionLabel>
+                <SettingsListCard>
+                  <SettingsLinkRow
+                    label="Sheet spike" // i18n-ignore: test-build only
+                    onPress={() => router.push('/spike')}
+                    testID="settings-link-spike"
+                  />
+                </SettingsListCard>
+              </View>
+            ) : null}
 
             {/* §情報 */}
             <View style={styles.section}>

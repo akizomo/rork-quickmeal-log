@@ -8,7 +8,7 @@
 import { radius, spacing, fontSize, fontWeight, lineHeight } from '../primitives';
 import type { SemanticColors } from '../semantic/types';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'raised';
+export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'raised' | 'plain';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
 export type ButtonTokens = {
@@ -98,6 +98,24 @@ export const makeButtonTokens = (sc: SemanticColors): ButtonTokens => ({
       label: {
         default: sc.content.primary,
         disabled: sc.action.secondary.onDisabled,
+      },
+      border: {
+        default: 'transparent',
+        pressed: 'transparent',
+      },
+    },
+    // iOS のナビゲーションバー / シート上部のテキストボタン (UIButton.Configuration.plain 相当)。
+    // 背景なし・文字はブランドのティント色 (action.text)。SheetScreen の「キャンセル」「保存」で使う (2026-10-17追加)。
+    // pressed は ghost と同じ淡いハイライトで面を一瞬だけ見せる。
+    plain: {
+      background: {
+        default: 'transparent',
+        pressed: sc.action.ghost.pressed,
+        disabled: 'transparent',
+      },
+      label: {
+        default: sc.action.text.default,
+        disabled: sc.action.text.disabled,
       },
       border: {
         default: 'transparent',

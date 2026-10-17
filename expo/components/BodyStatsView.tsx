@@ -5,16 +5,16 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   type TextStyle,
   useWindowDimensions,
   View,
 } from 'react-native';
 import Svg, { Circle, Line, Polyline, Text as SvgText } from 'react-native-svg';
 
-import { BottomSheet, useTheme } from '@/design-system';
+import { useRouter } from 'expo-router';
+
+import { useTheme } from '@/design-system';
 import { useT } from '@/hooks/useT';
-import { radius } from '@/design-system/tokens/primitives/radius';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { useAppState } from '@/providers/app-state-provider';
 import { useUnitSystem } from '@/hooks/useUnitSystem';
@@ -581,96 +581,13 @@ function TrendChart({
   );
 }
 
-// ---- 記録シート (インライン) -------------------------------------------------
-
-function WeightRecordSheet({
-  visible,
-  onClose,
-  value,
-  onChange,
-  onSubmit,
-}: {
-  visible: boolean;
-  onClose: () => void;
-  value: string;
-  onChange: (v: string) => void;
-  onSubmit: () => void;
-}) {
-  const theme = useTheme();
-  const t = useT();
-  return (
-    <BottomSheet
-      visible={visible}
-      onClose={onClose}
-      title={t('status.weightSheet.title')}
-      scrollable={false}
-      primaryAction={{ label: t('common.save'), onPress: onSubmit }}
-      testID="weight-sheet-stats"
-    >
-      <View style={[styles.inputWrap, { backgroundColor: theme.colors.surface.sunken }]}>
-        <TextInput
-          style={[styles.inputField, { color: theme.colors.content.primary }]}
-          value={value}
-          onChangeText={onChange}
-          keyboardType="numeric"
-          placeholder="56.4"
-          placeholderTextColor={theme.colors.content.tertiary}
-          autoFocus
-          testID="weight-input-stats"
-        />
-        <Text style={[styles.inputSuffix, { color: theme.colors.content.tertiary }]}>kg</Text>
-      </View>
-    </BottomSheet>
-  );
-}
-
-function BfRecordSheet({
-  visible,
-  onClose,
-  value,
-  onChange,
-  onSubmit,
-}: {
-  visible: boolean;
-  onClose: () => void;
-  value: string;
-  onChange: (v: string) => void;
-  onSubmit: () => void;
-}) {
-  const theme = useTheme();
-  const t = useT();
-  return (
-    <BottomSheet
-      visible={visible}
-      onClose={onClose}
-      title={t('status.bfSheet.title')}
-      scrollable={false}
-      primaryAction={{ label: t('common.save'), onPress: onSubmit }}
-      testID="bf-sheet-stats"
-    >
-      <View style={[styles.inputWrap, { backgroundColor: theme.colors.surface.sunken }]}>
-        <TextInput
-          style={[styles.inputField, { color: theme.colors.content.primary }]}
-          value={value}
-          onChangeText={onChange}
-          keyboardType="numeric"
-          placeholder="18.5"
-          placeholderTextColor={theme.colors.content.tertiary}
-          autoFocus
-          testID="bf-input-stats"
-        />
-        <Text style={[styles.inputSuffix, { color: theme.colors.content.tertiary }]}>%</Text>
-      </View>
-    </BottomSheet>
-  );
-}
-
 // ---- BodyStatsView ----------------------------------------------------------
 
 export function BodyStatsView({ period = 'month' }: { period?: BodyPeriod }) {
   const t = useTheme();
   const tr = useT();
-  const { weights, bodyFatEntries, profile, settings, addWeightEntry, addBodyFatEntry } = useAppState();
+  const { weights, bodyFatEntries, profile, settings } = useAppState();
+  const router = useRouter();
   const { unitSystem } = useUnitSystem();
   const wUnit = weightSuffix(unitSystem);
   const { width: screenWidth } = useWindowDimensions();
@@ -681,28 +598,6 @@ export function BodyStatsView({ period = 'month' }: { period?: BodyPeriod }) {
     d.setHours(0, 0, 0, 0);
     return d.getTime();
   }, []);
-
-  // 記録シート状態
-  const [weightSheetVisible, setWeightSheetVisible] = useState(false);
-  const [weightInput, setWeightInput] = useState('');
-  const [bfSheetVisible, setBfSheetVisible] = useState(false);
-  const [bfInput, setBfInput] = useState('');
-
-  const submitWeight = () => {
-    const v = Number(weightInput);
-    if (!Number.isFinite(v) || v <= 0) return;
-    addWeightEntry(v);
-    setWeightInput('');
-    setWeightSheetVisible(false);
-  };
-
-  const submitBf = () => {
-    const v = Number(bfInput);
-    if (!Number.isFinite(v) || v <= 0 || v > 60) return;
-    addBodyFatEntry(v);
-    setBfInput('');
-    setBfSheetVisible(false);
-  };
 
   const weightSeries = useMemo(
     () =>
@@ -768,7 +663,7 @@ export function BodyStatsView({ period = 'month' }: { period?: BodyPeriod }) {
             fractionDigits={1}
             color={t.colors.action.text.default}
             direction={profile.goalDirection ?? null}
-            onRecord={() => setWeightSheetVisible(true)}
+            onRecord={() => router.push({ pathname: '/record-body', params: { kind: 'weight' } })}
           />
           <View style={[styles.cardDivider, { backgroundColor: t.colors.border.default }]} />
           <TrendChart
@@ -798,7 +693,7 @@ export function BodyStatsView({ period = 'month' }: { period?: BodyPeriod }) {
             fractionDigits={1}
             color={t.colors.accent.default}
             direction={bfGoalDirection}
-            onRecord={() => setBfSheetVisible(true)}
+            onRecord={() => router.push({ pathname: '/record-body', params: { kind: 'bodyFat' } })}
           />
           <View style={[styles.cardDivider, { backgroundColor: t.colors.border.default }]} />
           <TrendChart
@@ -820,21 +715,6 @@ export function BodyStatsView({ period = 'month' }: { period?: BodyPeriod }) {
           />
         </View>
       </ScrollView>
-
-      <WeightRecordSheet
-        visible={weightSheetVisible}
-        onClose={() => { setWeightSheetVisible(false); setWeightInput(''); }}
-        value={weightInput}
-        onChange={setWeightInput}
-        onSubmit={submitWeight}
-      />
-      <BfRecordSheet
-        visible={bfSheetVisible}
-        onClose={() => { setBfSheetVisible(false); setBfInput(''); }}
-        value={bfInput}
-        onChange={setBfInput}
-        onSubmit={submitBf}
-      />
     </>
   );
 }
@@ -901,22 +781,5 @@ const styles = StyleSheet.create({
   },
   chartEmpty: {
     fontSize: fs.sm,
-  },
-  inputWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    borderRadius: radius.md,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-  },
-  inputField: {
-    flex: 1,
-    fontSize: fs['3xl'],
-    fontWeight: '700',
-  },
-  inputSuffix: {
-    fontSize: fs.md,
-    fontWeight: '700',
   },
 });

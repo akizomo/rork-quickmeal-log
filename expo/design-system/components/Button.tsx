@@ -2,6 +2,7 @@
  * Button — DS PoC コンポーネント。
  *
  * - variant: primary / secondary / ghost / raised (押せる面。surface.raised + elevation.xs)
+ *   / plain (iOS のナビゲーションバー型テキストボタン。背景なし・ティント色の文字)
  * - size: sm / md / lg
  * - C-2 方針: Platform 分岐はコンポーネント層で行う (iOS は active opacity、
  *   Android は ripple 相当の pressed color) — React Native Pressable が
