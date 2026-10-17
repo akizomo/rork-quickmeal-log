@@ -73,10 +73,11 @@
         }
       ],
       [
-        "react-native-health",
+        "@kingstinct/react-native-healthkit",
         {
-          "isClinicalDataEnabled": false,
-          "healthSharePermission": "歩数・運動・体重・体脂肪率などのヘルスデータを取り込んで、毎日のカロリー目標調整に使います。"
+          "NSHealthShareUsageDescription": "歩数・運動・体重・体脂肪率などのヘルスデータを取り込んで、毎日のカロリー目標調整に使います。",
+          "NSHealthUpdateUsageDescription": false,
+          "background": false
         }
       ],
       "react-native-health-connect",
