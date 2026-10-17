@@ -17,6 +17,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import type { TextInputInstance } from 'react-native';
 
 import {
   Body,
@@ -107,7 +108,7 @@ export function SearchSheet({ visible, onClose, onOpen }: Props) {
   const [debounced, setDebounced] = useState('');
   const [directInputOpen, setDirectInputOpen] = useState(false);
 
-  const inputRef = useRef<TextInput>(null);
+  const inputRef = useRef<TextInputInstance>(null);
 
   /**
    * 診断 (KPI計装 Layer 1): 直近で「ヒットしなかった」クエリを保持する。

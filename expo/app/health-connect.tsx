@@ -100,7 +100,7 @@ export default function HealthConnectRoute() {
       <View style={{ flex: 1, backgroundColor: t.colors.surface.default }} testID="health-connect-screen">
         <LinearGradient
           colors={[t.colors.surface.default, t.colors.surface.sunken]}
-          style={StyleSheet.absoluteFillObject}
+          style={StyleSheet.absoluteFill}
         />
         <SafeAreaView edges={['top', 'bottom']} style={{ flex: 1 }}>
           <ScrollView

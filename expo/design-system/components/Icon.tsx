@@ -58,5 +58,7 @@ export interface IconProps {
 }
 
 export function Icon({ name, size = 24, color }: IconProps) {
-  return <MaterialIcons name={ICON_GLYPH[name]} size={size} color={color} />;
+  // RN 0.88 の厳格な型で ColorValue と @expo/vector-icons の color 型が一致しなくなったため明示的に渡す
+  // (渡しているのはテーマの色文字列のみで、実体は変わらない)
+  return <MaterialIcons name={ICON_GLYPH[name]} size={size} color={color as string | undefined} />;
 }

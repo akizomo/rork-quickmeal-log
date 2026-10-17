@@ -181,7 +181,7 @@ export function Dialog({
       >
         {/* Scrim */}
         <Animated.View
-          style={[StyleSheet.absoluteFillObject, { opacity: scrimOpacity }]}
+          style={[StyleSheet.absoluteFill, { opacity: scrimOpacity }]}
           pointerEvents={visible ? 'auto' : 'none'}
         >
           {Platform.OS === 'web' ? (
@@ -304,7 +304,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   scrimTint: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: `rgba(0,0,0,${SCRIM_TINT_OPACITY})`,
   },
   header: {

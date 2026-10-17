@@ -108,7 +108,7 @@ export default function PaywallRoute() {
     <>
       <Stack.Screen options={{ headerShown: false, presentation: 'modal' }} />
       <View style={styles.page} testID="paywall-screen">
-        <LinearGradient colors={[t.colors.surface.default, t.colors.surface.raised]} style={StyleSheet.absoluteFillObject} />
+        <LinearGradient colors={[t.colors.surface.default, t.colors.surface.raised]} style={StyleSheet.absoluteFill} />
         <SafeAreaView edges={['top', 'bottom']} style={styles.safe}>
           {/* 強制課金型なので閉じるボタンなし。ヘッダー余白だけ確保。 */}
           <View style={styles.closeRow} />

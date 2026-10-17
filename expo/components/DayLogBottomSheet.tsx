@@ -303,7 +303,7 @@ DayLogBottomSheet.displayName = 'DayLogBottomSheet';
 
 const styles = StyleSheet.create({
   backdrop: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   sheet: {
     position: 'absolute',

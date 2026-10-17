@@ -7,6 +7,7 @@
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import { Alert, Platform, TextInput, View } from 'react-native';
+import type { TextInputInstance } from 'react-native';
 
 import { Body, Button, Dialog, Heading, useTheme } from '@/design-system';
 import { radius } from '@/design-system/tokens/primitives/radius';
@@ -15,7 +16,7 @@ import { SpikeToast, useSpikeToast } from './_toast';
 export default function SpikeSmallSheet() {
   const router = useRouter();
   const t = useTheme();
-  const inputRef = useRef<TextInput>(null);
+  const inputRef = useRef<TextInputInstance>(null);
   const [value, setValue] = useState('62.4');
   const [dialogOpen, setDialogOpen] = useState(false);
   const toast = useSpikeToast();

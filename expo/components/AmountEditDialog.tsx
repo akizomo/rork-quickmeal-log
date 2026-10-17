@@ -29,6 +29,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import type { TextInputInstance } from 'react-native';
 
 import { Chip, Dialog, useTheme } from '@/design-system';
 import { useT } from '@/hooks/useT';
@@ -93,7 +94,7 @@ export function AmountEditDialog({
   const t = useTheme();
   const tr = useT();
   const resolvedTitle = title ?? tr('amountEdit.defaultTitle');
-  const inputRef = useRef<TextInput>(null);
+  const inputRef = useRef<TextInputInstance>(null);
 
   // draft: 常に valid (clamp済み・step揃い)
   const [draft, setDraft] = useState<number>(() =>
