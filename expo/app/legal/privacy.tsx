@@ -9,7 +9,7 @@ import { useLocale } from '@/hooks/useLocale';
 const CONTENT = {
   ja: {
     title: 'プライバシーポリシー',
-    lastUpdated: '最終更新日: 2026-04-28',
+    lastUpdated: '最終更新日: 2026-10-16',
     intro: 'Hachibu (以下「本アプリ」) は、ユーザーのプライバシーを尊重します。本ポリシーは、本アプリが収集する情報、利用目的、および管理方法について説明します。',
     sections: [
       {
@@ -28,6 +28,18 @@ const CONTENT = {
             title: '1.3 課金情報',
             body: '購入処理は Apple App Store / Google Play Store が直接行い、本アプリはクレジットカード情報を取得しません。',
           },
+          {
+            title: '1.4 ヘルスデータ (Apple ヘルスケア / Health Connect)',
+            body: 'ユーザーが許可した場合に限り、以下のデータを読み取ります:\n· 歩数\n· アクティブエネルギー (消費カロリー)\n· ワークアウト\n· 体重・体脂肪率\n\nこれらは端末内で、1日のカロリー目安の調整と記録の表示にのみ使います。ヘルスデータを外部サーバーや iCloud に送信・保存することはなく、広告・マーケティングへの利用や第三者への提供もしません。本アプリからヘルスデータへの書き込みは行いません。許可は端末の設定からいつでも取り消せます。',
+          },
+          {
+            title: '1.5 カメラとバーコード',
+            body: 'カメラはバーコードの読み取りにのみ使います。撮影した画像は保存も送信もしません。読み取ったバーコードの番号は、栄養情報を調べるために外部の食品データベース Open Food Facts へ送信されます。',
+          },
+          {
+            title: '1.6 クラッシュ・エラー情報',
+            body: 'アプリの不具合を見つけて直すため、Sentry を使ってクラッシュやエラーの診断情報 (端末の種類、OS とアプリのバージョン、エラーの内容と発生箇所など) を送信します。この情報を広告やトラッキングに使うことはありません。',
+          },
         ],
       },
       {
@@ -37,12 +49,12 @@ const CONTENT = {
       },
       {
         title: '3. データの削除',
-        body: 'アプリを削除すると、端末内のすべてのデータが消去されます。',
+        body: 'アプリを削除すると、端末内のすべてのデータが消去されます。RevenueCat が保持する購入情報の削除をご希望の場合は、contact@akizony.com までご連絡ください。',
         subsections: [],
       },
       {
         title: '4. クッキー / トラッキング',
-        body: '本アプリはトラッキング目的のクッキー、IDFA、第三者解析ツールを使用しません。',
+        body: '本アプリは広告やトラッキングを目的としたクッキー、IDFA、解析ツールを使用しません。',
         subsections: [],
       },
       {
@@ -64,7 +76,7 @@ const CONTENT = {
   },
   en: {
     title: 'Privacy Policy',
-    lastUpdated: 'Last updated: April 28, 2026',
+    lastUpdated: 'Last updated: October 16, 2026',
     intro: 'Hachibu (the "App") respects your privacy. This policy explains what information the App collects, how it is used, and how it is managed.',
     sections: [
       {
@@ -83,6 +95,18 @@ const CONTENT = {
             title: '1.3 Payment Information',
             body: 'All purchases are processed directly by the Apple App Store or Google Play Store. The App does not access your credit card information.',
           },
+          {
+            title: '1.4 Health Data (Apple Health / Health Connect)',
+            body: 'Only if you grant permission, the App reads the following data:\n· Steps\n· Active energy (calories burned)\n· Workouts\n· Weight and body fat percentage\n\nThis data is used on your device only, to adjust your daily calorie target and display your records. Health data is never sent to or stored on external servers or iCloud, never used for advertising or marketing, and never shared with third parties. The App does not write any data to Apple Health or Health Connect. You can revoke permission at any time in your device settings.',
+          },
+          {
+            title: '1.5 Camera and Barcodes',
+            body: 'The camera is used only to scan barcodes. Camera images are never saved or sent. The scanned barcode number is sent to Open Food Facts, an external food database, to look up nutrition information.',
+          },
+          {
+            title: '1.6 Crash and Error Reports',
+            body: 'To find and fix problems, the App uses Sentry to send crash and error diagnostics (such as device model, OS and app version, and the error details and location). This information is never used for advertising or tracking.',
+          },
         ],
       },
       {
@@ -92,12 +116,12 @@ const CONTENT = {
       },
       {
         title: '3. Data Deletion',
-        body: 'Deleting the App removes all data stored on your device.',
+        body: 'Deleting the App removes all data stored on your device. To request deletion of purchase information held by RevenueCat, please contact contact@akizony.com.',
         subsections: [],
       },
       {
         title: '4. Cookies / Tracking',
-        body: 'The App does not use cookies, IDFA, or third-party analytics for tracking purposes.',
+        body: 'The App does not use cookies, IDFA, or analytics tools for advertising or tracking purposes.',
         subsections: [],
       },
       {

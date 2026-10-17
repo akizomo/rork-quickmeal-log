@@ -17,6 +17,9 @@
       "supportsTablet": false,
       "bundleIdentifier": "app.akizony.hachibu",
       "buildNumber": "1",
+      "config": {
+        "usesNonExemptEncryption": false
+      },
       "privacyManifests": {
         "NSPrivacyTracking": false,
         "NSPrivacyTrackingDomains": [],
@@ -24,25 +27,25 @@
         "NSPrivacyAccessedAPITypes": [
           {
             "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
-            "NSPrivacyAccessedAPIReasons": [
+            "NSPrivacyAccessedAPITypeReasons": [
               "CA92.1"
             ]
           },
           {
             "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryFileTimestamp",
-            "NSPrivacyAccessedAPIReasons": [
+            "NSPrivacyAccessedAPITypeReasons": [
               "C617.1"
             ]
           },
           {
             "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategorySystemBootTime",
-            "NSPrivacyAccessedAPIReasons": [
+            "NSPrivacyAccessedAPITypeReasons": [
               "35F9.1"
             ]
           },
           {
             "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryDiskSpace",
-            "NSPrivacyAccessedAPIReasons": [
+            "NSPrivacyAccessedAPITypeReasons": [
               "E174.1"
             ]
           }
@@ -87,6 +90,7 @@
         }
       ],
       "./plugins/health-connect-manifest.plugin.js",
+      "./plugins/ios-pods-deployment-target.plugin.js",
       "@sentry/react-native",
       "expo-localization"
     ],

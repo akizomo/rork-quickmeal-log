@@ -33,6 +33,11 @@ cd expo
 npx eas-cli@18.12.2 build --profile production --platform ios --non-interactive
 ```
 
+> **iOS で Apple ID ログインが要る操作 (証明書の新規作成・更新) は `eas-cli@25.0.0` 以上を使う。** 18.12.2 では Apple 側の認証変更により `Authentication with Apple Developer Portal failed! iTunes service key is empty` で失敗する (2026-10-16 確認)。`npx` は eas-cli の取得に10分以上かかったため `bunx eas-cli@25.0.0 ...` を使った。証明書が EAS に保存された後の通常ビルドは `--non-interactive` で動く想定 (未検証)。
+>
+> **iOS のビルドイメージは `eas.json` で `macos-sequoia-15.6-xcode-26.0` (= EAS の `sdk-54` 対応イメージ) に固定している。外さないこと。**
+> Xcode 27 (iOS 27 SDK) でビルドすると UIScene ライフサイクル必須となり、RN 0.81 / Expo SDK 54 のアプリは起動直後に `EXC_BREAKPOINT` で落ちる (2026-10-16 ローカル Xcode 27.1 で実証)。`auto` / `latest` エイリアスは将来 Xcode 27 系へ動き得るため使わない。Expo SDK を上げるときはイメージも対応する `sdk-XX` の実体へ同時に更新する。
+
 ---
 
 ## 1. 前提条件
@@ -111,6 +116,9 @@ npx eas-cli@18.12.2 whoami
 | **development** | Dev Client (Expo Go の代わり) | APK | Simulator | ❌ |
 | **preview** | 内部配布・テスター向け | APK | Real device | ❌ |
 | **production** | 製品版 / ストア提出 | AAB | App Store | ✅ |
+| **testflight** | production と同設定 + paywall スキップボタン有効 (`EXPO_PUBLIC_ALLOW_PAYWALL_SKIP=true`)。TestFlight 実機確認専用 | (AAB) | App Store (TestFlight) | ✅ |
+
+> ⚠️ **審査に提出するビルドは必ず `production` プロファイル**。`testflight` / `preview` ビルドは paywall に `[TEST] Paywall スキップ` が出る。App Store Connect でバージョンに紐付けるビルド番号を間違えないこと (TestFlight 上はどちらも同じアプリ・連番で並ぶ)。
 
 **選び方の目安**:
 - 友人 5 人にインストールさせて即動作確認したい → `preview`
@@ -198,6 +206,9 @@ find expo/android -name "*.kt" | xargs grep -l "cornerRadius"
 ---
 
 ## 6. トラブルシューティング
+
+### iOS アプリが起動直後に落ちる (`NoSceneLifecycleAdoption`)
+クラッシュレポートに `_UIApplicationEvaluateRuntimeIssueForNoSceneLifecycleAdoption` があれば、Xcode 27 系でビルドされている。`eas.json` の `ios.image` が Xcode 26 系に固定されているか、ローカルなら `xcodebuild -version` を確認する。ローカル Mac が Xcode 27 しか無い場合、Simulator 確認は諦めて EAS → TestFlight で確認する。
 
 ### 配布したビルドが splash 表示直後にクラッシュする
 

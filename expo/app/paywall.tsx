@@ -5,9 +5,9 @@ import { ActivityIndicator, Alert, Linking, Pressable, ScrollView, StyleSheet, T
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { PurchasesOffering, PurchasesPackage } from 'react-native-purchases';
 
-import { TRIAL_DAYS } from '@/constants/iap';
+import { PAYWALL_SKIP_ENABLED, TRIAL_DAYS } from '@/constants/iap';
 import { LEGAL_LINKS } from '@/constants/onboarding';
-import { Badge, Body, Icon, Label, useTheme, type Theme } from '@/design-system';
+import { Badge, Body, Button, Icon, Label, useTheme, type Theme } from '@/design-system';
 import { radius } from '@/design-system/tokens/primitives/radius';
 import { fontSize as fs, lineHeight as lh } from '@/design-system/tokens/primitives/typography';
 import { useAppState } from '@/providers/app-state-provider';
@@ -35,8 +35,12 @@ export default function PaywallRoute() {
 
   const isTrialOrActive = settings.subscriptionStatus === 'trialing' || settings.subscriptionStatus === 'active';
 
+  // 取得失敗時に再試行できるよう、loadAttempt を依存に入れて再フェッチする
+  const [loadAttempt, setLoadAttempt] = useState<number>(0);
+
   useEffect(() => {
     let cancelled = false;
+    setLoading(true);
     fetchOffering()
       .then((res) => {
         if (cancelled) return;
@@ -49,7 +53,7 @@ export default function PaywallRoute() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [loadAttempt]);
 
   const handlePurchase = useCallback(
     async (pkg: PurchasesPackage) => {
@@ -132,7 +136,14 @@ export default function PaywallRoute() {
             ) : !offering ? (
               <View style={styles.loadingBox}>
                 <Text style={styles.priceSub}>{tr('paywall.loadError')}</Text>
-                <Text style={styles.priceHint}>{tr('paywall.iapSetupHint')}</Text>
+                <Text style={styles.priceHint}>{tr('paywall.loadErrorHint')}</Text>
+                <Button
+                  label={tr('paywall.reload')}
+                  variant="secondary"
+                  size="sm"
+                  onPress={() => setLoadAttempt((n) => n + 1)}
+                  testID="paywall-reload"
+                />
               </View>
             ) : (
               <View style={{ gap: 12 }}>
@@ -140,6 +151,7 @@ export default function PaywallRoute() {
                   <PlanCard
                     pkg={annualPkg}
                     label={tr('paywall.annual')}
+                    priceLabel={tr('paywall.perYear', { price: annualPkg.product.priceString })}
                     badgeLabel={tr('paywall.discount')}
                     isPurchasing={purchasing === annualPkg.identifier}
                     disabled={!!purchasing || isTrialOrActive}
@@ -150,6 +162,7 @@ export default function PaywallRoute() {
                   <PlanCard
                     pkg={monthlyPkg}
                     label={tr('paywall.monthly')}
+                    priceLabel={tr('paywall.perMonth', { price: monthlyPkg.product.priceString })}
                     isPurchasing={purchasing === monthlyPkg.identifier}
                     disabled={!!purchasing || isTrialOrActive}
                     onPress={() => handlePurchase(monthlyPkg)}
@@ -162,16 +175,19 @@ export default function PaywallRoute() {
           </ScrollView>
 
           <View style={styles.footer}>
-            {__DEV__ ? (
+            {PAYWALL_SKIP_ENABLED ? (
               <Pressable
                 onPress={() => {
-                  updateSettingsValues({ subscriptionStatus: 'trialing' });
+                  updateSettingsValues({
+                    subscriptionStatus: 'trialing',
+                    trialStartedAtISO: settings.trialStartedAtISO ?? new Date().toISOString(),
+                  });
                   router.replace('/');
                 }}
                 style={{ alignItems: 'center', paddingVertical: 8 }}
               >
                 <Text style={{ fontSize: fs.xs, color: t.colors.status.danger.default, fontWeight: '700' }}>
-                  [DEV] Paywall スキップ {/* i18n-ignore: dev-only label */}
+                  {__DEV__ ? '[DEV]' : '[TEST]'} Paywall スキップ {/* i18n-ignore: dev/test-only label */}
                 </Text>
               </Pressable>
             ) : null}
@@ -204,6 +220,7 @@ export default function PaywallRoute() {
 function PlanCard({
   pkg,
   label,
+  priceLabel,
   badgeLabel,
   isPurchasing,
   disabled,
@@ -211,6 +228,8 @@ function PlanCard({
 }: {
   pkg: PurchasesPackage;
   label: string;
+  /** 「¥480 / 月」のように請求額と期間をセットで示す (App Store 審査 3.1.2) */
+  priceLabel: string;
   badgeLabel?: string;
   isPurchasing: boolean;
   disabled: boolean;
@@ -219,7 +238,6 @@ function PlanCard({
   const t = useTheme();
   const tr = useT();
   const styles = useMemo(() => makeStyles(t), [t]);
-  const product = pkg.product;
   return (
     <Pressable
       onPress={onPress}
@@ -230,7 +248,7 @@ function PlanCard({
       ]}
       testID={`paywall-plan-${pkg.packageType}`}
       accessibilityRole="button"
-      accessibilityLabel={`${label} ${product.priceString}`}
+      accessibilityLabel={`${label} ${priceLabel}`}
       accessibilityHint={tr('paywall.a11y.purchaseHint')}
       accessibilityState={{ disabled, busy: isPurchasing }}
     >
@@ -241,7 +259,7 @@ function PlanCard({
             <Badge tone="accent" size="sm">{badgeLabel}</Badge>
           ) : null}
         </View>
-        <Text style={styles.priceSub}>{product.priceString}</Text>
+        <Text style={styles.priceSub}>{priceLabel}</Text>
       </View>
       {isPurchasing ? (
         <ActivityIndicator color={t.colors.action.text.default} />
