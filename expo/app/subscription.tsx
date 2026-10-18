@@ -111,12 +111,13 @@ export default function SubscriptionRoute() {
             <View style={styles.section}>
               <SettingsSectionLabel>{t('subscription.sections.plan')}</SettingsSectionLabel>
               <SettingsListCard>
-                {status !== 'active' ? (
+                {/* トライアル中・契約中は出さない: トライアル中はすでにストアのサブスクを開始済みで、
+                    paywall のプラン選択は無効になる (押せない画面に飛ぶだけ)。プラン変更は「サブスクリプションを管理」から。
+                    購入の入口が要るのは未加入 (期限切れ・解約後) のときだけ。 */}
+                {status !== 'active' && status !== 'trialing' ? (
                   <>
                     <SettingsLinkRow
-                      label={status === 'trialing'
-                        ? t('subscription.planActions.selectTrialing')
-                        : t('subscription.planActions.buyInactive')}
+                      label={t('subscription.planActions.buyInactive')}
                       onPress={() => router.push('/paywall')}
                       testID="subscription-link-paywall"
                     />

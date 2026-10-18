@@ -256,7 +256,6 @@
     "trialBody": "本登録後は、選んだプランで自動更新されます。解約は App Store のサブスクリプション設定からいつでも可能です。",
     "trialBodyAndroid": "本登録後は月額¥480 または 年額¥4,800 で自動更新されます。解約は Google Play のサブスクリプション設定からいつでも可能です。",
     "planActions": {
-      "selectTrialing": "プランを選択する",
       "buyInactive": "購入してプレミアムを開始",
       "restore": "購入を復元",
       "manage": "サブスクリプションを管理",

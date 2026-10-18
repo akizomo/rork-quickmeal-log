@@ -256,7 +256,6 @@
     "trialBody": "After the trial, your chosen plan renews automatically. Cancel anytime from your App Store subscription settings.",
     "trialBodyAndroid": "After the trial, your chosen plan renews automatically. Cancel anytime from your Google Play subscription settings.",
     "planActions": {
-      "selectTrialing": "Choose a plan",
       "buyInactive": "Start Premium",
       "restore": "Restore Purchase",
       "manage": "Manage Subscription",
