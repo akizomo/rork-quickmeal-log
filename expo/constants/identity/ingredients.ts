@@ -1309,6 +1309,33 @@ const BUCKET_VEGGIES: Identity[] = [
     searchTags: ['コーン', 'とうもろこし', 'コーン缶'],
   },
   {
+    // 海藻。「わかめ」「もずく」が検索で0件 (ベンチマークの既知の失敗) で、温野菜や
+    // 煮物・和え物で代用すると記録に別の名前が残る。日常的に食べるのに正しい名前の
+    // 着地先が無かったため新設 (IA spec v1.9)。
+    // カロリーは1食分で 5〜25kcal とごく小さい。種類は「名前で探せて、記録に正しく
+    // 残る」ためのもので、マクロの段差は小さい (もずく酢の三杯酢の糖だけ動く)。
+    // ひじき煮は side_seasoned、海苔をごはんに乗せるのは Add-on (`nori_furikake`) のまま。
+    // 1食分の目安 (日本食品標準成分表(八訂) から換算):
+    //   わかめ(水戻し) 30g・めかぶ 1パック 約40g → 平均 10/0.7/0.1/2.5
+    //   もずく酢 1パック 約70g (三杯酢込み) → 25/0.3/0.1/5.5
+    //   焼きのり 全形1枚 3g → 9/1.2/0.1/1.3
+    id: 'seaweed',
+    label: '海藻',
+    searchTags: [
+      'かいそう', '海藻', 'わかめ', 'ワカメ', '若布', 'めかぶ', 'もずく', '海雲', 'もずくず', 'もずく酢',
+      'やきのり', '焼きのり', '焼き海苔', 'あじつけのり', '味付けのり', '味付け海苔', 'のり', '海苔',
+    ],
+    primaryHome: { tab: 'ingredient', bucket: 'veggies' },
+    defaultMacro: { kcal: 10, protein: 0.7, fat: 0.1, carbs: 2.5 },
+    referenceDescription: '1 = 小鉢1つ・1パック・のり1枚。カロリーはごく小さいので、だいたいで大丈夫',
+    amount: { unit: 'piece', default: 1, unitLabel: '食分', chips: [{ label: '1', value: 1 }, { label: '2', value: 2 }] },
+    attributes: [
+      { key: 'wakame', label: 'わかめ・めかぶ', isDefault: true, searchTags: ['わかめ', 'めかぶ'] },
+      { key: 'mozuku', label: 'もずく酢', searchTags: ['もずく', 'もずくず', 'もずく酢'], factor: { kcal: 2.5, protein: 0.43, carbs: 2.2 } },
+      { key: 'nori', label: 'のり', searchTags: ['のり', '海苔', 'やきのり', '焼きのり', '焼き海苔', 'あじつけのり', '味付けのり', '味付け海苔'], factor: { kcal: 0.9, protein: 1.7, carbs: 0.52 } },
+    ],
+  },
+  {
     id: 'side_seasoned',
     label: '煮物・和え物',
     // ひらがな形だけだと漢字クエリが一切当たらない (normalize は漢字→読み変換を

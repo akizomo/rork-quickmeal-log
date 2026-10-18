@@ -63,7 +63,7 @@ export const TUNING_CORPUS: Item[] = [
     ['バナナ', 'banana'], ['りんご', 'apple_pear'], ['みかん', 'citrus'], ['オレンジ', 'citrus'], ['いちご', 'ichigo'],
     ['ぶどう', 'berry/grape'], ['ブルーベリー', 'berry/blueberry'], ['キウイ', 'fruit_other'], ['桃', 'fruit_other'], ['スイカ', 'fruit_other'],
     ['メロン', 'fruit_other'], ['パイナップル', 'fruit_other'], ['梨', 'apple_pear'], ['柿', 'fruit_other'], ['アボカド', 'avocado'],
-    ['ドライフルーツ', 'dried_fruit'], ['レーズン', 'dried_fruit'], ['もずく', ['side_seasoned', 'veg_cooked']], ['わかめ', ['side_seasoned', 'veg_cooked', 'soup']], ['オクラ', 'veg_cooked'],
+    ['ドライフルーツ', 'dried_fruit'], ['レーズン', 'dried_fruit'], ['もずく', ['seaweed/mozuku', 'side_seasoned', 'veg_cooked']], ['わかめ', ['seaweed', 'side_seasoned', 'veg_cooked', 'soup']], ['めかぶ', 'seaweed'], ['焼きのり', 'seaweed/nori'], ['味付けのり', 'seaweed/nori'], ['海藻', 'seaweed'], ['オクラ', 'veg_cooked'],
   ]),
   ...C('乳製品・油', 'base', [
     ['牛乳', 'milk'], ['低脂肪乳', 'milk/low_fat'], ['ヨーグルト', 'yogurt'], ['ギリシャヨーグルト', 'yogurt/greek'], ['飲むヨーグルト', 'yogurt/drink'],
