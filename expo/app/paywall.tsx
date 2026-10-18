@@ -16,6 +16,7 @@ import { useLocale } from '@/hooks/useLocale';
 import { fetchOffering, purchase } from '@/utils/iap';
 import {
   cancelTrialExpiryNotification,
+  getTrialNotificationPermissionStatus,
   requestTrialNotificationPermission,
   scheduleTrialExpiryNotification,
 } from '@/utils/trial-notifications';
@@ -67,6 +68,14 @@ export default function PaywallRoute() {
 
           // トライアル開始 → 終了48h前のローカル通知をスケジュール
           // 通知許諾は購入完了直後に文脈一致でリクエスト (ユーザー保護のため)
+          // 許可ダイアログの前に、何のための通知かを先に伝える (初回のみ)
+          if ((await getTrialNotificationPermissionStatus()) === 'undetermined') {
+            await new Promise<void>((resolve) => {
+              Alert.alert(tr('paywall.alerts.notifyPreTitle'), tr('paywall.alerts.notifyPreBody'), [
+                { text: tr('paywall.alerts.notifyPreOk'), onPress: () => resolve() },
+              ], { onDismiss: () => resolve() });
+            });
+          }
           await requestTrialNotificationPermission();
           const trialStartedAtISO = new Date().toISOString();
           await scheduleTrialExpiryNotification(trialStartedAtISO, TRIAL_DAYS, uiLanguage);
@@ -103,6 +112,13 @@ export default function PaywallRoute() {
 
   const monthlyPkg = offering?.monthly ?? offering?.availablePackages.find((p) => p.packageType === 'MONTHLY');
   const annualPkg = offering?.annual ?? offering?.availablePackages.find((p) => p.packageType === 'ANNUAL');
+
+  // 年額が月額の何ヶ月分お得か。価格は地域で変わるので固定文言にせず、ストアの価格から計算する
+  // (例: ¥480 × 12 = ¥5,760 に対して ¥4,800 → 約2ヶ月分)。1ヶ月未満しか差が無ければ従来の「お得」に戻す
+  const savedMonths =
+    monthlyPkg && annualPkg && monthlyPkg.product.price > 0
+      ? Math.round((monthlyPkg.product.price * 12 - annualPkg.product.price) / monthlyPkg.product.price)
+      : 0;
 
   return (
     <>
@@ -152,7 +168,7 @@ export default function PaywallRoute() {
                     pkg={annualPkg}
                     label={tr('paywall.annual')}
                     priceLabel={tr('paywall.perYear', { price: annualPkg.product.priceString })}
-                    badgeLabel={tr('paywall.discount')}
+                    badgeLabel={savedMonths >= 1 ? tr('paywall.discountMonths', { months: savedMonths }) : tr('paywall.discount')}
                     isPurchasing={purchasing === annualPkg.identifier}
                     disabled={!!purchasing || isTrialOrActive}
                     onPress={() => handlePurchase(annualPkg)}

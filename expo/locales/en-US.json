@@ -208,6 +208,12 @@
       "providerUpdate": "Update Health Connect",
       "syncError": "Sync error · Check permissions",
       "syncedAt": "Health sync · {{time}}",
+      "syncedNoData": "No data found · Check permissions",
+      "noDataTitle": "Couldn't get any Health data",
+      "noDataBody": "There may be no data in Health, or Hachibu may not have permission to read it.\n\nYou can change this in the Health app: tap your profile at the top right → Apps → Hachibu.",
+      "openHealth": "Open Health",
+      "retrySync": "Sync again",
+
       "sync": "Health sync"
     },
     "timeAgo": {
@@ -247,7 +253,8 @@
       "inactive": "Purchase a plan to unlock all features"
     },
     "trialEndDate": "Billing starts: {{date}}",
-    "trialBody": "After the trial, you'll be billed automatically. Cancel anytime from your subscription settings.",
+    "trialBody": "After the trial, your chosen plan renews automatically. Cancel anytime from your App Store subscription settings.",
+    "trialBodyAndroid": "After the trial, your chosen plan renews automatically. Cancel anytime from your Google Play subscription settings.",
     "planActions": {
       "selectTrialing": "Choose a plan",
       "buyInactive": "Start Premium",
@@ -283,6 +290,7 @@
     "perMonth": "{{price}} / month",
     "perYear": "{{price}} / year",
     "discount": "Best value",
+    "discountMonths": "Save {{months}} months",
     "select": "Select",
     "restore": "Restore Purchase",
     "a11y": {
@@ -290,6 +298,9 @@
     },
     "alerts": {
       "purchaseError": "Purchase failed",
+      "notifyPreTitle": "We'll remind you before it ends",
+      "notifyPreBody": "We'll send a notification 2 days before your free trial ends. On the next screen, please allow notifications.",
+      "notifyPreOk": "Continue",
       "purchaseErrorRetry": "Please try again later.",
       "restoreFail": "No purchase found to restore",
       "restoreFailBody": "Please check your Apple ID or Google Account."

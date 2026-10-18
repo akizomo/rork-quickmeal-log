@@ -27,6 +27,11 @@ export interface UseHealthSyncReturn {
   lastSyncedAt: string | null;
   /** 最後の同期エラーメッセージ */
   lastError: string | null;
+  /**
+   * 直近の同期で 1 件も取れなかったか。iOS の HealthKit は「読み取りを拒否されたか」を教えない
+   * (拒否してもデータが空で返るだけ) ため、「同期しました」と言い切らず許可の確認を案内する判断に使う。
+   */
+  lastSyncEmpty: boolean;
   /** 手動同期を実行 */
   syncNow: () => Promise<void>;
   /** スロットル判定を経た同期。画面フォーカス時など「必要なら軽量に」呼ぶ用途。 */
@@ -65,6 +70,7 @@ export function useHealthSync(): UseHealthSyncReturn {
   const [syncing, setSyncing] = useState<boolean>(false);
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
   const [lastError, setLastError] = useState<string | null>(null);
+  const [lastSyncEmpty, setLastSyncEmpty] = useState<boolean>(false);
   const didAutoSyncRef = useRef<boolean>(false);
   /** 並列同期防止ミューテックス。useState は closure で古い値を読むため ref で管理する */
   const syncingRef = useRef<boolean>(false);
@@ -128,6 +134,12 @@ export function useHealthSync(): UseHealthSyncReturn {
         syncedAt: result.syncedAt,
       });
       setLastSyncedAt(result.syncedAt);
+      setLastSyncEmpty(
+        result.weights.length === 0 &&
+          result.bodyFats.length === 0 &&
+          result.workouts.length === 0 &&
+          result.dailyActivities.length === 0
+      );
       return result;
     } catch (err) {
       const message = err instanceof Error ? err.message : '同期に失敗しました'; // i18n-ignore: error.message is OS-provided; this fallback is an unreachable guard
@@ -227,6 +239,7 @@ export function useHealthSync(): UseHealthSyncReturn {
     syncing,
     lastSyncedAt,
     lastError,
+    lastSyncEmpty,
     syncNow,
     syncIfDue,
     requestPermissions,
