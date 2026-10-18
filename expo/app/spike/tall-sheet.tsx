@@ -22,7 +22,7 @@ export default function SpikeTallSheet() {
   const router = useRouter();
   const t = useTheme();
   const { height } = useWindowDimensions();
-  const [fixedLayout, setFixedLayout] = useState(true);
+  const [fixedLayout, setFixedLayout] = useState(false);
   const [selected, setSelected] = useState(0);
   const [memo, setMemo] = useState('');
   const toast = useSpikeToast();

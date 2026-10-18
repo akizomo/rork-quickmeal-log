@@ -155,3 +155,13 @@
 - **ただし今は移せない**: 呼び出し元の IdentityLogSheet / DishQuickEntrySheet が背の高い BottomSheet (RN `<Modal>`) のまま。ネイティブ formSheet はナビゲーションの画面から出るので、RN Modal の**上には出せない** (UIKit は表示中の Modal がある画面から別の画面を出せない。今回「量調整が開かない」と同じ種類の不具合になる。未検証の推定)
 - → **SDK 58 で背の高いシートを formSheet 化するときに一緒に移す**。そのとき「値を呼び出し元へ返す」仕組み (今は `onClose(next)` コールバック) をルートのパラメータ + 状態への直接書き込みに置き換える
 - それまでは 2026-10-17 の修正 (シートの子として描画するネスト Modal) で運用
+
+### 7-6. SDK 58 での再検証 (2026-10-18, sdk-58-upgrade ブランチ / Xcode 27.1 / iOS 27.1 Simulator)
+- **起動**: Xcode 27 でビルドしたアプリが iOS 27 で正常に起動 (SDK 58 の Scene ライフサイクル対応で、SDK 54 の起動直後クラッシュは解消)
+- **背の高い formSheet (スパイク B)**: SDK 54 で出ていた問題がすべて解消
+  - 本文先頭が見出しの上にはみ出して描画される不具合 → **解消** (react-native-screens 4.30 の修正と一致)
+  - `flex: 1` の本文スクロール + 固定フッター → **成立** (SDK 54 ではフッターが画面外へはみ出していた)
+  - 最下部の入力欄 → `automaticallyAdjustKeyboardInsets` でキーボードの真上までスクロールされ、描画ずれも無し
+- 結論: **背の高いシート (IdentityLogSheet / DishQuickEntrySheet / LogEditorSheet / 検索) も formSheet に移行できる**。量調整ダイアログ (§7-5) も同時に移せる
+- 既存の BottomSheet 実装 (検索シート + キーボード、2026-10-17 の修正) も SDK 58 で表示崩れなし
+- 未確認: Android 全般 (android/ の作り直しが未了)、HealthKit の許可ダイアログと実データ取得
