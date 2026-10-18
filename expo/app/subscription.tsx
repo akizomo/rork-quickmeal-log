@@ -43,7 +43,7 @@ export default function SubscriptionRoute() {
       : null;
   const trialEndLabel = trialEndDate
     ? t('subscription.trialEndDate', {
-        date: `${trialEndDate.getMonth() + 1}/${trialEndDate.getDate()} (${trialDays}d)`,
+        date: `${trialEndDate.getMonth() + 1}/${trialEndDate.getDate()}`,
       })
     : null;
 
@@ -101,7 +101,7 @@ export default function SubscriptionRoute() {
                 ) : null}
                 {status === 'trialing' && trialDays > 0 ? (
                   <Body size="sm" tone="secondary" style={{ marginTop: 4 }}>
-                    {t('subscription.trialBody')}
+                    {t(Platform.OS === 'android' ? 'subscription.trialBodyAndroid' : 'subscription.trialBody')}
                   </Body>
                 ) : null}
               </Card>

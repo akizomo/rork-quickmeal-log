@@ -16,6 +16,8 @@
  * 後追いタスク: `bun add expo-notifications` 実行 + Android 通知チャネル設定。
  */
 
+import { Platform } from 'react-native';
+
 const TRIAL_NOTIFY_SCHEDULE_ID = 'hachibu_trial_expiry';
 const TRIAL_NOTIFY_CHANNEL_ID = 'trial_expiry';
 
@@ -37,6 +39,27 @@ function loadNotificationsModule(): unknown {
     return require('expo-notifications');
   } catch (e) {
     return null;
+  }
+}
+
+/**
+ * 通知許可の現在の状態。ダイアログを出す前に「まだ聞いていないか」を判定するのに使う
+ * (許可前の説明は undetermined のときだけ出す)。モジュールが無い / 取得失敗は 'unavailable'。
+ */
+export async function getTrialNotificationPermissionStatus(): Promise<
+  'granted' | 'denied' | 'undetermined' | 'unavailable'
+> {
+  const N = loadNotificationsModule() as
+    | { getPermissionsAsync: () => Promise<{ status: string; granted?: boolean }> }
+    | null;
+  if (!N) return 'unavailable';
+  try {
+    const p = await N.getPermissionsAsync();
+    if (p.granted || p.status === 'granted') return 'granted';
+    if (p.status === 'denied') return 'denied';
+    return 'undetermined';
+  } catch {
+    return 'unavailable';
   }
 }
 
@@ -71,12 +94,12 @@ const NOTIFY_CONTENT: Record<string, { channelName: string; title: string; body:
   ja: {
     channelName: 'トライアル終了のお知らせ',
     title: 'Hachibu トライアル残り2日',
-    body: '7日間の無料体験はあと2日で終了します。継続される場合は何もしなくてOK、解約は App Store / Google Play から。',
+    body: '7日間の無料体験はあと2日で終了します。継続される場合は何もしなくてOK、解約は {{store}} のサブスクリプション設定から。',
   },
   'en-US': {
     channelName: 'Trial Expiry',
     title: 'Hachibu Trial — 2 Days Left',
-    body: 'Your 7-day free trial ends in 2 days. Do nothing to continue — or cancel in App Store / Google Play settings.',
+    body: 'Your 7-day free trial ends in 2 days. Do nothing to continue — or cancel in your {{store}} subscription settings.',
   },
 };
 // i18n-ignore-end
@@ -114,7 +137,10 @@ export async function scheduleTrialExpiryNotification(
     console.log('[trial-notify] target time already passed; not scheduling', fireAt.toISOString());
     return;
   }
-  const content = NOTIFY_CONTENT[lang] ?? NOTIFY_CONTENT.ja;
+  const base = NOTIFY_CONTENT[lang] ?? NOTIFY_CONTENT.ja;
+  // 解約先のストア名は端末のOSに合わせる (iOS で Google Play と出さない)
+  const store = Platform.OS === 'android' ? 'Google Play' : 'App Store';
+  const content = { ...base, body: base.body.replace('{{store}}', store) };
   try {
     // Android: チャネル登録 (初回のみ。既存ならno-op)
     if (N.setNotificationChannelAsync) {
