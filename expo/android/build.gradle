@@ -8,9 +8,11 @@ buildscript {
   dependencies {
     classpath('com.android.tools.build:gradle')
     classpath('com.facebook.react:react-native-gradle-plugin')
-    classpath('org.jetbrains.kotlin:kotlin-gradle-plugin')
-    // Compose compiler plugin for Kotlin 2.0+ (required for Glance widgets)
-    classpath('org.jetbrains.kotlin.plugin.compose:org.jetbrains.kotlin.plugin.compose.gradle.plugin:2.0.21')
+    def kotlinVersion = findProperty('android.kotlinVersion')
+    classpath(kotlinVersion ? "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion" : 'org.jetbrains.kotlin:kotlin-gradle-plugin')
+    // Compose compiler plugin (Glance ウィジェットに必須)。Kotlin 本体と同じ版にする必要がある。
+    // RN 0.88 の Kotlin は 2.2.0 (node_modules/react-native/gradle/libs.versions.toml)
+    classpath("org.jetbrains.kotlin.plugin.compose:org.jetbrains.kotlin.plugin.compose.gradle.plugin:${kotlinVersion ?: '2.2.0'}")
   }
 }
 

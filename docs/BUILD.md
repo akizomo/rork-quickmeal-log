@@ -207,6 +207,11 @@ find expo/android -name "*.kt" | xargs grep -l "cornerRadius"
 
 ## 6. トラブルシューティング
 
+### ⚠️ `expo prebuild` で android/ のウィジェットが消える (SDK 58〜)
+SDK 58 から `npx expo prebuild` は既定で `android/` を作り直す (`--clean` 相当)。android/ はホーム画面ウィジェット (Kotlin・XML・receiver・Gradle 設定) を手で足して git 管理しているため、**そのまま実行すると全部消える**。
+- Android で prebuild が要るときは、実行後に `git status expo/android` で消えた/上書きされたファイルを確認し、ウィジェット関連 (widget/ 一式、res の layout/xml/drawable/values-night、colors.xml と strings.xml の widget_*、AndroidManifest の receiver、MainApplication の `WidgetBridgePackage`、build.gradle の Compose/Glance) と調整済みのスプラッシュ画像・アイコンを戻す (SDK 58 更新コミット b6e604a が手順の実例)
+- 恒久対応はウィジェットを config plugin 化して prebuild で毎回生成すること (未着手)
+
 ### iOS アプリが起動直後に落ちる (`NoSceneLifecycleAdoption`)
 クラッシュレポートに `_UIApplicationEvaluateRuntimeIssueForNoSceneLifecycleAdoption` があれば、Xcode 27 系でビルドされている。`eas.json` の `ios.image` が Xcode 26 系に固定されているか、ローカルなら `xcodebuild -version` を確認する。ローカル Mac が Xcode 27 しか無い場合、Simulator 確認は諦めて EAS → TestFlight で確認する。
 

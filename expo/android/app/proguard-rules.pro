@@ -12,3 +12,7 @@
 -keep class com.facebook.react.turbomodule.** { *; }
 
 # Add any project specific keep options here:
+
+# ホーム画面ウィジェット (Glance + JS ブリッジ)。SDK 58 からリリースビルドで R8 が既定で有効になったため、
+# リフレクション経由で呼ばれる NativeModule / Receiver が削られないよう丸ごと残す。
+-keep class app.akizony.hachibu.widget.** { *; }
