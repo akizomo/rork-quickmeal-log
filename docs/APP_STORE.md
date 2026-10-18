@@ -197,7 +197,8 @@ The camera is used only to scan food barcodes.
 | 項目 | 結果 |
 |---|---|
 | Android (Android 17 エミュレータ) 起動・オンボーディング・paywall スキップ・ホーム表示 | ○ |
-| ウィジェット5種が OS に登録される | ○ (ホーム画面に置いての表示は未確認) |
+| ウィジェット5種が OS に登録される | ○ |
+| ウィジェット (2×2) をホーム画面に追加 → 表示 → ボタンをタップして記録 (「✓ Undo」に切り替わる) | ○ (他のサイズ 4×2 / 3×3 / リング / 4×3 は未確認。追加は設定 > 「Add Home Screen Widget」、置かれるのは追加先のページで 1 ページ目とは限らない) |
 | Health Connect の許可画面 → 許可 → 画面遷移 | ○ (読み取り権限3件) |
 | Health Connect の歩数集計 | ○ エラーなし |
 | Health Connect のアクティブカロリー集計 | ✗ `IllegalArgumentException: Either use TimeRangeFilter with LocalDateTime or AggregateGroupByDurationRequest`。歩数と同じ呼び出し形式のため Android 17 エミュレータの挙動の可能性が高い。**SDK 54 でも出るかは未確認** (切り分けには実機か旧ビルドが必要) |
