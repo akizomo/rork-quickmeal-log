@@ -21,8 +21,6 @@ export const KNOWN_FAILURES: string[] = [
   "おひたし", // vocab-only
   "メロン", // vocab-only
   "レーズン", // zero
-  "もずく", // zero
-  "わかめ", // zero
   "シュークリーム", // vocab-only
   "ドーナツ", // vocab-only
   "カフェラテ", // vocab-only
