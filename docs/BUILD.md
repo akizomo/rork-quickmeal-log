@@ -121,9 +121,10 @@ npx eas-cli@18.12.2 whoami
 | **development** | Dev Client (Expo Go の代わり) | APK | Simulator | ❌ |
 | **preview** | 内部配布・テスター向け | APK | Real device | ❌ |
 | **production** | 製品版 / ストア提出 | AAB | App Store | ✅ |
-| **testflight** | production と同設定 + paywall スキップボタン有効 (`EXPO_PUBLIC_ALLOW_PAYWALL_SKIP=true`)。TestFlight 実機確認専用 | (AAB) | App Store (TestFlight) | ✅ |
 
-> ⚠️ **審査に提出するビルドは必ず `production` プロファイル**。`testflight` / `preview` ビルドは paywall に `[TEST] Paywall スキップ` が出る。App Store Connect でバージョンに紐付けるビルド番号を間違えないこと (TestFlight 上はどちらも同じアプリ・連番で並ぶ)。
+> ⚠️ **審査に提出するビルド・TestFlight (内部/外部テスト) に出すビルドは、すべて `production` プロファイル。** `preview` ビルドは paywall に `[TEST] Paywall スキップ` が出る (Android の APK 配布用で、iOS の TestFlight には使わない)。
+> **`testflight` プロファイルは 2026-10-18 に廃止した** (paywall スキップ付きの TestFlight 用)。有料 App 契約が有効になり、TestFlight でも購入が Sandbox 扱いで試せるため不要になった。外部テストのベータ審査でスキップボタンが見えるのも避けたい。TestFlight でも本番と同じ見た目・同じ購入フローで確認する。
+> TestFlight に出すビルドは、そのまま審査にも使い回せる (App Store Connect でバージョンに紐付けるだけ。再ビルド不要)。
 
 **選び方の目安**:
 - 友人 5 人にインストールさせて即動作確認したい → `preview`
