@@ -196,3 +196,18 @@ The app starts with a 7-day free trial subscription (auto-renewable). You can te
 HealthKit is used read-only (steps, active energy, workouts, weight, body fat %) to adjust the daily calorie target shown on the home screen. Health permission is optional; the app works fully with manual input.
 The camera is used only to scan food barcodes.
 ```
+
+---
+
+## 5. SDK 58 更新の動作確認メモ (2026-10-18, sdk-58-upgrade ブランチ)
+
+| 項目 | 結果 |
+|---|---|
+| Android (Android 17 エミュレータ) 起動・オンボーディング・paywall スキップ・ホーム表示 | ○ |
+| ウィジェット5種が OS に登録される | ○ |
+| ウィジェット (2×2) をホーム画面に追加 → 表示 → ボタンをタップして記録 (「✓ Undo」に切り替わる) | ○ (他のサイズ 4×2 / 3×3 / リング / 4×3 は未確認。追加は設定 > 「Add Home Screen Widget」、置かれるのは追加先のページで 1 ページ目とは限らない) |
+| Health Connect の許可画面 → 許可 → 画面遷移 | ○ (読み取り権限3件) |
+| Health Connect の歩数集計 | ○ エラーなし |
+| Health Connect のアクティブカロリー集計 | ✗ `IllegalArgumentException: Either use TimeRangeFilter with LocalDateTime or AggregateGroupByDurationRequest`。歩数と同じ呼び出し形式のため Android 17 エミュレータの挙動の可能性が高い。**SDK 54 でも出るかは未確認** (切り分けには実機か旧ビルドが必要) |
+| Health Connect の実データ取り込み | 未確認 (エミュレータにデータを入れる手段が無い) |
+| リリースビルド (R8 有効) の起動 | 未確認 |
