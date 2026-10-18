@@ -13,6 +13,7 @@
  */
 
 import { Stack, useRouter } from 'expo-router';
+import type { SearchBarCommands } from 'react-native-screens';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Keyboard,
@@ -124,6 +125,13 @@ export function SearchScreen() {
   });
   useEffect(() => () => commitPendingMissRef.current(), []);
 
+  // iOS は headerSearchBarOptions.autoFocus が効かない (Android 専用) ので、ページ表示後に focus() で検索欄を選択状態にする
+  const searchBarRef = useRef<SearchBarCommands>(null);
+  useEffect(() => {
+    const id = setTimeout(() => searchBarRef.current?.focus(), 800); // 画面遷移 (約500ms) が終わってからでないと focus が効かない
+    return () => clearTimeout(id);
+  }, []);
+
   // Debounce
   useEffect(() => {
     const id = setTimeout(() => setDebounced(query), DEBOUNCE_MS);
@@ -231,7 +239,8 @@ export function SearchScreen() {
           title: tr('search.title'),
           headerSearchBarOptions: {
             placeholder: tr('search.placeholder'),
-            autoFocus: true,
+            ref: searchBarRef,
+            autoFocus: true, // Android のみ。iOS は下の useEffect で focus() する
             hideWhenScrolling: false,
             autoCapitalize: 'none',
             onChangeText: (e) => setQuery(e.nativeEvent.text),
