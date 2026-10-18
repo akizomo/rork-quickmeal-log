@@ -1,25 +1,20 @@
 /**
- * AmountEditDialog — 量編集専用ダイアログ。
+ * AmountEditSheet — 量の直接入力シート (ネイティブ formSheet `/amount-edit` の中身)。
  *
- * センター配置の Dialog を使うことで、キーボードが開いてもダイアログ全体が
- * KeyboardAvoidingView により押し上げられ、確定ボタンが隠れない。
+ * 2026-10-18: 中央 Dialog から formSheet へ移行 (docs/SHEET_MIGRATION.md §7-5)。
+ * 体重入力 (record-body.tsx) と同じく、iOS は数字キーボード右上の OS 標準カプセルを「保存」にして確定する。
  *
- * 利用側:
- *   const amountEditConfig = useMemo(() => buildSushiAmountEditConfig(mode), [mode]);
+ * 呼び出し側は値を受け取るコールバックを `openAmountEditor()` に渡す。シートはナビゲーションの
+ * 画面として開くため、props では値を返せない。依頼内容は小さな zustand ストアに置く。
  *
- *   <AmountEditDialog
- *     visible={editorOpen}
- *     config={amountEditConfig}
- *     initialValue={count}
- *     onClose={(next) => { setEditorOpen(false); if (next != null) setCount(next); }}
- *   />
+ *   openAmountEditor({ config, initialValue, onDone: (next) => { if (next !== null) setCount(next) } });
  *
  * # 設計方針
- *  - Dialog (design-system) を使いセンター配置。キーボード表示時は Dialog ごと上に移動。
  *  - 値バリデーション・正規化はすべて amount-edit.ts の純粋関数に委譲
- *  - ダイアログは「draft」のみを管理し、確定(onClose(next))まで親には通知しない
+ *  - シートは「draft」のみを管理し、確定まで呼び出し側には通知しない。保存せずに閉じたら onDone(null)
  */
 
+import { router, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   AccessibilityInfo,
@@ -30,8 +25,9 @@ import {
   View,
 } from 'react-native';
 import type { TextInputInstance } from 'react-native';
+import { create } from 'zustand';
 
-import { Chip, Dialog, useTheme } from '@/design-system';
+import { Chip, SheetScreen, useTheme } from '@/design-system';
 import { useT } from '@/hooks/useT';
 import { radius } from '@/design-system/tokens/primitives/radius';
 import { fontSize as fs, letterSpacing as ls } from '@/design-system/tokens/primitives/typography';
@@ -51,19 +47,66 @@ import {
 // Types
 // ---------------------------------------------------------------------------
 
-export type AmountEditDialogProps = {
-  visible: boolean;
-  /**
-   * Called when the dialog closes.
-   * `next` is the new numeric value (null = キャンセル / no change).
-   */
-  onClose: (next: number | null) => void;
+export type AmountEditRequest = {
   config: AmountEditConfig;
   initialValue: number;
-  /** Dialog title. Default: "量を変更" */
+  /** シートのタイトル。既定は「量を変更」 */
   title?: string;
   testID?: string;
+  /** 閉じたときに呼ばれる。`next` は確定した値 (null = 保存せずに閉じた) */
+  onDone: (next: number | null) => void;
 };
+
+type AmountEditStore = {
+  request: AmountEditRequest | null;
+  setRequest: (request: AmountEditRequest | null) => void;
+};
+
+/** 開いている量入力シートの依頼内容。シートはナビゲーションの画面なので props では渡せない */
+const useAmountEditStore = create<AmountEditStore>((set) => ({
+  request: null,
+  setRequest: (request) => set({ request }),
+}));
+
+/** 量入力シート (`/amount-edit`) を開く。確定・取り消しの結果は request.onDone で受け取る */
+export function openAmountEditor(request: AmountEditRequest): void {
+  useAmountEditStore.getState().setRequest(request);
+  router.push('/amount-edit');
+}
+
+/** `/amount-edit` ルートの中身。依頼が無い (再起動直後など) ときは何も出さずに閉じる */
+export function AmountEditRoute() {
+  const request = useAmountEditStore((s) => s.request);
+  const routerRef = useRouter();
+  // 依頼ごとの onDone を1回だけ呼ぶ (保存で閉じた / スワイプ・キャンセルで閉じた のどちらか)
+  const doneRef = useRef(false);
+
+  useEffect(() => {
+    if (!request) routerRef.back();
+  }, [request, routerRef]);
+
+  useEffect(() => {
+    // スワイプ等でシートが閉じられたら「保存せずに閉じた」として通知する
+    return () => {
+      const current = useAmountEditStore.getState().request;
+      if (!doneRef.current && current) current.onDone(null);
+      useAmountEditStore.getState().setRequest(null);
+    };
+  }, []);
+
+  if (!request) return null;
+  return (
+    <AmountEditSheet
+      {...request}
+      onDone={(next) => {
+        if (doneRef.current) return;
+        doneRef.current = true;
+        request.onDone(next);
+        routerRef.back();
+      }}
+    />
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -83,14 +126,13 @@ function formatValue(value: number, decimals: 0 | 1 | 2): string {
 // Component
 // ---------------------------------------------------------------------------
 
-export function AmountEditDialog({
-  visible,
-  onClose,
+function AmountEditSheet({
+  onDone,
   config,
   initialValue,
   title,
   testID,
-}: AmountEditDialogProps) {
+}: AmountEditRequest) {
   const t = useTheme();
   const tr = useT();
   const resolvedTitle = title ?? tr('amountEdit.defaultTitle');
@@ -108,25 +150,16 @@ export function AmountEditDialog({
   // 多重発火防止
   const closingRef = useRef(false);
 
-  // ダイアログが開くたびに initialValue でリセット＆入力フォーカス
+  // シートの提示アニメ後に入力へフォーカス (record-body と同じく 400ms。spike で競合しないことを確認済み)
   useEffect(() => {
-    if (visible) {
-      closingRef.current = false;
-      const seeded = clampToRange(snapToStep(initialValue, config), config);
-      setDraft(seeded);
-      setRawInput(formatValue(seeded, config.decimals));
-      // ダイアログのアニメ完了後にフォーカスを当てる
-      const timer = setTimeout(() => inputRef.current?.focus(), 300);
-      return () => clearTimeout(timer);
-    }
-  }, [visible, initialValue, config]);
+    const timer = setTimeout(() => inputRef.current?.focus(), 400);
+    return () => clearTimeout(timer);
+  }, []);
 
   // draft 変化時にスクリーンリーダーへ通知
   useEffect(() => {
-    if (visible) {
-      AccessibilityInfo.announceForAccessibility(`${draft}${config.unitLabel}`);
-    }
-  }, [draft, visible, config.unitLabel]);
+    AccessibilityInfo.announceForAccessibility(`${draft}${config.unitLabel}`);
+  }, [draft, config.unitLabel]);
 
   // ---------------------------------------------------------------------------
   // Handlers
@@ -136,16 +169,16 @@ export function AmountEditDialog({
     (value: number) => {
       if (closingRef.current) return;
       closingRef.current = true;
-      onClose(value);
+      onDone(value);
     },
-    [onClose],
+    [onDone],
   );
 
   const handleCancel = useCallback(() => {
     if (closingRef.current) return;
     closingRef.current = true;
-    onClose(null);
-  }, [onClose]);
+    onDone(null);
+  }, [onDone]);
 
   const updateDraft = useCallback(
     (next: number) => {
@@ -203,19 +236,16 @@ export function AmountEditDialog({
   // ---------------------------------------------------------------------------
 
   return (
-    <Dialog
-      visible={visible}
-      onClose={handleCancel}
+    <SheetScreen
       title={resolvedTitle}
-      primaryAction={{
-        label: tr('common.done'),
+      cancelLabel={tr('common.cancel')}
+      onCancel={handleCancel}
+      confirmAction={{
+        label: tr('common.save'),
         onPress: () => commitAndClose(draft),
         disabled: !isValidAmount(draft, config),
       }}
-      secondaryAction={{
-        label: tr('common.cancel'),
-        onPress: handleCancel,
-      }}
+      confirmPlacement="return-key"
       testID={testID}
     >
       {/* 一体型ステッパー: [ − ] [ TextInput  単位 ] [ + ] */}
@@ -256,7 +286,10 @@ export function AmountEditDialog({
             onChangeText={handleChangeText}
             onBlur={handleInputBlur}
             keyboardType={config.decimals > 0 ? 'decimal-pad' : 'number-pad'}
+            // iOS: 数字キーボード右上の OS 標準カプセルを「保存」にして確定 (record-body.tsx と同じ)
+            // Android: 数字キーボード右下の ✓ で確定
             returnKeyType="done"
+            inputAccessoryViewButtonLabel={tr('common.save')}
             onSubmitEditing={() => commitAndClose(draft)}
             accessibilityLabel={tr('amountEdit.inputA11y', { min: config.min, max: config.max, unit: config.unitLabel })}
             accessibilityValue={{ now: draft, min: config.min, max: config.max }}
@@ -307,7 +340,7 @@ export function AmountEditDialog({
       <Text style={[styles.rangeHint, { color: t.colors.content.tertiary }]}>
         {config.min}–{config.max} {config.unitLabel}
       </Text>
-    </Dialog>
+    </SheetScreen>
   );
 }
 

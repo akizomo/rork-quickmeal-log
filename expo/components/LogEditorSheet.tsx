@@ -2,7 +2,7 @@ import React, { memo, useMemo, useState } from 'react';
 import { PanResponder, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { additionPresets, portionSnapPoints, sizeOptions } from '@/constants/nutrition-data';
-import { Badge, BottomSheet, Caption, Chip, Icon, useTheme, type Theme } from '@/design-system';
+import { Badge, Button, Caption, Chip, Icon, TallSheetScreen, useTheme, type Theme } from '@/design-system';
 import { useT } from '@/hooks/useT';
 import { radius } from '@/design-system/tokens/primitives/radius';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
@@ -51,7 +51,6 @@ export const LogEditorSheet = memo(function LogEditorSheet() {
     };
   }, [editorLog]);
 
-  const visible = editorLog != null;
   const log = editorLog;
   const title = log
     ? editorIsPending
@@ -60,14 +59,18 @@ export const LogEditorSheet = memo(function LogEditorSheet() {
     : '';
 
   return (
-    <BottomSheet
-      visible={visible}
+    <TallSheetScreen
       onClose={handleClose}
       title={title}
-      secondaryAction={{
-        label: editorIsPending ? tr('common.cancel') : tr('common.delete'),
-        onPress: handleDelete,
-      }}
+      // 旧 BottomSheet の secondaryAction (取り消し / 削除) はフッター左に置く
+      footerLeft={
+        <Button
+          label={editorIsPending ? tr('common.cancel') : tr('common.delete')}
+          variant="ghost"
+          onPress={handleDelete}
+          testID="log-editor-sheet-secondary"
+        />
+      }
       primaryAction={{
         label: editorIsPending ? tr('common.add') : tr('common.done'),
         onPress: handleDone,
@@ -86,7 +89,7 @@ export const LogEditorSheet = memo(function LogEditorSheet() {
           onChange={(next) => updateDishLog(log.id, next)}
         />
       ) : null}
-    </BottomSheet>
+    </TallSheetScreen>
   );
 });
 

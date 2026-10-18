@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
@@ -22,7 +23,6 @@ import { buildRegistry } from '@/constants/identity';
 import { deriveDefaultTab, FREQUENT_TAB_MIN_LOGS, rankFrequentIdentities, type RankedIdentity } from '@/utils/quick-log-history';
 import type { QuickLogTabKey } from '@/types/quick-log';
 import { widgetRequestPin } from '@/utils/widget-bridge';
-import { SearchSheet } from '@/components/SearchSheet';
 
 export const QUICK_LOG_TOKENS = {
   sectionPaddingHorizontal: 16,
@@ -308,12 +308,12 @@ export const QuickLogSection = memo(function QuickLogSection() {
   const tr = useT();
   const { foodRegion: locale, uiLanguage } = useLocale();
   const { width: screenWidth } = useWindowDimensions();
-  const [searchOpen, setSearchOpen] = useState(false);
+  const router = useRouter();
 
   const handleOpenSearch = useCallback(() => {
     bumpDiagnostic('searchOpenCount');
-    setSearchOpen(true);
-  }, [bumpDiagnostic]);
+    router.push('/search');
+  }, [bumpDiagnostic, router]);
 
   const history = settings.quickLogHistory as import('@/types/quick-log').QuickLogHistoryMap | undefined;
   const totalHistoryEntries = useMemo(() => {
@@ -392,11 +392,6 @@ export const QuickLogSection = memo(function QuickLogSection() {
           testID="open-search"
         />
       </View>
-      <SearchSheet
-        visible={searchOpen}
-        onClose={() => setSearchOpen(false)}
-        onOpen={() => setSearchOpen(true)}
-      />
 
       {selectedTab === 'frequent' ? (
         <FrequentPills

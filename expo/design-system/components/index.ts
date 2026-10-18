@@ -20,6 +20,8 @@ export { BottomSheet } from './BottomSheet';
 export type { BottomSheetProps, BottomSheetAction } from './BottomSheet';
 export { SheetScreen, formSheetOptions } from './SheetScreen';
 export type { SheetScreenProps, SheetScreenAction } from './SheetScreen';
+export { TallSheetScreen, tallSheetOptions } from './TallSheetScreen';
+export type { TallSheetScreenProps } from './TallSheetScreen';
 export { Dialog } from './Dialog';
 export type { DialogProps, DialogAction } from './Dialog';
 export { MacroChip } from './MacroChip';

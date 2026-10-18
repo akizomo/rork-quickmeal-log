@@ -1,36 +1,35 @@
 /**
- * SearchSheet — Identity 検索ボトムシート (SEARCH_SPEC v0.3 §F1–F5)
+ * SearchScreen — Identity 検索ページ (SEARCH_SPEC v0.3 §F1–F5)
+ *
+ * 2026-10-18: ボトムシートから下層ページ (app/search.tsx) に移行。検索欄は iOS 標準の
+ * ナビゲーションバー検索 (headerSearchBarOptions / UISearchController)。
  *
  * 動線:
- *   QuickLogSection の 🔍 ボタン → SearchSheet 表示
- *   → Identity 選択 → IdentityLogSheet (onDismiss で検索に戻る)
- *   → フッター「数値で入力する」→ DirectInputSheet
+ *   QuickLogSection の 🔍 ボタン → 検索ページへ push
+ *   → Identity 選択 → 記録シート (formSheet) がこのページの上に出る。閉じると検索語が残ったまま戻る
+ *   → 「数値で入力する」→ 直接入力シート (formSheet /direct-input)
  *
  * 0件ヒット時: カテゴリヒントチップ (§F5a) を最大4件表示。
  */
 
+import { Stack, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Keyboard,
   Pressable,
+  ScrollView,
   StyleSheet,
-  TextInput,
   View,
 } from 'react-native';
-import type { TextInputInstance } from 'react-native';
 
 import {
   Body,
-  BottomSheet,
   Caption,
   Chip,
-  Icon,
-  IconButton,
   Label,
   Overline,
   useTheme,
 } from '@/design-system';
-import { DirectInputSheet } from '@/components/DirectInputSheet';
 import { buildRegistry, getBucketDef, getIdentity, presetAddonInputs } from '@/constants/identity';
 import { useAppState } from '@/providers/app-state-provider';
 import { useLocale } from '@/hooks/useLocale';
@@ -48,13 +47,6 @@ import type { BucketKey } from '@/types/identity';
 import type { QuickLogHistoryMap } from '@/types/quick-log';
 
 const DEBOUNCE_MS = 180;
-
-type Props = {
-  visible: boolean;
-  onClose: () => void;
-  /** Called to re-open this sheet (e.g. after IdentityLogSheet dismiss). */
-  onOpen: () => void;
-};
 
 function resultKey(result: SearchEntryResult): string {
   const { identity, attribute, style, preset } = result.entry;
@@ -98,7 +90,8 @@ function SearchResultRow({
   );
 }
 
-export function SearchSheet({ visible, onClose, onOpen }: Props) {
+export function SearchScreen() {
+  const router = useRouter();
   const t = useTheme();
   const tr = useT();
   const { openIdentityLogSheet, recordSearchMissEvent, bumpDiagnostic, settings } = useAppState();
@@ -106,9 +99,6 @@ export function SearchSheet({ visible, onClose, onOpen }: Props) {
 
   const [query, setQuery] = useState('');
   const [debounced, setDebounced] = useState('');
-  const [directInputOpen, setDirectInputOpen] = useState(false);
-
-  const inputRef = useRef<TextInputInstance>(null);
 
   /**
    * 診断 (KPI計装 Layer 1): 直近で「ヒットしなかった」クエリを保持する。
@@ -127,16 +117,12 @@ export function SearchSheet({ visible, onClose, onOpen }: Props) {
     recordSearchMissEvent(miss.q, miss.hadHints);
   }, [recordSearchMissEvent]);
 
-  // Focus input when sheet opens; clear query when it closes
+  // 診断: 見つからないままページを離れた = 未発見の確定信号
+  const commitPendingMissRef = useRef(commitPendingMiss);
   useEffect(() => {
-    if (visible) {
-      const id = setTimeout(() => inputRef.current?.focus(), 250);
-      return () => clearTimeout(id);
-    } else {
-      setQuery('');
-      setDebounced('');
-    }
-  }, [visible]);
+    commitPendingMissRef.current = commitPendingMiss;
+  });
+  useEffect(() => () => commitPendingMissRef.current(), []);
 
   // Debounce
   useEffect(() => {
@@ -177,7 +163,6 @@ export function SearchSheet({ visible, onClose, onOpen }: Props) {
   const handleSelect = useCallback(
     (entry: SearchEntry) => {
       Keyboard.dismiss();
-      onClose(); // hide search sheet
       openIdentityLogSheet(entry.identity.primaryHome.bucket, {
         identityId: entry.identity.id,
         attributeKey: entry.attribute?.key,
@@ -186,10 +171,9 @@ export function SearchSheet({ visible, onClose, onOpen }: Props) {
         ...(entry.preset
           ? { amountValue: entry.preset.amountValue, addons: presetAddonInputs(entry.preset) }
           : {}),
-        onDismiss: onOpen, // re-open search sheet if user cancels
       });
     },
-    [onClose, onOpen, openIdentityLogSheet]
+    [openIdentityLogSheet]
   );
 
   const handleCategoryHint = useCallback(
@@ -197,10 +181,9 @@ export function SearchSheet({ visible, onClose, onOpen }: Props) {
       // 診断: Identity に直接たどり着けずカテゴリへ逃げた = 未発見の確定信号
       commitPendingMiss();
       Keyboard.dismiss();
-      onClose();
-      openIdentityLogSheet(bucket, { onDismiss: onOpen });
+      openIdentityLogSheet(bucket);
     },
-    [commitPendingMiss, onClose, onOpen, openIdentityLogSheet]
+    [commitPendingMiss, openIdentityLogSheet]
   );
 
   const handleVocabularyMatch = useCallback(
@@ -209,33 +192,18 @@ export function SearchSheet({ visible, onClose, onOpen }: Props) {
       // ことを示す確定信号。カテゴリヒント選択と同じ意味論で扱う。
       commitPendingMiss();
       Keyboard.dismiss();
-      onClose();
-      openIdentityLogSheet(match.bucket, { identityId: match.identity, onDismiss: onOpen });
+      openIdentityLogSheet(match.bucket, { identityId: match.identity });
     },
-    [commitPendingMiss, onClose, onOpen, openIdentityLogSheet]
+    [commitPendingMiss, openIdentityLogSheet]
   );
-
-  const handleClear = useCallback(() => {
-    setQuery('');
-    setDebounced('');
-    inputRef.current?.focus();
-  }, []);
-
-  const handleClose = useCallback(() => {
-    // 診断: 見つからないまま閉じた = 未発見の確定信号
-    commitPendingMiss();
-    Keyboard.dismiss();
-    onClose();
-  }, [commitPendingMiss, onClose]);
 
   const handleOpenDirectInput = useCallback(() => {
     // 診断: 最終手段へ逃げた = 未発見の確定信号 (DB の穴を最も強く示す)
     commitPendingMiss();
     bumpDiagnostic('directInputOpenCount');
     Keyboard.dismiss();
-    onClose(); // hide search sheet — DirectInputSheet replaces it, not stacks on it
-    setDirectInputOpen(true);
-  }, [bumpDiagnostic, commitPendingMiss, onClose]);
+    router.push('/direct-input');
+  }, [bumpDiagnostic, commitPendingMiss, router]);
 
   const isEmpty = debounced.trim().length === 0;
   const hasConfident = confidentResults.length > 0;
@@ -258,54 +226,30 @@ export function SearchSheet({ visible, onClose, onOpen }: Props) {
 
   return (
     <>
-      <BottomSheet
-        visible={visible}
-        onClose={handleClose}
-        title={tr('search.title')}
-        keyboardAware
-        expandToFull
-        maxHeightRatio={0.96}
-        testID="search-sheet"
-      >
-        {/* 検索バー */}
-        <View
-          style={[
-            styles.searchBar,
-            {
-              backgroundColor: t.colors.surface.raised,
-              borderRadius: t.radius.md,
-              paddingHorizontal: t.spacing['3'],
-              marginBottom: t.spacing['4'],
+      <Stack.Screen
+        options={{
+          title: tr('search.title'),
+          headerSearchBarOptions: {
+            placeholder: tr('search.placeholder'),
+            autoFocus: true,
+            hideWhenScrolling: false,
+            autoCapitalize: 'none',
+            onChangeText: (e) => setQuery(e.nativeEvent.text),
+            onCancelButtonPress: () => {
+              setQuery('');
+              setDebounced('');
             },
-          ]}
-        >
-          <Icon name="search" size={18} color={t.colors.content.secondary} />
-          <TextInput
-            ref={inputRef}
-            value={query}
-            onChangeText={setQuery}
-            placeholder={tr('search.placeholder')}
-            placeholderTextColor={t.colors.content.tertiary}
-            style={[
-              styles.searchInput,
-              { color: t.colors.content.primary, fontSize: t.typography.fontSize.md },
-            ]}
-            autoCorrect={false}
-            autoCapitalize="none"
-            returnKeyType="search"
-            testID="search-input"
-          />
-          {query.length > 0 ? (
-            <IconButton
-              icon="close"
-              size="sm"
-              onPress={handleClear}
-              accessibilityLabel={tr('search.clearA11y')}
-            />
-          ) : null}
-        </View>
-
-
+          },
+        }}
+      />
+      <ScrollView
+        style={{ backgroundColor: t.colors.surface.default }}
+        contentInsetAdjustmentBehavior="automatic"
+        keyboardDismissMode="on-drag"
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{ padding: t.spacing['5'] }}
+        testID="search-screen"
+      >
         {/* 検索結果 (層1: confident) */}
         {hasConfident ? (
           <View style={[styles.resultList, { marginBottom: hasMaybe || hasHints ? t.spacing['4'] : 0 }]}>
@@ -386,28 +330,12 @@ export function SearchSheet({ visible, onClose, onOpen }: Props) {
             <Label size="sm" tone="link">{tr('search.enterManually')}</Label>
           </Pressable>
         </View>
-      </BottomSheet>
-
-      <DirectInputSheet
-        visible={directInputOpen}
-        onClose={() => setDirectInputOpen(false)}
-        onDismiss={onOpen}
-      />
+      </ScrollView>
     </>
   );
 }
 
 const styles = StyleSheet.create({
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    height: 44,
-    gap: 8,
-  },
-  searchInput: {
-    flex: 1,
-    paddingVertical: 0,
-  },
   resultList: {
     gap: 0,
   },

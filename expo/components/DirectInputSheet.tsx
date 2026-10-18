@@ -3,24 +3,22 @@
  *
  * 名前(任意) + kcal(必須) + P/F/C(任意) を手入力して即座に記録する。
  * 再利用なし・使い捨て。カスタム食品管理は別スコープ (P2-S7)。
+ *
+ * 2026-10-18: ネイティブ formSheet ルート (/direct-input) の中身に移行。検索ページの上に積んで開き、
+ * 閉じると検索ページに戻る (旧実装の「キャンセル時に検索シートを開き直す」onDismiss は不要になった)。
  */
 
+import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 
-import { Body, BottomSheet, Label, Overline, useTheme } from '@/design-system';
+import { Body, Label, Overline, SheetScreen, useTheme } from '@/design-system';
 import { useT } from '@/hooks/useT';
 import { useAppState } from '@/providers/app-state-provider';
 import { formatDateKey, generateId, getMealSlot } from '@/utils/nutrition';
 
-type Props = {
-  visible: boolean;
-  onClose: () => void;
-  /** Called on cancel only (not after a successful save) — e.g. to re-open search sheet. */
-  onDismiss?: () => void;
-};
-
-export function DirectInputSheet({ visible, onClose, onDismiss }: Props) {
+export function DirectInputSheet() {
+  const router = useRouter();
   const t = useTheme();
   const tr = useT();
   const { pushLog, loggingDate } = useAppState();
@@ -71,9 +69,8 @@ export function DirectInputSheet({ visible, onClose, onDismiss }: Props) {
 
   const handleClose = useCallback(() => {
     reset();
-    onClose();
-    onDismiss?.();
-  }, [reset, onClose, onDismiss]);
+    router.back();
+  }, [reset, router]);
 
   const handleSave = useCallback(async () => {
     if (!canSave) return;
@@ -105,18 +102,15 @@ export function DirectInputSheet({ visible, onClose, onDismiss }: Props) {
     });
 
     reset();
-    onClose();
-  }, [canSave, kcal, name, proteinStr, fatStr, carbsStr, loggingDate, pushLog, reset, onClose]);
+    router.back();
+  }, [canSave, kcal, name, proteinStr, fatStr, carbsStr, loggingDate, pushLog, reset, router]);
 
   return (
-    <BottomSheet
-      visible={visible}
-      onClose={handleClose}
+    <SheetScreen
       title={tr('directInput.title')}
-      primaryAction={{ label: tr('directInput.record'), onPress: handleSave, disabled: !canSave }}
-      secondaryAction={{ label: tr('common.cancel'), onPress: handleClose }}
-      keyboardAware
-      expandToFull
+      cancelLabel={tr('common.cancel')}
+      onCancel={handleClose}
+      confirmAction={{ label: tr('directInput.record'), onPress: handleSave, disabled: !canSave }}
     >
       <View style={{ gap: t.spacing['5'] }}>
         {/* 名前 */}
@@ -188,7 +182,7 @@ export function DirectInputSheet({ visible, onClose, onDismiss }: Props) {
           <Body size="sm" tone="secondary">{tr('directInput.gramUnit')}</Body>
         </View>
       </View>
-    </BottomSheet>
+    </SheetScreen>
   );
 }
 

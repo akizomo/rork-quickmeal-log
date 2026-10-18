@@ -6,7 +6,7 @@ import {
   View,
 } from 'react-native';
 
-import { AmountEditDialog } from '@/components/AmountEditDialog';
+import { openAmountEditor as openAmountSheet } from '@/components/AmountEditSheet';
 import { type AmountEditConfig, buildPizzaAmountEditConfig, buildSushiAmountEditConfig } from '@/utils/amount-edit';
 
 import {
@@ -21,7 +21,7 @@ import {
   getDishTopCategory,
   multiplyMacroSimple,
 } from '@/constants/dish-master';
-import { BottomSheet, Button, Chip as DSChip, Icon, Overline, useTheme, type Theme } from '@/design-system';
+import { Button, TallSheetScreen, Chip as DSChip, Icon, Overline, useTheme, type Theme } from '@/design-system';
 import { useT } from '@/hooks/useT';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { useAppState } from '@/providers/app-state-provider';
@@ -504,47 +504,28 @@ function PrimaryActionButton({ label, onPress }: { label: string; onPress: () =>
   );
 }
 
-type AmountEditorState = {
-  config: AmountEditConfig;
-  initialValue: number;
-  onClose: (n: number | null) => void;
-};
-
 export const DishQuickEntrySheet = memo(function DishQuickEntrySheet() {
   const { dishQuickEntryKey, setDishQuickEntryKey, submitDishQuickEntry } = useAppState();
-  const visible = Boolean(dishQuickEntryKey);
   const category = dishQuickEntryKey ? getDishTopCategory(dishQuickEntryKey) ?? null : null;
-
-  const [amountEditor, setAmountEditor] = useState<AmountEditorState | null>(null);
 
   const handleSubmit = async (payload: DishQuickEntryPayload) => {
     await submitDishQuickEntry(payload);
   };
 
   const handleClose = () => {
-    setAmountEditor(null);
     setDishQuickEntryKey(null);
   };
 
+  // 量の直接入力はこのシートの上に積む formSheet (/amount-edit)
   const openAmountEditor = useCallback(
     (config: AmountEditConfig, initialValue: number, onClose: (n: number | null) => void) => {
-      setAmountEditor({ config, initialValue, onClose });
+      openAmountSheet({ config, initialValue, onDone: onClose, testID: 'dqe-amount-dialog' });
     },
     [],
   );
 
-  const handleAmountEditorClose = useCallback(
-    (next: number | null) => {
-      amountEditor?.onClose(next);
-      setAmountEditor(null);
-    },
-    [amountEditor],
-  );
-
   return (
-    <>
-      <BottomSheet
-        visible={visible}
+      <TallSheetScreen
         onClose={handleClose}
         title={category?.label ?? ''}
         testID="dqe"
@@ -568,18 +549,7 @@ export const DishQuickEntrySheet = memo(function DishQuickEntrySheet() {
             ) : null}
           </>
         ) : null}
-        {/* iOS は表示中の Modal の「兄弟」として別の Modal を出せないため、シートの子として描画する */}
-        {amountEditor ? (
-          <AmountEditDialog
-            visible
-            config={amountEditor.config}
-            initialValue={amountEditor.initialValue}
-            onClose={handleAmountEditorClose}
-            testID="dqe-amount-dialog"
-          />
-        ) : null}
-      </BottomSheet>
-    </>
+      </TallSheetScreen>
   );
 });
 

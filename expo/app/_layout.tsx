@@ -7,10 +7,8 @@ import * as SplashScreen from 'expo-splash-screen';
 import React, { useEffect } from 'react';
 import { LogBox, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { DishQuickEntrySheet } from '@/components/DishQuickEntrySheet';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
-import { IdentityLogSheet } from '@/components/IdentityLogSheet';
-import { ThemeProvider, darkTheme, formSheetOptions, lightTheme, useTheme } from '@/design-system';
+import { ThemeProvider, darkTheme, formSheetOptions, lightTheme, tallSheetOptions, useTheme } from '@/design-system';
 import { useT } from '@/hooks/useT';
 import { AppStateProvider, useAppState } from '@/providers/app-state-provider';
 import { HealthSyncProvider } from '@/providers/health-sync-provider';
@@ -68,9 +66,19 @@ function RootLayoutNav() {
       <Stack.Screen name="legal/terms" options={{ title: tr('nav.terms') }} />
       <Stack.Screen name="settings" options={{ title: tr('nav.settings') }} />
       <Stack.Screen name="search-misses" options={{ title: tr('nav.searchMisses') }} />
-      <Stack.Screen name="modal" options={{ presentation: 'modal', title: tr('nav.modal') }} />
       {/* ネイティブ formSheet (docs/SHEET_MIGRATION.md 方針 B: 中身の高さで収まる小さいシートのみ) */}
       <Stack.Screen name="record-body" options={formSheetOptions(t)} />
+      <Stack.Screen name="amount-edit" options={formSheetOptions(t)} />
+      {/* 背の高い記録シート (SDK 58 以上が前提。docs/SHEET_MIGRATION.md §7-6) */}
+      <Stack.Screen name="log-identity" options={tallSheetOptions(t)} />
+      <Stack.Screen name="dish-entry" options={tallSheetOptions(t)} />
+      <Stack.Screen name="log-editor" options={tallSheetOptions(t)} />
+      <Stack.Screen name="direct-input" options={formSheetOptions(t)} />
+      <Stack.Screen name="exercise" options={tallSheetOptions(t)} />
+      <Stack.Screen name="balance" options={formSheetOptions(t)} />
+      <Stack.Screen name="weekly-balance" options={formSheetOptions(t)} />
+      <Stack.Screen name="search-miss-edit" options={formSheetOptions(t)} />
+      <Stack.Screen name="search" options={{ title: tr('search.title') }} />
       {__DEV__ ? <Stack.Screen name="dev" options={{ headerShown: false }} /> : null}
       {/* SHEET_MIGRATION.md Phase 0 スパイク (使い捨て)。テストビルドの設定画面からのみ導線あり */}
       <Stack.Screen name="spike/index" />
@@ -145,8 +153,6 @@ export default function RootLayout() {
               <StatusBar style="auto" />
               <HealthSyncProvider>
                 <RootLayoutNav />
-                <DishQuickEntrySheet />
-                <IdentityLogSheet />
               </HealthSyncProvider>
             </ThemedApp>
           </AppStateProvider>

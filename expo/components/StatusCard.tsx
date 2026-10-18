@@ -1,17 +1,17 @@
-import React, { memo, useCallback, useMemo, useState } from 'react';
+import React, { memo, useCallback, useMemo } from 'react';
 import Svg, { Circle } from 'react-native-svg';
-import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
 import { CalorieOverflowRing } from '@/components/CalorieOverflowRing';
-import { ExerciseSheet } from '@/components/ExerciseSheet';
 import { MiniProgressBar } from '@/components/MiniProgressBar';
 import { ACTIVITY_LEVEL_I18N_KEY, TRIAL_DURATION_DAYS } from '@/constants/onboarding';
-import { Body, BottomSheet, Button, Caption, Dialog, Icon, IconButton, Label, useTheme, type Theme } from '@/design-system';
+import { Body, Button, Caption, Icon, IconButton, Label, SheetScreen, useTheme, type Theme } from '@/design-system';
 import { useT } from '@/hooks/useT';
 import { radius } from '@/design-system/tokens/primitives/radius';
 import { fontSize as fs, letterSpacing as ls } from '@/design-system/tokens/primitives/typography';
 import { useAppState } from '@/providers/app-state-provider';
 import { useRouter } from 'expo-router';
+import { useProvideSheetProps, useSheetProps } from '@/utils/sheet-props';
 import { adjustedTargetKcal, calcBaselineActiveKcal, CARRYOVER_HARD_FLOOR_KCAL, carryoverSoftFloorKcal, getAdjustedPfcForDate, getEffectiveSubscriptionStatus, getTdeeExerciseKcalForDate, stepsToActiveKcal, trialDaysRemaining } from '@/utils/goals';
 import { isWeeklyBalanceWorthProposing, type WeeklyBalance } from '@/utils/weekly-balance';
 import { formatDateKey, formatMacroText } from '@/utils/nutrition';
@@ -50,24 +50,7 @@ const RECAP_TEASER_DOTS: { cx: number; cy: number; r: number; opacity: number }[
  *
  * 計算式は **常に表示** (前バージョンの "運動がある時のみ表示" を廃止)。
  */
-const BalanceModal = memo(function BalanceModal({
-  visible,
-  onClose,
-  baseTargetKcal,
-  adjustedTargetKcal,
-  consumedKcal,
-  exerciseAdded,
-  addedLabel,
-  activityLevelLabel,
-  weeklyBalanceActive,
-  weeklyAdjustmentKcal,
-  weeklyRemainingDays,
-  weeklyProposal,
-  onOpenWeeklyBalance,
-  onStopWeeklyBalance,
-}: {
-  visible: boolean;
-  onClose: () => void;
+type BalanceSheetProps = {
   baseTargetKcal: number;
   adjustedTargetKcal: number;
   consumedKcal: number;
@@ -81,8 +64,53 @@ const BalanceModal = memo(function BalanceModal({
   weeklyRemainingDays: number;
   /** 未使用時に提案する向き。null なら提案しない */
   weeklyProposal: 'over' | 'under' | null;
-  onOpenWeeklyBalance: () => void;
   onStopWeeklyBalance: () => void;
+};
+
+/** 週の収支を「やめる」前の確認 (iOS 標準アラート)。旧 Dialog の置き換え */
+function confirmStopWeeklyBalance(tr: ReturnType<typeof useT>, onConfirm: () => void) {
+  Alert.alert(
+    tr('statusCard.weeklyBalance.stopDialogTitle'),
+    tr('statusCard.weeklyBalance.stopDialogBody'),
+    [
+      { text: tr('statusCard.weeklyBalance.continue'), style: 'cancel' },
+      { text: tr('statusCard.weeklyBalance.stop'), style: 'destructive', onPress: onConfirm },
+    ],
+  );
+}
+
+/** `/balance` ルートの中身。値は StatusCard が useProvideSheetProps('balance') で渡す */
+export function BalanceSheetRoute() {
+  const router = useRouter();
+  const props = useSheetProps<BalanceSheetProps>('balance');
+  if (!props) return null;
+  return (
+    <BalanceSheet
+      {...props}
+      onClose={() => router.back()}
+      // 収支の説明から「詳しく / 始める」で週の収支シートへ差し替える
+      onOpenWeeklyBalance={() => router.replace('/weekly-balance')}
+    />
+  );
+}
+
+const BalanceSheet = memo(function BalanceSheet({
+  onClose,
+  baseTargetKcal,
+  adjustedTargetKcal,
+  consumedKcal,
+  exerciseAdded,
+  addedLabel,
+  activityLevelLabel,
+  weeklyBalanceActive,
+  weeklyAdjustmentKcal,
+  weeklyRemainingDays,
+  weeklyProposal,
+  onOpenWeeklyBalance,
+  onStopWeeklyBalance,
+}: BalanceSheetProps & {
+  onClose: () => void;
+  onOpenWeeklyBalance: () => void;
 }) {
   const t = useTheme();
   const tr = useT();
@@ -99,17 +127,9 @@ const BalanceModal = memo(function BalanceModal({
       ? t.colors.nutrition.calorie.severeExceed.graphic
       : t.colors.nutrition.calorie.within.text;
   const hasExercise = exerciseAdded > 0;
-  const [cancelDialogVisible, setCancelDialogVisible] = useState(false);
   return (
-    <>
-    <Dialog visible={visible} onClose={onClose} testID="balance-modal">
-      <IconButton
-        icon="close"
-        size="md"
-        onPress={onClose}
-        style={styles.balanceCloseButton}
-        accessibilityLabel={tr('common.close')}
-      />
+    // 中身の高さに合わせる小さいシート。右上の × は SheetScreen が出す
+    <SheetScreen onCancel={onClose} testID="balance-modal">
 
       <View style={styles.balanceHero}>
         <Label size="sm" tone="secondary">{overshoot ? tr('statusCard.balance.over') : tr('statusCard.balance.remaining')}</Label>
@@ -179,7 +199,7 @@ const BalanceModal = memo(function BalanceModal({
             <Label size="sm" tone="link">{tr('statusCard.weeklyBalance.details')}</Label>
           </Pressable>
           <Text style={{ color: t.colors.border.default, marginHorizontal: t.spacing['2'] }}>|</Text>
-          <Pressable onPress={() => setCancelDialogVisible(true)} hitSlop={8} accessibilityRole="button" accessibilityLabel={tr('statusCard.weeklyBalance.stopA11y')}>
+          <Pressable onPress={() => confirmStopWeeklyBalance(tr, () => { onClose(); onStopWeeklyBalance(); })} hitSlop={8} accessibilityRole="button" accessibilityLabel={tr('statusCard.weeklyBalance.stopA11y')}>
             <Label size="sm" style={{ color: t.colors.status.danger.default }}>{tr('statusCard.weeklyBalance.stop')}</Label>
           </Pressable>
         </View>
@@ -203,26 +223,7 @@ const BalanceModal = memo(function BalanceModal({
           </View>
         </Pressable>
       ) : null}
-      {/* iOS は表示中の Modal の兄弟として別の Modal を出せないため、子として描画する */}
-      <Dialog
-        visible={cancelDialogVisible}
-        onClose={() => setCancelDialogVisible(false)}
-        title={tr('statusCard.weeklyBalance.stopDialogTitle')}
-        primaryAction={{
-          label: tr('statusCard.weeklyBalance.stop'),
-          onPress: () => { setCancelDialogVisible(false); onClose(); onStopWeeklyBalance(); },
-        }}
-        secondaryAction={{
-          label: tr('statusCard.weeklyBalance.continue'),
-          onPress: () => setCancelDialogVisible(false),
-        }}
-      >
-        <Body size="sm" tone="secondary">
-          {tr('statusCard.weeklyBalance.stopDialogBody')}
-        </Body>
-      </Dialog>
-    </Dialog>
-    </>
+    </SheetScreen>
   );
 });
 
@@ -299,28 +300,34 @@ function SheetRow({ label, value, caption }: { label: string; value: string; cap
  * 今週の収支を合わせる (PRD §6.4.5) の確認シート。
  * 日数などの選択肢は持たない — 残り日数は日曜までで決まり、毎日計算し直すため。
  */
-function WeeklyBalanceSheet({
-  visible,
-  onClose,
-  onStart,
-  onStop,
-  active,
-  balance,
-  todayTargetKcal,
-}: {
-  visible: boolean;
-  onClose: () => void;
+type WeeklyBalanceSheetProps = {
   onStart: () => void;
   onStop: () => void;
   active: boolean;
   balance: WeeklyBalance;
   /** 調整前の今日の目標 (ベース + 活動加算) */
   todayTargetKcal: number;
-}) {
+};
+
+/** `/weekly-balance` ルートの中身。値は StatusCard が useProvideSheetProps('weeklyBalance') で渡す */
+export function WeeklyBalanceSheetRoute() {
+  const router = useRouter();
+  const props = useSheetProps<WeeklyBalanceSheetProps>('weeklyBalance');
+  if (!props) return null;
+  return <WeeklyBalanceSheet {...props} onClose={() => router.back()} />;
+}
+
+function WeeklyBalanceSheet({
+  onClose,
+  onStart,
+  onStop,
+  active,
+  balance,
+  todayTargetKcal,
+}: WeeklyBalanceSheetProps & { onClose: () => void }) {
   const t = useTheme();
   const tr = useT();
   const { profile } = useAppState();
-  const [stopDialogVisible, setStopDialogVisible] = useState(false);
 
   const adj = balance.todayAdjustmentKcal;
   const soFarValue = balance.balanceKcal > 0
@@ -345,24 +352,15 @@ function WeeklyBalanceSheet({
   }
 
   return (
-    <>
-    <BottomSheet
-      visible={visible}
-      onClose={onClose}
+    <SheetScreen
       title={tr('statusCard.weeklyBalanceSheet.title')}
-      primaryAction={active ? {
-        label: tr('common.close'),
-        onPress: onClose,
-      } : {
+      onCancel={onClose}
+      // 未使用時: 左上キャンセル / 右上「始める」。使用中: 右上 × で閉じ、やめるは本文下の破壊的ボタン
+      cancelLabel={active ? undefined : tr('common.cancel')}
+      confirmAction={active ? undefined : {
         label: tr('statusCard.weeklyBalanceSheet.confirm'),
         onPress: () => { onClose(); onStart(); },
       }}
-      secondaryAction={active ? {
-        label: tr('statusCard.weeklyBalance.stop'),
-        onPress: () => setStopDialogVisible(true),
-        destructive: true,
-      } : undefined}
-      scrollable={false}
     >
       <View>
         <SheetRow
@@ -391,26 +389,16 @@ function WeeklyBalanceSheet({
           {tr('statusCard.weeklyBalanceSheet.note')}
         </Body>
       </View>
-      {/* iOS は表示中の Modal の兄弟として別の Modal を出せないため、子として描画する */}
-      <Dialog
-        visible={stopDialogVisible}
-        onClose={() => setStopDialogVisible(false)}
-        title={tr('statusCard.weeklyBalance.stopDialogTitle')}
-        primaryAction={{
-          label: tr('statusCard.weeklyBalance.stop'),
-          onPress: () => { setStopDialogVisible(false); onClose(); onStop(); },
-        }}
-        secondaryAction={{
-          label: tr('statusCard.weeklyBalance.continue'),
-          onPress: () => setStopDialogVisible(false),
-        }}
-      >
-        <Body size="sm" tone="secondary">
-          {tr('statusCard.weeklyBalance.stopDialogBody')}
-        </Body>
-      </Dialog>
-    </BottomSheet>
-    </>
+      {active ? (
+        <Button
+          label={tr('statusCard.weeklyBalance.stop')}
+          variant="ghost"
+          labelStyle={{ color: t.colors.status.danger.default }}
+          onPress={() => confirmStopWeeklyBalance(tr, () => { onClose(); onStop(); })}
+          testID="weekly-balance-stop"
+        />
+      ) : null}
+    </SheetScreen>
   );
 }
 
@@ -567,9 +555,7 @@ export const StatusCard = memo(function StatusCard({
   const tr = useT();
   const styles = useMemo(() => makeStyles(t), [t]);
   const { width: screenWidth } = useWindowDimensions();
-  const [exerciseSheetVisible, setExerciseSheetVisible] = useState(false);
-  const [balanceVisible, setBalanceVisible] = useState(false);
-  const [weeklySheetVisible, setWeeklySheetVisible] = useState(false);
+  const router = useRouter();
 
   const today = useMemo(() => new Date(), []);
   const targetDate = viewedDate ?? today;
@@ -618,13 +604,51 @@ export const StatusCard = memo(function StatusCard({
     };
   }, [profile, effectiveTarget]);
 
-  const openExerciseSheet = useCallback(() => setExerciseSheetVisible(true), []);
-  const closeExerciseSheet = useCallback(() => setExerciseSheetVisible(false), []);
+  const openExerciseSheet = useCallback(
+    () => router.push({ pathname: '/exercise', params: { dateKey } }),
+    [router, dateKey],
+  );
 
   const weeklyProposal: 'over' | 'under' | null =
     !weeklyBalanceActive && isWeeklyBalanceWorthProposing(weeklyBalance.balanceKcal, profile.targetCalories)
       ? (weeklyBalance.balanceKcal > 0 ? 'over' : 'under')
       : null;
+
+  // 収支の説明 / 週の収支シート (ネイティブ formSheet ルート) へ渡す値。開いている間に再計算されても反映される
+  const todayTargetKcal = isToday ? effectiveTarget - weeklyAdjustmentKcal : effectiveTarget;
+  const weeklyBalanceSheetProps = useMemo<WeeklyBalanceSheetProps>(
+    () => ({
+      onStart: startWeeklyBalance,
+      onStop: stopWeeklyBalance,
+      active: weeklyBalanceActive,
+      balance: weeklyBalance,
+      todayTargetKcal,
+    }),
+    [startWeeklyBalance, stopWeeklyBalance, weeklyBalanceActive, weeklyBalance, todayTargetKcal],
+  );
+  useProvideSheetProps('weeklyBalance', weeklyBalanceSheetProps);
+  const activityLevelLabel = profile.activityLevel
+    ? tr(`onboarding.activity.${ACTIVITY_LEVEL_I18N_KEY[profile.activityLevel]}.label`)
+    : null;
+  const consumedKcal = Math.round(dayMacro.kcal);
+  const balanceSheetProps = useMemo<BalanceSheetProps>(
+    () => ({
+      baseTargetKcal: profile.targetCalories,
+      adjustedTargetKcal: effectiveTarget,
+      consumedKcal,
+      exerciseAdded: Math.max(0, effectiveTarget - (isToday ? weeklyAdjustmentKcal : 0) - profile.targetCalories),
+      addedLabel: tr('statusCard.balance.addedActivity'),
+      activityLevelLabel,
+      weeklyBalanceActive: isToday && weeklyBalanceActive,
+      weeklyAdjustmentKcal: isToday ? weeklyAdjustmentKcal : 0,
+      weeklyRemainingDays: weeklyBalance.remainingDays,
+      weeklyProposal: isToday ? weeklyProposal : null,
+      onStopWeeklyBalance: stopWeeklyBalance,
+    }),
+    [profile.targetCalories, effectiveTarget, consumedKcal, isToday, weeklyAdjustmentKcal, tr, activityLevelLabel,
+      weeklyBalanceActive, weeklyBalance.remainingDays, weeklyProposal, stopWeeklyBalance],
+  );
+  useProvideSheetProps('balance', balanceSheetProps);
 
   const ringSize = Math.round(Math.min(180, Math.max(120, screenWidth * 0.38)));
   const ringStroke = Math.round(ringSize * 0.11);
@@ -637,20 +661,11 @@ export const StatusCard = memo(function StatusCard({
           balanceKcal={weeklyBalance.balanceKcal}
           remainingDays={weeklyBalance.remainingDays}
           todayAdjustmentKcal={weeklyAdjustmentKcal}
-          onOpenSheet={() => setWeeklySheetVisible(true)}
+          onOpenSheet={() => router.push('/weekly-balance')}
           onDismiss={dismissWeeklyBalanceBanner}
         />
       ) : null}
       {isToday ? <WeeklyRecapTeaser /> : null}
-      <WeeklyBalanceSheet
-        visible={weeklySheetVisible}
-        onClose={() => setWeeklySheetVisible(false)}
-        onStart={startWeeklyBalance}
-        onStop={stopWeeklyBalance}
-        active={weeklyBalanceActive}
-        balance={weeklyBalance}
-        todayTargetKcal={isToday ? effectiveTarget - weeklyAdjustmentKcal : effectiveTarget}
-      />
       {/* 3-column: 食事 | Ring(残り) | 消費 */}
       <View style={styles.ringRow}>
         {/* Left: 食事 (タップで食事ログシート half) */}
@@ -674,7 +689,7 @@ export const StatusCard = memo(function StatusCard({
 
         {/* Center: Ring (タップで収支表示) */}
         <Pressable
-          onPress={() => setBalanceVisible(true)}
+          onPress={() => router.push('/balance')}
           testID="status-ring-area"
           accessibilityRole="button"
           accessibilityLabel={tr('statusCard.a11y.showBalance')}
@@ -742,25 +757,6 @@ export const StatusCard = memo(function StatusCard({
         />
       </View>
 
-      <ExerciseSheet visible={exerciseSheetVisible} onClose={closeExerciseSheet} dateKey={dateKey} />
-      <BalanceModal
-        visible={balanceVisible}
-        onClose={() => setBalanceVisible(false)}
-        baseTargetKcal={profile.targetCalories}
-        adjustedTargetKcal={effectiveTarget}
-        consumedKcal={Math.round(dayMacro.kcal)}
-        exerciseAdded={Math.max(0, effectiveTarget - (isToday ? weeklyAdjustmentKcal : 0) - profile.targetCalories)}
-        addedLabel={tr('statusCard.balance.addedActivity')}
-        activityLevelLabel={
-          profile.activityLevel ? tr(`onboarding.activity.${ACTIVITY_LEVEL_I18N_KEY[profile.activityLevel]}.label`) : null
-        }
-        weeklyBalanceActive={isToday && weeklyBalanceActive}
-        weeklyAdjustmentKcal={isToday ? weeklyAdjustmentKcal : 0}
-        weeklyRemainingDays={weeklyBalance.remainingDays}
-        weeklyProposal={isToday ? weeklyProposal : null}
-        onOpenWeeklyBalance={() => { setBalanceVisible(false); setWeeklySheetVisible(true); }}
-        onStopWeeklyBalance={stopWeeklyBalance}
-      />
     </View>
   );
 });

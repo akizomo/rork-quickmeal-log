@@ -1,7 +1,8 @@
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { BottomSheet, Chip, IconButton, Label, Overline, useTheme, type Theme } from '@/design-system';
+import { Button, Chip, IconButton, Label, Overline, TallSheetScreen, useTheme, type Theme } from '@/design-system';
 import { useT } from '@/hooks/useT';
 import { fontSize as fs, letterSpacing as ls } from '@/design-system/tokens/primitives/typography';
 import { radius } from '@/design-system/tokens/primitives/radius';
@@ -23,14 +24,16 @@ import type { ExerciseLog } from '@/types/nutrition';
 
 const DURATION_PRESETS = [15, 20, 30, 45, 60] as const;
 
-interface ExerciseSheetProps {
-  visible: boolean;
-  onClose: () => void;
-  /** 省略時は今日。過去日を指定するとその日のデータを表示する。 */
-  dateKey?: string;
-}
 
-export const ExerciseSheet = memo(function ExerciseSheet({ visible, onClose, dateKey: dateKeyProp }: ExerciseSheetProps) {
+/**
+ * 運動の記録シート (ネイティブ formSheet ルート /exercise の中身)。
+ * `/exercise?dateKey=YYYY-MM-DD` で過去日を開ける。省略時は今日。
+ */
+export const ExerciseSheet = memo(function ExerciseSheet() {
+  const router = useRouter();
+  const { dateKey: dateKeyParam } = useLocalSearchParams<{ dateKey?: string }>();
+  const dateKeyProp = dateKeyParam || undefined;
+  const onClose = useCallback(() => router.back(), [router]);
   const t = useTheme();
   const tr = useT();
   const styles = useMemo(() => makeStyles(t), [t]);
@@ -136,15 +139,13 @@ export const ExerciseSheet = memo(function ExerciseSheet({ visible, onClose, dat
   const sheetTitle = tr('exercise.sheetTitle', { day: dayLabel });
 
   return (
-    <BottomSheet
-      visible={visible}
+    <TallSheetScreen
       onClose={onClose}
       title={sheetTitle}
+      footerLeft={<Button label={tr('common.cancel')} variant="ghost" onPress={onClose} testID="exercise-sheet-secondary" />}
       primaryAction={{ label: tr('exercise.add'), onPress: handleSave }}
-      secondaryAction={{ label: tr('common.cancel'), onPress: onClose }}
       testID="exercise-sheet"
     >
-      <ScrollView showsVerticalScrollIndicator={false} style={styles.scroll}>
         <View style={styles.content}>
           <View style={styles.summaryCard} testID="exercise-summary-card">
             <View style={styles.summaryHeader}>
@@ -272,8 +273,7 @@ export const ExerciseSheet = memo(function ExerciseSheet({ visible, onClose, dat
             </View>
           </View>
         </View>
-      </ScrollView>
-    </BottomSheet>
+    </TallSheetScreen>
   );
 });
 
@@ -323,7 +323,6 @@ function ExerciseHistoryRow({ log, onDelete }: { log: ExerciseLog; onDelete: () 
 }
 
 const makeStyles = (t: Theme) => StyleSheet.create({
-  scroll: { maxHeight: 520 },
   content: { gap: 20, paddingBottom: 16 },
   summaryCard: {
     backgroundColor: t.colors.surface.raised,
