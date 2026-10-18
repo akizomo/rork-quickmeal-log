@@ -194,3 +194,10 @@
 - 量入力の結果は `openAmountEditor({ onDone })` (zustand の小さなストア) で返す
 - StatusCard が計算した値 (収支・週の収支) は `utils/sheet-props.ts` で渡す
 - 旧 `openIdentityLogSheet({ onDismiss })` の「キャンセルで検索シートを開き直す」は、検索がページになり記録シートを閉じれば検索に戻るので使わなくなった (仕組みは残置)
+
+### 8-x. 背の高いシートの描画ずれ: SDK 58 でも「書き方」で防ぐ必要があった (2026-10-18)
+§7-6 のスパイク B は正常に見えたが、`TallSheetScreen` (見出し + `flex: 1` の ScrollView + フッター) では SDK 58 でも本文が見出しの上へ約 70pt はみ出して描画された。
+- **原因**: react-native-screens は formSheet 内の ScrollView の frame を「シート全体」に補正する (`RNSScreen.mm` `applyFrameCorrectionForDescendantScrollView`)。ScrollView が画面直下の子でない場合は `setFrame:self.frame` のフォールバックになり、Yoga が置いた位置 (見出しの下) が無視される。
+- **効果が無かった対処**: ScrollView を View で包む / `sheetExpandsWhenScrolledToEdge: false` / 初期 detent の変更 / 横スクロールのチップ列を外す / 見出しに `collapsable={false}`。
+- **効いた対処**: ScrollView を画面直下の最初の子にして `absoluteFill`、見出しとフッターは 1 枚のオーバーレイ (`pointerEvents="box-none"`) にして ScrollView の上に重ね、実測した高さを本文の余白 (`paddingTop` / `paddingBottom`) に足す。画面直下を 2 要素に保つ (3 つ以上だと `RNSScreenContentWrapper` が警告する)。
+- 実装は `design-system/components/TallSheetScreen.tsx`。**背の高い formSheet は必ずこの部品を使う** (自前で ScrollView を並べない)。
