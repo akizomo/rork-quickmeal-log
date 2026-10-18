@@ -275,8 +275,8 @@ function PlanCard({
 const makeStyles = (t: Theme) => StyleSheet.create({
   page: { flex: 1, backgroundColor: t.colors.surface.default },
   safe: { flex: 1 },
-  closeRow: { flexDirection: 'row', justifyContent: 'flex-end', paddingHorizontal: 20, paddingTop: 4 },
-  scroll: { paddingHorizontal: 24, paddingTop: 8, paddingBottom: 20, gap: 20 },
+  closeRow: { flexDirection: 'row', justifyContent: 'flex-end', paddingHorizontal: 20 },
+  scroll: { paddingHorizontal: 24, paddingTop: 24, paddingBottom: 20, gap: 20 }, // 上を左右 (24) とそろえる
   title: { fontSize: fs['3xl'], fontWeight: '700', color: t.colors.content.primary, lineHeight: 36 },
   subtitle: { fontSize: fs.md, lineHeight: 22, color: t.colors.content.secondary },
   benefitsCard: { backgroundColor: t.colors.surface.raised, borderRadius: 24, padding: 20, gap: 16 },
