@@ -120,6 +120,13 @@
 
 - 残課題 (本質対応): BottomSheet/Dialog が RN `Modal` ベースであること自体が、重ね順の脆さと Android キーボード未対応の根。**リリース前に formSheet へ移行する方針 (2026-10-17 決定)**。影響範囲と段取りは [SHEET_MIGRATION.md](./SHEET_MIGRATION.md)
 
+### 🐛 2026-10-18 アップロード検証で ITMS-90683 (Build 5 が弾かれた)
+- **症状**: `NSHealthUpdateUsageDescription` が Info.plist に無い、というメールが届いた (Build 5)。
+- **原因**: `app.json` の `@kingstinct/react-native-healthkit` プラグインで `"NSHealthUpdateUsageDescription": false` にしていた。アプリは **読み取りのみ**でも、HealthKit ライブラリが書き込み系 API を参照しているため、**書き込みをしなくても説明文は必須**。(SDK 58 移行時に「書き込まないので不要」と判断したのが誤り)
+- **対応**: 説明文を入れた (「ヘルスケアのデータを読み取って使うだけで、書き込むことはありません」)。書き込み権限の要求は出さないので、許可ダイアログには影響しない。
+- **再発防止**: HealthKit 周りの Info.plist キーは **`false` で消さない**。ネイティブ依存を触ったら、ビルド前に `npx expo config --type introspect | grep NSHealth` で両方のキーが入っていることを確認する。
+- 注意: Info.plist には location / microphone / motion の既定文言も入っている (`expo-location` / `expo-camera` 由来)。アプリは位置情報・マイクを使っていないので、不要なら該当モジュールの除去を検討 (審査で用途を聞かれ得る)。
+
 ### ⏳ あなたの手続き待ち
 | タスク | 必要なもの |
 |---|---|
