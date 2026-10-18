@@ -46,7 +46,7 @@
 
 ### D. RevenueCat
 - [x] RevenueCat プロジェクトに **App Store アプリを追加** (Bundle ID 上記、C で発行したキーを登録)
-- [ ] 2プロダクトを取り込み、エンタイトルメント `Hachibu` と Offering `default` の monthly / annual パッケージに紐付け
+- [x] 2プロダクトを取り込み、エンタイトルメント `Hachibu` と Offering `default` の monthly / annual パッケージに紐付け (2026-10-18 ユーザー申告で完了。TestFlight の paywall で価格が出ることは未確認)
 - [x] 発行された **`appl_` で始まる Public SDK Key** を Claude に共有 (公開キーなのでチャットで可)
 
 ### E. ビルド環境
