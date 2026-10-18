@@ -42,6 +42,9 @@ npx eas-cli@18.12.2 build --profile production --platform ios --non-interactive
 
 ---
 
+> **⚠️ 依存を増減したら `bun.lock` も更新してコミットする (2026-10-18)。** `expo/` には `bun.lock` と `package-lock.json` の両方がある。**EAS は `bun.lock` があれば bun で `--frozen-lockfile` インストールする**ため、`package.json` と食い違うと「Install dependencies」フェーズで `Unknown error` になる (`expo-location` を `npm uninstall` で外し、`package-lock.json` だけ更新して `bun.lock` を忘れた事故)。
+> 依存を触ったら、ビルド前に **`cd expo && bun install --lockfile-only && bun install --frozen-lockfile --dry-run`** を実行し、`bun.lock` の差分をコミットする。`npm ci` はローカルでは peer 依存 (lucide-react-native と react 19) で失敗するが、EAS は npm を使わないので無関係。
+
 ## 1. 前提条件
 
 | 項目 | 必須? | 確認コマンド |
