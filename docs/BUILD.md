@@ -35,8 +35,10 @@ npx eas-cli@18.12.2 build --profile production --platform ios --non-interactive
 
 > **iOS で Apple ID ログインが要る操作 (証明書の新規作成・更新) は `eas-cli@25.0.0` 以上を使う。** 18.12.2 では Apple 側の認証変更により `Authentication with Apple Developer Portal failed! iTunes service key is empty` で失敗する (2026-10-16 確認)。`npx` は eas-cli の取得に10分以上かかったため `bunx eas-cli@25.0.0 ...` を使った。証明書が EAS に保存された後の通常ビルドは `--non-interactive` で動く想定 (未検証)。
 >
-> **iOS のビルドイメージは `eas.json` で `macos-sequoia-15.6-xcode-26.0` (= EAS の `sdk-54` 対応イメージ) に固定している。外さないこと。**
-> Xcode 27 (iOS 27 SDK) でビルドすると UIScene ライフサイクル必須となり、RN 0.81 / Expo SDK 54 のアプリは起動直後に `EXC_BREAKPOINT` で落ちる (2026-10-16 ローカル Xcode 27.1 で実証)。`auto` / `latest` エイリアスは将来 Xcode 27 系へ動き得るため使わない。Expo SDK を上げるときはイメージも対応する `sdk-XX` の実体へ同時に更新する。
+> **iOS のビルドイメージは `eas.json` で `macos-tahoe-26.6-xcode-27.0` (= EAS の `sdk-58` 対応イメージ) に固定している。外さないこと。**
+> Xcode 27 (iOS 27 SDK) でビルドすると UIScene ライフサイクル必須となり、RN 0.81 / Expo SDK 54 のアプリは起動直後に `EXC_BREAKPOINT` で落ちる (2026-10-16 ローカル Xcode 27.1 で実証)。SDK 58 (RN 0.88) は Scene ライフサイクルに対応済みで、Xcode 27 で起動することを 2026-10-18 に Simulator で確認した (SDK 54 に戻す場合は `macos-sequoia-15.6-xcode-26.0` へ戻す)。
+> `auto` / `latest` エイリアスは将来イメージが動き得るため使わない。Expo SDK を上げるときはイメージも対応する `sdk-XX` の実体へ同時に更新する。
+> **27.0 に固定している理由**: Expo のイメージ一覧には 27.1 (RC) もあるが、ベータ/RC の Xcode でビルドしたものは App Store Connect が受け付けないことがある。正式版の 27.1 が EAS に出たら更新を検討する。イメージ名は eas.json では検証されず、誤りは cloud build の開始時にしか分からないので、変更時は [Expo のビルドサーバー一覧](https://docs.expo.dev/build-reference/infrastructure/) で名前を確認する。
 
 ---
 
