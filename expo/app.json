@@ -69,7 +69,9 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "バーコードをスキャンして食品の栄養情報を取得するためにカメラを使用します。"
+          "cameraPermission": "バーコードをスキャンして食品の栄養情報を取得するためにカメラを使用します。",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
         }
       ],
       [
