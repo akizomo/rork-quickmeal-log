@@ -22,7 +22,7 @@
  */
 
 import { useRouter } from 'expo-router';
-import React from 'react';
+import React, { useState } from 'react';
 import { ScrollView, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import type { NativeStackNavigationOptions } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -84,10 +84,43 @@ export function TallSheetScreen({
   const close = onClose ?? (() => router.back());
   const hasFooter = !!(primaryAction || footerLeft);
   const bottomInset = Math.max(insets.bottom, t.spacing['4']);
+  // 見出しとフッターは ScrollView の上に重ねる (下記コメント)。本文の余白に高さを足すため実測する
+  const [headerHeight, setHeaderHeight] = useState(0);
+  const [footerHeight, setFooterHeight] = useState(0);
 
   return (
-    <View style={[styles.fill, { backgroundColor: t.colors.surface.default }]} testID={testID}>
-      <View style={[styles.header, { paddingHorizontal: t.spacing['5'], paddingTop: t.spacing['5'], paddingBottom: t.spacing['2'] }]}>
+    <>
+      {/* react-native-screens は formSheet 内の ScrollView の frame を「シート全体 (原点 0,0)」に強制補正する
+          (RNSScreen.mm の applyFrameCorrectionForDescendantScrollView)。ScrollView を見出しの兄弟として
+          flex で並べると、Yoga の位置 (見出しの下) と無視されて、本文が見出しの上へはみ出して描画された
+          (2026-10-18 iOS 27 / react-native-screens 4.30 で確認)。補正と矛盾しないよう、ScrollView を最初から
+          シート全面に置き、見出し・フッターを前面に重ねて、その高さ分を本文の余白に足す。
+          ScrollView は画面直下の最初の子、見出し+フッターは 1 枚のオーバーレイにして、直下を 2 要素に保つ
+          (3 つ以上だと RNSScreenContentWrapper が警告し、補正の前提が崩れる)。 */}
+      <ScrollView
+        testID={testID}
+        style={StyleSheet.absoluteFill}
+        contentContainerStyle={[
+          {
+            paddingHorizontal: t.spacing['5'],
+            paddingTop: headerHeight + t.spacing['4'],
+            paddingBottom: (hasFooter ? footerHeight : 0) + (hasFooter ? t.spacing['4'] : bottomInset),
+          },
+          contentStyle,
+        ]}
+        keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets
+        contentInsetAdjustmentBehavior="never"
+        showsVerticalScrollIndicator={false}
+        automaticallyAdjustContentInsets={false}
+      >
+        {children}
+      </ScrollView>
+      <View style={styles.overlay} pointerEvents="box-none" collapsable={false}>
+      <View
+        collapsable={false}
+        onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}
+        style={[styles.header, { backgroundColor: t.colors.surface.default, paddingHorizontal: t.spacing['5'], paddingTop: t.spacing['5'], paddingBottom: t.spacing['2'] }]}>
         {title ? <Heading size="lg">{title}</Heading> : <View />}
         {headerRight !== undefined ? (
           headerRight
@@ -102,26 +135,9 @@ export function TallSheetScreen({
         )}
       </View>
 
-      <ScrollView
-        style={styles.fill}
-        contentContainerStyle={[
-          {
-            paddingHorizontal: t.spacing['5'],
-            paddingTop: t.spacing['4'],
-            paddingBottom: hasFooter ? t.spacing['4'] : bottomInset,
-          },
-          contentStyle,
-        ]}
-        keyboardShouldPersistTaps="handled"
-        automaticallyAdjustKeyboardInsets
-        contentInsetAdjustmentBehavior="never"
-        showsVerticalScrollIndicator={false}
-      >
-        {children}
-      </ScrollView>
-
       {hasFooter ? (
         <View
+          onLayout={(e) => setFooterHeight(e.nativeEvent.layout.height)}
           style={[
             styles.footer,
             {
@@ -150,7 +166,8 @@ export function TallSheetScreen({
           )}
         </View>
       ) : null}
-    </View>
+      </View>
+    </>
   );
 }
 
@@ -161,6 +178,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
+  overlay: { ...StyleSheet.absoluteFill, justifyContent: 'space-between' },
   footer: {
     flexDirection: 'row',
     alignItems: 'center',
