@@ -94,7 +94,14 @@
       "@sentry/react-native",
       "expo-localization",
       "expo-image",
-      "expo-splash-screen",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#355E52"
+        }
+      ],
       "expo-status-bar"
     ],
     "experiments": {
