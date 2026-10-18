@@ -165,3 +165,32 @@
 - 結論: **背の高いシート (IdentityLogSheet / DishQuickEntrySheet / LogEditorSheet / 検索) も formSheet に移行できる**。量調整ダイアログ (§7-5) も同時に移せる
 - 既存の BottomSheet 実装 (検索シート + キーボード、2026-10-17 の修正) も SDK 58 で表示崩れなし
 - 未確認: Android 全般 (android/ の作り直しが未了)、HealthKit の許可ダイアログと実データ取得
+
+## 8. 全面移行 (2026-10-18, sdk-58-ios-sheets ブランチ)
+
+状態: コード有・tsc / jest / i18n 通過。iOS 27 Simulator での確認は §8-3 (Android は未確認)。
+
+### 8-1. 移行先の対応表
+| 旧 | 新 | 種別 |
+|---|---|---|
+| IdentityLogSheet (BottomSheet, グローバル) | `/log-identity` | tallSheetOptions + TallSheetScreen |
+| DishQuickEntrySheet (BottomSheet, グローバル) | `/dish-entry` | 同上 |
+| LogEditorSheet (BottomSheet, HomeScreen) | `/log-editor` | 同上 |
+| ExerciseSheet (BottomSheet, StatusCard) | `/exercise?dateKey=` | 同上 |
+| AmountEditDialog (Dialog) | `/amount-edit` (`openAmountEditor()`) | formSheetOptions + SheetScreen。数字キーボード右上の「保存」カプセル |
+| 体重 / 体脂肪 (BottomSheet ×4) | `/record-body?kind=` (10-17 済) | 同上 |
+| DirectInputSheet (BottomSheet) | `/direct-input` | 同上 |
+| BalanceModal (Dialog) | `/balance` | 同上 (右上 ×) |
+| WeeklyBalanceSheet (BottomSheet) | `/weekly-balance` | 同上 |
+| 週の収支「やめる」確認 (Dialog ×2) | `Alert.alert` (destructive) | iOS 標準アラート |
+| SearchSheet (BottomSheet) | `/search` (下層ページ) | `headerSearchBarOptions` (UISearchController) |
+| 見つからなかった食品の編集 (Dialog) | `/search-miss-edit?q=` | formSheetOptions + SheetScreen |
+| app/modal.tsx (テンプレートの残骸) | 削除 | — |
+
+アプリ本体 (app/ と components/) の RN `<Modal>` / `BottomSheet` / `Dialog` の利用は **ゼロ**。両部品は /dev の比較用に残す (削除は Android での確認後に判断)。
+
+### 8-2. 値の受け渡し
+- 開閉の状態を app-state が持っていたもの (記録シート / 一皿料理 / ログ編集) は、**状態はそのまま**にして、開くときにルートを push、状態が閉じたらルートが `router.back()`、スワイプで閉じられたらルートのアンマウント時に状態を閉じる (`app/log-identity.tsx` 等)
+- 量入力の結果は `openAmountEditor({ onDone })` (zustand の小さなストア) で返す
+- StatusCard が計算した値 (収支・週の収支) は `utils/sheet-props.ts` で渡す
+- 旧 `openIdentityLogSheet({ onDismiss })` の「キャンセルで検索シートを開き直す」は、検索がページになり記録シートを閉じれば検索に戻るので使わなくなった (仕組みは残置)
