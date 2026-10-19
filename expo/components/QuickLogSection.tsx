@@ -28,8 +28,8 @@ export const QUICK_LOG_TOKENS = {
   sectionPaddingHorizontal: 16,
   sectionPaddingTop: 8,
   sectionPaddingBottom: 8,
-  segmentHeight: 36,
-  segmentRadius: 18,
+  segmentHeight: 42, // 右の検索ボタン (IconButton lg = 42) と高さをそろえる
+  segmentRadius: 21,
   segmentBottomSpacing: 8,
   gridColumns: 3,
   gridGap: 8,
@@ -380,6 +380,8 @@ export const QuickLogSection = memo(function QuickLogSection() {
           options={segmentOptions}
           value={selectedTab}
           onChange={handleTabChange}
+          height={QUICK_LOG_TOKENS.segmentHeight}
+          borderRadius={QUICK_LOG_TOKENS.segmentRadius}
           style={{ flex: 1 }}
           testID="mode-tab"
         />
