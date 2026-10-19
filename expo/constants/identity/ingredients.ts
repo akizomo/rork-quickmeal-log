@@ -702,6 +702,13 @@ const BUCKET_EGG: Identity[] = [
       { key: 'fried', label: '目玉焼き', factor: { kcal: 1.33, fat: 1.44 } },
       { key: 'omelet', label: '卵焼き・スクランブル', factor: { kcal: 1.47, fat: 1.54, carbs: 7.5 } },
       { key: 'chawan', label: '茶碗蒸し', factor: { kcal: 1.07, protein: 0.97, fat: 0.96, carbs: 15 } },
+      // 9ボタンの「卵」からたまごスープを探す動線。スープは汁物 (杯) なので soup/egg へ振替。
+      // 検索は soup/egg に直接着地するため、ここには searchTags を持たせない (1位を食い合う)。
+      {
+        key: 'soup',
+        label: 'スープ',
+        migration: { bucketKey: 'misc_dish', identityKey: 'soup', attributeKey: 'egg', confirmMessage: 'たまごスープとして記録します' },
+      },
     ],
     asAddon: {
       unit: 'piece',

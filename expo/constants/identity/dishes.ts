@@ -1324,6 +1324,15 @@ const BUCKET_MISC_DISH: Identity[] = [
       { key: 'miso_light', label: '味噌汁・お吸い物', isDefault: true, searchTags: ['みそしる', 'おすいもの'] },
       { key: 'miso_rich', label: '味噌汁(具沢山)', factor: { kcal: 2.0, protein: 2.0, fat: 3.0, carbs: 2.0 }, searchTags: ['みそしる'] },
       { key: 'tonjiru', label: '豚汁・けんちん汁', factor: { kcal: 4.125, protein: 3.2, fat: 8.0, carbs: 3.75 }, searchTags: ['とんじる', 'ぶたじる', 'けんちんじる'] },
+      // たまごスープ。検索は soup に着地するが種類が無く、記録が「味噌汁」で残っていた。
+      // 1杯200ml = 卵1/2個 25g (八訂 全卵生: 36/3.1/2.6/0.1) + 片栗粉 3g + 顆粒だし
+      // → 50/3.3/2.6/3.2。かきたま汁 (だし) も卵と片栗粉が主で同じ値に寄る。
+      {
+        key: 'egg',
+        label: 'たまごスープ・中華スープ',
+        searchTags: ['たまごすーぷ', 'たまごスープ', '卵スープ', '玉子スープ', 'エッグスープ', 'ちゅうかすーぷ', '中華スープ', 'かきたまじる', 'かきたま汁', 'かき玉汁', 'かきたま'],
+        factor: { kcal: 1.25, protein: 1.32, fat: 2.6, carbs: 0.8 },
+      },
       {
         key: 'western',
         label: '洋風スープ',

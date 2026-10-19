@@ -93,6 +93,15 @@ export const STYLE_MIGRATIONS: MigrationRule[] = [
     description: 'さつまいも + 焼き蜜・揚げ蜜 → おやつ甘飲/和菓子',
   },
 
+  // Egg — スープ → たまごスープ
+  {
+    fromIdentityId: 'egg',
+    trigger: 'style',
+    triggerKey: 'soup',
+    to: { bucketKey: 'misc_dish', identityKey: 'soup', attributeKey: 'egg', confirmMessage: 'たまごスープとして記録します' },
+    description: '卵 + スープ → おかず・単品/汁物・スープ(たまごスープ)',
+  },
+
   // Chicken (lean) — 揚げ → 唐揚げ(むね)
   {
     fromIdentityId: 'chicken_lean',

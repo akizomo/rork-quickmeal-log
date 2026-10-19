@@ -58,7 +58,7 @@ export const TUNING_CORPUS: Item[] = [
     ['大根', 'veg_cooked'], ['ごぼう', 'veg_cooked'], ['きのこ', 'veg_dense/mushroom'], ['しめじ', 'veg_dense/mushroom'], ['えのき', 'veg_dense/mushroom'],
     ['野菜炒め', ['veg_cooked[stir_fry]', 'chuka_okazu/pork_vegetable']], ['温野菜', 'veg_cooked'], ['ポテトサラダ', ['side_creamy/potato_salad', 'potato[salad_mayo]']], ['マカロニサラダ', 'side_creamy/macaroni'], ['コールスロー', 'side_creamy/coleslaw'],
     ['ひじき', 'side_seasoned'], ['きんぴらごぼう', 'side_seasoned'], ['おひたし', 'side_seasoned'], ['煮物', 'side_seasoned'], ['切り干し大根', 'side_seasoned'],
-    ['キムチ', 'pickles/kimchi'], ['漬物', 'pickles'], ['梅干し', 'pickles/ume'], ['味噌汁', ['soup/miso_light', 'soup/miso_rich', 'soup']], ['豚汁', 'soup/tonjiru'],
+    ['キムチ', 'pickles/kimchi'], ['漬物', 'pickles'], ['梅干し', 'pickles/ume'], ['味噌汁', ['soup/miso_light', 'soup/miso_rich', 'soup']], ['豚汁', 'soup/tonjiru'], ['たまごスープ', 'soup/egg'], ['卵スープ', 'soup/egg'], ['中華スープ', 'soup/egg'], ['かきたま汁', 'soup/egg'],
     ['コーンスープ', ['soup/creamy', 'soup']], ['ミネストローネ', ['soup/western', 'veggie_soup']], ['野菜スープ', 'veggie_soup'], ['とうもろこし', 'corn'], ['コーン', 'corn'],
     ['バナナ', 'banana'], ['りんご', 'apple_pear'], ['みかん', 'citrus'], ['オレンジ', 'citrus'], ['いちご', 'ichigo'],
     ['ぶどう', 'berry/grape'], ['ブルーベリー', 'berry/blueberry'], ['キウイ', 'fruit_other'], ['桃', 'fruit_other'], ['スイカ', 'fruit_other'],

@@ -132,6 +132,17 @@ describe('resolveLog — Style migration', () => {
     expect(result.styleKey).toBeUndefined();
   });
 
+  it('migrates egg + Style=soup to soup (attribute=egg) — 9ボタンの「卵」からたまごスープ', () => {
+    const result = resolveLog({ originIdentityId: 'egg', styleKey: 'soup' });
+    expect(result.recordIdentityId).toBe('soup');
+    expect(result.attributeKey).toBe('egg');
+    // soup defaultMacro(40/2.5/1/4) × egg factor(1.25/1.32/2.6/0.8) = 50/3.3/2.6/3.2
+    expect(result.baseMacro.kcal).toBeCloseTo(50, 1);
+    expect(result.baseMacro.fat).toBeCloseTo(2.6, 1);
+    expect(result.confirmMessage).toBe('たまごスープとして記録します');
+    expect(result.styleKey).toBeUndefined();
+  });
+
   it('honors amountValue across a migration when units match (chicken_thigh 100g + fried → karaage_momo 100g)', () => {
     // resolveLog is a pure function that trusts the caller's amountValue as-is;
     // it does NOT know whether the unit is meaningful for the recordIdentity.
