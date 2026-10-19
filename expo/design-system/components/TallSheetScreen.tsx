@@ -113,6 +113,9 @@ export function TallSheetScreen({
         contentInsetAdjustmentBehavior="never"
         showsVerticalScrollIndicator={false}
         automaticallyAdjustContentInsets={false}
+        // 中身がシートに収まるときはスクロールさせない (iOS 既定の「常にバウンス」だと、全画面の高さで
+        // 中身が短いぶん大きく引っぱれてしまい、シートのドラッグとも紛らわしい)。はみ出すときの端のバウンスは残す
+        alwaysBounceVertical={false}
       >
         {children}
       </ScrollView>
