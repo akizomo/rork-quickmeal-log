@@ -14,6 +14,7 @@
 
 import { Stack, useRouter } from 'expo-router';
 import type { SearchBarCommands } from 'react-native-screens';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Keyboard,
@@ -32,6 +33,7 @@ import {
   useTheme,
 } from '@/design-system';
 import { buildRegistry, getBucketDef, getIdentity, presetAddonInputs } from '@/constants/identity';
+import { UndoToast } from '@/components/UndoToast';
 import { useAppState } from '@/providers/app-state-provider';
 import { useLocale } from '@/hooks/useLocale';
 import { useT } from '@/hooks/useT';
@@ -127,6 +129,7 @@ export function SearchScreen() {
 
   // iOS は headerSearchBarOptions.autoFocus が効かない (Android 専用) ので、ページ表示後に focus() で検索欄を選択状態にする
   const searchBarRef = useRef<SearchBarCommands>(null);
+  const insets = useSafeAreaInsets();
   useEffect(() => {
     const id = setTimeout(() => searchBarRef.current?.focus(), 800); // 画面遷移 (約500ms) が終わってからでないと focus が効かない
     return () => clearTimeout(id);
@@ -340,6 +343,9 @@ export function SearchScreen() {
           </Pressable>
         </View>
       </ScrollView>
+      {/* 記録シートを閉じて戻ってきたとき、ここで記録の取り消しトーストを出す (ホームのトーストは裏で見えない)。
+          下の検索バー (iOS 26 は画面下) にかぶらない高さに置く */}
+      <UndoToast bottom={insets.bottom + 72} />
     </>
   );
 }

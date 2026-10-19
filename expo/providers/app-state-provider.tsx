@@ -448,6 +448,15 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     }, 4000);
   }, []);
 
+  /** 取り消しトーストを (取り消しはせずに) 閉じる。トーストのスワイプで使う */
+  const dismissUndo = useCallback(() => {
+    if (undoTimerRef.current) {
+      clearTimeout(undoTimerRef.current);
+      undoTimerRef.current = null;
+    }
+    setUndoState(null);
+  }, []);
+
   const pushLog = useCallback(
     async (log: FoodLog) => {
       if (settings.hapticsEnabled) {
@@ -1839,6 +1848,7 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     cancelPendingLog,
     editorIsPending,
     undoLastLog,
+    dismissUndo,
     deleteLog,
     adjustLogAmount,
     updateIngredientLog,
