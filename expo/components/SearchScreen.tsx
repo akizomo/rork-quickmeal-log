@@ -130,6 +130,17 @@ export function SearchScreen() {
   // iOS は headerSearchBarOptions.autoFocus が効かない (Android 専用) ので、ページ表示後に focus() で検索欄を選択状態にする
   const searchBarRef = useRef<SearchBarCommands>(null);
   const insets = useSafeAreaInsets();
+  // 検索中はキーボードが出ている (記録シートから戻ってもそのまま)。トーストを画面下に固定すると
+  // キーボードの裏に隠れて記録できたか分からないので、キーボードの高さぶん持ち上げる
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  useEffect(() => {
+    const show = Keyboard.addListener('keyboardWillShow', (e) => setKeyboardHeight(e.endCoordinates.height));
+    const hide = Keyboard.addListener('keyboardWillHide', () => setKeyboardHeight(0));
+    return () => {
+      show.remove();
+      hide.remove();
+    };
+  }, []);
   useEffect(() => {
     const id = setTimeout(() => searchBarRef.current?.focus(), 800); // 画面遷移 (約500ms) が終わってからでないと focus が効かない
     return () => clearTimeout(id);
@@ -345,7 +356,7 @@ export function SearchScreen() {
       </ScrollView>
       {/* 記録シートを閉じて戻ってきたとき、ここで記録の取り消しトーストを出す (ホームのトーストは裏で見えない)。
           下の検索バー (iOS 26 は画面下) にかぶらない高さに置く */}
-      <UndoToast bottom={insets.bottom + 72} />
+      <UndoToast bottom={Math.max(keyboardHeight, insets.bottom) + 72} />
     </>
   );
 }
