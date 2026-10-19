@@ -9,6 +9,8 @@
  *   - 'ghost'  — 背景なし (Dialog/BottomSheetの閉じるボタン等)
  *   - 'filled' — 円形の surface.raised 背景 (Homeヘッダーのアバター/ヘルプ/実績、
  *                週次・月次実績の前後ナビ等)
+ *   - 'outlined' — 背景なし + 押せる要素の輪郭 (border.interactive) の円。塗りほど主張させずに
+ *                「押せるボタン」だと分かるようにしたいとき (Home の検索ボタン、2026-10-19)
  *
  * # size
  *   - 'sm' — box 28 / icon 14 (削除・クリア等の副次的なアイコン)
@@ -29,7 +31,7 @@ import { useTheme } from '../theme';
 import { Icon, type IconName } from './Icon';
 
 export type IconButtonSize = 'sm' | 'md' | 'lg';
-export type IconButtonVariant = 'ghost' | 'filled';
+export type IconButtonVariant = 'ghost' | 'filled' | 'outlined';
 export type IconButtonTone = 'secondary' | 'tertiary' | 'danger' | 'action' | 'inverse';
 
 const SIZE_MAP: Record<IconButtonSize, { box: number; icon: number }> = {
@@ -102,6 +104,7 @@ export function IconButton({
           justifyContent: 'center',
         },
         variant === 'filled' ? { backgroundColor: t.colors.surface.raised } : null,
+        variant === 'outlined' ? { borderWidth: 1, borderColor: t.colors.border.interactive } : null,
         disabled ? { opacity: 0.5 } : null,
         style,
       ]}

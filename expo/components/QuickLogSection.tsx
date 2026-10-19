@@ -383,9 +383,12 @@ export const QuickLogSection = memo(function QuickLogSection() {
           style={{ flex: 1 }}
           testID="mode-tab"
         />
+        {/* 検索は記録の主要な入口なので、アイコンだけの ghost では見つけにくかった (2026-10-19 フィードバック)。
+            塗りほど主張させず、枠線で「押せるボタン」だと分かるようにし、アイコンも一段大きくする */}
         <IconButton
           icon="search"
-          size="md"
+          size="lg"
+          variant="outlined"
           tone="secondary"
           onPress={handleOpenSearch}
           accessibilityLabel={tr('quicklog.a11y.search')}
