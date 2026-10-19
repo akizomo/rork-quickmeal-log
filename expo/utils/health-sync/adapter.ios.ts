@@ -11,9 +11,9 @@ import {
 } from '@kingstinct/react-native-healthkit';
 
 import { normalizeIosWorkoutType, getExerciseLabel } from './mapping';
+import { aggregateDailyActivity, toDateKey } from './daily-activity';
 import type {
   HealthBodyFatSample,
-  HealthDailyActivitySample,
   HealthDiagnostics,
   HealthSyncAdapter,
   HealthSyncResult,
@@ -198,14 +198,6 @@ async function getWorkoutSamples(rangeDays: number): Promise<IosWorkoutSample[]>
   }
 }
 
-function toDateKey(iso: string): string {
-  const d = new Date(iso);
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
-  return `${yyyy}-${mm}-${dd}`;
-}
-
 function buildHealthSyncId(metric: string, sample: HealthValue): string {
   return sample.id ?? `${metric}-${sample.startDate}-${sample.value}`;
 }
@@ -226,49 +218,6 @@ function normalizeBodyFat(samples: HealthValue[]): HealthBodyFatSample[] {
     // HealthKit の percent 単位は 0.0〜1.0。ライブラリが % に換算して返す場合もあるので両方に対応する
     bodyFatPct: Math.round((s.value <= 1 ? s.value * 100 : s.value) * 10) / 10,
     healthSyncId: buildHealthSyncId('bodyfat', s),
-  }));
-}
-
-/**
- * 歩数 / アクティブエネのサンプルを日付別に集約して DailyActivitySummary 配列にする。
- *
- * getDailyStepCountSamples は HKStatisticsOptionCumulativeSum (ソース間重複排除済み) を
- * 使うため通常は1日1サンプル。ただし DST 境界等で複数サンプルが同日に返る場合があるため
- * 安全のため集約する。歩数は「同日の複数サンプルの合計」を使用する (正当な細分化)。
- * ただし Apple Watch + iPhone の両方が "day total" として返ってきた場合の二重計上を
- * 防ぐため、同一 value の重複サンプルは排除する。
- */
-function aggregateDailyActivity(
-  stepSamples: HealthValue[],
-  energySamples: HealthValue[]
-): HealthDailyActivitySample[] {
-  // 歩数: (date, startDate) をキーにしてウィンドウを識別する。
-  //   - 同じ startDate = 同じ統計期間 → 複数ソース (iPhone/Watch) の重複とみなし MAX を取る
-  //   - 異なる startDate = 異なる時間帯 (午前/午後など) → 正当な細分化なので合算する
-  const stepWindowMap = new Map<string, number>();
-  for (const s of stepSamples) {
-    const date = toDateKey(s.endDate ?? s.startDate);
-    const windowKey = `${date}|${s.startDate}`;
-    const prev = stepWindowMap.get(windowKey) ?? 0;
-    stepWindowMap.set(windowKey, Math.max(prev, s.value));
-  }
-  const map = new Map<string, { steps: number; activeKcal: number }>();
-  for (const [windowKey, value] of stepWindowMap) {
-    const date = windowKey.split('|')[0];
-    const cur = map.get(date) ?? { steps: 0, activeKcal: 0 };
-    cur.steps += value;
-    map.set(date, cur);
-  }
-  for (const s of energySamples) {
-    const date = toDateKey(s.endDate ?? s.startDate);
-    const cur = map.get(date) ?? { steps: 0, activeKcal: 0 };
-    cur.activeKcal += s.value;
-    map.set(date, cur);
-  }
-  return Array.from(map.entries()).map(([date, v]) => ({
-    date,
-    steps: Math.round(v.steps),
-    activeKcal: Math.round(v.activeKcal),
   }));
 }
 
