@@ -404,7 +404,7 @@ function buildCards(recap: WeeklyRecap, styles: Styles, tr: Tr): Card[] {
       const pillText = d.streakWeeks >= 2
         ? tr(insight.direction === 'less' ? 'weeklyRecap.insight.streakLess' : 'weeklyRecap.insight.streakMore', { weeks: d.streakWeeks })
         : tr(insight.direction === 'less' ? 'weeklyRecap.insight.less' : 'weeklyRecap.insight.more');
-      const max = Math.max(insight.avgActual, insight.avgTarget) || 1;
+      const max = Math.max(insight.actualSharePct, insight.targetSharePct) || 1;
       cards.push({
         bg: 'light',
         render: (t) => {
@@ -438,8 +438,8 @@ function buildCards(recap: WeeklyRecap, styles: Styles, tr: Tr): Card[] {
               </View>
               <View style={[styles.spacer, { justifyContent: 'center' }]}>
                 <View style={{ gap: t.spacing['4'] }}>
-                  <MacroBar label={tr('weeklyRecap.insight.barActual')} value={insight.avgActual} max={max} color={nutri.graphic} t={t} styles={styles} />
-                  <MacroBar label={tr('weeklyRecap.insight.barTarget')} value={insight.avgTarget} max={max} color={t.colors.border.default} t={t} styles={styles} muted />
+                  <MacroBar label={tr('weeklyRecap.insight.barActual')} value={insight.actualSharePct} max={max} color={nutri.graphic} t={t} styles={styles} />
+                  <MacroBar label={tr('weeklyRecap.insight.barTarget')} value={insight.targetSharePct} max={max} color={t.colors.border.default} t={t} styles={styles} muted />
                 </View>
               </View>
             </>
@@ -594,7 +594,7 @@ function MacroBar({
       <View style={styles.barCaptionRow}>
         <Body size="sm" tone="secondary">{label}</Body>
         <Body weight="regular" style={{ fontSize: 17, color: muted ? t.colors.content.secondary : t.colors.content.primary }}>
-          {value}g
+          {value}%
         </Body>
       </View>
       <View style={[styles.track, { backgroundColor: t.colors.surface.sunken, marginTop: t.spacing['1'] }]}>

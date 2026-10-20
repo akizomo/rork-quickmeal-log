@@ -539,11 +539,11 @@
     },
     "insight": {
       "label": "{{macro}}",
-      "lead": "目標との差がいちばん大きかったのは",
+      "lead": "カロリーの内訳で、目標との差がいちばん大きかったのは",
       "less": "目標より 少なめ",
       "more": "目標より 多め",
-      "barActual": "1日の平均",
-      "barTarget": "1日の目標",
+      "barActual": "先週の割合",
+      "barTarget": "目標の割合",
       "streakLess": "{{weeks}}週続けて 少なめ",
       "streakMore": "{{weeks}}週続けて 多め"
     },

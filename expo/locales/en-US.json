@@ -539,11 +539,11 @@
     },
     "insight": {
       "label": "{{macro}}",
-      "lead": "The biggest gap from your goal was",
+      "lead": "In your calorie mix, the biggest gap from your goal was",
       "less": "Below target",
       "more": "Above target",
-      "barActual": "Daily average",
-      "barTarget": "Daily goal",
+      "barActual": "Last week",
+      "barTarget": "Goal",
       "streakLess": "Below target {{weeks}} weeks running",
       "streakMore": "Above target {{weeks}} weeks running"
     },

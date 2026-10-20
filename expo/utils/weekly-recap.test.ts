@@ -189,7 +189,8 @@ describe('computeWeeklyRecap — macroInsight', () => {
   });
 
   it('乖離が閾値以上 (15%以上) なら direction=more で返す', () => {
-    // target protein = 100g。実測 140g → 40% 乖離
+    // 割合 (エネルギー比) で比べる。目標 P100/F50/C200 → たんぱく質 400/1650 = 24%。
+    // 実測 P140/F50/C200 → 560/1810 = 31% (目標の割合より約28%多い)
     const logs = [
       makeLog('2026-07-27', 2000, { protein: 140, fat: 50, carbs: 200 }),
     ];
@@ -197,9 +198,19 @@ describe('computeWeeklyRecap — macroInsight', () => {
     expect(result?.macroInsight).toMatchObject({
       axis: 'protein',
       direction: 'more',
-      avgActual: 140,
-      avgTarget: 100,
+      actualSharePct: 31,
+      targetSharePct: 24,
     });
+  });
+
+  it('全体の量が少ないだけ (配分は目標どおり) なら null — つけ忘れや少食を「◯◯が少なめ」と言わない', () => {
+    // 目標の6割の量を、目標と同じ配分で記録した週
+    const logs = [
+      makeLog('2026-07-27', 1200, { protein: 60, fat: 30, carbs: 120 }),
+      makeLog('2026-07-28', 1200, { protein: 60, fat: 30, carbs: 120 }),
+    ];
+    const result = computeWeeklyRecap(logs, makeProfile(2000), [], undefined, NOW);
+    expect(result?.macroInsight).toBeNull();
   });
 
   it('実測が目標を下回れば direction=less', () => {
@@ -252,26 +263,26 @@ describe('computeWeeklyRecap — macroBoost.note (観点A は観点Cに従属)',
   it('最有力候補に nutritionNote が無くても、候補内の次点に有れば拾う (候補は3件までまとめて「アドバイス」なので)', () => {
     const logs = [
       makeLog('2026-07-27', 2000, { protein: 60, fat: 50, carbs: 200 }), // protein less
-      makeLog('2026-06-01', 300, {}, 'meat_solo'), // nutritionNotes 無し・最頻出
-      makeLog('2026-06-02', 300, {}, 'meat_solo'),
-      makeLog('2026-06-03', 300, {}, 'meat_solo'),
+      makeLog('2026-06-01', 300, {}, 'seafood_lean'), // たんぱく質の話のノート無し・最頻出
+      makeLog('2026-06-02', 300, {}, 'seafood_lean'),
+      makeLog('2026-06-03', 300, {}, 'seafood_lean'),
       makeLog('2026-06-04', 300, {}, 'egg'), // nutritionNotes 有り・2番手
     ];
     const result = computeWeeklyRecap(logs, makeProfile(2000), [], undefined, NOW);
-    expect(result?.macroBoost?.candidates[0].identityId).toBe('meat_solo');
+    expect(result?.macroBoost?.candidates[0].identityId).toBe('seafood_lean');
     expect(result?.macroBoost?.note?.identityId).toBe('egg');
   });
 
   it('候補の誰も nutritionNote を持たなければ note は null', () => {
-    // 豆知識が未整備の高たんぱく食材: meat_solo / salad_chicken / seafood_lean / protein_drink / protein_bar / cheese_low_fat
-    // (そこにノートを足したらここも差し替えること)。履歴側で4件埋めてカタログ補完を発生させない
+    // たんぱく質の話 (topics) のノートが未整備で、勧めてよい高たんぱく食材: salad_chicken / seafood_lean / white_fish / red_meat (鉄の話のみ)
+    // (そこにたんぱく質の話を足したらここも差し替えること)。履歴側で4件埋めてカタログ補完を発生させない
     const logs = [
       makeLog('2026-07-27', 2000, { protein: 60, fat: 50, carbs: 200 }), // protein less
-      makeLog('2026-06-01', 300, {}, 'meat_solo'),
-      makeLog('2026-06-02', 300, {}, 'meat_solo'),
-      makeLog('2026-06-03', 300, {}, 'salad_chicken'),
-      makeLog('2026-06-04', 300, {}, 'seafood_lean'),
-      makeLog('2026-06-05', 300, {}, 'protein_drink'), // 履歴に高密度が4件あれば、カタログ補完なしで履歴だけから3件出る
+      makeLog('2026-06-01', 300, {}, 'salad_chicken'),
+      makeLog('2026-06-02', 300, {}, 'salad_chicken'),
+      makeLog('2026-06-03', 300, {}, 'seafood_lean'),
+      makeLog('2026-06-04', 300, {}, 'white_fish'),
+      makeLog('2026-06-05', 300, {}, 'red_meat'), // 履歴に高密度が4件あれば、カタログ補完なしで履歴だけから3件出る
     ];
     const result = computeWeeklyRecap(logs, makeProfile(2000), [], undefined, NOW);
     expect(result?.macroBoost?.candidates).toHaveLength(3);
@@ -300,13 +311,14 @@ describe('computeWeeklyRecap — macroBoost.note (観点A は観点Cに従属)',
     for (let w = 0; w < 26; w++) {
       const now = new Date(NOW.getTime() + w * 7 * 24 * 60 * 60 * 1000);
       const weekStart = formatDateKey(new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000));
+      // 納豆のノートはビタミンKの話 (話題なし) なのでアドバイスには出ない。「はじめて」のカードで確かめる
       const logs = [
-        makeLog(weekStart, 2000, { protein: 60, fat: 50, carbs: 200 }),
-        makeLog('2026-06-01', 300, {}, 'natto'),
-        makeLog('2026-06-02', 300, {}, 'natto'),
+        makeLog('2026-06-01', 300, onTarget, 'egg'),
+        makeLog(weekStart, 300, onTarget, 'natto'),
       ];
-      const r = computeWeeklyRecap(logs, makeProfile(2000), [], undefined, now);
-      const text = r?.macroBoost?.note?.note.text;
+      const r = computeWeeklyRecap(logs, makeProfile(0), [], undefined, now);
+      const d = r?.discoveries.find((x) => x.kind === 'newFoods');
+      const text = d && d.kind === 'newFoods' ? d.note?.note.text : undefined;
       if (text) seen.add(text);
     }
     expect(seen.size).toBeGreaterThan(1);
@@ -410,6 +422,39 @@ describe('computeWeeklyRecap — macroBoost (観点C: 目標接続型・less方�
 const kinds = (r: ReturnType<typeof computeWeeklyRecap>) => (r?.discoveries ?? []).map((d) => d.kind);
 /** PFC 目標どおり (乖離なし) の1日。macro の発見を出さずに食材系だけを見るため。 */
 const onTarget = { protein: 100, fat: 50, carbs: 200 };
+
+describe('computeWeeklyRecap — アドバイスに出さない食材', () => {
+  const lowFat = { protein: 100, fat: 20, carbs: 200 }; // 脂質の割合が目標より少ない週
+
+  it('調味料・油脂そのもの、お菓子・飲み物、加工肉、脂の多い肉、料理は、履歴にあってもカタログからも候補にしない', () => {
+    const history = ['mayo', 'mayo', 'oil', 'butter_cream', 'chocolate', 'bacon_sausage', 'ham', 'beef_pork_fatty', 'chuka_okazu', 'ramen_heavy']
+      .map((id, i) => makeLog(`2026-06-${String(i + 1).padStart(2, '0')}`, 100, {}, id));
+    const r = computeWeeklyRecap([makeLog('2026-07-27', 2000, lowFat), ...history], makeProfile(2000), [], undefined, NOW);
+    expect(r?.macroInsight).toMatchObject({ axis: 'fat', direction: 'less' });
+    const ids = r?.macroBoost?.candidates.map((c) => c.identityId) ?? [];
+    expect(ids.length).toBeGreaterThan(0);
+    for (const id of ['mayo', 'oil', 'butter_cream', 'dressing', 'chocolate', 'bacon_sausage', 'ham', 'beef_pork_fatty', 'chuka_okazu', 'ramen_heavy']) {
+      expect(ids).not.toContain(id);
+    }
+    // 食材 (ingredient) だけを勧める
+    for (const id of ids) expect(getIdentity(id)?.primaryHome.tab).toBe('ingredient');
+  });
+
+  it('割合は高くても1食の量がごく少ない食材は「増やしたいとき」の候補にしない (例: 海藻の炭水化物)', () => {
+    // 4週ぶん回して、カタログのローテーションのどこにも出ないことを見る
+    const lowCarb = { protein: 100, fat: 50, carbs: 100 };
+    for (let w = 0; w < 4; w++) {
+      const now = new Date(NOW.getTime() + w * 7 * 86_400_000);
+      const day = formatDateKey(new Date(now.getTime() - 7 * 86_400_000));
+      const r = computeWeeklyRecap([makeLog(day, 2000, lowCarb)], makeProfile(2000), [], undefined, now);
+      expect(r?.macroInsight).toMatchObject({ axis: 'carbs', direction: 'less' });
+      for (const c of r?.macroBoost?.candidates ?? []) {
+        expect(getIdentity(c.identityId)!.defaultMacro.carbs).toBeGreaterThanOrEqual(15);
+        expect(c.identityId).not.toBe('sweet_drink');
+      }
+    }
+  });
+});
 
 describe('computeWeeklyRecap — いつもとの差', () => {
   it('その前の週の記録日数を返す。0日なら null', () => {
@@ -644,7 +689,7 @@ describe('selectDiscoveries', () => {
   const item = { identityId: 'egg', label: 'たまご' };
   const macro = {
     kind: 'macro' as const,
-    insight: { axis: 'protein' as const, direction: 'less' as const, avgActual: 60, avgTarget: 100 },
+    insight: { axis: 'protein' as const, direction: 'less' as const, actualSharePct: 16, targetSharePct: 24 },
     streakWeeks: 1,
     boost: null,
   };

@@ -31,7 +31,7 @@ const WEEKDAY_MON_FIRST: Record<AppLocale, string[]> = {
   'en-US': [...enUS.monthlyStats.weekDays.slice(1), enUS.monthlyStats.weekDays[0]],
 };
 
-/** PFC 傾向を「特筆すべき」と判定する最小乖離率。これ未満は insight を出さない。 */
+/** PFC の割合 (エネルギー比) が目標の割合から何割ずれたら「特筆すべき」とするか。これ未満は insight を出さない。 */
 const INSIGHT_THRESHOLD_RATIO = 0.15;
 
 /** 軸ごとの kcal/g 換算係数。「高◯◯食材」の密度判定に使う。 */
@@ -48,6 +48,46 @@ const AXIS_DENSITY_THRESHOLD: Record<MacroAxis, number> = { protein: 0.25, fat: 
  * 例: fat 0.20 = カロリーの20%未満が脂質由来なら低脂質の代替候補とみなす。
  */
 const AXIS_LOW_DENSITY_THRESHOLD: Record<MacroAxis, number> = { protein: 0.10, fat: 0.20, carbs: 0.25 };
+
+/**
+ * 「増やしたいときは」の候補に求める、1食 (defaultMacro) あたりの最小グラム数。
+ * 密度 (カロリー比) だけで選ぶと、海藻 (炭水化物2.5g) のように比率は高くても量としては
+ * ほとんど足しにならない食材が候補に入るため。たんぱく質は卵1個 (6.2g)・豆腐・納豆が入る値にしている。
+ */
+const BOOST_MIN_GRAMS: Record<MacroAxis, number> = { protein: 6, fat: 5, carbs: 15 };
+
+/**
+ * アドバイスに出してよい食材 (許可リスト)。**一般に体に良い、少なくとも悪くないと言える食材だけ**を勧める
+ * (PRD §6.7.5「アドバイスの候補」)。食べた事実はどの食材でも映すが、勧めるのはここに載る食材だけ。
+ *
+ * 基準: 食事バランスガイド (農水省・厚労省) の主食・主菜・副菜・牛乳乳製品・果物にあたり、
+ * ハーバード Healthy Eating Plate / WHO の健康的な食事で「控える」側に入らない、加工の少ない食材。
+ * - 料理 (dish) は入れない。作り方や店で中身が大きく変わり、勧める根拠を持てないため
+ * - 入れないもの: お菓子・甘い飲み物・お酒 / 調味料・油脂そのもの (オイル・バター・マヨネーズ・ドレッシング) /
+ *   加工肉 (ハム・ベーコン・ソーセージ・ジャーキー、WHO の定義) / 脂の多い肉 (牛・豚の普通脂・高脂) /
+ *   揚げたもの (油揚げ) / 食塩の多いもの (漬物・練り物) / マヨネーズ和え (クリーミー系) /
+ *   バターや砂糖の多いパン (リッチ)・甘いものを含む区分 (餅・団子、シリアル) / 中華麺 (ラーメンの文脈になるため) /
+ *   補助食品 (プロテイン・プロテインバー。食品から勧める) / レバー (ビタミンAが多く、妊娠中は控える目安があるため)
+ */
+const ADVICE_RECOMMENDABLE_IDS = new Set([
+  // 主食
+  'rice', 'onigiri', 'okayu', 'bread', 'oatmeal', 'potato', 'sweet_potato', 'noodle_udon', 'noodle_pasta',
+  // 主菜
+  'chicken_lean', 'salad_chicken', 'white_fish', 'seafood_lean', 'red_meat', 'canned_lean_fish',
+  'egg', 'chicken_thigh', 'fatty_fish', 'canned_fatty_fish',
+  // 牛乳・乳製品 / 大豆
+  'milk', 'yogurt', 'cheese', 'cheese_low_fat', 'soy_milk', 'tofu', 'natto', 'edamame_soy',
+  // 副菜
+  'salad_raw', 'veg_cooked', 'veg_dense', 'corn', 'seaweed', 'side_seasoned', 'veggie_soup',
+  // 果物
+  'banana', 'apple_pear', 'citrus', 'ichigo', 'berry', 'fruit_other',
+  // 脂質を含む食材 (油脂そのものではないもの)
+  'avocado', 'nuts',
+]);
+
+function isAdviceEligible(identity: Identity): boolean {
+  return ADVICE_RECOMMENDABLE_IDS.has(identity.id);
+}
 
 /** macroBoost で提示する候補の最大数。 */
 const MAX_BOOST_CANDIDATES = 3;
@@ -155,8 +195,10 @@ export interface WeeklyMacroInsight {
   axis: MacroAxis;
   /** 「多め/少なめ」の2値のみ。良し悪しの評価語は持たない。 */
   direction: 'more' | 'less';
-  avgActual: number;
-  avgTarget: number;
+  /** P/F/C のエネルギーのうち、この栄養素が占めた割合 (記録日の合計から。0〜100 の整数)。 */
+  actualSharePct: number;
+  /** 目標の P/F/C のエネルギーのうち、この栄養素が占める割合 (0〜100 の整数)。 */
+  targetSharePct: number;
 }
 
 export interface WeeklyRecapDay {
@@ -221,7 +263,8 @@ export interface WeeklyRecap {
   /** 月〜日の7日分。ストーリー画面のバーチャートに使う。 */
   days: WeeklyRecapDay[];
   /**
-   * PFC のうち最も乖離が大きかった1軸のみ (乖離率 15%未満なら null)。
+   * PFC の割合 (エネルギー比) が目標の割合から最もずれた1軸のみ (ずれが 15%未満なら null)。
+   * 量 (g) ではなく割合で比べるので、記録が少ない週でも「全体が少ない」を PFC の話にしない。
    * 3軸まとめて出すと成績表のように見えるため、あえて1つに絞る。
    * プロフィール未設定 (targetCalories <= 0) なら常に null。
    */
@@ -273,7 +316,7 @@ function computeWeekCore(
   };
 
   const macroInsight = base > 0 && loggedDays.length > 0
-    ? computeMacroInsight(loggedDays, profile, targetForKey, base)
+    ? computeMacroInsight(loggedDays, profile)
     : null;
 
   return { range, weekKey, entries, loggedDays, targetForKey, macroInsight };
@@ -601,12 +644,14 @@ function computeMacroBoost(
   const historyMatching = (match: (identity: Identity) => boolean): WeeklyMacroBoostCandidate[] =>
     [...freq.entries()]
       .map(([identityId, count]) => ({ identity: getIdentity(identityId), count }))
-      .filter((c): c is { identity: Identity; count: number } => !!c.identity && match(c.identity))
+      .filter((c): c is { identity: Identity; count: number } => !!c.identity && isAdviceEligible(c.identity) && match(c.identity))
       .sort((a, b) => b.count - a.count)
       .map(({ identity }) => ({ identityId: identity.id, label: identity.label, fromHistory: true }));
 
   if (direction === 'less') {
-    const isDense = (identity: Identity) => densityFor(axis, identity.defaultMacro) >= AXIS_DENSITY_THRESHOLD[axis];
+    const isDense = (identity: Identity) =>
+      densityFor(axis, identity.defaultMacro) >= AXIS_DENSITY_THRESHOLD[axis]
+      && identity.defaultMacro[axis] >= BOOST_MIN_GRAMS[axis];
     const fromHistory = historyMatching(isDense);
 
     // 履歴に十分あれば履歴だけを週ごとにローテーション (毎週同じ3品にしない)。
@@ -617,7 +662,7 @@ function computeMacroBoost(
     } else {
       const seenIds = new Set(fromHistory.map((c) => c.identityId));
       const catalogPool = ALL_IDENTITIES
-        .filter((identity) => !seenIds.has(identity.id) && isDense(identity))
+        .filter((identity) => !seenIds.has(identity.id) && isAdviceEligible(identity) && isDense(identity))
         .sort((a, b) => densityFor(axis, b.defaultMacro) - densityFor(axis, a.defaultMacro))
         .slice(0, CATALOG_ROTATION_POOL)
         .map((identity): WeeklyMacroBoostCandidate => ({ identityId: identity.id, label: identity.label, fromHistory: false }));
@@ -630,7 +675,8 @@ function computeMacroBoost(
     for (const c of candidates) {
       const identity = getIdentity(c.identityId);
       const picked = identity?.nutritionNotes
-        ? pickNutritionNote(identity.nutritionNotes, identity.id, weekKey)
+        // 「なぜこの食材が候補か」を支える話だけを出す (その栄養素の話に絞る。PRD §6.7.5「各カードの役割」)
+        ? pickNutritionNote(identity.nutritionNotes, identity.id, weekKey, axis)
         : null;
       if (identity && picked) {
         note = { identityId: identity.id, identityLabel: identity.label, note: picked };
@@ -653,42 +699,53 @@ function computeMacroBoost(
 }
 
 /**
- * 記録日の実測 P/F/C 平均と、各日の目標kcal比率でスケールした目標 P/F/C 平均を比較し、
- * 最も乖離が大きい1軸だけを返す (nutrition-ui の todayAdjustedPfc と同じスケール方式)。
+ * P/F/C の「割合」(エネルギー比) を目標の割合と比べ、ずれがいちばん大きい1軸だけを返す。
+ *
+ * グラムの絶対量では比べない。量で比べると、記録が目標の7割しかない週 (つけ忘れ・少食) は
+ * 3軸そろって「少なめ」になり、配分ではなく全体量の話を PFC の話として伝えてしまうため。
+ * 量はカロリーのカード、配分はこのカード、と役割を分ける (PRD §6.7.5「各カードの役割」)。
+ * 割合は目標側・実測側とも P/F/C のエネルギーの合計を分母にする (kcal の丸めや酒類の影響を受けない)。
  */
 function computeMacroInsight(
   loggedDays: [string, { protein: number; fat: number; carbs: number }][],
   profile: UserProfile,
-  targetForKey: (key: string) => number,
-  base: number,
 ): WeeklyMacroInsight | null {
   const axes: MacroAxis[] = ['protein', 'fat', 'carbs'];
-  const targetBase: Record<MacroAxis, number> = {
+  const targetGrams: Record<MacroAxis, number> = {
     protein: profile.targetProtein,
     fat: profile.targetFat,
     carbs: profile.targetCarbs,
   };
+  const actualGrams: Record<MacroAxis, number> = { protein: 0, fat: 0, carbs: 0 };
+  for (const [, m] of loggedDays) for (const axis of axes) actualGrams[axis] += m[axis];
+
+  const energyShares = (grams: Record<MacroAxis, number>): Record<MacroAxis, number> | null => {
+    const total = axes.reduce((sum, axis) => sum + grams[axis] * AXIS_KCAL_PER_GRAM[axis], 0);
+    if (total <= 0) return null;
+    return {
+      protein: (grams.protein * AXIS_KCAL_PER_GRAM.protein) / total,
+      fat: (grams.fat * AXIS_KCAL_PER_GRAM.fat) / total,
+      carbs: (grams.carbs * AXIS_KCAL_PER_GRAM.carbs) / total,
+    };
+  };
+  const actual = energyShares(actualGrams);
+  const target = energyShares(targetGrams);
+  if (!actual || !target) return null;
 
   let best: WeeklyMacroInsight | null = null;
   let bestAbsDiff = 0;
 
   for (const axis of axes) {
-    const avgActual = loggedDays.reduce((sum, [, m]) => sum + m[axis], 0) / loggedDays.length;
-    const avgTarget = loggedDays.reduce((sum, [key]) => {
-      const ratio = targetForKey(key) / base;
-      return sum + targetBase[axis] * ratio;
-    }, 0) / loggedDays.length;
-
-    if (avgTarget <= 0) continue;
-    const diffRatio = (avgActual - avgTarget) / avgTarget;
+    if (target[axis] <= 0) continue;
+    const diffRatio = (actual[axis] - target[axis]) / target[axis];
     const absDiff = Math.abs(diffRatio);
     if (absDiff > bestAbsDiff) {
       bestAbsDiff = absDiff;
       best = {
         axis,
         direction: diffRatio > 0 ? 'more' : 'less',
-        avgActual: Math.round(avgActual),
-        avgTarget: Math.round(avgTarget),
+        actualSharePct: Math.round(actual[axis] * 100),
+        targetSharePct: Math.round(target[axis] * 100),
       };
     }
   }

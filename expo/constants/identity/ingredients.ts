@@ -78,6 +78,32 @@ const SRC_COOKING_VITAMINS: NutritionNoteSource = {
   url: 'https://doi.org/10.1007/s10068-017-0281-1',
 };
 
+/** 成分表の脂肪酸成分表 (可食部100gあたり、MODE=4)。脂の種類 (飽和/一価/多価・n-3/n-6) の数値はこちら。 */
+const seibunFa = (label: string, itemNo: string): NutritionNoteSource => ({
+  label: `文部科学省 日本食品標準成分表（八訂）増補2023 脂肪酸 ${label}`,
+  url: `https://fooddb.mext.go.jp/details/details.pl?ITEM_NO=${itemNo}&MODE=4`,
+});
+const H_OMEGA3 = harvard('オメガ3脂肪酸', 'what-should-you-eat/fats-and-cholesterol/types-of-fat/omega-3-fats/');
+const H_FAT_TYPES = harvard('脂質の種類', 'what-should-you-eat/fats-and-cholesterol/types-of-fat/');
+
+/** 食事摂取基準 (2025年版) の脂質: 飽和脂肪酸は成人すべてで目標量7%エネルギー以下、n-3/n-6系は必須脂肪酸で目安量。 */
+const SRC_DRI2025_FAT: NutritionNoteSource = {
+  label: '農林水産省 脂質の摂取基準（日本人の食事摂取基準 2025年版）',
+  url: 'https://www.maff.go.jp/j/syouan/seisaku/trans_fat/t_eikyou/fat_eikyou.html',
+};
+
+/** WHO 2023: 飽和脂肪酸は総エネルギーの10%以下、多価不飽和脂肪酸などへの置き換えを推奨。 */
+const SRC_WHO_SFA_2023: NutritionNoteSource = {
+  label: 'WHO 脂質・炭水化物ガイドライン更新（2023）',
+  url: 'https://www.who.int/news/item/17-07-2023-who-updates-guidelines-on-fats-and-carbohydrates',
+};
+
+/** 生の100gあたり EPA+DHA: 大西洋さば 0.898+1.401g (FDC 175119)、シロザケ 0.233+0.394g (FDC 173689)。 */
+const SRC_USDA_FISH_N3: NutritionNoteSource = {
+  label: '米国農務省 USDA FoodData Central（さば・シロザケ 生）',
+  url: 'https://fdc.nal.usda.gov/food-details/175119/nutrients',
+};
+
 /** 組成・含有量の記述元。 */
 const SRC_SEIBUN: NutritionNoteSource = {
   label: '文部科学省 日本食品標準成分表',
@@ -821,6 +847,20 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
     primaryHome: { tab: 'ingredient', bucket: 'fatty_protein' },
     quickTapDisabled: true, // Attribute バラ/サーロイン/ホルモン/タン: kcal 220-470, F 17-46
     defaultMacro: { kcal: 380, protein: 16, fat: 35, carbs: 0 },
+    nutritionNotes: [
+      {
+        text: '牛や豚のばら肉は、脂質の3〜4割が飽和脂肪酸です。成分表では100gあたり、豚ばら（脂身つき・生）が脂質35.4g・飽和脂肪酸14.6g、和牛ばらが50.0g・15.5gです。',
+        source: seibunFa('ぶた ばら 脂身つき 生', '11_11129_7'),
+        alsoSources: [H_FAT_TYPES],
+        topics: ['fat'],
+      },
+      {
+        text: '牛や豚の脂身に多い飽和脂肪酸は、国の食事摂取基準（2025年版）で、成人は1日のエネルギーの7%以下が目標とされています。WHOは、飽和脂肪を多価不飽和脂肪酸などに置き換えることを勧めています。',
+        source: SRC_DRI2025_FAT,
+        alsoSources: [SRC_WHO_SFA_2023, H_FAT_TYPES],
+        topics: ['fat'],
+      },
+    ],
     amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '100', value: 100 }, { label: '150', value: 150 }, { label: '200', value: 200 }] },
     attributes: [
       { key: 'bara', label: 'バラ（豚）', isDefault: true },
@@ -840,6 +880,18 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
     nutritionNotes: [
       { text: '鮭などの脂がのった魚に含まれる不飽和脂肪酸は、常温でも固まりにくく、肉の脂(飽和脂肪酸)とは性質が違います。', source: SRC_SEIBUN },
       { text: '脂がのった魚に多いn-3系脂肪酸は、皮膚の健康維持を助ける栄養素です。', source: SRC_CAA },
+      {
+        text: 'さばや鮭などの魚の脂には、n-3系脂肪酸のEPA・DHAが含まれます。n-3系は体内で作れないため、食べものからとる必要がある脂です。成分表では、生のまさば100gにEPA0.69g・DHA0.97gが含まれます。',
+        source: seibunFa('まさば 生', '10_10154_7'),
+        alsoSources: [H_OMEGA3, SRC_DRI2025_FAT],
+        topics: ['fat'],
+      },
+      {
+        text: '脂がのった魚でも、EPA・DHAの量は種類で違います。生の100gあたり、成分表ではまさばが約1.7g、しろさけが約0.7g。米国USDAでも、大西洋さばが約2.3g、シロザケが約0.6gです。',
+        source: seibunFa('まさば 生 / しろさけ 生', '10_10154_7'),
+        alsoSources: [SRC_USDA_FISH_N3],
+        topics: ['fat'],
+      },
     ],
     amount: { unit: 'g', default: 80, step: 10, chips: [{ label: '1切', value: 80 }, { label: '100', value: 100 }, { label: '2切', value: 160 }] },
     attributes: [
@@ -882,6 +934,12 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
         text: '骨ごと食べられる魚の缶詰でとれるカルシウムは、骨や歯の形成に必要な栄養素です。',
         source: SRC_CAA,
         alsoSources: [H_CALCIUM],
+      },
+      {
+        text: 'さばの水煮缶にも、魚の脂のEPA・DHAが残っています。成分表では100gあたりEPA0.93g・DHA1.3gで、生のまさば（0.69g・0.97g）と比べても少なくありません。',
+        source: seibunFa('さば 缶詰 水煮', '10_10164_7'),
+        alsoSources: [H_OMEGA3],
+        topics: ['fat'],
       },
     ],
     referenceDescription: 'さば缶・いわし缶など。コンビニ個食サイズ(100〜150g)が目安。190g大缶は量を調整',
@@ -1540,6 +1598,12 @@ const BUCKET_ADDED_FAT: Identity[] = [
     defaultMacro: { kcal: 110, protein: 0, fat: 12, carbs: 0 },
     nutritionNotes: [
       { text: '油は少ない量でもエネルギーが大きく、小さじ1杯の差がそのまま効いてきます。', source: SRC_SEIBUN },
+      {
+        text: '油は、種類で脂の中身が違います。成分表では100gあたり、オリーブ油は一価不飽和脂肪酸が74g、ごま油は多価不飽和脂肪酸（ほぼn-6系）が41g。なたね油は、n-3系も7.5g含みます。',
+        source: seibunFa('オリーブ油 / ごま油 / なたね油', '14_14001_7'),
+        alsoSources: [H_FAT_TYPES, H_OMEGA3],
+        topics: ['fat'],
+      },
     ],
     amount: { unit: 'ml', default: 15, step: 5, chips: [{ label: '小さじ', value: 5 }, { label: '大さじ', value: 15 }] },
     attributes: [
@@ -1644,6 +1708,12 @@ const BUCKET_ADDED_FAT: Identity[] = [
         text: 'ナッツに含まれるビタミンEは、抗酸化作用により、体内の脂質を酸化から守り細胞の健康維持を助ける栄養素です。',
         source: SRC_CAA,
         alsoSources: [H_VITE],
+      },
+      {
+        text: 'ナッツは、種類で脂の中身が違います。成分表では100gあたり、くるみ（いり）はn-3系のα-リノレン酸を約9g含みます。アーモンド（乾）は一価不飽和脂肪酸が約34gで、n-3系はほとんど含みません。',
+        source: seibunFa('くるみ いり / アーモンド 乾', '5_05014_7'),
+        alsoSources: [H_OMEGA3, H_FAT_TYPES],
+        topics: ['fat'],
       },
     ],
     amount: { unit: 'g', default: 30, step: 5, chips: [{ label: '一掴み', value: 15 }, { label: '30', value: 30 }, { label: '50', value: 50 }] },
