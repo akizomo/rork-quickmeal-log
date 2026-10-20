@@ -20,8 +20,8 @@ import { Identity, NutritionNoteSource } from '@/types/identity';
 
 /** 栄養素の「働き」の記述元。国が定型文を定めているためオーバークレームにならない。 */
 const SRC_CAA: NutritionNoteSource = {
-  label: '消費者庁 食品表示基準（栄養機能食品）',
-  url: 'https://www.caa.go.jp/policies/policy/food_labeling/foods_with_nutrient_function_claims',
+  label: '消費者庁 栄養機能食品（令和8年10月改定）',
+  url: 'https://www.caa.go.jp/policies/policy/food_labeling/foods_with_function_claims/assets/food_labeling_cms206_261001_02.pdf',
 };
 
 // ---------------------------------------------------------------------------
@@ -84,6 +84,25 @@ const seibunFa = (label: string, itemNo: string): NutritionNoteSource => ({
   label: `文部科学省 日本食品標準成分表（八訂）増補2023 脂肪酸 ${label}`,
   url: `https://fooddb.mext.go.jp/details/details.pl?ITEM_NO=${itemNo}&MODE=4`,
 });
+const H_PROTEIN = harvard('たんぱく質', 'what-should-you-eat/protein/');
+const H_FIBER = harvard('食物繊維', 'carbohydrates/fiber/');
+
+/** 脂は 9kcal/g、たんぱく質・炭水化物は 4kcal/g (「2倍以上」)。米国国立医学図書館 + FAO で照合。 */
+const SRC_KCAL_MEDLINE: NutritionNoteSource = {
+  label: '米国国立医学図書館 MedlinePlus（脂質の解説）',
+  url: 'https://medlineplus.gov/ency/patientinstructions/000104.htm',
+};
+const SRC_KCAL_FAO: NutritionNoteSource = {
+  label: 'FAO 食品のエネルギー換算係数',
+  url: 'https://www.fao.org/4/y5022e/y5022e04.htm',
+};
+
+/** JPHC: 約4万人・約11年。魚の摂取が最も多い群は虚血性心疾患のリスクが約4割低い (生活習慣の影響の可能性を著者が指摘)。 */
+const SRC_JPHC_FISH: NutritionNoteSource = {
+  label: '国立がん研究センター 多目的コホート研究（魚と心臓の病気）',
+  url: 'https://epi.ncc.go.jp/jphc/outcome/279.html',
+};
+
 const H_OMEGA3 = harvard('オメガ3脂肪酸', 'what-should-you-eat/fats-and-cholesterol/types-of-fat/omega-3-fats/');
 const H_FAT_TYPES = harvard('脂質の種類', 'what-should-you-eat/fats-and-cholesterol/types-of-fat/');
 
@@ -126,9 +145,9 @@ const BUCKET_STAPLE: Identity[] = [
       {
         // 炭水化物の量は同じ (成分表のめし100gで炭水化物 玄米34.7g・精白米36.1g)。食物繊維も八訂では差が小さい
         // (玄米1.4g・精白米1.5g) ため、差がはっきりしているマグネシウムとビタミンB1で書く。
-        text: '玄米ごはんは、糖質の量は白米ごはんとほぼ同じで、マグネシウムとビタミンB1が多めです。成分表では100gあたり、マグネシウムが玄米49mg・白米7mg、ビタミンB1が玄米0.16mg・白米0.02mgです。',
+        text: '玄米ごはんは、白米と糖質の量はほぼ同じですが、マグネシウムが約7倍、ビタミンB1が約8倍あります。どちらも、体がエネルギーを作るのを助ける栄養素です。',
         source: seibun('水稲めし 玄米', '1_01085_7'),
-        alsoSources: [seibun('水稲めし 精白米', '1_01088_7'), H_WHOLE_GRAINS],
+        alsoSources: [seibun('水稲めし 精白米', '1_01088_7'), H_WHOLE_GRAINS, SRC_CAA],
         topics: ['carbs'],
       },
     ],
@@ -339,7 +358,7 @@ const BUCKET_STAPLE: Identity[] = [
     defaultMacro: { kcal: 76, protein: 1.9, fat: 0.1, carbs: 17 },
     nutritionNotes: [
       {
-        text: 'じゃがいもや里芋に含まれるビタミンCは、皮膚や粘膜の健康維持を助けるとともに、抗酸化作用を持つ栄養素です。',
+        text: 'じゃがいもや里芋に多いビタミンCは、皮膚や骨、血管のもとになるコラーゲンを作るのを助ける栄養素です。',
         source: SRC_CAA,
         alsoSources: [H_VITC],
       },
@@ -456,9 +475,9 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
     defaultMacro: { kcal: 105, protein: 23, fat: 1.5, carbs: 0 },
     nutritionNotes: [
       {
-        text: '鶏むね（皮なし）は、たんぱく質が多く脂質が控えめな食材です。成分表では100gあたり、たんぱく質24.4g・脂質1.9gです（米国USDAでは22.5g・2.62g）。',
+        text: '鶏むね（皮なし）は、たんぱく質が多く、脂がとても少ない食材です。たんぱく質は、筋肉や骨、皮膚、髪など、体のほとんどをつくる材料です。',
         source: seibun('鶏むね（皮なし）', '11_11214_7'),
-        alsoSources: [SRC_USDA_CHICKEN],
+        alsoSources: [SRC_USDA_CHICKEN, H_PROTEIN],
         topics: ['protein', 'fat'],
       },
     ],
@@ -601,9 +620,9 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
     defaultMacro: { kcal: 130, protein: 22, fat: 4, carbs: 0 },
     nutritionNotes: [
       {
-        text: '赤身肉に含まれる鉄は、赤血球をつくるのに必要な栄養素です。',
+        text: '赤身肉に多い鉄は、赤血球を作るのに必要な栄養素です。赤血球は、体じゅうに酸素を運んでいます。',
         source: SRC_CAA,
-        alsoSources: [H_IRON],
+        alsoSources: [H_IRON, H_PROTEIN],
       },
     ],
     amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '100', value: 100 }, { label: '150', value: 150 }, { label: '200', value: 200 }] },
@@ -677,7 +696,7 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
     defaultMacro: { kcal: 85, protein: 15, fat: 2, carbs: 3.5 },
     nutritionNotes: [
       {
-        text: 'ジャーキーは、水分を抜き、塩で味つけ・保存した加工肉です。成分表では100gあたり、たんぱく質54.8g・食塩相当量4.8gで、生の牛かた肉（16.5g・0.1g）よりどちらも濃くなっています。',
+        text: 'ジャーキーは、肉の水分を抜いて塩で味つけしたものです。そのぶん中身が濃くなり、たんぱく質は生の肉の約3倍、塩分は40倍以上になります。',
         source: seibun('ビーフジャーキー', '11_11107_7'),
         alsoSources: [SRC_WHO_PROCESSED_MEAT],
         topics: ['protein'],
@@ -694,12 +713,12 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
     defaultMacro: { kcal: 130, protein: 20, fat: 3.5, carbs: 2.5 },
     nutritionNotes: [
       {
-        text: 'レバーは、赤血球をつくる鉄と、夜間の視力の維持に関わるビタミンAが際立って多い食材です。成分表では鶏レバー100gに、鉄9.0mg・ビタミンA14,000μgRAEが含まれます。',
+        text: 'レバーは、赤血球を作る鉄が、肉の中でもとくに多い食材です。',
         source: seibun('鶏レバー', '11_11232_7'),
         alsoSources: [H_IRON, H_VITA],
       },
       {
-        text: 'レバーに多いビタミンAは、夜間の視力の維持を助けるとともに、皮膚や粘膜の健康維持を助ける栄養素です。',
+        text: 'レバーに多いビタミンAは、暗いところでの見え方や、皮膚や粘膜の健康を保つのを助ける栄養素です。',
         source: SRC_CAA,
         alsoSources: [H_VITA],
       },
@@ -722,7 +741,7 @@ const BUCKET_EGG: Identity[] = [
     defaultMacro: { kcal: 75, protein: 6.2, fat: 5.2, carbs: 0.2 },
     nutritionNotes: [
       {
-        text: '卵のたんぱく質は、FAOの評価法（DIAAS）で最上位の「優れた品質」（100以上）に分類されます。ゆで卵は年齢の基準により110〜135%、卵たんぱくは101%という報告があります。',
+        text: '卵のたんぱく質は、体で作れない成分（必須アミノ酸）をバランスよく含みます。国連の機関（FAO）の評価方法で、最上位の「優れた品質」に入るという報告があります。',
         source: SRC_EGG_DIAAS_2024,
         alsoSources: [SRC_EGG_DIAAS_2020],
         topics: ['protein'],
@@ -774,9 +793,9 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
     defaultMacro: { kcal: 200, protein: 17, fat: 14, carbs: 0 },
     nutritionNotes: [
       {
-        text: '鶏の脂質は皮に集まっています。成分表では、むね肉100gの脂質は皮つきが17.2g、皮なしが1.9gです。米国USDAでも、皮のみは32.4g、皮なしのむね肉は2.62gです。',
+        text: '鶏の脂は、ほとんどが皮についています。むね肉なら、皮を外すと脂は10分の1ほどに減ります。脂は同じ重さで、たんぱく質の2倍以上のカロリーがあります。',
         source: seibun('鶏むね（皮つき）', '11_11213_7'),
-        alsoSources: [SRC_USDA_CHICKEN],
+        alsoSources: [SRC_USDA_CHICKEN, SRC_KCAL_MEDLINE, SRC_KCAL_FAO],
         topics: ['fat'],
       },
     ],
@@ -814,7 +833,7 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
     nutritionNotes: [
       { text: '牛肉や豚肉の鉄(ヘム鉄)は、野菜や大豆の鉄(非ヘム鉄)より吸収されやすい形をしています。組み合わせを気にせず、そのままとれるのが特徴です。', source: SRC_SEIBUN },
       {
-        text: '牛肉や豚肉に含まれる鉄は、赤血球をつくるのに必要な栄養素です。',
+        text: '牛肉や豚肉に含まれる鉄は、赤血球を作るのに必要な栄養素です。',
         source: SRC_CAA,
         alsoSources: [H_IRON],
       },
@@ -858,13 +877,13 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
     defaultMacro: { kcal: 380, protein: 16, fat: 35, carbs: 0 },
     nutritionNotes: [
       {
-        text: '牛や豚のばら肉は、脂質の3〜4割が飽和脂肪酸です。成分表では100gあたり、豚ばら（脂身つき・生）が脂質35.4g・飽和脂肪酸14.6g、和牛ばらが50.0g・15.5gです。',
+        text: '牛や豚のばら肉の脂は、3〜4割が「飽和脂肪酸」という種類です。肉やバターに多いこの脂は、とりすぎると血液中のコレステロールが増えるとされています。',
         source: seibunFa('ぶた ばら 脂身つき 生', '11_11129_7'),
-        alsoSources: [H_FAT_TYPES],
+        alsoSources: [H_FAT_TYPES, SRC_DRI2025_FAT],
         topics: ['fat'],
       },
       {
-        text: '牛や豚の脂身に多い飽和脂肪酸は、国の食事摂取基準（2025年版）で、成人は1日のエネルギーの7%以下が目標とされています。WHOは、飽和脂肪を多価不飽和脂肪酸などに置き換えることを勧めています。',
+        text: '肉の脂に多い飽和脂肪酸は、国が「1日のカロリーの7%以下」を目標にしている脂です。1日2,000kcalの人なら、豚ばら100gほどでその量に届きます。WHOは、一部を植物の油や魚に置きかえることをすすめています。',
         source: SRC_DRI2025_FAT,
         alsoSources: [SRC_WHO_SFA_2023, H_FAT_TYPES],
         topics: ['fat'],
@@ -888,15 +907,22 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
     defaultMacro: { kcal: 200, protein: 20, fat: 12, carbs: 0 },
     nutritionNotes: [
       { text: '鮭などの脂がのった魚に含まれる不飽和脂肪酸は、常温でも固まりにくく、肉の脂(飽和脂肪酸)とは性質が違います。', source: SRC_SEIBUN },
-      { text: '脂がのった魚に多いn-3系脂肪酸は、皮膚の健康維持を助ける栄養素です。', source: SRC_CAA },
       {
-        text: 'さばや鮭などの魚の脂には、n-3系脂肪酸のEPA・DHAが含まれます。n-3系は体内で作れないため、食べものからとる必要がある脂です。成分表では、生のまさば100gにEPA0.69g・DHA0.97gが含まれます。',
+        // オメガ3が「何にいいか」。JPHC (食事からのEPA・DHAが多い群で虚血性心疾患 約4割低い) + ハーバード (魚は○・サプリは同じ結果なし)。
+        // 栄養機能食品の定型文 (皮膚の健康維持) は伝わりにくいため、研究の紹介として書く。
+        text: '魚の脂のオメガ3を多くとる人ほど、心筋梗塞などの心臓の病気が少ないという研究が、日本にも海外にもあります。ただ、サプリメントでは同じ結果は出ておらず、原因とまでは言い切れません。',
+        source: SRC_JPHC_FISH,
+        alsoSources: [H_OMEGA3],
+        topics: ['fat'],
+      },
+      {
+        text: 'さばや鮭の脂には、体の中では作れない「オメガ3」という脂が含まれます。さばなら1切れで、1日にとりたい量の目安くらいになります。',
         source: seibunFa('まさば 生', '10_10154_7'),
         alsoSources: [H_OMEGA3, SRC_DRI2025_FAT],
         topics: ['fat'],
       },
       {
-        text: '脂がのった魚でも、EPA・DHAの量は種類で違います。生の100gあたり、成分表ではまさばが約1.7g、しろさけが約0.7g。米国USDAでも、大西洋さばが約2.3g、シロザケが約0.6gです。',
+        text: '魚の脂に多いオメガ3の量は、魚の種類で違います。さばは、鮭の2倍以上を含みます（日本と米国のデータ）。',
         source: seibunFa('まさば 生 / しろさけ 生', '10_10154_7'),
         alsoSources: [SRC_USDA_FISH_N3],
         topics: ['fat'],
@@ -940,12 +966,12 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
     nutritionNotes: [
       { text: '魚の缶詰は加圧加熱で骨まで柔らかくなるため、骨ごと食べられます。生の切り身では残す部分がそのままとれます。', source: SRC_SEIBUN },
       {
-        text: '骨ごと食べられる魚の缶詰でとれるカルシウムは、骨や歯の形成に必要な栄養素です。',
+        text: '骨ごと食べられる魚の缶詰では、骨や歯を作るカルシウムがとれます。生の切り身では残す骨まで、いっしょに食べられるからです。',
         source: SRC_CAA,
         alsoSources: [H_CALCIUM],
       },
       {
-        text: 'さばの水煮缶にも、魚の脂のEPA・DHAが残っています。成分表では100gあたりEPA0.93g・DHA1.3gで、生のまさば（0.69g・0.97g）と比べても少なくありません。',
+        text: 'さばの水煮缶にも、魚の脂のオメガ3がしっかり残っていて、量は生のさばと同じくらいか、それ以上です。手軽にとれる形のひとつです。',
         source: seibunFa('さば 缶詰 水煮', '10_10164_7'),
         alsoSources: [H_OMEGA3],
         topics: ['fat'],
@@ -971,7 +997,7 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
     defaultMacro: { kcal: 40, protein: 5, fat: 2.5, carbs: 1 },
     nutritionNotes: [
       {
-        text: 'ハムやベーコンなどの加工肉は、塩漬けや燻製などで風味や保存性を高めた肉です。成分表では、ロースハム100gに食塩相当量2.3g、ばらベーコンに2.6gが含まれます。',
+        text: 'ハムやベーコンは、塩漬けやいぶすことで、味と日もちをよくした加工肉です。そのぶん、生の肉にはほとんどない塩分が加わっています。',
         source: seibun('ロースハム', '11_11176_7'),
         alsoSources: [SRC_WHO_PROCESSED_MEAT],
       },
@@ -991,7 +1017,7 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
     defaultMacro: { kcal: 100, protein: 5, fat: 9, carbs: 0.5 },
     nutritionNotes: [
       {
-        text: 'ベーコンやソーセージは、脂質と塩分をあわせて含みます。成分表では100gあたり、ばらベーコンが脂質19.4g・食塩相当量2.6g、ウインナーが脂質30.6g・食塩相当量1.9gです。',
+        text: 'ベーコンやソーセージは、脂と塩分をどちらも多く含む加工肉です。ウインナーは、重さの約3割が脂です。',
         source: seibun('ばらベーコン', '11_11183_7'),
         alsoSources: [SRC_WHO_PROCESSED_MEAT],
         topics: ['fat'],
@@ -1035,7 +1061,7 @@ const BUCKET_DAIRY_SOY: Identity[] = [
     defaultMacro: { kcal: 134, protein: 6.6, fat: 7.6, carbs: 9.6 },
     nutritionNotes: [
       {
-        text: '牛乳に多く含まれるカルシウムは、骨や歯の形成に必要な栄養素です。',
+        text: '牛乳に多いカルシウムは、骨や歯を作るのに必要な栄養素です。コップ1杯で、1日に必要な量の3分の1ほどがとれます。',
         source: SRC_CAA,
         alsoSources: [H_CALCIUM],
       },
@@ -1080,7 +1106,7 @@ const BUCKET_DAIRY_SOY: Identity[] = [
     defaultMacro: { kcal: 80, protein: 5, fat: 6, carbs: 1 },
     nutritionNotes: [
       {
-        text: 'チーズは、少量でもカルシウムが多い食品です。成分表では、プロセスチーズ100gに630mg（牛乳は110mg）が含まれます。',
+        text: 'チーズは、少しの量でもカルシウムが多い食品です。プロセスチーズには、同じ重さの牛乳の約6倍のカルシウムがあります。',
         source: seibun('プロセスチーズ', '13_13040_7'),
         alsoSources: [H_CALCIUM],
       },
@@ -1125,7 +1151,7 @@ const BUCKET_DAIRY_SOY: Identity[] = [
     defaultMacro: { kcal: 92, protein: 7.2, fat: 4, carbs: 6.2 },
     nutritionNotes: [
       {
-        text: '豆乳は大豆由来のたんぱく質を含みますが、カルシウムは牛乳ほど多くありません。成分表では、調製豆乳が100gあたり31mg、牛乳は110mgです。牛乳の代わりにするときは、カルシウムが強化された製品かどうかが分かれ目になります。',
+        text: '豆乳は大豆のたんぱく質を含みますが、カルシウムは牛乳の3分の1以下です（成分表）。牛乳の代わりにするなら、カルシウム入りの製品かどうかが分かれ目です。',
         source: seibun('調製豆乳', '4_04053_7'),
         alsoSources: [H_CALCIUM],
       },
@@ -1146,9 +1172,9 @@ const BUCKET_DAIRY_SOY: Identity[] = [
     defaultMacro: { kcal: 83, protein: 7.5, fat: 4.5, carbs: 3 },
     nutritionNotes: [
       {
-        text: '豆腐は、たんぱく質とカルシウムを含む食品です。成分表では、木綿豆腐100gにたんぱく質7.0g・カルシウム93mgが含まれます。',
+        text: '豆腐は、たんぱく質と、骨や歯を作るカルシウムを、どちらもとれる食品です。木綿豆腐のカルシウムは、同じ重さの牛乳の8割ほどあります。',
         source: seibun('木綿豆腐', '4_04032_7'),
-        alsoSources: [H_CALCIUM],
+        alsoSources: [H_CALCIUM, SRC_CAA],
         topics: ['protein'],
       },
     ],
@@ -1185,12 +1211,12 @@ const BUCKET_DAIRY_SOY: Identity[] = [
     defaultMacro: { kcal: 80, protein: 6.6, fat: 4, carbs: 5 },
     nutritionNotes: [
       {
-        text: '納豆は、発酵の過程でビタミンKを増やす食品です。成分表では、ゆで大豆100gが7μgなのに対し、納豆は600μgです。',
+        text: '納豆は、発酵するあいだにビタミンKが増える食品で、ゆでた大豆の80倍以上あります。ビタミンKは、骨を作るのを助ける栄養素です。',
         source: seibun('糸引き納豆', '4_04046_7'),
         alsoSources: [H_VITK],
       },
       {
-        text: '納豆に多いビタミンKは、正常な血液凝固と骨の健康維持に関わる栄養素です。',
+        text: '納豆に多いビタミンKは、けがをしたときに血を固めるはたらきを助ける栄養素です。',
         source: SRC_CAA,
         alsoSources: [H_VITK],
       },
@@ -1211,7 +1237,7 @@ const BUCKET_DAIRY_SOY: Identity[] = [
     defaultMacro: { kcal: 65, protein: 6, fat: 3, carbs: 4 },
     nutritionNotes: [
       {
-        text: '大豆や枝豆に含まれる鉄は、赤血球をつくるのに必要な栄養素です。',
+        text: '大豆や枝豆に含まれる鉄は、赤血球を作るのに必要な栄養素です。',
         source: SRC_CAA,
         alsoSources: [H_IRON],
       },
@@ -1333,7 +1359,7 @@ const BUCKET_VEGGIES: Identity[] = [
     nutritionNotes: [
       { text: 'ブロッコリーは、野菜には珍しく、筋肉や臓器の材料になるたんぱく質を含む野菜です。', source: SRC_SEIBUN },
       {
-        text: 'ブロッコリーに多いビタミンCは、皮膚や粘膜の健康維持を助けるとともに、抗酸化作用を持つ栄養素です。',
+        text: 'ブロッコリーに多いビタミンCは、食べものの鉄を体にとりこむのを助ける栄養素です。',
         source: SRC_CAA,
         alsoSources: [H_VITC],
       },
@@ -1471,7 +1497,7 @@ const BUCKET_VEGGIES: Identity[] = [
     defaultMacro: { kcal: 35, protein: 1.5, fat: 0.5, carbs: 6 },
     nutritionNotes: [
       {
-        text: 'ビタミンCは熱で壊れやすく、ゆでると減ります。成分表ではほうれんそう100gが、生で35mg、ゆでて19mgです。10種の野菜の研究でも、ゆでるのはビタミンCの保持率がもっとも低い調理法でした。',
+        text: 'ビタミンCは熱に弱く、ほうれんそうはゆでると半分ほどに減ります。野菜10種の研究でも、ゆでるのがいちばん減りやすい調理法でした。',
         source: seibun('ほうれんそう（生）', '6_06267_7'),
         alsoSources: [H_VITC, SRC_COOKING_VITAMINS],
       },
@@ -1497,7 +1523,7 @@ const BUCKET_FRUIT: Identity[] = [
     nutritionNotes: [
       { text: 'バナナは、体内の水分バランスに関わるミネラルのひとつ、カリウムを含みます。', source: SRC_SEIBUN },
       {
-        text: 'バナナに含まれるカリウムは、正常な血圧の維持に必要な栄養素です。',
+        text: 'バナナに多いカリウムは、血圧を正常に保つのを助ける栄養素です。',
         source: SRC_CAA,
         alsoSources: [H_POTASSIUM],
       },
@@ -1549,7 +1575,7 @@ const BUCKET_FRUIT: Identity[] = [
     defaultMacro: { kcal: 44, protein: 1.2, fat: 0.1, carbs: 11 }, // 10粒分
     nutritionNotes: [
       {
-        text: 'いちごに多いビタミンCは、皮膚や粘膜の健康維持を助けるとともに、抗酸化作用を持つ栄養素です。',
+        text: 'いちごに多いビタミンCは、体の細胞を守るのを助ける栄養素です。',
         source: SRC_CAA,
         alsoSources: [H_VITC],
       },
@@ -1608,7 +1634,7 @@ const BUCKET_ADDED_FAT: Identity[] = [
     nutritionNotes: [
       { text: '油は少ない量でもエネルギーが大きく、小さじ1杯の差がそのまま効いてきます。', source: SRC_SEIBUN },
       {
-        text: '油は、種類で脂の中身が違います。成分表では100gあたり、オリーブ油は一価不飽和脂肪酸が74g、ごま油は多価不飽和脂肪酸（ほぼn-6系）が41g。なたね油は、n-3系も7.5g含みます。',
+        text: '料理の油は、カロリーはどれもほぼ同じですが、脂の種類が違います。なたね油には体の中で作れないオメガ3が含まれますが、オリーブ油やごま油にはほとんどありません。',
         source: seibunFa('オリーブ油 / ごま油 / なたね油', '14_14001_7'),
         alsoSources: [H_FAT_TYPES, H_OMEGA3],
         topics: ['fat'],
@@ -1688,7 +1714,7 @@ const BUCKET_ADDED_FAT: Identity[] = [
     defaultMacro: { kcal: 90, protein: 1, fat: 9, carbs: 0.5 },
     nutritionNotes: [
       {
-        text: 'アボカドは果物ですが、糖質ではなく脂質が主成分です。成分表では、100gあたり脂質17.5g・炭水化物7.9gです。',
+        text: 'アボカドは果物ですが、甘さ（糖質）ではなく脂が中心の食べものです。脂は、炭水化物の2倍以上あります。',
         source: seibun('アボカド', '7_07006_7'),
         alsoSources: [H_AVOCADO],
         topics: ['fat'],
@@ -1714,14 +1740,14 @@ const BUCKET_ADDED_FAT: Identity[] = [
     nutritionNotes: [
       { text: 'ナッツの脂質は不飽和脂肪酸が中心で、常温でも固まりにくく、肉の脂(飽和脂肪酸)とは性質が違います。', source: SRC_SEIBUN },
       {
-        text: 'ナッツに含まれるビタミンEは、抗酸化作用により、体内の脂質を酸化から守り細胞の健康維持を助ける栄養素です。',
+        text: 'ナッツに多いビタミンEは、体の細胞を守るのを助ける栄養素です。',
         source: SRC_CAA,
         alsoSources: [H_VITE],
       },
       {
-        text: 'ナッツは、種類で脂の中身が違います。成分表では100gあたり、くるみ（いり）はn-3系のα-リノレン酸を約9g含みます。アーモンド（乾）は一価不飽和脂肪酸が約34gで、n-3系はほとんど含みません。',
+        text: 'ナッツは、種類で脂の中身が違います。くるみには体の中で作れないオメガ3が多く、ひとつかみで1日の目安の半分以上がとれます。アーモンドには、ほとんど含まれません。',
         source: seibunFa('くるみ いり / アーモンド 乾', '5_05014_7'),
-        alsoSources: [H_OMEGA3, H_FAT_TYPES],
+        alsoSources: [H_OMEGA3, H_FAT_TYPES, SRC_DRI2025_FAT],
         topics: ['fat'],
       },
     ],

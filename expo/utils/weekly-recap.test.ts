@@ -686,6 +686,28 @@ describe('computeWeeklyRecap — 栄養素の内訳 (macroSources) と豆知識'
   });
 });
 
+describe('豆知識の言葉 — 食事の知識が浅い人でも読める (VOICE.md「豆知識の書き方」)', () => {
+  const shown = ALL_IDENTITIES.flatMap((i) => (i.nutritionNotes ?? []).filter((n) => n.alsoSources?.length));
+
+  it('説明なしでは伝わらない専門用語・単位を使わない', () => {
+    const jargon = ['EPA', 'DHA', 'n-3', 'n-6', '一価不飽和', '多価不飽和', 'リノレン', 'DIAAS', 'μg', 'RAE',
+      '抗酸化作用', '保持率', '総死亡', '観察研究', '食塩相当量'];
+    for (const n of shown) {
+      for (const word of jargon) expect({ text: n.text, word, hit: n.text.includes(word) }).toMatchObject({ hit: false });
+    }
+  });
+
+  it('細かい数値を出さない (mg・μg・小数のグラム)。比べる・身近な量に置きかえる', () => {
+    for (const n of shown) {
+      expect({ text: n.text, hit: /mg|μg|\d+\.\d+\s*g/.test(n.text) }).toMatchObject({ hit: false });
+    }
+  });
+
+  it('長すぎない (120字以内)', () => {
+    for (const n of shown) expect({ text: n.text, len: n.text.length <= 120 }).toMatchObject({ len: true });
+  });
+});
+
 describe('豆知識の話題 (topics)', () => {
   it('話題を持つノートは、すべて照合済み (alsoSources あり) — 「もと」カードに出るのは照合済みだけ', () => {
     const tagged = ALL_IDENTITIES.flatMap((i) => (i.nutritionNotes ?? []).filter((n) => n.topics?.length));

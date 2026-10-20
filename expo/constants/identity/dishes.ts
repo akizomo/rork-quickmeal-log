@@ -122,49 +122,60 @@ const SRC_UDON = seibun('うどん（ゆで）', '1_01039_7');
 /** 鶏もも皮(生) 脂質51.6g / ささみ(生) 脂質0.8g。 */
 const SRC_CHICKEN_PARTS = seibun('にわとり 皮・ささみ', '11_11235_7');
 
+/** 脂は 9kcal/g、たんぱく質・炭水化物は 4kcal/g (「2倍以上」)。 */
+const SRC_KCAL_MEDLINE: NutritionNoteSource = {
+  label: '米国国立医学図書館 MedlinePlus（脂質の解説）',
+  url: 'https://medlineplus.gov/ency/patientinstructions/000104.htm',
+};
+
+const H_FIBER: NutritionNoteSource = {
+  label: 'ハーバード公衆衛生大学院 The Nutrition Source（食物繊維）',
+  url: 'https://nutritionsource.hsph.harvard.edu/carbohydrates/fiber/',
+};
+
 const NOTE_RAMEN: NutritionNote = {
-  text: 'ラーメン1杯の食塩は、商品によって7.7〜15.4gと幅があり、そのうちスープが38〜67%を占めます（市販品の分析）。汁を残すと、食塩は半分ほど減るとされています（種類で差があります）。',
+  text: 'ラーメン1杯の塩分は、1日の目標量と同じか、それ以上あり、その4〜7割はスープです。スープを残すと、塩分は半分ほどに減るとされています。',
   source: SRC_RAMEN_FSTR,
-  alsoSources: [SRC_DOCK, SRC_RAMEN_NUTRIENTS],
+  alsoSources: [SRC_DOCK, SRC_RAMEN_NUTRIENTS, SRC_MAFF_SALT],
 };
 
 const NOTE_TEMPURA: NutritionNote = {
-  text: 'きすの天ぷら100gあたり、衣の天ぷら粉は約13g、調理で増える脂質は約15gです（成分表の調理例）。素材の外側に、衣と揚げ油の分が足されています。',
+  text: '天ぷらは、素材の外側に衣と揚げ油が足された料理です。きすのような脂の少ない魚も、天ぷらにすると脂がぐっと増えます（成分表の調理例）。',
   source: SRC_SEIBUN_FRY,
   alsoSources: [SRC_FRY_NAWATA],
   topics: ['fat'],
 };
 
 const NOTE_TONKATSU: NutritionNote = {
-  text: '揚げると、脂質の増え方は素材で変わります。成分表の調理例では、とんかつ100gあたり、脂身つきロースで約11g、脂質の少ないヒレで約21g増えています。',
+  text: '揚げると脂が増えますが、増え方は肉で違います。成分表の調理例では、脂の少ないヒレのほうが、脂身のあるロースより2倍ほど多く脂が増えています。',
   source: SRC_SEIBUN_FRY,
   alsoSources: [SRC_FRY_NAWATA],
   topics: ['fat'],
 };
 
 const NOTE_TUNA: NutritionNote = {
-  text: 'まぐろは、同じ魚でも部位で脂質が大きく違います。成分表では、天然くろまぐろの赤身が100gあたり1.4g、脂身が27.5gです。',
+  text: 'まぐろは、同じ魚でも部位で脂の量が大きく違い、トロには赤身の約20倍の脂があります。脂は同じ重さで、たんぱく質の2倍以上のカロリーがあります。',
   source: SRC_TUNA,
-  alsoSources: [SRC_TUNA_CUTS],
+  alsoSources: [SRC_TUNA_CUTS, SRC_KCAL_MEDLINE],
   topics: ['fat'],
 };
 
 const NOTE_PASTA: NutritionNote = {
-  text: 'パスタは、乾麺とゆでた麺でエネルギーが大きく違います。成分表では、100gあたり乾麺が347kcal・水分11.3g、ゆでた麺が150kcal・水分60.0gです（USDAでも乾麺371kcal、ゆで158kcal）。麺のグラム数は、乾麺かゆでた後かで意味が変わります。',
+  text: 'パスタは、ゆでると水を吸って重さが2倍以上になります。同じ「100g」でも、乾麺とゆでた後では、カロリーが2倍以上違います。',
   source: SRC_PASTA,
   alsoSources: [SRC_USDA],
   topics: ['carbs'],
 };
 
 const NOTE_CURRY_ROUX: NutritionNote = {
-  text: 'カレーのルウは、重さの約3分の1が脂質、約10分の1が食塩相当量です（市販の固形ルウ100gあたり、脂質34.1g・食塩相当量10.6g）。味の濃さは、ルウの量で大きく変わります。',
+  text: 'カレーのルウは、重さの約3分の1が脂、約10分の1が塩分です。ルウを少なめにすると、脂も塩分もそのぶん減ります。',
   source: SRC_SEIBUN_ROUX,
   alsoSources: [SRC_USDA_ROUX],
   topics: ['fat'],
 };
 
 const NOTE_BALANCE_STUDY: NutritionNote = {
-  text: '食事バランスガイドの点数が高い人ほど、約15年の追跡で総死亡が低かったという研究があります（日本の成人約8万人。最も高い群は最も低い群の0.85倍）。観察研究なので、原因と結果までは分かりません。',
+  text: 'ごはん・主菜・副菜をそろえて食べる人ほど、約15年のあいだに亡くなった人の割合が1割あまり低かったという、日本の約8万人の研究があります。ただし、食べ方が原因とまでは言い切れません。',
   source: SRC_BMJ_GUIDE,
   alsoSources: [SRC_BALANCE_GUIDE],
 };
@@ -490,12 +501,12 @@ const BUCKET_JAPANESE_NOODLES: Identity[] = [
     primaryHome: { tab: 'dish', bucket: 'japanese_noodles' },
     nutritionNotes: [
       {
-        text: 'うどん1杯の食塩相当量は約5.6gという資料があります。成人の1日の目標は男性7.5g未満・女性6.5g未満で、麺類は、つゆを残すと食塩が減ります。',
+        text: 'うどん1杯の塩分は、1日の目標量の8割ほどにあたるという資料があります。塩分のとりすぎは高血圧に関わるため、つゆを残すのもひとつの手です。',
         source: SRC_MAFF_SALT,
         alsoSources: [SRC_DOCK, SRC_RAMEN_FSTR],
       },
       {
-        text: 'うどんは、ゆでた麺100gの約75%が水分で、エネルギーは95kcalです。同じゆで麺のそばは130kcalで、たんぱく質もうどん2.6gに対しそば4.8gと差があります。',
+        text: 'ゆでたうどんは、重さの約4分の3が水分です。そのぶん、同じ重さのゆでたそばより、カロリーは少なめです。',
         source: SRC_UDON,
         alsoSources: [SRC_SOBA],
         topics: ['carbs'],
@@ -522,9 +533,9 @@ const BUCKET_JAPANESE_NOODLES: Identity[] = [
     primaryHome: { tab: 'dish', bucket: 'japanese_noodles' },
     nutritionNotes: [
       {
-        text: 'そばは、ゆでた麺100gあたりのたんぱく質が4.8g、食物繊維が2.9gです。同じゆで麺のうどん（2.6g・1.3g）より、どちらも多くなっています。',
+        text: 'そばは、うどんと比べて、たんぱく質も食物繊維も約2倍ある麺です。食物繊維は、血糖や空腹感をゆるやかに保つのを助けます。',
         source: SRC_SOBA,
-        alsoSources: [SRC_UDON, SRC_USDA],
+        alsoSources: [SRC_UDON, SRC_USDA, H_FIBER],
         topics: ['protein', 'carbs'],
       },
     ],
@@ -973,7 +984,7 @@ const BUCKET_MISC_DISH: Identity[] = [
     primaryHome: { tab: 'dish', bucket: 'misc_dish' },
     nutritionNotes: [
       {
-        text: 'ごはんとおかず、汁がそろう定食は、食事バランスガイドの「主食・副菜・主菜」をそろえやすい形です。ごはん・麺は主食、野菜・いも・海藻・きのこは副菜、肉・魚・卵・大豆は主菜にあたります。',
+        text: '定食は、ごはん（主食）、肉や魚のおかず（主菜）、野菜のおかず（副菜）がそろいやすい形です。国の「食事バランスガイド」も、この3つをそろえる食べ方をすすめています。',
         source: SRC_BALANCE_GUIDE,
         alsoSources: [SRC_BALANCE_GUIDE_MHLW],
       },
@@ -1009,7 +1020,7 @@ const BUCKET_MISC_DISH: Identity[] = [
     primaryHome: { tab: 'dish', bucket: 'misc_dish' },
     nutritionNotes: [
       {
-        text: 'お弁当は、主食のごはんに、主菜と副菜が詰め合わせになった形です。食事バランスガイドでは、野菜・いも・海藻・きのこの料理が「副菜」、肉・魚・卵・大豆の料理が「主菜」とされています。',
+        text: 'お弁当は、ごはんに、肉や魚のおかず（主菜）と野菜のおかず（副菜）を詰めた形です。野菜のおかずが少ないときは、サラダを足すとそろいます。',
         source: SRC_BALANCE_GUIDE,
         alsoSources: [SRC_BALANCE_GUIDE_MHLW],
       },
@@ -1046,7 +1057,7 @@ const BUCKET_MISC_DISH: Identity[] = [
     nutritionNotes: [
       NOTE_TEMPURA,
       {
-        text: '揚げ物の脂質は、素材で増え方が変わります。成分表の調理例では、若鶏もも（皮つき）のから揚げは肉の脂が油に溶け出して100gあたり約1g減り、皮なしは約5g増えています。',
+        text: 'から揚げは、皮つきだと肉の脂が油に溶け出すので、揚げても脂はあまり増えません。皮なしの肉のほうが、揚げると脂が増えます（成分表の調理例）。',
         source: SRC_SEIBUN_FRY,
         alsoSources: [SRC_FRY_NAWATA],
         topics: ['fat'],
@@ -1110,7 +1121,7 @@ const BUCKET_MISC_DISH: Identity[] = [
     primaryHome: { tab: 'dish', bucket: 'misc_dish' },
     nutritionNotes: [
       {
-        text: '焼鳥は、串の部位で脂質が大きく違います。鶏の皮は100gあたり約32〜52g（成分表ではもも皮51.6g、USDAでは32.4〜44.2g）、ささみ・むね肉は約1〜3g（成分表のささみ0.8g、USDAのむね肉2.6g）です。',
+        text: '焼鳥は、串の部位で脂の量が大きく違います。鶏皮には、ささみやむね肉の10倍以上の脂があります（日本と米国のデータ）。',
         source: SRC_CHICKEN_PARTS,
         alsoSources: [SRC_USDA],
         topics: ['fat'],
@@ -1218,7 +1229,7 @@ const BUCKET_MISC_DISH: Identity[] = [
     primaryHome: { tab: 'dish', bucket: 'misc_dish' },
     nutritionNotes: [
       {
-        text: '国の目標は野菜を1日350g以上（WHOは野菜と果物で400g以上）。令和元年の調査では、平均は男性約290g、女性約270gで、あと約70gが目安とされています。鍋ものの野菜も、この量に数えられます。',
+        text: '国の目標は、野菜を1日350g（野菜のおかず5〜6皿分）以上です。ふだんの平均はあと1皿分ほど足りず、鍋の野菜もこの量に入ります。',
         source: SRC_VEGETABLE,
         alsoSources: [SRC_WHO_VEG],
       },
