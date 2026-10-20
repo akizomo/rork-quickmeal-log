@@ -461,23 +461,33 @@ function buildCards(recap: WeeklyRecap, styles: Styles, tr: Tr): Card[] {
             <Body size="lg" style={{ marginTop: t.spacing['6'], lineHeight: 26 }}>
               {boost.direction === 'less'
                 ? tr('weeklyRecap.advice.leadMore', { macro: boostMacroName })
-                : tr('weeklyRecap.advice.leadLess', { macro: boostMacroName })}
+                : boost.axis === 'carbs'
+                  ? tr('weeklyRecap.advice.leadSwapStaple')
+                  : tr('weeklyRecap.advice.leadLess', { macro: boostMacroName })}
             </Body>
             <View style={[styles.spacer, { justifyContent: 'center' }]}>
               <View style={{ gap: t.spacing['3'] }}>
                 {boost.candidates.map((c) => {
                   const identity = getIdentity(c.identityId);
                   const bucket = identity ? getBucketDef(identity.primaryHome.bucket) : undefined;
-                  const axisGrams = identity?.defaultMacro[boost.axis] ?? 0;
+                  const axisGrams = c.axisGrams ?? identity?.defaultMacro[boost.axis] ?? 0;
                   return (
                     <View
                       key={c.identityId}
                       style={[styles.candidateCard, { backgroundColor: t.colors.surface.raised }]}
                     >
                       <Body style={{ fontSize: 20 }}>{bucket?.emoji ?? '🍽️'}</Body>
-                      <Body weight="medium" style={{ flex: 1, color: t.colors.content.primary }}>
-                        {c.label}
-                      </Body>
+                      <View style={{ flex: 1 }}>
+                        <Body weight="medium" style={{ color: t.colors.content.primary }}>
+                          {c.label}
+                        </Body>
+                        {/* 置き換え候補は、先週食べていたもののかわりであることを添える。 */}
+                        {c.replaces ? (
+                          <Body size="sm" tone="secondary">
+                            {tr('weeklyRecap.advice.replaces', { label: c.replaces })}
+                          </Body>
+                        ) : null}
+                      </View>
                       <MacroChip kind={boost.axis} value={axisGrams} size="sm" />
                     </View>
                   );

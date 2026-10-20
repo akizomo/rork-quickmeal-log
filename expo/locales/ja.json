@@ -551,6 +551,8 @@
       "label": "アドバイス",
       "leadMore": "{{macro}}を増やしたいときは",
       "leadLess": "{{macro}}が少なめの選択肢なら",
+      "leadSwapStaple": "主食を選ぶなら",
+      "replaces": "{{label}}のかわりに",
       "sourcePrefix": "出典: "
     },
     "outro": {

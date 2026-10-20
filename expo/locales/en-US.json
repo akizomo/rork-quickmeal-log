@@ -551,6 +551,8 @@
       "label": "Tips",
       "leadMore": "To get more {{macro}}",
       "leadLess": "Lower-{{macro}} options",
+      "leadSwapStaple": "When choosing a staple",
+      "replaces": "Instead of {{label}}",
       "sourcePrefix": "Source: "
     },
     "outro": {

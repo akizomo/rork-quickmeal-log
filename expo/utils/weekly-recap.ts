@@ -44,12 +44,6 @@ const AXIS_KCAL_PER_GRAM: Record<MacroAxis, number> = { protein: 4, fat: 9, carb
 const AXIS_DENSITY_THRESHOLD: Record<MacroAxis, number> = { protein: 0.25, fat: 0.35, carbs: 0.45 };
 
 /**
- * 軸ごとの「低◯◯食材」判定閾値 (direction='more' の代替案提示に使う)。
- * 例: fat 0.20 = カロリーの20%未満が脂質由来なら低脂質の代替候補とみなす。
- */
-const AXIS_LOW_DENSITY_THRESHOLD: Record<MacroAxis, number> = { protein: 0.10, fat: 0.20, carbs: 0.25 };
-
-/**
  * 「増やしたいときは」の候補に求める、1食 (defaultMacro) あたりの最小グラム数。
  * 密度 (カロリー比) だけで選ぶと、海藻 (炭水化物2.5g) のように比率は高くても量としては
  * ほとんど足しにならない食材が候補に入るため。たんぱく質は卵1個 (6.2g)・豆腐・納豆が入る値にしている。
@@ -87,6 +81,108 @@ const ADVICE_RECOMMENDABLE_IDS = new Set([
 
 function isAdviceEligible(identity: Identity): boolean {
   return ADVICE_RECOMMENDABLE_IDS.has(identity.id);
+}
+
+/**
+ * 「多めの週」に出す置き換え表 (PRD §6.7.5「置き換えの規則」)。
+ * 「その栄養素が少ない別のもの」ではなく、**同じ役割のまま中身がよりよいもの**に限る
+ * (ごはん→玄米、うどん→そば、脂の多い肉→赤身、脂質の多い麺料理→脂質の少ない麺料理)。
+ * 先週の記録に from があるときだけ、to を出す。勧める根拠を持てない組み合わせは入れない。
+ * to は許可リスト (ADVICE_RECOMMENDABLE_IDS) とは別に、この表で直接決める (麺料理など料理も含むため)。
+ */
+interface SwapRule {
+  axis: 'fat' | 'carbs';
+  from: string;
+  /** 省略 = 種類を問わない。指定時は、記録の種類 (attrKey。未指定なら既定の種類) がこれと一致するときだけ。 */
+  fromAttr?: string;
+  to: string;
+  toAttr?: string;
+}
+
+/** 脂質が多め (1食15g以上) の麺料理。置き換え先は脂質の少ない麺料理 (そば・うどん)。 */
+const RICH_NOODLE_IDS = [
+  'ramen_heavy', 'tantanmen', 'fried_noodles', 'tsukemen', 'ramen_jiro', 'yaki_udon', 'tempura_noodle',
+  'pasta_tomato', 'pasta_japanese', 'pasta_meat', 'pasta_oil', 'pasta_cream',
+];
+const LIGHT_NOODLE_IDS = ['soba', 'udon'];
+
+const SWAP_RULES: SwapRule[] = [
+  // 脂質: 同じ役割で、脂の少ないもの
+  { axis: 'fat', from: 'beef_pork_fatty', to: 'red_meat' },
+  { axis: 'fat', from: 'beef_pork', to: 'red_meat' },
+  { axis: 'fat', from: 'bacon_sausage', to: 'red_meat' },
+  { axis: 'fat', from: 'chicken_thigh', to: 'chicken_lean' },
+  { axis: 'fat', from: 'cheese', to: 'cheese_low_fat' },
+  { axis: 'fat', from: 'aburaage', to: 'tofu' },
+  { axis: 'fat', from: 'side_creamy', to: 'side_seasoned' },
+  { axis: 'fat', from: 'bread_rich', to: 'bread' },
+  ...RICH_NOODLE_IDS.flatMap((from) => LIGHT_NOODLE_IDS.map((to): SwapRule => ({ axis: 'fat', from, to }))),
+  // 炭水化物: 同じ主食で、精製の少ないもの・量の少ないもの
+  { axis: 'carbs', from: 'rice', fromAttr: 'white', to: 'rice', toAttr: 'brown' },
+  { axis: 'carbs', from: 'bread', fromAttr: 'plain', to: 'bread', toAttr: 'whole' },
+  { axis: 'carbs', from: 'noodle_udon', fromAttr: 'udon', to: 'noodle_udon', toAttr: 'soba' },
+  { axis: 'carbs', from: 'udon', to: 'soba' },
+  { axis: 'carbs', from: 'noodle_pasta', fromAttr: 'regular', to: 'noodle_pasta', toAttr: 'whole' },
+  { axis: 'carbs', from: 'cereal', to: 'oatmeal' },
+  { axis: 'carbs', from: 'sweet_bread', to: 'bread' },
+  { axis: 'carbs', from: 'sweet_drink', to: 'fruit_other' },
+];
+
+function attrOf(identity: Identity, key: string | undefined) {
+  return key ? identity.attributes?.find((a) => a.key === key) : undefined;
+}
+
+/** 記録の種類。未指定なら既定の種類 (白米・食パンなど)。 */
+function effectiveAttrKey(identity: Identity, attrKey: string | undefined): string | undefined {
+  return attrKey ?? identity.attributes?.find((a) => a.isDefault)?.key;
+}
+
+/** 先週の記録から、置き換え表に当てはまるものを、よく食べた順に候補にする。 */
+function computeSwapCandidates(
+  weekLogs: FoodLog[],
+  axis: 'fat' | 'carbs',
+  weekIndex: number,
+): WeeklyMacroBoostCandidate[] {
+  const counts = new Map<string, number>();
+  for (const log of weekLogs) {
+    if (!log.identityId) continue;
+    const identity = getIdentity(log.identityId);
+    if (!identity) continue;
+    const key = `${log.identityId}|${effectiveAttrKey(identity, log.attrKey) ?? ''}`;
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+
+  const picked: { count: number; candidate: WeeklyMacroBoostCandidate }[] = [];
+  const seenTo = new Set<string>();
+  for (const rule of SWAP_RULES) {
+    if (rule.axis !== axis) continue;
+    const fromIdentity = getIdentity(rule.from);
+    const toIdentity = getIdentity(rule.to);
+    if (!fromIdentity || !toIdentity) continue;
+    const count = rule.fromAttr
+      ? counts.get(`${rule.from}|${rule.fromAttr}`) ?? 0
+      : [...counts.entries()].filter(([k]) => k.startsWith(`${rule.from}|`)).reduce((n, [, c]) => n + c, 0);
+    if (count === 0) continue;
+    const toKey = `${rule.to}|${rule.toAttr ?? ''}`;
+    if (seenTo.has(toKey)) continue;
+    seenTo.add(toKey);
+
+    const fromAttr = attrOf(fromIdentity, rule.fromAttr);
+    const toAttr = attrOf(toIdentity, rule.toAttr);
+    const factor = toAttr?.factor?.[axis] ?? 1;
+    picked.push({
+      count,
+      candidate: {
+        identityId: rule.to,
+        label: toAttr ? `${toIdentity.label}（${toAttr.label}）` : toIdentity.label,
+        fromHistory: true,
+        replaces: fromAttr ? `${fromIdentity.label}（${fromAttr.label}）` : fromIdentity.label,
+        axisGrams: Math.round(toIdentity.defaultMacro[axis] * factor * 10) / 10,
+      },
+    });
+  }
+  picked.sort((a, b) => b.count - a.count);
+  return rotate(picked.map((p) => p.candidate), MAX_BOOST_CANDIDATES, weekIndex);
 }
 
 /** macroBoost で提示する候補の最大数。 */
@@ -173,11 +269,15 @@ export interface WeeklyMacroBoostCandidate {
   label: string;
   /** 記録履歴にあるか (自分のレパートリーか、未経験の選択肢か)。UIの見せ方を変える余地のため公開する。 */
   fromHistory: boolean;
+  /** 置き換え候補のとき、先週食べていた置き換え元の表示名 (例: 「ごはん（白米）」)。 */
+  replaces?: string;
+  /** 置き換え候補のとき、候補の1食あたりの対象栄養素のグラム数 (種類による補正込み)。 */
+  axisGrams?: number;
 }
 
 export interface WeeklyMacroBoost {
   axis: MacroAxis;
-  /** 'less' = その軸を増やせる高密度候補、'more' = その軸が少ない低密度代替候補。 */
+  /** 'less' = その軸を増やせる高密度候補、'more' = 先週食べていたものの置き換え候補 (SWAP_RULES)。 */
   direction: 'less' | 'more';
   /**
    * その軸の密度が高い (less) / 低い (more) Identity を最大 MAX_BOOST_CANDIDATES 件。
@@ -360,7 +460,7 @@ export function computeWeeklyRecap(
   }));
 
   const weekIndex = weekIndexOf(range.start);
-  const macroBoost = computeMacroBoost(logs, macroInsight, weekKey, weekIndex);
+  const macroBoost = computeMacroBoost(logs, macroInsight, weekKey, weekIndex, range);
 
   // ── いつもとの差 (固定カードの補足) ──
   const pastWeeks = Array.from({ length: BASELINE_WEEKS }, (_, i) => core(i + 2));
@@ -630,6 +730,7 @@ function computeMacroBoost(
   insight: WeeklyMacroInsight | null,
   weekKey: string,
   weekIndex: number,
+  range: DateRange,
 ): WeeklyMacroBoost | null {
   if (!insight) return null;
   const { axis, direction } = insight;
@@ -686,16 +787,26 @@ function computeMacroBoost(
     return { axis, direction, candidates, note };
   }
 
-  // direction === 'more': 低密度食材を記録履歴から提示 (カタログ補完なし)
-  const candidates = rotate(
-    historyMatching((identity) => densityFor(axis, identity.defaultMacro) < AXIS_LOW_DENSITY_THRESHOLD[axis]),
-    MAX_BOOST_CANDIDATES,
-    weekIndex,
-  );
-
+  // direction === 'more': 先週食べていたものの置き換え候補 (SWAP_RULES)。
+  // たんぱく質が多めの週は、置き換えを勧める根拠が弱いので出さない。
+  if (axis === 'protein') return null;
+  const startKey = formatDateKey(range.start);
+  const endKey = formatDateKey(range.end);
+  const weekLogs = allLogs.filter((log) => log.date >= startKey && log.date <= endKey);
+  const candidates = computeSwapCandidates(weekLogs, axis, weekIndex);
   if (candidates.length === 0) return null;
 
-  return { axis, direction, candidates, note: null };
+  // 豆知識は、候補 (置き換え後) のうちその栄養素の話を持つ最初の1件。
+  let note: WeeklyFoodFact | null = null;
+  for (const c of candidates) {
+    const identity = getIdentity(c.identityId);
+    const picked = identity?.nutritionNotes ? pickNutritionNote(identity.nutritionNotes, identity.id, weekKey, axis) : null;
+    if (identity && picked) {
+      note = { identityId: identity.id, identityLabel: identity.label, note: picked };
+      break;
+    }
+  }
+  return { axis, direction, candidates, note };
 }
 
 /**

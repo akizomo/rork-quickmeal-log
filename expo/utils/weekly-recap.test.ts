@@ -339,7 +339,7 @@ describe('computeWeeklyRecap — macroBoost (観点C: 目標接続型・less方�
     expect(result?.macroBoost).toBeNull();
   });
 
-  it("direction='more' のときは候補が条件を満たしても null (非対称・意図的)", () => {
+  it("たんぱく質が多めの週は、置き換えを勧める根拠が弱いので候補を出さない", () => {
     const logs = [
       makeLog('2026-07-27', 2000, { protein: 140, fat: 50, carbs: 200 }, 'chicken_lean'), // protein 40%乖離・more
     ];
@@ -422,6 +422,70 @@ describe('computeWeeklyRecap — macroBoost (観点C: 目標接続型・less方�
 const kinds = (r: ReturnType<typeof computeWeeklyRecap>) => (r?.discoveries ?? []).map((d) => d.kind);
 /** PFC 目標どおり (乖離なし) の1日。macro の発見を出さずに食材系だけを見るため。 */
 const onTarget = { protein: 100, fat: 50, carbs: 200 };
+
+describe('computeWeeklyRecap — 多めの週の置き換え (SWAP_RULES)', () => {
+  const fatMore = { protein: 100, fat: 90, carbs: 200 };
+  const carbsMore = { protein: 100, fat: 50, carbs: 350 };
+  const extra = (date: string, id: string, over: object = {}) => ({ ...makeLog(date, 1, {}, id), ...over });
+  const boostOf = (logs: FoodLog[]) => computeWeeklyRecap(logs, makeProfile(2000), [], undefined, NOW)?.macroBoost;
+
+  it('脂質が多めの週は、先週食べていた脂の多いものを、同じ役割で脂の少ないものに置き換える', () => {
+    const b = boostOf([
+      makeLog('2026-07-27', 2000, fatMore, 'chicken_thigh'),
+      extra('2026-07-28', 'chicken_thigh'),
+      extra('2026-07-29', 'beef_pork_fatty'),
+    ]);
+    expect(b).toMatchObject({ axis: 'fat', direction: 'more' });
+    expect(b?.candidates.map((c) => [c.identityId, c.replaces])).toEqual([
+      ['chicken_lean', '鶏もも・手羽'],
+      ['red_meat', '牛・豚 (高脂)'],
+    ]);
+    expect(b?.candidates[0].fromHistory).toBe(true);
+  });
+
+  it('脂質の多い麺料理 (ラーメン・パスタ等) は、脂質の少ない麺料理 (そば・うどん) に置き換える', () => {
+    const b = boostOf([makeLog('2026-07-27', 2000, fatMore, 'pasta_cream'), extra('2026-07-28', 'ramen_heavy')]);
+    const ids = b?.candidates.map((c) => c.identityId) ?? [];
+    expect(ids).toEqual(['soba', 'udon']); // 置き換え先が同じ候補は1つにまとめる
+    for (const id of ids) expect(getIdentity(id)!.defaultMacro.fat).toBeLessThanOrEqual(3);
+  });
+
+  it('炭水化物が多めの週は、同じ主食を精製の少ない種類に置き換える (白米→玄米)。量はほぼ同じなので、1食の量は種類の補正込みで出す', () => {
+    const b = boostOf([makeLog('2026-07-27', 2000, carbsMore, 'rice')]); // 種類の指定なし = 既定の白米
+    expect(b).toMatchObject({ axis: 'carbs', direction: 'more' });
+    expect(b?.candidates).toEqual([
+      { identityId: 'rice', label: 'ごはん（玄米）', fromHistory: true, replaces: 'ごはん（白米）', axisGrams: 56 },
+    ]);
+  });
+
+  it('すでに玄米を食べているなら、玄米は勧めない (置き換え元に当てはまる記録が無ければ候補なし)', () => {
+    const b = boostOf([{ ...makeLog('2026-07-27', 2000, carbsMore, 'rice'), attrKey: 'brown' }]);
+    expect(b).toBeNull();
+  });
+
+  it('置き換え表に当てはまる食べものが先週の記録に無ければ、候補は出さない (履歴や全カタログからは補わない)', () => {
+    expect(boostOf([makeLog('2026-07-27', 2000, fatMore, 'salad_raw'), extra('2026-06-01', 'chicken_thigh')])).toBeNull();
+  });
+
+  it('置き換え先の豆知識は、その栄養素の話のものだけを添える (玄米: マグネシウム・ビタミンB1)', () => {
+    const b = boostOf([makeLog('2026-07-27', 2000, carbsMore, 'rice')]);
+    expect(b?.note?.identityId).toBe('rice');
+    expect(b?.note?.note.text).toContain('玄米');
+    expect(b?.note?.note.alsoSources?.length).toBeGreaterThan(0);
+  });
+
+  it('置き換え表の元・先の Identity と種類 (attr) がすべてデータに実在する', () => {
+    // 表の誤字・Identity 改名で、候補が静かに出なくなるのを防ぐ
+    const ids = ['beef_pork_fatty', 'beef_pork', 'bacon_sausage', 'chicken_thigh', 'chicken_lean', 'red_meat', 'cheese', 'cheese_low_fat',
+      'aburaage', 'tofu', 'side_creamy', 'side_seasoned', 'bread_rich', 'bread', 'rice', 'noodle_udon', 'udon', 'soba', 'noodle_pasta',
+      'cereal', 'oatmeal', 'sweet_bread', 'sweet_drink', 'fruit_other', 'ramen_heavy', 'tantanmen', 'fried_noodles', 'tsukemen',
+      'ramen_jiro', 'yaki_udon', 'tempura_noodle', 'pasta_tomato', 'pasta_japanese', 'pasta_meat', 'pasta_oil', 'pasta_cream'];
+    for (const id of ids) expect(getIdentity(id)).toBeTruthy();
+    const attrs: [string, string][] = [['rice', 'white'], ['rice', 'brown'], ['bread', 'plain'], ['bread', 'whole'],
+      ['noodle_udon', 'udon'], ['noodle_udon', 'soba'], ['noodle_pasta', 'regular'], ['noodle_pasta', 'whole']];
+    for (const [id, key] of attrs) expect(getIdentity(id)?.attributes?.some((a) => a.key === key)).toBe(true);
+  });
+});
 
 describe('computeWeeklyRecap — アドバイスに出さない食材', () => {
   const lowFat = { protein: 100, fat: 20, carbs: 200 }; // 脂質の割合が目標より少ない週
@@ -585,7 +649,7 @@ describe('computeWeeklyRecap — 栄養素の内訳 (macroSources) と豆知識'
   // 2026-07-27 週のローテーションは炭水化物 (SOURCE_AXIS_ROTATION[2])。
   it('「もと」カードには、並んだ食材のうち その栄養素の話 (topics) の豆知識を、割合の大きい順に探して添える', () => {
     const logs = [
-      makeLog('2026-07-27', 600, { carbs: 120 }, 'rice'), // ごはん: 照合済みのノートなし
+      makeLog('2026-07-27', 600, { carbs: 120 }, 'oatmeal'), // オートミール: 照合済みのノートなし
       makeLog('2026-07-28', 500, { carbs: 80 }, 'soba'), // そば: 炭水化物の話 (食物繊維) あり
       makeLog('2026-07-29', 400, { carbs: 1, fat: 20 }, 'chicken_thigh'), // 鶏もも: 脂質の話のみ
     ];
@@ -598,7 +662,7 @@ describe('computeWeeklyRecap — 栄養素の内訳 (macroSources) と豆知識'
 
   it('その栄養素の話を持つ食材が並ばなければ、「もと」カードに豆知識は添えない (別の栄養素の話や、並ばない食材の話はしない)', () => {
     const logs = [
-      makeLog('2026-07-27', 600, { carbs: 120 }, 'rice'),
+      makeLog('2026-07-27', 600, { carbs: 120 }, 'oatmeal'),
       makeLog('2026-07-28', 400, { carbs: 1, fat: 20 }, 'chicken_thigh'),
     ];
     const r = computeWeeklyRecap(logs, makeProfile(2000), [], undefined, NOW);
@@ -611,7 +675,7 @@ describe('computeWeeklyRecap — 栄養素の内訳 (macroSources) と豆知識'
     const logs = [
       makeLog('2026-07-01', 500, onTarget, 'egg'), // 以前の記録 (はじめて を出すため)
       makeLog('2026-07-27', 600, { carbs: 120 }, 'soba'),
-      makeLog('2026-07-28', 300, { carbs: 40 }, 'rice'),
+      makeLog('2026-07-28', 300, { carbs: 40 }, 'oatmeal'),
     ];
     // 目標なし = PFC のカードが枠を取らないようにする
     const r = computeWeeklyRecap(logs, makeProfile(0), [], undefined, NOW);
@@ -673,11 +737,11 @@ describe('豆知識ゲート — 補強出典の無いノートはユーザー�
     expect(verified.length).toBeGreaterThanOrEqual(25);
   });
 
-  it('補強出典の無いノートしか持たない食材では、豆知識は出ない (例: ごはん)', () => {
-    const rice = getIdentity('rice');
-    expect((rice?.nutritionNotes ?? []).every((n) => !n.alsoSources?.length)).toBe(true);
+  it('補強出典の無いノートしか持たない食材では、豆知識は出ない (例: オートミール)', () => {
+    const oatmeal = getIdentity('oatmeal');
+    expect((oatmeal?.nutritionNotes ?? []).every((n) => !n.alsoSources?.length)).toBe(true);
     const r = computeWeeklyRecap(
-      [makeLog('2026-07-01', 500, onTarget, 'egg'), makeLog('2026-07-28', 2000, onTarget, 'rice')],
+      [makeLog('2026-07-01', 500, onTarget, 'egg'), makeLog('2026-07-28', 2000, onTarget, 'oatmeal')],
       makeProfile(2000), [], undefined, NOW,
     );
     const d = r?.discoveries.find((x) => x.kind === 'newFoods');

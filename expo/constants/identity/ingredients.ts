@@ -47,6 +47,7 @@ const H_VITE = harvard('ビタミンE', 'vitamin-e/');
 const H_CALCIUM = harvard('カルシウム', 'calcium/');
 const H_POTASSIUM = harvard('カリウム', 'potassium/');
 const H_AVOCADO = harvard('アボカド', 'avocados/');
+const H_WHOLE_GRAINS = harvard('全粒穀物', 'what-should-you-eat/whole-grains/');
 
 /** 加工肉の定義 (塩漬け・燻製などで風味や保存性を高めた肉。例: ハム・ソーセージ・ジャーキー)。 */
 const SRC_WHO_PROCESSED_MEAT: NutritionNoteSource = {
@@ -122,6 +123,14 @@ const BUCKET_STAPLE: Identity[] = [
     defaultMacro: { kcal: 234, protein: 3.8, fat: 0.5, carbs: 56 },
     nutritionNotes: [
       { text: 'ごはんは、脳や体を動かすエネルギー源になる糖質が主成分です。', source: SRC_SEIBUN },
+      {
+        // 炭水化物の量は同じ (成分表のめし100gで炭水化物 玄米34.7g・精白米36.1g)。食物繊維も八訂では差が小さい
+        // (玄米1.4g・精白米1.5g) ため、差がはっきりしているマグネシウムとビタミンB1で書く。
+        text: '玄米ごはんは、糖質の量は白米ごはんとほぼ同じで、マグネシウムとビタミンB1が多めです。成分表では100gあたり、マグネシウムが玄米49mg・白米7mg、ビタミンB1が玄米0.16mg・白米0.02mgです。',
+        source: seibun('水稲めし 玄米', '1_01085_7'),
+        alsoSources: [seibun('水稲めし 精白米', '1_01088_7'), H_WHOLE_GRAINS],
+        topics: ['carbs'],
+      },
     ],
     amount: {
       unit: 'g',
@@ -450,7 +459,7 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
         text: '鶏むね（皮なし）は、たんぱく質が多く脂質が控えめな食材です。成分表では100gあたり、たんぱく質24.4g・脂質1.9gです（米国USDAでは22.5g・2.62g）。',
         source: seibun('鶏むね（皮なし）', '11_11214_7'),
         alsoSources: [SRC_USDA_CHICKEN],
-        topics: ['protein'],
+        topics: ['protein', 'fat'],
       },
     ],
     amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '100', value: 100 }, { label: '150', value: 150 }, { label: '200', value: 200 }] },
