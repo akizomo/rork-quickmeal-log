@@ -536,6 +536,53 @@ describe('computeWeeklyRecap — 栄養素の内訳 (macroSources) と豆知識'
     expect(d && d.kind === 'newFoods' && d.note?.identityId).toBe('egg');
     expect(d && d.kind === 'newFoods' && d.note?.note.source.label).toBeTruthy();
   });
+
+  // 2026-07-27 週のローテーションは炭水化物 (SOURCE_AXIS_ROTATION[2])。
+  it('「もと」カードには、並んだ食材のうち その栄養素の話 (topics) の豆知識を、割合の大きい順に探して添える', () => {
+    const logs = [
+      makeLog('2026-07-27', 600, { carbs: 120 }, 'rice'), // ごはん: 照合済みのノートなし
+      makeLog('2026-07-28', 500, { carbs: 80 }, 'soba'), // そば: 炭水化物の話 (食物繊維) あり
+      makeLog('2026-07-29', 400, { carbs: 1, fat: 20 }, 'chicken_thigh'), // 鶏もも: 脂質の話のみ
+    ];
+    const r = computeWeeklyRecap(logs, makeProfile(2000), [], undefined, NOW);
+    const d = r?.discoveries.find((x) => x.kind === 'macroSources');
+    expect(d?.kind === 'macroSources' && d.axis).toBe('carbs');
+    expect(d && d.kind === 'macroSources' && d.note?.identityId).toBe('soba');
+    expect(d && d.kind === 'macroSources' && d.note?.note.topics).toContain('carbs');
+  });
+
+  it('その栄養素の話を持つ食材が並ばなければ、「もと」カードに豆知識は添えない (別の栄養素の話や、並ばない食材の話はしない)', () => {
+    const logs = [
+      makeLog('2026-07-27', 600, { carbs: 120 }, 'rice'),
+      makeLog('2026-07-28', 400, { carbs: 1, fat: 20 }, 'chicken_thigh'),
+    ];
+    const r = computeWeeklyRecap(logs, makeProfile(2000), [], undefined, NOW);
+    const d = r?.discoveries.find((x) => x.kind === 'macroSources');
+    expect(d?.kind).toBe('macroSources');
+    expect(d && d.kind === 'macroSources' && d.note).toBeNull();
+  });
+
+  it('同じ週に同じ文面の豆知識は2度出さない (先に出るカードに残す)', () => {
+    const logs = [
+      makeLog('2026-07-01', 500, onTarget, 'egg'), // 以前の記録 (はじめて を出すため)
+      makeLog('2026-07-27', 600, { carbs: 120 }, 'soba'),
+      makeLog('2026-07-28', 300, { carbs: 40 }, 'rice'),
+    ];
+    // 目標なし = PFC のカードが枠を取らないようにする
+    const r = computeWeeklyRecap(logs, makeProfile(0), [], undefined, NOW);
+    const fresh = r?.discoveries.find((x) => x.kind === 'newFoods');
+    const src = r?.discoveries.find((x) => x.kind === 'macroSources');
+    expect(fresh && fresh.kind === 'newFoods' && fresh.note?.identityId).toBe('soba');
+    expect(src && src.kind === 'macroSources' && src.note).toBeNull();
+  });
+});
+
+describe('豆知識の話題 (topics)', () => {
+  it('話題を持つノートは、すべて照合済み (alsoSources あり) — 「もと」カードに出るのは照合済みだけ', () => {
+    const tagged = ALL_IDENTITIES.flatMap((i) => (i.nutritionNotes ?? []).filter((n) => n.topics?.length));
+    expect(tagged.length).toBeGreaterThan(0);
+    for (const n of tagged) expect(n.alsoSources?.length ?? 0).toBeGreaterThan(0);
+  });
 });
 
 describe('豆知識データ (nutritionNotes) — 出典必須ルール', () => {

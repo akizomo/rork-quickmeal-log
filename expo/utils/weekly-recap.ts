@@ -98,10 +98,18 @@ const MAX_STREAK_LOOKBACK = 4;
  * weekKey と identityId を混ぜてハッシュするため、食材ごとに別の周期で回る
  * (同じ週に複数食材が揃って1番目のノートを出す、といった偏りを避ける)。
  */
-function pickNutritionNote(allNotes: NutritionNote[], identityId: string, weekKey: string): NutritionNote | null {
+function pickNutritionNote(
+  allNotes: NutritionNote[],
+  identityId: string,
+  weekKey: string,
+  topic?: MacroAxis,
+): NutritionNote | null {
   // 2系統以上の出典で照合できた (alsoSources を持つ) ノートだけを出す。
   // 単一出典のノートは、照合が済むまでコードに残しつつ、ユーザーには見せない (§10.14 追補 2026-09-29)。
-  const notes = allNotes.filter((n) => (n.alsoSources?.length ?? 0) > 0);
+  // topic を指定したときは、その栄養素の話のノートに絞る (「もと」カード用、PRD §6.7.5「各カードの役割」)。
+  const notes = allNotes.filter(
+    (n) => (n.alsoSources?.length ?? 0) > 0 && (!topic || (n.topics ?? []).includes(topic)),
+  );
   if (notes.length === 0) return null;
   const seed = `${weekKey}:${identityId}`;
   let hash = 0;
@@ -175,7 +183,8 @@ export type WeeklyDiscovery =
   | { kind: 'topFood'; item: WeeklyFoodItem; count: number; note: WeeklyFoodFact | null }
   | { kind: 'newFoods'; items: WeeklyFoodItem[]; note: WeeklyFoodFact | null }
   | { kind: 'comebackFoods'; items: (WeeklyFoodItem & { weeksSince: number })[]; note: WeeklyFoodFact | null }
-  | { kind: 'macroSources'; axis: MacroAxis; sources: WeeklyMacroSource[] }
+  // note: 並んだ食材のうち、その栄養素の話 (topics) の豆知識を持つ最初の1件 (無ければ null)。
+  | { kind: 'macroSources'; axis: MacroAxis; sources: WeeklyMacroSource[]; note: WeeklyFoodFact | null }
   | {
       kind: 'macro';
       insight: WeeklyMacroInsight;
@@ -327,7 +336,7 @@ export function computeWeeklyRecap(
   const candidates: ScoredDiscovery[] = [
     ...computeFoodDiscoveries(logs, range, pastWeeks[0]?.range ?? null, weekKey),
   ];
-  const sources = computeMacroSources(logs, range, SOURCE_AXIS_ROTATION[weekIndex % SOURCE_AXIS_ROTATION.length]);
+  const sources = computeMacroSources(logs, range, SOURCE_AXIS_ROTATION[weekIndex % SOURCE_AXIS_ROTATION.length], weekKey);
   if (sources) {
     // 常に出せるので、他に強い発見がある週には譲る (穴埋め役)。
     candidates.push({ discovery: sources, score: 0.5, cost: 1 });
@@ -361,8 +370,19 @@ export function computeWeeklyRecap(
     prevWeekDaysLogged: prevDays > 0 ? prevDays : null,
     baselineAvgKcal,
     kcalVsUsual,
-    discoveries: selectDiscoveries(candidates),
+    discoveries: dedupeNotes(selectDiscoveries(candidates)),
   };
+}
+
+/** 同じ週に同じ文面の豆知識を2度出さない (表示順で先に出たほうを残す)。料理どうしで文面を共有するノートがあるため。 */
+function dedupeNotes(discoveries: WeeklyDiscovery[]): WeeklyDiscovery[] {
+  const seen = new Set<string>();
+  return discoveries.map((d) => {
+    if (!('note' in d) || !d.note) return d;
+    if (seen.has(d.note.note.text)) return { ...d, note: null };
+    seen.add(d.note.note.text);
+    return d;
+  });
 }
 
 export interface ScoredDiscovery {
@@ -503,7 +523,7 @@ function computeFoodDiscoveries(
  * 記録ごとの macro (トッピング込み) を Identity 別に合算する。多い/少ないの評価はしない。
  * 内訳が2件未満 (1品しか記録が無い) なら、内訳と呼べないので null。
  */
-function computeMacroSources(logs: FoodLog[], range: DateRange, axis: MacroAxis): WeeklyDiscovery | null {
+function computeMacroSources(logs: FoodLog[], range: DateRange, axis: MacroAxis, weekKey: string): WeeklyDiscovery | null {
   const startKey = formatDateKey(range.start);
   const endKey = formatDateKey(range.end);
   const byKey = new Map<string, { identityId?: string; label: string; grams: number }>();
@@ -524,7 +544,18 @@ function computeMacroSources(logs: FoodLog[], range: DateRange, axis: MacroAxis)
     .sort((a, b) => b.grams - a.grams || a.label.localeCompare(b.label))
     .slice(0, MAX_SOURCES)
     .map((e): WeeklyMacroSource => ({ identityId: e.identityId, label: e.label, sharePct: Math.round((e.grams / total) * 100) }));
-  return { kind: 'macroSources', axis, sources };
+  // 豆知識は、割合の大きい食材から順に「この栄養素の話」を持つものを探す。
+  // 並んでいない食材の話 (例: 魚が無い週の n-3) はしない。不足を言うことになるため (PRD §6.7.5)。
+  let note: WeeklyFoodFact | null = null;
+  for (const src of sources) {
+    const identity = src.identityId ? getIdentity(src.identityId) : undefined;
+    const picked = identity?.nutritionNotes ? pickNutritionNote(identity.nutritionNotes, identity.id, weekKey, axis) : null;
+    if (identity && picked) {
+      note = { identityId: identity.id, identityLabel: identity.label, note: picked };
+      break;
+    }
+  }
+  return { kind: 'macroSources', axis, sources, note };
 }
 
 function topIdentityIn(logs: FoodLog[], range: DateRange): string | null {

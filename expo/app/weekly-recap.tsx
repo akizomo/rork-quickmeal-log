@@ -384,6 +384,8 @@ function buildCards(recap: WeeklyRecap, styles: Styles, tr: Tr): Card[] {
                   ))}
                 </View>
               </View>
+              {/* その栄養素の中身・取り方の話だけを添える (PRD §6.7.5「各カードの役割」)。 */}
+              {renderNote(t, d.note, tr)}
             </>
           );
         },

@@ -132,30 +132,35 @@ const NOTE_TEMPURA: NutritionNote = {
   text: 'きすの天ぷら100gあたり、衣の天ぷら粉は約13g、調理で増える脂質は約15gです（成分表の調理例）。素材の外側に、衣と揚げ油の分が足されています。',
   source: SRC_SEIBUN_FRY,
   alsoSources: [SRC_FRY_NAWATA],
+  topics: ['fat'],
 };
 
 const NOTE_TONKATSU: NutritionNote = {
   text: '揚げると、脂質の増え方は素材で変わります。成分表の調理例では、とんかつ100gあたり、脂身つきロースで約11g、脂質の少ないヒレで約21g増えています。',
   source: SRC_SEIBUN_FRY,
   alsoSources: [SRC_FRY_NAWATA],
+  topics: ['fat'],
 };
 
 const NOTE_TUNA: NutritionNote = {
   text: 'まぐろは、同じ魚でも部位で脂質が大きく違います。成分表では、天然くろまぐろの赤身が100gあたり1.4g、脂身が27.5gです。',
   source: SRC_TUNA,
   alsoSources: [SRC_TUNA_CUTS],
+  topics: ['fat'],
 };
 
 const NOTE_PASTA: NutritionNote = {
   text: 'パスタは、乾麺とゆでた麺でエネルギーが大きく違います。成分表では、100gあたり乾麺が347kcal・水分11.3g、ゆでた麺が150kcal・水分60.0gです（USDAでも乾麺371kcal、ゆで158kcal）。麺のグラム数は、乾麺かゆでた後かで意味が変わります。',
   source: SRC_PASTA,
   alsoSources: [SRC_USDA],
+  topics: ['carbs'],
 };
 
 const NOTE_CURRY_ROUX: NutritionNote = {
   text: 'カレーのルウは、重さの約3分の1が脂質、約10分の1が食塩相当量です（市販の固形ルウ100gあたり、脂質34.1g・食塩相当量10.6g）。味の濃さは、ルウの量で大きく変わります。',
   source: SRC_SEIBUN_ROUX,
   alsoSources: [SRC_USDA_ROUX],
+  topics: ['fat'],
 };
 
 const NOTE_BALANCE_STUDY: NutritionNote = {
@@ -493,6 +498,7 @@ const BUCKET_JAPANESE_NOODLES: Identity[] = [
         text: 'うどんは、ゆでた麺100gの約75%が水分で、エネルギーは95kcalです。同じゆで麺のそばは130kcalで、たんぱく質もうどん2.6gに対しそば4.8gと差があります。',
         source: SRC_UDON,
         alsoSources: [SRC_SOBA],
+        topics: ['carbs'],
       },
     ],
     defaultMacro: { kcal: 430, protein: 12, fat: 2, carbs: 85 },
@@ -519,6 +525,7 @@ const BUCKET_JAPANESE_NOODLES: Identity[] = [
         text: 'そばは、ゆでた麺100gあたりのたんぱく質が4.8g、食物繊維が2.9gです。同じゆで麺のうどん（2.6g・1.3g）より、どちらも多くなっています。',
         source: SRC_SOBA,
         alsoSources: [SRC_UDON, SRC_USDA],
+        topics: ['protein', 'carbs'],
       },
     ],
     defaultMacro: { kcal: 410, protein: 15, fat: 2.5, carbs: 79 },
@@ -1042,6 +1049,7 @@ const BUCKET_MISC_DISH: Identity[] = [
         text: '揚げ物の脂質は、素材で増え方が変わります。成分表の調理例では、若鶏もも（皮つき）のから揚げは肉の脂が油に溶け出して100gあたり約1g減り、皮なしは約5g増えています。',
         source: SRC_SEIBUN_FRY,
         alsoSources: [SRC_FRY_NAWATA],
+        topics: ['fat'],
       },
     ],
     quickTapDisabled: true, // Attribute 唐揚げ/とんかつ/エビフライ/コロッケ/フライドポテト: kcal 200-500, F 12-30
@@ -1105,6 +1113,7 @@ const BUCKET_MISC_DISH: Identity[] = [
         text: '焼鳥は、串の部位で脂質が大きく違います。鶏の皮は100gあたり約32〜52g（成分表ではもも皮51.6g、USDAでは32.4〜44.2g）、ささみ・むね肉は約1〜3g（成分表のささみ0.8g、USDAのむね肉2.6g）です。',
         source: SRC_CHICKEN_PARTS,
         alsoSources: [SRC_USDA],
+        topics: ['fat'],
       },
     ],
     defaultMacro: { kcal: 350, protein: 32, fat: 16, carbs: 8 }, // 5本=350kcal

@@ -416,7 +416,16 @@ export interface NutritionNote {
    * 照合の記録は docs/NUTRITION_NOTES_SOURCES.md。
    */
   alsoSources?: NutritionNoteSource[];
+  /**
+   * このノートが、その食材の「どの栄養素の中身・取り方」の話か (PRD §6.7.5「各カードの役割」)。
+   * 週次振り返りの「もと」カード (例: 脂質はどの食べものから) は、話題が一致するノートだけを添える。
+   * 脂質なら脂の種類や量の変わり方、たんぱく質なら質や一緒にとれるもの、炭水化物なら食物繊維や水分など。
+   * ビタミン・ミネラルだけの話には付けない (未設定なら「もと」カードには出ない)。
+   */
+  topics?: NutritionNoteTopic[];
 }
+
+export type NutritionNoteTopic = 'protein' | 'fat' | 'carbs';
 
 export interface NutritionNoteSource {
   /** UI に出す短い表記 (例: 「消費者庁 食品表示基準」「Harvard T.H. Chan School of Public Health」)。 */
