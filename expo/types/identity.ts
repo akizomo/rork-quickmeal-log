@@ -426,6 +426,11 @@ export interface NutritionNote {
    * ビタミン・ミネラルだけの話には付けない (未設定なら「もと」カードには出ない)。
    */
   topics?: NutritionNoteTopic[];
+  /**
+   * このノートが特定の種類 (Attribute) だけの話なら、その key (例: 玄米 'brown' / 白米 'white')。
+   * 週次振り返りの置き換えアドバイス (例: 白米→玄米) で、勧める種類と違う話を添えないために使う。
+   */
+  attr?: string;
 }
 
 export type NutritionNoteTopic = 'protein' | 'fat' | 'carbs';

@@ -103,6 +103,33 @@ const SRC_JPHC_FISH: NutritionNoteSource = {
   url: 'https://epi.ncc.go.jp/jphc/outcome/279.html',
 };
 
+const H_CARBS = harvard('炭水化物', 'carbohydrates/');
+const H_OATS = harvard('オーツ麦', 'food-features/oats/');
+
+/** 食物繊維: 食事摂取基準2025の目標量 (成人男性20g以上・女性18g以上)、便のかさを増やす・腸内環境のはたらき。 */
+const SRC_KENNET_FIBER: NutritionNoteSource = {
+  label: '厚生労働省 e-ヘルスネット（食物繊維の必要性と健康）',
+  url: 'https://kennet.mhlw.go.jp/information/information/food/e-05-001.html',
+};
+
+/** WHO 2015: 遊離糖類は総エネルギーの10%未満。果汁・果汁濃縮物の糖は含み、生の果物・野菜の糖は含まない。 */
+const SRC_WHO_SUGARS: NutritionNoteSource = {
+  label: 'WHO 糖類の摂取に関するガイドライン（2015）',
+  url: 'https://www.who.int/news/item/04-03-2015-who-calls-on-countries-to-reduce-sugars-intake-among-adults-and-children',
+};
+
+/** りんご 生 食物繊維: 皮つき 2.4g (FDC 171688) / 皮なし 1.3g (171689)。 */
+const SRC_USDA_APPLE: NutritionNoteSource = {
+  label: '米国農務省 USDA FoodData Central（りんご 皮つき・皮なし）',
+  url: 'https://fdc.nal.usda.gov/food-details/171688/nutrients',
+};
+
+/** オレンジ 生 食物繊維 2.4g (FDC 169097) / オレンジジュース 0.2g (169098)。 */
+const SRC_USDA_ORANGE: NutritionNoteSource = {
+  label: '米国農務省 USDA FoodData Central（オレンジ・オレンジジュース）',
+  url: 'https://fdc.nal.usda.gov/food-details/169098/nutrients',
+};
+
 const H_OMEGA3 = harvard('オメガ3脂肪酸', 'what-should-you-eat/fats-and-cholesterol/types-of-fat/omega-3-fats/');
 const H_FAT_TYPES = harvard('脂質の種類', 'what-should-you-eat/fats-and-cholesterol/types-of-fat/');
 
@@ -146,8 +173,17 @@ const BUCKET_STAPLE: Identity[] = [
         // 炭水化物の量は同じ (成分表のめし100gで炭水化物 玄米34.7g・精白米36.1g)。食物繊維も八訂では差が小さい
         // (玄米1.4g・精白米1.5g) ため、差がはっきりしているマグネシウムとビタミンB1で書く。
         text: '玄米ごはんは、白米と糖質の量はほぼ同じですが、マグネシウムが約7倍、ビタミンB1が約8倍あります。どちらも、体がエネルギーを作るのを助ける栄養素です。',
+        attr: 'brown',
         source: seibun('水稲めし 玄米', '1_01085_7'),
         alsoSources: [seibun('水稲めし 精白米', '1_01088_7'), H_WHOLE_GRAINS, SRC_CAA],
+        topics: ['carbs'],
+      },
+      {
+        // めし 156kcal/100g × 茶わん1杯150g = 234kcal → 2,000kcal の 11.7%
+        attr: 'white',
+        text: 'ごはんの炭水化物は、体の中でブドウ糖になり、体を動かすエネルギーになります。茶わん1杯で、1日2,000kcalの人が必要なエネルギーの1割強です。',
+        source: seibun('水稲めし 精白米', '1_01088_7'),
+        alsoSources: [H_CARBS],
         topics: ['carbs'],
       },
     ],
@@ -236,6 +272,16 @@ const BUCKET_STAPLE: Identity[] = [
     primaryHome: { tab: 'ingredient', bucket: 'staple' },
     quickTapDisabled: true, // Attribute span too wide (食パン 158 → ナン 320, F 2.5 → 11)
     defaultMacro: { kcal: 158, protein: 5.3, fat: 2.5, carbs: 28 },
+    nutritionNotes: [
+      {
+        // 角形食パン 食物繊維 4.2g/100g × 6枚切り1枚60g = 2.5g → 目標量 男性20g・女性18g の 13〜14%
+        // 全粒粉パンは 4.5g/100g で食パンとほぼ同じ (別AIの「約1.4倍」は誤り) のため、比較は書かない
+        text: '食パン（6枚切り）1枚で、1日にとりたい食物繊維の1割ほどがとれます。食物繊維は、便のかさを増やし、お腹の調子を整えるのを助けます。',
+        source: seibun('角形食パン', '1_01026_7'),
+        alsoSources: [SRC_KENNET_FIBER, H_FIBER],
+        topics: ['carbs'],
+      },
+    ],
     amount: {
       unit: 'g',
       default: 60, step: 10,
@@ -308,6 +354,15 @@ const BUCKET_STAPLE: Identity[] = [
     label: 'シリアル',
     primaryHome: { tab: 'ingredient', bucket: 'staple' },
     defaultMacro: { kcal: 134, protein: 3, fat: 1.5, carbs: 30 },
+    nutritionNotes: [
+      {
+        // オートミール 9.4g/100g ÷ コーンフレーク 2.4g/100g = 3.9倍
+        text: 'シリアルは、種類で食物繊維の量が大きく違います。成分表では、オートミールはコーンフレークの約4倍。食物繊維は、お腹の調子を整えるのを助けます。',
+        source: seibun('オートミール / コーンフレーク', '1_01004_7'),
+        alsoSources: [H_OATS, SRC_KENNET_FIBER],
+        topics: ['carbs'],
+      },
+    ],
     amount: { unit: 'g', default: 40, step: 10, chips: [{ label: '30', value: 30 }, { label: '40', value: 40 }, { label: '50', value: 50 }] },
     attributes: [
       { key: 'plain', label: 'プレーン', isDefault: true },
@@ -529,6 +584,13 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
     // base = タラ・カレイ・ヒラメ等の白身魚。マグロ赤身は attribute で分岐。
     defaultMacro: { kcal: 75, protein: 16, fat: 0.7, carbs: 0 },
     nutritionNotes: [
+      {
+        // まだら 生 脂質0.2g / 輸入牛ばら 32.9g (和牛ばら 50.0g) → 1/164 以下
+        text: 'たらは、たんぱく質がとれて、脂がほとんどない魚です。同じ重さの牛ばら肉と比べると、脂は100分の1以下です（成分表）。',
+        source: seibun('まだら 生', '10_10205_7'),
+        alsoSources: [H_PROTEIN],
+        topics: ['protein'],
+      },
       { text: '赤身の魚は、泳ぎ続けるために酸素をたくわえる色素たんぱく質を多く持ち、そのぶん赤血球をつくるのに必要な鉄も多く含みます。', source: SRC_SEIBUN },
     ],
     amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '1切', value: 80 }, { label: '1食', value: 100 }, { label: '2切', value: 160 }] },
@@ -568,6 +630,15 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
     primaryHome: { tab: 'ingredient', bucket: 'lean_protein' },
     // v1.2: default 80g→100g 化 (modal-set 1食量を chicken_lean/red_meat と揃える)
     defaultMacro: { kcal: 88, protein: 17.5, fat: 0.8, carbs: 1 },
+    nutritionNotes: [
+      {
+        // するめいか 生 脂質0.8g / 若どり むね 皮なし 生 1.9g → 0.42
+        text: 'いかは、たんぱく質がとれて、脂がとても少ない食べものです。するめいかの脂は、皮をとった鶏むね肉の半分以下です（成分表）。',
+        source: seibun('するめいか 生', '10_10345_7'),
+        alsoSources: [H_PROTEIN],
+        topics: ['protein'],
+      },
+    ],
     amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '80', value: 80 }, { label: '1食', value: 100 }, { label: '150', value: 150 }] },
     styles: [
       { key: 'raw', label: '生・刺身', isDefault: true },
@@ -619,6 +690,14 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
     // 旧 default 135/21/5 (牛もも基準) → 新 130/22/4 (牛豚もも・ヒレ平均)。
     defaultMacro: { kcal: 130, protein: 22, fat: 4, carbs: 0 },
     nutritionNotes: [
+      {
+        // 和牛もも赤肉 たんぱく質21.3g・脂質10.7g / 和牛ばら 11.0g・50.0g → 1.9倍・0.21
+        // 輸入牛もも赤肉 21.2g・4.3g / 輸入牛ばら 14.4g・32.9g → 1.5倍・0.13
+        text: '牛のもも肉（赤身）は、ばら肉と比べて、たんぱく質が1.5〜2倍、脂は4分の1以下です（成分表）。たんぱく質は、筋肉や骨、皮膚など、体のほとんどをつくる材料です。',
+        source: seibun('和牛 もも 赤肉 生 / ばら 脂身つき 生', '11_11021_7'),
+        alsoSources: [H_PROTEIN, H_FAT_TYPES],
+        topics: ['protein'],
+      },
       {
         text: '赤身肉に多い鉄は、赤血球を作るのに必要な栄養素です。赤血球は、体じゅうに酸素を運んでいます。',
         source: SRC_CAA,
@@ -1086,6 +1165,13 @@ const BUCKET_DAIRY_SOY: Identity[] = [
     primaryHome: { tab: 'ingredient', bucket: 'dairy_soy' },
     defaultMacro: { kcal: 62, protein: 3.6, fat: 3, carbs: 4.9 },
     nutritionNotes: [
+      {
+        // ヨーグルト 全脂無糖 カルシウム120mg/100g / 普通牛乳 110mg/100g
+        text: 'ヨーグルトは、たんぱく質といっしょに、骨や歯を作るカルシウムがとれます。同じ重さの牛乳と同じくらいのカルシウムを含みます（成分表）。',
+        source: seibun('ヨーグルト 全脂無糖', '13_13025_7'),
+        alsoSources: [SRC_CAA, H_CALCIUM],
+        topics: ['protein'],
+      },
       { text: 'ヨーグルトは、乳酸菌が乳を発酵させ乳酸に変えることで固まる食品です。', source: SRC_SEIBUN },
     ],
     // 飲むヨーグルトは Attribute=drink で吸収するため chip 削除 (単位齟齬解消)
@@ -1210,6 +1296,14 @@ const BUCKET_DAIRY_SOY: Identity[] = [
     primaryHome: { tab: 'ingredient', bucket: 'dairy_soy' },
     defaultMacro: { kcal: 80, protein: 6.6, fat: 4, carbs: 5 },
     nutritionNotes: [
+      {
+        // 糸引き納豆 食物繊維9.5g/100g × 1パック約40g (アプリの既定: たんぱく質6.6g ÷ 16.5g/100g) = 3.8g
+        // → 目標量 男性20g・女性18g の 19〜21%
+        text: '納豆は、たんぱく質といっしょに食物繊維もとれる食べものです。1パックで、1日にとりたい食物繊維の2割ほど。食物繊維は、お腹の調子を整えるのを助けます。',
+        source: seibun('糸引き納豆', '4_04046_7'),
+        alsoSources: [SRC_KENNET_FIBER, H_FIBER],
+        topics: ['protein'],
+      },
       {
         text: '納豆は、発酵するあいだにビタミンKが増える食品で、ゆでた大豆の80倍以上あります。ビタミンKは、骨を作るのを助ける栄養素です。',
         source: seibun('糸引き納豆', '4_04046_7'),
@@ -1544,6 +1638,13 @@ const BUCKET_FRUIT: Identity[] = [
     defaultMacro: { kcal: 135, protein: 0.5, fat: 0.5, carbs: 35 },
     nutritionNotes: [
       { text: 'りんごや梨の食物繊維は、便通に関わる成分です。皮の近くに多く含まれるため、皮ごと食べるかどうかで量が変わります。', source: SRC_SEIBUN },
+      {
+        // 成分表: りんご 皮つき 1.9g / 皮なし 1.4g = 1.36倍。USDA: 2.4g / 1.3g = 1.85倍
+        text: 'りんごを皮ごと食べると、皮をむいたときより食物繊維が1.4〜1.8倍ほど多くなります（日本と米国のデータ）。食物繊維は、お腹の調子を整えるのを助けます。',
+        source: seibun('りんご 皮つき / 皮なし', '7_07176_7'),
+        alsoSources: [SRC_USDA_APPLE, SRC_KENNET_FIBER],
+        topics: ['carbs'],
+      },
     ],
     amount: { unit: 'piece', default: 1 },
     asAddon: {
@@ -1904,6 +2005,21 @@ const BUCKET_SNACK_DRINK: Identity[] = [
     label: 'ジュース',
     primaryHome: { tab: 'ingredient', bucket: 'snack_drink' },
     defaultMacro: { kcal: 140, protein: 0, fat: 0, carbs: 35 },
+    nutritionNotes: [
+      {
+        // 成分表: オレンジ ネーブル 生 1.0g / 濃縮還元ジュース 0.2g = 5分の1。USDA: 2.4g / 0.2g = 12分の1
+        text: 'オレンジを果汁100%のジュースにすると、食物繊維はほとんど残りません。果物のままと比べて5分の1ほど、米国のデータでは10分の1以下です。',
+        source: seibun('オレンジ 濃縮還元ジュース / ネーブル 生', '7_07043_7'),
+        alsoSources: [SRC_USDA_ORANGE, H_CARBS],
+        topics: ['carbs'],
+      },
+      {
+        text: 'WHOは、砂糖などの糖分を1日のカロリーの1割未満にすることをすすめています。果汁100%のジュースの糖分もここに入りますが、生の果物の糖分は入りません。',
+        source: SRC_WHO_SUGARS,
+        alsoSources: [H_CARBS],
+        topics: ['carbs'],
+      },
+    ],
     referenceDescription: 'コーラ・サイダー・果汁ジュース・スポーツドリンクなど、サラッと甘い飲み物',
     amount: { unit: 'ml', default: 350, step: 10, chips: [{ label: 'コップ1杯', value: 200 }, { label: '缶1本', value: 350 }, { label: '1本(500)', value: 500 }] },
     searchTags: ['ジュース', 'コーラ', 'サイダー', 'スポドリ', '炭酸', '果汁'],

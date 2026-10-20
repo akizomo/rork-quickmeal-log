@@ -263,26 +263,26 @@ describe('computeWeeklyRecap — macroBoost.note (観点A は観点Cに従属)',
   it('最有力候補に nutritionNote が無くても、候補内の次点に有れば拾う (候補は3件までまとめて「アドバイス」なので)', () => {
     const logs = [
       makeLog('2026-07-27', 2000, { protein: 60, fat: 50, carbs: 200 }), // protein less
-      makeLog('2026-06-01', 300, {}, 'seafood_lean'), // たんぱく質の話のノート無し・最頻出
-      makeLog('2026-06-02', 300, {}, 'seafood_lean'),
-      makeLog('2026-06-03', 300, {}, 'seafood_lean'),
+      makeLog('2026-06-01', 300, {}, 'salad_chicken'), // たんぱく質の話のノート無し・最頻出
+      makeLog('2026-06-02', 300, {}, 'salad_chicken'),
+      makeLog('2026-06-03', 300, {}, 'salad_chicken'),
       makeLog('2026-06-04', 300, {}, 'egg'), // nutritionNotes 有り・2番手
     ];
     const result = computeWeeklyRecap(logs, makeProfile(2000), [], undefined, NOW);
-    expect(result?.macroBoost?.candidates[0].identityId).toBe('seafood_lean');
+    expect(result?.macroBoost?.candidates[0].identityId).toBe('salad_chicken');
     expect(result?.macroBoost?.note?.identityId).toBe('egg');
   });
 
   it('候補の誰も nutritionNote を持たなければ note は null', () => {
-    // たんぱく質の話 (topics) のノートが未整備で、勧めてよい高たんぱく食材: salad_chicken / seafood_lean / white_fish / red_meat (鉄の話のみ)
+    // たんぱく質の話 (topics) のノートが未整備で、勧めてよい高たんぱく食材: salad_chicken / canned_lean_fish / fatty_fish・canned_fatty_fish (脂質の話のみ)
     // (そこにたんぱく質の話を足したらここも差し替えること)。履歴側で4件埋めてカタログ補完を発生させない
     const logs = [
       makeLog('2026-07-27', 2000, { protein: 60, fat: 50, carbs: 200 }), // protein less
       makeLog('2026-06-01', 300, {}, 'salad_chicken'),
       makeLog('2026-06-02', 300, {}, 'salad_chicken'),
-      makeLog('2026-06-03', 300, {}, 'seafood_lean'),
-      makeLog('2026-06-04', 300, {}, 'white_fish'),
-      makeLog('2026-06-05', 300, {}, 'red_meat'), // 履歴に高密度が4件あれば、カタログ補完なしで履歴だけから3件出る
+      makeLog('2026-06-03', 300, {}, 'fatty_fish'),
+      makeLog('2026-06-04', 300, {}, 'canned_fatty_fish'),
+      makeLog('2026-06-05', 300, {}, 'canned_lean_fish'), // 履歴に高密度が4件あれば、カタログ補完なしで履歴だけから3件出る
     ];
     const result = computeWeeklyRecap(logs, makeProfile(2000), [], undefined, NOW);
     expect(result?.macroBoost?.candidates).toHaveLength(3);
@@ -454,7 +454,7 @@ describe('computeWeeklyRecap — 多めの週の置き換え (SWAP_RULES)', () =
     const b = boostOf([makeLog('2026-07-27', 2000, carbsMore, 'rice')]); // 種類の指定なし = 既定の白米
     expect(b).toMatchObject({ axis: 'carbs', direction: 'more' });
     expect(b?.candidates).toEqual([
-      { identityId: 'rice', label: 'ごはん（玄米）', fromHistory: true, replaces: 'ごはん（白米）', axisGrams: 56 },
+      { identityId: 'rice', label: 'ごはん（玄米）', fromHistory: true, replaces: 'ごはん（白米）', axisGrams: 56, attrKey: 'brown' },
     ]);
   });
 
@@ -472,6 +472,17 @@ describe('computeWeeklyRecap — 多めの週の置き換え (SWAP_RULES)', () =
     expect(b?.note?.identityId).toBe('rice');
     expect(b?.note?.note.text).toContain('玄米');
     expect(b?.note?.note.alsoSources?.length).toBeGreaterThan(0);
+  });
+
+  it('置き換え先と違う種類の豆知識は添えない (玄米を勧めるときに、白米の話を出さない)。週が変わっても同じ', () => {
+    for (let w = 0; w < 12; w++) {
+      const now = new Date(NOW.getTime() + w * 7 * 86_400_000);
+      const day = formatDateKey(new Date(now.getTime() - 7 * 86_400_000));
+      const r = computeWeeklyRecap([makeLog(day, 2000, carbsMore, 'rice')], makeProfile(2000), [], undefined, now);
+      const m = r?.discoveries.find((d) => d.kind === 'macro');
+      const note = m && m.kind === 'macro' ? m.boost?.note : r?.macroBoost?.note;
+      expect(note?.note.attr).toBe('brown');
+    }
   });
 
   it('置き換え表の元・先の Identity と種類 (attr) がすべてデータに実在する', () => {

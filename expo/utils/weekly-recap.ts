@@ -178,6 +178,7 @@ function computeSwapCandidates(
         fromHistory: true,
         replaces: fromAttr ? `${fromIdentity.label}（${fromAttr.label}）` : fromIdentity.label,
         axisGrams: Math.round(toIdentity.defaultMacro[axis] * factor * 10) / 10,
+        attrKey: rule.toAttr,
       },
     });
   }
@@ -239,12 +240,16 @@ function pickNutritionNote(
   identityId: string,
   weekKey: string,
   topic?: MacroAxis,
+  attrKey?: string,
 ): NutritionNote | null {
   // 2系統以上の出典で照合できた (alsoSources を持つ) ノートだけを出す。
   // 単一出典のノートは、照合が済むまでコードに残しつつ、ユーザーには見せない (§10.14 追補 2026-09-29)。
   // topic を指定したときは、その栄養素の話のノートに絞る (「もと」カード用、PRD §6.7.5「各カードの役割」)。
+  // attrKey を指定したときは、別の種類の話 (例: 玄米を勧めるときの白米の話) を除く。
   const notes = allNotes.filter(
-    (n) => (n.alsoSources?.length ?? 0) > 0 && (!topic || (n.topics ?? []).includes(topic)),
+    (n) => (n.alsoSources?.length ?? 0) > 0
+      && (!topic || (n.topics ?? []).includes(topic))
+      && (!attrKey || !n.attr || n.attr === attrKey),
   );
   if (notes.length === 0) return null;
   const seed = `${weekKey}:${identityId}`;
@@ -273,6 +278,8 @@ export interface WeeklyMacroBoostCandidate {
   replaces?: string;
   /** 置き換え候補のとき、候補の1食あたりの対象栄養素のグラム数 (種類による補正込み)。 */
   axisGrams?: number;
+  /** 置き換え候補の種類 (例: 玄米 = 'brown')。豆知識を種類に合わせて選ぶのに使う。 */
+  attrKey?: string;
 }
 
 export interface WeeklyMacroBoost {
@@ -796,11 +803,11 @@ function computeMacroBoost(
   const candidates = computeSwapCandidates(weekLogs, axis, weekIndex);
   if (candidates.length === 0) return null;
 
-  // 豆知識は、候補 (置き換え後) のうちその栄養素の話を持つ最初の1件。
+  // 豆知識は、候補 (置き換え後) のうちその栄養素の話を持つ最初の1件。種類が違う話 (玄米を勧めるときの白米の話) は除く。
   let note: WeeklyFoodFact | null = null;
   for (const c of candidates) {
     const identity = getIdentity(c.identityId);
-    const picked = identity?.nutritionNotes ? pickNutritionNote(identity.nutritionNotes, identity.id, weekKey, axis) : null;
+    const picked = identity?.nutritionNotes ? pickNutritionNote(identity.nutritionNotes, identity.id, weekKey, axis, c.attrKey) : null;
     if (identity && picked) {
       note = { identityId: identity.id, identityLabel: identity.label, note: picked };
       break;
