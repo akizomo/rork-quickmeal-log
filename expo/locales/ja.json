@@ -443,7 +443,12 @@
     "switchToG": "gに切り替え",
     "switchToCount": "個数に切り替え",
     "usualAmount": "いつもの",
-    "amountRefPrefix": "目安"
+    "amountRefPrefix": "目安",
+    "roughHint": {
+      "line1": "20〜30kcalは、ごはんひと口くらいの差。",
+      "line2": "ざっくりでも、記録を続けるほうがずっと大切です。",
+      "closeA11y": "ヒントを閉じる"
+    }
   },
   "logEditor": {
     "addIngredient": "食材を追加",

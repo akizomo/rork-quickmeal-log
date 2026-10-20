@@ -443,7 +443,12 @@
     "switchToG": "Switch to g",
     "switchToCount": "Switch to count",
     "usualAmount": "Usual",
-    "amountRefPrefix": "Reference"
+    "amountRefPrefix": "Reference",
+    "roughHint": {
+      "line1": "A 20–30 kcal gap is about one bite of rice.",
+      "line2": "Keeping a rough log going matters far more.",
+      "closeA11y": "Close tip"
+    }
   },
   "logEditor": {
     "addIngredient": "Add ingredient",

@@ -197,6 +197,11 @@ export interface AppSettings {
    */
   healthConnectSeenAtISO?: string | null;
   /**
+   * PRD §6.5.2: 詳細シートの「記録時の安心ヒント」(20〜30kcalの差は気にしなくていい) を
+   * 表示した時刻。`null` の間は次に詳細シートを開いたときに一度だけ出す。
+   */
+  roughHintSeenAtISO?: string | null;
+  /**
    * v1.7+: 最後に Health 同期が成功した時刻 (ISO)。
    * foreground 復帰時の自動再同期スロットル (5分) 判定に使う。
    * アンマウントで消えないよう、フック state ではなくここに永続化する。

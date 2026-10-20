@@ -159,6 +159,7 @@ function migrateSettings(raw: Partial<AppSettings> | undefined): AppSettings {
     onboardingCompletedAtISO: raw?.onboardingCompletedAtISO ?? null,
     paywallSeenAtISO: raw?.paywallSeenAtISO ?? null,
     healthConnectSeenAtISO: raw?.healthConnectSeenAtISO ?? null,
+    roughHintSeenAtISO: raw?.roughHintSeenAtISO ?? null,
     lastHealthSyncAtISO: raw?.lastHealthSyncAtISO ?? null,
     quickLogHistory: castHistoryMap(raw?.quickLogHistory),
     tabUsageCounts: raw?.tabUsageCounts ?? { ingredient: 0, dish: 0, frequent: 0 },
@@ -1027,6 +1028,12 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     persist(profile, logs, next, weights, bodyFatEntries);
   }, [bodyFatEntries, logs, persist, profile, settings, weights]);
 
+  const markRoughHintSeen = useCallback(() => {
+    const next: AppSettings = { ...settings, roughHintSeenAtISO: new Date().toISOString() };
+    setSettings(next);
+    persist(profile, logs, next, weights, bodyFatEntries);
+  }, [bodyFatEntries, logs, persist, profile, settings, weights]);
+
   const startTrial = useCallback(() => {
     const startedAtISO = new Date().toISOString();
     const next: AppSettings = {
@@ -1823,6 +1830,7 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     markIntroSeen,
     markPaywallSeen,
     markHealthConnectSeen,
+    markRoughHintSeen,
     completePurchase,
     startTrial,
     restorePurchase,

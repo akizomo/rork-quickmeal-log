@@ -22,6 +22,8 @@ export { SheetScreen, formSheetOptions } from './SheetScreen';
 export type { SheetScreenProps, SheetScreenAction } from './SheetScreen';
 export { Dialog } from './Dialog';
 export type { DialogProps, DialogAction } from './Dialog';
+export { Callout } from './Callout';
+export type { CalloutProps, CalloutArrowAlign } from './Callout';
 export { MacroChip } from './MacroChip';
 export type { MacroChipProps, MacroChipKind, MacroChipSize } from './MacroChip';
 export { MacroCard } from './MacroCard';

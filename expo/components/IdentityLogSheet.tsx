@@ -13,6 +13,7 @@ import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 
 import {
   BottomSheet,
+  Callout,
   Caption,
   Chip,
   Icon,
@@ -79,6 +80,10 @@ function withUsualChip(
   return idx === -1 ? [...chips, usualChip] : [...chips.slice(0, idx), usualChip, ...chips.slice(idx)];
 }
 
+// 記録時の安心ヒント (PRD §6.5.2) を出すまでの待ち。シートの入場 spring が落ち着いてから
+// 出す (同時に動くと、どこを見ればいいか分からなくなる)。
+const ROUGH_HINT_DELAY_MS = 700;
+
 function defaultAttributeKey(identity: Identity | undefined): string | undefined {
   if (!identity?.attributes?.length) return undefined;
   return identity.attributes.find((a) => a.isDefault)?.key ?? identity.attributes[0].key;
@@ -143,6 +148,8 @@ export function IdentityLogSheet() {
     updateLivePreview,
     deleteLog,
     logs,
+    settings,
+    markRoughHintSeen,
   } = useAppState();
 
   const visible = identityLogSheet.visible;
@@ -512,6 +519,27 @@ export function IdentityLogSheet() {
 
   const canSave = !!resolved && resolved.totalMacro.kcal > 0;
 
+  // 記録時の安心ヒント (PRD §6.5.2)。詳細シートで初めて kcal が出たときに生涯1回だけ。
+  // 表示した時点で表示済みにする (フラグが立っても、このシートを開いている間は出し続ける)。
+  const [roughHintVisible, setRoughHintVisible] = useState(false);
+  const roughHintEligible =
+    visible && !identityLogSheet.editingLogId && !settings.roughHintSeenAtISO && canSave;
+  // markRoughHintSeen は settings/logs が変わるたびに作り直されるので、待ちタイマーを
+  // リセットさせないよう ref で読む。
+  const markRoughHintSeenRef = useRef(markRoughHintSeen);
+  markRoughHintSeenRef.current = markRoughHintSeen;
+  useEffect(() => {
+    if (!roughHintEligible) return;
+    const timer = setTimeout(() => {
+      setRoughHintVisible(true);
+      markRoughHintSeenRef.current();
+    }, ROUGH_HINT_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [roughHintEligible]);
+  useEffect(() => {
+    if (!visible) setRoughHintVisible(false);
+  }, [visible]);
+
   // 種類連動のトッピング既定リスト。振替が発生している場合は振替先 Identity の
   // トッピング (例: 唐揚げ=レモン/マヨ) を表示する。選択中の Add-on は (既定外でも)
   // 常に表示し続け、編集再開時や種類切替時に選択済みチップが消えないようにする。
@@ -547,6 +575,16 @@ export function IdentityLogSheet() {
         disabled: !canSave,
       }}
       footerLeft={<FooterPreview macro={resolved?.totalMacro ?? null} />}
+      footerAccessory={
+        <Callout
+          visible={roughHintVisible}
+          title={tr('identityLog.roughHint.line1')}
+          message={tr('identityLog.roughHint.line2')}
+          onDismiss={() => setRoughHintVisible(false)}
+          dismissAccessibilityLabel={tr('identityLog.roughHint.closeA11y')}
+          testID="ils-rough-hint"
+        />
+      }
       headerRight={
         <View style={{ flexDirection: 'row', gap: t.spacing['3'], alignItems: 'center' }}>
           {editingLog ? (
