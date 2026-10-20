@@ -20,6 +20,10 @@ type Props = {
   onDismiss?: () => void;
 };
 
+type MacroKey = 'protein' | 'fat' | 'carbs';
+const MACRO_KEYS: MacroKey[] = ['protein', 'fat', 'carbs'];
+const KCAL_PER_GRAM: Record<MacroKey, number> = { protein: 4, fat: 9, carbs: 4 };
+
 export function DirectInputSheet({ visible, onClose, onDismiss }: Props) {
   const t = useTheme();
   const tr = useT();
@@ -31,8 +35,15 @@ export function DirectInputSheet({ visible, onClose, onDismiss }: Props) {
   const [fatStr, setFatStr] = useState('');
   const [carbsStr, setCarbsStr] = useState('');
   const [kcalIsAuto, setKcalIsAuto] = useState(false);
+  const setMacro = useCallback((key: MacroKey, v: string) => {
+    if (key === 'protein') setProteinStr(v);
+    else if (key === 'fat') setFatStr(v);
+    else setCarbsStr(v);
+  }, []);
   // true のとき PFC 変化によるオート上書きを抑制する
   const kcalManuallyEdited = useRef(false);
+  // kcal 手入力 + PFC のうち2つが埋まっているとき、残り1つを逆算して埋めた欄
+  const [autoMacro, setAutoMacro] = useState<MacroKey | null>(null);
 
   // PFC から kcal を自動計算 (P×4 + F×9 + C×4)
   useEffect(() => {
@@ -50,11 +61,57 @@ export function DirectInputSheet({ visible, onClose, onDismiss }: Props) {
     }
   }, [proteinStr, fatStr, carbsStr]);
 
+  // kcal を手入力し、P/F/C のうち1つだけ空なら、kcal から残りを逆算して埋める。
+  // 自動で埋めた欄は、他の欄・kcal の変更に追従して再計算する (ユーザーが触ったら手入力扱い)。
+  useEffect(() => {
+    const kcalValue = parseFloat(kcalStr) || 0;
+    if (!kcalManuallyEdited.current || kcalValue <= 0) {
+      if (autoMacro) {
+        setAutoMacro(null);
+        setMacro(autoMacro, '');
+      }
+      return;
+    }
+    const values: Record<MacroKey, string> = { protein: proteinStr, fat: fatStr, carbs: carbsStr };
+    const empties = MACRO_KEYS.filter((k) => k === autoMacro || values[k].trim() === '');
+    if (empties.length !== 1) {
+      if (autoMacro) {
+        setAutoMacro(null);
+        setMacro(autoMacro, '');
+      }
+      return;
+    }
+    const target = empties[0];
+    const others = MACRO_KEYS.filter((k) => k !== target).reduce(
+      (sum, k) => sum + (parseFloat(values[k]) || 0) * KCAL_PER_GRAM[k],
+      0,
+    );
+    const grams = (kcalValue - others) / KCAL_PER_GRAM[target];
+    if (grams < 0) {
+      if (autoMacro) {
+        setAutoMacro(null);
+        setMacro(autoMacro, '');
+      }
+      return;
+    }
+    const next = String(Math.round(grams * 10) / 10);
+    if (values[target] !== next) setMacro(target, next);
+    if (autoMacro !== target) setAutoMacro(target);
+  }, [kcalStr, proteinStr, fatStr, carbsStr, autoMacro, setMacro]);
+
   const handleKcalChange = useCallback((v: string) => {
     setKcalStr(v);
     kcalManuallyEdited.current = v.length > 0;
     if (v.length === 0) setKcalIsAuto(false);
   }, []);
+
+  const handleMacroChange = useCallback(
+    (key: MacroKey, v: string) => {
+      if (autoMacro === key) setAutoMacro(null);
+      setMacro(key, v);
+    },
+    [autoMacro, setMacro],
+  );
 
   const reset = useCallback(() => {
     setName('');
@@ -63,6 +120,7 @@ export function DirectInputSheet({ visible, onClose, onDismiss }: Props) {
     setFatStr('');
     setCarbsStr('');
     setKcalIsAuto(false);
+    setAutoMacro(null);
     kcalManuallyEdited.current = false;
   }, []);
 
@@ -165,21 +223,21 @@ export function DirectInputSheet({ visible, onClose, onDismiss }: Props) {
           <View style={[styles.macroRow, { gap: t.spacing['3'] }]}>
             <MacroField
               value={proteinStr}
-              onChangeText={setProteinStr}
+              onChangeText={(v) => handleMacroChange('protein', v)}
               suffix="P"
               placeholder="0"
               accessibilityLabel={tr('directInput.proteinA11y')}
             />
             <MacroField
               value={fatStr}
-              onChangeText={setFatStr}
+              onChangeText={(v) => handleMacroChange('fat', v)}
               suffix="F"
               placeholder="0"
               accessibilityLabel={tr('directInput.fatA11y')}
             />
             <MacroField
               value={carbsStr}
-              onChangeText={setCarbsStr}
+              onChangeText={(v) => handleMacroChange('carbs', v)}
               suffix="C"
               placeholder="0"
               accessibilityLabel={tr('directInput.carbsA11y')}
