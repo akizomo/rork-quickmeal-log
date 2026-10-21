@@ -12,9 +12,8 @@
  * 0件ヒット時: カテゴリヒントチップ (§F5a) を最大4件表示。
  */
 
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useIsFocused, useRouter } from 'expo-router';
 import type { SearchBarCommands } from 'react-native-screens';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Keyboard,
@@ -33,7 +32,6 @@ import {
   useTheme,
 } from '@/design-system';
 import { buildRegistry, getBucketDef, getIdentity, presetAddonInputs } from '@/constants/identity';
-import { UndoToast } from '@/components/UndoToast';
 import { useAppState } from '@/providers/app-state-provider';
 import { useLocale } from '@/hooks/useLocale';
 import { useT } from '@/hooks/useT';
@@ -97,7 +95,7 @@ export function SearchScreen() {
   const router = useRouter();
   const t = useTheme();
   const tr = useT();
-  const { openIdentityLogSheet, recordSearchMissEvent, bumpDiagnostic, settings } = useAppState();
+  const { openIdentityLogSheet, recordSearchMissEvent, bumpDiagnostic, settings, undoState } = useAppState();
   const { foodRegion: locale } = useLocale();
 
   const [query, setQuery] = useState('');
@@ -129,18 +127,25 @@ export function SearchScreen() {
 
   // iOS は headerSearchBarOptions.autoFocus が効かない (Android 専用) ので、ページ表示後に focus() で検索欄を選択状態にする
   const searchBarRef = useRef<SearchBarCommands>(null);
-  const insets = useSafeAreaInsets();
-  // 検索中はキーボードが出ている (記録シートから戻ってもそのまま)。トーストを画面下に固定すると
-  // キーボードの裏に隠れて記録できたか分からないので、キーボードの高さぶん持ち上げる
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  // 検索から記録したらホームまで戻す。検索ページに留まると、記録できたのか分からない
+  // (トーストは画面下でキーボードの裏に隠れる)。ホームなら、合計カロリーの更新と取り消しトーストで結果が見える。
+  // 保存は記録シート / 料理入力 / 手入力のどれでも undoState の更新として現れる。保存した瞬間はまだシートが
+  // 上に乗っているので、シートが閉じて検索ページがフォーカスを取り戻してから戻る (二重に pop しない)。
+  const isFocused = useIsFocused();
+  const savedLogIdRef = useRef<string | null>(undoState?.kind === 'add' ? undoState.log.id : null);
+  const goHomeAfterFocusRef = useRef(false);
   useEffect(() => {
-    const show = Keyboard.addListener('keyboardWillShow', (e) => setKeyboardHeight(e.endCoordinates.height));
-    const hide = Keyboard.addListener('keyboardWillHide', () => setKeyboardHeight(0));
-    return () => {
-      show.remove();
-      hide.remove();
-    };
-  }, []);
+    if (undoState?.kind !== 'add' || undoState.log.id === savedLogIdRef.current) return;
+    savedLogIdRef.current = undoState.log.id;
+    if (isFocused) router.dismissTo('/');
+    else goHomeAfterFocusRef.current = true;
+  }, [undoState, isFocused, router]);
+  useEffect(() => {
+    if (isFocused && goHomeAfterFocusRef.current) {
+      goHomeAfterFocusRef.current = false;
+      router.dismissTo('/');
+    }
+  }, [isFocused, router]);
   useEffect(() => {
     const id = setTimeout(() => searchBarRef.current?.focus(), 800); // 画面遷移 (約500ms) が終わってからでないと focus が効かない
     return () => clearTimeout(id);
@@ -354,9 +359,6 @@ export function SearchScreen() {
           </Pressable>
         </View>
       </ScrollView>
-      {/* 記録シートを閉じて戻ってきたとき、ここで記録の取り消しトーストを出す (ホームのトーストは裏で見えない)。
-          下の検索バー (iOS 26 は画面下) にかぶらない高さに置く */}
-      <UndoToast bottom={Math.max(keyboardHeight, insets.bottom) + 72} />
     </>
   );
 }
