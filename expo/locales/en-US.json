@@ -370,6 +370,8 @@
   },
   "directInput": {
     "title": "Enter numbers",
+    "editTitle": "Edit entry",
+    "fixedNameNote": "Saved with the numbers you enter. The name stays as is.",
     "record": "Log",
     "sections": {
       "name": "Name (optional)",

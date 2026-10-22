@@ -7,22 +7,19 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AppState } from 'react-native';
 
 import { defaultBodyFatEntries, defaultProfile, defaultSettings, defaultWeightEntries } from '@/constants/nutrition-data';
-import { getDishTopCategory } from '@/constants/dish-master';
-import { getQuickLogCategory, getQuickLogSubcategory } from '@/constants/quick-log-master';
 import type { CustomerInfo } from 'react-native-purchases';
 
-import { AppSettings, BodyFatEntry, DailyActivitySummary, DishDraft, DishQuickEntryPayload, ExerciseLog, FoodLog, IngredientDraft, LogMode, SubscriptionStatus, UserProfile, WeightEntry } from '@/types/nutrition';
+import { AppSettings, BodyFatEntry, DailyActivitySummary, ExerciseLog, FoodLog, LogMode, SubscriptionStatus, UserProfile, WeightEntry } from '@/types/nutrition';
 import type { DiagnosticsData } from '@/types/diagnostics';
 import { ENTITLEMENT_ID } from '@/constants/iap';
 import { addCustomerInfoListener, getCustomerInfo, restorePurchases as iapRestore } from '@/utils/iap';
 import { usualAmountForIdentity } from '@/utils/usual-amount';
-import { IngredientQuickDraft, QuickLogHistoryMap, QuickLogSelection, QuickLogTabKey } from '@/types/quick-log';
-import { buildDishMacro, clampPortion, computeIngredient, createFoodLogFromDish, createFoodLogFromDishQuickEntry, createFoodLogFromIngredient, formatDateKey, generateId, getDefaultModeByTime, getMealSlot, getQuickCategories, getSubType, sumToday } from '@/utils/nutrition';
+import { QuickLogHistoryMap, QuickLogSelection, QuickLogTabKey } from '@/types/quick-log';
+import { formatDateKey, generateId, getDefaultModeByTime, getMealSlot, sumToday } from '@/utils/nutrition';
 import { adjustedTargetKcal, calcBaselineActiveKcal, calcExerciseGrossKcal, calcExerciseNetKcal, EXERCISE_TYPES, stepsToActiveKcal } from '@/utils/goals';
 import { computeWeeklyBalance, isWeeklyBalanceWorthProposing } from '@/utils/weekly-balance';
 import { getWeekRange, isSameDay } from '@/utils/history';
-import { castHistoryMap, deriveDefaultTab, rankFrequentSelections, recordDishSelection, recordSelection, recordTabUsage, selectionFromDraft } from '@/utils/quick-log-history';
-import { computeQuickLogMacro } from '@/utils/quick-log-macro';
+import { castHistoryMap, deriveDefaultTab, rankFrequentSelections, recordSelection, recordTabUsage } from '@/utils/quick-log-history';
 import {
   bumpDiagnosticCounter,
   castDiagnostics,
@@ -34,10 +31,10 @@ import { beginSpan } from '@/utils/perf';
 import { widgetUpdateKcal, widgetDrainPendingQueue, widgetUpdateCategories, widgetUpdateUiLanguage } from '@/utils/widget-bridge';
 import { resolveLog, ResolveInput, ResolveResult } from '@/utils/identity-resolver';
 import { logDraftToFoodLog } from '@/utils/identity-log-bridge';
-import { getBucketDef, getIdentity } from '@/constants/identity';
+import { buildRegistry, getBucketDef, getIdentity } from '@/constants/identity';
+import { resolveWidgetEntryIdentityId } from '@/utils/widget-entry';
 import { lookupLegacyIdentity } from '@/constants/identity/migration-map';
 import type { BucketKey } from '@/types/identity';
-void getSubType;
 
 export const MAX_PAST_LOGGING_DAYS = 7;
 
@@ -200,8 +197,6 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
   // When logging on a past day (within MAX_PAST_LOGGING_DAYS), this is set to that day.
   // null = log to today (default).
   const [loggingDate, setLoggingDate] = useState<Date | null>(null);
-  const [editorLogId, setEditorLogId] = useState<string | null>(null);
-  const [dishQuickEntryKey, setDishQuickEntryKey] = useState<string | null>(null);
   const [identityLogSheet, setIdentityLogSheet] = useState<{
     visible: boolean;
     bucketKey?: BucketKey;
@@ -221,7 +216,6 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
   }>({ visible: false });
   /** Called when IdentityLogSheet is dismissed via × / backdrop (not on save). */
   const identityLogSheetOnDismissRef = useRef<(() => void) | null>(null);
-  const [pendingLogIds, setPendingLogIds] = useState<string[]>([]);
   const [feedback, setFeedback] = useState<FeedbackState | null>(null);
   const [livePreview, setLivePreview] = useState<LivePreviewState | null>(null);
   const [undoState, setUndoState] = useState<UndoState | null>(null);
@@ -450,21 +444,6 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     [bodyFatEntries, logs, persist, profile, settings, weights]
   );
 
-  const pushPendingLog = useCallback(
-    async (log: FoodLog) => {
-      if (settings.hapticsEnabled) {
-        Haptics.selectionAsync().catch((error) => {
-          console.log('[app-state] Haptics error', error);
-        });
-      }
-      const nextLogs = [log, ...logs];
-      setLogs(nextLogs);
-      setPendingLogIds((prev) => [...prev, log.id]);
-      persist(profile, nextLogs, settings, weights, bodyFatEntries);
-    },
-    [bodyFatEntries, logs, persist, profile, settings, weights]
-  );
-
   // Rewrite a freshly-created log so it lands on `loggingDate` (a past day) when
   // the user is viewing a past page. Keeps the time-of-day from "now" so the meal
   // slot inference still feels natural.
@@ -483,90 +462,6 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       };
     },
     [loggingDate]
-  );
-
-  const quickLog = useCallback(
-    async (categoryKey: string, modeOverride?: 'ingredient' | 'dish') => {
-      // modeOverride: ⭐️タブから item.mode を明示的に渡す。
-      // 省略時は selectedMode を使用（通常の食材/料理タブからの呼び出し）。
-      const effectiveMode = modeOverride ?? selectedMode;
-
-      if (effectiveMode === 'dish') {
-        const topCat = getDishTopCategory(categoryKey);
-        if (topCat && topCat.quickEntry.kind !== 'instant_save') {
-          console.log('[app-state] Opening dish quick entry sheet', categoryKey);
-          setDishQuickEntryKey(categoryKey);
-          return null;
-        }
-      }
-
-      const baseLog = effectiveMode === 'ingredient'
-        ? createFoodLogFromIngredient(categoryKey)
-        : createFoodLogFromDish(categoryKey);
-
-      if (!baseLog) {
-        console.log('[app-state] Failed to create quick log', { categoryKey, effectiveMode });
-        return null;
-      }
-
-      const log = applyLoggingDate(baseLog);
-      await pushLog(log);
-      return log;
-    },
-    [applyLoggingDate, pushLog, selectedMode]
-  );
-
-  const submitQuickIngredient = useCallback(
-    async (draft: IngredientQuickDraft) => {
-      const category = getQuickLogCategory(draft.categoryKey);
-      const sub = getQuickLogSubcategory(draft.categoryKey, draft.subcategoryKey);
-      const computation = computeQuickLogMacro(draft);
-      if (!category || !sub || !computation) {
-        console.log('[app-state] Failed to compute quick ingredient', draft);
-        return null;
-      }
-
-      const now = new Date();
-      const baseLog: FoodLog = {
-        id: generateId('log'),
-        date: formatDateKey(now),
-        timestamp: now.toISOString(),
-        mealSlot: getMealSlot(now),
-        mode: 'ingredient',
-        categoryKey: category.key,
-        categoryLabel: category.label,
-        subTypeKey: sub.key,
-        subTypeLabel: sub.label,
-        baseMacro: computation.baseMacro,
-        macro: computation.total,
-        attrKey: draft.attrKey,
-        partKey: draft.partKey,
-        methodKey: draft.methodKey,
-        amountValue: draft.amountValue,
-        amountUnit: draft.amountUnit,
-        amountLabel: draft.amountLabel,
-      };
-      const log = applyLoggingDate(baseLog);
-      await pushLog(log);
-
-      // Record selection in history (recent + frequency)
-      const sel = selectionFromDraft(draft);
-      if (sel) {
-        const currentHistory = (settings.quickLogHistory ?? {}) as QuickLogHistoryMap;
-        const nextHistory = recordSelection(currentHistory, sel);
-        const nextSettings: AppSettings = { ...settings, quickLogHistory: nextHistory };
-        setSettings(nextSettings);
-        // Persist with the freshly-pushed log already in `logs`. pushLog has
-        // updated the in-memory state, but we re-persist with the new settings
-        // here. Read the latest logs through the closure used by pushLog.
-        // Note: pushLog persists itself; this second persist captures the
-        // updated history map.
-        persist(profile, [log, ...logs], nextSettings, weights, bodyFatEntries);
-      }
-
-      return log;
-    },
-    [applyLoggingDate, bodyFatEntries, logs, persist, profile, pushLog, settings, weights]
   );
 
   // ----- Identity-first IA (Phase 2+) -----
@@ -723,103 +618,6 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     [logs, submitIdentityLog]
   );
 
-  const submitDishQuickEntry = useCallback(
-    async (payload: DishQuickEntryPayload) => {
-      const baseLog = createFoodLogFromDishQuickEntry(payload);
-      if (!baseLog) {
-        console.log('[app-state] Failed to create dish quick entry');
-        return null;
-      }
-      const log = applyLoggingDate(baseLog);
-      await pushLog(log);
-      setDishQuickEntryKey(null);
-
-      // ①-a dish 履歴記録（長押し確定時）
-      // subcategoryKey: 実際のサブカテゴリキー (例: 'gyudon', 'ramen_light')
-      // amountLabel: サブカテゴリラベル + 量 (例: '牛丼 · 並') → ⭐️ グリッドの副テキスト
-      if (payload.topCategoryKey) {
-        const subcategoryKey = payload.subcategoryKey ?? 'default';
-        const parts = [payload.subcategoryLabel, payload.portionPrimaryLabel].filter(Boolean);
-        const amountLabel = parts.length > 0 ? parts.join(' · ') : '1食'; // i18n-ignore: legacy quick-log system, JA-only path
-        const currentHistory = (settings.quickLogHistory ?? {}) as QuickLogHistoryMap;
-        const nextHistory = recordDishSelection(
-          currentHistory, payload.topCategoryKey, subcategoryKey, amountLabel,
-        );
-        setSettings(prev => ({ ...prev, quickLogHistory: nextHistory }));
-      }
-
-      return log;
-    },
-    [applyLoggingDate, pushLog, settings, setSettings]
-  );
-
-  const openDraftEditor = useCallback(
-    async (categoryKey: string) => {
-      if (selectedMode === 'dish') {
-        const topCat = getDishTopCategory(categoryKey);
-        if (topCat && topCat.quickEntry.kind !== 'instant_save') {
-          setDishQuickEntryKey(categoryKey);
-          return null;
-        }
-      }
-
-      const baseLog = selectedMode === 'ingredient'
-        ? createFoodLogFromIngredient(categoryKey)
-        : createFoodLogFromDish(categoryKey);
-
-      if (!baseLog) return null;
-      const log = applyLoggingDate(baseLog);
-      await pushPendingLog(log);
-      setEditorLogId(log.id);
-
-      // ①-a dish 履歴記録（短押し instant_save 時）
-      // baseLog.subTypeKey: 実際のサブカテゴリキー (例: 'gyudon')
-      // baseLog.subTypeLabel: 表示ラベル (例: '牛丼') → buildRankedItem で dish master から再解決
-      // baseLog.portionLabel: 量ラベル (例: '1人前')
-      if (selectedMode === 'dish' && baseLog) {
-        const subcategoryKey = baseLog.subTypeKey ?? 'default';
-        const amountLabel = baseLog.portionLabel ?? '1食'; // i18n-ignore: legacy quick-log system, JA-only path
-        const currentHistory = (settings.quickLogHistory ?? {}) as QuickLogHistoryMap;
-        const nextHistory = recordDishSelection(
-          currentHistory, categoryKey, subcategoryKey, amountLabel,
-        );
-        setSettings(prev => ({ ...prev, quickLogHistory: nextHistory }));
-      }
-
-      return log;
-    },
-    [applyLoggingDate, pushPendingLog, selectedMode, settings, setSettings]
-  );
-
-  const commitPendingLog = useCallback(
-    (id: string) => {
-      setPendingLogIds((prev) => {
-        if (!prev.includes(id)) return prev;
-        const target = logs.find((item) => item.id === id);
-        if (target) {
-          triggerFeedback(target);
-          triggerUndo(target, 'add');
-        }
-        return prev.filter((p) => p !== id);
-      });
-    },
-    [logs, triggerFeedback, triggerUndo]
-  );
-
-  const cancelPendingLog = useCallback(
-    (id: string) => {
-      setPendingLogIds((prev) => {
-        if (!prev.includes(id)) return prev;
-        const nextLogs = logs.filter((item) => item.id !== id);
-        console.log('[app-state] Canceling pending log', id);
-        setLogs(nextLogs);
-        persist(profile, nextLogs, settings, weights, bodyFatEntries);
-        return prev.filter((p) => p !== id);
-      });
-    },
-    [bodyFatEntries, logs, persist, profile, settings, weights]
-  );
-
   const undoLastLog = useCallback(() => {
     if (!undoState) {
       return;
@@ -847,87 +645,6 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       persist(profile, nextLogs, settings, weights, bodyFatEntries);
     },
     [bodyFatEntries, logs, persist, profile, settings, triggerUndo, weights]
-  );
-
-  const updateIngredientLog = useCallback(
-    (id: string, draft: IngredientDraft) => {
-      const category = getQuickCategories('ingredient').find((item) => item.key === draft.categoryKey);
-      if (!category) {
-        return;
-      }
-
-      const computation = computeIngredient(draft);
-      const nextLogs = logs.map((item) => {
-        if (item.id !== id) return item;
-        return {
-          ...item,
-          categoryKey: draft.categoryKey,
-          categoryLabel: category.label,
-          subTypeKey: draft.subTypeKey,
-          subTypeLabel: computation.subtype?.label,
-          portionValue: draft.portionValue,
-          portionLabel: computation.portionLabel,
-          amountMultiplier: draft.portionValue,
-          baseMacro: computation.baseMacro,
-          toppings: computation.toppings,
-          toppingMacroDelta: computation.toppingMacroDelta,
-          macro: computation.total,
-        } satisfies FoodLog;
-      });
-
-      console.log('[app-state] Updating ingredient log', { id, draft });
-      setLogs(nextLogs);
-      persist(profile, nextLogs, settings, weights, bodyFatEntries);
-    },
-    [bodyFatEntries, logs, persist, profile, settings, weights]
-  );
-
-  const updateDishLog = useCallback(
-    (id: string, draft: DishDraft) => {
-      const category = getQuickCategories('dish').find((item) => item.key === draft.categoryKey);
-      if (!category) {
-        return;
-      }
-
-      const subType = getSubType('dish', draft.categoryKey, draft.subTypeKey);
-      const nextLogs = logs.map((item) => {
-        if (item.id !== id) return item;
-        return {
-          ...item,
-          categoryKey: draft.categoryKey,
-          categoryLabel: category.label,
-          subTypeKey: draft.subTypeKey,
-          subTypeLabel: subType?.label,
-          additions: draft.additions,
-          size: draft.size,
-          macro: buildDishMacro(draft),
-        } satisfies FoodLog;
-      });
-
-      console.log('[app-state] Updating dish log', { id, draft });
-      setLogs(nextLogs);
-      persist(profile, nextLogs, settings, weights, bodyFatEntries);
-    },
-    [bodyFatEntries, logs, persist, profile, settings, weights]
-  );
-
-  const adjustLogAmount = useCallback(
-    (id: string, direction: 'increase' | 'decrease') => {
-      const target = logs.find((item) => item.id === id);
-      if (!target || target.mode !== 'ingredient') {
-        return;
-      }
-
-      const current = target.portionValue ?? target.amountMultiplier ?? 1;
-      const nextAmount = clampPortion(direction === 'increase' ? current + 0.5 : current - 0.5);
-      updateIngredientLog(id, {
-        categoryKey: target.categoryKey,
-        subTypeKey: target.subTypeKey ?? '',
-        portionValue: nextAmount,
-        toppingKeys: (target.toppings ?? []).map((t) => t.id),
-      });
-    },
-    [logs, updateIngredientLog]
   );
 
   const updateProfileValues = useCallback(
@@ -1531,9 +1248,11 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       return prev === next ? prev : next;
     });
   }, []);
-  // quickLog / quickLogIdentity の最新参照を ref で保持して AppState ハンドラに渡す（stale closure 防止）
-  const quickLogRef = useRef(quickLog);
-  useEffect(() => { quickLogRef.current = quickLog; }, [quickLog]);
+  // quickLogIdentity の最新参照を ref で保持して AppState ハンドラに渡す（stale closure 防止）
+  const foodRegionRef = useRef({ foodRegion: settings.foodRegion, uiLanguage: settings.uiLanguage });
+  useEffect(() => {
+    foodRegionRef.current = { foodRegion: settings.foodRegion, uiLanguage: settings.uiLanguage };
+  }, [settings.foodRegion, settings.uiLanguage]);
   const quickLogIdentityRef = useRef(quickLogIdentity);
   useEffect(() => { quickLogIdentityRef.current = quickLogIdentity; }, [quickLogIdentity]);
   const bumpDiagnosticRef = useRef(bumpDiagnostic);
@@ -1544,14 +1263,13 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       if (s !== 'active') return;
       refreshToday();
       // ウィジェットから積まれたログを drain して既存フローに流す。
-      // id が Identity ID なら quickLogIdentity、カテゴリキーなら quickLog にルーティング。
+      // 記録は必ず Identity 経由 (旧形式ログを作らない)。バケットキーはバケット先頭の Identity。
       widgetDrainPendingQueue().then((entries) => {
+        const { foodRegion, uiLanguage } = foodRegionRef.current;
+        const { byBucket } = buildRegistry(foodRegion ?? 'ja', uiLanguage);
         entries.forEach((entry) => {
-          if (getIdentity(entry.categoryId)) {
-            void quickLogIdentityRef.current(entry.categoryId, 'frequent');
-          } else {
-            void quickLogRef.current(entry.categoryId, 'ingredient');
-          }
+          const identityId = resolveWidgetEntryIdentityId(entry.categoryId, byBucket);
+          if (identityId) void quickLogIdentityRef.current(identityId, 'frequent');
         });
         // 診断: ウィジェット経由の記録件数。drain 単位で1回だけ加算する
         // (件数ぶん個別に呼ぶと closure が stale になり取りこぼす)。
@@ -1721,8 +1439,6 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     () => dailyActivities.find((d) => d.date === todayKey) ?? null,
     [dailyActivities, todayKey]
   );
-  const editorLog = useMemo(() => logs.find((item) => item.id === editorLogId) ?? null, [editorLogId, logs]);
-  const editorIsPending = useMemo(() => (editorLogId ? pendingLogIds.includes(editorLogId) : false), [editorLogId, pendingLogIds]);
 
   // 今週の調整を始める。日曜が終わると weekKey が変わり自動で切れる。
   const startWeeklyBalance = useCallback(() => {
@@ -1779,7 +1495,6 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     weights,
     bodyFatEntries,
     selectedMode,
-    editorLog,
     feedback,
     livePreview,
     updateLivePreview,
@@ -1789,26 +1504,13 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     setSelectedMode,
     loggingDate,
     setLoggingDate,
-    setEditorLogId,
-    dishQuickEntryKey,
-    setDishQuickEntryKey,
-    submitDishQuickEntry,
-    submitQuickIngredient,
     identityLogSheet,
     openIdentityLogSheet,
     closeIdentityLogSheet,
     submitIdentityLog,
     quickLogIdentity,
-    quickLog,
-    openDraftEditor,
-    commitPendingLog,
-    cancelPendingLog,
-    editorIsPending,
     undoLastLog,
     deleteLog,
-    adjustLogAmount,
-    updateIngredientLog,
-    updateDishLog,
     updateProfileValues,
     updateSettingsValues,
     // KPI計装 Layer 1 (docs/ROADMAP.md §3.0)
@@ -1839,5 +1541,6 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     resetOnboarding,
     noop,
     pushLog,
+    replaceLog,
   };
 });

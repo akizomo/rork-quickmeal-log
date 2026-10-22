@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { getIdentity } from '@/constants/identity';
+import { DirectInputSheet } from '@/components/DirectInputSheet';
 import { MealLogCard, useTheme } from '@/design-system';
 import { useT } from '@/hooks/useT';
 import { spring } from '@/design-system/tokens/primitives/motion';
@@ -21,6 +21,7 @@ import { useAppState } from '@/providers/app-state-provider';
 import { FoodLog } from '@/types/nutrition';
 import { formatShortDay, isSameDay, logsForDate, sumForDate } from '@/utils/history';
 import { getLogDisplayInfo } from '@/utils/log-display';
+import { resolveLogEditRoute } from '@/utils/log-edit-route';
 import { formatDateKey } from '@/utils/nutrition';
 
 type SnapStage = 'peek' | 'half' | 'full';
@@ -42,23 +43,17 @@ function formatTime(timestamp: string): string {
   return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
 }
 
-function LogListItem({ log }: { log: FoodLog }) {
-  const { deleteLog, setEditorLogId, openIdentityLogSheet, settings } = useAppState();
+function LogListItem({ log, onEditNumeric }: { log: FoodLog; onEditNumeric: (log: FoodLog) => void }) {
+  const { deleteLog, openIdentityLogSheet, settings } = useAppState();
   const display = getLogDisplayInfo(log, settings.uiLanguage);
   const handlePress = () => {
-    // New IA log → open IdentityLogSheet in edit mode (preload from log)
-    if (log.identityId) {
-      const id = getIdentity(log.identityId);
-      if (id) {
-        openIdentityLogSheet(id.primaryHome.bucket, {
-          identityId: log.originIdentityId ?? log.identityId,
-          editingLogId: log.id,
-        });
-        return;
-      }
+    // 編集の入口は resolveLogEditRoute が必ず 1 つに決める (utils/log-edit-route.ts)。
+    const route = resolveLogEditRoute(log);
+    if (route.kind === 'identity') {
+      openIdentityLogSheet(route.bucket, { identityId: route.identityId, editingLogId: log.id });
+      return;
     }
-    // Legacy log fallback → old editor
-    setEditorLogId(log.id);
+    onEditNumeric(log);
   };
   return (
     <MealLogCard onPress={handlePress} testID={`log-item-${log.id}`}>
@@ -100,6 +95,15 @@ export const DayLogBottomSheet = memo(
   const { logs, todayLogs, todayMacro, settings } = useAppState();
   const { height: screenHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
+
+  // 数値で編集するシートは 1 つだけ持つ。閉じるアニメーション中も内容を保つため、
+  // 対象の記録は閉じても保持し、開閉は open で管理する。
+  const [numericEdit, setNumericEdit] = useState<{ log: FoodLog; open: boolean } | null>(null);
+  const handleEditNumeric = useCallback((log: FoodLog) => setNumericEdit({ log, open: true }), []);
+  const handleCloseNumericEdit = useCallback(
+    () => setNumericEdit((prev) => (prev ? { ...prev, open: false } : prev)),
+    [],
+  );
 
   const today = useMemo(() => new Date(), []);
   const isToday = isSameDay(viewedDate, today);
@@ -292,10 +296,15 @@ export const DayLogBottomSheet = memo(
               <Text style={[styles.emptyText, { color: t.colors.content.secondary }]}>{tr('dayLog.emptyText')}</Text>
             </View>
           ) : (
-            dayLogs.map((log) => <LogListItem key={log.id} log={log} />)
+            dayLogs.map((log) => <LogListItem key={log.id} log={log} onEditNumeric={handleEditNumeric} />)
           )}
         </ScrollView>
       </Animated.View>
+      <DirectInputSheet
+        visible={numericEdit?.open ?? false}
+        editingLog={numericEdit?.log ?? null}
+        onClose={handleCloseNumericEdit}
+      />
     </>
   );
 }));

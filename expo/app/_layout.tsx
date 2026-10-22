@@ -7,7 +7,6 @@ import * as SplashScreen from 'expo-splash-screen';
 import React, { useEffect } from 'react';
 import { LogBox, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { DishQuickEntrySheet } from '@/components/DishQuickEntrySheet';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { IdentityLogSheet } from '@/components/IdentityLogSheet';
 import { ThemeProvider, darkTheme, formSheetOptions, lightTheme, useTheme } from '@/design-system';
@@ -145,7 +144,6 @@ export default function RootLayout() {
               <StatusBar style="auto" />
               <HealthSyncProvider>
                 <RootLayoutNav />
-                <DishQuickEntrySheet />
                 <IdentityLogSheet />
               </HealthSyncProvider>
             </ThemedApp>

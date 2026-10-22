@@ -8,7 +8,6 @@ import { useT } from '@/hooks/useT';
 import { DayLogBottomSheet, type DayLogBottomSheetRef } from '@/components/DayLogBottomSheet';
 import { FloatingFeedback } from '@/components/FloatingFeedback';
 import { HomeDatePager, type HomeDatePagerRef } from '@/components/HomeDatePager';
-import { LogEditorSheet } from '@/components/LogEditorSheet';
 import { UndoToast } from '@/components/UndoToast';
 import { Icon, IconButton, Label, useTheme, type Theme } from '@/design-system';
 import { spring } from '@/design-system/tokens/primitives/motion';
@@ -274,7 +273,6 @@ export function HomeScreen() {
       <DayLogBottomSheet ref={dayLogSheetRef} viewedDate={viewedDate} />
       <FloatingFeedback />
       <UndoToast />
-      <LogEditorSheet />
     </View>
   );
 }

@@ -127,6 +127,12 @@ export interface FoodLog {
    * "I tapped 肉魚(低脂)" shows as "肉魚(低脂)" not "鶏むね・ささみ").
    */
   wasShortTap?: boolean;
+  /**
+   * True when the user fixed this log's kcal/PFC by hand (数値で編集).
+   * Such a log must never be re-derived from an Identity (IdentityLogSheet would
+   * rebuild the numbers from default amounts) — see utils/log-edit-route.ts.
+   */
+  macroManual?: boolean;
 }
 
 /**

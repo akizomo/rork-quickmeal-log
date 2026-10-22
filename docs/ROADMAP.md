@@ -222,6 +222,21 @@ Next 期以降は **D7 / D30 リテンション** および **週次アクティ
   - **`soup` に種類 `egg` (たまごスープ・中華スープ)** を追加 (Identity は増やさない)。かきたま汁・中華スープも同じ種類へ
   - 9ボタンの「卵」からも探せるよう、`egg` の調理に「スープ」を追加 (選ぶとたまごスープへ振替)。検索は「卵」「たまご」でも層1にたまごスープが出る
   - 1杯 50/3.3/2.6/3.2 (卵1/2個+片栗粉、成分表(八訂)からの換算、照合未実施)
+- **ナゲット・フライドチキン・ステーキの部位・直接入力の改善 (2026-10-22, IA spec v1.11 / SEARCH_SPEC §4.2)** — 「ナゲット、フライドチキンが検索で出ない」「ステーキで肉の種類を選びたい」「直接数値入力が気づかれない」「直接入力で記録した後の調整シートがおかしい」「ソーセージが2枚はおかしい」が起点
+  - **`fried_main` に種類 `nugget` (チキンナゲット・5個) / `fried_chicken` (フライドチキン・2ピース)** を追加。以前は唐揚げに寄せて着地させていた (ベンチマークの正解も唐揚げで許容していた) のを、専用の種類へ厳密化。個数単位で上書き (Identity は増やさない)
+  - **`meat_solo` のステーキを4種に分割** — サーロイン等 (既存 key `steak`) / ヒレ・赤身 / トンテキ・ポークソテー / チキンステーキ。脂質がサーロインとヒレで2倍以上ちがうため (§1.5 の分割軸)。値は成分表の生肉150g + 焼き油・たれの目安で、**照合未実施**
+  - **ソーセージ・ウインナーの単位を「本」に** — `bacon_sausage` の量が Identity 共通の「枚」だった。種類別の量上書きで対応 (既定2本は従来どおりなので計算値は不変)
+  - **🐛 記録カードの量表示が種類別の単位を無視していた** — `log-display.ts` / `identity-log-bridge.ts` が `identity.amount` を直接見ていたため、唐揚げ (g) が「150 個」のように出ていた。`getEffectiveAmountSpec` 経由に修正
+  - **🐛 直接入力の記録をタップすると旧エディタが開いていた** — Identity を持たないため `LogEditorSheet` (旧カテゴリ + 倍率スライダー) に落ち、カテゴリが「—」、倍率を触ると旧データで再計算されて**入力した数値が壊れていた**。`DirectInputSheet` に編集モードを足し、そちらで開くよう変更
+  - **直接入力の入口を目立たせる** — 末尾の小さなリンクのみだったため、結果が多いと画面外に押し出されていた。層1 (確実な一致) が無いときは「数値で入力する」をボタンで出す (SEARCH_SPEC §4.2 の「0件時 CTA」が未実装だった分を、層1なし全体に広げて実装)
+- **旧エディタ経路の撤去 — 記録をタップしたとき、必ず開く先があり数値を壊さない (2026-10-22)** — 上の「直接入力だけ `LogEditorSheet` から `DirectInputSheet` へ回す」暫定対応を一般化し、**旧エディタそのものを無くした**。「症状ごとに直す」のをやめ、型 (= Identity から選択状態を復元できない記録) として直す方針 (feedback: fix the class not the symptom)
+  - **調査 (到達可能 / コードのみ)**: 旧エディタに落ちうる記録は3種。**(a) 直接入力** (`categoryKey: 'direct_input'`)、**(b) 旧形式ログ** (Identity 導入前の `quickLog` / 長押しシート / 料理クイック入力で保存。`portionValue` / `toppings` / `additions` / `size` / `partKey` / `methodKey` などを持つ)、**(c) 辞書から消えた Identity を指す記録**。さらに**隠れた同型**があった: 起動時 backfill で `identityId` が付いた旧形式ログは `DayLogBottomSheet` の判定 (`identityId` があれば IdentityLogSheet) を通り、**既定の量で再計算されて保存値と違う kcal を表示・上書き保存**していた (旧エディタを経由しないだけで壊れ方は同じ)
+  - **到達可能だった旧形式ログの作成経路が1本残っていた**: Android ウィジェットの既定ボタン (アプリ同期前・履歴に Identity の無い項目) は ID にバケットキー (`staple` 等) を送り、`app-state-provider` の drain が `quickLog` (旧カテゴリ記録) へ流していた。ウィジェットだけ旧形式ログを作り続けるので、**Identity 経由に統一** (`utils/widget-entry.ts`: バケットキー → バケット先頭の Identity。ホームの9ボタン1タップと同じ規則。解決不能な ID は記録しない)。コードのみで到達不能だったもの: `openDraftEditor` / `submitQuickIngredient` / `adjustLogAmount` (呼び出し元なし)、`submitDishQuickEntry` と `DishQuickEntrySheet` (`quickLog` の dish 分岐経由のみ、ウィジェットは ingredient 固定)
+  - **方針は「数値で編集」(DirectInputSheet 編集モード)。旧ログの Identity 移行はしない**。理由: 移行マップ (`migration-map.ts`) は identityId を付ける (表示・集計用) だけで、旧マスタの macro と Identity の macro は別物 (例: 旧 `rice` ×2 の保存値と Identity の既定量の値は一致しない)、かつ旧ログから量 (`amountValue`) は復元できない。移行して再計算すると保存値が変わる。**当初案との差分**: 指示は「Identity に移行できるものは移行」も選択肢だったが、移行可能性を調べた結果、保存値を守れる移行ルールが存在しないため (i) に統一した。`identityId` は残すので記録カードの表示・集計・「いつもの量」には従来どおり使われる
+  - **ルーティングを純粋関数に切り出した** (`utils/log-edit-route.ts` `resolveLogEditRoute`): `identity` (IdentityLogSheet) になるのは **IdentityLogSheet が自分で保存した記録だけ** (旧形式専用フィールドが無く、`identityId` / origin が辞書に実在し、`macroManual` が無い)。それ以外は全部 `numeric`。迷ったら numeric に倒す (数値は必ず残る)。`FoodLog.macroManual` を新設し、数値で直した記録は以後ずっと numeric に固定 (Identity 記録を数値で直した後に開き直して再計算で戻る事故を防ぐ)。数値編集では名前を変えない記録 (直接入力以外) は名前を読み取り専用で表示
+  - **不変条件テスト** (`utils/log-edit-route.test.ts` / `widget-entry.test.ts`): 全 Identity で記録→identity に解決され入口が実在 / 移行マップ全エントリの backfill 済み旧形式ログ・旧カテゴリ全種が numeric / 辞書から消えた Identity は numeric / 数値編集後も numeric かつ macro が入力値のまま / ウィジェット既定9ボタンが Identity に解決
+  - **削除**: `LogEditorSheet.tsx`、`DishQuickEntrySheet.tsx`、`app-state-provider` の `editorLog` / `setEditorLogId` / `editorIsPending` / `updateIngredientLog` / `updateDishLog` / `adjustLogAmount` / `pushPendingLog` / `commitPendingLog` / `cancelPendingLog` / `openDraftEditor` / `quickLog` / `submitQuickIngredient` / `submitDishQuickEntry` / `dishQuickEntryKey`。**残した死蔵コード (§7.1 に追記)**: `utils/nutrition.ts` の旧ドラフト計算 (`createFoodLogFrom*` / `computeIngredient` / `buildDishMacro` / `draftFromLog`)、`utils/quick-log-macro.ts`、`constants/dish-master.ts`、`constants/quick-log-master.ts`、`quick-log-history.ts` の旧ドラフト関連。`utils/nutrition.ts` の旧ドラフト関数はテストの旧形式ログ fixture に使っており、`quick-log-history` は ⭐️履歴の型と絡むため、別作業として判断する
+  - **⚠️ 未確認**: Web プレビュー (JS レイヤーのみ) で、直接入力 / 旧形式 (Identity あり・なし) / Identity 記録の4種を開き、保存値が動かないことまで確認。**ネイティブ (iOS/Android 実機) では未確認**。ウィジェット経由の記録は Android 実機でのみ検証可能で未確認。数値編集後に macroManual が付くため、既存ユーザーの旧形式ログを数値で直した後は Identity 辞書の更新が反映されない (意図どおり)
 
 > **⚠️ 上記はいずれも実ユーザーで未検証。** 実装と実機動作は確認済だが、「⭐️が使われているか」「ウィジェットが設置されたか」を示すデータは存在しない (下記 KPI 未計装のため)。
 
@@ -512,6 +527,7 @@ Next 期以降は **D7 / D30 リテンション** および **週次アクティ
 | ファイル | 状態 | 判断 |
 |---|---|---|
 | `expo/app/barcode-log.tsx` (12KB) + `expo/utils/open-food-facts.ts` | アプリ内から参照ゼロ。ルーティング導線なし | **未判断** — 精度検証して再開 or 削除 |
+| 旧ドラフト計算: `expo/utils/nutrition.ts` の `createFoodLogFrom*` / `computeIngredient` / `buildDishMacro` / `draftFromLog`、`utils/quick-log-macro.ts`、`constants/dish-master.ts`、`constants/quick-log-master.ts`、`utils/quick-log-history.ts` の旧ドラフト系 | 旧エディタ・旧クイック記録の撤去 (2026-10-22) で**呼び出し元がなくなった** (画面・provider からの参照ゼロ)。一部はテストの旧形式ログ fixture と ⭐️履歴の型が使用中 | **未判断** — 旧形式ログを新規に作る経路は無いが、既存ユーザーの旧形式ログの表示は `log-display.ts` の legacy フォールバックが担う。fixture と履歴型を切り離してから削除 |
 | ~~`expo/components/IdentitySearchBar.tsx`~~ + ~~`searchIdentities()`~~ | — | **✅ 削除済 (2026-08-03)**。`SearchSheet` + `searchIdentitiesFuzzy()` に置換済で参照ゼロだった。PRD §13.1 P0 / SEARCH_SPEC §F1・§10 の「温存」記述も同時に解消 |
 
 ---

@@ -370,6 +370,8 @@
   },
   "directInput": {
     "title": "数値で入力",
+    "editTitle": "記録を編集",
+    "fixedNameNote": "入力した数値のまま保存します。名前は変わりません。",
     "record": "記録する",
     "sections": {
       "name": "名前（任意）",
