@@ -83,6 +83,8 @@ export const JP_ANCHORS: UnitAnchor[] = [
   { key: 'chicken_lean/no_skin', kcal: [95, 125] },
   { key: 'chicken_thigh/with_skin', kcal: [180, 250] },
   { key: 'beef_pork/beef', kcal: [200, 260] },
+  { key: 'beef_pork/minced', kcal: [190, 260], note: '豚ひき 209 / 牛ひき 251' },
+  { key: 'chicken_thigh/minced', kcal: [150, 200], note: '鶏ひき 171' },
   { key: 'beef_pork_fatty/bara', kcal: [330, 420] },
   { key: 'fatty_fish/salmon', kcal: [170, 270] },
   { key: 'milk/plain', kcal: [55, 75] },

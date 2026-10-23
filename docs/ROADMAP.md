@@ -263,6 +263,10 @@ Next 期以降は **D7 / D30 リテンション** および **週次アクティ
   - **削除**: `LogEditorSheet.tsx`、`DishQuickEntrySheet.tsx`、`app-state-provider` の `editorLog` / `setEditorLogId` / `editorIsPending` / `updateIngredientLog` / `updateDishLog` / `adjustLogAmount` / `pushPendingLog` / `commitPendingLog` / `cancelPendingLog` / `openDraftEditor` / `quickLog` / `submitQuickIngredient` / `submitDishQuickEntry` / `dishQuickEntryKey`。**残した死蔵コード (§7.1 に追記)**: `utils/nutrition.ts` の旧ドラフト計算 (`createFoodLogFrom*` / `computeIngredient` / `buildDishMacro` / `draftFromLog`)、`utils/quick-log-macro.ts`、`constants/dish-master.ts`、`constants/quick-log-master.ts`、`quick-log-history.ts` の旧ドラフト関連。`utils/nutrition.ts` の旧ドラフト関数はテストの旧形式ログ fixture に使っており、`quick-log-history` は ⭐️履歴の型と絡むため、別作業として判断する
   - **⚠️ 未確認**: Web プレビュー (JS レイヤーのみ) で、直接入力 / 旧形式 (Identity あり・なし) / Identity 記録の4種を開き、保存値が動かないことまで確認。**ネイティブ (iOS/Android 実機) では未確認**。ウィジェット経由の記録は Android 実機でのみ検証可能で未確認。数値編集後に macroManual が付くため、既存ユーザーの旧形式ログを数値で直した後は Identity 辞書の更新が反映されない (意図どおり)
 
+- **ひき肉の追加 (2026-10-23, IA spec v1.12)** — 「ひき肉がない」が起点。検索は別名で「牛・豚 / 牛（ロース）」に着地し、9ボタンからは選べず、記録にひき肉の名前が残らなかった (「豚ひき肉」も牛に着地)
+  - **`beef_pork` に種類「ひき肉」** (豚ひき・牛ひき・合いびき、225kcal/100g)、**`chicken_thigh` に種類「鶏ひき肉」** (171kcal/100g)。いずれも成分表(八訂)の食品番号と照合済み
+  - **⚠️ 同じ型の残り (未着手)**: 別名表 (`search-aliases.ts`) の280語のうち272語は、記録が別の名前 (寄せ先の Identity / 種類の名前) で残る。多くは同義語で問題ないが、「いくら→鮭」「ししゃも→鮭」「うずら卵→卵」「ラム→牛」のように別の食品として残るものが混ざる。仕分けは未実施
+
 > **⚠️ 上記はいずれも実ユーザーで未検証。** 実装と実機動作は確認済だが、「⭐️が使われているか」「ウィジェットが設置されたか」を示すデータは存在しない (下記 KPI 未計装のため)。
 
 **🟡 コード有だが到達不能:**

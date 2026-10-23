@@ -58,6 +58,8 @@ export const SEIBUN_LINKS: SeibunLink[] = [
   K('chicken_thigh/with_skin', '11221', 'もも 皮つき 生'),
   K('beef_pork/beef', '11072', 'サーロイン 皮下脂肪なし 生'),
   K('beef_pork/pork', '11123', 'ロース 脂身つき 生'),
+  K('beef_pork/minced', '11163', 'ぶた ［ひき肉］ 生', undefined, '合いびき (牛:豚) と豚ひき肉を1つの種類で扱う。基準は豚ひき肉、牛ひき肉 (11089) は 251kcal で同じ群'),
+  K('chicken_thigh/minced', '11230', 'ひき肉 生'),
   K('beef_pork_fatty/bara', '11129', 'ばら 脂身つき 生'),
   K('red_meat/momo_hire', '11085', 'ヒレ 赤肉 生'),
   K('red_meat/shoulder_loin', '11073', 'サーロイン 赤肉 生'),

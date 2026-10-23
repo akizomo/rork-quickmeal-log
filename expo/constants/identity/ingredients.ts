@@ -889,6 +889,8 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
         // Silent migration to lean_protein
         migration: { bucketKey: 'lean_protein', identityKey: 'chicken_lean' },
       },
+      // 鶏ひき肉 (八訂 11230: 171/17.5/12.0/0)。もも皮つきより脂が少ない。
+      { key: 'minced', label: '鶏ひき肉', factor: { kcal: 0.855, protein: 1.029, fat: 0.857 } },
     ],
     styles: [
       { key: 'light', label: 'あっさり', isDefault: true },
@@ -923,6 +925,11 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
     attributes: [
       { key: 'beef', label: '牛（ロース・もも等）', isDefault: true },
       { key: 'pork', label: '豚（ロース・肩ロース等）', factor: { kcal: 0.96, protein: 1.03, fat: 0.91 } },
+      // ひき肉。検索の別名で牛（ロース）に着地していて、9ボタンからは選べず、記録にも名前が残らなかった。
+      // 基準は豚ひき肉 (八訂 11163: 209/17.7/17.2/0.1)。牛ひき肉 (11089: 251) ・合いびきも同じ群として扱う。
+      // kcal は成分表の 209 ではなく P/F/C からの逆算 225 に合わせる。209 のままだと「油あり」
+      // (fat×1.5) で kcal と PFC の乖離が 15% を超える (identity-resolver.test の不変条件)。
+      { key: 'minced', label: 'ひき肉', factor: { kcal: 0.978, protein: 1.011, fat: 1.042 } },
     ],
     styles: [
       { key: 'light', label: 'あっさり', isDefault: true },
