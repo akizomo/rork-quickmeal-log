@@ -223,6 +223,11 @@ export interface AppSettings {
    */
   quickLogHistory?: Record<string, unknown[]>;
   /**
+   * 適用済みのデータ移行ID (utils/log-migrations.ts)。保存済みの記録・履歴の「量」の解釈を
+   * 変える DB 修正を、1回だけ・冪等に適用するための印。未設定 = 1つも適用していない。
+   */
+  appliedMigrations?: string[];
+  /**
    * 食材/一皿料理/⭐️ の各タブで実際に記録した回数の累計 (減らない・全期間)。
    * デフォルトタブ判定 (最も使われているタブを優先) に使う。
    * 型はここでは緩く持ち、実ロジックは `quick-log-history.ts` 側で扱う

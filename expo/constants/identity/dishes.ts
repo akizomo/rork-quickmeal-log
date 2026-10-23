@@ -203,7 +203,9 @@ const BUCKET_RICE_DISH: Identity[] = [
       ],
     },
     attributes: [
-      { key: 'gyudon', label: '牛丼', isDefault: true, searchTags: ['ぎゅうどん'] },
+      // 牛丼 並盛: 吉野家 633/P19.6/F23.6/C88.2・松屋 687/P17.1/F28.9/C85.5 (公式)。旧 660/P25/F18 は kcal は
+      // 合っていたが、たんぱく質が約3割多く脂質が約3割少なかった (チェーン公式との照合で検出)。
+      { key: 'gyudon', label: '牛丼', isDefault: true, searchTags: ['ぎゅうどん'], factor: { kcal: 0.97, protein: 0.76, fat: 1.39, carbs: 1.0 } },
       // 親子丼は卵が主菜のため egg を hidden（二重計上を避ける）
       { key: 'oyakodon', label: '親子丼', factor: { kcal: 0.94, protein: 1.12, fat: 0.82, carbs: 0.93 }, hiddenAddonIds: ['egg'], searchTags: ['おやこどん'] },
       // ねぎとろ丼は海鮮系 → rayu/kimchi は合わない
@@ -211,6 +213,8 @@ const BUCKET_RICE_DISH: Identity[] = [
       // 中華丼は五目あんかけ → rayu は可・kimchi/egg は不自然
       { key: 'chuka', label: '中華丼', factor: { kcal: 0.91, protein: 0.88, fat: 0.89, carbs: 0.97 }, defaultAddonIds: ['rayu'], searchTags: ['ちゅうかどん'] },
       { key: 'mabo', label: '麻婆丼', factor: { kcal: 0.98, protein: 1, fat: 1.22, carbs: 0.93 }, searchTags: ['まーぼーどん'] },
+      // うな重・うな丼: ご飯200g + 蒲焼1尾(≒120g) ≒ 700kcal/P30/F22/C90。牛丼より脂質・たんぱく質が高い (外部基準カバレッジで穴が判明)。
+      { key: 'unadon', label: 'うな丼・うな重', factor: { kcal: 1.06, protein: 1.2, fat: 1.22, carbs: 1.02 }, searchTags: ['うなどん', 'うなじゅう', 'うな重', 'うな丼', 'うなぎ丼'] },
     ],
     // cheese は親子丼/中華丼/麻婆丼に合わないので default から外し allowed のみに
     defaultAddonIds: ['egg', 'kimchi_top', 'rayu', 'gohan_omori', 'niku_omori'],
@@ -305,7 +309,9 @@ const BUCKET_CURRY: Identity[] = [
     nutritionNotes: [
       NOTE_CURRY_ROUX,
     ],
-    defaultMacro: { kcal: 720, protein: 21, fat: 23, carbs: 100 },
+    // ご飯200g + ルー・具。ココイチ公式 (ライス300g を200g に補正): ポーク 545/P9/F18/C90・ビーフ 667/P15/F30/C89。
+    // 旧 720kcal/P21 は kcal が上側に外れ、たんぱく質が約1.5〜2倍だった (チェーン公式との照合で検出)。
+    defaultMacro: { kcal: 640, protein: 14, fat: 24, carbs: 98 },
     referenceDescription: 'ご飯200g + ルー・具',
     amount: { unit: 'percent', default: 100, chips: [{ label: '並', value: 100 }, { label: '大盛', value: 150 }, { label: '特盛', value: 200 }] },
     attributes: [
@@ -337,7 +343,9 @@ const BUCKET_CURRY: Identity[] = [
     label: 'バターチキン',
     searchTags: ['バターチキンカレー'],
     primaryHome: { tab: 'dish', bucket: 'curry' },
-    defaultMacro: { kcal: 780, protein: 22, fat: 40, carbs: 72 },
+    // ご飯200g + バターチキン。ココイチ公式 (ライス300gを200gに補正) 763/P24.9/F32.7/C94.6。旧 C72 は
+    // ご飯200gだけの炭水化物 (74g) より少なく、説明と矛盾していた (成分表の炊飯値との整合走査で検出)。
+    defaultMacro: { kcal: 770, protein: 25, fat: 33, carbs: 93 },
     referenceDescription: 'ご飯200g + バターチキン (or ナンで代用可)',
     amount: { unit: 'percent', default: 100, chips: [{ label: '並', value: 100 }, { label: '大盛', value: 150 }] },
     defaultAddonIds: ['cheese', 'gohan_omori'],
@@ -512,16 +520,26 @@ const BUCKET_JAPANESE_NOODLES: Identity[] = [
         topics: ['carbs'],
       },
     ],
-    defaultMacro: { kcal: 430, protein: 12, fat: 2, carbs: 85 },
-    referenceDescription: '麺250g (生1玉) + 出汁 (トッピングはアドオンで追加)',
+    // 1人前 = ゆで麺 270g + かけつゆ。成分表(八訂) 01039 うどん ゆで 95kcal/P2.6/F0.4/C21.6 per 100g → 256/7/1.1/58 + つゆ
+    // (出汁・しょうゆ・みりん・ねぎ) 約 40kcal/C6 ≒ 300/P9/F1.5/C64。はなまるうどん かけ(小=1玉) 273〜292kcal (公式ページ) とも整合。
+    // 旧 430kcal/C85 は、ゆで麺 約390g (生麺なら約150g) 相当で、チェーンの1玉 (はなまる かけ 273〜292kcal、
+    // なか卯 並 C55〜60) の約1.5倍だった。説明の「麺250g」とも合わず、同じゆで250gなら成分表ではうどん (C54) より
+    // そば (C65) の炭水化物が多いのに DB は うどん C85 > そば C79 と逆だった (照合で検出)。
+    // 量の意味は「1人前」のままなので、保存済みログの移行は不要。
+    defaultMacro: { kcal: 300, protein: 9, fat: 1.5, carbs: 64 },
+    referenceDescription: 'ゆで麺270g + 出汁 (トッピングはアドオンで追加)',
     amount: { unit: 'percent', default: 100, chips: [{ label: '小', value: 50 }, { label: '1人前', value: 100 }, { label: '大盛', value: 150 }, { label: '特盛', value: 200 }] },
     attributes: [
       { key: 'kake', label: 'かけ', isDefault: true },
       { key: 'bukkake', label: 'ぶっかけ' },
       // きつね/月見は具を factor に織り込み済みなので、二重計上になる
       // トッピングを隠す (きつね=油揚げ, 月見=卵)。
-      { key: 'kitsune', label: 'きつね', searchTags: ['きつねうどん'], factor: { kcal: 1.16, protein: 1.13, fat: 1.33 }, hiddenAddonIds: ['kitsune_top'] },
-      { key: 'tsukimi', label: '月見', searchTags: ['つきみうどん'], factor: { kcal: 1.09, protein: 1.25, fat: 1.11 }, hiddenAddonIds: ['egg'] },
+      // きつね = かけ + 油揚げ (甘煮 約30g ≒ 95kcal/P4/F7/C8) → 395/P13/F8.5/C72。月見 = かけ + 卵1個 (≒75kcal/P6/F5)
+      // → 375/P15/F6.5/C64。油揚げ・卵の脂質が抜けて kcal と PFC が食い違っていた (旧 F2.7/F2.2)。
+      // なか卯公式の きつね 並 505/P23.5/F17.8、月見 並 413/F11.4 は揚げ玉・具が多く、成分表の積み上げより大きい
+      // (KNOWN_DISH_DEVIATIONS で凍結)。
+      { key: 'kitsune', label: 'きつね', searchTags: ['きつねうどん'], factor: { kcal: 1.317, protein: 1.444, fat: 5.667, carbs: 1.125 }, hiddenAddonIds: ['kitsune_top'] },
+      { key: 'tsukimi', label: '月見', searchTags: ['つきみうどん'], factor: { kcal: 1.25, protein: 1.667, fat: 4.333 }, hiddenAddonIds: ['egg'] },
       { key: 'kamaage', label: '釜揚げ', searchTags: ['かまあげうどん'], factor: { kcal: 0.91, fat: 0.78 } },
     ],
     defaultAddonIds: ['egg', 'tempura_top', 'tororo', 'udon_omori'],
@@ -1003,7 +1021,9 @@ const BUCKET_MISC_DISH: Identity[] = [
       ],
     },
     attributes: [
-      { key: 'yakizakana', label: '焼魚定食', isDefault: true, factor: { kcal: 0.82, protein: 1.0, fat: 0.6, carbs: 0.91 }, searchTags: ['やきざかな'] },
+      // 焼魚定食: 吉野家 焼魚定食(鮭) 478/P17.8/F8.2/C84.8・さんま定食 507/P23.1/F8.5/C87.7 (公式)、成分表の積み上げ
+      // (ご飯200g + 焼き鮭80g + 味噌汁 + 小鉢) ≒ 560/P28/F16/C83。旧 697kcal は約3割多く、脂質が約2倍だった。
+      { key: 'yakizakana', label: '焼魚定食', isDefault: true, factor: { kcal: 0.659, protein: 0.8125, fat: 0.467, carbs: 0.787 }, searchTags: ['やきざかな'] },
       { key: 'yakiniku', label: '焼肉定食', factor: { kcal: 1.06, protein: 1.09, fat: 1.07 }, searchTags: ['やきにく'] },
       { key: 'karaage', label: '唐揚げ定食', factor: { kcal: 1.05, protein: 1.06, fat: 1.13, carbs: 0.97 }, searchTags: ['からあげ'] },
       { key: 'tonkatsu', label: 'トンカツ定食', factor: { kcal: 1.18, protein: 1.09, fat: 1.33, carbs: 1.02 }, searchTags: ['とんかつ'] },
@@ -1039,7 +1059,9 @@ const BUCKET_MISC_DISH: Identity[] = [
     },
     // 主菜タイプで Attribute 分け (旧 コンビニ/手作り/幕の内/駅弁 はPFC収束しないので廃止)
     attributes: [
-      { key: 'noriben', label: 'のり弁', isDefault: true, factor: { kcal: 0.79, protein: 0.61, fat: 0.6, carbs: 0.94 }, searchTags: ['のりべん'] }, // ~550kcal
+      // のり弁: ほっともっと 697〜770kcal・セブン海苔弁当 885・ローソン だしご飯の海苔弁当 836 (各社公式)。
+      // 旧 553kcal は公式の範囲より約2〜3割低かった (チェーン公式との照合で検出)。ほっともっと 770/P22.5/F23.6/C116.9 に合わせた。
+      { key: 'noriben', label: 'のり弁', isDefault: true, factor: { kcal: 1.1, protein: 0.957, fat: 1.2, carbs: 1.17 }, searchTags: ['のりべん'] }, // ~770kcal
       { key: 'sake', label: '鮭弁', factor: { kcal: 0.93, protein: 0.96, fat: 0.85, carbs: 0.96 }, searchTags: ['さけべん', 'しゃけべん'] }, // ~650
       { key: 'karaage', label: '唐揚げ弁当', factor: { kcal: 1.21, protein: 1.22, fat: 1.4, carbs: 1.0 }, searchTags: ['からあげべんとう'] }, // ~850
       { key: 'tonkatsu', label: 'とんかつ弁当', factor: { kcal: 1.29, protein: 1.13, fat: 1.5, carbs: 1.07 } }, // ~900
@@ -1063,7 +1085,7 @@ const BUCKET_MISC_DISH: Identity[] = [
         topics: ['fat'],
       },
     ],
-    quickTapDisabled: true, // Attribute 唐揚げ/とんかつ/エビフライ/コロッケ/フライドポテト: kcal 200-500, F 12-30
+    quickTapDisabled: true, // Attribute 唐揚げ/とんかつ/エビフライ/コロッケ/ナゲット/フライドチキン/フライドポテト: kcal 200-500, F 12-30
     defaultMacro: { kcal: 350, protein: 18, fat: 20, carbs: 18 },
     referenceDescription: '1個=衣+主菜',
     amount: { unit: 'piece', default: 3 },
@@ -1094,12 +1116,36 @@ const BUCKET_MISC_DISH: Identity[] = [
         amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '100', value: 100 }, { label: '150', value: 150 }, { label: '200', value: 200 }] },
         altAmount: { unit: 'piece', default: 3, unitLabel: '個', gramsPerUnit: 30 },
       },
-      { key: 'tonkatsu', label: 'ロースかつ', factor: { kcal: 1.43, protein: 1.22, fat: 1.5 }, defaultAddonIds: ['sauce', 'mayo'] },
-      { key: 'tonkatsu_hire', label: 'ヒレかつ', factor: { kcal: 1.1, protein: 1.45, fat: 0.7, carbs: 1.0 }, defaultAddonIds: ['sauce', 'mayo'] },
-      { key: 'menchi', label: 'メンチカツ', factor: { kcal: 0.8, protein: 0.5, fat: 0.85 }, defaultAddonIds: ['sauce', 'mayo'] },
-      { key: 'ebi_fry', label: 'エビフライ', factor: { kcal: 0.8, protein: 0.83, fat: 0.75 }, defaultAddonIds: ['tartar', 'lemon_squeeze'] },
+      // 数える単位を実物に合わせる (2026-10-22、log-migrations.ts の移行とセット)。
+      // とんかつは「枚」(ロース 1枚 150g ≒ 500kcal)、メンチカツ・コロッケは「個」(1個 ≒ 200-280kcal)。
+      // factor は既定量ぶんの macro なので据え置き。旧: 既定 3個 → 新: 既定 1枚 / 1個。
+      { key: 'tonkatsu', label: 'ロースかつ', factor: { kcal: 1.43, protein: 1.22, fat: 1.5 }, defaultAddonIds: ['sauce', 'mayo'], amount: { unit: 'piece', default: 1, unitLabel: '枚', step: 0.5, chips: [{ label: '半分', value: 0.5 }, { label: '1枚', value: 1 }, { label: '2枚', value: 2 }] } },
+      { key: 'tonkatsu_hire', label: 'ヒレかつ', factor: { kcal: 1.1, protein: 1.45, fat: 1.25, carbs: 0.83 }, defaultAddonIds: ['sauce', 'mayo'], amount: { unit: 'piece', default: 1, unitLabel: '枚', step: 0.5, chips: [{ label: '半分', value: 0.5 }, { label: '1枚', value: 1 }, { label: '2枚', value: 2 }] } },
+      { key: 'menchi', label: 'メンチカツ', factor: { kcal: 0.8, protein: 0.5, fat: 0.85 }, defaultAddonIds: ['sauce', 'mayo'], amount: { unit: 'piece', default: 1, unitLabel: '個', chips: [{ label: '1個', value: 1 }, { label: '2個', value: 2 }, { label: '3個', value: 3 }] } },
+      // エビフライは「本」で数える (3本 ≒ 280kcal、1本 ≒ 93)。既定量・計算値は不変で表示の単位だけ直す。
+      { key: 'ebi_fry', label: 'エビフライ', factor: { kcal: 0.8, protein: 0.83, fat: 0.75 }, defaultAddonIds: ['tartar', 'lemon_squeeze'], amount: { unit: 'piece', default: 3, unitLabel: '本' } },
       { key: 'fish_fry', label: '魚介揚げ', searchTags: ['ぎょかいあげ'], factor: { kcal: 0.8, protein: 0.83, fat: 0.75 }, defaultAddonIds: ['tartar', 'lemon_squeeze'] },
-      { key: 'korokke', label: 'コロッケ', factor: { kcal: 0.57, protein: 0.22, fat: 0.6 }, defaultAddonIds: ['sauce'] },
+      { key: 'korokke', label: 'コロッケ', factor: { kcal: 0.57, protein: 0.22, fat: 0.6 }, defaultAddonIds: ['sauce'], amount: { unit: 'piece', default: 1, unitLabel: '個', chips: [{ label: '1個', value: 1 }, { label: '2個', value: 2 }, { label: '3個', value: 3 }] } },
+      // チェーンの定番品はg表示が無く「何ピース」で数えるため、個数単位で上書きする。
+      // factor は種類の既定量 (ナゲット5個 / フライドチキン2ピース) での値に合わせてある。
+      {
+        key: 'nugget',
+        label: 'チキンナゲット',
+        // マックナゲット5ピース ≒ 263kcal/P15.3/F16/C14.3 (fatsecret 掲載値)
+        searchTags: ['なげっと', 'ちきんなげっと', 'ナゲット', 'マックナゲット'],
+        factor: { kcal: 0.751, protein: 0.833, fat: 0.8, carbs: 0.778 }, // ≒263kcal/P15/F16/C14 (5個)
+        defaultAddonIds: ['sauce'],
+        amount: { unit: 'piece', default: 5, unitLabel: '個', chips: [{ label: '5個', value: 5 }, { label: '10個', value: 10 }, { label: '15個', value: 15 }] },
+      },
+      {
+        key: 'fried_chicken',
+        label: 'フライドチキン',
+        // 骨付き1ピース(可食部87g) ≒ 218〜237kcal/F12.8/C9.1 (ケンタッキー公表値の報道)。P は残差から ≒17g
+        searchTags: ['ふらいどちきん', 'ケンタッキー', 'けんたっきー', 'ほねつきちきん'],
+        factor: { kcal: 1.314, protein: 1.889, fat: 1.4, carbs: 1.0 }, // ≒460kcal/P34/F28/C18 (2ピース)
+        defaultAddonIds: [],
+        amount: { unit: 'piece', default: 2, unitLabel: 'ピース', chips: [{ label: '1ピース', value: 1 }, { label: '2ピース', value: 2 }, { label: '3ピース', value: 3 }] },
+      },
       { key: 'tempura', label: '天ぷら盛', searchTags: ['てんぷら'], factor: { kcal: 0.8, protein: 0.28, fat: 0.9, carbs: 1.22 }, defaultAddonIds: ['lemon_squeeze'] },
       {
         key: 'fries',
@@ -1138,9 +1184,28 @@ const BUCKET_MISC_DISH: Identity[] = [
     defaultMacro: { kcal: 420, protein: 27, fat: 28, carbs: 12 },
     referenceDescription: '主菜のみ (ご飯/副菜なし)',
     amount: { unit: 'g', default: 150, step: 10, chips: [{ label: '100', value: 100 }, { label: '150', value: 150 }, { label: '200', value: 200 }] },
+    // ステーキは肉の種類・部位で脂質が数倍ちがう (成分表: 牛サーロイン脂身つき
+    // F≒24〜28g/100g、牛ヒレ赤肉 F≒5〜11g/100g)。脂質の段差がある群ごとに分ける
+    // (IA spec §1.5)。値は 150g (焼く前の重さ) + 焼き油・ソース少々の目安。
     attributes: [
       { key: 'hamburg', label: 'ハンバーグ', isDefault: true, factor: { kcal: 0.9, fat: 0.79, carbs: 1.5 } },
-      { key: 'steak', label: 'ステーキ', factor: { kcal: 1.0, protein: 1.19, fat: 1.07, carbs: 0.17 } },
+      // 既存ログ互換のため key は 'steak' のまま (= 霜降り・脂のある部位)。
+      // 括弧内は検索対象外 (labelParts) なので、どちらも「ステーキ」の完全一致で着地する。
+      // 豚ロース薄切り 120g + 焼き油・たれ ≒ 380kcal/P22/F27/C8 (成分表(八訂)の豚ロース 100g ≒ 263kcal/F19 から換算、照合未実施)。
+      // 家庭・定食の「1人前」の重さで数えるため、既定量を 120g に上書き。
+      {
+        key: 'shogayaki',
+        label: '生姜焼き',
+        searchTags: ['しょうがやき', 'しょうが焼き'],
+        factor: { kcal: 0.905, protein: 0.815, fat: 0.964, carbs: 0.667 },
+        amount: { unit: 'g', default: 120, step: 10, chips: [{ label: '100', value: 100 }, { label: '120', value: 120 }, { label: '150', value: 150 }] },
+      },
+      { key: 'steak', label: 'ステーキ (サーロイン等)', searchTags: ['さーろいん', 'りぶろーす', 'ビーフステーキ', 'ぎゅうすてーき'], factor: { kcal: 1.0, protein: 1.19, fat: 1.07, carbs: 0.17 } }, // ≒420kcal/P32/F30/C2
+      { key: 'steak_lean', label: 'ステーキ (ヒレ・赤身)', searchTags: ['ヒレステーキ', 'ひれすてーき', 'あかみすてーき', 'らんぷすてーき'], factor: { kcal: 0.619, protein: 1.222, fat: 0.464, carbs: 0.167 } }, // ≒260kcal/P33/F13/C2
+      // 豚ロース脂身つき150g (≒370kcal/F29) + 甘辛だれ
+      { key: 'pork_steak', label: 'トンテキ・ポークソテー', searchTags: ['とんてき', 'ぽーくそてー', 'ぶたすてーき'], factor: { kcal: 1.0, protein: 1.074, fat: 1.071, carbs: 0.833 } }, // ≒420kcal/P29/F30/C10
+      // 鶏もも皮つき150g (≒285kcal/F21) + 焼き油
+      { key: 'chicken_steak', label: 'チキンステーキ', searchTags: ['ちきんすてーき', 'チキンソテー', 'ちきんそてー'], factor: { kcal: 0.762, protein: 0.926, fat: 0.821, carbs: 0.25 } }, // ≒320kcal/P25/F23/C3
     ],
   },
   {
@@ -1189,6 +1254,24 @@ const BUCKET_MISC_DISH: Identity[] = [
         amount: { unit: 'piece', default: 2, unitLabel: '本', chips: [{ label: '1本', value: 1 }, { label: '2本', value: 2 }, { label: '3本', value: 3 }] },
       },
       { key: 'xiaolongbao', label: '小籠包', factor: { kcal: 1.0, fat: 0.75, carbs: 1.14 }, searchTags: ['しょうろんぽう'] },
+      // 中華まんは1個で数える (コンビニ・蒸籠の定番)。餃子5個≒250kcal の基準から、1個ぶんの値を直接持つ。
+      // 肉まん・ピザまん 1個 ≒ 230kcal/P8.5/F6/C35、あんまん 1個 ≒ 280kcal/P6/F6.5/C50。
+      {
+        key: 'nikuman',
+        label: '肉まん・ピザまん',
+        factor: { kcal: 0.92, protein: 0.85, fat: 0.6, carbs: 1.25 },
+        searchTags: ['にくまん', 'ぴざまん', '中華まん', 'ちゅうかまん', 'カレーまん'],
+        defaultAddonIds: [], // ラー油は餃子・シューマイ向け。中華まんには付けない
+        amount: { unit: 'piece', default: 1, unitLabel: '個', chips: [{ label: '1個', value: 1 }, { label: '2個', value: 2 }] },
+      },
+      {
+        key: 'anman',
+        label: 'あんまん',
+        factor: { kcal: 1.12, protein: 0.6, fat: 0.65, carbs: 1.786 },
+        searchTags: ['あんまん', 'こしあんまん'],
+        defaultAddonIds: [], // ラー油は餃子・シューマイ向け。中華まんには付けない
+        amount: { unit: 'piece', default: 1, unitLabel: '個', chips: [{ label: '1個', value: 1 }, { label: '2個', value: 2 }] },
+      },
     ],
     defaultAddonIds: ['rayu'],
   },
@@ -1322,6 +1405,8 @@ const BUCKET_MISC_DISH: Identity[] = [
         label: 'たこ焼き',
         searchTags: ['たこやき'],
         factor: { kcal: 0.72, protein: 0.6, fat: 0.75, carbs: 0.71 },
+        // たこ焼きは「個」で数える (8個 ≒ 418kcal = 1人前)。旧: 既定 1枚 → 新: 既定 8個 (log-migrations.ts で保存済みを換算)。
+        amount: { unit: 'piece', default: 8, unitLabel: '個', chips: [{ label: '6個', value: 6 }, { label: '8個', value: 8 }, { label: '12個', value: 12 }, { label: '16個', value: 16 }] },
         defaultAddonIds: ['sauce'],
         allowedAddonIds: ['sauce', 'mayo', 'katsuobushi'],
       },

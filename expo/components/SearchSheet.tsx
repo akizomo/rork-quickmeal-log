@@ -21,7 +21,9 @@ import {
 import {
   Body,
   BottomSheet,
+  Button,
   Caption,
+  Card,
   Chip,
   Icon,
   IconButton,
@@ -33,6 +35,7 @@ import { DirectInputSheet } from '@/components/DirectInputSheet';
 import { buildRegistry, getBucketDef, getIdentity, presetAddonInputs } from '@/constants/identity';
 import { useAppState } from '@/providers/app-state-provider';
 import { useLocale } from '@/hooks/useLocale';
+import { findNegligible } from '@/utils/negligible-foods';
 import { useT } from '@/hooks/useT';
 import {
   describeSearchEntry,
@@ -47,6 +50,13 @@ import type { BucketKey } from '@/types/identity';
 import type { QuickLogHistoryMap } from '@/types/quick-log';
 
 const DEBOUNCE_MS = 180;
+
+/** 「記録不要」案内の文言キー (動的に組み立てない: i18n の未使用キー検査が追えなくなる)。 */
+const NEGLIGIBLE_MESSAGE_KEY = {
+  zero: 'search.negligibleZero',
+  small: 'search.negligibleSmall',
+  inDish: 'search.negligibleInDish',
+} as const;
 
 type Props = {
   visible: boolean;
@@ -240,7 +250,13 @@ export function SearchSheet({ visible, onClose, onOpen }: Props) {
   const hasConfident = confidentResults.length > 0;
   const hasMaybe = maybeResults.length > 0 || vocabularyMatches.length > 0;
   const hasHints = categoryHints.length > 0;
-  const noMatch = !isEmpty && !hasConfident && !hasMaybe && !hasHints;
+  const noMatch = !isEmpty && !hasConfident && !hasMaybe && !hasHints && !findNegligible(debounced, locale);
+  // 層1 (confident) が無い = 探し物が見つかっていない可能性が高い。このときは
+  // 「数値で入力する」を末尾の小さなリンクではなくボタンとして出す (§4.4)。
+  const showDirectInputCta = !isEmpty && !hasConfident;
+  // 「記録しなくていい」語 (お茶・ブラックコーヒー・調味料…) は、見つからなかったのではなく
+  // 記録不要と案内する。完全一致のみ。未ヒット診断にも数えない (DB拡張の候補ではないため)。
+  const negligible = useMemo(() => (isEmpty ? null : findNegligible(debounced, locale)), [debounced, isEmpty, locale]);
 
   // 診断 (SEARCH_SPEC v0.4 §F5): 層1 (confident) のヒット有無だけで miss を判定する。
   // 層2 (もしかして) でしか着地しなかったクエリも miss として記録する — これが
@@ -248,12 +264,12 @@ export function SearchSheet({ visible, onClose, onOpen }: Props) {
   // いたため、bigram の誤ヒットが miss を握り潰していた。
   useEffect(() => {
     if (isEmpty) return;
-    if (hasConfident) {
+    if (hasConfident || negligible) {
       pendingMissRef.current = null;
     } else {
       pendingMissRef.current = { q: debounced, hadHints: hasHints };
     }
-  }, [debounced, isEmpty, hasConfident, hasHints]);
+  }, [debounced, isEmpty, hasConfident, hasHints, negligible]);
 
   return (
     <>
@@ -304,6 +320,12 @@ export function SearchSheet({ visible, onClose, onOpen }: Props) {
           ) : null}
         </View>
 
+
+        {negligible ? (
+          <Card variant="outlined" style={{ marginBottom: t.spacing['4'] }} testID="search-negligible-notice">
+            <Body>{tr(NEGLIGIBLE_MESSAGE_KEY[negligible])}</Body>
+          </Card>
+        ) : null}
 
         {/* 検索結果 (層1: confident) */}
         {hasConfident ? (
@@ -373,18 +395,34 @@ export function SearchSheet({ visible, onClose, onOpen }: Props) {
           </Body>
         ) : null}
 
-        {/* 数値で入力する — 常設テキストリンク (最終手段、目立たせない) */}
-        <View style={{ marginTop: t.spacing['5'], flexDirection: 'row', alignItems: 'center', gap: t.spacing['1'] }}>
-          <Body size="sm" tone="secondary">{tr('search.notFoundPrompt')}</Body>
-          <Pressable
-            onPress={handleOpenDirectInput}
-            style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1 })}
-            accessibilityRole="button"
-            accessibilityLabel={tr('search.enterManuallyA11y')}
-          >
-            <Label size="sm" tone="link">{tr('search.enterManually')}</Label>
-          </Pressable>
-        </View>
+        {showDirectInputCta ? (
+          /* 数値で入力する — 見つからなかったときの CTA */
+          <View style={{ marginTop: t.spacing['5'], gap: t.spacing['2'], alignItems: 'flex-start' }}>
+            <Body size="sm" tone="secondary">{tr('search.notFoundPrompt')}</Body>
+            <Button
+              variant="secondary"
+              size="sm"
+              label={tr('search.enterManually')}
+              leading={<Icon name="edit" size={16} color={t.colors.content.primary} />}
+              onPress={handleOpenDirectInput}
+              accessibilityLabel={tr('search.enterManuallyA11y')}
+              testID="search-direct-input-cta"
+            />
+          </View>
+        ) : (
+          /* 数値で入力する — 常設テキストリンク (見つかっているときは控えめに) */
+          <View style={{ marginTop: t.spacing['5'], flexDirection: 'row', alignItems: 'center', gap: t.spacing['1'] }}>
+            <Body size="sm" tone="secondary">{tr('search.notFoundPrompt')}</Body>
+            <Pressable
+              onPress={handleOpenDirectInput}
+              style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1 })}
+              accessibilityRole="button"
+              accessibilityLabel={tr('search.enterManuallyA11y')}
+            >
+              <Label size="sm" tone="link">{tr('search.enterManually')}</Label>
+            </Pressable>
+          </View>
+        )}
       </BottomSheet>
 
       <DirectInputSheet

@@ -678,7 +678,7 @@ export function IdentityLogSheet() {
 
           {/* Amount (振替先があればその実効 spec を使う) */}
           {(() => {
-            const amt = activeAmountSpec ?? origin.amount;
+            const amt = activeAmountSpec ?? getEffectiveAmountSpec(origin, attributeKey);
             const amtUnitLabel = amt.unitLabel ?? UNIT_LABELS[uiLanguage][amt.unit];
             const amountRefIdentity = amountBasis?.identity ?? origin;
             const toggleLabel = isAltMode ? tr('identityLog.switchToG') : tr('identityLog.switchToCount');
@@ -745,7 +745,8 @@ export function IdentityLogSheet() {
               </Text>
               <Icon name="edit" size={16} color={t.colors.content.tertiary} />
             </Pressable>
-            {amountRefIdentity.referenceDescription && amt.unit === amountRefIdentity.amount.unit ? (
+            {/* amount-spec: identity-level — referenceDescription は Identity 基準量の説明 (例: 1個=衣+主菜) なので、単位と数え方 (個/枚) が Identity 共通のときだけ出す */}
+            {amountRefIdentity.referenceDescription && amt.unit === amountRefIdentity.amount.unit && (amt.unitLabel ?? '') === (amountRefIdentity.amount.unitLabel ?? '') ? (
               <Caption tone="tertiary" style={{ marginTop: t.spacing['2'] }} testID="ils-amount-ref">
                 {tr('identityLog.amountRefPrefix')}: {amountRefIdentity.referenceDescription}
               </Caption>

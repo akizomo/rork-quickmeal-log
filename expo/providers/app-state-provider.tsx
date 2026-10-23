@@ -34,6 +34,7 @@ import { logDraftToFoodLog } from '@/utils/identity-log-bridge';
 import { buildRegistry, getBucketDef, getIdentity } from '@/constants/identity';
 import { resolveWidgetEntryIdentityId } from '@/utils/widget-entry';
 import { lookupLegacyIdentity } from '@/constants/identity/migration-map';
+import { applyDataMigrations, MIGRATIONS } from '@/utils/log-migrations';
 import type { BucketKey } from '@/types/identity';
 
 export const MAX_PAST_LOGGING_DAYS = 7;
@@ -234,12 +235,17 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       console.log('[app-state] Loading persisted state');
       const raw = await AsyncStorage.getItem(STORAGE_KEY);
       if (!raw) {
-        return defaultPersistedState;
+        // 新規インストール: 保存済みの記録が無いので、これまでの移行は「適用済み」として始める。
+        // 印を付けないと、新しい DB 仕様で記録した値が、次回起動で旧仕様として二重に換算される。
+        return {
+          ...defaultPersistedState,
+          settings: { ...defaultPersistedState.settings, appliedMigrations: MIGRATIONS.map((m) => m.id) },
+        };
       }
 
       try {
         const parsed = JSON.parse(raw) as Partial<PersistedState>;
-        return {
+        const loaded: PersistedState = {
           profile: migrateProfile(parsed.profile),
           logs: parsed.logs ?? [],
           settings: migrateSettings(parsed.settings),
@@ -248,6 +254,21 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
           exerciseLogs: parsed.exerciseLogs ?? [],
           dailyActivities: parsed.dailyActivities ?? [],
         };
+        // 保存済みの記録・履歴の「量」を、DB の単位修正に合わせて換算する (utils/log-migrations.ts)。
+        // 換算は1回だけが前提なので、適用したら**ここで直ちに永続化**する。メモリ上だけで済ませると、
+        // 次の保存より前にアプリが落ちたとき、次回起動で同じ換算を二重に掛けてしまう。
+        const { state: migrated, changed } = applyDataMigrations(loaded);
+        if (changed) {
+          try {
+            await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(migrated));
+            console.log('[app-state] Applied data migrations', migrated.settings.appliedMigrations);
+          } catch (persistError) {
+            // 書けなかった場合も記録は失わない (旧データが未適用のまま残るので、次回起動でやり直せる。
+            // メモリ上の移行済み状態は、次の通常の保存で印つきで書き込まれる)。
+            console.log('[app-state] Failed to persist data migrations', persistError);
+          }
+        }
+        return migrated;
       } catch (error) {
         console.log('[app-state] Failed to parse persisted state', error);
         return defaultPersistedState;

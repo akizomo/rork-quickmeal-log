@@ -1006,7 +1006,10 @@
     "noResults": "No results found",
     "notFoundPrompt": "Can't find your food?",
     "enterManuallyA11y": "Enter values manually",
-    "enterManually": "Enter manually"
+    "enterManually": "Enter manually",
+    "negligibleZero": "About 0 kcal. No need to log it.",
+    "negligibleSmall": "Tiny at a normal amount. Skipping it barely changes anything.",
+    "negligibleInDish": "Roux is already counted in curry and stew entries."
   },
   "searchMisses": {
     "lead": "Words you searched for but didn't find are saved on this device. Sharing them helps decide which foods to add next.",

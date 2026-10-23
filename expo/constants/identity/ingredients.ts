@@ -505,7 +505,9 @@ const BUCKET_STAPLE: Identity[] = [
     label: '中華麺',
     searchTags: ['ちゅうかめん', 'ラーメン', 'らーめん'],
     primaryHome: { tab: 'ingredient', bucket: 'staple' },
-    defaultMacro: { kcal: 203, protein: 6.4, fat: 0.6, carbs: 42 }, // 茹で中華麺 120g
+    // 茹で中華麺 120g (成分表(八訂) 01048: 133kcal/P4.9/F0.6/C29.2 per 100g)。以前の 203kcal は
+    // 生めん 249kcal/100g と茹でめんの中間の値で、どちらの重さにも合っていなかった (成分表との照合で検出)。
+    defaultMacro: { kcal: 160, protein: 5.9, fat: 0.7, carbs: 35 },
     amount: {
       unit: 'g',
       default: 120, step: 10,
@@ -1012,7 +1014,9 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
       { key: 'salmon', label: '鮭', isDefault: true },
       { key: 'saba', label: 'サバ', factor: { kcal: 1.0, fat: 1.17 } },
       { key: 'buri', label: 'ぶり', factor: { kcal: 1.1, fat: 1.25 } },
-      { key: 'sanma', label: 'さんま', factor: { kcal: 1.45, protein: 0.73, fat: 2.0 } },
+      // さんま (皮つき焼き) 80g ≒ 225kcal/P18.6/F18.2 (成分表(八訂) 10174: 281kcal/P23.3/F22.8 per 100g)。
+      // 以前の 290kcal (363/100g) は焼きでも生でも成分表のどの形より多かった (成分表との照合で検出)。
+      { key: 'sanma', label: 'さんま', factor: { kcal: 1.125, protein: 0.93, fat: 1.52 } },
       { key: 'iwashi', label: 'いわし', factor: { kcal: 0.81, fat: 0.83 } },
       // 蒲焼のたれの糖質は macroDelta で足す。旧実装は `carbs: 999` を factor に
       // 置いていたが、factor は乗算なのでベース carbs: 0 に対して 0×999=0 となり
@@ -1073,7 +1077,8 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
     id: 'ham',
     label: 'ハム',
     primaryHome: { tab: 'ingredient', bucket: 'fatty_protein' },
-    defaultMacro: { kcal: 40, protein: 5, fat: 2.5, carbs: 1 },
+    // ロースハム 2枚 ≒ 20g = 42kcal/P3.7/F2.9/C0.4 (成分表(八訂) 11176: 211kcal/P18.6/F14.5/C2.0 per 100g)
+    defaultMacro: { kcal: 42, protein: 3.7, fat: 2.9, carbs: 0.4 },
     nutritionNotes: [
       {
         text: 'ハムやベーコンは、塩漬けやいぶすことで、味と日もちをよくした加工肉です。そのぶん、生の肉にはほとんどない塩分が加わっています。',
@@ -1105,8 +1110,23 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
     amount: { unit: 'piece', default: 2, unitLabel: '枚', chips: [{ label: '2枚', value: 2 }, { label: '1パック', value: 5 }] },
     attributes: [
       { key: 'bacon', label: 'ベーコン', isDefault: true },
-      { key: 'sausage', label: 'ソーセージ', factor: { kcal: 1.5, protein: 1.4, fat: 1.33 } },
-      { key: 'wiener', label: 'ウインナー', factor: { kcal: 0.8, protein: 0.8, fat: 0.83 } },
+      // ソーセージ類は「本」で数える。既定量2本は従来と同じなので、factor (=2本での値) は据え置き。
+      {
+        key: 'sausage',
+        label: 'ソーセージ',
+        factor: { kcal: 1.5, protein: 1.4, fat: 1.33 },
+        amount: { unit: 'piece', default: 2, unitLabel: '本', chips: [{ label: '1本', value: 1 }, { label: '2本', value: 2 }, { label: '3本', value: 3 }] },
+      },
+      {
+        key: 'wiener',
+        label: 'ウインナー',
+        // 2本 ≒ 90kcal。吉野家公式の「ウィンナー 2本 = 86kcal/P3.2/F6.1/C4.4」と、成分表 (11186 ウインナー
+        // 319kcal/100g) から逆算した 1本 ≒ 14g (45kcal) に合わせた。
+        // (2026-10-22 に一度 112kcal へ上げたが、成分表だけから「1本=17.5g」と仮定したのが誤りで、公式の重さと
+        //  合わなかった。公式の値が取れたので 90kcal に訂正した)
+        factor: { kcal: 0.9, protein: 0.66, fat: 0.91, carbs: 1.8 },
+        amount: { unit: 'piece', default: 2, unitLabel: '本', chips: [{ label: '2本', value: 2 }, { label: '3本', value: 3 }, { label: '5本', value: 5 }] },
+      },
     ],
     asAddon: {
       unit: 'piece',
@@ -1189,7 +1209,9 @@ const BUCKET_DAIRY_SOY: Identity[] = [
     id: 'cheese',
     label: 'チーズ',
     primaryHome: { tab: 'ingredient', bucket: 'dairy_soy' },
-    defaultMacro: { kcal: 80, protein: 5, fat: 6, carbs: 1 },
+    // プロセスチーズ 20g (スライス1枚 18g) = 63kcal/P4.5/F5.2/C0.3 (成分表(八訂) 13040: 313kcal/P22.7/F26.0/C1.3 per 100g)。
+    // 以前の 80kcal は約27%多かった。種類の値は成分表の各ナチュラルチーズ (13056/13035/13038) の20gぶんに合わせた。
+    defaultMacro: { kcal: 63, protein: 4.5, fat: 5.2, carbs: 0.3 },
     nutritionNotes: [
       {
         text: 'チーズは、少しの量でもカルシウムが多い食品です。プロセスチーズには、同じ重さの牛乳の約6倍のカルシウムがあります。',
@@ -1200,14 +1222,14 @@ const BUCKET_DAIRY_SOY: Identity[] = [
     amount: { unit: 'g', default: 20, chips: [{ label: 'スライス1枚', value: 18 }, { label: '30', value: 30 }, { label: '50', value: 50 }] }, // スライス1枚=18g (実測値。step整合を優先せず精度維持)
     attributes: [
       { key: 'slice', label: 'スライス・6P', isDefault: true },
-      { key: 'mozza', label: 'モッツァレラ', factor: { kcal: 0.85, protein: 1.20, fat: 0.83, carbs: 0.50 } },
-      { key: 'cream', label: 'クリーム', factor: { kcal: 1.39, protein: 0.5, fat: 1.67 } },
-      { key: 'parmesan', label: 'パルメザン', factor: { kcal: 1.34, protein: 1.96, fat: 1.13 } },
+      { key: 'mozza', label: 'モッツァレラ', factor: { kcal: 0.854, protein: 0.818, fat: 0.765, carbs: 2.8 } }, // 20g ≒ 54kcal
+      { key: 'cream', label: 'クリーム', factor: { kcal: 0.994, protein: 0.364, fat: 1.269, carbs: 1.53 } }, // 20g ≒ 63kcal (旧 111kcal は約1.8倍)
+      { key: 'parmesan', label: 'パルメザン', factor: { kcal: 1.413, protein: 1.956, fat: 1.185, carbs: 1.27 } }, // 20g ≒ 89kcal
     ],
     asAddon: {
       unit: 'g',
       unitAmount: 20,
-      addedMacro: { kcal: 80, protein: 5, fat: 6, carbs: 1 },
+      addedMacro: { kcal: 63, protein: 4.5, fat: 5.2, carbs: 0.3 },
       defaultLabel: 'チーズ',
     },
   },

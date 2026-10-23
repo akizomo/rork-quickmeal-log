@@ -1006,7 +1006,10 @@
     "noResults": "見つかりませんでした",
     "notFoundPrompt": "食品が見つかりませんか？",
     "enterManuallyA11y": "数値で直接入力する",
-    "enterManually": "数値で入力する"
+    "enterManually": "数値で入力する",
+    "negligibleZero": "ほぼ0kcal。記録しなくて大丈夫です。",
+    "negligibleSmall": "ふつうの量なら、ごくわずか。記録しなくても、ほぼ変わりません。",
+    "negligibleInDish": "ルーは、カレーやシチューの数字にふくまれています。"
   },
   "searchMisses": {
     "lead": "検索で見つからなかった言葉が、この端末に貯まっています。共有すると、次の更新で足す食品の参考になります。",

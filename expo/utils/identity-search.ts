@@ -19,6 +19,7 @@
 import { ALL_IDENTITIES, ALL_US_IDENTITIES, JP_PRESETS, getAddonLabel, getBucketDef } from '@/constants/identity';
 import { DISH_VOCABULARY } from '@/constants/identity/dish-vocabulary';
 import { HEAD_NOUNS, type HeadNounTarget } from '@/constants/identity/head-nouns';
+import { aliasesFor } from '@/constants/identity/search-aliases';
 import { normalize, romajiVariant } from '@/utils/identity-normalize';
 import {
   labelParts,
@@ -269,6 +270,7 @@ function identityTargets(identity: Identity, jp: boolean): Target[] {
   const raws: Array<[string, TargetKind]> = [[identity.label, 'name']];
   if (jp) for (const p of labelParts(identity.label)) raws.push([p, 'part']);
   for (const t of identity.searchTags ?? []) raws.push([t, 'tag']);
+  if (jp) for (const t of aliasesFor(identity.id)) raws.push([t, 'tag']);
   const targets = targetsOf(raws);
   if (!jp) return targets;
 
@@ -287,10 +289,11 @@ function identityTargets(identity: Identity, jp: boolean): Target[] {
   return targets;
 }
 
-function styleTargets(style: StyleOption, jp: boolean): Target[] {
+function styleTargets(style: StyleOption, jp: boolean, identityId?: string): Target[] {
   const raws: Array<[string, TargetKind]> = [[style.label, 'name']];
   if (jp) for (const p of labelParts(style.label)) raws.push([p, 'part']);
   for (const t of style.searchTags ?? []) raws.push([t, 'tag']);
+  if (jp && identityId) for (const t of aliasesFor(`${identityId}[${style.key}]`)) raws.push([t, 'tag']);
   return targetsOf(raws);
 }
 
@@ -299,7 +302,10 @@ function attributeTargets(
   attribute: AttributeOption,
   opts: { jp: boolean; generic: boolean; contextBound: (k: string) => boolean; heads: string[]; tailHeads: string[] },
 ): Target[] {
-  const tags = (attribute.searchTags ?? []).map((t) => [t, 'tag'] as [string, TargetKind]);
+  const tags = [
+    ...(attribute.searchTags ?? []),
+    ...(opts.jp ? aliasesFor(`${identity.id}/${attribute.key}`) : []),
+  ].map((t) => [t, 'tag'] as [string, TargetKind]);
   if (!opts.jp) {
     // 英語 (US): 従来どおり。複合語・部分への分解はしない。
     return targetsOf(
@@ -395,7 +401,7 @@ function buildIndex(identities: Identity[], genericLabels: Set<string>, presets:
       });
     }
     for (const style of identity.styles ?? []) {
-      out.push({ entry: { identity, style }, targets: styleTargets(style, jp) });
+      out.push({ entry: { identity, style }, targets: styleTargets(style, jp, identity.id) });
     }
   }
 

@@ -48,7 +48,7 @@ export const TUNING_CORPUS: Item[] = [
     ['たまご', 'egg'], ['ゆで卵', ['egg[boiled]', 'egg']], ['目玉焼き', 'egg[fried]'], ['卵焼き', 'egg[omelet]'], ['スクランブルエッグ', 'egg[omelet]'],
     ['温泉卵', 'egg'], ['オムレツ', 'egg[omelet]'], ['茶碗蒸し', 'egg[chawan]'], ['豆腐', 'tofu'], ['冷奴', 'tofu'],
     ['厚揚げ', 'aburaage/thick'], ['油揚げ', 'aburaage/thin'], ['納豆', 'natto'], ['枝豆', 'edamame_soy/edamame'], ['ハム', 'ham'],
-    ['ベーコン', 'bacon_sausage/bacon'], ['ウインナー', 'bacon_sausage/wiener'], ['ソーセージ', 'bacon_sausage/sausage'], ['プロテイン', 'protein_drink'], ['プロテインバー', 'protein_bar'],
+    ['ベーコン', 'bacon_sausage/bacon'], ['ウインナー', 'bacon_sausage/wiener'], ['ソーセージ', 'bacon_sausage/sausage'], ['ヒレステーキ', 'meat_solo/steak_lean'], ['トンテキ', 'meat_solo/pork_steak'], ['チキンステーキ', 'meat_solo/chicken_steak'], ['ポークソテー', 'meat_solo/pork_steak'], ['プロテイン', 'protein_drink'], ['プロテインバー', 'protein_bar'],
     ['ビーフジャーキー', 'jerky'], ['レバー', 'liver'],
   ]),
   ...C('野菜果物', 'base', [
@@ -93,7 +93,7 @@ export const TUNING_CORPUS: Item[] = [
     ['きつねうどん', 'udon/kitsune'], ['月見うどん', 'udon/tsukimi'], ['ざるそば', 'soba/zaru'], ['天ぷらそば', 'tempura_noodle/tempura_soba'], ['鍋焼きうどん', 'tempura_noodle/nabe_yaki'],
     ['焼うどん', 'yaki_udon'], ['そうめん', 'somen'], ['寿司', ['sushi_plate', 'sushi_piece']], ['回転寿司', 'sushi_plate'], ['ちらし寿司', 'chirashi'],
     ['巻き寿司', 'maki'], ['いなり寿司', 'maki/inari'], ['手巻き寿司', 'maki/temaki'], ['定食', 'teishoku'], ['焼き魚定食', 'teishoku/yakizakana'],
-    ['唐揚げ定食', 'teishoku/karaage'], ['生姜焼き定食', 'teishoku/shogayaki'], ['生姜焼き', ['teishoku/shogayaki', 'beef_pork']], ['弁当', 'bento'], ['のり弁', 'bento/noriben'],
+    ['唐揚げ定食', 'teishoku/karaage'], ['生姜焼き定食', 'teishoku/shogayaki'], ['生姜焼き', 'meat_solo/shogayaki'], ['弁当', 'bento'], ['のり弁', 'bento/noriben'],
     ['幕の内弁当', 'bento/makunouchi'], ['唐揚げ', KARAAGE], ['とんかつ', 'fried_main/tonkatsu'], ['ヒレカツ', 'fried_main/tonkatsu_hire'], ['メンチカツ', 'fried_main/menchi'],
     ['エビフライ', 'fried_main/ebi_fry'], ['コロッケ', 'fried_main/korokke'], ['天ぷら', 'fried_main/tempura'], ['フライドポテト', 'fried_main/fries'], ['焼き鳥', 'yakitori'],
     ['ハンバーグ', 'meat_solo/hamburg'], ['肉じゃが', 'washoku_okazu/nikujaga'], ['肉豆腐', 'washoku_okazu/niku_dofu'], ['筑前煮', 'side_seasoned'], ['すき焼き', 'nabe/sukiyaki'],
@@ -117,8 +117,8 @@ export const TUNING_CORPUS: Item[] = [
     ['生春巻き', 'fresh_roll'], ['チヂミ', ['okonomi']], ['肉まん', ['tenshin']], ['天津飯', ['fried_rice_omurice', 'gyudon_class/chuka']], ['タコライス', ['gapao_rice', 'burrito_taco/bowl']],
   ]),
   ...C('チェーン・コンビニ', 'chain', [
-    ['ファミチキ', [...KARAAGE, 'chicken_thigh']], ['からあげクン', KARAAGE], ['ビッグマック', ['burger', 'burger_big']], ['マックポテト', 'fried_main/fries'], ['てりやきマックバーガー', 'burger/teriyaki'],
-    ['フィレオフィッシュ', 'burger/fish'], ['ナゲット', [...KARAAGE, 'fried_main']], ['チキンナゲット', [...KARAAGE, 'fried_main']], ['ケンタッキー', [...KARAAGE, 'chicken_thigh']], ['フライドチキン', [...KARAAGE, 'chicken_thigh']],
+    ['ファミチキ', 'fried_main/fried_chicken'], ['からあげクン', KARAAGE], ['ビッグマック', ['burger', 'burger_big']], ['マックポテト', 'fried_main/fries'], ['てりやきマックバーガー', 'burger/teriyaki'],
+    ['フィレオフィッシュ', 'burger/fish'], ['ナゲット', 'fried_main/nugget'], ['チキンナゲット', 'fried_main/nugget'], ['ケンタッキー', 'fried_main/fried_chicken'], ['フライドチキン', 'fried_main/fried_chicken'],
     ['吉野家', 'gyudon_class/gyudon'], ['すき家', 'gyudon_class/gyudon'], ['牛めし', 'gyudon_class/gyudon'], ['カップラーメン', [...RAMEN, 'noodle_ramen']], ['カップヌードル', [...RAMEN, 'noodle_ramen']],
     ['スタバ', 'sweet_drink_rich'], ['菓子パン', 'sweet_bread'], ['コンビニ弁当', 'bento'], ['サラダチキンバー', 'salad_chicken'], ['冷凍パスタ', PASTA],
   ]),
