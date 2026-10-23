@@ -69,7 +69,7 @@ export const TUNING_CORPUS: Item[] = [
     ['牛乳', 'milk'], ['低脂肪乳', 'milk/low_fat'], ['ヨーグルト', 'yogurt'], ['ギリシャヨーグルト', 'yogurt/greek'], ['飲むヨーグルト', 'yogurt/drink'],
     ['チーズ', 'cheese'], ['スライスチーズ', 'cheese/slice'], ['モッツァレラ', 'cheese/mozza'], ['カッテージチーズ', 'cheese_low_fat'], ['豆乳', 'soy_milk'],
     ['バター', 'butter_cream/butter'], ['マーガリン', 'butter_cream/margarine'], ['生クリーム', 'butter_cream/cream'], ['マヨネーズ', 'mayo'], ['マヨ', 'mayo'],
-    ['ドレッシング', 'dressing'], ['オリーブオイル', 'oil/olive'], ['ごま油', ['oil/sesame', 'oil']], ['ナッツ', 'nuts'], ['アーモンド', 'nuts'],
+    ['ドレッシング', 'dressing'], ['オリーブオイル', 'oil'], ['ごま油', 'oil'], ['ナッツ', 'nuts'], ['アーモンド', 'nuts'],
     ['くるみ', 'nuts'], ['ピーナッツ', 'nuts'], ['ミックスナッツ', 'nuts'],
   ]),
   ...C('おやつ・飲み物・酒', 'base', [

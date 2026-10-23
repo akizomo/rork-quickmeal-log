@@ -205,7 +205,7 @@ const BUCKET_RICE_DISH: Identity[] = [
     attributes: [
       // 牛丼 並盛: 吉野家 633/P19.6/F23.6/C88.2・松屋 687/P17.1/F28.9/C85.5 (公式)。旧 660/P25/F18 は kcal は
       // 合っていたが、たんぱく質が約3割多く脂質が約3割少なかった (チェーン公式との照合で検出)。
-      { key: 'gyudon', label: '牛丼', isDefault: true, searchTags: ['ぎゅうどん'], factor: { kcal: 0.97, protein: 0.76, fat: 1.39, carbs: 1.0 } },
+      { key: 'gyudon', label: '牛丼・豚丼', isDefault: true, searchTags: ['ぎゅうどん'], factor: { kcal: 0.97, protein: 0.76, fat: 1.39, carbs: 1.0 } },
       // 親子丼は卵が主菜のため egg を hidden（二重計上を避ける）
       { key: 'oyakodon', label: '親子丼', factor: { kcal: 0.94, protein: 1.12, fat: 0.82, carbs: 0.93 }, hiddenAddonIds: ['egg'], searchTags: ['おやこどん'] },
       // ねぎとろ丼は海鮮系 → rayu/kimchi は合わない
@@ -1124,7 +1124,7 @@ const BUCKET_MISC_DISH: Identity[] = [
       { key: 'menchi', label: 'メンチカツ', factor: { kcal: 0.8, protein: 0.5, fat: 0.85 }, defaultAddonIds: ['sauce', 'mayo'], amount: { unit: 'piece', default: 1, unitLabel: '個', chips: [{ label: '1個', value: 1 }, { label: '2個', value: 2 }, { label: '3個', value: 3 }] } },
       // エビフライは「本」で数える (3本 ≒ 280kcal、1本 ≒ 93)。既定量・計算値は不変で表示の単位だけ直す。
       { key: 'ebi_fry', label: 'エビフライ', factor: { kcal: 0.8, protein: 0.83, fat: 0.75 }, defaultAddonIds: ['tartar', 'lemon_squeeze'], amount: { unit: 'piece', default: 3, unitLabel: '本' } },
-      { key: 'fish_fry', label: '魚介揚げ', searchTags: ['ぎょかいあげ'], factor: { kcal: 0.8, protein: 0.83, fat: 0.75 }, defaultAddonIds: ['tartar', 'lemon_squeeze'] },
+      { key: 'fish_fry', label: '魚介フライ', searchTags: ['ぎょかいあげ', '魚介揚げ', 'ぎょかいふらい'], factor: { kcal: 0.8, protein: 0.83, fat: 0.75 }, defaultAddonIds: ['tartar', 'lemon_squeeze'] },
       { key: 'korokke', label: 'コロッケ', factor: { kcal: 0.57, protein: 0.22, fat: 0.6 }, defaultAddonIds: ['sauce'], amount: { unit: 'piece', default: 1, unitLabel: '個', chips: [{ label: '1個', value: 1 }, { label: '2個', value: 2 }, { label: '3個', value: 3 }] } },
       // チェーンの定番品はg表示が無く「何ピース」で数えるため、個数単位で上書きする。
       // factor は種類の既定量 (ナゲット5個 / フライドチキン2ピース) での値に合わせてある。

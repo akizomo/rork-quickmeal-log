@@ -90,7 +90,7 @@ export const JP_ANCHORS: UnitAnchor[] = [
   { key: 'milk/plain', kcal: [55, 75] },
   { key: 'cheese/slice', kcal: [300, 400] },
   { key: 'butter_cream/butter', kcal: [700, 780] },
-  { key: 'oil/olive', kcal: [700, 900] },
+  { key: 'oil', kcal: [700, 900] },
   { key: 'mayo', kcal: [600, 730] },
   { key: 'nuts/plain', kcal: [560, 680] },
   { key: 'chocolate/plain', kcal: [520, 600] },

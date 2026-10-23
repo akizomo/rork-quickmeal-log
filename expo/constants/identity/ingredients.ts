@@ -598,7 +598,8 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
     amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '1切', value: 80 }, { label: '1食', value: 100 }, { label: '2切', value: 160 }] },
     attributes: [
       { key: 'white', label: '白身魚（タラ・カレイ等）', isDefault: true },
-      { key: 'tuna_red', label: 'マグロ赤身', factor: { kcal: 1.67, protein: 1.65, fat: 2.0 } },
+      // ラベルに代表例を並べる (白身魚側と同じ形)。「マグロ赤身」だけだとカツオがここだと分からなかった。
+      { key: 'tuna_red', label: '赤身魚（マグロ・カツオ等）', searchTags: ['まぐろあかみ', 'マグロ赤身'], factor: { kcal: 1.67, protein: 1.65, fat: 2.0 } },
     ],
     styles: [
       { key: 'raw', label: '生・刺身', isDefault: true },
@@ -620,7 +621,7 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
           bucketKey: 'misc_dish',
           identityKey: 'fried_main',
           attributeKey: 'fish_fry',
-          confirmMessage: '魚介揚げとして記録します',
+          confirmMessage: '魚介フライとして記録します',
         },
       },
     ],
@@ -1493,7 +1494,7 @@ const BUCKET_VEGGIES: Identity[] = [
       { key: 'cauliflower', label: 'カリフラワー', factor: { kcal: 0.71, protein: 0.70, fat: 0.25, carbs: 1.0 } },
       { key: 'asparagus', label: 'アスパラガス', factor: { kcal: 0.63, protein: 0.60, fat: 0.50, carbs: 0.74 } },
       { key: 'brussels_sprouts', label: '芽キャベツ', factor: { kcal: 1.43, protein: 1.14, fat: 0.50, carbs: 1.80 }, searchTags: ['めきゃべつ'] },
-      { key: 'spinach', label: 'ほうれん草', factor: { kcal: 0.57, protein: 0.67, fat: 0.75, carbs: 0.62 }, searchTags: ['ほうれんそう'] },
+      { key: 'spinach', label: '青菜', factor: { kcal: 0.57, protein: 0.67, fat: 0.75, carbs: 0.62 }, searchTags: ['あおな', 'ほうれんそう', 'ほうれん草'] },
       // きのこ類 — 主要6種の平均値 (生/100g: kcal 20, P 2.5, F 0.4, C 3.4)。ブロッコリー比 factor
       { key: 'mushroom', label: 'きのこ', factor: { kcal: 0.57, protein: 0.58, fat: 1.00, carbs: 0.68 }, searchTags: ['きのこ', 'えのき', 'しいたけ', 'しめじ', 'エリンギ', 'まいたけ', 'なめこ'] },
     ],
@@ -1771,19 +1772,16 @@ const BUCKET_ADDED_FAT: Identity[] = [
       },
     ],
     amount: { unit: 'ml', default: 15, step: 5, chips: [{ label: '小さじ', value: 5 }, { label: '大さじ', value: 15 }] },
-    attributes: [
-      { key: 'olive', label: 'オリーブ', isDefault: true },
-      { key: 'sesame', label: 'ごま' },
-      { key: 'mct', label: 'MCT', factor: { kcal: 1.13 } },
-      { key: 'coconut', label: 'ココナッツ', factor: { kcal: 1.13 } },
-    ],
+    // 種類 (オリーブ / ごま / MCT / ココナッツ) は 2026-10-23 に廃止。油の種類でカロリーは
+    // ほぼ変わらず、§1.5「分割の軸はマクロの段差」に合わない。名前は searchTags で探せる。
+    // 旧ログの attrKey ('olive' 等) は表示で無視される (log-display は未知の種類を出さない)。
     asAddon: {
       unit: 'ml',
       unitAmount: 15,
       addedMacro: { kcal: 110, protein: 0, fat: 12, carbs: 0 },
       defaultLabel: '油',
     },
-    searchTags: ['あぶら', '油', 'サラダ油', 'さらだあぶら', 'ごま油', '胡麻油', 'ごまあぶら', 'オリーブオイル', 'おりーぶおいる', '植物油'],
+    searchTags: ['あぶら', '油', 'サラダ油', 'さらだあぶら', 'ごま油', '胡麻油', 'ごまあぶら', 'オリーブオイル', 'おりーぶおいる', '植物油', 'ココナッツオイル', 'MCTオイル', 'なたね油', '米油', 'えごま油', 'アマニ油'],
   },
   {
     id: 'butter_cream',
