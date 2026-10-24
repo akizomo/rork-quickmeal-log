@@ -208,6 +208,12 @@
       "providerUpdate": "Health Connect を更新",
       "syncError": "同期エラー · 権限を確認",
       "syncedAt": "ヘルス同期 · {{time}}",
+      "syncedNoData": "データを取得できませんでした · 許可を確認",
+      "noDataTitle": "ヘルスケアのデータを取得できませんでした",
+      "noDataBody": "ヘルスケアにデータが無いか、Hachibu に読み取りが許可されていない可能性があります。\n\n許可は、ヘルスケアアプリの右上のプロフィール → アプリ → Hachibu から変更できます。",
+      "openHealth": "ヘルスケアを開く",
+      "retrySync": "もう一度同期",
+
       "sync": "ヘルス同期"
     },
     "timeAgo": {
@@ -247,9 +253,9 @@
       "inactive": "プランを購入してフル機能を解放できます"
     },
     "trialEndDate": "本登録切替日: {{date}}",
-    "trialBody": "本登録後は月額¥480 または 年額¥4,800 で自動更新されます。解約は Google Play のサブスクリプション設定からいつでも可能です。",
+    "trialBody": "本登録後は、選んだプランで自動更新されます。解約は App Store のサブスクリプション設定からいつでも可能です。",
+    "trialBodyAndroid": "本登録後は月額¥480 または 年額¥4,800 で自動更新されます。解約は Google Play のサブスクリプション設定からいつでも可能です。",
     "planActions": {
-      "selectTrialing": "プランを選択する",
       "buyInactive": "購入してプレミアムを開始",
       "restore": "購入を復元",
       "manage": "サブスクリプションを管理",
@@ -283,6 +289,7 @@
     "perMonth": "{{price}} / 月",
     "perYear": "{{price}} / 年",
     "discount": "お得",
+    "discountMonths": "{{months}}ヶ月分お得",
     "select": "選ぶ",
     "restore": "購入を復元",
     "a11y": {
@@ -291,6 +298,9 @@
     "alerts": {
       "purchaseError": "購入に失敗しました",
       "purchaseErrorRetry": "時間をおいて再度お試しください。",
+      "notifyPreTitle": "終了前にお知らせします",
+      "notifyPreBody": "無料トライアルが終わる2日前に、通知でお知らせします。次の画面で、通知の許可をお願いします。",
+      "notifyPreOk": "次へ",
       "restoreFail": "復元できる購入が見つかりません",
       "restoreFailBody": "Apple IDかGoogleアカウントをご確認ください。"
     }

@@ -3,6 +3,8 @@ import React, { useMemo } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Linking,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -134,6 +136,7 @@ export default function StatusRoute() {
                   syncing={healthSync.syncing}
                   lastSyncedAt={healthSync.lastSyncedAt}
                   lastError={healthSync.lastError}
+                  lastSyncEmpty={healthSync.lastSyncEmpty}
                   onPress={async () => {
                     // プロバイダ未インストール / 要更新は Play Store へ明示遷移
                     if (
@@ -146,6 +149,14 @@ export default function StatusRoute() {
                     if (healthSync.status !== 'authorized') {
                       const granted = await healthSync.requestPermissions();
                       if (!granted) return;
+                    }
+                    // iOS は読み取りの拒否を検知できない。前回の同期が空だったときは、再同期の前に許可の確認方法を案内する
+                    if (Platform.OS === 'ios' && healthSync.status === 'authorized' && healthSync.lastSyncEmpty) {
+                      Alert.alert(t('status.health.noDataTitle'), t('status.health.noDataBody'), [
+                        { text: t('status.health.openHealth'), onPress: () => { Linking.openURL('x-apple-health://').catch(() => Linking.openSettings()); } },
+                        { text: t('status.health.retrySync'), onPress: () => { healthSync.syncNow().catch(() => undefined); } },
+                      ]);
+                      return;
                     }
                     await healthSync.syncNow();
                   }}
@@ -244,6 +255,7 @@ function HealthSyncRow({
   syncing,
   lastSyncedAt,
   lastError,
+  lastSyncEmpty,
   onPress,
   onLongPress,
 }: {
@@ -251,6 +263,7 @@ function HealthSyncRow({
   syncing: boolean;
   lastSyncedAt: string | null;
   lastError: string | null;
+  lastSyncEmpty: boolean;
   onPress: () => void;
   onLongPress?: () => void;
 }) {
@@ -261,9 +274,10 @@ function HealthSyncRow({
     if (status === 'provider_missing') return t('status.health.providerMissing');
     if (status === 'provider_update_required') return t('status.health.providerUpdate');
     if (lastError) return t('status.health.syncError');
+    if (status === 'authorized' && lastSyncedAt && lastSyncEmpty) return t('status.health.syncedNoData');
     if (status === 'authorized' && lastSyncedAt) return t('status.health.syncedAt', { time: formatRelativeTime(lastSyncedAt, t) });
     return t('status.health.sync');
-  }, [syncing, lastError, status, lastSyncedAt, t]);
+  }, [syncing, lastError, lastSyncEmpty, status, lastSyncedAt, t]);
 
   return (
     <Pressable

@@ -8,38 +8,37 @@
  * 保存済みの数値そのものを編集するので、Identity から再計算して値が変わることはない。
  * 直接入力ログに加え、IdentityLogSheet で選択状態を復元できない記録 (旧形式ログなど)
  * もここで開く。どの記録をここへ回すかは utils/log-edit-route.ts が決める。
+ *
+ * 2026-10-18: ネイティブ formSheet ルート (/direct-input) の中身に移行。検索ページの上に積んで開き、
+ * 閉じると検索ページに戻る (旧実装の「キャンセル時に検索シートを開き直す」onDismiss は不要になった)。
+ * 編集モードはルートパラメータ `editingLogId` で開く (記録一覧から `/direct-input?editingLogId=…`)。
  */
 
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 
-import { Body, BottomSheet, Label, Overline, useTheme } from '@/design-system';
+import { Body, Label, Overline, SheetScreen, useTheme } from '@/design-system';
 import { useT } from '@/hooks/useT';
 import { useAppState } from '@/providers/app-state-provider';
-import type { FoodLog } from '@/types/nutrition';
 import { applyNumericEdit, DIRECT_INPUT_CATEGORY_KEY } from '@/utils/log-edit-route';
 import { getLogDisplayInfo } from '@/utils/log-display';
 import { formatDateKey, generateId, getMealSlot } from '@/utils/nutrition';
 
 export { DIRECT_INPUT_CATEGORY_KEY };
 
-type Props = {
-  visible: boolean;
-  onClose: () => void;
-  /** Called on cancel only (not after a successful save) — e.g. to re-open search sheet. */
-  onDismiss?: () => void;
-  /** 編集対象の直接入力ログ。指定時は新規追加ではなく上書き保存する。 */
-  editingLog?: FoodLog | null;
-};
-
 type MacroKey = 'protein' | 'fat' | 'carbs';
 const MACRO_KEYS: MacroKey[] = ['protein', 'fat', 'carbs'];
 const KCAL_PER_GRAM: Record<MacroKey, number> = { protein: 4, fat: 9, carbs: 4 };
 
-export function DirectInputSheet({ visible, onClose, onDismiss, editingLog }: Props) {
+export function DirectInputSheet() {
+  const router = useRouter();
   const t = useTheme();
   const tr = useT();
-  const { pushLog, replaceLog, loggingDate, settings } = useAppState();
+  const { pushLog, replaceLog, loggingDate, settings, logs } = useAppState();
+  // 編集対象の記録。指定時は新規追加ではなく上書き保存する。
+  const { editingLogId: editingLogIdParam } = useLocalSearchParams<{ editingLogId?: string }>();
+  const editingLog = editingLogIdParam ? logs.find((l) => l.id === editingLogIdParam) ?? null : null;
 
   // 直接入力以外の記録 (旧形式ログなど) は名前が分類・表示の元になっているので、ここでは
   // 名前を変えずに数値だけ直す。名前は読み取り専用で見せる。
@@ -69,7 +68,7 @@ export function DirectInputSheet({ visible, onClose, onDismiss, editingLog }: Pr
   // PFC がすべて 0 の記録 (kcal だけ入力) は空欄に戻し、0 を入力したように見せない。
   const editingLogId = editingLog?.id;
   useEffect(() => {
-    if (!visible || !editingLog) return;
+    if (!editingLog) return;
     const { kcal: k, protein: p, fat: f, carbs: c } = editingLog.macro;
     const hasPfc = p > 0 || f > 0 || c > 0;
     kcalManuallyEdited.current = true;
@@ -82,7 +81,7 @@ export function DirectInputSheet({ visible, onClose, onDismiss, editingLog }: Pr
     setCarbsStr(hasPfc ? String(c) : '');
     // editingLog の参照はログ更新のたびに変わるので、id が変わったときだけ読み込む
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visible, editingLogId]);
+  }, [editingLogId]);
 
   // PFC から kcal を自動計算 (P×4 + F×9 + C×4)
   useEffect(() => {
@@ -168,9 +167,8 @@ export function DirectInputSheet({ visible, onClose, onDismiss, editingLog }: Pr
 
   const handleClose = useCallback(() => {
     reset();
-    onClose();
-    onDismiss?.();
-  }, [reset, onClose, onDismiss]);
+    router.back();
+  }, [reset, router]);
 
   const handleSave = useCallback(async () => {
     if (!canSave) return;
@@ -187,7 +185,7 @@ export function DirectInputSheet({ visible, onClose, onDismiss, editingLog }: Pr
         label: fixedName != null ? undefined : label,
       }));
       reset();
-      onClose();
+      router.back();
       return;
     }
 
@@ -213,18 +211,15 @@ export function DirectInputSheet({ visible, onClose, onDismiss, editingLog }: Pr
     });
 
     reset();
-    onClose();
-  }, [canSave, kcal, name, proteinStr, fatStr, carbsStr, loggingDate, pushLog, replaceLog, editingLog, fixedName, reset, onClose]);
+    router.back();
+  }, [canSave, kcal, name, proteinStr, fatStr, carbsStr, loggingDate, pushLog, replaceLog, editingLog, fixedName, reset, router]);
 
   return (
-    <BottomSheet
-      visible={visible}
-      onClose={handleClose}
+    <SheetScreen
       title={editingLog ? tr('directInput.editTitle') : tr('directInput.title')}
-      primaryAction={{ label: editingLog ? tr('common.save') : tr('directInput.record'), onPress: handleSave, disabled: !canSave }}
-      secondaryAction={{ label: tr('common.cancel'), onPress: handleClose }}
-      keyboardAware
-      expandToFull
+      cancelLabel={tr('common.cancel')}
+      onCancel={handleClose}
+      confirmAction={{ label: editingLog ? tr('common.save') : tr('directInput.record'), onPress: handleSave, disabled: !canSave }}
     >
       <View style={{ gap: t.spacing['5'] }}>
         {/* 名前 */}
@@ -303,7 +298,7 @@ export function DirectInputSheet({ visible, onClose, onDismiss, editingLog }: Pr
           <Body size="sm" tone="secondary">{tr('directInput.gramUnit')}</Body>
         </View>
       </View>
-    </BottomSheet>
+    </SheetScreen>
   );
 }
 

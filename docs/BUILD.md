@@ -35,10 +35,15 @@ npx eas-cli@18.12.2 build --profile production --platform ios --non-interactive
 
 > **iOS で Apple ID ログインが要る操作 (証明書の新規作成・更新) は `eas-cli@25.0.0` 以上を使う。** 18.12.2 では Apple 側の認証変更により `Authentication with Apple Developer Portal failed! iTunes service key is empty` で失敗する (2026-10-16 確認)。`npx` は eas-cli の取得に10分以上かかったため `bunx eas-cli@25.0.0 ...` を使った。証明書が EAS に保存された後の通常ビルドは `--non-interactive` で動く想定 (未検証)。
 >
-> **iOS のビルドイメージは `eas.json` で `macos-sequoia-15.6-xcode-26.0` (= EAS の `sdk-54` 対応イメージ) に固定している。外さないこと。**
-> Xcode 27 (iOS 27 SDK) でビルドすると UIScene ライフサイクル必須となり、RN 0.81 / Expo SDK 54 のアプリは起動直後に `EXC_BREAKPOINT` で落ちる (2026-10-16 ローカル Xcode 27.1 で実証)。`auto` / `latest` エイリアスは将来 Xcode 27 系へ動き得るため使わない。Expo SDK を上げるときはイメージも対応する `sdk-XX` の実体へ同時に更新する。
+> **iOS のビルドイメージは `eas.json` で `macos-tahoe-26.6-xcode-27.0` (= EAS の `sdk-58` 対応イメージ) に固定している。外さないこと。**
+> Xcode 27 (iOS 27 SDK) でビルドすると UIScene ライフサイクル必須となり、RN 0.81 / Expo SDK 54 のアプリは起動直後に `EXC_BREAKPOINT` で落ちる (2026-10-16 ローカル Xcode 27.1 で実証)。SDK 58 (RN 0.88) は Scene ライフサイクルに対応済みで、Xcode 27 で起動することを 2026-10-18 に Simulator で確認した (SDK 54 に戻す場合は `macos-sequoia-15.6-xcode-26.0` へ戻す)。
+> `auto` / `latest` エイリアスは将来イメージが動き得るため使わない。Expo SDK を上げるときはイメージも対応する `sdk-XX` の実体へ同時に更新する。
+> **27.0 に固定している理由**: Expo のイメージ一覧には 27.1 (RC) もあるが、ベータ/RC の Xcode でビルドしたものは App Store Connect が受け付けないことがある。正式版の 27.1 が EAS に出たら更新を検討する。イメージ名は eas.json では検証されず、誤りは cloud build の開始時にしか分からないので、変更時は [Expo のビルドサーバー一覧](https://docs.expo.dev/build-reference/infrastructure/) で名前を確認する。
 
 ---
+
+> **⚠️ 依存を増減したら `bun.lock` も更新してコミットする (2026-10-18)。** `expo/` には `bun.lock` と `package-lock.json` の両方がある。**EAS は `bun.lock` があれば bun で `--frozen-lockfile` インストールする**ため、`package.json` と食い違うと「Install dependencies」フェーズで `Unknown error` になる (`expo-location` を `npm uninstall` で外し、`package-lock.json` だけ更新して `bun.lock` を忘れた事故)。
+> 依存を触ったら、ビルド前に **`cd expo && bun install --lockfile-only && bun install --frozen-lockfile --dry-run`** を実行し、`bun.lock` の差分をコミットする。`npm ci` はローカルでは peer 依存 (lucide-react-native と react 19) で失敗するが、EAS は npm を使わないので無関係。
 
 ## 1. 前提条件
 
@@ -116,9 +121,10 @@ npx eas-cli@18.12.2 whoami
 | **development** | Dev Client (Expo Go の代わり) | APK | Simulator | ❌ |
 | **preview** | 内部配布・テスター向け | APK | Real device | ❌ |
 | **production** | 製品版 / ストア提出 | AAB | App Store | ✅ |
-| **testflight** | production と同設定 + paywall スキップボタン有効 (`EXPO_PUBLIC_ALLOW_PAYWALL_SKIP=true`)。TestFlight 実機確認専用 | (AAB) | App Store (TestFlight) | ✅ |
 
-> ⚠️ **審査に提出するビルドは必ず `production` プロファイル**。`testflight` / `preview` ビルドは paywall に `[TEST] Paywall スキップ` が出る。App Store Connect でバージョンに紐付けるビルド番号を間違えないこと (TestFlight 上はどちらも同じアプリ・連番で並ぶ)。
+> ⚠️ **審査に提出するビルド・TestFlight (内部/外部テスト) に出すビルドは、すべて `production` プロファイル。** `preview` ビルドは paywall に `[TEST] Paywall スキップ` が出る (Android の APK 配布用で、iOS の TestFlight には使わない)。
+> **`testflight` プロファイルは 2026-10-18 に廃止した** (paywall スキップ付きの TestFlight 用)。有料 App 契約が有効になり、TestFlight でも購入が Sandbox 扱いで試せるため不要になった。外部テストのベータ審査でスキップボタンが見えるのも避けたい。TestFlight でも本番と同じ見た目・同じ購入フローで確認する。
+> TestFlight に出すビルドは、そのまま審査にも使い回せる (App Store Connect でバージョンに紐付けるだけ。再ビルド不要)。
 
 **選び方の目安**:
 - 友人 5 人にインストールさせて即動作確認したい → `preview`
@@ -206,6 +212,11 @@ find expo/android -name "*.kt" | xargs grep -l "cornerRadius"
 ---
 
 ## 6. トラブルシューティング
+
+### ⚠️ `expo prebuild` で android/ のウィジェットが消える (SDK 58〜)
+SDK 58 から `npx expo prebuild` は既定で `android/` を作り直す (`--clean` 相当)。android/ はホーム画面ウィジェット (Kotlin・XML・receiver・Gradle 設定) を手で足して git 管理しているため、**そのまま実行すると全部消える**。
+- Android で prebuild が要るときは、実行後に `git status expo/android` で消えた/上書きされたファイルを確認し、ウィジェット関連 (widget/ 一式、res の layout/xml/drawable/values-night、colors.xml と strings.xml の widget_*、AndroidManifest の receiver、MainApplication の `WidgetBridgePackage`、build.gradle の Compose/Glance) と調整済みのスプラッシュ画像・アイコンを戻す (SDK 58 更新コミット b6e604a が手順の実例)
+- 恒久対応はウィジェットを config plugin 化して prebuild で毎回生成すること (未着手)
 
 ### iOS アプリが起動直後に落ちる (`NoSceneLifecycleAdoption`)
 クラッシュレポートに `_UIApplicationEvaluateRuntimeIssueForNoSceneLifecycleAdoption` があれば、Xcode 27 系でビルドされている。`eas.json` の `ios.image` が Xcode 26 系に固定されているか、ローカルなら `xcodebuild -version` を確認する。ローカル Mac が Xcode 27 しか無い場合、Simulator 確認は諦めて EAS → TestFlight で確認する。

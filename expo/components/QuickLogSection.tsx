@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
@@ -22,14 +23,13 @@ import { buildRegistry } from '@/constants/identity';
 import { deriveDefaultTab, FREQUENT_TAB_MIN_LOGS, rankFrequentIdentities, type RankedIdentity } from '@/utils/quick-log-history';
 import type { QuickLogTabKey } from '@/types/quick-log';
 import { widgetRequestPin } from '@/utils/widget-bridge';
-import { SearchSheet } from '@/components/SearchSheet';
 
 export const QUICK_LOG_TOKENS = {
   sectionPaddingHorizontal: 16,
   sectionPaddingTop: 8,
   sectionPaddingBottom: 8,
-  segmentHeight: 36,
-  segmentRadius: 18,
+  segmentHeight: 42, // 右の検索ボタン (IconButton lg = 42) と高さをそろえる
+  segmentRadius: 21,
   segmentBottomSpacing: 8,
   gridColumns: 3,
   gridGap: 8,
@@ -308,12 +308,12 @@ export const QuickLogSection = memo(function QuickLogSection() {
   const tr = useT();
   const { foodRegion: locale, uiLanguage } = useLocale();
   const { width: screenWidth } = useWindowDimensions();
-  const [searchOpen, setSearchOpen] = useState(false);
+  const router = useRouter();
 
   const handleOpenSearch = useCallback(() => {
     bumpDiagnostic('searchOpenCount');
-    setSearchOpen(true);
-  }, [bumpDiagnostic]);
+    router.push('/search');
+  }, [bumpDiagnostic, router]);
 
   const history = settings.quickLogHistory as import('@/types/quick-log').QuickLogHistoryMap | undefined;
   const totalHistoryEntries = useMemo(() => {
@@ -380,23 +380,23 @@ export const QuickLogSection = memo(function QuickLogSection() {
           options={segmentOptions}
           value={selectedTab}
           onChange={handleTabChange}
+          height={QUICK_LOG_TOKENS.segmentHeight}
+          borderRadius={QUICK_LOG_TOKENS.segmentRadius}
           style={{ flex: 1 }}
           testID="mode-tab"
         />
+        {/* 検索は記録の主要な入口なので、アイコンだけの ghost では見つけにくかった (2026-10-19 フィードバック)。
+            塗りほど主張させず、枠線で「押せるボタン」だと分かるようにし、アイコンも一段大きくする */}
         <IconButton
           icon="search"
-          size="md"
+          size="lg"
+          variant="outlined"
           tone="secondary"
           onPress={handleOpenSearch}
           accessibilityLabel={tr('quicklog.a11y.search')}
           testID="open-search"
         />
       </View>
-      <SearchSheet
-        visible={searchOpen}
-        onClose={() => setSearchOpen(false)}
-        onOpen={() => setSearchOpen(true)}
-      />
 
       {selectedTab === 'frequent' ? (
         <FrequentPills

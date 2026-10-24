@@ -83,7 +83,7 @@ function ButtonSection({
 
 // ---------- IconButton ----------
 function IconButtonSection({ t }: { t: Theme }) {
-  const variants: IconButtonVariant[] = ['ghost', 'filled'];
+  const variants: IconButtonVariant[] = ['ghost', 'filled', 'outlined'];
   const sizes: IconButtonSize[] = ['sm', 'md', 'lg'];
   const tones: IconButtonTone[] = ['secondary', 'tertiary', 'danger', 'action'];
 

@@ -1,8 +1,12 @@
 /**
- * Overlays — Dialog (中央配置) / BottomSheet (下からのシート) / Callout (吹き出し)。DEV 専用。
+ * Overlays — シートの見本。DEV 専用。
+ *
+ * 2026-10-18 からアプリ本体はネイティブ formSheet (SheetScreen / TallSheetScreen) を使う。
+ * 下の Dialog / BottomSheet (RN Modal ベース) は比較用に残しているだけで、新規には使わない (CLAUDE.md)。
+ * Callout (吹き出し) はシートの種類によらず使う。
  */
 
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import {
@@ -28,6 +32,7 @@ export default function OverlaysScreen() {
         style={{ backgroundColor: t.colors.surface.default }}
         contentContainerStyle={{ padding: t.spacing['5'], gap: t.spacing['8'] }}
       >
+        <FormSheetSection t={t} />
         <DialogSection t={t} />
         <BottomSheetSection t={t} />
         <CalloutSection t={t} />
@@ -36,13 +41,30 @@ export default function OverlaysScreen() {
   );
 }
 
-// ---------- Dialog ----------
+// ---------- formSheet (推奨) ----------
+function FormSheetSection({ t }: { t: Theme }) {
+  const router = useRouter();
+  return (
+    <Section title="formSheet (推奨)" t={t}>
+      <Caption>
+        react-native-screens のネイティブシート。開閉は router.push / back、スワイプ・背景タップ・
+        キーボード追従は OS が担う。中身の並びだけ SheetScreen / TallSheetScreen で揃える。
+      </Caption>
+      <View style={{ gap: t.spacing['2'] }}>
+        <Button label="SheetScreen (中身の高さ・数字入力)" variant="secondary" onPress={() => router.push('/dev/components/sheet-small')} />
+        <Button label="TallSheetScreen (60%/100%・固定フッター)" variant="secondary" onPress={() => router.push('/dev/components/sheet-tall')} />
+      </View>
+    </Section>
+  );
+}
+
+// ---------- Dialog (旧・比較用) ----------
 function DialogSection({ t }: { t: Theme }) {
   const [withFooterOpen, setWithFooterOpen] = useState(false);
   const [minimalOpen, setMinimalOpen] = useState(false);
 
   return (
-    <Section title="Dialog" t={t}>
+    <Section title="Dialog (旧・比較用)" t={t}>
       <Caption>
         中央配置のモーダル。header/footer が無い側は content 自身が広めの余白
         (spacing.5) を持ち、ある側は控えめ (spacing.2) になる。
@@ -85,7 +107,7 @@ function BottomSheetSection({ t }: { t: Theme }) {
   const [count, setCount] = useState(0);
 
   return (
-    <Section title="BottomSheet" t={t}>
+    <Section title="BottomSheet (旧・比較用)" t={t}>
       <Caption>
         Material 3 / HIG 準拠 — 退場アニメ完走を待ってから unmount。drag handle から
         下スワイプで dismiss、scrim タップでも dismiss。

@@ -126,7 +126,7 @@ export const UndoToast = memo(function UndoToast() {
       onAccessibilityEscape={dismissUndo}
       testID="undo-toast"
     >
-      <View>
+      <View style={styles.textCol}>
         <Text style={styles.undoTitle}>
           {tr(active.kind === 'delete' ? 'undoToast.deleted' : 'undoToast.recorded', {
             label: getLogDisplayInfo(active.log, settings.uiLanguage).title,
@@ -142,7 +142,8 @@ export const UndoToast = memo(function UndoToast() {
 });
 
 const makeStyles = (t: Theme) => StyleSheet.create({
-  undoToast: { position: 'absolute', left: 18, right: 18, bottom: 24, borderRadius: radius.xl, paddingHorizontal: 20, paddingVertical: 15, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  undoToast: { position: 'absolute', left: 18, right: 18, bottom: 24, borderRadius: radius.xl, paddingHorizontal: 20, paddingVertical: 15, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
+  textCol: { flexShrink: 1 },
   undoTitle: { color: t.colors.content.inverse, fontSize: fs.md, fontWeight: '700' },
   undoText: { fontSize: fs.sm, marginTop: 4 },
   undoAction: { fontSize: fs.md, fontWeight: '700' },

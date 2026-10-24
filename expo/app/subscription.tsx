@@ -43,7 +43,7 @@ export default function SubscriptionRoute() {
       : null;
   const trialEndLabel = trialEndDate
     ? t('subscription.trialEndDate', {
-        date: `${trialEndDate.getMonth() + 1}/${trialEndDate.getDate()} (${trialDays}d)`,
+        date: `${trialEndDate.getMonth() + 1}/${trialEndDate.getDate()}`,
       })
     : null;
 
@@ -96,12 +96,12 @@ export default function SubscriptionRoute() {
                 <Caption tone="secondary">{statusSub}</Caption>
                 {trialEndLabel ? (
                   <Caption tone="secondary" style={{ marginTop: 4 }}>
-                    {t('subscription.trialEndDate', { date: trialEndLabel })}
+                    {trialEndLabel}
                   </Caption>
                 ) : null}
                 {status === 'trialing' && trialDays > 0 ? (
                   <Body size="sm" tone="secondary" style={{ marginTop: 4 }}>
-                    {t('subscription.trialBody')}
+                    {t(Platform.OS === 'android' ? 'subscription.trialBodyAndroid' : 'subscription.trialBody')}
                   </Body>
                 ) : null}
               </Card>
@@ -111,12 +111,13 @@ export default function SubscriptionRoute() {
             <View style={styles.section}>
               <SettingsSectionLabel>{t('subscription.sections.plan')}</SettingsSectionLabel>
               <SettingsListCard>
-                {status !== 'active' ? (
+                {/* トライアル中・契約中は出さない: トライアル中はすでにストアのサブスクを開始済みで、
+                    paywall のプラン選択は無効になる (押せない画面に飛ぶだけ)。プラン変更は「サブスクリプションを管理」から。
+                    購入の入口が要るのは未加入 (期限切れ・解約後) のときだけ。 */}
+                {status !== 'active' && status !== 'trialing' ? (
                   <>
                     <SettingsLinkRow
-                      label={status === 'trialing'
-                        ? t('subscription.planActions.selectTrialing')
-                        : t('subscription.planActions.buyInactive')}
+                      label={t('subscription.planActions.buyInactive')}
                       onPress={() => router.push('/paywall')}
                       testID="subscription-link-paywall"
                     />

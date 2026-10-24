@@ -12,15 +12,15 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import {
-  BottomSheet,
   Callout,
   Caption,
   Chip,
   Icon,
   IconButton,
+  TallSheetScreen,
   useTheme,
 } from '@/design-system';
-import { AmountEditDialog } from '@/components/AmountEditDialog';
+import { openAmountEditor } from '@/components/AmountEditSheet';
 import { buildIdentityAmountEditConfig } from '@/utils/amount-edit';
 import { useAppState } from '@/providers/app-state-provider';
 import { useLocale } from '@/hooks/useLocale';
@@ -171,7 +171,6 @@ export function IdentityLogSheet() {
   const [attributeKey, setAttributeKey] = useState<string | undefined>(undefined);
   const [styleKey, setStyleKey] = useState<string | undefined>(undefined);
   const [amountValue, setAmountValue] = useState<number>(0);
-  const [amountEditorOpen, setAmountEditorOpen] = useState(false);
   // 量欄の表示単位切替 (例: 唐揚げ g⇔個)。保存・計算は常に amountValue (主単位)
   // で行い、これは入力の便宜のための表示モードに過ぎない。
   const [amountModeAlt, setAmountModeAlt] = useState(false);
@@ -190,7 +189,6 @@ export function IdentityLogSheet() {
       setAttributeKey(undefined);
       setStyleKey(undefined);
       setAmountValue(0);
-      setAmountEditorOpen(false);
       setAmountModeAlt(false);
       setAddons([]);
       return;
@@ -517,6 +515,19 @@ export function IdentityLogSheet() {
     );
   }, [editingLog, deleteLog, updateLivePreview, closeIdentityLogSheet, tr]);
 
+  // 量の直接入力は記録シートの上に積む formSheet (/amount-edit) で行う
+  const openAmountSheet = useCallback(() => {
+    if (!amountConfig) return;
+    openAmountEditor({
+      config: amountConfig,
+      initialValue: displayAmountValue,
+      testID: 'ils-amount-dialog',
+      onDone: (next) => {
+        if (next !== null) setAmountValue(isAltMode && altAmountSpec ? next * altAmountSpec.gramsPerUnit : next);
+      },
+    });
+  }, [amountConfig, displayAmountValue, isAltMode, altAmountSpec]);
+
   const canSave = !!resolved && resolved.totalMacro.kcal > 0;
 
   // 記録時の安心ヒント (PRD §6.5.2)。詳細シートで初めて kcal が出たときに生涯1回だけ。
@@ -564,10 +575,7 @@ export function IdentityLogSheet() {
   }, [amountBasis, addons]);
 
   return (
-    <>
-    <BottomSheet
-      visible={visible}
-      onClose={closeIdentityLogSheet}
+    <TallSheetScreen
       title={bucket ? `${bucket.emoji} ${bucket.label}` : ''}
       primaryAction={{
         label: editingLog ? tr('identityLog.update') : tr('identityLog.save'),
@@ -606,12 +614,8 @@ export function IdentityLogSheet() {
           />
         </View>
       }
-      // Fixed half-screen sheet. `expandToFull` keeps the sheet from shrinking
-      // to its intrinsic content height, so chip rows / Add-on toggles / amount
-      // edits don't cause the sheet to "jump" up and down while the user is
-      // interacting. The internal ScrollView absorbs any overflow.
-      maxHeightRatio={0.6}
-      expandToFull
+      // 高さはネイティブシートの detent (app/_layout.tsx の tallSheetOptions) で固定。
+      // 中身の増減でシートが上下しないよう、はみ出しは本文の ScrollView が吸収する
       testID="identity-log-sheet"
     >
       {bucket && origin ? (
@@ -724,7 +728,7 @@ export function IdentityLogSheet() {
               </ChipRow>
             ) : null}
             <Pressable
-              onPress={() => setAmountEditorOpen(true)}
+              onPress={openAmountSheet}
               style={[
                 ilsStyles.amountRow,
                 {
@@ -795,22 +799,7 @@ export function IdentityLogSheet() {
               via `footerLeft={<FooterPreview ... />}`, EC-cart style. */}
         </>
       ) : null}
-      {/* iOS は表示中の Modal の「兄弟」として別の Modal を出せない (何も表示されず黙って失敗する)。
-          シートの子として描画し、ネストした Modal として上に重ねる。 */}
-      {amountConfig ? (
-        <AmountEditDialog
-          visible={amountEditorOpen}
-          config={amountConfig}
-          initialValue={displayAmountValue}
-          onClose={(next) => {
-            setAmountEditorOpen(false);
-            if (next !== null) setAmountValue(isAltMode && altAmountSpec ? next * altAmountSpec.gramsPerUnit : next);
-          }}
-          testID="ils-amount-dialog"
-        />
-      ) : null}
-    </BottomSheet>
-    </>
+    </TallSheetScreen>
   );
 }
 

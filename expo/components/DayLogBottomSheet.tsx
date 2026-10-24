@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import React, { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import {
   Animated,
@@ -11,7 +12,6 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { DirectInputSheet } from '@/components/DirectInputSheet';
 import { MealLogCard, useTheme } from '@/design-system';
 import { useT } from '@/hooks/useT';
 import { spring } from '@/design-system/tokens/primitives/motion';
@@ -92,17 +92,15 @@ export const DayLogBottomSheet = memo(
   forwardRef<DayLogBottomSheetRef, Props>(function DayLogBottomSheet({ viewedDate }, ref) {
   const t = useTheme();
   const tr = useT();
+  const router = useRouter();
   const { logs, todayLogs, todayMacro, settings } = useAppState();
   const { height: screenHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
 
-  // 数値で編集するシートは 1 つだけ持つ。閉じるアニメーション中も内容を保つため、
-  // 対象の記録は閉じても保持し、開閉は open で管理する。
-  const [numericEdit, setNumericEdit] = useState<{ log: FoodLog; open: boolean } | null>(null);
-  const handleEditNumeric = useCallback((log: FoodLog) => setNumericEdit({ log, open: true }), []);
-  const handleCloseNumericEdit = useCallback(
-    () => setNumericEdit((prev) => (prev ? { ...prev, open: false } : prev)),
-    [],
+  // 数値で編集する記録は formSheet ルート (/direct-input) を編集モードで開く。
+  const handleEditNumeric = useCallback(
+    (log: FoodLog) => router.push({ pathname: '/direct-input', params: { editingLogId: log.id } }),
+    [router],
   );
 
   const today = useMemo(() => new Date(), []);
@@ -300,11 +298,6 @@ export const DayLogBottomSheet = memo(
           )}
         </ScrollView>
       </Animated.View>
-      <DirectInputSheet
-        visible={numericEdit?.open ?? false}
-        editingLog={numericEdit?.log ?? null}
-        onClose={handleCloseNumericEdit}
-      />
     </>
   );
 }));
@@ -312,7 +305,7 @@ DayLogBottomSheet.displayName = 'DayLogBottomSheet';
 
 const styles = StyleSheet.create({
   backdrop: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   sheet: {
     position: 'absolute',

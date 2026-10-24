@@ -481,7 +481,7 @@ export function BottomSheet({
             backdrop-filter を確実に適用。scrimOpacity でフェード制御。
             シートは fade しない（slide のみ）。 */}
         <Animated.View
-          style={[StyleSheet.absoluteFillObject, { opacity: scrimOpacity }]}
+          style={[StyleSheet.absoluteFill, { opacity: scrimOpacity }]}
           pointerEvents={visible ? 'auto' : 'none'}
         >
           {Platform.OS === 'web' ? (
@@ -656,7 +656,7 @@ export function BottomSheet({
 const styles = StyleSheet.create({
   fill: { flex: 1 },
   scrimTint: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: `rgba(0,0,0,${SCRIM_TINT_OPACITY})`,
   },
   sheet: {

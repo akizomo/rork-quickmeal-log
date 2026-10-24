@@ -155,3 +155,72 @@
 - **ただし今は移せない**: 呼び出し元の IdentityLogSheet / DishQuickEntrySheet が背の高い BottomSheet (RN `<Modal>`) のまま。ネイティブ formSheet はナビゲーションの画面から出るので、RN Modal の**上には出せない** (UIKit は表示中の Modal がある画面から別の画面を出せない。今回「量調整が開かない」と同じ種類の不具合になる。未検証の推定)
 - → **SDK 58 で背の高いシートを formSheet 化するときに一緒に移す**。そのとき「値を呼び出し元へ返す」仕組み (今は `onClose(next)` コールバック) をルートのパラメータ + 状態への直接書き込みに置き換える
 - それまでは 2026-10-17 の修正 (シートの子として描画するネスト Modal) で運用
+
+### 7-6. SDK 58 での再検証 (2026-10-18, sdk-58-upgrade ブランチ / Xcode 27.1 / iOS 27.1 Simulator)
+- **起動**: Xcode 27 でビルドしたアプリが iOS 27 で正常に起動 (SDK 58 の Scene ライフサイクル対応で、SDK 54 の起動直後クラッシュは解消)
+- **背の高い formSheet (スパイク B)**: SDK 54 で出ていた問題がすべて解消
+  - 本文先頭が見出しの上にはみ出して描画される不具合 → **解消** (react-native-screens 4.30 の修正と一致)
+  - `flex: 1` の本文スクロール + 固定フッター → **成立** (SDK 54 ではフッターが画面外へはみ出していた)
+  - 最下部の入力欄 → `automaticallyAdjustKeyboardInsets` でキーボードの真上までスクロールされ、描画ずれも無し
+- 結論: **背の高いシート (IdentityLogSheet / DishQuickEntrySheet / LogEditorSheet / 検索) も formSheet に移行できる**。量調整ダイアログ (§7-5) も同時に移せる
+- 既存の BottomSheet 実装 (検索シート + キーボード、2026-10-17 の修正) も SDK 58 で表示崩れなし
+- 未確認: Android 全般 (android/ の作り直しが未了)、HealthKit の許可ダイアログと実データ取得
+
+## 8. 全面移行 (2026-10-18, sdk-58-ios-sheets ブランチ)
+
+状態: コード有・tsc / jest / i18n 通過。iOS 27 Simulator での確認は §8-3 (Android は未確認)。
+
+### 8-1. 移行先の対応表
+| 旧 | 新 | 種別 |
+|---|---|---|
+| IdentityLogSheet (BottomSheet, グローバル) | `/log-identity` | tallSheetOptions + TallSheetScreen |
+| DishQuickEntrySheet (BottomSheet, グローバル) | `/dish-entry` | 同上 |
+| LogEditorSheet (BottomSheet, HomeScreen) | `/log-editor` | 同上 |
+| ExerciseSheet (BottomSheet, StatusCard) | `/exercise?dateKey=` | 同上 |
+| AmountEditDialog (Dialog) | `/amount-edit` (`openAmountEditor()`) | formSheetOptions + SheetScreen。数字キーボード右上の「保存」カプセル |
+| 体重 / 体脂肪 (BottomSheet ×4) | `/record-body?kind=` (10-17 済) | 同上 |
+| DirectInputSheet (BottomSheet) | `/direct-input` | 同上 |
+| BalanceModal (Dialog) | `/balance` | 同上 (右上 ×) |
+| WeeklyBalanceSheet (BottomSheet) | `/weekly-balance` | 同上 |
+| 週の収支「やめる」確認 (Dialog ×2) | `Alert.alert` (destructive) | iOS 標準アラート |
+| SearchSheet (BottomSheet) | `/search` (下層ページ) | `headerSearchBarOptions` (UISearchController) |
+| 見つからなかった食品の編集 (Dialog) | `/search-miss-edit?q=` | formSheetOptions + SheetScreen |
+| app/modal.tsx (テンプレートの残骸) | 削除 | — |
+
+アプリ本体 (app/ と components/) の RN `<Modal>` / `BottomSheet` / `Dialog` の利用は **ゼロ**。両部品は /dev の比較用に残す (削除は Android での確認後に判断)。
+
+### 8-2. 値の受け渡し
+- 開閉の状態を app-state が持っていたもの (記録シート / 一皿料理 / ログ編集) は、**状態はそのまま**にして、開くときにルートを push、状態が閉じたらルートが `router.back()`、スワイプで閉じられたらルートのアンマウント時に状態を閉じる (`app/log-identity.tsx` 等)
+- 量入力の結果は `openAmountEditor({ onDone })` (zustand の小さなストア) で返す
+- StatusCard が計算した値 (収支・週の収支) は `utils/sheet-props.ts` で渡す
+- 旧 `openIdentityLogSheet({ onDismiss })` の「キャンセルで検索シートを開き直す」は、検索がページになり記録シートを閉じれば検索に戻るので使わなくなった (仕組みは残置)
+
+### 8-x. 背の高いシートの描画ずれ: SDK 58 でも「書き方」で防ぐ必要があった (2026-10-18)
+§7-6 のスパイク B は正常に見えたが、`TallSheetScreen` (見出し + `flex: 1` の ScrollView + フッター) では SDK 58 でも本文が見出しの上へ約 70pt はみ出して描画された。
+- **原因**: react-native-screens は formSheet 内の ScrollView の frame を「シート全体」に補正する (`RNSScreen.mm` `applyFrameCorrectionForDescendantScrollView`)。ScrollView が画面直下の子でない場合は `setFrame:self.frame` のフォールバックになり、Yoga が置いた位置 (見出しの下) が無視される。
+- **効果が無かった対処**: ScrollView を View で包む / `sheetExpandsWhenScrolledToEdge: false` / 初期 detent の変更 / 横スクロールのチップ列を外す / 見出しに `collapsable={false}`。
+- **効いた対処**: ScrollView を画面直下の最初の子にして `absoluteFill`、見出しとフッターは 1 枚のオーバーレイ (`pointerEvents="box-none"`) にして ScrollView の上に重ね、実測した高さを本文の余白 (`paddingTop` / `paddingBottom`) に足す。画面直下を 2 要素に保つ (3 つ以上だと `RNSScreenContentWrapper` が警告する)。
+- 実装は `design-system/components/TallSheetScreen.tsx`。**背の高い formSheet は必ずこの部品を使う** (自前で ScrollView を並べない)。
+
+### 8-y. Android の確認結果 (2026-10-24, Android 17 エミュレータ / android-sdk58 ブランチ)
+SDK 58 + formSheet / 下層ページ移行 + main (旧エディタ撤去) を統合した状態で、デバッグビルドを Android エミュレータで確認した。**実機・リリースビルド (R8) は未確認**。
+
+| 項目 | 結果 |
+|---|---|
+| 起動 → ホーム表示 | ○ |
+| 検索ページ (ナビゲーションバー検索): 開くと検索欄に自動フォーカス / キーボード表示 / 結果表示 | ○ (`headerSearchBarOptions.autoFocus` は Android で効く) |
+| 検索 → 結果をタップ → 記録シート (`/log-identity`): 60% で開く / 引き上げて全高 / 下端固定のフッターで保存 | ○ ただし下記の修正が必要だった |
+| 数値入力 (`/direct-input`) シート: キーボードにシートが追従して全項目が見える | ○ (SDK 54 の自作シートで未解決だった Android のキーボード回避が解消) |
+| 数値入力で記録 → ホームに戻り合計が増え、取り消しトーストが出る | ○ |
+| 記録一覧の数値の記録をタップ → 編集モード (`/direct-input?editingLogId=`) が値入りで開く | ○ |
+| 運動シート (`/exercise`) | ○ (修正後。フッターは同じ `TallSheetScreen`) |
+| ウィジェット表示 / Health Connect の実データ / リリースビルド (R8) | 未確認 |
+
+**🐛 Android の背の高い formSheet はフッターが画面の外に出る (修正済)**
+- 症状: `tallSheetOptions` の detent `[0.6, 1.0]` だと、最初の 60% の高さでシートが開き、**JS で下端に置いたフッター (kcal と保存ボタン) が見えず記録できない**。
+- 原因: Android の formSheet は中身を「最大の detent の高さ」で配置したまま上から見せる。`onLayout` の実測でオーバーレイの高さが 923dp (画面全体) だった。「コンテナの下端」は 60% のシートの下端ではなく、画面の外にある。iOS は detent の高さに中身が収まる。
+- **当初の対処 (不採用)**: Android だけ detent を全高 `[1.0]` 1 段にした。フッターは見えるが、60% で開く可変の高さが Android から失われ、短い中身では余白が大きい。
+- **採用した対処**: react-native-screens の **`unstable_sheetFooter` (Android 専用、formSheet の下端に固定されるフッター)** に `TallSheetScreen` のフッターを渡す。detent は iOS と同じ `[0.6, 1.0]` のまま。フッターは見えている範囲の下端に固定され、引き上げて全高にしても下端に残る (記録シートで確認)。`unstable_` の名のとおり将来 API が変わりうる。見出しとスクロール領域は従来どおり JS のオーバーレイ。
+- 未確認: `footerAccessory` (記録時の安心ヒント `Callout`) をネイティブのフッターの中に出したとき、上方向にはみ出して描画されるか (高さ 0 のアンカーに絶対配置している)。
+
+**検証で触った main との統合の差分**: `DirectInputSheet` はルート化したまま main の編集モードを取り込み、編集対象は `editingLogId` ルートパラメータで渡す (記録一覧から push)。`TallSheetScreen` に `footerAccessory` を追加 (記録時の安心ヒント `Callout` を従来の位置に出すため)。

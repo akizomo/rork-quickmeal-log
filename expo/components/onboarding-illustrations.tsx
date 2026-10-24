@@ -890,7 +890,7 @@ const frequentStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   tabPill: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     borderRadius: radius.full,
   },
   tabSegmentText: {

@@ -8,6 +8,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
+import type { TextInputInstance } from 'react-native';
 
 import { Caption, SheetScreen, useTheme } from '@/design-system';
 import { radius } from '@/design-system/tokens/primitives/radius';
@@ -44,7 +45,7 @@ export default function RecordBodyRoute() {
   const kind: RecordBodyKind = params.kind === 'bodyFat' ? 'bodyFat' : 'weight';
   const { profile, addWeightEntry, addBodyFatEntry } = useAppState();
   const [value, setValue] = useState<string>('');
-  const inputRef = useRef<TextInput>(null);
+  const inputRef = useRef<TextInputInstance>(null);
 
   useEffect(() => {
     const id = setTimeout(() => inputRef.current?.focus(), AUTO_FOCUS_DELAY_MS);

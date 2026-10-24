@@ -7,7 +7,6 @@
     "icon": "./assets/images/icon.png",
     "scheme": "hachibu",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
@@ -70,14 +69,17 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "バーコードをスキャンして食品の栄養情報を取得するためにカメラを使用します。"
+          "cameraPermission": "バーコードをスキャンして食品の栄養情報を取得するためにカメラを使用します。",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
         }
       ],
       [
-        "react-native-health",
+        "@kingstinct/react-native-healthkit",
         {
-          "isClinicalDataEnabled": false,
-          "healthSharePermission": "歩数・運動・体重・体脂肪率などのヘルスデータを取り込んで、毎日のカロリー目標調整に使います。"
+          "NSHealthShareUsageDescription": "歩数・運動・体重・体脂肪率などのヘルスデータを取り込んで、毎日のカロリー目標調整に使います。",
+          "NSHealthUpdateUsageDescription": "Hachibu はヘルスケアのデータを読み取って使うだけで、ヘルスケアへ書き込むことはありません。",
+          "background": false
         }
       ],
       "react-native-health-connect",
@@ -92,7 +94,18 @@
       "./plugins/health-connect-manifest.plugin.js",
       "./plugins/ios-pods-deployment-target.plugin.js",
       "@sentry/react-native",
-      "expo-localization"
+      "expo-localization",
+      "expo-image",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-logo.png",
+          "imageWidth": 185,
+          "resizeMode": "contain",
+          "backgroundColor": "#355E52"
+        }
+      ],
+      "expo-status-bar"
     ],
     "experiments": {
       "typedRoutes": true

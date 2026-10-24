@@ -36,7 +36,7 @@ UI の実装・修正を行う際は**必ず以下の順序**で参照するこ�
 
 0. **`expo/app/dev/` にトークン/コンポーネントのショーケース画面がある（一般的なデザインシステムに合わせた Foundations / Components 2系統構成）**
    - `/dev/foundations` — Colors / Typography / Spacing / Radius / Elevation / **Motion** の各ページ (`expo/app/dev/foundations/*.tsx`)。Motion は duration/easing/spring を実際にアニメーション再生して比較できる。
-   - `/dev/components` — Buttons (Button/IconButton) / Inputs (NumberField/SelectCard/Chip) / Data Display (Typography/Card/Badge) / Overlays (Dialog/BottomSheet) の各ページ (`expo/app/dev/components/*.tsx`)。
+   - `/dev/components` — Buttons (Button/IconButton) / Inputs (NumberField/SelectCard/Chip) / Data Display (Typography/Card/Badge) / Overlays (SheetScreen/TallSheetScreen と、比較用に残した旧 Dialog/BottomSheet) の各ページ (`expo/app/dev/components/*.tsx`)。
    - 共通の `Section`/`NavList` 等の見た目ヘルパーは `expo/app/dev/_shared.tsx` (routing対象外)。
    - 新しいトークンやコンポーネントを追加・変更したら、**必ず該当カテゴリのページにも反映する**。LAN/Simulator/Web からそのまま確認できる。
 
@@ -100,12 +100,14 @@ UI の実装・修正を行う際は**必ず以下の順序**で参照するこ�
      - `duration.fast(120)`=マイクロフィードバック、`short(200)`=退場、`medium(300)`=画面内遷移、`long(450)`=入場、`xlong(600)`=長い演出。
      - `easing.standard`=汎用/画面遷移、`enter`=入場(減速)、`exit`=退場(加速)。`spring.enter/exit/snap/pop` も同様に用途別。
      - **既存トークンと数値がほぼ同じ独自定義 (例: 独自の `MD3_STANDARD` 定数) を見つけたら、トークン側に寄せて重複を解消する。** 明確に異なるチューニングが必要な場合のみ、独自定数を保持してよいが、その理由をコメントで明記し、トークン名を騙る紛らわしい命名 (`MD3_*` 等) は避ける。
-   - 生の RN `<Modal>` を直接使わない。モーダル/ボトムシートが必要な場合は必ず `design-system` の `Dialog`（中央配置）または `BottomSheet`（下からのシート）を使う。
-   - **BottomSheet と TextInput のキーボードルール（違反するとキーボードがシートを隠す）**
-     - TextInput を含む BottomSheet には必ず `keyboardAware={true}` を付ける。
-     - `keyboardAware` は **iOS のみ機能する**（`keyboardWillShow` イベントでシートを translateY）。**Android の Modal は Activity の `windowSoftInputMode="adjustResize"` を継承しない別 Window で動くため、JS 側の補正も効かない。Android での Modal 内キーボード回避は未解決の既知制限。**
-     - BottomSheet 内で TextInput を auto-focus する場合、delay は **spring アニメーション完了後 (≥650ms)** にする。短い delay は spring とキーボード出現が競合する。
-     - **TextInput を auto-focus する Dialog は BottomSheet に変換しない。** Android でキーボードが回避できず UX が破綻する。量調整系 (`AmountEditDialog`) はこれに該当し Dialog を維持する。
+   - **シート・モーダルはネイティブ formSheet ルートで作る** (2026-10-18 移行。経緯は [docs/SHEET_MIGRATION.md](./docs/SHEET_MIGRATION.md))。生の RN `<Modal>` も、Modal ベースの design-system `BottomSheet` / `Dialog` も新規には使わない (アプリ本体の利用はゼロ。両部品は /dev の比較用に残しているだけ)
+     - 中身の高さで収まるシート → `app/<name>.tsx` を作り、`app/_layout.tsx` で `<Stack.Screen name="<name>" options={formSheetOptions(t)} />`、中身は `SheetScreen` (上部バー: 左キャンセル / 中央タイトル / 右確定 or ×)
+     - 背の高いシート (チップ群・スクロールが要る) → `tallSheetOptions(t)` + `TallSheetScreen` (見出し + 本文 ScrollView + 固定フッター)
+     - 確認だけのダイアログ → `Alert.alert` (破壊的な操作は `style: 'destructive'`)。検索のような一覧 → シートではなく下層ページ (`headerSearchBarOptions`)
+     - 開閉は `router.push('/<name>')` / `router.back()`。値を返したいときは props ではなく状態 (app-state / 小さな zustand ストア。例: `openAmountEditor` / `utils/sheet-props.ts`) で受け渡す。シートはスワイプでも閉じるので、**閉じたときの後始末はルートのアンマウント時に行う** (`app/log-identity.tsx` 参照)
+     - formSheet 内の TextInput はシート自体がキーボードに追従するので `keyboardAware` のような指定は要らない。背の高いシートの最下部の入力は `TallSheetScreen` の ScrollView (`automaticallyAdjustKeyboardInsets`) が見える位置までスクロールする。自動フォーカスの delay は 400ms (提示アニメと競合しないことを確認済み)
+     - 数字の入力は `keyboardType="decimal-pad"` + `returnKeyType="done"` + `inputAccessoryViewButtonLabel="保存"` で、iOS はキーボード右上の OS 標準カプセルを確定ボタンにする (`SheetScreen` の `confirmPlacement="return-key"` と組み合わせ、上部バーの確定は出さない)
+     - **formSheet は SDK 58 (react-native-screens 4.30) 以上が前提**。SDK 54 では formSheet 内の ScrollView の描画がずれた (SHEET_MIGRATION.md §7)
    - アイコン単体のタップ領域 (close/削除/前後ナビ等) は必ず `IconButton` (`design-system/components/IconButton.tsx`) を使う。`Pressable + Icon` の手書きは禁止。`variant`(ghost/filled) と `size`(sm/md/lg) と `tone`(secondary/tertiary/danger/action) で表現し、新しい組み合わせが要る場合は `IconButton` 側を拡張する。
 
 3. **コンポーネントは既存の流用を優先する**

@@ -8,9 +8,9 @@ import {
   StyleSheet,
   Text,
   View,
-  ViewToken,
   useWindowDimensions,
 } from 'react-native';
+import type { ListViewToken } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Logo } from '@/components/Logo';
 import { ButtonGridIllustration, GestureDemoIllustration, IntroProgressIllustration } from '@/components/onboarding-illustrations';
@@ -63,7 +63,7 @@ export default function IntroRoute() {
   const listRef = useRef<FlatList<Slide>>(null);
   const { width: screenWidth } = useWindowDimensions();
 
-  const onViewable = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
+  const onViewable = useRef(({ viewableItems }: { viewableItems: ListViewToken[] }) => {
     const first = viewableItems[0];
     if (first && typeof first.index === 'number') {
       setIndex(first.index);
@@ -92,7 +92,7 @@ export default function IntroRoute() {
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={styles.page} testID="intro-screen">
-        <LinearGradient colors={[t.colors.surface.default, t.colors.surface.raised]} style={StyleSheet.absoluteFillObject} />
+        <LinearGradient colors={[t.colors.surface.default, t.colors.surface.raised]} style={StyleSheet.absoluteFill} />
         <SafeAreaView edges={['top', 'bottom']} style={styles.safe}>
           {/* TOP BAR: brand + skip */}
           <View style={styles.topBar}>

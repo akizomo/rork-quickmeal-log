@@ -1,7 +1,7 @@
 import { Stack } from 'expo-router';
 import React, { useState } from 'react';
 import { Pressable, Text } from 'react-native';
-import { ThemeProvider, lightTheme, darkTheme, useTheme } from '@/design-system';
+import { ThemeProvider, formSheetOptions, lightTheme, darkTheme, tallSheetOptions, useTheme } from '@/design-system';
 
 type DevThemeMode = 'light' | 'dark';
 
@@ -22,6 +22,9 @@ export default function DevLayout() {
         }}
       >
         <Stack.Screen name="index" options={{ title: 'Design System' }} />
+        {/* Overlays ページのシート見本 (ネイティブ formSheet) */}
+        <Stack.Screen name="components/sheet-small" options={formSheetOptions(theme)} />
+        <Stack.Screen name="components/sheet-tall" options={tallSheetOptions(theme)} />
       </Stack>
     </ThemeProvider>
   );

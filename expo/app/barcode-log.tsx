@@ -303,8 +303,8 @@ const styles = StyleSheet.create({
   form: { padding: 20, gap: 4, paddingBottom: 40 },
   fieldRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
   input: { flex: 1, borderWidth: 1, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, fontSize: fs.md },
-  loadingOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' }, // カメラ映像上の暗幕。palette.scrimはivory系で真っ黒背景と合わないため維持
-  scanFrame: { ...StyleSheet.absoluteFillObject, justifyContent: 'center', alignItems: 'center' },
+  loadingOverlay: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' }, // カメラ映像上の暗幕。palette.scrimはivory系で真っ黒背景と合わないため維持
+  scanFrame: { ...StyleSheet.absoluteFill, justifyContent: 'center', alignItems: 'center' },
   scanBox: { width: 260, height: 160, borderWidth: 2, borderRadius: 12 },
   manualBar: { position: 'absolute', bottom: 0, left: 0, right: 0, paddingVertical: 16, alignItems: 'center' },
   manualBtn: { paddingVertical: 8, paddingHorizontal: 24 },

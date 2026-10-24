@@ -27,7 +27,7 @@
 
 ### A. 契約・口座 (最優先・待ち時間あり)
 - [x] App Store Connect > ビジネス で **有料 App 契約 (Paid Apps Agreement)** に同意 (2026-10-16)
-- [x] 銀行口座・税務情報 (W-8BEN 等) を登録 (2026-10-16 提出完了: 口座・W-8BEN (日米条約12条 0%)・米国外ステータス証明書。**契約ステータスの「有効」待ち**) → 契約ステータスが「有効」になるまで数日。**これが有効になるまでサブスクの Sandbox 購入テストができない**
+- [x] 銀行口座・税務情報 (W-8BEN 等) を登録 (2026-10-16 提出完了: 口座・W-8BEN (日米条約12条 0%)・米国外ステータス証明書。**契約ステータスは「有効」になった (2026-10-18 ユーザー申告)**) → Sandbox 購入テストが可能になった
 - [ ] 配信地域を決める (推奨: **まず日本のみ**。EU を含めると DSA のトレーダー申告が必要で、個人は住所が公開される)
 
 ### B. App Store Connect の初期設定
@@ -46,7 +46,7 @@
 
 ### D. RevenueCat
 - [x] RevenueCat プロジェクトに **App Store アプリを追加** (Bundle ID 上記、C で発行したキーを登録)
-- [ ] 2プロダクトを取り込み、エンタイトルメント `Hachibu` と Offering `default` の monthly / annual パッケージに紐付け
+- [x] 2プロダクトを取り込み、エンタイトルメント `Hachibu` と Offering `default` の monthly / annual パッケージに紐付け (2026-10-18 ユーザー申告で完了。TestFlight の paywall で価格が出ることは未確認)
 - [x] 発行された **`appl_` で始まる Public SDK Key** を Claude に共有 (公開キーなのでチャットで可)
 
 ### E. ビルド環境
@@ -120,6 +120,13 @@
 
 - 残課題 (本質対応): BottomSheet/Dialog が RN `Modal` ベースであること自体が、重ね順の脆さと Android キーボード未対応の根。**リリース前に formSheet へ移行する方針 (2026-10-17 決定)**。影響範囲と段取りは [SHEET_MIGRATION.md](./SHEET_MIGRATION.md)
 
+### 🐛 2026-10-18 アップロード検証で ITMS-90683 (Build 5 が弾かれた)
+- **症状**: `NSHealthUpdateUsageDescription` が Info.plist に無い、というメールが届いた (Build 5)。
+- **原因**: `app.json` の `@kingstinct/react-native-healthkit` プラグインで `"NSHealthUpdateUsageDescription": false` にしていた。アプリは **読み取りのみ**でも、HealthKit ライブラリが書き込み系 API を参照しているため、**書き込みをしなくても説明文は必須**。(SDK 58 移行時に「書き込まないので不要」と判断したのが誤り)
+- **対応**: 説明文を入れた (「ヘルスケアのデータを読み取って使うだけで、書き込むことはありません」)。書き込み権限の要求は出さないので、許可ダイアログには影響しない。
+- **再発防止**: HealthKit 周りの Info.plist キーは **`false` で消さない**。ネイティブ依存を触ったら、ビルド前に `npx expo config --type introspect | grep NSHealth` で両方のキーが入っていることを確認する。
+- 注意: Info.plist には location / microphone / motion の既定文言も入っている (`expo-location` / `expo-camera` 由来)。アプリは位置情報・マイクを使っていないので、不要なら該当モジュールの除去を検討 (審査で用途を聞かれ得る)。
+
 ### ⏳ あなたの手続き待ち
 | タスク | 必要なもの |
 |---|---|
@@ -191,3 +198,18 @@ The app starts with a 7-day free trial subscription (auto-renewable). You can te
 HealthKit is used read-only (steps, active energy, workouts, weight, body fat %) to adjust the daily calorie target shown on the home screen. Health permission is optional; the app works fully with manual input.
 The camera is used only to scan food barcodes.
 ```
+
+---
+
+## 5. SDK 58 更新の動作確認メモ (2026-10-18, sdk-58-upgrade ブランチ)
+
+| 項目 | 結果 |
+|---|---|
+| Android (Android 17 エミュレータ) 起動・オンボーディング・paywall スキップ・ホーム表示 | ○ |
+| ウィジェット5種が OS に登録される | ○ |
+| ウィジェット (2×2) をホーム画面に追加 → 表示 → ボタンをタップして記録 (「✓ Undo」に切り替わる) | ○ (他のサイズ 4×2 / 3×3 / リング / 4×3 は未確認。追加は設定 > 「Add Home Screen Widget」、置かれるのは追加先のページで 1 ページ目とは限らない) |
+| Health Connect の許可画面 → 許可 → 画面遷移 | ○ (読み取り権限3件) |
+| Health Connect の歩数集計 | ○ エラーなし |
+| Health Connect のアクティブカロリー集計 | ✗ `IllegalArgumentException: Either use TimeRangeFilter with LocalDateTime or AggregateGroupByDurationRequest`。歩数と同じ呼び出し形式のため Android 17 エミュレータの挙動の可能性が高い。**SDK 54 でも出るかは未確認** (切り分けには実機か旧ビルドが必要) |
+| Health Connect の実データ取り込み | 未確認 (エミュレータにデータを入れる手段が無い) |
+| リリースビルド (R8 有効) の起動 | 未確認 |

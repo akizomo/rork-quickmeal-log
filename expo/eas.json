@@ -1,7 +1,8 @@
 {
   "cli": {
     "version": ">= 12.0.0",
-    "appVersionSource": "remote"
+    "appVersionSource": "remote",
+    "promptToConfigurePushNotifications": false
   },
   "build": {
     "development": {
@@ -9,7 +10,7 @@
       "distribution": "internal",
       "ios": {
         "simulator": true,
-        "image": "macos-sequoia-15.6-xcode-26.0"
+        "image": "macos-tahoe-26.6-xcode-27.0"
       }
     },
     "preview": {
@@ -17,7 +18,7 @@
       "channel": "preview",
       "ios": {
         "simulator": false,
-        "image": "macos-sequoia-15.6-xcode-26.0",
+        "image": "macos-tahoe-26.6-xcode-27.0",
         "env": {
           "SENTRY_DISABLE_AUTO_UPLOAD": "true"
         }
@@ -33,16 +34,10 @@
       "channel": "production",
       "autoIncrement": true,
       "ios": {
-        "image": "macos-sequoia-15.6-xcode-26.0",
+        "image": "macos-tahoe-26.6-xcode-27.0",
         "env": {
           "SENTRY_DISABLE_AUTO_UPLOAD": "true"
         }
-      }
-    },
-    "testflight": {
-      "extends": "production",
-      "env": {
-        "EXPO_PUBLIC_ALLOW_PAYWALL_SKIP": "true"
       }
     }
   },
@@ -57,9 +52,6 @@
         "track": "internal",
         "releaseStatus": "draft"
       }
-    },
-    "testflight": {
-      "extends": "production"
     }
   }
 }

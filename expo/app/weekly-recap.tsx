@@ -716,7 +716,7 @@ function makeStyles(t: Theme) {
     ticks: { flexDirection: 'row', gap: t.spacing['1'] },
     tick: { flex: 1, height: 2.5, borderRadius: radius.full },
     weekLabel: { marginTop: t.spacing['3'], letterSpacing: 1.2, textTransform: 'uppercase', opacity: 0.6, fontSize: t.typography.fontSize.xs },
-    zones: { ...StyleSheet.absoluteFillObject, flexDirection: 'row', zIndex: 25 },
+    zones: { ...StyleSheet.absoluteFill, flexDirection: 'row', zIndex: 25 },
     // ロゴ (3×3ドット・8割の主張) を deep カードの背景に薄く配置。表紙/アウトロ限定。
     logoWatermark: { position: 'absolute', bottom: -10, right: -30, opacity: 0.07, zIndex: 5 },
     zonePrev: { width: '35%', height: '100%' },

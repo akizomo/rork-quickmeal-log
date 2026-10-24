@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import createContextHook from '@nkzw/create-context-hook';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import * as Haptics from 'expo-haptics';
+import { router } from 'expo-router';
 import { getLocales } from 'expo-localization';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState } from 'react-native';
@@ -217,6 +218,8 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
   }>({ visible: false });
   /** Called when IdentityLogSheet is dismissed via × / backdrop (not on save). */
   const identityLogSheetOnDismissRef = useRef<(() => void) | null>(null);
+  /** /log-identity ルートを積んでいるか (二重 push 防止。state の反映を待たずに読むため ref) */
+  const identityLogSheetVisibleRef = useRef(false);
   const [feedback, setFeedback] = useState<FeedbackState | null>(null);
   const [livePreview, setLivePreview] = useState<LivePreviewState | null>(null);
   const [undoState, setUndoState] = useState<UndoState | null>(null);
@@ -503,6 +506,13 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       }
     ) => {
       identityLogSheetOnDismissRef.current = opts?.onDismiss ?? null;
+      // 記録シートはネイティブ formSheet ルート (/log-identity)。開いていなければ画面として積む。
+      // 既に開いている (シート内で Identity を切り替えた等) ときは状態だけ差し替える。
+      // 閉じるのは app/log-identity.tsx が visible=false を見て router.back() する (docs/SHEET_MIGRATION.md)
+      if (!identityLogSheetVisibleRef.current) {
+        identityLogSheetVisibleRef.current = true;
+        router.push('/log-identity');
+      }
       setIdentityLogSheet({
         visible: true,
         bucketKey,
@@ -519,6 +529,7 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
   );
 
   const closeIdentityLogSheet = useCallback(() => {
+    identityLogSheetVisibleRef.current = false;
     const onDismiss = identityLogSheetOnDismissRef.current;
     identityLogSheetOnDismissRef.current = null;
     setIdentityLogSheet({ visible: false });
@@ -557,6 +568,7 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
             wasShortTap: existing.wasShortTap, // preserve original origin flag
           }, settings.uiLanguage);
           await replaceLog(updated);
+          identityLogSheetVisibleRef.current = false;
           setIdentityLogSheet({ visible: false });
           return updated;
         }
@@ -611,6 +623,7 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       setSettings(nextSettings);
       persist(profile, [log, ...logs], nextSettings, weights, bodyFatEntries);
 
+      identityLogSheetVisibleRef.current = false;
       setIdentityLogSheet({ visible: false });
       return log;
     },
