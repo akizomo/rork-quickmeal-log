@@ -201,3 +201,25 @@
 - **効果が無かった対処**: ScrollView を View で包む / `sheetExpandsWhenScrolledToEdge: false` / 初期 detent の変更 / 横スクロールのチップ列を外す / 見出しに `collapsable={false}`。
 - **効いた対処**: ScrollView を画面直下の最初の子にして `absoluteFill`、見出しとフッターは 1 枚のオーバーレイ (`pointerEvents="box-none"`) にして ScrollView の上に重ね、実測した高さを本文の余白 (`paddingTop` / `paddingBottom`) に足す。画面直下を 2 要素に保つ (3 つ以上だと `RNSScreenContentWrapper` が警告する)。
 - 実装は `design-system/components/TallSheetScreen.tsx`。**背の高い formSheet は必ずこの部品を使う** (自前で ScrollView を並べない)。
+
+### 8-y. Android の確認結果 (2026-10-24, Android 17 エミュレータ / android-sdk58 ブランチ)
+SDK 58 + formSheet / 下層ページ移行 + main (旧エディタ撤去) を統合した状態で、デバッグビルドを Android エミュレータで確認した。**実機・リリースビルド (R8) は未確認**。
+
+| 項目 | 結果 |
+|---|---|
+| 起動 → ホーム表示 | ○ |
+| 検索ページ (ナビゲーションバー検索): 開くと検索欄に自動フォーカス / キーボード表示 / 結果表示 | ○ (`headerSearchBarOptions.autoFocus` は Android で効く) |
+| 検索 → 結果をタップ → 記録シート (`/log-identity`) | ○ ただし下記の修正が必要だった |
+| 数値入力 (`/direct-input`) シート: キーボードにシートが追従して全項目が見える | ○ (SDK 54 の自作シートで未解決だった Android のキーボード回避が解消) |
+| 数値入力で記録 → ホームに戻り合計が増え、取り消しトーストが出る | ○ |
+| 記録一覧の数値の記録をタップ → 編集モード (`/direct-input?editingLogId=`) が値入りで開く | ○ |
+| 運動シート (`/exercise`) | ○ (修正後) |
+| ウィジェット表示 / Health Connect の実データ / リリースビルド (R8) | 未確認 |
+
+**🐛 Android の背の高い formSheet はフッターが画面の外に出る (修正済)**
+- 症状: `tallSheetOptions` の既定 detent `[0.6, 1.0]` だと、最初の 60% の高さでシートが開き、**フッター (kcal と保存ボタン) が見えず記録できない**。シートは引き上げにも反応せず (グラバーも出ない)、中身は下で切れる。
+- 原因: Android の formSheet は中身を「最大の detent の高さ」で配置したまま上から見せる。`onLayout` の実測でオーバーレイの高さが 923dp (画面全体) だった。iOS は detent の高さに中身が収まる。
+- 対処: `tallSheetOptions` を Android だけ全高 1 段 (`[1.0]`) にした。フッターが画面下端に出る。**全高なので中身が短いシートでは余白が大きい** (記録シートで約 500px の空き)。
+- 検討して採らなかった案: detent を残したままフッターだけ見える位置に置く (シートの可視高さを JS から取れないため不可)。余白の見た目を詰めたい場合は、Android だけ `fitToContents` にする案があるが、本文がスクロールする記録シートで高さが変わる影響を未検証。
+
+**検証で触った main との統合の差分**: `DirectInputSheet` はルート化したまま main の編集モードを取り込み、編集対象は `editingLogId` ルートパラメータで渡す (記録一覧から push)。`TallSheetScreen` に `footerAccessory` を追加 (記録時の安心ヒント `Callout` を従来の位置に出すため)。

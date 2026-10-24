@@ -23,7 +23,7 @@
 
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Platform, ScrollView, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import type { NativeStackNavigationOptions } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -39,13 +39,17 @@ const SHEET_CORNER_RADIUS = 28;
 
 /**
  * 背の高い formSheet ルート共通の Stack.Screen options。
- * @param detents シートの高さ (画面高に対する比率、昇順)。既定は旧 BottomSheet の 60% と、引き上げ時の全高
+ * @param detents シートの高さ (画面高に対する比率、昇順)。既定は旧 BottomSheet の 60% と、引き上げ時の全高。
+ *   Android では無視して全高 1 段にする (下記)
  */
 export function tallSheetOptions(t: Theme, detents: number[] = [0.6, 1.0]): NativeStackNavigationOptions {
   return {
     presentation: 'formSheet',
     headerShown: false,
-    sheetAllowedDetents: detents,
+    // Android の formSheet は、中身を「最大の detent の高さ」で配置したまま上から見せる。
+    // [0.6, 1.0] だと最初の 60% の高さでは、シート下端のフッター (保存ボタン) が画面の外に出て押せない
+    // (2026-10-24 Android 17 エミュレータで実測: 中身の高さが 923dp = 画面全体)。全高 1 段にすれば収まる。
+    sheetAllowedDetents: Platform.OS === 'android' ? [1.0] : detents,
     sheetInitialDetentIndex: 0,
     sheetGrabberVisible: true,
     sheetCornerRadius: SHEET_CORNER_RADIUS,
