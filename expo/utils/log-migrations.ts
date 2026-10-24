@@ -52,6 +52,11 @@ export const MIGRATIONS: DataMigration[] = [
       { identityId: 'okonomi', attrKey: 'takoyaki', scale: 8 },
     ],
   },
+  {
+    id: 'maki-thin-cut-2026-10-24',
+    description: '細巻を「本」から「切」で数える。1本 = 6切 (macro は据え置き)', // i18n-ignore: 開発者向けの説明 (UI には出さない)
+    amountRescale: [{ identityId: 'maki', attrKey: 'maki_thin', scale: 6 }],
+  },
 ];
 
 const round2 = (n: number): number => Math.round(n * 100) / 100;

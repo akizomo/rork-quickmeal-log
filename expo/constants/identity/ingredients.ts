@@ -198,7 +198,7 @@ const BUCKET_STAPLE: Identity[] = [
     },
     attributes: [
       { key: 'white', label: '白米', isDefault: true },
-      { key: 'brown', label: '玄米', factor: { kcal: 1.06, fat: 3.0 } },
+      { key: 'brown', label: '玄米', searchTags: ['げんまい'], factor: { kcal: 1.06, fat: 3.0 } },
       { key: 'mixed', label: '雑穀', factor: { kcal: 1.03 } },
     ],
     styles: [
@@ -226,7 +226,7 @@ const BUCKET_STAPLE: Identity[] = [
       'natto', 'egg', 'kimchi_top', 'salmon_flake', 'mentaiko', 'nori_furikake',
       'butter_cream', 'shirasu', 'katsuobushi',
     ], // cheese / rayu は白米には不自然なので除外
-    searchTags: ['ごはん', 'ご飯', '白米', 'はくまい', '玄米', 'げんまい', '米', 'こめ', '赤飯', 'せきはん', 'ライス'],
+    searchTags: ['ごはん', 'ご飯', '白米', 'はくまい', '米', 'こめ', '赤飯', 'せきはん', 'ライス'],
   },
   {
     id: 'onigiri',
@@ -392,13 +392,14 @@ const BUCKET_STAPLE: Identity[] = [
       {
         key: 'dango',
         label: '団子',
+        searchTags: ['だんご', 'みたらし', '串団子'],
         factor: { kcal: 0.85, carbs: 0.86 },
         defaultAddonIds: ['mitarashi_tare', 'anko', 'kinako'],
       },
     ],
     defaultAddonIds: ['kinako', 'honey', 'nori_furikake'],
     allowedAddonIds: ['kinako', 'honey', 'nori_furikake', 'butter_cream', 'mitarashi_tare', 'anko'],
-    searchTags: ['餅', '団子', 'みたらし', 'あんこ', '串団子', 'だんご'],
+    searchTags: ['餅', 'あんこ'],
   },
   {
     id: 'potato',
@@ -580,7 +581,7 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
   {
     id: 'white_fish',
     label: '白身魚・赤身魚',
-    searchTags: ['しろみざかな', '白身魚', 'あかみざかな', '赤身魚', 'たら', '鱈', 'かれい', '鰈', 'まぐろ', '鮪', 'ひらめ', '鮃', 'たい', '鯛'],
+    searchTags: ['しろみざかな', '白身魚', '赤身魚'],
     primaryHome: { tab: 'ingredient', bucket: 'lean_protein' },
     // v1.2: default 80g→100g 化 (modal-set 1食量を chicken_lean/red_meat と揃える)
     // base = タラ・カレイ・ヒラメ等の白身魚。マグロ赤身は attribute で分岐。
@@ -597,9 +598,9 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
     ],
     amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '1切', value: 80 }, { label: '1食', value: 100 }, { label: '2切', value: 160 }] },
     attributes: [
-      { key: 'white', label: '白身魚（タラ・カレイ等）', isDefault: true },
+      { key: 'white', label: '白身魚（タラ・カレイ等）', searchTags: ['たら', '鱈', 'かれい', '鰈', 'ひらめ', '鮃', 'たい', '鯛'], isDefault: true },
       // ラベルに代表例を並べる (白身魚側と同じ形)。「マグロ赤身」だけだとカツオがここだと分からなかった。
-      { key: 'tuna_red', label: '赤身魚（マグロ・カツオ等）', searchTags: ['まぐろあかみ', 'マグロ赤身'], factor: { kcal: 1.67, protein: 1.65, fat: 2.0 } },
+      { key: 'tuna_red', label: '赤身魚（マグロ・カツオ等）', searchTags: ['まぐろあかみ', 'マグロ赤身', 'あかみざかな', 'まぐろ', '鮪'], factor: { kcal: 1.67, protein: 1.65, fat: 2.0 } },
     ],
     styles: [
       { key: 'raw', label: '生・刺身', isDefault: true },
@@ -673,8 +674,7 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
     label: '練り物',
     searchTags: [
       'ねりもの', '練り物', 'ちくわ', '竹輪', 'かまぼこ', '蒲鉾', 'はんぺん', 'かにかま', 'カニカマ',
-      'つみれ', 'さつまあげ', 'さつま揚げ', 'ごぼうてん', 'ごぼう天', 'あげかまぼこ',
-    ],
+      'つみれ', 'あげかまぼこ'],
     primaryHome: { tab: 'ingredient', bucket: 'lean_protein' },
     defaultMacro: { kcal: 51, protein: 5.7, fat: 0.7, carbs: 5.8 },
     referenceDescription: '50g = ちくわ大1本・はんぺん1/2枚・さつま揚げ1枚くらい',
@@ -818,7 +818,7 @@ const BUCKET_EGG: Identity[] = [
     id: 'egg',
     label: '卵',
     // 「卵」「玉子」の漢字が無く、玉子 がサンドイッチの具に誤着地していた。
-    searchTags: ['たまご', '卵', '玉子', 'ゆでたまご', 'ゆで卵', 'たまごやき', '卵焼き', 'めだまやき', '目玉焼き', 'なまたまご', '生卵'],
+    searchTags: ['たまご', '卵', '玉子'],
     primaryHome: { tab: 'ingredient', bucket: 'egg' },
     defaultMacro: { kcal: 75, protein: 6.2, fat: 5.2, carbs: 0.2 },
     nutritionNotes: [
@@ -836,10 +836,10 @@ const BUCKET_EGG: Identity[] = [
       { key: 'yolk', label: '卵黄', factor: { kcal: 0.73, protein: 0.45, fat: 0.96 } },
     ],
     styles: [
-      { key: 'raw', label: '生', isDefault: true },
-      { key: 'boiled', label: 'ゆで', factor: { kcal: 1.04 } },
-      { key: 'fried', label: '目玉焼き', factor: { kcal: 1.33, fat: 1.44 } },
-      { key: 'omelet', label: '卵焼き・スクランブル', factor: { kcal: 1.47, fat: 1.54, carbs: 7.5 } },
+      { key: 'raw', label: '生', searchTags: ['なまたまご', '生卵'], isDefault: true },
+      { key: 'boiled', label: 'ゆで', searchTags: ['ゆでたまご', 'ゆで卵'], factor: { kcal: 1.04 } },
+      { key: 'fried', label: '目玉焼き', searchTags: ['めだまやき'], factor: { kcal: 1.33, fat: 1.44 } },
+      { key: 'omelet', label: '卵焼き・スクランブル', searchTags: ['たまごやき', '卵焼き'], factor: { kcal: 1.47, fat: 1.54, carbs: 7.5 } },
       { key: 'chawan', label: '茶碗蒸し', factor: { kcal: 1.07, protein: 0.97, fat: 0.96, carbs: 15 } },
       // 9ボタンの「卵」からたまごスープを探す動線。スープは汁物 (杯) なので soup/egg へ振替。
       // 検索は soup/egg に直接着地するため、ここには searchTags を持たせない (1位を食い合う)。
@@ -911,7 +911,7 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
   {
     id: 'beef_pork',
     label: '牛・豚 (普通脂)',
-    searchTags: ['ぎゅうにく', 'ぶたにく', 'とんかつ', 'めんちかつ'],
+    searchTags: ['ぎゅうにく', 'ぶたにく'],
     primaryHome: { tab: 'ingredient', bucket: 'fatty_protein' },
     defaultMacro: { kcal: 230, protein: 17.5, fat: 16.5, carbs: 0 },
     nutritionNotes: [
@@ -960,7 +960,6 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
   {
     id: 'beef_pork_fatty',
     label: '牛・豚 (高脂)',
-    searchTags: ['ばらにく', 'バラ肉', 'ぶたばら', '豚バラ', '豚バラ肉', 'ぎゅうばら', '牛バラ', '牛バラ肉', 'さーろいん', 'ほるもん', 'ホルモン'],
     primaryHome: { tab: 'ingredient', bucket: 'fatty_protein' },
     quickTapDisabled: true, // Attribute バラ/サーロイン/ホルモン/タン: kcal 220-470, F 17-46
     defaultMacro: { kcal: 380, protein: 16, fat: 35, carbs: 0 },
@@ -980,17 +979,18 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
     ],
     amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '100', value: 100 }, { label: '150', value: 150 }, { label: '200', value: 200 }] },
     attributes: [
-      { key: 'bara', label: 'バラ（豚）', isDefault: true },
-      { key: 'bara_beef', label: 'バラ（牛）', factor: { kcal: 1.24, protein: 0.69, fat: 1.31 } },
-      { key: 'sirloin', label: 'サーロイン', factor: { kcal: 0.84, fat: 0.8 } },
-      { key: 'horumon', label: 'ホルモン', factor: { kcal: 0.58, protein: 0.94, fat: 0.49 } },
+      { key: 'bara', label: 'バラ（豚）', searchTags: ['ばらにく', 'バラ肉', 'ぶたばら', '豚バラ', '豚バラ肉'], isDefault: true },
+      { key: 'bara_beef', label: 'バラ（牛）', searchTags: ['ぎゅうばら', '牛バラ', '牛バラ肉'], factor: { kcal: 1.24, protein: 0.69, fat: 1.31 } },
+      { key: 'sirloin', label: 'サーロイン', searchTags: ['さーろいん'], factor: { kcal: 0.84, fat: 0.8 } },
+      { key: 'horumon', label: 'ホルモン', searchTags: ['ほるもん', 'ホルモン'], factor: { kcal: 0.58, protein: 0.94, fat: 0.49 } },
       { key: 'tan', label: 'タン', factor: { kcal: 0.71, protein: 0.95, fat: 0.57 } },
     ],
   },
   {
     id: 'fatty_fish',
     label: '脂魚',
-    searchTags: ['あぶらざかな', '脂魚', 'さけ', '鮭', 'しゃけ', 'さば', '鯖', 'さんま', '秋刀魚', 'ぶり', '鰤', 'いわし', '鰯', 'うなぎ', '鰻', 'あじ', '鯵'],
+    // 既定の種類 (鮭) を指す語は Identity に置いてよい (着地しても既定=鮭で記録される)。
+    searchTags: ['あぶらざかな', '脂魚', 'さけ', '鮭', 'しゃけ', 'あじ', '鯵'],
     primaryHome: { tab: 'ingredient', bucket: 'fatty_protein' },
     quickTapDisabled: true, // Attribute 鮭/サバ/ぶり/さんま/いわし/うなぎ: kcal 130-290, F 9-24
     defaultMacro: { kcal: 200, protein: 20, fat: 12, carbs: 0 },
@@ -1020,18 +1020,18 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
     amount: { unit: 'g', default: 80, step: 10, chips: [{ label: '1切', value: 80 }, { label: '100', value: 100 }, { label: '2切', value: 160 }] },
     attributes: [
       { key: 'salmon', label: '鮭', isDefault: true },
-      { key: 'saba', label: 'サバ', factor: { kcal: 1.0, fat: 1.17 } },
-      { key: 'buri', label: 'ぶり', factor: { kcal: 1.1, fat: 1.25 } },
+      { key: 'saba', label: 'サバ', searchTags: ['さば', '鯖'], factor: { kcal: 1.0, fat: 1.17 } },
+      { key: 'buri', label: 'ぶり', searchTags: ['ぶり', '鰤'], factor: { kcal: 1.1, fat: 1.25 } },
       // さんま (皮つき焼き) 80g ≒ 225kcal/P18.6/F18.2 (成分表(八訂) 10174: 281kcal/P23.3/F22.8 per 100g)。
       // 以前の 290kcal (363/100g) は焼きでも生でも成分表のどの形より多かった (成分表との照合で検出)。
-      { key: 'sanma', label: 'さんま', factor: { kcal: 1.125, protein: 0.93, fat: 1.52 } },
-      { key: 'iwashi', label: 'いわし', factor: { kcal: 0.81, fat: 0.83 } },
+      { key: 'sanma', label: 'さんま', searchTags: ['さんま', '秋刀魚'], factor: { kcal: 1.125, protein: 0.93, fat: 1.52 } },
+      { key: 'iwashi', label: 'いわし', searchTags: ['いわし', '鰯'], factor: { kcal: 0.81, fat: 0.83 } },
       // 蒲焼のたれの糖質は macroDelta で足す。旧実装は `carbs: 999` を factor に
       // 置いていたが、factor は乗算なのでベース carbs: 0 に対して 0×999=0 となり
       // **C が丸ごと欠落していた** (コメントの "C handled separately" は実在せず、
       // unagi はこの1箇所にしか出現しない)。C 2.5g は八訂 うなぎ蒲焼 3.1g/100g の
       // 既定量80g換算。kcal/P/F の校正値そのものは既存のまま据え置く。
-      { key: 'unagi', label: 'うなぎ蒲焼', factor: { kcal: 1.45, fat: 1.75 }, macroDelta: { kcal: 0, protein: 0, fat: 0, carbs: 2.5 }, searchTags: ['うなぎ', 'かばやき', '蒲焼'] },
+      { key: 'unagi', label: 'うなぎ蒲焼', factor: { kcal: 1.45, fat: 1.75 }, macroDelta: { kcal: 0, protein: 0, fat: 0, carbs: 2.5 }, searchTags: ['うなぎ', 'かばやき', '蒲焼', '鰻'] },
     ],
     styles: [
       { key: 'raw', label: '生・刺身', isDefault: true },
@@ -1317,7 +1317,7 @@ const BUCKET_DAIRY_SOY: Identity[] = [
       { key: 'thick', label: '厚揚げ', factor: { kcal: 2.33, protein: 3, fat: 1.86 }, macroDelta: { kcal: 0, protein: 0, fat: 0, carbs: 1 } },
       { key: 'ganmodoki', label: 'がんもどき', factor: { kcal: 1.6, protein: 2.0, fat: 1.5 } },
     ],
-    searchTags: ['油揚げ', '厚揚げ', 'がんもどき'],
+    searchTags: ['油揚げ'],
   },
   {
     id: 'natto',
@@ -1356,7 +1356,6 @@ const BUCKET_DAIRY_SOY: Identity[] = [
   {
     id: 'edamame_soy',
     label: '大豆・枝豆',
-    searchTags: ['だいず', 'えだまめ'],
     primaryHome: { tab: 'ingredient', bucket: 'dairy_soy' },
     defaultMacro: { kcal: 65, protein: 6, fat: 3, carbs: 4 },
     nutritionNotes: [
@@ -1369,8 +1368,8 @@ const BUCKET_DAIRY_SOY: Identity[] = [
     ],
     amount: { unit: 'g', default: 50, step: 10, chips: [{ label: '小皿', value: 50 }, { label: '100', value: 100 }] },
     attributes: [
-      { key: 'edamame', label: '枝豆', isDefault: true },
-      { key: 'soybeans_boiled', label: '大豆水煮', factor: { kcal: 1.08, protein: 1.17, fat: 1.5, carbs: 0.75 } },
+      { key: 'edamame', label: '枝豆', searchTags: ['えだまめ'], isDefault: true },
+      { key: 'soybeans_boiled', label: '大豆（水煮）', searchTags: ['だいず', '大豆水煮'], factor: { kcal: 1.08, protein: 1.17, fat: 1.5, carbs: 0.75 } },
     ],
     // サラダのトッピングとして必要 (§5)。ひよこ豆・キドニー豆は銘柄差が
     // 群内に収まるため Attribute を分けず、`soybeans_boiled` (大豆水煮) で
@@ -1476,7 +1475,7 @@ const BUCKET_VEGGIES: Identity[] = [
   {
     id: 'veg_dense',
     label: '高タンパク野菜',
-    searchTags: ['こうたんぱくやさい', 'たかたんぱくやさい', 'きのこ'],
+    searchTags: ['こうたんぱくやさい', 'たかたんぱくやさい'],
     primaryHome: { tab: 'ingredient', bucket: 'veggies' },
     // ブロッコリー基準 (生 100g): kcal 35, P 4.3, F 0.4, C 5
     defaultMacro: { kcal: 35, protein: 4.3, fat: 0.4, carbs: 5 },
@@ -1536,7 +1535,7 @@ const BUCKET_VEGGIES: Identity[] = [
     ],
     defaultAddonIds: ['mayo'],
     allowedAddonIds: ['mayo', 'cheese'],
-    searchTags: ['コーン', 'とうもろこし', 'コーン缶'],
+    searchTags: ['コーン', 'とうもろこし'],
   },
   {
     // 海藻。「わかめ」「もずく」が検索で0件 (ベンチマークの既知の失敗) で、温野菜や
@@ -1552,9 +1551,7 @@ const BUCKET_VEGGIES: Identity[] = [
     id: 'seaweed',
     label: '海藻',
     searchTags: [
-      'かいそう', '海藻', 'わかめ', 'ワカメ', '若布', 'めかぶ', 'もずく', '海雲', 'もずくず', 'もずく酢',
-      'やきのり', '焼きのり', '焼き海苔', 'あじつけのり', '味付けのり', '味付け海苔', 'のり', '海苔',
-    ],
+      'かいそう', '海藻', 'わかめ', 'ワカメ', '若布', 'めかぶ', '海雲'],
     primaryHome: { tab: 'ingredient', bucket: 'veggies' },
     defaultMacro: { kcal: 10, protein: 0.7, fat: 0.1, carbs: 2.5 },
     referenceDescription: '1 = 小鉢1つ・1パック・のり1枚。カロリーはごく小さいので、だいたいで大丈夫',
@@ -1731,7 +1728,7 @@ const BUCKET_FRUIT: Identity[] = [
     amount: { unit: 'g', default: 50, step: 10, chips: [{ label: '50', value: 50 }, { label: '100', value: 100 }] },
     attributes: [
       { key: 'blueberry', label: 'ブルーベリー', isDefault: true },
-      { key: 'grape', label: 'ぶどう', factor: { kcal: 1.07, carbs: 1.14 } },
+      { key: 'grape', label: 'ぶどう', searchTags: ['葡萄'], factor: { kcal: 1.07, carbs: 1.14 } },
     ],
     asAddon: {
       unit: 'g',
@@ -1739,7 +1736,7 @@ const BUCKET_FRUIT: Identity[] = [
       addedMacro: { kcal: 25, protein: 0.4, fat: 0.2, carbs: 6 },
       defaultLabel: 'ベリー',
     },
-    searchTags: ['ぶどう', '葡萄', 'ブルーベリー', 'いちじく', '無花果', 'ベリー'],
+    searchTags: ['ベリー'],
   },
   {
     id: 'fruit_other',
@@ -1748,7 +1745,7 @@ const BUCKET_FRUIT: Identity[] = [
     referenceDescription: 'キウイ・桃・パイナップル・マンゴー・柿・すいかなど',
     defaultMacro: { kcal: 60, protein: 0.7, fat: 0.2, carbs: 15 },
     amount: { unit: 'piece', default: 1 },
-    searchTags: ['キウイ', '桃', 'パイナップル', 'マンゴー', '柿', 'すいか', '西瓜', 'すいか', 'キウイフルーツ', 'パイン'],
+    searchTags: ['キウイ', '桃', 'パイナップル', 'マンゴー', '柿', 'すいか', '西瓜', 'キウイフルーツ', 'パイン', 'いちじく', '無花果'],
   },
 ];
 
@@ -1786,14 +1783,13 @@ const BUCKET_ADDED_FAT: Identity[] = [
   {
     id: 'butter_cream',
     label: 'バター・生クリーム',
-    searchTags: ['なまくりーむ'],
     primaryHome: { tab: 'ingredient', bucket: 'added_fat' },
     defaultMacro: { kcal: 75, protein: 0.1, fat: 8.1, carbs: 0 },
     amount: { unit: 'g', default: 10, step: 5, chips: [{ label: '5', value: 5 }, { label: '10', value: 10 }, { label: '大さじ', value: 15 }] },
     attributes: [
       { key: 'butter', label: 'バター', isDefault: true },
       { key: 'margarine', label: 'マーガリン', factor: { kcal: 0.95 } },
-      { key: 'cream', label: '生クリーム', factor: { kcal: 0.8, fat: 0.79 } },
+      { key: 'cream', label: '生クリーム', searchTags: ['なまくりーむ'], factor: { kcal: 0.8, fat: 0.79 } },
     ],
     asAddon: {
       unit: 'g',
@@ -1944,7 +1940,7 @@ const BUCKET_SNACK_DRINK: Identity[] = [
     // 市販カッププリン(森永等)基準 100g: kcal 117, P 4.0, F 5.4, C 13。ゼリーは低カロリー寄り。
     defaultMacro: { kcal: 117, protein: 4, fat: 5.4, carbs: 13 },
     amount: { unit: 'piece', default: 1, chips: [{ label: '1個', value: 1 }, { label: '大', value: 1.5 }] },
-    searchTags: ['プリン', 'ゼリー', 'カスタード'],
+    searchTags: ['プリン', 'カスタード'],
     attributes: [
       { key: 'custard', label: 'プリン', isDefault: true },
       { key: 'jelly', label: 'ゼリー・杏仁', searchTags: ['杏仁豆腐', 'あんにんどうふ', 'ゼリー'], factor: { kcal: 0.41, protein: 0.35, fat: 0.06, carbs: 0.62 } },

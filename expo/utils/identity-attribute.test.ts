@@ -109,9 +109,11 @@ describe('getEffectiveAmountSpec', () => {
     expect(getEffectiveAmountSpec(maki, 'temaki').unitLabel).toBe('個');
   });
 
-  it('細巻きは Identity のまま (本)', () => {
+  it('細巻きは「切」で数え、既定は 6切 (= 1本)', () => {
     const maki = getIdentity('maki')!;
-    expect(getEffectiveAmountSpec(maki, 'maki_thin')).toBe(maki.amount);
+    const spec = getEffectiveAmountSpec(maki, 'maki_thin');
+    expect(spec.unitLabel).toBe('切');
+    expect(spec.default).toBe(6);
   });
 
   it('春巻は 2本 デフォルト', () => {

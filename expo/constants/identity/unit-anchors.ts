@@ -50,7 +50,7 @@ export const JP_ANCHORS: UnitAnchor[] = [
   { key: 'sweet_bread', kcal: [250, 420] },
   { key: 'sushi_plate', kcal: [80, 160], unitLabel: '皿', note: '回転寿司 1皿 = 2貫 ≈ 100-130' },
   { key: 'sushi_piece', kcal: [45, 85], unitLabel: '貫' },
-  { key: 'maki/maki_thin', kcal: [130, 240], unitLabel: '本' },
+  { key: 'maki/maki_thin', kcal: [20, 40], unitLabel: '切', note: '1本=6切 ≈ 150-200' },
   { key: 'maki/maki_thick', kcal: [40, 100], unitLabel: '切' },
   { key: 'maki/inari', kcal: [90, 160], unitLabel: '個' },
   { key: 'maki/temaki', kcal: [120, 230] },

@@ -249,7 +249,6 @@ const BUCKET_RICE_DISH: Identity[] = [
   {
     id: 'katsudon_tendon',
     label: 'カツ丼・天丼',
-    searchTags: ['かつどん', 'てんどん'],
     primaryHome: { tab: 'dish', bucket: 'rice_dish' },
     nutritionNotes: [
       NOTE_TONKATSU,
@@ -259,8 +258,8 @@ const BUCKET_RICE_DISH: Identity[] = [
     referenceDescription: 'ご飯200g + カツ/天ぷら + 卵',
     amount: { unit: 'percent', default: 100, chips: [{ label: '並', value: 100 }, { label: '大盛', value: 150 }] },
     attributes: [
-      { key: 'katsudon', label: 'カツ丼', isDefault: true },
-      { key: 'tendon', label: '天丼', factor: { kcal: 0.94, protein: 0.69, fat: 0.97, carbs: 1.09 } },
+      { key: 'katsudon', label: 'カツ丼', searchTags: ['かつどん'], isDefault: true },
+      { key: 'tendon', label: '天丼', searchTags: ['てんどん'], factor: { kcal: 0.94, protein: 0.69, fat: 0.97, carbs: 1.09 } },
     ],
     defaultAddonIds: ['gohan_omori'],
     allowedAddonIds: ['gohan_omori'],
@@ -304,7 +303,7 @@ const BUCKET_CURRY: Identity[] = [
   {
     id: 'curry_class',
     label: 'カレー・シチュー系',
-    searchTags: ['カレー', 'シチュー', 'カレーライス'],
+    searchTags: ['カレー', 'カレーライス'],
     primaryHome: { tab: 'dish', bucket: 'curry' },
     nutritionNotes: [
       NOTE_CURRY_ROUX,
@@ -572,7 +571,6 @@ const BUCKET_JAPANESE_NOODLES: Identity[] = [
   {
     id: 'tempura_noodle',
     label: '天ぷら麺',
-    searchTags: ['てんぷら', 'てんそば', 'てんぷらうどん'],
     primaryHome: { tab: 'dish', bucket: 'japanese_noodles' },
     nutritionNotes: [
       NOTE_TEMPURA,
@@ -582,8 +580,8 @@ const BUCKET_JAPANESE_NOODLES: Identity[] = [
     amount: { unit: 'percent', default: 100, chips: [{ label: '1人前', value: 100 }, { label: '大盛', value: 150 }] },
     attributes: [
       // 「天ぷらそば」で打つ人が大半で、属性名「天そば」だけでは層1に着地しなかった (語彙の穴)。
-      { key: 'tempura_soba', label: '天そば', isDefault: true, searchTags: ['天ぷらそば', 'てんぷらそば', '天ぷら蕎麦', '天ぷらソバ'] },
-      { key: 'tempura_udon', label: '天ぷらうどん' },
+      { key: 'tempura_soba', label: '天そば', isDefault: true, searchTags: ['天ぷらそば', 'てんぷらそば', '天ぷら蕎麦', '天ぷらソバ', 'てんそば'] },
+      { key: 'tempura_udon', label: '天ぷらうどん', searchTags: ['てんぷらうどん'] },
       { key: 'nabe_yaki', label: '鍋焼きうどん', factor: { kcal: 1.10, protein: 1.20, fat: 1.15, carbs: 1.05 } },
     ],
     defaultAddonIds: ['udon_omori', 'soba_omori'],
@@ -730,31 +728,40 @@ const BUCKET_SUSHI: Identity[] = [
   {
     id: 'maki',
     label: '巻き・いなり・手巻き',
-    searchTags: ['まきずし', 'てまきずし', 'いなりずし'],
     primaryHome: { tab: 'dish', bucket: 'sushi' },
     defaultMacro: { kcal: 180, protein: 5, fat: 2, carbs: 38 },
-    referenceDescription: '細巻=米80g+具/本',
+    referenceDescription: '細巻 1本=6切 (米80g+具)',
     amount: { unit: 'piece', default: 1, unitLabel: '本' }, // 基準: 細巻=1本=180kcal
     attributes: [
-      { key: 'maki_thin', label: '細巻', isDefault: true, searchTags: ['ほそまき'] },
+      // 細巻は1本のまま食べることがほぼ無い (回転寿司・スーパーとも切って売られる) ため「切」で数える。
+      // 1本 = 6切 = 180kcal (Identity の defaultMacro と同じ量)。旧ログの「本」は log-migrations で ×6。
+      {
+        key: 'maki_thin',
+        label: '細巻',
+        isDefault: true,
+        searchTags: ['ほそまき'],
+        amount: { unit: 'piece', default: 6, unitLabel: '切', chips: [{ label: '3切', value: 3 }, { label: '6切', value: 6 }] },
+      },
       // 太巻きは「切」単位で売られる。factor は細巻1本に対する1切分の比率。
       // chips で「6切」「8切」を用意し、購入単位に合わせやすくする。
       {
         key: 'maki_thick',
         label: '太巻き',
-        searchTags: ['ふとまき'],
+        searchTags: ['ふとまき', 'まきずし'],
         factor: { kcal: 0.44, carbs: 0.42 },
         amount: { unit: 'piece', default: 1, unitLabel: '切', chips: [{ label: '3切', value: 3 }, { label: '6切', value: 6 }, { label: '8切', value: 8 }] },
       },
       {
         key: 'inari',
         label: 'いなり',
+        searchTags: ['いなりずし'],
         factor: { kcal: 0.67, fat: 1.0, carbs: 0.63 },
         amount: { unit: 'piece', default: 1, unitLabel: '個', chips: [{ label: '1個', value: 1 }, { label: '2個', value: 2 }, { label: '3個', value: 3 }] },
       },
       {
         key: 'temaki',
         label: '手巻き',
+        searchTags: ['てまきずし'],
         factor: { kcal: 1.0, protein: 1.4, fat: 2.0, carbs: 0.79 },
         amount: { unit: 'piece', default: 1, unitLabel: '個', chips: [{ label: '1個', value: 1 }, { label: '2個', value: 2 }] },
       },
@@ -1025,9 +1032,9 @@ const BUCKET_MISC_DISH: Identity[] = [
       // (ご飯200g + 焼き鮭80g + 味噌汁 + 小鉢) ≒ 560/P28/F16/C83。旧 697kcal は約3割多く、脂質が約2倍だった。
       { key: 'yakizakana', label: '焼魚定食', isDefault: true, factor: { kcal: 0.659, protein: 0.8125, fat: 0.467, carbs: 0.787 }, searchTags: ['やきざかな'] },
       { key: 'yakiniku', label: '焼肉定食', factor: { kcal: 1.06, protein: 1.09, fat: 1.07 }, searchTags: ['やきにく'] },
-      { key: 'karaage', label: '唐揚げ定食', factor: { kcal: 1.05, protein: 1.06, fat: 1.13, carbs: 0.97 }, searchTags: ['からあげ'] },
-      { key: 'tonkatsu', label: 'トンカツ定食', factor: { kcal: 1.18, protein: 1.09, fat: 1.33, carbs: 1.02 }, searchTags: ['とんかつ'] },
-      { key: 'shogayaki', label: '生姜焼き定食', factor: { kcal: 0.96, protein: 1.06, fat: 0.90, carbs: 0.96 }, searchTags: ['しょうがやき'] },
+      { key: 'karaage', label: '唐揚げ定食', factor: { kcal: 1.05, protein: 1.06, fat: 1.13, carbs: 0.97 }, searchTags: ['からあげていしょく', 'からあげ定食'] },
+      { key: 'tonkatsu', label: 'トンカツ定食', factor: { kcal: 1.18, protein: 1.09, fat: 1.33, carbs: 1.02 }, searchTags: ['とんかつていしょく', 'とんかつ定食'] },
+      { key: 'shogayaki', label: '生姜焼き定食', factor: { kcal: 0.96, protein: 1.06, fat: 0.90, carbs: 0.96 }, searchTags: ['しょうがやきていしょく', 'しょうが焼き定食'] },
       { key: 'hamburg', label: 'ハンバーグ定食', factor: { kcal: 1.0, protein: 1.0, fat: 1.07, carbs: 0.91 } },
     ],
     defaultAddonIds: ['gohan_omori'],
@@ -1110,7 +1117,6 @@ const BUCKET_MISC_DISH: Identity[] = [
       {
         key: 'karaage_mune',
         label: '唐揚げ(むね)',
-        searchTags: ['からあげ'],
         factor: { kcal: 0.629, protein: 1.444, fat: 0.4, carbs: 0.5 }, // ≒220kcal/P26/F8/C9 per 100g
         defaultAddonIds: ['lemon_squeeze', 'mayo'],
         amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '100', value: 100 }, { label: '150', value: 150 }, { label: '200', value: 200 }] },
@@ -1119,7 +1125,7 @@ const BUCKET_MISC_DISH: Identity[] = [
       // 数える単位を実物に合わせる (2026-10-22、log-migrations.ts の移行とセット)。
       // とんかつは「枚」(ロース 1枚 150g ≒ 500kcal)、メンチカツ・コロッケは「個」(1個 ≒ 200-280kcal)。
       // factor は既定量ぶんの macro なので据え置き。旧: 既定 3個 → 新: 既定 1枚 / 1個。
-      { key: 'tonkatsu', label: 'ロースかつ', factor: { kcal: 1.43, protein: 1.22, fat: 1.5 }, defaultAddonIds: ['sauce', 'mayo'], amount: { unit: 'piece', default: 1, unitLabel: '枚', step: 0.5, chips: [{ label: '半分', value: 0.5 }, { label: '1枚', value: 1 }, { label: '2枚', value: 2 }] } },
+      { key: 'tonkatsu', label: 'ロースかつ', searchTags: ['とんかつ', 'トンカツ'], factor: { kcal: 1.43, protein: 1.22, fat: 1.5 }, defaultAddonIds: ['sauce', 'mayo'], amount: { unit: 'piece', default: 1, unitLabel: '枚', step: 0.5, chips: [{ label: '半分', value: 0.5 }, { label: '1枚', value: 1 }, { label: '2枚', value: 2 }] } },
       { key: 'tonkatsu_hire', label: 'ヒレかつ', factor: { kcal: 1.1, protein: 1.45, fat: 1.25, carbs: 0.83 }, defaultAddonIds: ['sauce', 'mayo'], amount: { unit: 'piece', default: 1, unitLabel: '枚', step: 0.5, chips: [{ label: '半分', value: 0.5 }, { label: '1枚', value: 1 }, { label: '2枚', value: 2 }] } },
       { key: 'menchi', label: 'メンチカツ', factor: { kcal: 0.8, protein: 0.5, fat: 0.85 }, defaultAddonIds: ['sauce', 'mayo'], amount: { unit: 'piece', default: 1, unitLabel: '個', chips: [{ label: '1個', value: 1 }, { label: '2個', value: 2 }, { label: '3個', value: 3 }] } },
       // エビフライは「本」で数える (3本 ≒ 280kcal、1本 ≒ 93)。既定量・計算値は不変で表示の単位だけ直す。
@@ -1388,7 +1394,7 @@ const BUCKET_MISC_DISH: Identity[] = [
   {
     id: 'okonomi',
     label: '粉もの',
-    searchTags: ['こなもの', 'おこのみやき', 'たこやき'],
+    searchTags: ['こなもの', 'おこのみやき'],
     primaryHome: { tab: 'dish', bucket: 'misc_dish' },
     quickTapDisabled: true, // Attribute お好み焼き/広島/もんじゃ/たこ焼き: kcal 420-852
     defaultMacro: { kcal: 580, protein: 20, fat: 24, carbs: 70 },
@@ -1427,7 +1433,7 @@ const BUCKET_MISC_DISH: Identity[] = [
     amount: { unit: 'piece', default: 1, unitLabel: '杯', chips: [{ label: '1杯', value: 1 }, { label: '大', value: 2 }] },
     attributes: [
       { key: 'miso_light', label: '味噌汁・お吸い物', isDefault: true, searchTags: ['みそしる', 'おすいもの'] },
-      { key: 'miso_rich', label: '味噌汁(具沢山)', factor: { kcal: 2.0, protein: 2.0, fat: 3.0, carbs: 2.0 }, searchTags: ['みそしる'] },
+      { key: 'miso_rich', label: '味噌汁(具沢山)', factor: { kcal: 2.0, protein: 2.0, fat: 3.0, carbs: 2.0 } },
       { key: 'tonjiru', label: '豚汁・けんちん汁', factor: { kcal: 4.125, protein: 3.2, fat: 8.0, carbs: 3.75 }, searchTags: ['とんじる', 'ぶたじる', 'けんちんじる'] },
       // たまごスープ。検索は soup に着地するが種類が無く、記録が「味噌汁」で残っていた。
       // 1杯200ml = 卵1/2個 25g (八訂 全卵生: 36/3.1/2.6/0.1) + 片栗粉 3g + 顆粒だし

@@ -38,6 +38,8 @@ describe('量の移行 — 旧データを新しい単位に換算する', () =>
     ['fried_main', 'korokke', 3, 1, '1個'],
     ['okonomi', 'takoyaki', 1, 8, '8個'],
     ['okonomi', 'takoyaki', 0.5, 4, '4個'],
+    ['maki', 'maki_thin', 1, 6, '6切'],
+    ['maki', 'maki_thin', 2, 12, '12切'],
     ['okonomi', 'takoyaki', 2, 16, '16個'],
   ])('%s/%s: %s → %s', (identityId, attrKey, from, to, label) => {
     const migrated = migrateLog(oldLog({ identityId, attrKey, amountValue: from, amountLabel: 'OLD' }), RULES);
