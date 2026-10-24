@@ -1,0 +1,15 @@
+# iOS build artifacts — not needed for Android EAS build
+ios/build/
+ios/Pods/
+ios/DerivedData/
+
+# Android build artifacts — EAS builds from source on the server
+android/app/build/
+android/build/
+android/.gradle/
+
+# Node modules — EAS runs bun install on the server
+node_modules/
+
+# Web build output
+dist/

@@ -14,6 +14,10 @@
 - **[docs/BUILD.md](./docs/BUILD.md)** — EAS Build 手順 (GitHub Actions / ローカル CLI)・トラブルシュート・リリースノート規約。**ビルドを作成する際は必ずこのドキュメントに従う。**
 - **[docs/PLAY_STORE.md](./docs/PLAY_STORE.md)** — Play Console 提出時の文言・カテゴリ・連絡先テンプレート
 - **[docs/VOICE.md](./docs/VOICE.md)** — ブランドペルソナ・ライティングルール・USE/AVOID語彙。**UXコピーを書く・レビューする際は必ず参照すること。**
+- **[docs/FEEDBACK_OPS.md](./docs/FEEDBACK_OPS.md)** — テスターFBを Signal (Notion「FB Inbox」・非公開) → Problem → Story → ROADMAP → 検証 に流す運用。台帳は **[docs/PROBLEMS.md](./docs/PROBLEMS.md)**。
+  - **ユーザーFBを起点に実装するときは、先に PROBLEMS.md の Problem に紐付ける。** 起点の無い FB 対応を ROADMAP に直接書かない。ROADMAP のエントリには `起点: P-nnn` を添える
+  - 「今後のFBを見て判断」と保留するときは、PROBLEMS.md に**トリガー付きの保留 Story** として残す
+  - **リポジトリは公開。テスターの名前・原文を PROBLEMS.md やコミットに書かない** (FB番号と言い換えた要旨のみ)
 - **[docs/EXPERIENCE_DEPTH.md](./docs/EXPERIENCE_DEPTH.md)** — 体験軸ロードマップ。6つのコア体験 (①記録 / ②把握 / ③振り返り / ④実感 / ⑤継続 / ⑥納得) に機能をマッピングし、優先順位判断の補完ビューとして使う。
 
 ## プロジェクト概要
