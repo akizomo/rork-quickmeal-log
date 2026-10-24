@@ -671,6 +671,8 @@
       "title": "フィードバック",
       "searchMisses": "見つからなかった食品",
       "searchMissesCount": "{{count}}語",
+      "form": "不具合・要望を送る",
+      "formSub": "匿名のフォームが開きます",
       "review": "ストアで評価する"
     },
     "region": {

@@ -671,6 +671,8 @@
       "title": "Feedback",
       "searchMisses": "Foods not found",
       "searchMissesCount": "{{count}} words",
+      "form": "Report a problem or idea",
+      "formSub": "Opens an anonymous form",
       "review": "Rate on the store"
     },
     "region": {

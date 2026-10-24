@@ -1,4 +1,5 @@
 import { Stack, useRouter } from 'expo-router';
+import * as WebBrowser from 'expo-web-browser';
 import React from 'react';
 import { Alert, Linking, Platform, ScrollView, StyleSheet, Switch, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -11,7 +12,7 @@ import { PAYWALL_SKIP_ENABLED } from '@/constants/iap';
 import { useLocale } from '@/hooks/useLocale';
 import { useUnitSystem } from '@/hooks/useUnitSystem';
 import { widgetRequestPin } from '@/utils/widget-bridge';
-import { PLAY_STORE_URLS } from '@/utils/feedback';
+import { FEEDBACK_FORM_URL, PLAY_STORE_URLS } from '@/utils/feedback';
 
 const THEME_OPTION_KEYS: ('system' | 'light' | 'dark')[] = ['system', 'light', 'dark'];
 const LANGUAGE_OPTIONS: { key: 'ja' | 'en-US'; label: string }[] = [
@@ -38,6 +39,14 @@ export default function SettingsRoute() {
 
   const missCount = settings.diagnostics?.searchMisses.length ?? 0;
 
+  // 不具合・要望: 匿名の Notion フォームをアプリ内ブラウザで開く。開けなければ外部ブラウザへ
+  const openFeedbackForm = async () => {
+    try {
+      await WebBrowser.openBrowserAsync(FEEDBACK_FORM_URL);
+    } catch {
+      void Linking.openURL(FEEDBACK_FORM_URL).catch(() => {});
+    }
+  };
   // ストアで評価: ストアアプリ → ブラウザの順。自動でお願いを出すことはしない (押したときだけ)
   const openStoreReview = async () => {
     for (const url of PLAY_STORE_URLS) {
@@ -238,6 +247,13 @@ export default function SettingsRoute() {
                   sub={missCount > 0 ? t('settings.feedback.searchMissesCount', { count: missCount }) : undefined}
                   onPress={() => router.push('/search-misses')}
                   testID="settings-link-search-misses"
+                />
+                <SettingsDivider />
+                <SettingsLinkRow
+                  label={t('settings.feedback.form')}
+                  sub={t('settings.feedback.formSub')}
+                  onPress={() => { void openFeedbackForm(); }}
+                  testID="settings-feedback-form"
                 />
                 {Platform.OS === 'android' && (
                   <>
