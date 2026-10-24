@@ -97,6 +97,7 @@ Next 期以降は **D7 / D30 リテンション** および **週次アクティ
 > 軸 = **既存ユーザー定着 (D7/D30)**。**本文 §3 A〜E は v1.1 (6/04) の計画で stale。現況は本節が正。**
 > 現状アプリは Android のみ、`versionCode 1` / **クローズドテスト配布中 (実利用者 数人)**。
 > **iOS: 2026-10-16 Apple Developer Program 登録完了、App Store 掲載準備に着手。** 手続き/実装の分担と進捗は [APP_STORE.md](./APP_STORE.md) が正。コード側の審査対応 (paywall 3.1.2・プライバシーポリシー・輸出コンプライアンス) は済。2026-10-16 初の EAS iOS ビルド成功 → TestFlight 配布、実機で見つかった不具合は 10-17 修正済 (実機再確認待ち)。シート/ダイアログの iOS 標準化 (formSheet 移行) を審査前に実施中、SDK 54 → 58 更新を先行 ([SHEET_MIGRATION.md](./SHEET_MIGRATION.md))。
+> **シート/ダイアログの formSheet 移行 + SDK 54 → 58 は main に統合済み (2026-10-24、コード有・到達可能)。** 検索は下層ページ (`/search`)、記録シート・量入力・運動・収支・数値入力は formSheet ルートになり、アプリ本体から RN `<Modal>` の `BottomSheet` / `Dialog` は無くなった。**Android は 2026-10-24 に Android 17 エミュレータで初めて確認** (検索ページの自動フォーカス・数値入力のキーボード追従・記録・数値記録の編集が動く)。この確認で **Android の背の高い formSheet はフッターが画面外に出て記録できない**不具合を見つけ、react-native-screens の `unstable_sheetFooter` (Android 専用) に `TallSheetScreen` のフッターを渡して直した (高さは iOS と同じ 60% ⇄ 全高の可変のまま。当初は全高1段に固定する案だったが可変を失うため取り下げ。詳細は [SHEET_MIGRATION.md](./SHEET_MIGRATION.md) §8-y)。**未確認: Android 実機 / リリースビルド (R8) / ウィジェット表示 / Health Connect の実データ / 記録時の安心ヒント (`Callout`) のネイティブフッター内での表示。`check:deps` は expo 系12パッケージがパッチ版で古く未通過 (`npx expo install --fix` が必要)。**
 > **判定は3層を区別する: 「コード有」≠「到達可能」≠「実ユーザー検証済」。**
 
 **✅ 出荷済・実用レベル:**
