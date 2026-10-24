@@ -22,7 +22,7 @@ import React from 'react';
 import { Text, type TextProps, type TextStyle } from 'react-native';
 import { useTheme, type Theme } from '../theme';
 
-type ToneKey = 'primary' | 'secondary' | 'tertiary' | 'inverse' | 'onAction' | 'link';
+type ToneKey = 'primary' | 'secondary' | 'tertiary' | 'inverse' | 'inverseSecondary' | 'onAction' | 'link';
 type TypographySize = keyof Theme['typography']['fontSize'];
 
 type BaseProps = Omit<TextProps, 'style'> & {
@@ -37,6 +37,7 @@ function resolveTone(theme: Theme, tone: ToneKey): string {
     case 'secondary': return theme.colors.content.secondary;
     case 'tertiary':  return theme.colors.content.tertiary;
     case 'inverse':   return theme.colors.content.inverse;
+    case 'inverseSecondary': return theme.colors.content.inverseSecondary;
     case 'onAction':  return theme.colors.content.onAction;
     case 'link':      return theme.colors.action.text.default;
     case 'primary':

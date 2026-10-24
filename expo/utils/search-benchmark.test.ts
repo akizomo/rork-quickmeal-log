@@ -231,6 +231,20 @@ describe('検索ベンチマーク — 語彙の健全性', () => {
   });
 });
 
+describe('検索ベンチマーク — 正解の甘さ (近似で穴を隠していないか)', () => {
+  // 期待値に「複数の別 Identity」を許す行は、本当に曖昧な語 (うどん=型 or 種類) だけでなく、
+  // **近い別物で穴を隠している**ことがある (ナゲット→唐揚げでも合格、だった)。増やさない。
+  // 本物の穴を作ったら、その行の期待値を新しい着地先 1つに絞って、この上限を下げること。
+  const MAX_MULTI_IDENTITY_ROWS = 105; // 2026-10-22 時点の実数 (ファミチキを単一に絞って 106→105)
+  it('複数の別 Identity を正解にする行が増えていない', () => {
+    const idOf = (p: string) => p.split(/[/[]/)[0];
+    const multi = [...TUNING_CORPUS, ...HOLDOUT_CORPUS].filter(
+      (i) => i.kind !== 'gap' && new Set(i.e.map(idOf)).size > 1,
+    );
+    expect(multi.length).toBeLessThanOrEqual(MAX_MULTI_IDENTITY_ROWS);
+  });
+});
+
 describe('検索ベンチマーク — ラチェット (チューニング用語彙)', () => {
   const known = new Set(KNOWN_FAILURES);
   const scoredOrGap = tuning.filter((r) => r.item.kind !== 'chain');

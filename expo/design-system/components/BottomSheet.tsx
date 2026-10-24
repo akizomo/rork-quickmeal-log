@@ -170,6 +170,15 @@ export type BottomSheetProps = {
    * so it never intercepts taps on the sheet.
    */
   topAccessory?: React.ReactNode;
+
+  /**
+   * Optional content anchored just ABOVE the footer, overlapping the bottom of
+   * the scrollable content (e.g. a `Callout` pointing at a `footerLeft`
+   * summary). Its bottom edge sits on the footer's top border, so the
+   * consumer only decides horizontal layout. Taps outside the accessory's own
+   * touchables pass through to the content below.
+   */
+  footerAccessory?: React.ReactNode;
 };
 
 // ---------------------------------------------------------------------------
@@ -193,6 +202,7 @@ export function BottomSheet({
   testID,
   accessibilityLabel,
   topAccessory,
+  footerAccessory,
   footerLeft,
 }: BottomSheetProps) {
   const t = useTheme();
@@ -595,6 +605,19 @@ export function BottomSheet({
             </View>
           )}
 
+          {/* footerAccessory — 高さ0のアンカー。中身は下端をフッター上端に揃えて
+              コンテンツの上に重ねる (zIndex でフッターの境界線より手前に出す)。 */}
+          {hasFooter && footerAccessory ? (
+            <View pointerEvents="box-none" style={styles.footerAccessoryAnchor}>
+              <View
+                pointerEvents="box-none"
+                style={[styles.footerAccessory, { left: t.spacing['4'], right: t.spacing['4'] }]}
+              >
+                {footerAccessory}
+              </View>
+            </View>
+          ) : null}
+
           {/* Footer (横並び・右が primary) — also swipeable so the bottom
               edge of the sheet, where a thumb naturally rests, closes it. */}
           {hasFooter ? (
@@ -654,6 +677,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: 8,
+  },
+  footerAccessoryAnchor: {
+    height: 0,
+    zIndex: 1,
+  },
+  footerAccessory: {
+    position: 'absolute',
+    bottom: 0,
   },
   actions: {
     flexDirection: 'row',

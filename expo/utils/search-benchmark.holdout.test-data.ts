@@ -42,7 +42,7 @@ export const HOLDOUT_CORPUS: Item[] = [
   ...C('乳製品・油', 'base', [
     ['ミルク', 'milk'], ['低脂肪牛乳', 'milk/low_fat'], ['無糖ヨーグルト', 'yogurt/unsweetened'], ['プレーンヨーグルト', 'yogurt/unsweetened'], ['フルーツヨーグルト', 'preset:fruit_yogurt'],
     ['クリームチーズ', 'cheese/cream'], ['パルメザンチーズ', 'cheese/parmesan'], ['粉チーズ', 'cheese/parmesan'], ['無調整豆乳', 'soy_milk/plain'],
-    ['調整豆乳', 'soy_milk/adjusted'], ['サラダ油', 'oil'], ['ココナッツオイル', 'oil/coconut'], ['MCTオイル', 'oil/mct'], ['ノンオイルドレッシング', 'dressing/no_oil'],
+    ['調整豆乳', 'soy_milk/adjusted'], ['サラダ油', 'oil'], ['ココナッツオイル', 'oil'], ['MCTオイル', 'oil'], ['ノンオイルドレッシング', 'dressing/no_oil'],
   ]),
   ...C('おやつ・飲み物・酒', 'base', [
     ['板チョコ', 'chocolate'], ['ハイカカオ', 'chocolate/high_cacao'], ['ミルクチョコ', 'chocolate'], ['モンブラン', 'cake'], ['ティラミス', 'cake'],

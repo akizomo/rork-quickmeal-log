@@ -13,6 +13,7 @@ import { getBucketDef, getIdentity } from '@/constants/identity';
 import { Identity } from '@/types/identity';
 import { FoodLog, MealSlot } from '@/types/nutrition';
 import type { AppLocale } from '@/types/locale';
+import { getEffectiveAmountSpec } from './identity-attribute';
 import { UNIT_LABELS } from './unit-labels';
 import { ResolveResult } from './identity-resolver';
 
@@ -53,8 +54,8 @@ export function logDraftToFoodLog(draft: ResolveResult, meta: BridgeMeta, locale
     attrKey: draft.attributeKey,
     styleKey: draft.styleKey,
     amountValue: draft.amountValue,
-    amountUnit: toLegacyAmountUnit(recordIdentity),
-    amountLabel: buildAmountLabel(recordIdentity, draft.amountValue, locale),
+    amountUnit: toLegacyAmountUnit(recordIdentity, draft.attributeKey),
+    amountLabel: buildAmountLabel(recordIdentity, draft.attributeKey, draft.amountValue, locale),
     identityId: recordIdentity.id,
     originIdentityId: draft.originIdentityId,
     appliedAddons: draft.addons?.map((a) => ({
@@ -77,19 +78,29 @@ function requireIdentity(id: string): Identity {
  * Map the IA's wider AmountUnit set to the legacy FoodLog's narrower set.
  * Anything that isn't 'g' / 'ml' degrades to 'piece' for legacy compatibility.
  */
-function toLegacyAmountUnit(identity: Identity): 'g' | 'ml' | 'piece' {
-  const u = identity.amount.unit;
+function toLegacyAmountUnit(identity: Identity, attributeKey: string | undefined): 'g' | 'ml' | 'piece' {
+  // 保存する amountValue は種類 (Attribute) 別の実効 spec の単位で数えた値。Identity 共通の
+  // 単位を保存すると、種類が g で上書きしている食品 (唐揚げ) が 'piece' で残り、
+  // 「いつもの量」(usual-amount.ts) の単位一致判定から永久に外れる。
+  const u = getEffectiveAmountSpec(identity, attributeKey).unit;
   if (u === 'g' || u === 'ml') return u;
   return 'piece';
 }
 
-function buildAmountLabel(identity: Identity, amountValue: number, locale: AppLocale): string {
-  const u = identity.amount.unit;
+export function buildAmountLabel(
+  identity: Identity,
+  attributeKey: string | undefined,
+  amountValue: number,
+  locale: AppLocale,
+): string {
+  // 種類 (Attribute) 別の量の上書き (例: ソーセージ=本) を反映する。
+  const spec = getEffectiveAmountSpec(identity, attributeKey);
+  const u = spec.unit;
   // chip-aware: if value matches a defined chip exactly, prefer its human label
   // (e.g. "1人前", "大盛"). Falls back to numeric + suffix otherwise.
-  const chipHit = identity.amount.chips?.find((c) => c.value === amountValue);
+  const chipHit = spec.chips?.find((c) => c.value === amountValue);
   if (chipHit) return chipHit.label;
   if (u === 'g' || u === 'ml' || u === 'percent') return `${amountValue}${u === 'percent' ? '%' : u}`;
-  const unitLabel = identity.amount.unitLabel ?? UNIT_LABELS[locale][u];
+  const unitLabel = spec.unitLabel ?? UNIT_LABELS[locale][u];
   return `${amountValue}${unitLabel}`;
 }

@@ -380,6 +380,8 @@
   },
   "directInput": {
     "title": "数値で入力",
+    "editTitle": "記録を編集",
+    "fixedNameNote": "入力した数値のまま保存します。名前は変わりません。",
     "record": "記録する",
     "sections": {
       "name": "名前（任意）",
@@ -453,7 +455,12 @@
     "switchToG": "gに切り替え",
     "switchToCount": "個数に切り替え",
     "usualAmount": "いつもの",
-    "amountRefPrefix": "目安"
+    "amountRefPrefix": "目安",
+    "roughHint": {
+      "line1": "20〜30kcalは、ごはんひと口くらいの差。",
+      "line2": "ざっくりでも、記録を続けるほうがずっと大切です。",
+      "closeA11y": "ヒントを閉じる"
+    }
   },
   "logEditor": {
     "addIngredient": "食材を追加",
@@ -544,11 +551,11 @@
     },
     "insight": {
       "label": "{{macro}}",
-      "lead": "目標との差がいちばん大きかったのは",
+      "lead": "カロリーの内訳で、目標との差がいちばん大きかったのは",
       "less": "目標より 少なめ",
       "more": "目標より 多め",
-      "barActual": "1日の平均",
-      "barTarget": "1日の目標",
+      "barActual": "先週の割合",
+      "barTarget": "目標の割合",
       "streakLess": "{{weeks}}週続けて 少なめ",
       "streakMore": "{{weeks}}週続けて 多め"
     },
@@ -556,6 +563,8 @@
       "label": "アドバイス",
       "leadMore": "{{macro}}を増やしたいときは",
       "leadLess": "{{macro}}が少なめの選択肢なら",
+      "leadSwapStaple": "主食を選ぶなら",
+      "replaces": "{{label}}のかわりに",
       "sourcePrefix": "出典: "
     },
     "outro": {
@@ -1007,7 +1016,10 @@
     "noResults": "見つかりませんでした",
     "notFoundPrompt": "食品が見つかりませんか？",
     "enterManuallyA11y": "数値で直接入力する",
-    "enterManually": "数値で入力する"
+    "enterManually": "数値で入力する",
+    "negligibleZero": "ほぼ0kcal。記録しなくて大丈夫です。",
+    "negligibleSmall": "ふつうの量なら、ごくわずか。記録しなくても、ほぼ変わりません。",
+    "negligibleInDish": "ルーは、カレーやシチューの数字にふくまれています。"
   },
   "searchMisses": {
     "lead": "検索で見つからなかった言葉が、この端末に貯まっています。共有すると、次の更新で足す食品の参考になります。",

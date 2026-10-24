@@ -31,7 +31,7 @@ const WEEKDAY_MON_FIRST: Record<AppLocale, string[]> = {
   'en-US': [...enUS.monthlyStats.weekDays.slice(1), enUS.monthlyStats.weekDays[0]],
 };
 
-/** PFC 傾向を「特筆すべき」と判定する最小乖離率。これ未満は insight を出さない。 */
+/** PFC の割合 (エネルギー比) が目標の割合から何割ずれたら「特筆すべき」とするか。これ未満は insight を出さない。 */
 const INSIGHT_THRESHOLD_RATIO = 0.15;
 
 /** 軸ごとの kcal/g 換算係数。「高◯◯食材」の密度判定に使う。 */
@@ -44,10 +44,147 @@ const AXIS_KCAL_PER_GRAM: Record<MacroAxis, number> = { protein: 4, fat: 9, carb
 const AXIS_DENSITY_THRESHOLD: Record<MacroAxis, number> = { protein: 0.25, fat: 0.35, carbs: 0.45 };
 
 /**
- * 軸ごとの「低◯◯食材」判定閾値 (direction='more' の代替案提示に使う)。
- * 例: fat 0.20 = カロリーの20%未満が脂質由来なら低脂質の代替候補とみなす。
+ * 「増やしたいときは」の候補に求める、1食 (defaultMacro) あたりの最小グラム数。
+ * 密度 (カロリー比) だけで選ぶと、海藻 (炭水化物2.5g) のように比率は高くても量としては
+ * ほとんど足しにならない食材が候補に入るため。たんぱく質は卵1個 (6.2g)・豆腐・納豆が入る値にしている。
  */
-const AXIS_LOW_DENSITY_THRESHOLD: Record<MacroAxis, number> = { protein: 0.10, fat: 0.20, carbs: 0.25 };
+const BOOST_MIN_GRAMS: Record<MacroAxis, number> = { protein: 6, fat: 5, carbs: 15 };
+
+/**
+ * アドバイスに出してよい食材 (許可リスト)。**一般に体に良い、少なくとも悪くないと言える食材だけ**を勧める
+ * (PRD §6.7.5「アドバイスの候補」)。食べた事実はどの食材でも映すが、勧めるのはここに載る食材だけ。
+ *
+ * 基準: 食事バランスガイド (農水省・厚労省) の主食・主菜・副菜・牛乳乳製品・果物にあたり、
+ * ハーバード Healthy Eating Plate / WHO の健康的な食事で「控える」側に入らない、加工の少ない食材。
+ * - 料理 (dish) は入れない。作り方や店で中身が大きく変わり、勧める根拠を持てないため
+ * - 入れないもの: お菓子・甘い飲み物・お酒 / 調味料・油脂そのもの (オイル・バター・マヨネーズ・ドレッシング) /
+ *   加工肉 (ハム・ベーコン・ソーセージ・ジャーキー、WHO の定義) / 脂の多い肉 (牛・豚の普通脂・高脂) /
+ *   揚げたもの (油揚げ) / 食塩の多いもの (漬物・練り物) / マヨネーズ和え (クリーミー系) /
+ *   バターや砂糖の多いパン (リッチ)・甘いものを含む区分 (餅・団子、シリアル) / 中華麺 (ラーメンの文脈になるため) /
+ *   補助食品 (プロテイン・プロテインバー。食品から勧める) / レバー (ビタミンAが多く、妊娠中は控える目安があるため)
+ */
+const ADVICE_RECOMMENDABLE_IDS = new Set([
+  // 主食
+  'rice', 'onigiri', 'okayu', 'bread', 'oatmeal', 'potato', 'sweet_potato', 'noodle_udon', 'noodle_pasta',
+  // 主菜
+  'chicken_lean', 'salad_chicken', 'white_fish', 'seafood_lean', 'red_meat', 'canned_lean_fish',
+  'egg', 'chicken_thigh', 'fatty_fish', 'canned_fatty_fish',
+  // 牛乳・乳製品 / 大豆
+  'milk', 'yogurt', 'cheese', 'cheese_low_fat', 'soy_milk', 'tofu', 'natto', 'edamame_soy',
+  // 副菜
+  'salad_raw', 'veg_cooked', 'veg_dense', 'corn', 'seaweed', 'side_seasoned', 'veggie_soup',
+  // 果物
+  'banana', 'apple_pear', 'citrus', 'ichigo', 'berry', 'fruit_other',
+  // 脂質を含む食材 (油脂そのものではないもの)
+  'avocado', 'nuts',
+]);
+
+function isAdviceEligible(identity: Identity): boolean {
+  return ADVICE_RECOMMENDABLE_IDS.has(identity.id);
+}
+
+/**
+ * 「多めの週」に出す置き換え表 (PRD §6.7.5「置き換えの規則」)。
+ * 「その栄養素が少ない別のもの」ではなく、**同じ役割のまま中身がよりよいもの**に限る
+ * (ごはん→玄米、うどん→そば、脂の多い肉→赤身、脂質の多い麺料理→脂質の少ない麺料理)。
+ * 先週の記録に from があるときだけ、to を出す。勧める根拠を持てない組み合わせは入れない。
+ * to は許可リスト (ADVICE_RECOMMENDABLE_IDS) とは別に、この表で直接決める (麺料理など料理も含むため)。
+ */
+interface SwapRule {
+  axis: 'fat' | 'carbs';
+  from: string;
+  /** 省略 = 種類を問わない。指定時は、記録の種類 (attrKey。未指定なら既定の種類) がこれと一致するときだけ。 */
+  fromAttr?: string;
+  to: string;
+  toAttr?: string;
+}
+
+/** 脂質が多め (1食15g以上) の麺料理。置き換え先は脂質の少ない麺料理 (そば・うどん)。 */
+const RICH_NOODLE_IDS = [
+  'ramen_heavy', 'tantanmen', 'fried_noodles', 'tsukemen', 'ramen_jiro', 'yaki_udon', 'tempura_noodle',
+  'pasta_tomato', 'pasta_japanese', 'pasta_meat', 'pasta_oil', 'pasta_cream',
+];
+const LIGHT_NOODLE_IDS = ['soba', 'udon'];
+
+const SWAP_RULES: SwapRule[] = [
+  // 脂質: 同じ役割で、脂の少ないもの
+  { axis: 'fat', from: 'beef_pork_fatty', to: 'red_meat' },
+  { axis: 'fat', from: 'beef_pork', to: 'red_meat' },
+  { axis: 'fat', from: 'bacon_sausage', to: 'red_meat' },
+  { axis: 'fat', from: 'chicken_thigh', to: 'chicken_lean' },
+  { axis: 'fat', from: 'cheese', to: 'cheese_low_fat' },
+  { axis: 'fat', from: 'aburaage', to: 'tofu' },
+  { axis: 'fat', from: 'side_creamy', to: 'side_seasoned' },
+  { axis: 'fat', from: 'bread_rich', to: 'bread' },
+  ...RICH_NOODLE_IDS.flatMap((from) => LIGHT_NOODLE_IDS.map((to): SwapRule => ({ axis: 'fat', from, to }))),
+  // 炭水化物: 同じ主食で、精製の少ないもの・量の少ないもの
+  { axis: 'carbs', from: 'rice', fromAttr: 'white', to: 'rice', toAttr: 'brown' },
+  { axis: 'carbs', from: 'bread', fromAttr: 'plain', to: 'bread', toAttr: 'whole' },
+  { axis: 'carbs', from: 'noodle_udon', fromAttr: 'udon', to: 'noodle_udon', toAttr: 'soba' },
+  { axis: 'carbs', from: 'udon', to: 'soba' },
+  { axis: 'carbs', from: 'noodle_pasta', fromAttr: 'regular', to: 'noodle_pasta', toAttr: 'whole' },
+  { axis: 'carbs', from: 'cereal', to: 'oatmeal' },
+  { axis: 'carbs', from: 'sweet_bread', to: 'bread' },
+  { axis: 'carbs', from: 'sweet_drink', to: 'fruit_other' },
+];
+
+function attrOf(identity: Identity, key: string | undefined) {
+  return key ? identity.attributes?.find((a) => a.key === key) : undefined;
+}
+
+/** 記録の種類。未指定なら既定の種類 (白米・食パンなど)。 */
+function effectiveAttrKey(identity: Identity, attrKey: string | undefined): string | undefined {
+  return attrKey ?? identity.attributes?.find((a) => a.isDefault)?.key;
+}
+
+/** 先週の記録から、置き換え表に当てはまるものを、よく食べた順に候補にする。 */
+function computeSwapCandidates(
+  weekLogs: FoodLog[],
+  axis: 'fat' | 'carbs',
+  weekIndex: number,
+): WeeklyMacroBoostCandidate[] {
+  const counts = new Map<string, number>();
+  for (const log of weekLogs) {
+    if (!log.identityId) continue;
+    const identity = getIdentity(log.identityId);
+    if (!identity) continue;
+    const key = `${log.identityId}|${effectiveAttrKey(identity, log.attrKey) ?? ''}`;
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+
+  const picked: { count: number; candidate: WeeklyMacroBoostCandidate }[] = [];
+  const seenTo = new Set<string>();
+  for (const rule of SWAP_RULES) {
+    if (rule.axis !== axis) continue;
+    const fromIdentity = getIdentity(rule.from);
+    const toIdentity = getIdentity(rule.to);
+    if (!fromIdentity || !toIdentity) continue;
+    const count = rule.fromAttr
+      ? counts.get(`${rule.from}|${rule.fromAttr}`) ?? 0
+      : [...counts.entries()].filter(([k]) => k.startsWith(`${rule.from}|`)).reduce((n, [, c]) => n + c, 0);
+    if (count === 0) continue;
+    const toKey = `${rule.to}|${rule.toAttr ?? ''}`;
+    if (seenTo.has(toKey)) continue;
+    seenTo.add(toKey);
+
+    const fromAttr = attrOf(fromIdentity, rule.fromAttr);
+    const toAttr = attrOf(toIdentity, rule.toAttr);
+    const factor = toAttr?.factor?.[axis] ?? 1;
+    picked.push({
+      count,
+      candidate: {
+        identityId: rule.to,
+        label: toAttr ? `${toIdentity.label}（${toAttr.label}）` : toIdentity.label,
+        fromHistory: true,
+        replaces: fromAttr ? `${fromIdentity.label}（${fromAttr.label}）` : fromIdentity.label,
+        axisGrams: Math.round(toIdentity.defaultMacro[axis] * factor * 10) / 10,
+        attrKey: rule.toAttr,
+      },
+    });
+  }
+  picked.sort((a, b) => b.count - a.count);
+  return rotate(picked.map((p) => p.candidate), MAX_BOOST_CANDIDATES, weekIndex);
+}
 
 /** macroBoost で提示する候補の最大数。 */
 const MAX_BOOST_CANDIDATES = 3;
@@ -98,10 +235,22 @@ const MAX_STREAK_LOOKBACK = 4;
  * weekKey と identityId を混ぜてハッシュするため、食材ごとに別の周期で回る
  * (同じ週に複数食材が揃って1番目のノートを出す、といった偏りを避ける)。
  */
-function pickNutritionNote(allNotes: NutritionNote[], identityId: string, weekKey: string): NutritionNote | null {
+function pickNutritionNote(
+  allNotes: NutritionNote[],
+  identityId: string,
+  weekKey: string,
+  topic?: MacroAxis,
+  attrKey?: string,
+): NutritionNote | null {
   // 2系統以上の出典で照合できた (alsoSources を持つ) ノートだけを出す。
   // 単一出典のノートは、照合が済むまでコードに残しつつ、ユーザーには見せない (§10.14 追補 2026-09-29)。
-  const notes = allNotes.filter((n) => (n.alsoSources?.length ?? 0) > 0);
+  // topic を指定したときは、その栄養素の話のノートに絞る (「もと」カード用、PRD §6.7.5「各カードの役割」)。
+  // attrKey を指定したときは、別の種類の話 (例: 玄米を勧めるときの白米の話) を除く。
+  const notes = allNotes.filter(
+    (n) => (n.alsoSources?.length ?? 0) > 0
+      && (!topic || (n.topics ?? []).includes(topic))
+      && (!attrKey || !n.attr || n.attr === attrKey),
+  );
   if (notes.length === 0) return null;
   const seed = `${weekKey}:${identityId}`;
   let hash = 0;
@@ -125,11 +274,17 @@ export interface WeeklyMacroBoostCandidate {
   label: string;
   /** 記録履歴にあるか (自分のレパートリーか、未経験の選択肢か)。UIの見せ方を変える余地のため公開する。 */
   fromHistory: boolean;
+  /** 置き換え候補のとき、先週食べていた置き換え元の表示名 (例: 「ごはん（白米）」)。 */
+  replaces?: string;
+  /** 置き換え候補のとき、候補の1食あたりの対象栄養素のグラム数 (種類による補正込み)。 */
+  axisGrams?: number;
+  /** 置き換え候補の種類 (例: 玄米 = 'brown')。豆知識を種類に合わせて選ぶのに使う。 */
+  attrKey?: string;
 }
 
 export interface WeeklyMacroBoost {
   axis: MacroAxis;
-  /** 'less' = その軸を増やせる高密度候補、'more' = その軸が少ない低密度代替候補。 */
+  /** 'less' = その軸を増やせる高密度候補、'more' = 先週食べていたものの置き換え候補 (SWAP_RULES)。 */
   direction: 'less' | 'more';
   /**
    * その軸の密度が高い (less) / 低い (more) Identity を最大 MAX_BOOST_CANDIDATES 件。
@@ -147,8 +302,10 @@ export interface WeeklyMacroInsight {
   axis: MacroAxis;
   /** 「多め/少なめ」の2値のみ。良し悪しの評価語は持たない。 */
   direction: 'more' | 'less';
-  avgActual: number;
-  avgTarget: number;
+  /** P/F/C のエネルギーのうち、この栄養素が占めた割合 (記録日の合計から。0〜100 の整数)。 */
+  actualSharePct: number;
+  /** 目標の P/F/C のエネルギーのうち、この栄養素が占める割合 (0〜100 の整数)。 */
+  targetSharePct: number;
 }
 
 export interface WeeklyRecapDay {
@@ -175,7 +332,8 @@ export type WeeklyDiscovery =
   | { kind: 'topFood'; item: WeeklyFoodItem; count: number; note: WeeklyFoodFact | null }
   | { kind: 'newFoods'; items: WeeklyFoodItem[]; note: WeeklyFoodFact | null }
   | { kind: 'comebackFoods'; items: (WeeklyFoodItem & { weeksSince: number })[]; note: WeeklyFoodFact | null }
-  | { kind: 'macroSources'; axis: MacroAxis; sources: WeeklyMacroSource[] }
+  // note: 並んだ食材のうち、その栄養素の話 (topics) の豆知識を持つ最初の1件 (無ければ null)。
+  | { kind: 'macroSources'; axis: MacroAxis; sources: WeeklyMacroSource[]; note: WeeklyFoodFact | null }
   | {
       kind: 'macro';
       insight: WeeklyMacroInsight;
@@ -212,7 +370,8 @@ export interface WeeklyRecap {
   /** 月〜日の7日分。ストーリー画面のバーチャートに使う。 */
   days: WeeklyRecapDay[];
   /**
-   * PFC のうち最も乖離が大きかった1軸のみ (乖離率 15%未満なら null)。
+   * PFC の割合 (エネルギー比) が目標の割合から最もずれた1軸のみ (ずれが 15%未満なら null)。
+   * 量 (g) ではなく割合で比べるので、記録が少ない週でも「全体が少ない」を PFC の話にしない。
    * 3軸まとめて出すと成績表のように見えるため、あえて1つに絞る。
    * プロフィール未設定 (targetCalories <= 0) なら常に null。
    */
@@ -264,7 +423,7 @@ function computeWeekCore(
   };
 
   const macroInsight = base > 0 && loggedDays.length > 0
-    ? computeMacroInsight(loggedDays, profile, targetForKey, base)
+    ? computeMacroInsight(loggedDays, profile)
     : null;
 
   return { range, weekKey, entries, loggedDays, targetForKey, macroInsight };
@@ -308,7 +467,7 @@ export function computeWeeklyRecap(
   }));
 
   const weekIndex = weekIndexOf(range.start);
-  const macroBoost = computeMacroBoost(logs, macroInsight, weekKey, weekIndex);
+  const macroBoost = computeMacroBoost(logs, macroInsight, weekKey, weekIndex, range);
 
   // ── いつもとの差 (固定カードの補足) ──
   const pastWeeks = Array.from({ length: BASELINE_WEEKS }, (_, i) => core(i + 2));
@@ -327,7 +486,7 @@ export function computeWeeklyRecap(
   const candidates: ScoredDiscovery[] = [
     ...computeFoodDiscoveries(logs, range, pastWeeks[0]?.range ?? null, weekKey),
   ];
-  const sources = computeMacroSources(logs, range, SOURCE_AXIS_ROTATION[weekIndex % SOURCE_AXIS_ROTATION.length]);
+  const sources = computeMacroSources(logs, range, SOURCE_AXIS_ROTATION[weekIndex % SOURCE_AXIS_ROTATION.length], weekKey);
   if (sources) {
     // 常に出せるので、他に強い発見がある週には譲る (穴埋め役)。
     candidates.push({ discovery: sources, score: 0.5, cost: 1 });
@@ -361,8 +520,19 @@ export function computeWeeklyRecap(
     prevWeekDaysLogged: prevDays > 0 ? prevDays : null,
     baselineAvgKcal,
     kcalVsUsual,
-    discoveries: selectDiscoveries(candidates),
+    discoveries: dedupeNotes(selectDiscoveries(candidates)),
   };
+}
+
+/** 同じ週に同じ文面の豆知識を2度出さない (表示順で先に出たほうを残す)。料理どうしで文面を共有するノートがあるため。 */
+function dedupeNotes(discoveries: WeeklyDiscovery[]): WeeklyDiscovery[] {
+  const seen = new Set<string>();
+  return discoveries.map((d) => {
+    if (!('note' in d) || !d.note) return d;
+    if (seen.has(d.note.note.text)) return { ...d, note: null };
+    seen.add(d.note.note.text);
+    return d;
+  });
 }
 
 export interface ScoredDiscovery {
@@ -503,7 +673,7 @@ function computeFoodDiscoveries(
  * 記録ごとの macro (トッピング込み) を Identity 別に合算する。多い/少ないの評価はしない。
  * 内訳が2件未満 (1品しか記録が無い) なら、内訳と呼べないので null。
  */
-function computeMacroSources(logs: FoodLog[], range: DateRange, axis: MacroAxis): WeeklyDiscovery | null {
+function computeMacroSources(logs: FoodLog[], range: DateRange, axis: MacroAxis, weekKey: string): WeeklyDiscovery | null {
   const startKey = formatDateKey(range.start);
   const endKey = formatDateKey(range.end);
   const byKey = new Map<string, { identityId?: string; label: string; grams: number }>();
@@ -524,7 +694,18 @@ function computeMacroSources(logs: FoodLog[], range: DateRange, axis: MacroAxis)
     .sort((a, b) => b.grams - a.grams || a.label.localeCompare(b.label))
     .slice(0, MAX_SOURCES)
     .map((e): WeeklyMacroSource => ({ identityId: e.identityId, label: e.label, sharePct: Math.round((e.grams / total) * 100) }));
-  return { kind: 'macroSources', axis, sources };
+  // 豆知識は、割合の大きい食材から順に「この栄養素の話」を持つものを探す。
+  // 並んでいない食材の話 (例: 魚が無い週の n-3) はしない。不足を言うことになるため (PRD §6.7.5)。
+  let note: WeeklyFoodFact | null = null;
+  for (const src of sources) {
+    const identity = src.identityId ? getIdentity(src.identityId) : undefined;
+    const picked = identity?.nutritionNotes ? pickNutritionNote(identity.nutritionNotes, identity.id, weekKey, axis) : null;
+    if (identity && picked) {
+      note = { identityId: identity.id, identityLabel: identity.label, note: picked };
+      break;
+    }
+  }
+  return { kind: 'macroSources', axis, sources, note };
 }
 
 function topIdentityIn(logs: FoodLog[], range: DateRange): string | null {
@@ -556,6 +737,7 @@ function computeMacroBoost(
   insight: WeeklyMacroInsight | null,
   weekKey: string,
   weekIndex: number,
+  range: DateRange,
 ): WeeklyMacroBoost | null {
   if (!insight) return null;
   const { axis, direction } = insight;
@@ -570,12 +752,14 @@ function computeMacroBoost(
   const historyMatching = (match: (identity: Identity) => boolean): WeeklyMacroBoostCandidate[] =>
     [...freq.entries()]
       .map(([identityId, count]) => ({ identity: getIdentity(identityId), count }))
-      .filter((c): c is { identity: Identity; count: number } => !!c.identity && match(c.identity))
+      .filter((c): c is { identity: Identity; count: number } => !!c.identity && isAdviceEligible(c.identity) && match(c.identity))
       .sort((a, b) => b.count - a.count)
       .map(({ identity }) => ({ identityId: identity.id, label: identity.label, fromHistory: true }));
 
   if (direction === 'less') {
-    const isDense = (identity: Identity) => densityFor(axis, identity.defaultMacro) >= AXIS_DENSITY_THRESHOLD[axis];
+    const isDense = (identity: Identity) =>
+      densityFor(axis, identity.defaultMacro) >= AXIS_DENSITY_THRESHOLD[axis]
+      && identity.defaultMacro[axis] >= BOOST_MIN_GRAMS[axis];
     const fromHistory = historyMatching(isDense);
 
     // 履歴に十分あれば履歴だけを週ごとにローテーション (毎週同じ3品にしない)。
@@ -586,7 +770,7 @@ function computeMacroBoost(
     } else {
       const seenIds = new Set(fromHistory.map((c) => c.identityId));
       const catalogPool = ALL_IDENTITIES
-        .filter((identity) => !seenIds.has(identity.id) && isDense(identity))
+        .filter((identity) => !seenIds.has(identity.id) && isAdviceEligible(identity) && isDense(identity))
         .sort((a, b) => densityFor(axis, b.defaultMacro) - densityFor(axis, a.defaultMacro))
         .slice(0, CATALOG_ROTATION_POOL)
         .map((identity): WeeklyMacroBoostCandidate => ({ identityId: identity.id, label: identity.label, fromHistory: false }));
@@ -599,7 +783,8 @@ function computeMacroBoost(
     for (const c of candidates) {
       const identity = getIdentity(c.identityId);
       const picked = identity?.nutritionNotes
-        ? pickNutritionNote(identity.nutritionNotes, identity.id, weekKey)
+        // 「なぜこの食材が候補か」を支える話だけを出す (その栄養素の話に絞る。PRD §6.7.5「各カードの役割」)
+        ? pickNutritionNote(identity.nutritionNotes, identity.id, weekKey, axis)
         : null;
       if (identity && picked) {
         note = { identityId: identity.id, identityLabel: identity.label, note: picked };
@@ -609,55 +794,76 @@ function computeMacroBoost(
     return { axis, direction, candidates, note };
   }
 
-  // direction === 'more': 低密度食材を記録履歴から提示 (カタログ補完なし)
-  const candidates = rotate(
-    historyMatching((identity) => densityFor(axis, identity.defaultMacro) < AXIS_LOW_DENSITY_THRESHOLD[axis]),
-    MAX_BOOST_CANDIDATES,
-    weekIndex,
-  );
-
+  // direction === 'more': 先週食べていたものの置き換え候補 (SWAP_RULES)。
+  // たんぱく質が多めの週は、置き換えを勧める根拠が弱いので出さない。
+  if (axis === 'protein') return null;
+  const startKey = formatDateKey(range.start);
+  const endKey = formatDateKey(range.end);
+  const weekLogs = allLogs.filter((log) => log.date >= startKey && log.date <= endKey);
+  const candidates = computeSwapCandidates(weekLogs, axis, weekIndex);
   if (candidates.length === 0) return null;
 
-  return { axis, direction, candidates, note: null };
+  // 豆知識は、候補 (置き換え後) のうちその栄養素の話を持つ最初の1件。種類が違う話 (玄米を勧めるときの白米の話) は除く。
+  let note: WeeklyFoodFact | null = null;
+  for (const c of candidates) {
+    const identity = getIdentity(c.identityId);
+    const picked = identity?.nutritionNotes ? pickNutritionNote(identity.nutritionNotes, identity.id, weekKey, axis, c.attrKey) : null;
+    if (identity && picked) {
+      note = { identityId: identity.id, identityLabel: identity.label, note: picked };
+      break;
+    }
+  }
+  return { axis, direction, candidates, note };
 }
 
 /**
- * 記録日の実測 P/F/C 平均と、各日の目標kcal比率でスケールした目標 P/F/C 平均を比較し、
- * 最も乖離が大きい1軸だけを返す (nutrition-ui の todayAdjustedPfc と同じスケール方式)。
+ * P/F/C の「割合」(エネルギー比) を目標の割合と比べ、ずれがいちばん大きい1軸だけを返す。
+ *
+ * グラムの絶対量では比べない。量で比べると、記録が目標の7割しかない週 (つけ忘れ・少食) は
+ * 3軸そろって「少なめ」になり、配分ではなく全体量の話を PFC の話として伝えてしまうため。
+ * 量はカロリーのカード、配分はこのカード、と役割を分ける (PRD §6.7.5「各カードの役割」)。
+ * 割合は目標側・実測側とも P/F/C のエネルギーの合計を分母にする (kcal の丸めや酒類の影響を受けない)。
  */
 function computeMacroInsight(
   loggedDays: [string, { protein: number; fat: number; carbs: number }][],
   profile: UserProfile,
-  targetForKey: (key: string) => number,
-  base: number,
 ): WeeklyMacroInsight | null {
   const axes: MacroAxis[] = ['protein', 'fat', 'carbs'];
-  const targetBase: Record<MacroAxis, number> = {
+  const targetGrams: Record<MacroAxis, number> = {
     protein: profile.targetProtein,
     fat: profile.targetFat,
     carbs: profile.targetCarbs,
   };
+  const actualGrams: Record<MacroAxis, number> = { protein: 0, fat: 0, carbs: 0 };
+  for (const [, m] of loggedDays) for (const axis of axes) actualGrams[axis] += m[axis];
+
+  const energyShares = (grams: Record<MacroAxis, number>): Record<MacroAxis, number> | null => {
+    const total = axes.reduce((sum, axis) => sum + grams[axis] * AXIS_KCAL_PER_GRAM[axis], 0);
+    if (total <= 0) return null;
+    return {
+      protein: (grams.protein * AXIS_KCAL_PER_GRAM.protein) / total,
+      fat: (grams.fat * AXIS_KCAL_PER_GRAM.fat) / total,
+      carbs: (grams.carbs * AXIS_KCAL_PER_GRAM.carbs) / total,
+    };
+  };
+  const actual = energyShares(actualGrams);
+  const target = energyShares(targetGrams);
+  if (!actual || !target) return null;
 
   let best: WeeklyMacroInsight | null = null;
   let bestAbsDiff = 0;
 
   for (const axis of axes) {
-    const avgActual = loggedDays.reduce((sum, [, m]) => sum + m[axis], 0) / loggedDays.length;
-    const avgTarget = loggedDays.reduce((sum, [key]) => {
-      const ratio = targetForKey(key) / base;
-      return sum + targetBase[axis] * ratio;
-    }, 0) / loggedDays.length;
-
-    if (avgTarget <= 0) continue;
-    const diffRatio = (avgActual - avgTarget) / avgTarget;
+    if (target[axis] <= 0) continue;
+    const diffRatio = (actual[axis] - target[axis]) / target[axis];
     const absDiff = Math.abs(diffRatio);
     if (absDiff > bestAbsDiff) {
       bestAbsDiff = absDiff;
       best = {
         axis,
         direction: diffRatio > 0 ? 'more' : 'less',
-        avgActual: Math.round(avgActual),
-        avgTarget: Math.round(avgTarget),
+        actualSharePct: Math.round(actual[axis] * 100),
+        targetSharePct: Math.round(target[axis] * 100),
       };
     }
   }

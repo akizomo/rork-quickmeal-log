@@ -3,6 +3,7 @@
  *
  * 2026-10-18 からアプリ本体はネイティブ formSheet (SheetScreen / TallSheetScreen) を使う。
  * 下の Dialog / BottomSheet (RN Modal ベース) は比較用に残しているだけで、新規には使わない (CLAUDE.md)。
+ * Callout (吹き出し) はシートの種類によらず使う。
  */
 
 import { Stack, useRouter } from 'expo-router';
@@ -12,6 +13,7 @@ import {
   Body,
   BottomSheet,
   Button,
+  Callout,
   Caption,
   Dialog,
   Heading,
@@ -33,6 +35,7 @@ export default function OverlaysScreen() {
         <FormSheetSection t={t} />
         <DialogSection t={t} />
         <BottomSheetSection t={t} />
+        <CalloutSection t={t} />
       </ScrollView>
     </>
   );
@@ -183,6 +186,54 @@ function BottomSheetSection({ t }: { t: Theme }) {
             <Caption tone="secondary">行きを越えても drag handle 領域からだけ dismiss できる</Caption>
           </View>
         ))}
+      </BottomSheet>
+    </Section>
+  );
+}
+
+// ---------- Callout ----------
+function CalloutSection({ t }: { t: Theme }) {
+  const [visible, setVisible] = useState(true);
+  const [sheetOpen, setSheetOpen] = useState(false);
+
+  return (
+    <Section title="Callout" t={t}>
+      <Caption>
+        要素を指す吹き出し。面は surface.inverse、radius.md + elevation.md。尻尾は下向きで
+        arrowAlign (start/center/end) で位置を合わせる。操作は止めない。
+      </Caption>
+
+      <View style={{ gap: t.spacing['4'] }}>
+        <Callout
+          visible={visible}
+          title="20〜30kcalは、ごはんひと口くらいの差。"
+          message="ざっくりでも、記録を続けるほうがずっと大切です。"
+          onDismiss={() => setVisible(false)}
+          dismissAccessibilityLabel="ヒントを閉じる"
+          testID="callout-demo"
+        />
+        <Callout visible message="title 無し・閉じるボタン無し (arrowAlign=center)" arrowAlign="center" />
+        <Callout visible message="arrowAlign=end" arrowAlign="end" />
+        <Button label={visible ? '1つ目を隠す' : '1つ目を出す'} variant="secondary" onPress={() => setVisible((v) => !v)} />
+        <Button label="BottomSheet の footerAccessory で使う" variant="secondary" onPress={() => setSheetOpen(true)} />
+      </View>
+
+      <BottomSheet
+        visible={sheetOpen}
+        onClose={() => setSheetOpen(false)}
+        title="footerAccessory"
+        footerLeft={<Heading size="lg">312 kcal</Heading>}
+        footerAccessory={
+          <Callout
+            visible={sheetOpen}
+            title="20〜30kcalは、ごはんひと口くらいの差。"
+            message="ざっくりでも、記録を続けるほうがずっと大切です。"
+          />
+        }
+        primaryAction={{ label: '記録する', onPress: () => setSheetOpen(false) }}
+        testID="bs-callout"
+      >
+        <Body>footerAccessory は下端がフッター上端に揃い、コンテンツの上に重なる。</Body>
       </BottomSheet>
     </Section>
   );

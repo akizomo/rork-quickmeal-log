@@ -65,6 +65,11 @@ export type TallSheetScreenProps = {
   primaryAction?: SheetScreenAction;
   /** フッター左 (kcal・PFC のプレビュー等) */
   footerLeft?: React.ReactNode;
+  /**
+   * フッターの上端に下端を揃えて、本文の上に重ねる要素 (吹き出し等)。BottomSheet の同名 prop と同じ。
+   * 高さ0のアンカーに置くので本文の余白は変わらず、空いた部分のタッチは下の本文へ通す。
+   */
+  footerAccessory?: React.ReactNode;
   testID?: string;
 };
 
@@ -76,6 +81,7 @@ export function TallSheetScreen({
   contentStyle,
   primaryAction,
   footerLeft,
+  footerAccessory,
   testID,
 }: TallSheetScreenProps) {
   const t = useTheme();
@@ -139,6 +145,14 @@ export function TallSheetScreen({
       </View>
 
       {hasFooter ? (
+        <View pointerEvents="box-none">
+        {footerAccessory ? (
+          <View pointerEvents="box-none" style={styles.footerAccessoryAnchor}>
+            <View pointerEvents="box-none" style={[styles.footerAccessory, { left: t.spacing['4'], right: t.spacing['4'] }]}>
+              {footerAccessory}
+            </View>
+          </View>
+        ) : null}
         <View
           onLayout={(e) => setFooterHeight(e.nativeEvent.layout.height)}
           style={[
@@ -168,6 +182,7 @@ export function TallSheetScreen({
             <View style={styles.footerItem} />
           )}
         </View>
+        </View>
       ) : null}
       </View>
     </>
@@ -189,5 +204,13 @@ const styles = StyleSheet.create({
   },
   footerItem: {
     flex: 1,
+  },
+  footerAccessoryAnchor: {
+    height: 0,
+    zIndex: 1,
+  },
+  footerAccessory: {
+    position: 'absolute',
+    bottom: 0,
   },
 });

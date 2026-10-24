@@ -304,7 +304,7 @@ const FrequentPills = memo(function FrequentPills({
 });
 
 export const QuickLogSection = memo(function QuickLogSection() {
-  const { selectedMode, setSelectedMode, settings, quickLog, bumpDiagnostic } = useAppState();
+  const { selectedMode, setSelectedMode, settings, bumpDiagnostic } = useAppState();
   const tr = useT();
   const { foodRegion: locale, uiLanguage } = useLocale();
   const { width: screenWidth } = useWindowDimensions();

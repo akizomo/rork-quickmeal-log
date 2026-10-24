@@ -19,6 +19,7 @@
 import { ALL_IDENTITIES, ALL_US_IDENTITIES, JP_PRESETS, getAddonLabel, getBucketDef } from '@/constants/identity';
 import { DISH_VOCABULARY } from '@/constants/identity/dish-vocabulary';
 import { HEAD_NOUNS, type HeadNounTarget } from '@/constants/identity/head-nouns';
+import { aliasesFor } from '@/constants/identity/search-aliases';
 import { normalize, romajiVariant } from '@/utils/identity-normalize';
 import {
   labelParts,
@@ -267,8 +268,10 @@ function compoundsFor(attrNames: string[], headNames: string[], tailHeads: strin
 
 function identityTargets(identity: Identity, jp: boolean): Target[] {
   const raws: Array<[string, TargetKind]> = [[identity.label, 'name']];
-  if (jp) for (const p of labelParts(identity.label)) raws.push([p, 'part']);
+  // labelParts の先頭は括弧を外したラベル全体 (ラーメン (あっさり) → ラーメン)。これは名前そのもの。
+  if (jp) labelParts(identity.label).forEach((p, i) => raws.push([p, i === 0 ? 'name' : 'part']));
   for (const t of identity.searchTags ?? []) raws.push([t, 'tag']);
+  if (jp) for (const t of aliasesFor(identity.id)) raws.push([t, 'tag']);
   const targets = targetsOf(raws);
   if (!jp) return targets;
 
@@ -287,10 +290,11 @@ function identityTargets(identity: Identity, jp: boolean): Target[] {
   return targets;
 }
 
-function styleTargets(style: StyleOption, jp: boolean): Target[] {
+function styleTargets(style: StyleOption, jp: boolean, identityId?: string): Target[] {
   const raws: Array<[string, TargetKind]> = [[style.label, 'name']];
   if (jp) for (const p of labelParts(style.label)) raws.push([p, 'part']);
   for (const t of style.searchTags ?? []) raws.push([t, 'tag']);
+  if (jp && identityId) for (const t of aliasesFor(`${identityId}[${style.key}]`)) raws.push([t, 'tag']);
   return targetsOf(raws);
 }
 
@@ -299,7 +303,10 @@ function attributeTargets(
   attribute: AttributeOption,
   opts: { jp: boolean; generic: boolean; contextBound: (k: string) => boolean; heads: string[]; tailHeads: string[] },
 ): Target[] {
-  const tags = (attribute.searchTags ?? []).map((t) => [t, 'tag'] as [string, TargetKind]);
+  const tags = [
+    ...(attribute.searchTags ?? []),
+    ...(opts.jp ? aliasesFor(`${identity.id}/${attribute.key}`) : []),
+  ].map((t) => [t, 'tag'] as [string, TargetKind]);
   if (!opts.jp) {
     // 英語 (US): 従来どおり。複合語・部分への分解はしない。
     return targetsOf(
@@ -317,7 +324,8 @@ function attributeTargets(
     // (「たまご」「ツナ」「チーズ」「鮭」は別の食材そのもの) 場合は、単独で打たれたときに
     // そちらへ着地すべきなので、この属性は複合語 (たまごサンド) 経由でのみ辿り着けるようにする。
     const bare: Array<[string, TargetKind]> = [[attribute.label, 'name']];
-    for (const p of labelParts(attribute.label)) bare.push([p, 'part']);
+    // labelParts の先頭は括弧を外したラベル全体 (ステーキ (サーロイン等) → ステーキ)。これは名前そのもの。
+    labelParts(attribute.label).forEach((p, i) => bare.push([p, i === 0 ? 'name' : 'part']));
     for (const [raw, kind] of bare) if (!opts.contextBound(toKey(raw))) raws.push([raw, kind]);
   }
   raws.push(...tags);
@@ -395,7 +403,7 @@ function buildIndex(identities: Identity[], genericLabels: Set<string>, presets:
       });
     }
     for (const style of identity.styles ?? []) {
-      out.push({ entry: { identity, style }, targets: styleTargets(style, jp) });
+      out.push({ entry: { identity, style }, targets: styleTargets(style, jp, identity.id) });
     }
   }
 
@@ -641,7 +649,11 @@ export function searchEntriesFuzzy(query: string, opts?: SearchOptions): SearchE
         // 畳み込み前の形でも完全一致なら加点。畳み込みで同じキーになる別の語 (かれい=鰈 / カレー) は、
         // 打った形そのままの方を先にする。
         const exactPlain = h.method === 'exact' && t.plain === q.plain ? 0.1 : 0;
-        const net = h.score - q.penalty - (weak ? 0.05 : 0) + exactPlain;
+        // ラベルの「部分」(ハマチ・ぶり の ぶり / プリン・ゼリー の ゼリー) は、ラベル全体 (ぶり) と同点に
+        // なったとき全体に譲る。部分は「2つの名前を1つにまとめた」片方で、全体一致のほうが打った語そのもの。
+        // スタイルの部分は上の weak で既に下げている。
+        const partial = t.kind === 'part' && !entry.style ? 0.01 : 0;
+        const net = h.score - q.penalty - (weak ? 0.05 : 0) - partial + exactPlain;
         // 層1に値する根拠が1つでもあれば、層2の根拠 (bigram は最大 2.0 点) がそれより高得点でも
         // 層1として扱う。点数だけで選ぶと、含まれる語 (1.5〜1.95) より bigram が勝ち、層2に落ちる。
         const better =

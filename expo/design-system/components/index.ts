@@ -24,6 +24,8 @@ export { TallSheetScreen, tallSheetOptions } from './TallSheetScreen';
 export type { TallSheetScreenProps } from './TallSheetScreen';
 export { Dialog } from './Dialog';
 export type { DialogProps, DialogAction } from './Dialog';
+export { Callout } from './Callout';
+export type { CalloutProps, CalloutArrowAlign } from './Callout';
 export { MacroChip } from './MacroChip';
 export type { MacroChipProps, MacroChipKind, MacroChipSize } from './MacroChip';
 export { MacroCard } from './MacroCard';

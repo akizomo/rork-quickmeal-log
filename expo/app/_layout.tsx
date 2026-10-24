@@ -71,8 +71,6 @@ function RootLayoutNav() {
       <Stack.Screen name="amount-edit" options={formSheetOptions(t)} />
       {/* 背の高い記録シート (SDK 58 以上が前提。docs/SHEET_MIGRATION.md §7-6) */}
       <Stack.Screen name="log-identity" options={tallSheetOptions(t)} />
-      <Stack.Screen name="dish-entry" options={tallSheetOptions(t)} />
-      <Stack.Screen name="log-editor" options={tallSheetOptions(t)} />
       <Stack.Screen name="direct-input" options={formSheetOptions(t)} />
       <Stack.Screen name="exercise" options={tallSheetOptions(t)} />
       <Stack.Screen name="balance" options={formSheetOptions(t)} />

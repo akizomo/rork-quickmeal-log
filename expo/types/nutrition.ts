@@ -127,6 +127,12 @@ export interface FoodLog {
    * "I tapped 肉魚(低脂)" shows as "肉魚(低脂)" not "鶏むね・ささみ").
    */
   wasShortTap?: boolean;
+  /**
+   * True when the user fixed this log's kcal/PFC by hand (数値で編集).
+   * Such a log must never be re-derived from an Identity (IdentityLogSheet would
+   * rebuild the numbers from default amounts) — see utils/log-edit-route.ts.
+   */
+  macroManual?: boolean;
 }
 
 /**
@@ -197,6 +203,11 @@ export interface AppSettings {
    */
   healthConnectSeenAtISO?: string | null;
   /**
+   * PRD §6.5.2: 詳細シートの「記録時の安心ヒント」(20〜30kcalの差は気にしなくていい) を
+   * 表示した時刻。`null` の間は次に詳細シートを開いたときに一度だけ出す。
+   */
+  roughHintSeenAtISO?: string | null;
+  /**
    * v1.7+: 最後に Health 同期が成功した時刻 (ISO)。
    * foreground 復帰時の自動再同期スロットル (5分) 判定に使う。
    * アンマウントで消えないよう、フック state ではなくここに永続化する。
@@ -211,6 +222,11 @@ export interface AppSettings {
    * `QuickLogHistoryMap` from `@/types/quick-log`.
    */
   quickLogHistory?: Record<string, unknown[]>;
+  /**
+   * 適用済みのデータ移行ID (utils/log-migrations.ts)。保存済みの記録・履歴の「量」の解釈を
+   * 変える DB 修正を、1回だけ・冪等に適用するための印。未設定 = 1つも適用していない。
+   */
+  appliedMigrations?: string[];
   /**
    * 食材/一皿料理/⭐️ の各タブで実際に記録した回数の累計 (減らない・全期間)。
    * デフォルトタブ判定 (最も使われているタブを優先) に使う。

@@ -132,6 +132,17 @@ describe('resolveLog — Style migration', () => {
     expect(result.styleKey).toBeUndefined();
   });
 
+  it('migrates egg + Style=soup to soup (attribute=egg) — 9ボタンの「卵」からたまごスープ', () => {
+    const result = resolveLog({ originIdentityId: 'egg', styleKey: 'soup' });
+    expect(result.recordIdentityId).toBe('soup');
+    expect(result.attributeKey).toBe('egg');
+    // soup defaultMacro(40/2.5/1/4) × egg factor(1.25/1.32/2.6/0.8) = 50/3.3/2.6/3.2
+    expect(result.baseMacro.kcal).toBeCloseTo(50, 1);
+    expect(result.baseMacro.fat).toBeCloseTo(2.6, 1);
+    expect(result.confirmMessage).toBe('たまごスープとして記録します');
+    expect(result.styleKey).toBeUndefined();
+  });
+
   it('honors amountValue across a migration when units match (chicken_thigh 100g + fried → karaage_momo 100g)', () => {
     // resolveLog is a pure function that trusts the caller's amountValue as-is;
     // it does NOT know whether the unit is meaningful for the recordIdentity.
@@ -382,11 +393,11 @@ describe('Identity master integrity — マクロ定義のバグクラス検出 
     // 追跡: 「PFC↔kcal 乖離の残り18件を精査」タスク
     const KNOWN_DEVIATIONS = new Set([
       // JP 一皿料理タブ
-      'ramen_light/shio[no_soup]', 'udon/kitsune', 'maki/maki_thick',
-      'fried_main/tonkatsu_hire', 'sashimi/mixed', 'sashimi/maguro_lean',
+      'ramen_light/shio[no_soup]', 'maki/maki_thick',
+      'sashimi/mixed', 'sashimi/maguro_lean',
       // US 食材タブ
       'us_potato/mashed', 'us_potato/fries', 'us_cereal/granola', 'us_shrimp/fried',
-      'us_canned_tuna/in_oil', 'us_ground_beef/extra_lean', 'us_bacon_strip/turkey_bacon',
+      'us_canned_tuna/in_oil', 'us_ground_beef/extra_lean',
       'us_salmon/smoked', 'us_corn/cooked', 'us_nuts_mixed/cashews',
       'us_cookies/oreo', 'us_smoothie/green',
     ]);

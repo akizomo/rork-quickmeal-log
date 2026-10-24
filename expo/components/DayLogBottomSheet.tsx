@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import React, { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import {
   Animated,
@@ -11,7 +12,6 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { getIdentity } from '@/constants/identity';
 import { MealLogCard, useTheme } from '@/design-system';
 import { useT } from '@/hooks/useT';
 import { spring } from '@/design-system/tokens/primitives/motion';
@@ -21,6 +21,7 @@ import { useAppState } from '@/providers/app-state-provider';
 import { FoodLog } from '@/types/nutrition';
 import { formatShortDay, isSameDay, logsForDate, sumForDate } from '@/utils/history';
 import { getLogDisplayInfo } from '@/utils/log-display';
+import { resolveLogEditRoute } from '@/utils/log-edit-route';
 import { formatDateKey } from '@/utils/nutrition';
 
 type SnapStage = 'peek' | 'half' | 'full';
@@ -42,23 +43,17 @@ function formatTime(timestamp: string): string {
   return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
 }
 
-function LogListItem({ log }: { log: FoodLog }) {
-  const { deleteLog, setEditorLogId, openIdentityLogSheet, settings } = useAppState();
+function LogListItem({ log, onEditNumeric }: { log: FoodLog; onEditNumeric: (log: FoodLog) => void }) {
+  const { deleteLog, openIdentityLogSheet, settings } = useAppState();
   const display = getLogDisplayInfo(log, settings.uiLanguage);
   const handlePress = () => {
-    // New IA log → open IdentityLogSheet in edit mode (preload from log)
-    if (log.identityId) {
-      const id = getIdentity(log.identityId);
-      if (id) {
-        openIdentityLogSheet(id.primaryHome.bucket, {
-          identityId: log.originIdentityId ?? log.identityId,
-          editingLogId: log.id,
-        });
-        return;
-      }
+    // 編集の入口は resolveLogEditRoute が必ず 1 つに決める (utils/log-edit-route.ts)。
+    const route = resolveLogEditRoute(log);
+    if (route.kind === 'identity') {
+      openIdentityLogSheet(route.bucket, { identityId: route.identityId, editingLogId: log.id });
+      return;
     }
-    // Legacy log fallback → old editor
-    setEditorLogId(log.id);
+    onEditNumeric(log);
   };
   return (
     <MealLogCard onPress={handlePress} testID={`log-item-${log.id}`}>
@@ -97,9 +92,16 @@ export const DayLogBottomSheet = memo(
   forwardRef<DayLogBottomSheetRef, Props>(function DayLogBottomSheet({ viewedDate }, ref) {
   const t = useTheme();
   const tr = useT();
+  const router = useRouter();
   const { logs, todayLogs, todayMacro, settings } = useAppState();
   const { height: screenHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
+
+  // 数値で編集する記録は formSheet ルート (/direct-input) を編集モードで開く。
+  const handleEditNumeric = useCallback(
+    (log: FoodLog) => router.push({ pathname: '/direct-input', params: { editingLogId: log.id } }),
+    [router],
+  );
 
   const today = useMemo(() => new Date(), []);
   const isToday = isSameDay(viewedDate, today);
@@ -292,7 +294,7 @@ export const DayLogBottomSheet = memo(
               <Text style={[styles.emptyText, { color: t.colors.content.secondary }]}>{tr('dayLog.emptyText')}</Text>
             </View>
           ) : (
-            dayLogs.map((log) => <LogListItem key={log.id} log={log} />)
+            dayLogs.map((log) => <LogListItem key={log.id} log={log} onEditNumeric={handleEditNumeric} />)
           )}
         </ScrollView>
       </Animated.View>

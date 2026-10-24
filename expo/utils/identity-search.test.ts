@@ -151,3 +151,34 @@ describe('天ぷらそば (語彙の穴 — Preset ではなく属性タグで�
     expect(hit).toBeDefined();
   });
 });
+
+describe('たまごスープ (汁物の種類 egg)', () => {
+  it.each(['たまごスープ', '卵スープ', '中華スープ', 'かきたま汁'])('「%s」は層1の1位が soup の egg', (query) => {
+    const top = search(query).confident[0];
+    expect(`${top.entry.identity.id}/${top.entry.attribute?.key}`).toBe('soup/egg');
+  });
+
+  // 素材名から料理を探す使い方 (「卵」で打って、卵料理の中からスープを選ぶ)。
+  // 卵そのもの (egg) が上位を占めても、表示上限の中に残っていること。
+  it.each(['卵', 'たまご', '玉子'])('「%s」でも層1にたまごスープが出る', (query) => {
+    const hit = search(query).confident.find((r) => r.entry.identity.id === 'soup' && r.entry.attribute?.key === 'egg');
+    expect(hit).toBeDefined();
+  });
+});
+
+describe('ひき肉 (牛・豚 / 鶏もも の種類 minced)', () => {
+  // 以前は別名で「牛・豚 / 牛（ロース）」に着地し、記録にひき肉の名前が残らなかった。
+  it.each([
+    ['ひき肉', 'beef_pork/minced'],
+    ['ひきにく', 'beef_pork/minced'],
+    ['ミンチ', 'beef_pork/minced'],
+    ['合いびき肉', 'beef_pork/minced'],
+    ['豚ひき肉', 'beef_pork/minced'],
+    ['牛ひき肉', 'beef_pork/minced'],
+    ['鶏ひき肉', 'chicken_thigh/minced'],
+    ['鶏ミンチ', 'chicken_thigh/minced'],
+  ])('「%s」は層1の1位が %s', (query, expected) => {
+    const top = search(query).confident[0];
+    expect(`${top.entry.identity.id}/${top.entry.attribute?.key}`).toBe(expected);
+  });
+});

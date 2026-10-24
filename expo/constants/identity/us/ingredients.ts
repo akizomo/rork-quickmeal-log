@@ -319,7 +319,9 @@ const BUCKET_EGG: Identity[] = [
     id: 'us_egg',
     label: 'Egg',
     primaryHome: { tab: 'ingredient', bucket: 'egg' },
-    defaultMacro: { kcal: 72, protein: 6, fat: 5, carbs: 0.4 },
+    // 既定量は 2個。defaultMacro は「既定量ぶん」の値なので 2個分 (USDA large egg 1個 ≒ 72kcal/P6.3/F4.8)。
+    // 以前は 1個分 (72) が 2個の値になっており、卵が半分に記録されていた (db-invariants で検出)。
+    defaultMacro: { kcal: 144, protein: 12, fat: 10, carbs: 0.8 },
     amount: {
       unit: 'piece',
       default: 2,
@@ -332,7 +334,9 @@ const BUCKET_EGG: Identity[] = [
     },
     attributes: [
       { key: 'scrambled', label: 'Scrambled', isDefault: true },
-      { key: 'fried', label: 'Fried', factor: { kcal: 1.25, fat: 1.8 } },
+      // 目玉焼き 1個 ≒ 90kcal/P6.3/F7 (USDA fried egg) = 基準 (1個 72/6/5) の kcal ×1.25・脂質 ×1.4。
+      // 脂質 ×1.8 は P/F/C から逆算した kcal と食い違っていた (基準量を2個分に直したことで検出)。
+      { key: 'fried', label: 'Fried', factor: { kcal: 1.25, fat: 1.4 } },
       { key: 'boiled', label: 'Hard-boiled', factor: { kcal: 0.97, fat: 0.95 } },
       { key: 'poached', label: 'Poached', factor: { kcal: 1.0, fat: 1.0 } },
     ],
@@ -435,7 +439,9 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
     id: 'us_bacon_strip',
     label: 'Bacon',
     primaryHome: { tab: 'ingredient', bucket: 'fatty_protein' },
-    defaultMacro: { kcal: 148, protein: 10, fat: 11.5, carbs: 0.4 },
+    // 2 strips ≒ 90kcal (USDA cooked bacon 1 slice 8g ≒ 43)。asAddon の 2 strips = 90 と同じ値。
+    // 以前の 148 は 1 strip ≒ 74 で実物の約1.7倍だった (db-invariants の外部アンカーで検出)。
+    defaultMacro: { kcal: 90, protein: 6, fat: 7, carbs: 0.2 },
     amount: {
       unit: 'piece',
       default: 2,

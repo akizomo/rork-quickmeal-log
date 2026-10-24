@@ -31,6 +31,7 @@ import {
 import { FoodLog, FoodLogAddon } from '@/types/nutrition';
 import type { AppLocale } from '@/types/locale';
 import { migrateAmountValueForUnit } from './amount-migration';
+import { getEffectiveAmountSpec } from './identity-attribute';
 import { UNIT_LABELS } from './unit-labels';
 
 export interface LogDisplayInfo {
@@ -106,14 +107,18 @@ function buildSubtitle(identity: Identity, log: FoodLog): string | undefined {
 // ---------------------------------------------------------------------------
 
 function buildAmountText(identity: Identity, log: FoodLog, uiLanguage: AppLocale): string {
-  const rawValue = log.amountValue ?? identity.amount.default;
+  // 種類 (Attribute) が量の単位を上書きしている場合はそちらで表示する
+  // (例: ベーコン=枚 / ソーセージ=本、唐揚げ=g)。
+  const spec = getEffectiveAmountSpec(identity, log.attrKey);
+  const rawValue = log.amountValue ?? spec.default;
   // Translate legacy 'serving' values into the Identity's current unit (e.g. percent).
-  const value = migrateAmountValueForUnit(rawValue, log.amountUnit, identity.amount.unit);
+  const value = migrateAmountValueForUnit(rawValue, log.amountUnit, spec.unit);
   // chip-aware: prefer human label ("1人前", "大盛") when the saved value
   // matches a defined chip exactly.
-  const chipHit = identity.amount.chips?.find((c) => c.value === value);
-  if (chipHit) return chipHit.label;
-  const suffix = identity.amount.unitLabel ?? UNIT_LABELS[uiLanguage][identity.amount.unit];
+  const suffix = spec.unitLabel ?? UNIT_LABELS[uiLanguage][spec.unit];
+  const chipHit = spec.chips?.find((c) => c.value === value);
+  // 数値だけのチップ ("100" / "150") は単位を補う (シートの chipDisplayLabel と同じ規則)。
+  if (chipHit) return /^\d+(\.\d+)?$/.test(chipHit.label.trim()) ? `${chipHit.label}${suffix}` : chipHit.label;
   return `${formatAmountValue(value)} ${suffix}`;
 }
 

@@ -384,6 +384,8 @@ function buildCards(recap: WeeklyRecap, styles: Styles, tr: Tr): Card[] {
                   ))}
                 </View>
               </View>
+              {/* その栄養素の中身・取り方の話だけを添える (PRD §6.7.5「各カードの役割」)。 */}
+              {renderNote(t, d.note, tr)}
             </>
           );
         },
@@ -402,7 +404,7 @@ function buildCards(recap: WeeklyRecap, styles: Styles, tr: Tr): Card[] {
       const pillText = d.streakWeeks >= 2
         ? tr(insight.direction === 'less' ? 'weeklyRecap.insight.streakLess' : 'weeklyRecap.insight.streakMore', { weeks: d.streakWeeks })
         : tr(insight.direction === 'less' ? 'weeklyRecap.insight.less' : 'weeklyRecap.insight.more');
-      const max = Math.max(insight.avgActual, insight.avgTarget) || 1;
+      const max = Math.max(insight.actualSharePct, insight.targetSharePct) || 1;
       cards.push({
         bg: 'light',
         render: (t) => {
@@ -436,8 +438,8 @@ function buildCards(recap: WeeklyRecap, styles: Styles, tr: Tr): Card[] {
               </View>
               <View style={[styles.spacer, { justifyContent: 'center' }]}>
                 <View style={{ gap: t.spacing['4'] }}>
-                  <MacroBar label={tr('weeklyRecap.insight.barActual')} value={insight.avgActual} max={max} color={nutri.graphic} t={t} styles={styles} />
-                  <MacroBar label={tr('weeklyRecap.insight.barTarget')} value={insight.avgTarget} max={max} color={t.colors.border.default} t={t} styles={styles} muted />
+                  <MacroBar label={tr('weeklyRecap.insight.barActual')} value={insight.actualSharePct} max={max} color={nutri.graphic} t={t} styles={styles} />
+                  <MacroBar label={tr('weeklyRecap.insight.barTarget')} value={insight.targetSharePct} max={max} color={t.colors.border.default} t={t} styles={styles} muted />
                 </View>
               </View>
             </>
@@ -459,23 +461,33 @@ function buildCards(recap: WeeklyRecap, styles: Styles, tr: Tr): Card[] {
             <Body size="lg" style={{ marginTop: t.spacing['6'], lineHeight: 26 }}>
               {boost.direction === 'less'
                 ? tr('weeklyRecap.advice.leadMore', { macro: boostMacroName })
-                : tr('weeklyRecap.advice.leadLess', { macro: boostMacroName })}
+                : boost.axis === 'carbs'
+                  ? tr('weeklyRecap.advice.leadSwapStaple')
+                  : tr('weeklyRecap.advice.leadLess', { macro: boostMacroName })}
             </Body>
             <View style={[styles.spacer, { justifyContent: 'center' }]}>
               <View style={{ gap: t.spacing['3'] }}>
                 {boost.candidates.map((c) => {
                   const identity = getIdentity(c.identityId);
                   const bucket = identity ? getBucketDef(identity.primaryHome.bucket) : undefined;
-                  const axisGrams = identity?.defaultMacro[boost.axis] ?? 0;
+                  const axisGrams = c.axisGrams ?? identity?.defaultMacro[boost.axis] ?? 0;
                   return (
                     <View
                       key={c.identityId}
                       style={[styles.candidateCard, { backgroundColor: t.colors.surface.raised }]}
                     >
                       <Body style={{ fontSize: 20 }}>{bucket?.emoji ?? '🍽️'}</Body>
-                      <Body weight="medium" style={{ flex: 1, color: t.colors.content.primary }}>
-                        {c.label}
-                      </Body>
+                      <View style={{ flex: 1 }}>
+                        <Body weight="medium" style={{ color: t.colors.content.primary }}>
+                          {c.label}
+                        </Body>
+                        {/* 置き換え候補は、先週食べていたもののかわりであることを添える。 */}
+                        {c.replaces ? (
+                          <Body size="sm" tone="secondary">
+                            {tr('weeklyRecap.advice.replaces', { label: c.replaces })}
+                          </Body>
+                        ) : null}
+                      </View>
                       <MacroChip kind={boost.axis} value={axisGrams} size="sm" />
                     </View>
                   );
@@ -592,7 +604,7 @@ function MacroBar({
       <View style={styles.barCaptionRow}>
         <Body size="sm" tone="secondary">{label}</Body>
         <Body weight="regular" style={{ fontSize: 17, color: muted ? t.colors.content.secondary : t.colors.content.primary }}>
-          {value}g
+          {value}%
         </Body>
       </View>
       <View style={[styles.track, { backgroundColor: t.colors.surface.sunken, marginTop: t.spacing['1'] }]}>

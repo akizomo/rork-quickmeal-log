@@ -4,24 +4,48 @@
  * 名前(任意) + kcal(必須) + P/F/C(任意) を手入力して即座に記録する。
  * 再利用なし・使い捨て。カスタム食品管理は別スコープ (P2-S7)。
  *
+ * `editingLog` を渡すと編集モードになり、記録済みの kcal / PFC を読み込んで上書き保存する。
+ * 保存済みの数値そのものを編集するので、Identity から再計算して値が変わることはない。
+ * 直接入力ログに加え、IdentityLogSheet で選択状態を復元できない記録 (旧形式ログなど)
+ * もここで開く。どの記録をここへ回すかは utils/log-edit-route.ts が決める。
+ *
  * 2026-10-18: ネイティブ formSheet ルート (/direct-input) の中身に移行。検索ページの上に積んで開き、
  * 閉じると検索ページに戻る (旧実装の「キャンセル時に検索シートを開き直す」onDismiss は不要になった)。
+ * 編集モードはルートパラメータ `editingLogId` で開く (記録一覧から `/direct-input?editingLogId=…`)。
  */
 
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 
 import { Body, Label, Overline, SheetScreen, useTheme } from '@/design-system';
 import { useT } from '@/hooks/useT';
 import { useAppState } from '@/providers/app-state-provider';
+import { applyNumericEdit, DIRECT_INPUT_CATEGORY_KEY } from '@/utils/log-edit-route';
+import { getLogDisplayInfo } from '@/utils/log-display';
 import { formatDateKey, generateId, getMealSlot } from '@/utils/nutrition';
+
+export { DIRECT_INPUT_CATEGORY_KEY };
+
+type MacroKey = 'protein' | 'fat' | 'carbs';
+const MACRO_KEYS: MacroKey[] = ['protein', 'fat', 'carbs'];
+const KCAL_PER_GRAM: Record<MacroKey, number> = { protein: 4, fat: 9, carbs: 4 };
 
 export function DirectInputSheet() {
   const router = useRouter();
   const t = useTheme();
   const tr = useT();
-  const { pushLog, loggingDate } = useAppState();
+  const { pushLog, replaceLog, loggingDate, settings, logs } = useAppState();
+  // 編集対象の記録。指定時は新規追加ではなく上書き保存する。
+  const { editingLogId: editingLogIdParam } = useLocalSearchParams<{ editingLogId?: string }>();
+  const editingLog = editingLogIdParam ? logs.find((l) => l.id === editingLogIdParam) ?? null : null;
+
+  // 直接入力以外の記録 (旧形式ログなど) は名前が分類・表示の元になっているので、ここでは
+  // 名前を変えずに数値だけ直す。名前は読み取り専用で見せる。
+  const fixedName =
+    editingLog && editingLog.categoryKey !== DIRECT_INPUT_CATEGORY_KEY
+      ? getLogDisplayInfo(editingLog, settings.uiLanguage).title
+      : null;
 
   const [name, setName] = useState('');
   const [kcalStr, setKcalStr] = useState('');
@@ -29,8 +53,35 @@ export function DirectInputSheet() {
   const [fatStr, setFatStr] = useState('');
   const [carbsStr, setCarbsStr] = useState('');
   const [kcalIsAuto, setKcalIsAuto] = useState(false);
+  const setMacro = useCallback((key: MacroKey, v: string) => {
+    if (key === 'protein') setProteinStr(v);
+    else if (key === 'fat') setFatStr(v);
+    else setCarbsStr(v);
+  }, []);
   // true のとき PFC 変化によるオート上書きを抑制する
   const kcalManuallyEdited = useRef(false);
+  // kcal 手入力 + PFC のうち2つが埋まっているとき、残り1つを逆算して埋めた欄
+  const [autoMacro, setAutoMacro] = useState<MacroKey | null>(null);
+
+  // 編集モード: 開いたときに記録済みの値を読み込む。kcal は手入力扱いにして、
+  // PFC からの自動計算で保存済みの kcal が書き換わらないようにする。
+  // PFC がすべて 0 の記録 (kcal だけ入力) は空欄に戻し、0 を入力したように見せない。
+  const editingLogId = editingLog?.id;
+  useEffect(() => {
+    if (!editingLog) return;
+    const { kcal: k, protein: p, fat: f, carbs: c } = editingLog.macro;
+    const hasPfc = p > 0 || f > 0 || c > 0;
+    kcalManuallyEdited.current = true;
+    setName(editingLog.categoryLabel === tr('directInput.fallbackLabel') ? '' : editingLog.categoryLabel);
+    setKcalStr(String(k));
+    setKcalIsAuto(false);
+    setAutoMacro(null);
+    setProteinStr(hasPfc ? String(p) : '');
+    setFatStr(hasPfc ? String(f) : '');
+    setCarbsStr(hasPfc ? String(c) : '');
+    // editingLog の参照はログ更新のたびに変わるので、id が変わったときだけ読み込む
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editingLogId]);
 
   // PFC から kcal を自動計算 (P×4 + F×9 + C×4)
   useEffect(() => {
@@ -48,11 +99,57 @@ export function DirectInputSheet() {
     }
   }, [proteinStr, fatStr, carbsStr]);
 
+  // kcal を手入力し、P/F/C のうち1つだけ空なら、kcal から残りを逆算して埋める。
+  // 自動で埋めた欄は、他の欄・kcal の変更に追従して再計算する (ユーザーが触ったら手入力扱い)。
+  useEffect(() => {
+    const kcalValue = parseFloat(kcalStr) || 0;
+    if (!kcalManuallyEdited.current || kcalValue <= 0) {
+      if (autoMacro) {
+        setAutoMacro(null);
+        setMacro(autoMacro, '');
+      }
+      return;
+    }
+    const values: Record<MacroKey, string> = { protein: proteinStr, fat: fatStr, carbs: carbsStr };
+    const empties = MACRO_KEYS.filter((k) => k === autoMacro || values[k].trim() === '');
+    if (empties.length !== 1) {
+      if (autoMacro) {
+        setAutoMacro(null);
+        setMacro(autoMacro, '');
+      }
+      return;
+    }
+    const target = empties[0];
+    const others = MACRO_KEYS.filter((k) => k !== target).reduce(
+      (sum, k) => sum + (parseFloat(values[k]) || 0) * KCAL_PER_GRAM[k],
+      0,
+    );
+    const grams = (kcalValue - others) / KCAL_PER_GRAM[target];
+    if (grams < 0) {
+      if (autoMacro) {
+        setAutoMacro(null);
+        setMacro(autoMacro, '');
+      }
+      return;
+    }
+    const next = String(Math.round(grams * 10) / 10);
+    if (values[target] !== next) setMacro(target, next);
+    if (autoMacro !== target) setAutoMacro(target);
+  }, [kcalStr, proteinStr, fatStr, carbsStr, autoMacro, setMacro]);
+
   const handleKcalChange = useCallback((v: string) => {
     setKcalStr(v);
     kcalManuallyEdited.current = v.length > 0;
     if (v.length === 0) setKcalIsAuto(false);
   }, []);
+
+  const handleMacroChange = useCallback(
+    (key: MacroKey, v: string) => {
+      if (autoMacro === key) setAutoMacro(null);
+      setMacro(key, v);
+    },
+    [autoMacro, setMacro],
+  );
 
   const reset = useCallback(() => {
     setName('');
@@ -61,6 +158,7 @@ export function DirectInputSheet() {
     setFatStr('');
     setCarbsStr('');
     setKcalIsAuto(false);
+    setAutoMacro(null);
     kcalManuallyEdited.current = false;
   }, []);
 
@@ -80,6 +178,17 @@ export function DirectInputSheet() {
     const carbs = parseFloat(carbsStr) || 0;
     const label = name.trim() || tr('directInput.fallbackLabel');
 
+    if (editingLog) {
+      // 名前を変えない記録 (fixedName) は分類ラベルに触れない
+      await replaceLog(applyNumericEdit(editingLog, {
+        macro: { kcal, protein, fat, carbs },
+        label: fixedName != null ? undefined : label,
+      }));
+      reset();
+      router.back();
+      return;
+    }
+
     const now = new Date();
     // Preserve time-of-day even when logging to a past date
     const logDate = loggingDate
@@ -96,26 +205,32 @@ export function DirectInputSheet() {
       timestamp: logDate.toISOString(),
       mealSlot: getMealSlot(logDate),
       mode: 'ingredient',
-      categoryKey: 'direct_input',
+      categoryKey: DIRECT_INPUT_CATEGORY_KEY,
       categoryLabel: label,
       macro: { kcal, protein, fat, carbs },
     });
 
     reset();
     router.back();
-  }, [canSave, kcal, name, proteinStr, fatStr, carbsStr, loggingDate, pushLog, reset, router]);
+  }, [canSave, kcal, name, proteinStr, fatStr, carbsStr, loggingDate, pushLog, replaceLog, editingLog, fixedName, reset, router]);
 
   return (
     <SheetScreen
-      title={tr('directInput.title')}
+      title={editingLog ? tr('directInput.editTitle') : tr('directInput.title')}
       cancelLabel={tr('common.cancel')}
       onCancel={handleClose}
-      confirmAction={{ label: tr('directInput.record'), onPress: handleSave, disabled: !canSave }}
+      confirmAction={{ label: editingLog ? tr('common.save') : tr('directInput.record'), onPress: handleSave, disabled: !canSave }}
     >
       <View style={{ gap: t.spacing['5'] }}>
         {/* 名前 */}
         <View style={{ gap: t.spacing['2'] }}>
-          <Overline tone="secondary">{tr('directInput.sections.name')}</Overline>
+          <Overline tone="secondary">{fixedName != null ? tr('directInput.nameA11y') : tr('directInput.sections.name')}</Overline>
+          {fixedName != null ? (
+            <>
+              <Label size="lg">{fixedName}</Label>
+              <Body size="sm" tone="secondary">{tr('directInput.fixedNameNote')}</Body>
+            </>
+          ) : (
           <TextInput
             value={name}
             onChangeText={setName}
@@ -134,6 +249,7 @@ export function DirectInputSheet() {
             ]}
             accessibilityLabel={tr('directInput.nameA11y')}
           />
+          )}
         </View>
 
         {/* カロリー */}
@@ -159,21 +275,21 @@ export function DirectInputSheet() {
           <View style={[styles.macroRow, { gap: t.spacing['3'] }]}>
             <MacroField
               value={proteinStr}
-              onChangeText={setProteinStr}
+              onChangeText={(v) => handleMacroChange('protein', v)}
               suffix="P"
               placeholder="0"
               accessibilityLabel={tr('directInput.proteinA11y')}
             />
             <MacroField
               value={fatStr}
-              onChangeText={setFatStr}
+              onChangeText={(v) => handleMacroChange('fat', v)}
               suffix="F"
               placeholder="0"
               accessibilityLabel={tr('directInput.fatA11y')}
             />
             <MacroField
               value={carbsStr}
-              onChangeText={setCarbsStr}
+              onChangeText={(v) => handleMacroChange('carbs', v)}
               suffix="C"
               placeholder="0"
               accessibilityLabel={tr('directInput.carbsA11y')}

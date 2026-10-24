@@ -380,6 +380,8 @@
   },
   "directInput": {
     "title": "Enter numbers",
+    "editTitle": "Edit entry",
+    "fixedNameNote": "Saved with the numbers you enter. The name stays as is.",
     "record": "Log",
     "sections": {
       "name": "Name (optional)",
@@ -453,7 +455,12 @@
     "switchToG": "Switch to g",
     "switchToCount": "Switch to count",
     "usualAmount": "Usual",
-    "amountRefPrefix": "Reference"
+    "amountRefPrefix": "Reference",
+    "roughHint": {
+      "line1": "A 20–30 kcal gap is about one bite of rice.",
+      "line2": "Keeping a rough log going matters far more.",
+      "closeA11y": "Close tip"
+    }
   },
   "logEditor": {
     "addIngredient": "Add ingredient",
@@ -544,11 +551,11 @@
     },
     "insight": {
       "label": "{{macro}}",
-      "lead": "The biggest gap from your goal was",
+      "lead": "In your calorie mix, the biggest gap from your goal was",
       "less": "Below target",
       "more": "Above target",
-      "barActual": "Daily average",
-      "barTarget": "Daily goal",
+      "barActual": "Last week",
+      "barTarget": "Goal",
       "streakLess": "Below target {{weeks}} weeks running",
       "streakMore": "Above target {{weeks}} weeks running"
     },
@@ -556,6 +563,8 @@
       "label": "Tips",
       "leadMore": "To get more {{macro}}",
       "leadLess": "Lower-{{macro}} options",
+      "leadSwapStaple": "When choosing a staple",
+      "replaces": "Instead of {{label}}",
       "sourcePrefix": "Source: "
     },
     "outro": {
@@ -1007,7 +1016,10 @@
     "noResults": "No results found",
     "notFoundPrompt": "Can't find your food?",
     "enterManuallyA11y": "Enter values manually",
-    "enterManually": "Enter manually"
+    "enterManually": "Enter manually",
+    "negligibleZero": "About 0 kcal. No need to log it.",
+    "negligibleSmall": "Tiny at a normal amount. Skipping it barely changes anything.",
+    "negligibleInDish": "Roux is already counted in curry and stew entries."
   },
   "searchMisses": {
     "lead": "Words you searched for but didn't find are saved on this device. Sharing them helps decide which foods to add next.",

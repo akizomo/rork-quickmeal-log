@@ -20,8 +20,8 @@ import { Identity, NutritionNoteSource } from '@/types/identity';
 
 /** 栄養素の「働き」の記述元。国が定型文を定めているためオーバークレームにならない。 */
 const SRC_CAA: NutritionNoteSource = {
-  label: '消費者庁 食品表示基準（栄養機能食品）',
-  url: 'https://www.caa.go.jp/policies/policy/food_labeling/foods_with_nutrient_function_claims',
+  label: '消費者庁 栄養機能食品（令和8年10月改定）',
+  url: 'https://www.caa.go.jp/policies/policy/food_labeling/foods_with_function_claims/assets/food_labeling_cms206_261001_02.pdf',
 };
 
 // ---------------------------------------------------------------------------
@@ -47,6 +47,7 @@ const H_VITE = harvard('ビタミンE', 'vitamin-e/');
 const H_CALCIUM = harvard('カルシウム', 'calcium/');
 const H_POTASSIUM = harvard('カリウム', 'potassium/');
 const H_AVOCADO = harvard('アボカド', 'avocados/');
+const H_WHOLE_GRAINS = harvard('全粒穀物', 'what-should-you-eat/whole-grains/');
 
 /** 加工肉の定義 (塩漬け・燻製などで風味や保存性を高めた肉。例: ハム・ソーセージ・ジャーキー)。 */
 const SRC_WHO_PROCESSED_MEAT: NutritionNoteSource = {
@@ -78,6 +79,78 @@ const SRC_COOKING_VITAMINS: NutritionNoteSource = {
   url: 'https://doi.org/10.1007/s10068-017-0281-1',
 };
 
+/** 成分表の脂肪酸成分表 (可食部100gあたり、MODE=4)。脂の種類 (飽和/一価/多価・n-3/n-6) の数値はこちら。 */
+const seibunFa = (label: string, itemNo: string): NutritionNoteSource => ({
+  label: `文部科学省 日本食品標準成分表（八訂）増補2023 脂肪酸 ${label}`,
+  url: `https://fooddb.mext.go.jp/details/details.pl?ITEM_NO=${itemNo}&MODE=4`,
+});
+const H_PROTEIN = harvard('たんぱく質', 'what-should-you-eat/protein/');
+const H_FIBER = harvard('食物繊維', 'carbohydrates/fiber/');
+
+/** 脂は 9kcal/g、たんぱく質・炭水化物は 4kcal/g (「2倍以上」)。米国国立医学図書館 + FAO で照合。 */
+const SRC_KCAL_MEDLINE: NutritionNoteSource = {
+  label: '米国国立医学図書館 MedlinePlus（脂質の解説）',
+  url: 'https://medlineplus.gov/ency/patientinstructions/000104.htm',
+};
+const SRC_KCAL_FAO: NutritionNoteSource = {
+  label: 'FAO 食品のエネルギー換算係数',
+  url: 'https://www.fao.org/4/y5022e/y5022e04.htm',
+};
+
+/** JPHC: 約4万人・約11年。魚の摂取が最も多い群は虚血性心疾患のリスクが約4割低い (生活習慣の影響の可能性を著者が指摘)。 */
+const SRC_JPHC_FISH: NutritionNoteSource = {
+  label: '国立がん研究センター 多目的コホート研究（魚と心臓の病気）',
+  url: 'https://epi.ncc.go.jp/jphc/outcome/279.html',
+};
+
+const H_CARBS = harvard('炭水化物', 'carbohydrates/');
+const H_OATS = harvard('オーツ麦', 'food-features/oats/');
+
+/** 食物繊維: 食事摂取基準2025の目標量 (成人男性20g以上・女性18g以上)、便のかさを増やす・腸内環境のはたらき。 */
+const SRC_KENNET_FIBER: NutritionNoteSource = {
+  label: '厚生労働省 e-ヘルスネット（食物繊維の必要性と健康）',
+  url: 'https://kennet.mhlw.go.jp/information/information/food/e-05-001.html',
+};
+
+/** WHO 2015: 遊離糖類は総エネルギーの10%未満。果汁・果汁濃縮物の糖は含み、生の果物・野菜の糖は含まない。 */
+const SRC_WHO_SUGARS: NutritionNoteSource = {
+  label: 'WHO 糖類の摂取に関するガイドライン（2015）',
+  url: 'https://www.who.int/news/item/04-03-2015-who-calls-on-countries-to-reduce-sugars-intake-among-adults-and-children',
+};
+
+/** りんご 生 食物繊維: 皮つき 2.4g (FDC 171688) / 皮なし 1.3g (171689)。 */
+const SRC_USDA_APPLE: NutritionNoteSource = {
+  label: '米国農務省 USDA FoodData Central（りんご 皮つき・皮なし）',
+  url: 'https://fdc.nal.usda.gov/food-details/171688/nutrients',
+};
+
+/** オレンジ 生 食物繊維 2.4g (FDC 169097) / オレンジジュース 0.2g (169098)。 */
+const SRC_USDA_ORANGE: NutritionNoteSource = {
+  label: '米国農務省 USDA FoodData Central（オレンジ・オレンジジュース）',
+  url: 'https://fdc.nal.usda.gov/food-details/169098/nutrients',
+};
+
+const H_OMEGA3 = harvard('オメガ3脂肪酸', 'what-should-you-eat/fats-and-cholesterol/types-of-fat/omega-3-fats/');
+const H_FAT_TYPES = harvard('脂質の種類', 'what-should-you-eat/fats-and-cholesterol/types-of-fat/');
+
+/** 食事摂取基準 (2025年版) の脂質: 飽和脂肪酸は成人すべてで目標量7%エネルギー以下、n-3/n-6系は必須脂肪酸で目安量。 */
+const SRC_DRI2025_FAT: NutritionNoteSource = {
+  label: '農林水産省 脂質の摂取基準（日本人の食事摂取基準 2025年版）',
+  url: 'https://www.maff.go.jp/j/syouan/seisaku/trans_fat/t_eikyou/fat_eikyou.html',
+};
+
+/** WHO 2023: 飽和脂肪酸は総エネルギーの10%以下、多価不飽和脂肪酸などへの置き換えを推奨。 */
+const SRC_WHO_SFA_2023: NutritionNoteSource = {
+  label: 'WHO 脂質・炭水化物ガイドライン更新（2023）',
+  url: 'https://www.who.int/news/item/17-07-2023-who-updates-guidelines-on-fats-and-carbohydrates',
+};
+
+/** 生の100gあたり EPA+DHA: 大西洋さば 0.898+1.401g (FDC 175119)、シロザケ 0.233+0.394g (FDC 173689)。 */
+const SRC_USDA_FISH_N3: NutritionNoteSource = {
+  label: '米国農務省 USDA FoodData Central（さば・シロザケ 生）',
+  url: 'https://fdc.nal.usda.gov/food-details/175119/nutrients',
+};
+
 /** 組成・含有量の記述元。 */
 const SRC_SEIBUN: NutritionNoteSource = {
   label: '文部科学省 日本食品標準成分表',
@@ -96,6 +169,23 @@ const BUCKET_STAPLE: Identity[] = [
     defaultMacro: { kcal: 234, protein: 3.8, fat: 0.5, carbs: 56 },
     nutritionNotes: [
       { text: 'ごはんは、脳や体を動かすエネルギー源になる糖質が主成分です。', source: SRC_SEIBUN },
+      {
+        // 炭水化物の量は同じ (成分表のめし100gで炭水化物 玄米34.7g・精白米36.1g)。食物繊維も八訂では差が小さい
+        // (玄米1.4g・精白米1.5g) ため、差がはっきりしているマグネシウムとビタミンB1で書く。
+        text: '玄米ごはんは、白米と糖質の量はほぼ同じですが、マグネシウムが約7倍、ビタミンB1が約8倍あります。どちらも、体がエネルギーを作るのを助ける栄養素です。',
+        attr: 'brown',
+        source: seibun('水稲めし 玄米', '1_01085_7'),
+        alsoSources: [seibun('水稲めし 精白米', '1_01088_7'), H_WHOLE_GRAINS, SRC_CAA],
+        topics: ['carbs'],
+      },
+      {
+        // めし 156kcal/100g × 茶わん1杯150g = 234kcal → 2,000kcal の 11.7%
+        attr: 'white',
+        text: 'ごはんの炭水化物は、体の中でブドウ糖になり、体を動かすエネルギーになります。茶わん1杯で、1日2,000kcalの人が必要なエネルギーの1割強です。',
+        source: seibun('水稲めし 精白米', '1_01088_7'),
+        alsoSources: [H_CARBS],
+        topics: ['carbs'],
+      },
     ],
     amount: {
       unit: 'g',
@@ -108,7 +198,7 @@ const BUCKET_STAPLE: Identity[] = [
     },
     attributes: [
       { key: 'white', label: '白米', isDefault: true },
-      { key: 'brown', label: '玄米', factor: { kcal: 1.06, fat: 3.0 } },
+      { key: 'brown', label: '玄米', searchTags: ['げんまい'], factor: { kcal: 1.06, fat: 3.0 } },
       { key: 'mixed', label: '雑穀', factor: { kcal: 1.03 } },
     ],
     styles: [
@@ -136,7 +226,7 @@ const BUCKET_STAPLE: Identity[] = [
       'natto', 'egg', 'kimchi_top', 'salmon_flake', 'mentaiko', 'nori_furikake',
       'butter_cream', 'shirasu', 'katsuobushi',
     ], // cheese / rayu は白米には不自然なので除外
-    searchTags: ['ごはん', 'ご飯', '白米', 'はくまい', '玄米', 'げんまい', '米', 'こめ', '赤飯', 'せきはん', 'ライス'],
+    searchTags: ['ごはん', 'ご飯', '白米', 'はくまい', '米', 'こめ', '赤飯', 'せきはん', 'ライス'],
   },
   {
     id: 'onigiri',
@@ -182,6 +272,16 @@ const BUCKET_STAPLE: Identity[] = [
     primaryHome: { tab: 'ingredient', bucket: 'staple' },
     quickTapDisabled: true, // Attribute span too wide (食パン 158 → ナン 320, F 2.5 → 11)
     defaultMacro: { kcal: 158, protein: 5.3, fat: 2.5, carbs: 28 },
+    nutritionNotes: [
+      {
+        // 角形食パン 食物繊維 4.2g/100g × 6枚切り1枚60g = 2.5g → 目標量 男性20g・女性18g の 13〜14%
+        // 全粒粉パンは 4.5g/100g で食パンとほぼ同じ (別AIの「約1.4倍」は誤り) のため、比較は書かない
+        text: '食パン（6枚切り）1枚で、1日にとりたい食物繊維の1割ほどがとれます。食物繊維は、便のかさを増やし、お腹の調子を整えるのを助けます。',
+        source: seibun('角形食パン', '1_01026_7'),
+        alsoSources: [SRC_KENNET_FIBER, H_FIBER],
+        topics: ['carbs'],
+      },
+    ],
     amount: {
       unit: 'g',
       default: 60, step: 10,
@@ -254,6 +354,15 @@ const BUCKET_STAPLE: Identity[] = [
     label: 'シリアル',
     primaryHome: { tab: 'ingredient', bucket: 'staple' },
     defaultMacro: { kcal: 134, protein: 3, fat: 1.5, carbs: 30 },
+    nutritionNotes: [
+      {
+        // オートミール 9.4g/100g ÷ コーンフレーク 2.4g/100g = 3.9倍
+        text: 'シリアルは、種類で食物繊維の量が大きく違います。成分表では、オートミールはコーンフレークの約4倍。食物繊維は、お腹の調子を整えるのを助けます。',
+        source: seibun('オートミール / コーンフレーク', '1_01004_7'),
+        alsoSources: [H_OATS, SRC_KENNET_FIBER],
+        topics: ['carbs'],
+      },
+    ],
     amount: { unit: 'g', default: 40, step: 10, chips: [{ label: '30', value: 30 }, { label: '40', value: 40 }, { label: '50', value: 50 }] },
     attributes: [
       { key: 'plain', label: 'プレーン', isDefault: true },
@@ -283,13 +392,14 @@ const BUCKET_STAPLE: Identity[] = [
       {
         key: 'dango',
         label: '団子',
+        searchTags: ['だんご', 'みたらし', '串団子'],
         factor: { kcal: 0.85, carbs: 0.86 },
         defaultAddonIds: ['mitarashi_tare', 'anko', 'kinako'],
       },
     ],
     defaultAddonIds: ['kinako', 'honey', 'nori_furikake'],
     allowedAddonIds: ['kinako', 'honey', 'nori_furikake', 'butter_cream', 'mitarashi_tare', 'anko'],
-    searchTags: ['餅', '団子', 'みたらし', 'あんこ', '串団子', 'だんご'],
+    searchTags: ['餅', 'あんこ'],
   },
   {
     id: 'potato',
@@ -304,7 +414,7 @@ const BUCKET_STAPLE: Identity[] = [
     defaultMacro: { kcal: 76, protein: 1.9, fat: 0.1, carbs: 17 },
     nutritionNotes: [
       {
-        text: 'じゃがいもや里芋に含まれるビタミンCは、皮膚や粘膜の健康維持を助けるとともに、抗酸化作用を持つ栄養素です。',
+        text: 'じゃがいもや里芋に多いビタミンCは、皮膚や骨、血管のもとになるコラーゲンを作るのを助ける栄養素です。',
         source: SRC_CAA,
         alsoSources: [H_VITC],
       },
@@ -396,7 +506,9 @@ const BUCKET_STAPLE: Identity[] = [
     label: '中華麺',
     searchTags: ['ちゅうかめん', 'ラーメン', 'らーめん'],
     primaryHome: { tab: 'ingredient', bucket: 'staple' },
-    defaultMacro: { kcal: 203, protein: 6.4, fat: 0.6, carbs: 42 }, // 茹で中華麺 120g
+    // 茹で中華麺 120g (成分表(八訂) 01048: 133kcal/P4.9/F0.6/C29.2 per 100g)。以前の 203kcal は
+    // 生めん 249kcal/100g と茹でめんの中間の値で、どちらの重さにも合っていなかった (成分表との照合で検出)。
+    defaultMacro: { kcal: 160, protein: 5.9, fat: 0.7, carbs: 35 },
     amount: {
       unit: 'g',
       default: 120, step: 10,
@@ -421,9 +533,10 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
     defaultMacro: { kcal: 105, protein: 23, fat: 1.5, carbs: 0 },
     nutritionNotes: [
       {
-        text: '鶏むね（皮なし）は、たんぱく質が多く脂質が控えめな食材です。成分表では100gあたり、たんぱく質24.4g・脂質1.9gです（米国USDAでは22.5g・2.62g）。',
+        text: '鶏むね（皮なし）は、たんぱく質が多く、脂がとても少ない食材です。たんぱく質は、筋肉や骨、皮膚、髪など、体のほとんどをつくる材料です。',
         source: seibun('鶏むね（皮なし）', '11_11214_7'),
-        alsoSources: [SRC_USDA_CHICKEN],
+        alsoSources: [SRC_USDA_CHICKEN, H_PROTEIN],
+        topics: ['protein', 'fat'],
       },
     ],
     amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '100', value: 100 }, { label: '150', value: 150 }, { label: '200', value: 200 }] },
@@ -468,18 +581,26 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
   {
     id: 'white_fish',
     label: '白身魚・赤身魚',
-    searchTags: ['しろみざかな', '白身魚', 'あかみざかな', '赤身魚', 'たら', '鱈', 'かれい', '鰈', 'まぐろ', '鮪', 'ひらめ', '鮃', 'たい', '鯛'],
+    searchTags: ['しろみざかな', '白身魚', '赤身魚'],
     primaryHome: { tab: 'ingredient', bucket: 'lean_protein' },
     // v1.2: default 80g→100g 化 (modal-set 1食量を chicken_lean/red_meat と揃える)
     // base = タラ・カレイ・ヒラメ等の白身魚。マグロ赤身は attribute で分岐。
     defaultMacro: { kcal: 75, protein: 16, fat: 0.7, carbs: 0 },
     nutritionNotes: [
+      {
+        // まだら 生 脂質0.2g / 輸入牛ばら 32.9g (和牛ばら 50.0g) → 1/164 以下
+        text: 'たらは、たんぱく質がとれて、脂がほとんどない魚です。同じ重さの牛ばら肉と比べると、脂は100分の1以下です（成分表）。',
+        source: seibun('まだら 生', '10_10205_7'),
+        alsoSources: [H_PROTEIN],
+        topics: ['protein'],
+      },
       { text: '赤身の魚は、泳ぎ続けるために酸素をたくわえる色素たんぱく質を多く持ち、そのぶん赤血球をつくるのに必要な鉄も多く含みます。', source: SRC_SEIBUN },
     ],
     amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '1切', value: 80 }, { label: '1食', value: 100 }, { label: '2切', value: 160 }] },
     attributes: [
-      { key: 'white', label: '白身魚（タラ・カレイ等）', isDefault: true },
-      { key: 'tuna_red', label: 'マグロ赤身', factor: { kcal: 1.67, protein: 1.65, fat: 2.0 } },
+      { key: 'white', label: '白身魚（タラ・カレイ等）', searchTags: ['たら', '鱈', 'かれい', '鰈', 'ひらめ', '鮃', 'たい', '鯛'], isDefault: true },
+      // ラベルに代表例を並べる (白身魚側と同じ形)。「マグロ赤身」だけだとカツオがここだと分からなかった。
+      { key: 'tuna_red', label: '赤身魚（マグロ・カツオ等）', searchTags: ['まぐろあかみ', 'マグロ赤身', 'あかみざかな', 'まぐろ', '鮪'], factor: { kcal: 1.67, protein: 1.65, fat: 2.0 } },
     ],
     styles: [
       { key: 'raw', label: '生・刺身', isDefault: true },
@@ -501,7 +622,7 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
           bucketKey: 'misc_dish',
           identityKey: 'fried_main',
           attributeKey: 'fish_fry',
-          confirmMessage: '魚介揚げとして記録します',
+          confirmMessage: '魚介フライとして記録します',
         },
       },
     ],
@@ -513,6 +634,15 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
     primaryHome: { tab: 'ingredient', bucket: 'lean_protein' },
     // v1.2: default 80g→100g 化 (modal-set 1食量を chicken_lean/red_meat と揃える)
     defaultMacro: { kcal: 88, protein: 17.5, fat: 0.8, carbs: 1 },
+    nutritionNotes: [
+      {
+        // するめいか 生 脂質0.8g / 若どり むね 皮なし 生 1.9g → 0.42
+        text: 'いかは、たんぱく質がとれて、脂がとても少ない食べものです。するめいかの脂は、皮をとった鶏むね肉の半分以下です（成分表）。',
+        source: seibun('するめいか 生', '10_10345_7'),
+        alsoSources: [H_PROTEIN],
+        topics: ['protein'],
+      },
+    ],
     amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '80', value: 80 }, { label: '1食', value: 100 }, { label: '150', value: 150 }] },
     styles: [
       { key: 'raw', label: '生・刺身', isDefault: true },
@@ -544,8 +674,7 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
     label: '練り物',
     searchTags: [
       'ねりもの', '練り物', 'ちくわ', '竹輪', 'かまぼこ', '蒲鉾', 'はんぺん', 'かにかま', 'カニカマ',
-      'つみれ', 'さつまあげ', 'さつま揚げ', 'ごぼうてん', 'ごぼう天', 'あげかまぼこ',
-    ],
+      'つみれ', 'あげかまぼこ'],
     primaryHome: { tab: 'ingredient', bucket: 'lean_protein' },
     defaultMacro: { kcal: 51, protein: 5.7, fat: 0.7, carbs: 5.8 },
     referenceDescription: '50g = ちくわ大1本・はんぺん1/2枚・さつま揚げ1枚くらい',
@@ -565,9 +694,17 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
     defaultMacro: { kcal: 130, protein: 22, fat: 4, carbs: 0 },
     nutritionNotes: [
       {
-        text: '赤身肉に含まれる鉄は、赤血球をつくるのに必要な栄養素です。',
+        // 和牛もも赤肉 たんぱく質21.3g・脂質10.7g / 和牛ばら 11.0g・50.0g → 1.9倍・0.21
+        // 輸入牛もも赤肉 21.2g・4.3g / 輸入牛ばら 14.4g・32.9g → 1.5倍・0.13
+        text: '牛のもも肉（赤身）は、ばら肉と比べて、たんぱく質が1.5〜2倍、脂は4分の1以下です（成分表）。たんぱく質は、筋肉や骨、皮膚など、体のほとんどをつくる材料です。',
+        source: seibun('和牛 もも 赤肉 生 / ばら 脂身つき 生', '11_11021_7'),
+        alsoSources: [H_PROTEIN, H_FAT_TYPES],
+        topics: ['protein'],
+      },
+      {
+        text: '赤身肉に多い鉄は、赤血球を作るのに必要な栄養素です。赤血球は、体じゅうに酸素を運んでいます。',
         source: SRC_CAA,
-        alsoSources: [H_IRON],
+        alsoSources: [H_IRON, H_PROTEIN],
       },
     ],
     amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '100', value: 100 }, { label: '150', value: 150 }, { label: '200', value: 200 }] },
@@ -641,9 +778,10 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
     defaultMacro: { kcal: 85, protein: 15, fat: 2, carbs: 3.5 },
     nutritionNotes: [
       {
-        text: 'ジャーキーは、水分を抜き、塩で味つけ・保存した加工肉です。成分表では100gあたり、たんぱく質54.8g・食塩相当量4.8gで、生の牛かた肉（16.5g・0.1g）よりどちらも濃くなっています。',
+        text: 'ジャーキーは、肉の水分を抜いて塩で味つけしたものです。そのぶん中身が濃くなり、たんぱく質は生の肉の約3倍、塩分は40倍以上になります。',
         source: seibun('ビーフジャーキー', '11_11107_7'),
         alsoSources: [SRC_WHO_PROCESSED_MEAT],
+        topics: ['protein'],
       },
     ],
     amount: { unit: 'g', default: 30, step: 10, chips: [{ label: '20', value: 20 }, { label: '30', value: 30 }, { label: '50', value: 50 }] },
@@ -657,12 +795,12 @@ const BUCKET_LEAN_PROTEIN: Identity[] = [
     defaultMacro: { kcal: 130, protein: 20, fat: 3.5, carbs: 2.5 },
     nutritionNotes: [
       {
-        text: 'レバーは、赤血球をつくる鉄と、夜間の視力の維持に関わるビタミンAが際立って多い食材です。成分表では鶏レバー100gに、鉄9.0mg・ビタミンA14,000μgRAEが含まれます。',
+        text: 'レバーは、赤血球を作る鉄が、肉の中でもとくに多い食材です。',
         source: seibun('鶏レバー', '11_11232_7'),
         alsoSources: [H_IRON, H_VITA],
       },
       {
-        text: 'レバーに多いビタミンAは、夜間の視力の維持を助けるとともに、皮膚や粘膜の健康維持を助ける栄養素です。',
+        text: 'レバーに多いビタミンAは、暗いところでの見え方や、皮膚や粘膜の健康を保つのを助ける栄養素です。',
         source: SRC_CAA,
         alsoSources: [H_VITA],
       },
@@ -680,14 +818,15 @@ const BUCKET_EGG: Identity[] = [
     id: 'egg',
     label: '卵',
     // 「卵」「玉子」の漢字が無く、玉子 がサンドイッチの具に誤着地していた。
-    searchTags: ['たまご', '卵', '玉子', 'ゆでたまご', 'ゆで卵', 'たまごやき', '卵焼き', 'めだまやき', '目玉焼き', 'なまたまご', '生卵'],
+    searchTags: ['たまご', '卵', '玉子'],
     primaryHome: { tab: 'ingredient', bucket: 'egg' },
     defaultMacro: { kcal: 75, protein: 6.2, fat: 5.2, carbs: 0.2 },
     nutritionNotes: [
       {
-        text: '卵のたんぱく質は、FAOの評価法（DIAAS）で最上位の「優れた品質」（100以上）に分類されます。ゆで卵は年齢の基準により110〜135%、卵たんぱくは101%という報告があります。',
+        text: '卵のたんぱく質は、体で作れない成分（必須アミノ酸）をバランスよく含みます。国連の機関（FAO）の評価方法で、最上位の「優れた品質」に入るという報告があります。',
         source: SRC_EGG_DIAAS_2024,
         alsoSources: [SRC_EGG_DIAAS_2020],
+        topics: ['protein'],
       },
     ],
     amount: { unit: 'piece', default: 1 },
@@ -697,11 +836,18 @@ const BUCKET_EGG: Identity[] = [
       { key: 'yolk', label: '卵黄', factor: { kcal: 0.73, protein: 0.45, fat: 0.96 } },
     ],
     styles: [
-      { key: 'raw', label: '生', isDefault: true },
-      { key: 'boiled', label: 'ゆで', factor: { kcal: 1.04 } },
-      { key: 'fried', label: '目玉焼き', factor: { kcal: 1.33, fat: 1.44 } },
-      { key: 'omelet', label: '卵焼き・スクランブル', factor: { kcal: 1.47, fat: 1.54, carbs: 7.5 } },
+      { key: 'raw', label: '生', searchTags: ['なまたまご', '生卵'], isDefault: true },
+      { key: 'boiled', label: 'ゆで', searchTags: ['ゆでたまご', 'ゆで卵'], factor: { kcal: 1.04 } },
+      { key: 'fried', label: '目玉焼き', searchTags: ['めだまやき'], factor: { kcal: 1.33, fat: 1.44 } },
+      { key: 'omelet', label: '卵焼き・スクランブル', searchTags: ['たまごやき', '卵焼き'], factor: { kcal: 1.47, fat: 1.54, carbs: 7.5 } },
       { key: 'chawan', label: '茶碗蒸し', factor: { kcal: 1.07, protein: 0.97, fat: 0.96, carbs: 15 } },
+      // 9ボタンの「卵」からたまごスープを探す動線。スープは汁物 (杯) なので soup/egg へ振替。
+      // 検索は soup/egg に直接着地するため、ここには searchTags を持たせない (1位を食い合う)。
+      {
+        key: 'soup',
+        label: 'スープ',
+        migration: { bucketKey: 'misc_dish', identityKey: 'soup', attributeKey: 'egg', confirmMessage: 'たまごスープとして記録します' },
+      },
     ],
     asAddon: {
       unit: 'piece',
@@ -729,9 +875,10 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
     defaultMacro: { kcal: 200, protein: 17, fat: 14, carbs: 0 },
     nutritionNotes: [
       {
-        text: '鶏の脂質は皮に集まっています。成分表では、むね肉100gの脂質は皮つきが17.2g、皮なしが1.9gです。米国USDAでも、皮のみは32.4g、皮なしのむね肉は2.62gです。',
+        text: '鶏の脂は、ほとんどが皮についています。むね肉なら、皮を外すと脂は10分の1ほどに減ります。脂は同じ重さで、たんぱく質の2倍以上のカロリーがあります。',
         source: seibun('鶏むね（皮つき）', '11_11213_7'),
-        alsoSources: [SRC_USDA_CHICKEN],
+        alsoSources: [SRC_USDA_CHICKEN, SRC_KCAL_MEDLINE, SRC_KCAL_FAO],
+        topics: ['fat'],
       },
     ],
     amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '100', value: 100 }, { label: '150', value: 150 }, { label: '1枚', value: 250 }] },
@@ -743,6 +890,8 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
         // Silent migration to lean_protein
         migration: { bucketKey: 'lean_protein', identityKey: 'chicken_lean' },
       },
+      // 鶏ひき肉 (八訂 11230: 171/17.5/12.0/0)。もも皮つきより脂が少ない。
+      { key: 'minced', label: '鶏ひき肉', factor: { kcal: 0.855, protein: 1.029, fat: 0.857 } },
     ],
     styles: [
       { key: 'light', label: 'あっさり', isDefault: true },
@@ -762,13 +911,13 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
   {
     id: 'beef_pork',
     label: '牛・豚 (普通脂)',
-    searchTags: ['ぎゅうにく', 'ぶたにく', 'とんかつ', 'めんちかつ'],
+    searchTags: ['ぎゅうにく', 'ぶたにく'],
     primaryHome: { tab: 'ingredient', bucket: 'fatty_protein' },
     defaultMacro: { kcal: 230, protein: 17.5, fat: 16.5, carbs: 0 },
     nutritionNotes: [
       { text: '牛肉や豚肉の鉄(ヘム鉄)は、野菜や大豆の鉄(非ヘム鉄)より吸収されやすい形をしています。組み合わせを気にせず、そのままとれるのが特徴です。', source: SRC_SEIBUN },
       {
-        text: '牛肉や豚肉に含まれる鉄は、赤血球をつくるのに必要な栄養素です。',
+        text: '牛肉や豚肉に含まれる鉄は、赤血球を作るのに必要な栄養素です。',
         source: SRC_CAA,
         alsoSources: [H_IRON],
       },
@@ -777,6 +926,11 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
     attributes: [
       { key: 'beef', label: '牛（ロース・もも等）', isDefault: true },
       { key: 'pork', label: '豚（ロース・肩ロース等）', factor: { kcal: 0.96, protein: 1.03, fat: 0.91 } },
+      // ひき肉。検索の別名で牛（ロース）に着地していて、9ボタンからは選べず、記録にも名前が残らなかった。
+      // 基準は豚ひき肉 (八訂 11163: 209/17.7/17.2/0.1)。牛ひき肉 (11089: 251) ・合いびきも同じ群として扱う。
+      // kcal は成分表の 209 ではなく P/F/C からの逆算 225 に合わせる。209 のままだと「油あり」
+      // (fat×1.5) で kcal と PFC の乖離が 15% を超える (identity-resolver.test の不変条件)。
+      { key: 'minced', label: 'ひき肉', factor: { kcal: 0.978, protein: 1.011, fat: 1.042 } },
     ],
     styles: [
       { key: 'light', label: 'あっさり', isDefault: true },
@@ -806,43 +960,78 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
   {
     id: 'beef_pork_fatty',
     label: '牛・豚 (高脂)',
-    searchTags: ['ばらにく', 'バラ肉', 'ぶたばら', '豚バラ', '豚バラ肉', 'ぎゅうばら', '牛バラ', '牛バラ肉', 'さーろいん', 'ほるもん', 'ホルモン'],
     primaryHome: { tab: 'ingredient', bucket: 'fatty_protein' },
     quickTapDisabled: true, // Attribute バラ/サーロイン/ホルモン/タン: kcal 220-470, F 17-46
     defaultMacro: { kcal: 380, protein: 16, fat: 35, carbs: 0 },
+    nutritionNotes: [
+      {
+        text: '牛や豚のばら肉の脂は、3〜4割が「飽和脂肪酸」という種類です。肉やバターに多いこの脂は、とりすぎると血液中のコレステロールが増えるとされています。',
+        source: seibunFa('ぶた ばら 脂身つき 生', '11_11129_7'),
+        alsoSources: [H_FAT_TYPES, SRC_DRI2025_FAT],
+        topics: ['fat'],
+      },
+      {
+        text: '肉の脂に多い飽和脂肪酸は、国が「1日のカロリーの7%以下」を目標にしている脂です。1日2,000kcalの人なら、豚ばら100gほどでその量に届きます。WHOは、一部を植物の油や魚に置きかえることをすすめています。',
+        source: SRC_DRI2025_FAT,
+        alsoSources: [SRC_WHO_SFA_2023, H_FAT_TYPES],
+        topics: ['fat'],
+      },
+    ],
     amount: { unit: 'g', default: 100, step: 10, chips: [{ label: '100', value: 100 }, { label: '150', value: 150 }, { label: '200', value: 200 }] },
     attributes: [
-      { key: 'bara', label: 'バラ（豚）', isDefault: true },
-      { key: 'bara_beef', label: 'バラ（牛）', factor: { kcal: 1.24, protein: 0.69, fat: 1.31 } },
-      { key: 'sirloin', label: 'サーロイン', factor: { kcal: 0.84, fat: 0.8 } },
-      { key: 'horumon', label: 'ホルモン', factor: { kcal: 0.58, protein: 0.94, fat: 0.49 } },
+      { key: 'bara', label: 'バラ（豚）', searchTags: ['ばらにく', 'バラ肉', 'ぶたばら', '豚バラ', '豚バラ肉'], isDefault: true },
+      { key: 'bara_beef', label: 'バラ（牛）', searchTags: ['ぎゅうばら', '牛バラ', '牛バラ肉'], factor: { kcal: 1.24, protein: 0.69, fat: 1.31 } },
+      { key: 'sirloin', label: 'サーロイン', searchTags: ['さーろいん'], factor: { kcal: 0.84, fat: 0.8 } },
+      { key: 'horumon', label: 'ホルモン', searchTags: ['ほるもん', 'ホルモン'], factor: { kcal: 0.58, protein: 0.94, fat: 0.49 } },
       { key: 'tan', label: 'タン', factor: { kcal: 0.71, protein: 0.95, fat: 0.57 } },
     ],
   },
   {
     id: 'fatty_fish',
     label: '脂魚',
-    searchTags: ['あぶらざかな', '脂魚', 'さけ', '鮭', 'しゃけ', 'さば', '鯖', 'さんま', '秋刀魚', 'ぶり', '鰤', 'いわし', '鰯', 'うなぎ', '鰻', 'あじ', '鯵'],
+    // 既定の種類 (鮭) を指す語は Identity に置いてよい (着地しても既定=鮭で記録される)。
+    searchTags: ['あぶらざかな', '脂魚', 'さけ', '鮭', 'しゃけ', 'あじ', '鯵'],
     primaryHome: { tab: 'ingredient', bucket: 'fatty_protein' },
     quickTapDisabled: true, // Attribute 鮭/サバ/ぶり/さんま/いわし/うなぎ: kcal 130-290, F 9-24
     defaultMacro: { kcal: 200, protein: 20, fat: 12, carbs: 0 },
     nutritionNotes: [
       { text: '鮭などの脂がのった魚に含まれる不飽和脂肪酸は、常温でも固まりにくく、肉の脂(飽和脂肪酸)とは性質が違います。', source: SRC_SEIBUN },
-      { text: '脂がのった魚に多いn-3系脂肪酸は、皮膚の健康維持を助ける栄養素です。', source: SRC_CAA },
+      {
+        // オメガ3が「何にいいか」。JPHC (食事からのEPA・DHAが多い群で虚血性心疾患 約4割低い) + ハーバード (魚は○・サプリは同じ結果なし)。
+        // 栄養機能食品の定型文 (皮膚の健康維持) は伝わりにくいため、研究の紹介として書く。
+        text: '魚の脂のオメガ3を多くとる人ほど、心筋梗塞などの心臓の病気が少ないという研究が、日本にも海外にもあります。ただ、サプリメントでは同じ結果は出ておらず、原因とまでは言い切れません。',
+        source: SRC_JPHC_FISH,
+        alsoSources: [H_OMEGA3],
+        topics: ['fat'],
+      },
+      {
+        text: 'さばや鮭の脂には、体の中では作れない「オメガ3」という脂が含まれます。さばなら1切れで、1日にとりたい量の目安くらいになります。',
+        source: seibunFa('まさば 生', '10_10154_7'),
+        alsoSources: [H_OMEGA3, SRC_DRI2025_FAT],
+        topics: ['fat'],
+      },
+      {
+        text: '魚の脂に多いオメガ3の量は、魚の種類で違います。さばは、鮭の2倍以上を含みます（日本と米国のデータ）。',
+        source: seibunFa('まさば 生 / しろさけ 生', '10_10154_7'),
+        alsoSources: [SRC_USDA_FISH_N3],
+        topics: ['fat'],
+      },
     ],
     amount: { unit: 'g', default: 80, step: 10, chips: [{ label: '1切', value: 80 }, { label: '100', value: 100 }, { label: '2切', value: 160 }] },
     attributes: [
       { key: 'salmon', label: '鮭', isDefault: true },
-      { key: 'saba', label: 'サバ', factor: { kcal: 1.0, fat: 1.17 } },
-      { key: 'buri', label: 'ぶり', factor: { kcal: 1.1, fat: 1.25 } },
-      { key: 'sanma', label: 'さんま', factor: { kcal: 1.45, protein: 0.73, fat: 2.0 } },
-      { key: 'iwashi', label: 'いわし', factor: { kcal: 0.81, fat: 0.83 } },
+      { key: 'saba', label: 'サバ', searchTags: ['さば', '鯖'], factor: { kcal: 1.0, fat: 1.17 } },
+      { key: 'buri', label: 'ぶり', searchTags: ['ぶり', '鰤'], factor: { kcal: 1.1, fat: 1.25 } },
+      // さんま (皮つき焼き) 80g ≒ 225kcal/P18.6/F18.2 (成分表(八訂) 10174: 281kcal/P23.3/F22.8 per 100g)。
+      // 以前の 290kcal (363/100g) は焼きでも生でも成分表のどの形より多かった (成分表との照合で検出)。
+      { key: 'sanma', label: 'さんま', searchTags: ['さんま', '秋刀魚'], factor: { kcal: 1.125, protein: 0.93, fat: 1.52 } },
+      { key: 'iwashi', label: 'いわし', searchTags: ['いわし', '鰯'], factor: { kcal: 0.81, fat: 0.83 } },
       // 蒲焼のたれの糖質は macroDelta で足す。旧実装は `carbs: 999` を factor に
       // 置いていたが、factor は乗算なのでベース carbs: 0 に対して 0×999=0 となり
       // **C が丸ごと欠落していた** (コメントの "C handled separately" は実在せず、
       // unagi はこの1箇所にしか出現しない)。C 2.5g は八訂 うなぎ蒲焼 3.1g/100g の
       // 既定量80g換算。kcal/P/F の校正値そのものは既存のまま据え置く。
-      { key: 'unagi', label: 'うなぎ蒲焼', factor: { kcal: 1.45, fat: 1.75 }, macroDelta: { kcal: 0, protein: 0, fat: 0, carbs: 2.5 }, searchTags: ['うなぎ', 'かばやき', '蒲焼'] },
+      { key: 'unagi', label: 'うなぎ蒲焼', factor: { kcal: 1.45, fat: 1.75 }, macroDelta: { kcal: 0, protein: 0, fat: 0, carbs: 2.5 }, searchTags: ['うなぎ', 'かばやき', '蒲焼', '鰻'] },
     ],
     styles: [
       { key: 'raw', label: '生・刺身', isDefault: true },
@@ -868,9 +1057,15 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
     nutritionNotes: [
       { text: '魚の缶詰は加圧加熱で骨まで柔らかくなるため、骨ごと食べられます。生の切り身では残す部分がそのままとれます。', source: SRC_SEIBUN },
       {
-        text: '骨ごと食べられる魚の缶詰でとれるカルシウムは、骨や歯の形成に必要な栄養素です。',
+        text: '骨ごと食べられる魚の缶詰では、骨や歯を作るカルシウムがとれます。生の切り身では残す骨まで、いっしょに食べられるからです。',
         source: SRC_CAA,
         alsoSources: [H_CALCIUM],
+      },
+      {
+        text: 'さばの水煮缶にも、魚の脂のオメガ3がしっかり残っていて、量は生のさばと同じくらいか、それ以上です。手軽にとれる形のひとつです。',
+        source: seibunFa('さば 缶詰 水煮', '10_10164_7'),
+        alsoSources: [H_OMEGA3],
+        topics: ['fat'],
       },
     ],
     referenceDescription: 'さば缶・いわし缶など。コンビニ個食サイズ(100〜150g)が目安。190g大缶は量を調整',
@@ -890,10 +1085,11 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
     id: 'ham',
     label: 'ハム',
     primaryHome: { tab: 'ingredient', bucket: 'fatty_protein' },
-    defaultMacro: { kcal: 40, protein: 5, fat: 2.5, carbs: 1 },
+    // ロースハム 2枚 ≒ 20g = 42kcal/P3.7/F2.9/C0.4 (成分表(八訂) 11176: 211kcal/P18.6/F14.5/C2.0 per 100g)
+    defaultMacro: { kcal: 42, protein: 3.7, fat: 2.9, carbs: 0.4 },
     nutritionNotes: [
       {
-        text: 'ハムやベーコンなどの加工肉は、塩漬けや燻製などで風味や保存性を高めた肉です。成分表では、ロースハム100gに食塩相当量2.3g、ばらベーコンに2.6gが含まれます。',
+        text: 'ハムやベーコンは、塩漬けやいぶすことで、味と日もちをよくした加工肉です。そのぶん、生の肉にはほとんどない塩分が加わっています。',
         source: seibun('ロースハム', '11_11176_7'),
         alsoSources: [SRC_WHO_PROCESSED_MEAT],
       },
@@ -913,16 +1109,32 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
     defaultMacro: { kcal: 100, protein: 5, fat: 9, carbs: 0.5 },
     nutritionNotes: [
       {
-        text: 'ベーコンやソーセージは、脂質と塩分をあわせて含みます。成分表では100gあたり、ばらベーコンが脂質19.4g・食塩相当量2.6g、ウインナーが脂質30.6g・食塩相当量1.9gです。',
+        text: 'ベーコンやソーセージは、脂と塩分をどちらも多く含む加工肉です。ウインナーは、重さの約3割が脂です。',
         source: seibun('ばらベーコン', '11_11183_7'),
         alsoSources: [SRC_WHO_PROCESSED_MEAT],
+        topics: ['fat'],
       },
     ],
     amount: { unit: 'piece', default: 2, unitLabel: '枚', chips: [{ label: '2枚', value: 2 }, { label: '1パック', value: 5 }] },
     attributes: [
       { key: 'bacon', label: 'ベーコン', isDefault: true },
-      { key: 'sausage', label: 'ソーセージ', factor: { kcal: 1.5, protein: 1.4, fat: 1.33 } },
-      { key: 'wiener', label: 'ウインナー', factor: { kcal: 0.8, protein: 0.8, fat: 0.83 } },
+      // ソーセージ類は「本」で数える。既定量2本は従来と同じなので、factor (=2本での値) は据え置き。
+      {
+        key: 'sausage',
+        label: 'ソーセージ',
+        factor: { kcal: 1.5, protein: 1.4, fat: 1.33 },
+        amount: { unit: 'piece', default: 2, unitLabel: '本', chips: [{ label: '1本', value: 1 }, { label: '2本', value: 2 }, { label: '3本', value: 3 }] },
+      },
+      {
+        key: 'wiener',
+        label: 'ウインナー',
+        // 2本 ≒ 90kcal。吉野家公式の「ウィンナー 2本 = 86kcal/P3.2/F6.1/C4.4」と、成分表 (11186 ウインナー
+        // 319kcal/100g) から逆算した 1本 ≒ 14g (45kcal) に合わせた。
+        // (2026-10-22 に一度 112kcal へ上げたが、成分表だけから「1本=17.5g」と仮定したのが誤りで、公式の重さと
+        //  合わなかった。公式の値が取れたので 90kcal に訂正した)
+        factor: { kcal: 0.9, protein: 0.66, fat: 0.91, carbs: 1.8 },
+        amount: { unit: 'piece', default: 2, unitLabel: '本', chips: [{ label: '2本', value: 2 }, { label: '3本', value: 3 }, { label: '5本', value: 5 }] },
+      },
     ],
     asAddon: {
       unit: 'piece',
@@ -956,7 +1168,7 @@ const BUCKET_DAIRY_SOY: Identity[] = [
     defaultMacro: { kcal: 134, protein: 6.6, fat: 7.6, carbs: 9.6 },
     nutritionNotes: [
       {
-        text: '牛乳に多く含まれるカルシウムは、骨や歯の形成に必要な栄養素です。',
+        text: '牛乳に多いカルシウムは、骨や歯を作るのに必要な栄養素です。コップ1杯で、1日に必要な量の3分の1ほどがとれます。',
         source: SRC_CAA,
         alsoSources: [H_CALCIUM],
       },
@@ -981,6 +1193,13 @@ const BUCKET_DAIRY_SOY: Identity[] = [
     primaryHome: { tab: 'ingredient', bucket: 'dairy_soy' },
     defaultMacro: { kcal: 62, protein: 3.6, fat: 3, carbs: 4.9 },
     nutritionNotes: [
+      {
+        // ヨーグルト 全脂無糖 カルシウム120mg/100g / 普通牛乳 110mg/100g
+        text: 'ヨーグルトは、たんぱく質といっしょに、骨や歯を作るカルシウムがとれます。同じ重さの牛乳と同じくらいのカルシウムを含みます（成分表）。',
+        source: seibun('ヨーグルト 全脂無糖', '13_13025_7'),
+        alsoSources: [SRC_CAA, H_CALCIUM],
+        topics: ['protein'],
+      },
       { text: 'ヨーグルトは、乳酸菌が乳を発酵させ乳酸に変えることで固まる食品です。', source: SRC_SEIBUN },
     ],
     // 飲むヨーグルトは Attribute=drink で吸収するため chip 削除 (単位齟齬解消)
@@ -998,10 +1217,12 @@ const BUCKET_DAIRY_SOY: Identity[] = [
     id: 'cheese',
     label: 'チーズ',
     primaryHome: { tab: 'ingredient', bucket: 'dairy_soy' },
-    defaultMacro: { kcal: 80, protein: 5, fat: 6, carbs: 1 },
+    // プロセスチーズ 20g (スライス1枚 18g) = 63kcal/P4.5/F5.2/C0.3 (成分表(八訂) 13040: 313kcal/P22.7/F26.0/C1.3 per 100g)。
+    // 以前の 80kcal は約27%多かった。種類の値は成分表の各ナチュラルチーズ (13056/13035/13038) の20gぶんに合わせた。
+    defaultMacro: { kcal: 63, protein: 4.5, fat: 5.2, carbs: 0.3 },
     nutritionNotes: [
       {
-        text: 'チーズは、少量でもカルシウムが多い食品です。成分表では、プロセスチーズ100gに630mg（牛乳は110mg）が含まれます。',
+        text: 'チーズは、少しの量でもカルシウムが多い食品です。プロセスチーズには、同じ重さの牛乳の約6倍のカルシウムがあります。',
         source: seibun('プロセスチーズ', '13_13040_7'),
         alsoSources: [H_CALCIUM],
       },
@@ -1009,14 +1230,14 @@ const BUCKET_DAIRY_SOY: Identity[] = [
     amount: { unit: 'g', default: 20, chips: [{ label: 'スライス1枚', value: 18 }, { label: '30', value: 30 }, { label: '50', value: 50 }] }, // スライス1枚=18g (実測値。step整合を優先せず精度維持)
     attributes: [
       { key: 'slice', label: 'スライス・6P', isDefault: true },
-      { key: 'mozza', label: 'モッツァレラ', factor: { kcal: 0.85, protein: 1.20, fat: 0.83, carbs: 0.50 } },
-      { key: 'cream', label: 'クリーム', factor: { kcal: 1.39, protein: 0.5, fat: 1.67 } },
-      { key: 'parmesan', label: 'パルメザン', factor: { kcal: 1.34, protein: 1.96, fat: 1.13 } },
+      { key: 'mozza', label: 'モッツァレラ', factor: { kcal: 0.854, protein: 0.818, fat: 0.765, carbs: 2.8 } }, // 20g ≒ 54kcal
+      { key: 'cream', label: 'クリーム', factor: { kcal: 0.994, protein: 0.364, fat: 1.269, carbs: 1.53 } }, // 20g ≒ 63kcal (旧 111kcal は約1.8倍)
+      { key: 'parmesan', label: 'パルメザン', factor: { kcal: 1.413, protein: 1.956, fat: 1.185, carbs: 1.27 } }, // 20g ≒ 89kcal
     ],
     asAddon: {
       unit: 'g',
       unitAmount: 20,
-      addedMacro: { kcal: 80, protein: 5, fat: 6, carbs: 1 },
+      addedMacro: { kcal: 63, protein: 4.5, fat: 5.2, carbs: 0.3 },
       defaultLabel: 'チーズ',
     },
   },
@@ -1046,7 +1267,7 @@ const BUCKET_DAIRY_SOY: Identity[] = [
     defaultMacro: { kcal: 92, protein: 7.2, fat: 4, carbs: 6.2 },
     nutritionNotes: [
       {
-        text: '豆乳は大豆由来のたんぱく質を含みますが、カルシウムは牛乳ほど多くありません。成分表では、調製豆乳が100gあたり31mg、牛乳は110mgです。牛乳の代わりにするときは、カルシウムが強化された製品かどうかが分かれ目になります。',
+        text: '豆乳は大豆のたんぱく質を含みますが、カルシウムは牛乳の3分の1以下です（成分表）。牛乳の代わりにするなら、カルシウム入りの製品かどうかが分かれ目です。',
         source: seibun('調製豆乳', '4_04053_7'),
         alsoSources: [H_CALCIUM],
       },
@@ -1067,9 +1288,10 @@ const BUCKET_DAIRY_SOY: Identity[] = [
     defaultMacro: { kcal: 83, protein: 7.5, fat: 4.5, carbs: 3 },
     nutritionNotes: [
       {
-        text: '豆腐は、たんぱく質とカルシウムを含む食品です。成分表では、木綿豆腐100gにたんぱく質7.0g・カルシウム93mgが含まれます。',
+        text: '豆腐は、たんぱく質と、骨や歯を作るカルシウムを、どちらもとれる食品です。木綿豆腐のカルシウムは、同じ重さの牛乳の8割ほどあります。',
         source: seibun('木綿豆腐', '4_04032_7'),
-        alsoSources: [H_CALCIUM],
+        alsoSources: [H_CALCIUM, SRC_CAA],
+        topics: ['protein'],
       },
     ],
     amount: { unit: 'piece', default: 0.5, unitLabel: '丁', chips: [{ label: '半丁', value: 0.5 }, { label: '1丁', value: 1 }] },
@@ -1095,7 +1317,7 @@ const BUCKET_DAIRY_SOY: Identity[] = [
       { key: 'thick', label: '厚揚げ', factor: { kcal: 2.33, protein: 3, fat: 1.86 }, macroDelta: { kcal: 0, protein: 0, fat: 0, carbs: 1 } },
       { key: 'ganmodoki', label: 'がんもどき', factor: { kcal: 1.6, protein: 2.0, fat: 1.5 } },
     ],
-    searchTags: ['油揚げ', '厚揚げ', 'がんもどき'],
+    searchTags: ['油揚げ'],
   },
   {
     id: 'natto',
@@ -1105,12 +1327,20 @@ const BUCKET_DAIRY_SOY: Identity[] = [
     defaultMacro: { kcal: 80, protein: 6.6, fat: 4, carbs: 5 },
     nutritionNotes: [
       {
-        text: '納豆は、発酵の過程でビタミンKを増やす食品です。成分表では、ゆで大豆100gが7μgなのに対し、納豆は600μgです。',
+        // 糸引き納豆 食物繊維9.5g/100g × 1パック約40g (アプリの既定: たんぱく質6.6g ÷ 16.5g/100g) = 3.8g
+        // → 目標量 男性20g・女性18g の 19〜21%
+        text: '納豆は、たんぱく質といっしょに食物繊維もとれる食べものです。1パックで、1日にとりたい食物繊維の2割ほど。食物繊維は、お腹の調子を整えるのを助けます。',
+        source: seibun('糸引き納豆', '4_04046_7'),
+        alsoSources: [SRC_KENNET_FIBER, H_FIBER],
+        topics: ['protein'],
+      },
+      {
+        text: '納豆は、発酵するあいだにビタミンKが増える食品で、ゆでた大豆の80倍以上あります。ビタミンKは、骨を作るのを助ける栄養素です。',
         source: seibun('糸引き納豆', '4_04046_7'),
         alsoSources: [H_VITK],
       },
       {
-        text: '納豆に多いビタミンKは、正常な血液凝固と骨の健康維持に関わる栄養素です。',
+        text: '納豆に多いビタミンKは、けがをしたときに血を固めるはたらきを助ける栄養素です。',
         source: SRC_CAA,
         alsoSources: [H_VITK],
       },
@@ -1126,12 +1356,11 @@ const BUCKET_DAIRY_SOY: Identity[] = [
   {
     id: 'edamame_soy',
     label: '大豆・枝豆',
-    searchTags: ['だいず', 'えだまめ'],
     primaryHome: { tab: 'ingredient', bucket: 'dairy_soy' },
     defaultMacro: { kcal: 65, protein: 6, fat: 3, carbs: 4 },
     nutritionNotes: [
       {
-        text: '大豆や枝豆に含まれる鉄は、赤血球をつくるのに必要な栄養素です。',
+        text: '大豆や枝豆に含まれる鉄は、赤血球を作るのに必要な栄養素です。',
         source: SRC_CAA,
         alsoSources: [H_IRON],
       },
@@ -1139,8 +1368,8 @@ const BUCKET_DAIRY_SOY: Identity[] = [
     ],
     amount: { unit: 'g', default: 50, step: 10, chips: [{ label: '小皿', value: 50 }, { label: '100', value: 100 }] },
     attributes: [
-      { key: 'edamame', label: '枝豆', isDefault: true },
-      { key: 'soybeans_boiled', label: '大豆水煮', factor: { kcal: 1.08, protein: 1.17, fat: 1.5, carbs: 0.75 } },
+      { key: 'edamame', label: '枝豆', searchTags: ['えだまめ'], isDefault: true },
+      { key: 'soybeans_boiled', label: '大豆（水煮）', searchTags: ['だいず', '大豆水煮'], factor: { kcal: 1.08, protein: 1.17, fat: 1.5, carbs: 0.75 } },
     ],
     // サラダのトッピングとして必要 (§5)。ひよこ豆・キドニー豆は銘柄差が
     // 群内に収まるため Attribute を分けず、`soybeans_boiled` (大豆水煮) で
@@ -1246,14 +1475,14 @@ const BUCKET_VEGGIES: Identity[] = [
   {
     id: 'veg_dense',
     label: '高タンパク野菜',
-    searchTags: ['こうたんぱくやさい', 'たかたんぱくやさい', 'きのこ'],
+    searchTags: ['こうたんぱくやさい', 'たかたんぱくやさい'],
     primaryHome: { tab: 'ingredient', bucket: 'veggies' },
     // ブロッコリー基準 (生 100g): kcal 35, P 4.3, F 0.4, C 5
     defaultMacro: { kcal: 35, protein: 4.3, fat: 0.4, carbs: 5 },
     nutritionNotes: [
       { text: 'ブロッコリーは、野菜には珍しく、筋肉や臓器の材料になるたんぱく質を含む野菜です。', source: SRC_SEIBUN },
       {
-        text: 'ブロッコリーに多いビタミンCは、皮膚や粘膜の健康維持を助けるとともに、抗酸化作用を持つ栄養素です。',
+        text: 'ブロッコリーに多いビタミンCは、食べものの鉄を体にとりこむのを助ける栄養素です。',
         source: SRC_CAA,
         alsoSources: [H_VITC],
       },
@@ -1264,7 +1493,7 @@ const BUCKET_VEGGIES: Identity[] = [
       { key: 'cauliflower', label: 'カリフラワー', factor: { kcal: 0.71, protein: 0.70, fat: 0.25, carbs: 1.0 } },
       { key: 'asparagus', label: 'アスパラガス', factor: { kcal: 0.63, protein: 0.60, fat: 0.50, carbs: 0.74 } },
       { key: 'brussels_sprouts', label: '芽キャベツ', factor: { kcal: 1.43, protein: 1.14, fat: 0.50, carbs: 1.80 }, searchTags: ['めきゃべつ'] },
-      { key: 'spinach', label: 'ほうれん草', factor: { kcal: 0.57, protein: 0.67, fat: 0.75, carbs: 0.62 }, searchTags: ['ほうれんそう'] },
+      { key: 'spinach', label: '青菜', factor: { kcal: 0.57, protein: 0.67, fat: 0.75, carbs: 0.62 }, searchTags: ['あおな', 'ほうれんそう', 'ほうれん草'] },
       // きのこ類 — 主要6種の平均値 (生/100g: kcal 20, P 2.5, F 0.4, C 3.4)。ブロッコリー比 factor
       { key: 'mushroom', label: 'きのこ', factor: { kcal: 0.57, protein: 0.58, fat: 1.00, carbs: 0.68 }, searchTags: ['きのこ', 'えのき', 'しいたけ', 'しめじ', 'エリンギ', 'まいたけ', 'なめこ'] },
     ],
@@ -1306,7 +1535,7 @@ const BUCKET_VEGGIES: Identity[] = [
     ],
     defaultAddonIds: ['mayo'],
     allowedAddonIds: ['mayo', 'cheese'],
-    searchTags: ['コーン', 'とうもろこし', 'コーン缶'],
+    searchTags: ['コーン', 'とうもろこし'],
   },
   {
     // 海藻。「わかめ」「もずく」が検索で0件 (ベンチマークの既知の失敗) で、温野菜や
@@ -1322,9 +1551,7 @@ const BUCKET_VEGGIES: Identity[] = [
     id: 'seaweed',
     label: '海藻',
     searchTags: [
-      'かいそう', '海藻', 'わかめ', 'ワカメ', '若布', 'めかぶ', 'もずく', '海雲', 'もずくず', 'もずく酢',
-      'やきのり', '焼きのり', '焼き海苔', 'あじつけのり', '味付けのり', '味付け海苔', 'のり', '海苔',
-    ],
+      'かいそう', '海藻', 'わかめ', 'ワカメ', '若布', 'めかぶ', '海雲'],
     primaryHome: { tab: 'ingredient', bucket: 'veggies' },
     defaultMacro: { kcal: 10, protein: 0.7, fat: 0.1, carbs: 2.5 },
     referenceDescription: '1 = 小鉢1つ・1パック・のり1枚。カロリーはごく小さいので、だいたいで大丈夫',
@@ -1391,7 +1618,7 @@ const BUCKET_VEGGIES: Identity[] = [
     defaultMacro: { kcal: 35, protein: 1.5, fat: 0.5, carbs: 6 },
     nutritionNotes: [
       {
-        text: 'ビタミンCは熱で壊れやすく、ゆでると減ります。成分表ではほうれんそう100gが、生で35mg、ゆでて19mgです。10種の野菜の研究でも、ゆでるのはビタミンCの保持率がもっとも低い調理法でした。',
+        text: 'ビタミンCは熱に弱く、ほうれんそうはゆでると半分ほどに減ります。野菜10種の研究でも、ゆでるのがいちばん減りやすい調理法でした。',
         source: seibun('ほうれんそう（生）', '6_06267_7'),
         alsoSources: [H_VITC, SRC_COOKING_VITAMINS],
       },
@@ -1417,7 +1644,7 @@ const BUCKET_FRUIT: Identity[] = [
     nutritionNotes: [
       { text: 'バナナは、体内の水分バランスに関わるミネラルのひとつ、カリウムを含みます。', source: SRC_SEIBUN },
       {
-        text: 'バナナに含まれるカリウムは、正常な血圧の維持に必要な栄養素です。',
+        text: 'バナナに多いカリウムは、血圧を正常に保つのを助ける栄養素です。',
         source: SRC_CAA,
         alsoSources: [H_POTASSIUM],
       },
@@ -1438,6 +1665,13 @@ const BUCKET_FRUIT: Identity[] = [
     defaultMacro: { kcal: 135, protein: 0.5, fat: 0.5, carbs: 35 },
     nutritionNotes: [
       { text: 'りんごや梨の食物繊維は、便通に関わる成分です。皮の近くに多く含まれるため、皮ごと食べるかどうかで量が変わります。', source: SRC_SEIBUN },
+      {
+        // 成分表: りんご 皮つき 1.9g / 皮なし 1.4g = 1.36倍。USDA: 2.4g / 1.3g = 1.85倍
+        text: 'りんごを皮ごと食べると、皮をむいたときより食物繊維が1.4〜1.8倍ほど多くなります（日本と米国のデータ）。食物繊維は、お腹の調子を整えるのを助けます。',
+        source: seibun('りんご 皮つき / 皮なし', '7_07176_7'),
+        alsoSources: [SRC_USDA_APPLE, SRC_KENNET_FIBER],
+        topics: ['carbs'],
+      },
     ],
     amount: { unit: 'piece', default: 1 },
     asAddon: {
@@ -1469,7 +1703,7 @@ const BUCKET_FRUIT: Identity[] = [
     defaultMacro: { kcal: 44, protein: 1.2, fat: 0.1, carbs: 11 }, // 10粒分
     nutritionNotes: [
       {
-        text: 'いちごに多いビタミンCは、皮膚や粘膜の健康維持を助けるとともに、抗酸化作用を持つ栄養素です。',
+        text: 'いちごに多いビタミンCは、体の細胞を守るのを助ける栄養素です。',
         source: SRC_CAA,
         alsoSources: [H_VITC],
       },
@@ -1494,7 +1728,7 @@ const BUCKET_FRUIT: Identity[] = [
     amount: { unit: 'g', default: 50, step: 10, chips: [{ label: '50', value: 50 }, { label: '100', value: 100 }] },
     attributes: [
       { key: 'blueberry', label: 'ブルーベリー', isDefault: true },
-      { key: 'grape', label: 'ぶどう', factor: { kcal: 1.07, carbs: 1.14 } },
+      { key: 'grape', label: 'ぶどう', searchTags: ['葡萄'], factor: { kcal: 1.07, carbs: 1.14 } },
     ],
     asAddon: {
       unit: 'g',
@@ -1502,7 +1736,7 @@ const BUCKET_FRUIT: Identity[] = [
       addedMacro: { kcal: 25, protein: 0.4, fat: 0.2, carbs: 6 },
       defaultLabel: 'ベリー',
     },
-    searchTags: ['ぶどう', '葡萄', 'ブルーベリー', 'いちじく', '無花果', 'ベリー'],
+    searchTags: ['ベリー'],
   },
   {
     id: 'fruit_other',
@@ -1511,7 +1745,7 @@ const BUCKET_FRUIT: Identity[] = [
     referenceDescription: 'キウイ・桃・パイナップル・マンゴー・柿・すいかなど',
     defaultMacro: { kcal: 60, protein: 0.7, fat: 0.2, carbs: 15 },
     amount: { unit: 'piece', default: 1 },
-    searchTags: ['キウイ', '桃', 'パイナップル', 'マンゴー', '柿', 'すいか', '西瓜', 'すいか', 'キウイフルーツ', 'パイン'],
+    searchTags: ['キウイ', '桃', 'パイナップル', 'マンゴー', '柿', 'すいか', '西瓜', 'キウイフルーツ', 'パイン', 'いちじく', '無花果'],
   },
 ];
 
@@ -1527,33 +1761,35 @@ const BUCKET_ADDED_FAT: Identity[] = [
     defaultMacro: { kcal: 110, protein: 0, fat: 12, carbs: 0 },
     nutritionNotes: [
       { text: '油は少ない量でもエネルギーが大きく、小さじ1杯の差がそのまま効いてきます。', source: SRC_SEIBUN },
+      {
+        text: '料理の油は、カロリーはどれもほぼ同じですが、脂の種類が違います。なたね油には体の中で作れないオメガ3が含まれますが、オリーブ油やごま油にはほとんどありません。',
+        source: seibunFa('オリーブ油 / ごま油 / なたね油', '14_14001_7'),
+        alsoSources: [H_FAT_TYPES, H_OMEGA3],
+        topics: ['fat'],
+      },
     ],
     amount: { unit: 'ml', default: 15, step: 5, chips: [{ label: '小さじ', value: 5 }, { label: '大さじ', value: 15 }] },
-    attributes: [
-      { key: 'olive', label: 'オリーブ', isDefault: true },
-      { key: 'sesame', label: 'ごま' },
-      { key: 'mct', label: 'MCT', factor: { kcal: 1.13 } },
-      { key: 'coconut', label: 'ココナッツ', factor: { kcal: 1.13 } },
-    ],
+    // 種類 (オリーブ / ごま / MCT / ココナッツ) は 2026-10-23 に廃止。油の種類でカロリーは
+    // ほぼ変わらず、§1.5「分割の軸はマクロの段差」に合わない。名前は searchTags で探せる。
+    // 旧ログの attrKey ('olive' 等) は表示で無視される (log-display は未知の種類を出さない)。
     asAddon: {
       unit: 'ml',
       unitAmount: 15,
       addedMacro: { kcal: 110, protein: 0, fat: 12, carbs: 0 },
       defaultLabel: '油',
     },
-    searchTags: ['あぶら', '油', 'サラダ油', 'さらだあぶら', 'ごま油', '胡麻油', 'ごまあぶら', 'オリーブオイル', 'おりーぶおいる', '植物油'],
+    searchTags: ['あぶら', '油', 'サラダ油', 'さらだあぶら', 'ごま油', '胡麻油', 'ごまあぶら', 'オリーブオイル', 'おりーぶおいる', '植物油', 'ココナッツオイル', 'MCTオイル', 'なたね油', '米油', 'えごま油', 'アマニ油'],
   },
   {
     id: 'butter_cream',
     label: 'バター・生クリーム',
-    searchTags: ['なまくりーむ'],
     primaryHome: { tab: 'ingredient', bucket: 'added_fat' },
     defaultMacro: { kcal: 75, protein: 0.1, fat: 8.1, carbs: 0 },
     amount: { unit: 'g', default: 10, step: 5, chips: [{ label: '5', value: 5 }, { label: '10', value: 10 }, { label: '大さじ', value: 15 }] },
     attributes: [
       { key: 'butter', label: 'バター', isDefault: true },
       { key: 'margarine', label: 'マーガリン', factor: { kcal: 0.95 } },
-      { key: 'cream', label: '生クリーム', factor: { kcal: 0.8, fat: 0.79 } },
+      { key: 'cream', label: '生クリーム', searchTags: ['なまくりーむ'], factor: { kcal: 0.8, fat: 0.79 } },
     ],
     asAddon: {
       unit: 'g',
@@ -1602,9 +1838,10 @@ const BUCKET_ADDED_FAT: Identity[] = [
     defaultMacro: { kcal: 90, protein: 1, fat: 9, carbs: 0.5 },
     nutritionNotes: [
       {
-        text: 'アボカドは果物ですが、糖質ではなく脂質が主成分です。成分表では、100gあたり脂質17.5g・炭水化物7.9gです。',
+        text: 'アボカドは果物ですが、甘さ（糖質）ではなく脂が中心の食べものです。脂は、炭水化物の2倍以上あります。',
         source: seibun('アボカド', '7_07006_7'),
         alsoSources: [H_AVOCADO],
+        topics: ['fat'],
       },
     ],
     amount: { unit: 'piece', default: 0.5, chips: [{ label: '1/4個', value: 0.25 }, { label: '半個', value: 0.5 }, { label: '1個', value: 1 }] },
@@ -1627,9 +1864,15 @@ const BUCKET_ADDED_FAT: Identity[] = [
     nutritionNotes: [
       { text: 'ナッツの脂質は不飽和脂肪酸が中心で、常温でも固まりにくく、肉の脂(飽和脂肪酸)とは性質が違います。', source: SRC_SEIBUN },
       {
-        text: 'ナッツに含まれるビタミンEは、抗酸化作用により、体内の脂質を酸化から守り細胞の健康維持を助ける栄養素です。',
+        text: 'ナッツに多いビタミンEは、体の細胞を守るのを助ける栄養素です。',
         source: SRC_CAA,
         alsoSources: [H_VITE],
+      },
+      {
+        text: 'ナッツは、種類で脂の中身が違います。くるみには体の中で作れないオメガ3が多く、ひとつかみで1日の目安の半分以上がとれます。アーモンドには、ほとんど含まれません。',
+        source: seibunFa('くるみ いり / アーモンド 乾', '5_05014_7'),
+        alsoSources: [H_OMEGA3, H_FAT_TYPES, SRC_DRI2025_FAT],
+        topics: ['fat'],
       },
     ],
     amount: { unit: 'g', default: 30, step: 5, chips: [{ label: '一掴み', value: 15 }, { label: '30', value: 30 }, { label: '50', value: 50 }] },
@@ -1697,7 +1940,7 @@ const BUCKET_SNACK_DRINK: Identity[] = [
     // 市販カッププリン(森永等)基準 100g: kcal 117, P 4.0, F 5.4, C 13。ゼリーは低カロリー寄り。
     defaultMacro: { kcal: 117, protein: 4, fat: 5.4, carbs: 13 },
     amount: { unit: 'piece', default: 1, chips: [{ label: '1個', value: 1 }, { label: '大', value: 1.5 }] },
-    searchTags: ['プリン', 'ゼリー', 'カスタード'],
+    searchTags: ['プリン', 'カスタード'],
     attributes: [
       { key: 'custard', label: 'プリン', isDefault: true },
       { key: 'jelly', label: 'ゼリー・杏仁', searchTags: ['杏仁豆腐', 'あんにんどうふ', 'ゼリー'], factor: { kcal: 0.41, protein: 0.35, fat: 0.06, carbs: 0.62 } },
@@ -1785,6 +2028,21 @@ const BUCKET_SNACK_DRINK: Identity[] = [
     label: 'ジュース',
     primaryHome: { tab: 'ingredient', bucket: 'snack_drink' },
     defaultMacro: { kcal: 140, protein: 0, fat: 0, carbs: 35 },
+    nutritionNotes: [
+      {
+        // 成分表: オレンジ ネーブル 生 1.0g / 濃縮還元ジュース 0.2g = 5分の1。USDA: 2.4g / 0.2g = 12分の1
+        text: 'オレンジを果汁100%のジュースにすると、食物繊維はほとんど残りません。果物のままと比べて5分の1ほど、米国のデータでは10分の1以下です。',
+        source: seibun('オレンジ 濃縮還元ジュース / ネーブル 生', '7_07043_7'),
+        alsoSources: [SRC_USDA_ORANGE, H_CARBS],
+        topics: ['carbs'],
+      },
+      {
+        text: 'WHOは、砂糖などの糖分を1日のカロリーの1割未満にすることをすすめています。果汁100%のジュースの糖分もここに入りますが、生の果物の糖分は入りません。',
+        source: SRC_WHO_SUGARS,
+        alsoSources: [H_CARBS],
+        topics: ['carbs'],
+      },
+    ],
     referenceDescription: 'コーラ・サイダー・果汁ジュース・スポーツドリンクなど、サラッと甘い飲み物',
     amount: { unit: 'ml', default: 350, step: 10, chips: [{ label: 'コップ1杯', value: 200 }, { label: '缶1本', value: 350 }, { label: '1本(500)', value: 500 }] },
     searchTags: ['ジュース', 'コーラ', 'サイダー', 'スポドリ', '炭酸', '果汁'],

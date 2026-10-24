@@ -93,6 +93,15 @@ export const STYLE_MIGRATIONS: MigrationRule[] = [
     description: 'さつまいも + 焼き蜜・揚げ蜜 → おやつ甘飲/和菓子',
   },
 
+  // Egg — スープ → たまごスープ
+  {
+    fromIdentityId: 'egg',
+    trigger: 'style',
+    triggerKey: 'soup',
+    to: { bucketKey: 'misc_dish', identityKey: 'soup', attributeKey: 'egg', confirmMessage: 'たまごスープとして記録します' },
+    description: '卵 + スープ → おかず・単品/汁物・スープ(たまごスープ)',
+  },
+
   // Chicken (lean) — 揚げ → 唐揚げ(むね)
   {
     fromIdentityId: 'chicken_lean',
@@ -149,7 +158,7 @@ export const STYLE_MIGRATIONS: MigrationRule[] = [
     description: '牛 + 衣付揚げ → おかず・単品/揚げもの単品(メンチカツ)',
   },
 
-  // White fish — 衣付揚げ → 魚介揚げ
+  // White fish — 衣付揚げ → 魚介フライ
   {
     fromIdentityId: 'white_fish',
     trigger: 'style',
@@ -160,7 +169,7 @@ export const STYLE_MIGRATIONS: MigrationRule[] = [
       attributeKey: 'fish_fry',
       confirmMessage: 'アジフライ等として記録します',
     },
-    description: '白身魚 + 衣付揚げ → おかず・単品/揚げもの単品(魚介揚げ)',
+    description: '白身魚 + 衣付揚げ → おかず・単品/揚げもの単品(魚介フライ)',
   },
 
   // Seafood lean — 衣付揚げ → エビフライ
