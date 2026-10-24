@@ -654,6 +654,15 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     persist(profile, nextLogs, settings, weights, bodyFatEntries);
   }, [bodyFatEntries, logs, persist, profile, settings, undoState, weights]);
 
+  /** スワイプ等でユーザーが明示的にトーストを閉じたとき。取り消しはせず、表示だけ終える。 */
+  const dismissUndo = useCallback(() => {
+    if (undoTimerRef.current) {
+      clearTimeout(undoTimerRef.current);
+      undoTimerRef.current = null;
+    }
+    setUndoState(null);
+  }, []);
+
   const deleteLog = useCallback(
     (id: string) => {
       const target = logs.find((item) => item.id === id);
@@ -1531,6 +1540,7 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     submitIdentityLog,
     quickLogIdentity,
     undoLastLog,
+    dismissUndo,
     deleteLog,
     updateProfileValues,
     updateSettingsValues,
