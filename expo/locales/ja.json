@@ -458,7 +458,21 @@
     "amountRefPrefix": "目安",
     "pin": {
       "addA11y": "{{label}}を⭐️に入れる",
-      "removeA11y": "{{label}}を⭐️からはずす"
+      "removeA11y": "{{label}}を⭐️からはずす",
+      "notice": {
+        "added": {
+          "title": "⭐️に入れました",
+          "message": "ホームの⭐️タブに並びます。"
+        },
+        "addedFirst": {
+          "title": "⭐️に入れました",
+          "message": "ホームに⭐️タブが現れます。"
+        },
+        "removed": {
+          "title": "⭐️からはずしました",
+          "message": "よく記録するものなら、自動では並びます。"
+        }
+      }
     },
     "roughHint": {
       "line1": "20〜30kcalは、ごはんひと口くらいの差。",

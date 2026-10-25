@@ -23,6 +23,7 @@ import {
 import { openAmountEditor } from '@/components/AmountEditSheet';
 import { buildIdentityAmountEditConfig, decrementBy, incrementBy } from '@/utils/amount-edit';
 import { useAppState } from '@/providers/app-state-provider';
+import { shouldShowFrequentTab } from '@/utils/frequent-pins';
 import { useLocale } from '@/hooks/useLocale';
 import { useT } from '@/hooks/useT';
 import {
@@ -283,10 +284,29 @@ export function IdentityLogSheet() {
   // ⭐️ トグル (PRD §6.5.3)。いま選んでいる Identity を ⭐️ タブのピン留めに入れる / 外す。
   // ⭐️ タブ以外 (食材・料理タブ・検索) から開いたシートでも押せる。追加は末尾。
   const isPinned = !!origin && (settings.frequentPins ?? []).includes(origin.id);
+  // 押したあと何が起きたかを、フッターの吹き出しで一言伝える (ネイティブのシートの上には、アプリ全体のトーストが出ないため)
+  const [pinNotice, setPinNotice] = useState<'added' | 'addedFirst' | 'removed' | null>(null);
+  const pinNoticeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (pinNoticeTimerRef.current) clearTimeout(pinNoticeTimerRef.current);
+    },
+    [],
+  );
   const handleTogglePin = useCallback(() => {
     if (!origin) return;
-    setFrequentPinned(origin.id, !isPinned);
-  }, [origin, isPinned, setFrequentPinned]);
+    const adding = !isPinned;
+    // ⭐️ タブがまだ出ていない人の最初の1件は、タブが現れることも伝える
+    const historyEntries = Object.values((settings.quickLogHistory ?? {}) as Record<string, unknown[]>).reduce(
+      (sum, arr) => sum + arr.length,
+      0,
+    );
+    const tabWasHidden = !shouldShowFrequentTab(historyEntries, settings.frequentPins);
+    setFrequentPinned(origin.id, adding);
+    setPinNotice(adding ? (tabWasHidden ? 'addedFirst' : 'added') : 'removed');
+    if (pinNoticeTimerRef.current) clearTimeout(pinNoticeTimerRef.current);
+    pinNoticeTimerRef.current = setTimeout(() => setPinNotice(null), 2600);
+  }, [origin, isPinned, setFrequentPinned, settings.quickLogHistory, settings.frequentPins]);
 
   const handleSelectIdentity = useCallback((identity: Identity) => {
     const attrKey = defaultAttributeKey(identity);
@@ -619,14 +639,23 @@ export function IdentityLogSheet() {
         />
       }
       footerAccessory={
+        <>
         <Callout
-          visible={roughHintVisible}
+          visible={!!pinNotice}
+          title={pinNotice ? tr(`identityLog.pin.notice.${pinNotice}.title`) : ''}
+          message={pinNotice ? tr(`identityLog.pin.notice.${pinNotice}.message`) : ' '}
+          arrowAlign="center"
+          testID="ils-pin-notice"
+        />
+        <Callout
+          visible={roughHintVisible && !pinNotice}
           title={tr('identityLog.roughHint.line1')}
           message={tr('identityLog.roughHint.line2')}
           onDismiss={() => setRoughHintVisible(false)}
           dismissAccessibilityLabel={tr('identityLog.roughHint.closeA11y')}
           testID="ils-rough-hint"
         />
+        </>
       }
       headerRight={
         <View style={{ flexDirection: 'row', gap: t.spacing['3'], alignItems: 'center' }}>

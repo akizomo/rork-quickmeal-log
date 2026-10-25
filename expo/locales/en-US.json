@@ -458,7 +458,21 @@
     "amountRefPrefix": "Reference",
     "pin": {
       "addA11y": "Add {{label}} to ⭐️",
-      "removeA11y": "Remove {{label}} from ⭐️"
+      "removeA11y": "Remove {{label}} from ⭐️",
+      "notice": {
+        "added": {
+          "title": "Added to ⭐️",
+          "message": "It shows up in the ⭐️ tab on Home."
+        },
+        "addedFirst": {
+          "title": "Added to ⭐️",
+          "message": "A ⭐️ tab now appears on Home."
+        },
+        "removed": {
+          "title": "Removed from ⭐️",
+          "message": "If you log it often, it can still appear automatically."
+        }
+      }
     },
     "roughHint": {
       "line1": "A 20–30 kcal gap is about one bite of rice.",
