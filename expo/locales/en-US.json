@@ -739,9 +739,11 @@
   },
   "frequentEdit": {
     "title": "Edit ⭐️",
+    "intro": "Tidy what shows in ⭐️. Drag the handle to reorder, or take out what you don't need.",
     "pinned": {
       "title": "Picked by you",
       "empty": "Tap ⭐️ on a log sheet and it shows up here.",
+      "handleA11y": "Reorder {{label}}",
       "moveUpA11y": "Move {{label}} up",
       "moveDownA11y": "Move {{label}} down",
       "remove": "Remove",

@@ -739,9 +739,11 @@
   },
   "frequentEdit": {
     "title": "⭐️の編集",
+    "intro": "⭐️に並ぶものを整えます。つまみをドラッグして並べ替え、いらないものははずせます。",
     "pinned": {
       "title": "自分で選んだもの",
       "empty": "記録シートの ⭐️ を押すと、ここに並びます。",
+      "handleA11y": "{{label}}の並べ替え",
       "moveUpA11y": "{{label}}を上へ",
       "moveDownA11y": "{{label}}を下へ",
       "remove": "はずす",

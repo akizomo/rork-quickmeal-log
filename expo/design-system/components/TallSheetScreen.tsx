@@ -70,6 +70,8 @@ export type TallSheetScreenProps = {
    * 高さ0のアンカーに置くので本文の余白は変わらず、空いた部分のタッチは下の本文へ通す。
    */
   footerAccessory?: React.ReactNode;
+  /** 本文のスクロールを止める (本文の中でドラッグ並べ替えをしている間など)。既定 true */
+  scrollEnabled?: boolean;
   testID?: string;
 };
 
@@ -82,6 +84,7 @@ export function TallSheetScreen({
   primaryAction,
   footerLeft,
   footerAccessory,
+  scrollEnabled = true,
   testID,
 }: TallSheetScreenProps) {
   const t = useTheme();
@@ -163,6 +166,7 @@ export function TallSheetScreen({
           contentStyle,
         ]}
         keyboardShouldPersistTaps="handled"
+        scrollEnabled={scrollEnabled}
         automaticallyAdjustKeyboardInsets
         contentInsetAdjustmentBehavior="never"
         showsVerticalScrollIndicator={false}

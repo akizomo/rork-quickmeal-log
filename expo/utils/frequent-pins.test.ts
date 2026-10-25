@@ -13,6 +13,7 @@ import {
   effectiveHiddenCount,
   effectivePinCount,
   movePin,
+  movePinTo,
   removeHidden,
   removePin,
   resolveHiddenItems,
@@ -230,6 +231,31 @@ describe('movePin', () => {
   it('元の配列を書き換えない', () => {
     const copy = [...base];
     movePin(copy, 'natto', 'up');
+    expect(copy).toEqual(base);
+  });
+});
+
+describe('movePinTo', () => {
+  const base = ['rice', 'natto', 'udon', 'tofu'];
+
+  it('指定位置へ動かし、間の要素は1つずつずれる', () => {
+    expect(movePinTo(base, 'rice', 2)).toEqual(['natto', 'udon', 'rice', 'tofu']);
+    expect(movePinTo(base, 'tofu', 0)).toEqual(['tofu', 'rice', 'natto', 'udon']);
+  });
+
+  it('範囲外の位置は端に丸める', () => {
+    expect(movePinTo(base, 'natto', 99)).toEqual(['rice', 'udon', 'tofu', 'natto']);
+    expect(movePinTo(base, 'natto', -5)).toEqual(['natto', 'rice', 'udon', 'tofu']);
+  });
+
+  it('同じ位置・ピン留めに無い ID は何もしない', () => {
+    expect(movePinTo(base, 'udon', 2)).toEqual(base);
+    expect(movePinTo(base, 'ghost', 0)).toEqual(base);
+  });
+
+  it('元の配列を書き換えない', () => {
+    const copy = [...base];
+    movePinTo(copy, 'rice', 3);
     expect(copy).toEqual(base);
   });
 });

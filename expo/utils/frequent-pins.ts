@@ -78,6 +78,18 @@ export function movePin(
   return next;
 }
 
+/** ドラッグの結果: 指定した位置 (0 始まり) へ動かす。範囲外は端に丸め、ピン留めに無い ID は何もしない。 */
+export function movePinTo(pins: readonly string[] | undefined, id: string, toIndex: number): string[] {
+  const base = castIdList(pins);
+  const from = base.indexOf(id);
+  if (from === -1) return base;
+  const to = Math.max(0, Math.min(base.length - 1, toIndex));
+  if (to === from) return base;
+  const next = base.filter((p) => p !== id);
+  next.splice(to, 0, id);
+  return next;
+}
+
 export function addHidden(hidden: readonly string[] | undefined, id: string): string[] {
   const base = castIdList(hidden);
   return base.includes(id) ? base : [...base, id];

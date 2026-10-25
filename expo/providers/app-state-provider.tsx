@@ -21,7 +21,7 @@ import { adjustedTargetKcal, calcBaselineActiveKcal, calcExerciseGrossKcal, calc
 import { computeWeeklyBalance, isWeeklyBalanceWorthProposing } from '@/utils/weekly-balance';
 import { getWeekRange, isSameDay } from '@/utils/history';
 import { castHistoryMap, deriveDefaultTab, rankFrequentSelections, recordSelection, recordTabUsage } from '@/utils/quick-log-history';
-import { addHidden, castIdList, movePin, removeHidden, setPinned, type FrequentSource } from '@/utils/frequent-pins';
+import { addHidden, castIdList, movePin, movePinTo, removeHidden, setPinned, type FrequentSource } from '@/utils/frequent-pins';
 import {
   bumpDiagnosticCounter,
   castDiagnostics,
@@ -763,6 +763,14 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
   const moveFrequentPin = useCallback(
     (identityId: string, direction: 'up' | 'down') => {
       updateSettingsValues({ frequentPins: movePin(settings.frequentPins, identityId, direction) });
+    },
+    [settings.frequentPins, updateSettingsValues]
+  );
+
+  /** ピン留めの並びを、指定した位置へ動かす (ドラッグの確定)。 */
+  const moveFrequentPinTo = useCallback(
+    (identityId: string, toIndex: number) => {
+      updateSettingsValues({ frequentPins: movePinTo(settings.frequentPins, identityId, toIndex) });
     },
     [settings.frequentPins, updateSettingsValues]
   );
@@ -1621,6 +1629,7 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     updateSettingsValues,
     setFrequentPinned,
     moveFrequentPin,
+    moveFrequentPinTo,
     setFrequentHidden,
     // KPI計装 Layer 1 (docs/ROADMAP.md §3.0)
     recordSearchMissEvent,

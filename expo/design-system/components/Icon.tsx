@@ -23,6 +23,7 @@ const ICON_GLYPH = {
   chevronLeft: 'chevron-left',
   chevronDown: 'keyboard-arrow-down',
   chevronUp: 'keyboard-arrow-up',
+  dragHandle: 'drag-handle',
   star: 'star',
   starOutline: 'star-outline',
   edit: 'edit',
