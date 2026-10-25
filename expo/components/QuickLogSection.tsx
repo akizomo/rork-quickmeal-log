@@ -241,7 +241,7 @@ const FREQUENT_PILL_CANDIDATES = 20;
 const EMPTY_FREQUENT_LAYOUT = { pinned: [] as FrequentItem[], auto: [] as FrequentItem[], settingsKey: '' };
 
 /**
- * ⭐️ タブ: ピン留め (ユーザーが決めた順) → 細い線 → 自動 (よく選ぶ順) を、名前だけのピルで並べる。
+ * ⭐️ タブ: ピン留め (ユーザーが決めた順) → 自動 (よく選ぶ順) を、区切りなしで続けて名前だけのピルで並べる (ピン留めかどうかは編集シートで分かる)。
  * 大きさは全部同じで、並び順が位置の目印 (位置を覚えて押せるように)。
  * タップ = いつもの量で記録 / 長押し = 量シート。末尾の「編集」は編集シートを開く (PRD §6.5.3)。
  *
@@ -306,10 +306,9 @@ const FrequentPills = memo(function FrequentPills({
   }, [extra, onExtraHeightChange]);
 
   const measuring = settledBottom === null;
-  const showDivider = pinned.length > 0 && autoCount > 0;
   const hiddenWhileMeasuring = measuring ? styles.pillMeasuring : null;
 
-  const renderPill = (item: FrequentItem, index: number, trailing?: React.ReactNode) => (
+  const renderPill = (item: FrequentItem, index: number) => (
     <View
       key={item.identityId}
       onLayout={(e) => handleLayout(index, e)}
@@ -332,7 +331,6 @@ const FrequentPills = memo(function FrequentPills({
         delayLongPress={320}
         testID={`frequent-pill-${item.identityId}`}
       />
-      {trailing}
     </View>
   );
 
@@ -342,19 +340,7 @@ const FrequentPills = memo(function FrequentPills({
       testID="frequent-pills"
     >
       <React.Fragment key={pass}>
-        {pinned.map((item, i) =>
-          renderPill(
-            item,
-            i,
-            // 細い線: ピン留めと自動のあいだ。最後のピン留めに付けて、行頭に線だけ取り残されないようにする
-            showDivider && i === pinned.length - 1 ? (
-              <View
-                style={[styles.divider, { backgroundColor: t.colors.border.default, marginLeft: t.spacing['2'] }]}
-                testID="frequent-divider"
-              />
-            ) : null,
-          ),
-        )}
+        {pinned.map((item, i) => renderPill(item, i))}
         {shownAuto.map((item, i) => renderPill(item, pinned.length + i))}
         <View
           onLayout={(e) => handleLayout(editIndex, e)}
@@ -573,10 +559,6 @@ const styles = StyleSheet.create({
   },
   pillMeasuring: {
     opacity: 0,
-  },
-  divider: {
-    width: StyleSheet.hairlineWidth * 2,
-    height: 20,
   },
   cell: {
     width: '100%',
