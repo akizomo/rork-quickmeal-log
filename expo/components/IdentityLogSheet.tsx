@@ -15,7 +15,6 @@ import {
   Callout,
   Caption,
   Chip,
-  Icon,
   IconButton,
   Label,
   TallSheetScreen,
@@ -911,27 +910,12 @@ function FooterPreview({
   const t = useTheme();
   const tr = useT();
   const ready = !!macro && macro.kcal > 0;
-  return (
+  const preview = (
     <View style={{ flex: 1, justifyContent: 'center' }}>
       {pin ? (
-        <Pressable
-          onPress={pin.onToggle}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityState={{ selected: pin.pinned }}
-          accessibilityLabel={tr(pin.pinned ? 'identityLog.pin.removeA11y' : 'identityLog.pin.addA11y', { label: pin.label })}
-          style={{ flexDirection: 'row', alignItems: 'center', gap: t.spacing['1'], marginBottom: t.spacing['0.5'] }}
-          testID="ils-pin"
-        >
-          <Icon
-            name={pin.pinned ? 'star' : 'starOutline'}
-            size={18}
-            color={pin.pinned ? t.colors.action.text.default : t.colors.content.secondary}
-          />
-          <Label size="sm" tone="secondary" numberOfLines={1} style={{ flexShrink: 1 }}>
-            {pin.label}
-          </Label>
-        </Pressable>
+        <Label size="sm" tone="secondary" numberOfLines={1} testID="ils-preview-name">
+          {pin.label}
+        </Label>
       ) : null}
       <Text
         style={{
@@ -955,6 +939,22 @@ function FooterPreview({
           ? `P${Math.round(macro!.protein)} · F${Math.round(macro!.fat)} · C${Math.round(macro!.carbs)}`
           : 'P— · F— · C—'}
       </Text>
+    </View>
+  );
+  if (!pin) return preview;
+  // ⭐️ は「このサマリーの Identity」に付く。押せると分かるよう、枠つきの丸ボタン (入れたら塗り + 色) で左に置く
+  return (
+    <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: t.spacing['3'] }}>
+      <IconButton
+        icon={pin.pinned ? 'star' : 'starOutline'}
+        size="lg"
+        variant={pin.pinned ? 'filled' : 'outlined'}
+        tone={pin.pinned ? 'action' : 'secondary'}
+        onPress={pin.onToggle}
+        accessibilityLabel={tr(pin.pinned ? 'identityLog.pin.removeA11y' : 'identityLog.pin.addA11y', { label: pin.label })}
+        testID="ils-pin"
+      />
+      {preview}
     </View>
   );
 }
