@@ -21,9 +21,11 @@ import { adjustedTargetKcal, calcBaselineActiveKcal, calcExerciseGrossKcal, calc
 import { computeWeeklyBalance, isWeeklyBalanceWorthProposing } from '@/utils/weekly-balance';
 import { getWeekRange, isSameDay } from '@/utils/history';
 import { castHistoryMap, deriveDefaultTab, rankFrequentSelections, recordSelection, recordTabUsage } from '@/utils/quick-log-history';
+import { addHidden, castIdList, movePin, removeHidden, setPinned, type FrequentSource } from '@/utils/frequent-pins';
 import {
   bumpDiagnosticCounter,
   castDiagnostics,
+  type DiagnosticCounterKey,
   editSearchMiss,
   recordSearchMiss,
   removeSearchMiss,
@@ -163,6 +165,8 @@ function migrateSettings(raw: Partial<AppSettings> | undefined): AppSettings {
     quickLogHistory: castHistoryMap(raw?.quickLogHistory),
     tabUsageCounts: raw?.tabUsageCounts ?? { ingredient: 0, dish: 0, frequent: 0 },
     currentDefaultTab: raw?.currentDefaultTab,
+    frequentPins: castIdList(raw?.frequentPins),
+    frequentHidden: castIdList(raw?.frequentHidden),
     diagnostics: castDiagnostics(raw?.diagnostics),
   };
 }
@@ -215,6 +219,8 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     editingLogId?: string;
     /** Which QuickLogSection tab opened this sheet (for tabUsageCounts tracking). Absent for edits. */
     sourceTab?: QuickLogTabKey;
+    /** ⭐️ タブから開いたとき、ピン留め由来か自動由来か (frequent_tap_source の計測用)。 */
+    frequentSource?: FrequentSource;
   }>({ visible: false });
   /** Called when IdentityLogSheet is dismissed via × / backdrop (not on save). */
   const identityLogSheetOnDismissRef = useRef<(() => void) | null>(null);
@@ -502,6 +508,8 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
         addons?: { refId: string; refType: 'identity' | 'addon'; units: number }[];
         editingLogId?: string;
         sourceTab?: QuickLogTabKey;
+        /** ⭐️ タブのピルから開くとき。ピン留め由来か自動由来かを記録時の計測に引き継ぐ。 */
+        frequentSource?: FrequentSource;
         onDismiss?: () => void;
       }
     ) => {
@@ -523,6 +531,7 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
         initialAddons: opts?.addons,
         editingLogId: opts?.editingLogId,
         sourceTab: opts?.sourceTab,
+        frequentSource: opts?.frequentSource,
       });
     },
     []
@@ -551,10 +560,19 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
    * and history bookkeeping.
    */
   const submitIdentityLog = useCallback(
-    async (resolved: ResolveResult, opts?: { editingLogId?: string; wasShortTap?: boolean; sourceTab?: QuickLogTabKey }) => {
+    async (
+      resolved: ResolveResult,
+      opts?: {
+        editingLogId?: string;
+        wasShortTap?: boolean;
+        sourceTab?: QuickLogTabKey;
+        frequentSource?: FrequentSource;
+      },
+    ) => {
       identityLogSheetOnDismissRef.current = null; // save — onDismiss should not fire
       const editingLogId = opts?.editingLogId ?? identityLogSheet.editingLogId;
       const sourceTab = opts?.sourceTab ?? identityLogSheet.sourceTab;
+      const frequentSource = sourceTab === 'frequent' ? (opts?.frequentSource ?? identityLogSheet.frequentSource) : undefined;
 
       // Edit-mode: update the existing FoodLog in place (preserve id/date/timestamp/mealSlot).
       if (editingLogId) {
@@ -614,11 +632,21 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
         ? deriveDefaultTab(nextHistory, nextTabUsageCounts, settings.currentDefaultTab)
         : settings.currentDefaultTab;
 
+      // ⭐️ の内訳 (ピン留め由来 / 自動由来)。tabUsageCounts.frequent と同じ記録に載せる。
+      // ウィジェット経由 (frequentSource なし) は内訳に数えない。
+      const nextDiagnostics = frequentSource
+        ? bumpDiagnosticCounter(
+            settings.diagnostics,
+            frequentSource === 'pinned' ? 'frequentPinnedTapCount' : 'frequentAutoTapCount',
+          )
+        : settings.diagnostics;
+
       const nextSettings: AppSettings = {
         ...settings,
         quickLogHistory: nextHistory,
         tabUsageCounts: nextTabUsageCounts,
         currentDefaultTab: nextDefaultTab,
+        diagnostics: nextDiagnostics,
       };
       setSettings(nextSettings);
       persist(profile, [log, ...logs], nextSettings, weights, bodyFatEntries);
@@ -627,7 +655,7 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       setIdentityLogSheet({ visible: false });
       return log;
     },
-    [identityLogSheet.editingLogId, identityLogSheet.sourceTab, logs, replaceLog, applyLoggingDate, pushLog, settings, setSettings, persist, profile, weights, bodyFatEntries]
+    [identityLogSheet.editingLogId, identityLogSheet.sourceTab, identityLogSheet.frequentSource, logs, replaceLog, applyLoggingDate, pushLog, settings, setSettings, persist, profile, weights, bodyFatEntries]
   );
 
   /**
@@ -635,7 +663,7 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
    * Used by single-tap on a chip outside the bottom sheet.
    */
   const quickLogIdentity = useCallback(
-    async (identityId: string, sourceTab?: QuickLogTabKey) => {
+    async (identityId: string, sourceTab?: QuickLogTabKey, opts?: { frequentSource?: FrequentSource }) => {
       const identity = getIdentity(identityId);
       if (!identity) {
         console.log('[app-state] quickLogIdentity: unknown identity', identityId);
@@ -647,7 +675,7 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
         amountValue: usualAmountForIdentity(logs, identity, undefined),
       };
       const resolved = resolveLog(input);
-      return submitIdentityLog(resolved, { sourceTab });
+      return submitIdentityLog(resolved, { sourceTab, frequentSource: opts?.frequentSource });
     },
     [logs, submitIdentityLog]
   );
@@ -717,6 +745,40 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     [bodyFatEntries, logs, persist, profile, settings, weights]
   );
 
+  // ⭐️ タブのピン留め・非表示 (PRD §6.5.3)。純ロジックは utils/frequent-pins.ts。
+  /** Identity を ⭐️ にピン留めする / 外す。追加は末尾。ピン留めすると「表示しない」は解く。 */
+  const setFrequentPinned = useCallback(
+    (identityId: string, pinned: boolean) => {
+      const next = setPinned(
+        { pins: settings.frequentPins, hidden: settings.frequentHidden },
+        identityId,
+        pinned,
+      );
+      updateSettingsValues({ frequentPins: next.pins, frequentHidden: next.hidden });
+    },
+    [settings.frequentHidden, settings.frequentPins, updateSettingsValues]
+  );
+
+  /** ピン留めの並びを1つ上 / 下へ動かす。 */
+  const moveFrequentPin = useCallback(
+    (identityId: string, direction: 'up' | 'down') => {
+      updateSettingsValues({ frequentPins: movePin(settings.frequentPins, identityId, direction) });
+    },
+    [settings.frequentPins, updateSettingsValues]
+  );
+
+  /** 自動分を ⭐️ に「表示しない」 / 戻す。 */
+  const setFrequentHidden = useCallback(
+    (identityId: string, hidden: boolean) => {
+      updateSettingsValues({
+        frequentHidden: hidden
+          ? addHidden(settings.frequentHidden, identityId)
+          : removeHidden(settings.frequentHidden, identityId),
+      });
+    },
+    [settings.frequentHidden, updateSettingsValues]
+  );
+
   /**
    * KPI計装 Layer 1: 診断データを更新する共通経路。
    * 呼び出しは低頻度 (シート開閉・drain 単位) を前提とするため、
@@ -742,7 +804,7 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
 
   /** 診断カウンタを加算する。 */
   const bumpDiagnostic = useCallback(
-    (key: 'searchOpenCount' | 'directInputOpenCount' | 'widgetLogCount', by = 1) => {
+    (key: DiagnosticCounterKey, by = 1) => {
       applyDiagnostics((d) => bumpDiagnosticCounter(d, key, by));
     },
     [applyDiagnostics]
@@ -1557,6 +1619,9 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     deleteLog,
     updateProfileValues,
     updateSettingsValues,
+    setFrequentPinned,
+    moveFrequentPin,
+    setFrequentHidden,
     // KPI計装 Layer 1 (docs/ROADMAP.md §3.0)
     recordSearchMissEvent,
     bumpDiagnostic,

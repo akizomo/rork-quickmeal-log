@@ -456,6 +456,10 @@
     "switchToCount": "個数に切り替え",
     "usualAmount": "いつもの",
     "amountRefPrefix": "目安",
+    "pin": {
+      "addA11y": "{{label}}を⭐️に入れる",
+      "removeA11y": "{{label}}を⭐️からはずす"
+    },
     "roughHint": {
       "line1": "20〜30kcalは、ごはんひと口くらいの差。",
       "line2": "ざっくりでも、記録を続けるほうがずっと大切です。",
@@ -724,9 +728,36 @@
       "body": "アプリを開かずに記録できます",
       "add": "追加する"
     },
+    "frequent": {
+      "edit": "編集",
+      "editA11y": "⭐️の並びを編集"
+    },
     "a11y": {
       "search": "食品を検索",
       "addItem": "{{label}}を追加。長押しで詳細入力"
+    }
+  },
+  "frequentEdit": {
+    "title": "⭐️の編集",
+    "pinned": {
+      "title": "自分で選んだもの",
+      "empty": "記録シートの ⭐️ を押すと、ここに並びます。",
+      "moveUpA11y": "{{label}}を上へ",
+      "moveDownA11y": "{{label}}を下へ",
+      "remove": "はずす",
+      "removeA11y": "{{label}}を⭐️からはずす"
+    },
+    "auto": {
+      "title": "自動で入るもの",
+      "hint": "よく記録しているものを、残りの枠に並べます。",
+      "empty": "まだありません",
+      "hide": "表示しない",
+      "hideA11y": "{{label}}を⭐️に表示しない"
+    },
+    "hidden": {
+      "title": "表示しないもの {{count}}件",
+      "restore": "戻す",
+      "restoreA11y": "{{label}}を⭐️に戻す"
     }
   },
   "stats": {

@@ -149,6 +149,7 @@ export function IdentityLogSheet() {
     logs,
     settings,
     markRoughHintSeen,
+    setFrequentPinned,
   } = useAppState();
 
   const visible = identityLogSheet.visible;
@@ -277,6 +278,14 @@ export function IdentityLogSheet() {
   ]);
 
   const origin = originIdentityId ? getIdentity(originIdentityId) : undefined;
+
+  // ⭐️ トグル (PRD §6.5.3)。いま選んでいる Identity を ⭐️ タブのピン留めに入れる / 外す。
+  // ⭐️ タブ以外 (食材・料理タブ・検索) から開いたシートでも押せる。追加は末尾。
+  const isPinned = !!origin && (settings.frequentPins ?? []).includes(origin.id);
+  const handleTogglePin = useCallback(() => {
+    if (!origin) return;
+    setFrequentPinned(origin.id, !isPinned);
+  }, [origin, isPinned, setFrequentPinned]);
 
   const handleSelectIdentity = useCallback((identity: Identity) => {
     const attrKey = defaultAttributeKey(identity);
@@ -605,6 +614,16 @@ export function IdentityLogSheet() {
       }
       headerRight={
         <View style={{ flexDirection: 'row', gap: t.spacing['3'], alignItems: 'center' }}>
+          {origin && !editingLog ? (
+            <IconButton
+              icon={isPinned ? 'star' : 'starOutline'}
+              size="lg"
+              tone={isPinned ? 'action' : 'secondary'}
+              onPress={handleTogglePin}
+              accessibilityLabel={tr(isPinned ? 'identityLog.pin.removeA11y' : 'identityLog.pin.addA11y', { label: origin.label })}
+              testID="ils-pin"
+            />
+          ) : null}
           {editingLog ? (
             <IconButton
               icon="delete"

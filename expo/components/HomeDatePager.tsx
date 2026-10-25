@@ -224,7 +224,9 @@ export const HomeDatePager = memo(
 
   // QuickLog の自然高さ + peek 領域 = DayPage 下端で空けておくべきエリア
   const quickLogHeight = useMemo(() => computeQuickLogHeight(width, showWidgetNudge), [width, showWidgetNudge]);
-  const bottomReserve = PEEK_HEIGHT_PX + QUICKLOG_BOTTOM_GAP + quickLogHeight;
+  // ⭐️ のピン留めが枠を超えて伸びたぶん (QuickLogSection が測って伝える)
+  const [quickLogExtra, setQuickLogExtra] = useState(0);
+  const bottomReserve = PEEK_HEIGHT_PX + QUICKLOG_BOTTOM_GAP + quickLogHeight + quickLogExtra;
 
   // Notify parent and sync loggingDate so QuickLog writes to the viewed day.
   useEffect(() => {
@@ -316,7 +318,7 @@ export const HomeDatePager = memo(
           bottom = PEEK_HEIGHT_PX + 余白 で DayLogBottomSheet の peek (画面下端 120px)
           に隠れないようにする。日付スワイプとは独立して常に同じ位置に表示される。 */}
       <View style={styles.quickLogPin}>
-        <QuickLogSection />
+        <QuickLogSection onExtraHeightChange={setQuickLogExtra} />
       </View>
     </View>
   );

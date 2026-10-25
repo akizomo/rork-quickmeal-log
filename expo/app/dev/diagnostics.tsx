@@ -15,6 +15,7 @@ import { Alert, ScrollView, Share, Text, View } from 'react-native';
 import { Body, Button, Caption, Label, useTheme } from '@/design-system';
 import { useAppState } from '@/providers/app-state-provider';
 import { rankFrequentSelections } from '@/utils/quick-log-history';
+import { effectiveHiddenCount, effectivePinCount } from '@/utils/frequent-pins';
 import { sortedSearchMisses } from '@/utils/diagnostics';
 import type { QuickLogHistoryMap } from '@/types/quick-log';
 import { Section } from './_shared';
@@ -28,6 +29,12 @@ export default function DevDiagnostics() {
 
   const history = settings.quickLogHistory as QuickLogHistoryMap | undefined;
   const tabUsage = settings.tabUsageCounts ?? { ingredient: 0, dish: 0, frequent: 0 };
+
+  // ⭐️ のピン留め (frequent_tap_source、PRD §6.5.3 / §10.2.1)
+  const pinCount = effectivePinCount(settings.frequentPins);
+  const hiddenCount = effectiveHiddenCount(settings.frequentHidden);
+  const pinnedTaps = diagnostics?.frequentPinnedTapCount ?? 0;
+  const autoTaps = diagnostics?.frequentAutoTapCount ?? 0;
 
   const historyEntryCount = useMemo(() => {
     if (!history) return 0;
@@ -49,6 +56,12 @@ export default function DevDiagnostics() {
         historyEntryCount,
       },
       tabUsageCounts: tabUsage,
+      frequentTab: {
+        pinCount,
+        hiddenCount,
+        pinnedTapCount: pinnedTaps,
+        autoTapCount: autoTaps,
+      },
       currentDefaultTab: settings.currentDefaultTab ?? null,
       diagnostics: diagnostics ?? null,
       topRanked: topRanked.map((r) => ({
@@ -135,6 +148,18 @@ export default function DevDiagnostics() {
         <StatRow t={t} label="一皿料理" value={tabUsage.dish} />
         <StatRow t={t} label="⭐️ よく使う" value={tabUsage.frequent} />
         <StatRow t={t} label="現在のデフォルトタブ" value={settings.currentDefaultTab ?? '未決定'} />
+      </Section>
+
+      {/* ── ⭐️ のピン留め (frequent_tap_source) ───────────────────────── */}
+      <Section title="⭐️ ピン留めの使われ方" t={t}>
+        <Body size="sm" tone="secondary">
+          ⭐️ からの記録 (タップ・長押し) を、ピン留め由来と自動由来に分けて数える。自動由来がほとんど増えないなら、
+          自動の補充は使われていない (⭐️の降格・撤去の判断材料。PROBLEMS.md P-007 Story d)。ウィジェット経由は含まない。
+        </Body>
+        <StatRow t={t} label="ピン留め由来の記録" value={pinnedTaps} />
+        <StatRow t={t} label="自動由来の記録" value={autoTaps} />
+        <StatRow t={t} label="ピン留め件数 (いま)" value={pinCount} note="0 ならピン留めは未使用" />
+        <StatRow t={t} label="「表示しない」件数 (いま)" value={hiddenCount} />
       </Section>
 
       {/* ── ランキング品質の目視確認 ───────────────────────────────────── */}

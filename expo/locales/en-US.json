@@ -456,6 +456,10 @@
     "switchToCount": "Switch to count",
     "usualAmount": "Usual",
     "amountRefPrefix": "Reference",
+    "pin": {
+      "addA11y": "Add {{label}} to ⭐️",
+      "removeA11y": "Remove {{label}} from ⭐️"
+    },
     "roughHint": {
       "line1": "A 20–30 kcal gap is about one bite of rice.",
       "line2": "Keeping a rough log going matters far more.",
@@ -724,9 +728,36 @@
       "body": "No need to open the app",
       "add": "Add widget"
     },
+    "frequent": {
+      "edit": "Edit",
+      "editA11y": "Edit ⭐️"
+    },
     "a11y": {
       "search": "Search food",
       "addItem": "Add {{label}}. Long-press for details."
+    }
+  },
+  "frequentEdit": {
+    "title": "Edit ⭐️",
+    "pinned": {
+      "title": "Picked by you",
+      "empty": "Tap ⭐️ on a log sheet and it shows up here.",
+      "moveUpA11y": "Move {{label}} up",
+      "moveDownA11y": "Move {{label}} down",
+      "remove": "Remove",
+      "removeA11y": "Remove {{label}} from ⭐️"
+    },
+    "auto": {
+      "title": "Filled in automatically",
+      "hint": "What you log most fills the remaining space.",
+      "empty": "Nothing yet",
+      "hide": "Hide",
+      "hideA11y": "Hide {{label}} from ⭐️"
+    },
+    "hidden": {
+      "title": "Hidden · {{count}}",
+      "restore": "Restore",
+      "restoreA11y": "Restore {{label}} to ⭐️"
     }
   },
   "stats": {

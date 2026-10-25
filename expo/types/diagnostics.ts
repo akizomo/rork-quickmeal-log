@@ -39,4 +39,14 @@ export interface DiagnosticsData {
   directInputOpenCount: number;
   /** ウィジェット経由で記録が確定した件数。ウィジェットが実用されているかの判定用。 */
   widgetLogCount: number;
+  /**
+   * ⭐️ タブで、**ピン留めしたもの**から記録した回数 (タップ・長押し→記録の両方)。
+   * `tabUsageCounts.frequent` の内訳 (PRD §10.2.1 frequent_tap_source)。
+   */
+  frequentPinnedTapCount: number;
+  /**
+   * ⭐️ タブで、**自動で補充されたもの**から記録した回数。
+   * これがほとんど増えないなら、自動の補充は使われておらず、⭐️の降格・撤去の判断材料になる (PROBLEMS.md P-007 Story d)。
+   */
+  frequentAutoTapCount: number;
 }

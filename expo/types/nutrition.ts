@@ -240,6 +240,15 @@ export interface AppSettings {
    */
   currentDefaultTab?: 'ingredient' | 'dish' | 'frequent';
   /**
+   * ⭐️ タブのピン留め (PRD §6.5.3)。Identity ID の順序付き配列で、ユーザーが決めた順で先頭に固定する。
+   * 末尾に追加される。辞書に無い ID は表示時に黙って除く (配列自体は触らない)。
+   */
+  frequentPins?: string[];
+  /**
+   * ⭐️ タブで「表示しない」にした自動分の Identity ID。ピン留めしたものは入れない (ピン留めは「外す」)。
+   */
+  frequentHidden?: string[];
+  /**
    * Identity-first IA schema version applied to the persisted FoodLog list.
    * Bumped when a one-shot backfill of `identityId` runs at boot.
    *   undefined / 0 — never migrated yet

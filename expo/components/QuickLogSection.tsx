@@ -20,7 +20,8 @@ import { useAppState } from '@/providers/app-state-provider';
 import { useLocale } from '@/hooks/useLocale';
 import type { BucketDef, BucketKey } from '@/types/identity';
 import { buildRegistry } from '@/constants/identity';
-import { deriveDefaultTab, FREQUENT_TAB_MIN_LOGS, rankFrequentIdentities, type RankedIdentity } from '@/utils/quick-log-history';
+import { deriveDefaultTab, FREQUENT_TAB_MIN_LOGS } from '@/utils/quick-log-history';
+import { composeFrequentItems, shouldShowFrequentTab, type FrequentItem } from '@/utils/frequent-pins';
 import type { QuickLogTabKey } from '@/types/quick-log';
 import { widgetRequestPin } from '@/utils/widget-bridge';
 
@@ -237,73 +238,149 @@ const FREQUENT_TAB_OPTION = { key: 'frequent' as const, label: '⭐️' };
  */
 const FREQUENT_PILL_CANDIDATES = 20;
 
+const EMPTY_FREQUENT_LAYOUT = { pinned: [] as FrequentItem[], auto: [] as FrequentItem[], settingsKey: '' };
+
 /**
- * ⭐️ タブ: よく選ぶ Identity を名前だけのピルで並べる。
- * 大きさは全部同じで、並び順が順位 (位置を覚えて押せるように)。
- * タップ = いつもの量で記録 / 長押し = 量シート。
- * 高さは通常グリッドに揃え、収まりきらない行のピルは出さない
- * (タブ切り替えで下のコンテンツが跳ねず、空白も残さない)。
+ * ⭐️ タブ: ピン留め (ユーザーが決めた順) → 細い線 → 自動 (よく選ぶ順) を、名前だけのピルで並べる。
+ * 大きさは全部同じで、並び順が位置の目印 (位置を覚えて押せるように)。
+ * タップ = いつもの量で記録 / 長押し = 量シート。末尾の「編集」は編集シートを開く (PRD §6.5.3)。
+ *
+ * 高さは通常グリッドに揃える。**自動分だけ**、収まりきらない行のピルを出さない
+ * (タブ切り替えで下のコンテンツが跳ねず、空白も残さない)。**ピン留めは枠を超えても全部出し**、
+ * その分だけ縦に伸ばす (自分で選んだものを隠さない)。伸びた高さは onExtraHeightChange でホームへ伝える。
+ *
+ * 収まる数は実測で決める: 自動分を全部並べて測り、末尾の「編集」まで収まらなければ
+ * 自動分を減らして測り直す (測定中は見せない)。
  */
 const FrequentPills = memo(function FrequentPills({
-  items,
+  pinned,
+  auto,
   height,
+  onExtraHeightChange,
 }: {
-  items: RankedIdentity[];
+  pinned: FrequentItem[];
+  auto: FrequentItem[];
   height: number;
+  onExtraHeightChange?: (extra: number) => void;
 }) {
   const { quickLogIdentity, openIdentityLogSheet } = useAppState();
+  const router = useRouter();
   const t = useTheme();
-  // 各ピルの下端 (container 内の y + 高さ)。測り終えたら収まる数で切る。
-  // 折り返しは左から順に詰まるので、後ろを消しても前のピルの位置は動かない。
-  const bottomsRef = useRef<number[]>([]);
-  // items / height が変わったら測り直す。親が key で作り直すので、ここでは初期値だけ持つ。
-  const [visibleCount, setVisibleCount] = useState<number | null>(null);
+  const tr = useT();
+  // 測定の進行。親が key で作り直すので、ここでは初期値だけ持つ。
+  // autoCount: いま並べている自動分の数 / pass: 測り直しの回数 (子を作り直すための key)
+  const [autoCount, setAutoCount] = useState(auto.length);
+  const [pass, setPass] = useState(0);
+  const [settledBottom, setSettledBottom] = useState<number | null>(null);
+  // 各項目の下端 (container 内の y + 高さ)。項目番号 = ピン留め → 自動 → 編集
+  const bottomsRef = useRef<Record<number, number>>({});
 
-  const handlePillLayout = (index: number, e: LayoutChangeEvent) => {
-    if (visibleCount !== null) return;
+  const total = pinned.length + autoCount + 1; // +1 は「編集」
+  const editIndex = total - 1;
+  const shownAuto = auto.slice(0, autoCount);
+
+  const handleLayout = (index: number, e: LayoutChangeEvent) => {
+    if (settledBottom !== null) return;
     const { y, height: h } = e.nativeEvent.layout;
     bottomsRef.current[index] = y + h;
-    const measured = bottomsRef.current.filter((b) => b !== undefined).length;
-    if (measured < items.length) return;
-    const firstOverflow = bottomsRef.current.findIndex((b) => b > height);
-    setVisibleCount(firstOverflow === -1 ? items.length : firstOverflow);
+    const measured = Object.keys(bottomsRef.current).length;
+    if (measured < total) return;
+    const bottoms = bottomsRef.current;
+    if (bottoms[editIndex] <= height || autoCount === 0) {
+      // 収まった。自動分が 0 でも収まらないのはピン留めが枠を超えているとき (縦に伸ばす)
+      setSettledBottom(bottoms[editIndex]);
+      return;
+    }
+    // 自動分が単独で収まる数まで減らし、「編集」の分も残すため最低 1 つは減らして測り直す
+    let fit = 0;
+    while (fit < autoCount && bottoms[pinned.length + fit] <= height) fit += 1;
+    bottomsRef.current = {};
+    setAutoCount(Math.min(autoCount - 1, fit));
+    setPass((p) => p + 1);
   };
 
-  const shown = visibleCount === null ? items : items.slice(0, visibleCount);
+  const extra = settledBottom !== null ? Math.max(0, settledBottom - height) : 0;
+  useEffect(() => {
+    onExtraHeightChange?.(extra);
+    return () => onExtraHeightChange?.(0);
+  }, [extra, onExtraHeightChange]);
+
+  const measuring = settledBottom === null;
+  const showDivider = pinned.length > 0 && autoCount > 0;
+  const hiddenWhileMeasuring = measuring ? styles.pillMeasuring : null;
+
+  const renderPill = (item: FrequentItem, index: number, trailing?: React.ReactNode) => (
+    <View
+      key={item.identityId}
+      onLayout={(e) => handleLayout(index, e)}
+      // 測定中は見せない (はみ出す行が一瞬見えるのを防ぐ)
+      style={[styles.pillItem, hiddenWhileMeasuring]}
+      pointerEvents={measuring ? 'none' : 'auto'}
+    >
+      <Button
+        label={item.label}
+        variant="raised"
+        size="sm"
+        onPress={() => void quickLogIdentity(item.identityId, 'frequent', { frequentSource: item.source })}
+        onLongPress={() =>
+          openIdentityLogSheet(item.bucketKey as BucketKey, {
+            identityId: item.identityId,
+            sourceTab: 'frequent',
+            frequentSource: item.source,
+          })
+        }
+        delayLongPress={320}
+        testID={`frequent-pill-${item.identityId}`}
+      />
+      {trailing}
+    </View>
+  );
 
   return (
     <View
-      style={[styles.pillWrap, { gap: t.spacing['2'], height }]}
+      style={[styles.pillWrap, { gap: t.spacing['2'], height: height + extra }]}
       testID="frequent-pills"
     >
-      {shown.map((item, index) => (
+      <React.Fragment key={pass}>
+        {pinned.map((item, i) =>
+          renderPill(
+            item,
+            i,
+            // 細い線: ピン留めと自動のあいだ。最後のピン留めに付けて、行頭に線だけ取り残されないようにする
+            showDivider && i === pinned.length - 1 ? (
+              <View
+                style={[styles.divider, { backgroundColor: t.colors.border.default, marginLeft: t.spacing['2'] }]}
+                testID="frequent-divider"
+              />
+            ) : null,
+          ),
+        )}
+        {shownAuto.map((item, i) => renderPill(item, pinned.length + i))}
         <View
-          key={item.identityId}
-          onLayout={(e) => handlePillLayout(index, e)}
-          // 測定中は見せない (はみ出す行が一瞬見えるのを防ぐ)
-          style={visibleCount === null ? styles.pillMeasuring : null}
+          onLayout={(e) => handleLayout(editIndex, e)}
+          style={[styles.pillItem, hiddenWhileMeasuring]}
+          pointerEvents={measuring ? 'none' : 'auto'}
         >
           <Button
-            label={item.label}
-            variant="raised"
+            label={tr('quicklog.frequent.edit')}
+            variant="plain"
             size="sm"
-            onPress={() => void quickLogIdentity(item.identityId, 'frequent')}
-            onLongPress={() =>
-              openIdentityLogSheet(item.bucketKey as BucketKey, {
-                identityId: item.identityId,
-                sourceTab: 'frequent',
-              })
-            }
-            delayLongPress={320}
-            testID={`frequent-pill-${item.identityId}`}
+            onPress={() => router.push('/frequent-edit')}
+            accessibilityLabel={tr('quicklog.frequent.editA11y')}
+            testID="frequent-edit-open"
           />
         </View>
-      ))}
+      </React.Fragment>
     </View>
   );
 });
 
-export const QuickLogSection = memo(function QuickLogSection() {
+export const QuickLogSection = memo(function QuickLogSection({
+  onExtraHeightChange,
+}: {
+  /** ⭐️ のピン留めが枠を超えて縦に伸びたぶんの高さ (px)。ホームが下の余白に足す。 */
+  onExtraHeightChange?: (extra: number) => void;
+}) {
   const { selectedMode, setSelectedMode, settings, bumpDiagnostic } = useAppState();
   const tr = useT();
   const { foodRegion: locale, uiLanguage } = useLocale();
@@ -320,7 +397,8 @@ export const QuickLogSection = memo(function QuickLogSection() {
     if (!history) return 0;
     return Object.values(history).reduce((sum, arr) => sum + arr.length, 0);
   }, [history]);
-  const showFrequentTab = totalHistoryEntries >= FREQUENT_TAB_MIN_LOGS;
+  // 記録が一定数たまるか、ピン留めが1件でもあれば出す (PRD §6.5.3)。
+  const showFrequentTab = shouldShowFrequentTab(totalHistoryEntries, settings.frequentPins);
 
   const [selectedTab, setSelectedTab] = useState<QuickLogTabKey>(() =>
     deriveDefaultTab(history, settings.tabUsageCounts, settings.currentDefaultTab)
@@ -339,23 +417,42 @@ export const QuickLogSection = memo(function QuickLogSection() {
     return showFrequentTab ? [...base, FREQUENT_TAB_OPTION] : base;
   }, [showFrequentTab, tr]);
 
+  // ⭐️ タブに出ていなければ (ピン留めを外して 0 件になった等)、食材/一皿料理へ戻す
+  const activeTab: QuickLogTabKey = selectedTab === 'frequent' && !showFrequentTab ? selectedMode : selectedTab;
+
   // ⭐️ の並びはタブを開いたときに確定させ、表示中は固定する。
   // 記録のたびに並べ替えると、押したピルが指の下で動いてしまう。
-  // 空のときだけ history の更新を待って取り直す (起動直後の settings 読み込み待ち)。
-  const [frequentItems, setFrequentItems] = useState<RankedIdentity[]>([]);
+  // 取り直すのは ①空のとき (起動直後の settings 読み込み待ち) ②ピン留め・「表示しない」を変えたとき
+  // (編集シートから戻った直後に反映する)。記録 (history の更新) では取り直さない。
+  const frequentPins = settings.frequentPins;
+  const frequentHidden = settings.frequentHidden;
+  const [frequentLayout, setFrequentLayout] = useState<{
+    pinned: FrequentItem[];
+    auto: FrequentItem[];
+    settingsKey: string;
+  }>(EMPTY_FREQUENT_LAYOUT);
   useEffect(() => {
-    if (selectedTab !== 'frequent') {
-      setFrequentItems((prev) => (prev.length === 0 ? prev : []));
+    if (activeTab !== 'frequent') {
+      setFrequentLayout((prev) => (prev === EMPTY_FREQUENT_LAYOUT ? prev : EMPTY_FREQUENT_LAYOUT));
       return;
     }
-    setFrequentItems((prev) =>
-      prev.length > 0
-        ? prev
-        : rankFrequentIdentities(history, { nowISO: new Date().toISOString(), limit: FREQUENT_PILL_CANDIDATES }),
-    );
-  }, [selectedTab, history]);
+    const settingsKey = `${(frequentPins ?? []).join(',')}|${(frequentHidden ?? []).join(',')}`;
+    setFrequentLayout((prev) => {
+      const isEmpty = prev.pinned.length + prev.auto.length === 0;
+      if (!isEmpty && prev.settingsKey === settingsKey) return prev;
+      return {
+        ...composeFrequentItems(history, {
+          pins: frequentPins,
+          hidden: frequentHidden,
+          nowISO: new Date().toISOString(),
+          autoLimit: FREQUENT_PILL_CANDIDATES,
+        }),
+        settingsKey,
+      };
+    });
+  }, [activeTab, history, frequentPins, frequentHidden]);
 
-  const effectiveMode = selectedTab === 'frequent' ? selectedMode : selectedTab;
+  const effectiveMode = activeTab === 'frequent' ? selectedMode : activeTab;
   const categories = useMemo(
     () => buildRegistry(locale, uiLanguage).buckets.filter((b: BucketDef) => b.tab === effectiveMode),
     [locale, uiLanguage, effectiveMode],
@@ -378,7 +475,7 @@ export const QuickLogSection = memo(function QuickLogSection() {
       <View style={styles.segmentRow}>
         <SegmentedControl
           options={segmentOptions}
-          value={selectedTab}
+          value={activeTab}
           onChange={handleTabChange}
           height={QUICK_LOG_TOKENS.segmentHeight}
           borderRadius={QUICK_LOG_TOKENS.segmentRadius}
@@ -398,11 +495,13 @@ export const QuickLogSection = memo(function QuickLogSection() {
         />
       </View>
 
-      {selectedTab === 'frequent' ? (
+      {activeTab === 'frequent' ? (
         <FrequentPills
-          key={`${frequentItems.map((i) => i.identityId).join(',')}@${buttonHeight}`}
-          items={frequentItems}
+          key={`${frequentLayout.pinned.map((i) => i.identityId).join(',')}/${frequentLayout.auto.map((i) => i.identityId).join(',')}@${buttonHeight}`}
+          pinned={frequentLayout.pinned}
+          auto={frequentLayout.auto}
           height={buttonHeight * 3 + gridGap * 2}
+          onExtraHeightChange={onExtraHeightChange}
         />
       ) : (
         <View style={styles.grid}>
@@ -468,8 +567,16 @@ const styles = StyleSheet.create({
     alignContent: 'flex-start',
     // 影 (elevation.xs) が切れないよう overflow は既定のまま。はみ出しは visibleCount で落とす
   },
+  pillItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   pillMeasuring: {
     opacity: 0,
+  },
+  divider: {
+    width: StyleSheet.hairlineWidth * 2,
+    height: 20,
   },
   cell: {
     width: '100%',

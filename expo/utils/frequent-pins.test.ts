@@ -1,0 +1,281 @@
+/**
+ * Tests for frequent-pins.ts — ⭐️ タブの「ピン留め優先 + 自動で補充」(PRD §6.5.3)。
+ *
+ * 並び・重複除去・「表示しない」・存在しない ID のガード・出現条件・編集操作を確認する。
+ * Pure-logic layer, Node environment (no React Native APIs).
+ */
+
+import {
+  addHidden,
+  addPin,
+  castIdList,
+  composeFrequentItems,
+  effectiveHiddenCount,
+  effectivePinCount,
+  movePin,
+  removeHidden,
+  removePin,
+  resolveHiddenItems,
+  resolvePinnedItems,
+  setPinned,
+  shouldShowFrequentTab,
+} from './frequent-pins';
+import { FREQUENT_TAB_MIN_LOGS } from './quick-log-history';
+import type { QuickLogHistoryMap, QuickLogSelection } from '@/types/quick-log';
+
+const NOW = new Date().toISOString();
+
+function makeSel(categoryKey: string, subcategoryKey: string, daysAgo = 0): QuickLogSelection {
+  return {
+    categoryKey,
+    subcategoryKey,
+    amountValue: 100,
+    amountUnit: 'g',
+    amountLabel: '100g',
+    amountCandidateKey: 'default',
+    loggedAtISO: new Date(Date.now() - daysAgo * 86_400_000).toISOString(),
+  };
+}
+
+/** 頻度の高い順に udon (3回) > rice (2回) > natto (1回) > chicken_lean (1回・古い) */
+const HISTORY: QuickLogHistoryMap = {
+  japanese_noodles: [makeSel('japanese_noodles', 'udon', 0), makeSel('japanese_noodles', 'udon', 1), makeSel('japanese_noodles', 'udon', 2)],
+  staple: [makeSel('staple', 'rice', 0), makeSel('staple', 'rice', 1)],
+  dairy_soy: [makeSel('dairy_soy', 'natto', 0)],
+  lean_protein: [makeSel('lean_protein', 'chicken_lean', 10)],
+};
+
+const ids = (items: { identityId: string }[]) => items.map((i) => i.identityId);
+
+// ---------------------------------------------------------------------------
+// composeFrequentItems — 並び
+// ---------------------------------------------------------------------------
+
+describe('composeFrequentItems — 並び', () => {
+  it('ピン留めなし・非表示なしなら、従来どおり自動ランキングだけが並ぶ', () => {
+    const { pinned, auto } = composeFrequentItems(HISTORY, { nowISO: NOW, autoLimit: 20 });
+    expect(pinned).toEqual([]);
+    expect(ids(auto)).toEqual(['udon', 'rice', 'natto', 'chicken_lean']);
+    expect(auto.every((i) => i.source === 'auto')).toBe(true);
+  });
+
+  it('ピン留めはユーザーが決めた順で先頭に固定され、ランキングの順位は無関係', () => {
+    const { pinned } = composeFrequentItems(HISTORY, {
+      pins: ['chicken_lean', 'rice'],
+      nowISO: NOW,
+      autoLimit: 20,
+    });
+    expect(ids(pinned)).toEqual(['chicken_lean', 'rice']);
+    expect(pinned.every((i) => i.source === 'pinned')).toBe(true);
+  });
+
+  it('自動分からピン留め済みのものを除く (同じ Identity を二度出さない)', () => {
+    const { pinned, auto } = composeFrequentItems(HISTORY, {
+      pins: ['rice'],
+      nowISO: NOW,
+      autoLimit: 20,
+    });
+    expect(ids(pinned)).toEqual(['rice']);
+    expect(ids(auto)).toEqual(['udon', 'natto', 'chicken_lean']);
+    const all = [...ids(pinned), ...ids(auto)];
+    expect(new Set(all).size).toBe(all.length);
+  });
+
+  it('自動分から「表示しない」を除き、そのぶん下の候補が繰り上がる', () => {
+    const { auto } = composeFrequentItems(HISTORY, {
+      hidden: ['udon'],
+      nowISO: NOW,
+      autoLimit: 2,
+    });
+    expect(ids(auto)).toEqual(['rice', 'natto']);
+  });
+
+  it('履歴にまだ無い Identity もピン留めできる (回数の少ない新習慣を置ける)', () => {
+    const { pinned, auto } = composeFrequentItems(HISTORY, {
+      pins: ['tofu'],
+      nowISO: NOW,
+      autoLimit: 20,
+    });
+    expect(ids(pinned)).toEqual(['tofu']);
+    expect(ids(auto)).not.toContain('tofu');
+    expect(pinned[0].bucketKey).toBeTruthy();
+    expect(pinned[0].label).toBeTruthy();
+  });
+
+  it('履歴が空でもピン留めだけは出る', () => {
+    const { pinned, auto } = composeFrequentItems(undefined, {
+      pins: ['rice', 'natto'],
+      nowISO: NOW,
+      autoLimit: 20,
+    });
+    expect(ids(pinned)).toEqual(['rice', 'natto']);
+    expect(auto).toEqual([]);
+  });
+
+  it('ピン留めは autoLimit に関係なく全部出す (枠を超えても隠さない)', () => {
+    const { pinned, auto } = composeFrequentItems(HISTORY, {
+      pins: ['rice', 'natto', 'udon', 'chicken_lean'],
+      nowISO: NOW,
+      autoLimit: 2,
+    });
+    expect(pinned).toHaveLength(4);
+    expect(auto).toEqual([]);
+  });
+
+  it('autoLimit で自動分の候補数を打ち切る', () => {
+    const { auto } = composeFrequentItems(HISTORY, { nowISO: NOW, autoLimit: 2 });
+    expect(ids(auto)).toEqual(['udon', 'rice']);
+  });
+
+  it('ピン留めが「表示しない」にも入っていたら、ピン留めを優先して出す', () => {
+    const { pinned, auto } = composeFrequentItems(HISTORY, {
+      pins: ['rice'],
+      hidden: ['rice'],
+      nowISO: NOW,
+      autoLimit: 20,
+    });
+    expect(ids(pinned)).toEqual(['rice']);
+    expect(ids(auto)).not.toContain('rice');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 存在しない Identity のガード
+// ---------------------------------------------------------------------------
+
+describe('存在しない Identity ID のガード', () => {
+  it('辞書に無いピン留めは黙って除き、落ちない', () => {
+    const { pinned } = composeFrequentItems(HISTORY, {
+      pins: ['no_such_identity', 'rice', 'also_missing'],
+      nowISO: NOW,
+      autoLimit: 20,
+    });
+    expect(ids(pinned)).toEqual(['rice']);
+  });
+
+  it('辞書に無い ID だけでも空になるだけ', () => {
+    expect(resolvePinnedItems(['ghost'])).toEqual([]);
+    expect(resolveHiddenItems(['ghost'])).toEqual([]);
+    expect(effectivePinCount(['ghost'])).toBe(0);
+    expect(effectiveHiddenCount(['ghost'])).toBe(0);
+  });
+
+  it('辞書に無い ID を「表示しない」に持っていても自動分は崩れない', () => {
+    const { auto } = composeFrequentItems(HISTORY, {
+      hidden: ['ghost'],
+      nowISO: NOW,
+      autoLimit: 20,
+    });
+    expect(ids(auto)).toEqual(['udon', 'rice', 'natto', 'chicken_lean']);
+  });
+
+  it('実効件数は辞書にあるものだけを数える', () => {
+    expect(effectivePinCount(['rice', 'ghost', 'natto'])).toBe(2);
+    expect(effectiveHiddenCount(['udon', 'ghost'])).toBe(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// castIdList (保存値の読み込み)
+// ---------------------------------------------------------------------------
+
+describe('castIdList', () => {
+  it('配列以外は空配列', () => {
+    expect(castIdList(undefined)).toEqual([]);
+    expect(castIdList(null)).toEqual([]);
+    expect(castIdList('rice')).toEqual([]);
+    expect(castIdList({ 0: 'rice' })).toEqual([]);
+  });
+
+  it('文字列以外・空文字を捨て、重複は先頭を残す', () => {
+    expect(castIdList(['rice', 3, '', null, 'natto', 'rice'])).toEqual(['rice', 'natto']);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 編集操作
+// ---------------------------------------------------------------------------
+
+describe('addPin / removePin', () => {
+  it('追加は末尾。すでにあれば何もしない', () => {
+    expect(addPin(['rice'], 'natto')).toEqual(['rice', 'natto']);
+    expect(addPin(['rice', 'natto'], 'rice')).toEqual(['rice', 'natto']);
+    expect(addPin(undefined, 'rice')).toEqual(['rice']);
+  });
+
+  it('外す。無いものを外しても何も起きない', () => {
+    expect(removePin(['rice', 'natto'], 'rice')).toEqual(['natto']);
+    expect(removePin(['rice'], 'udon')).toEqual(['rice']);
+    expect(removePin(undefined, 'udon')).toEqual([]);
+  });
+});
+
+describe('movePin', () => {
+  const base = ['rice', 'natto', 'udon'];
+
+  it('1つ上 / 下へ動かす', () => {
+    expect(movePin(base, 'natto', 'up')).toEqual(['natto', 'rice', 'udon']);
+    expect(movePin(base, 'natto', 'down')).toEqual(['rice', 'udon', 'natto']);
+  });
+
+  it('先頭を上へ・末尾を下へは動かない', () => {
+    expect(movePin(base, 'rice', 'up')).toEqual(base);
+    expect(movePin(base, 'udon', 'down')).toEqual(base);
+  });
+
+  it('ピン留めに無い ID は動かない', () => {
+    expect(movePin(base, 'ghost', 'up')).toEqual(base);
+  });
+
+  it('元の配列を書き換えない', () => {
+    const copy = [...base];
+    movePin(copy, 'natto', 'up');
+    expect(copy).toEqual(base);
+  });
+});
+
+describe('addHidden / removeHidden', () => {
+  it('「表示しない」に追加 / 戻す', () => {
+    expect(addHidden(['udon'], 'rice')).toEqual(['udon', 'rice']);
+    expect(addHidden(['udon'], 'udon')).toEqual(['udon']);
+    expect(removeHidden(['udon', 'rice'], 'udon')).toEqual(['rice']);
+  });
+});
+
+describe('setPinned', () => {
+  it('ピン留めすると末尾に付き、「表示しない」に入っていれば解く', () => {
+    const next = setPinned({ pins: ['rice'], hidden: ['udon', 'natto'] }, 'udon', true);
+    expect(next.pins).toEqual(['rice', 'udon']);
+    expect(next.hidden).toEqual(['natto']);
+  });
+
+  it('外しても「表示しない」にはならない (自動分に戻るだけ)', () => {
+    const next = setPinned({ pins: ['rice', 'udon'], hidden: [] }, 'rice', false);
+    expect(next.pins).toEqual(['udon']);
+    expect(next.hidden).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 出現条件
+// ---------------------------------------------------------------------------
+
+describe('shouldShowFrequentTab', () => {
+  it('記録が閾値未満でピン留めなしなら出さない', () => {
+    expect(shouldShowFrequentTab(FREQUENT_TAB_MIN_LOGS - 1, [])).toBe(false);
+    expect(shouldShowFrequentTab(0, undefined)).toBe(false);
+  });
+
+  it('記録が閾値に達していれば、ピン留めなしでも出す (従来どおり)', () => {
+    expect(shouldShowFrequentTab(FREQUENT_TAB_MIN_LOGS, [])).toBe(true);
+  });
+
+  it('記録が5件未満でも、ピン留めが1件あれば出す', () => {
+    expect(shouldShowFrequentTab(0, ['rice'])).toBe(true);
+    expect(shouldShowFrequentTab(FREQUENT_TAB_MIN_LOGS - 1, ['rice'])).toBe(true);
+  });
+
+  it('辞書に無い ID だけのピン留めでは出さない', () => {
+    expect(shouldShowFrequentTab(0, ['ghost'])).toBe(false);
+  });
+});
