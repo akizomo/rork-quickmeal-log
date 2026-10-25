@@ -942,9 +942,11 @@ function FooterPreview({
     </View>
   );
   if (!pin) return preview;
-  // ⭐️ は「このサマリーの Identity」に付く。押せると分かるよう、枠つきの丸ボタン (入れたら塗り + 色) で左に置く
+  // ⭐️ は「プレビューしたものを、⭐️ に入れるか、記録に追加するか」の流れで、保存ボタンのすぐ左に置く。
+  // 押せると分かるよう、枠つきの丸ボタン (入れたら塗り + 色)
   return (
-    <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: t.spacing['3'] }}>
+    <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: t.spacing['2'] }}>
+      {preview}
       <IconButton
         icon={pin.pinned ? 'star' : 'starOutline'}
         size="lg"
@@ -954,7 +956,6 @@ function FooterPreview({
         accessibilityLabel={tr(pin.pinned ? 'identityLog.pin.removeA11y' : 'identityLog.pin.addA11y', { label: pin.label })}
         testID="ils-pin"
       />
-      {preview}
     </View>
   );
 }
