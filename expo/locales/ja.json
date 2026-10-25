@@ -467,6 +467,12 @@
         "addedFirst": {
           "title": "⭐️に入れました",
           "message": "ホームに⭐️タブが現れます。"
+        },
+        "shortAdded": {
+          "message": "⭐️に入れました"
+        },
+        "shortRemoved": {
+          "message": "⭐️からはずしました"
         }
       }
     },

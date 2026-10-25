@@ -284,9 +284,9 @@ export function IdentityLogSheet() {
   // ⭐️ トグル (PRD §6.5.3)。いま選んでいる Identity を ⭐️ タブのピン留めに入れる / 外す。
   // ⭐️ タブ以外 (食材・料理タブ・検索) から開いたシートでも押せる。追加は末尾。
   const isPinned = !!origin && (settings.frequentPins ?? []).includes(origin.id);
-  // 初めて ⭐️ に入れたときだけ、何が起きたかを吹き出しで伝える (ネイティブのシートの上にはアプリ全体のトーストが出ない)。
-  // 押すたびに出るとうるさいので、生涯1回。以降は星の塗りの変化だけで伝える
-  const [pinNotice, setPinNotice] = useState<'added' | 'addedFirst' | null>(null);
+  // ⭐️ を押した結果を、シート内の吹き出しで伝える (ネイティブのシートの上にはアプリ全体のトーストが出ない)。
+  // 初めて入れたときだけ説明つき (生涯1回)、以降は結果だけの短い一言を1.6秒
+  const [pinNotice, setPinNotice] = useState<'added' | 'addedFirst' | 'shortAdded' | 'shortRemoved' | null>(null);
   const pinNoticeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(
     () => () => {
@@ -298,16 +298,19 @@ export function IdentityLogSheet() {
     if (!origin) return;
     const adding = !isPinned;
     if (adding && !settings.pinNoticeSeenAtISO) {
-      // ⭐️ タブがまだ出ていない人は、タブが現れることも伝える
+      // 初回: 何が起きるかを説明する。⭐️ タブがまだ出ていない人は、タブが現れることも伝える
       const historyEntries = Object.values((settings.quickLogHistory ?? {}) as Record<string, unknown[]>).reduce(
         (sum, arr) => sum + arr.length,
         0,
       );
       const tabWasHidden = !shouldShowFrequentTab(historyEntries, settings.frequentPins);
       setPinNotice(tabWasHidden ? 'addedFirst' : 'added');
-      if (pinNoticeTimerRef.current) clearTimeout(pinNoticeTimerRef.current);
-      pinNoticeTimerRef.current = setTimeout(() => setPinNotice(null), 3200);
+    } else {
+      // 2回目以降: 説明は付けず、結果だけを短く (何も出ないと押せたか気になる)
+      setPinNotice(adding ? 'shortAdded' : 'shortRemoved');
     }
+    if (pinNoticeTimerRef.current) clearTimeout(pinNoticeTimerRef.current);
+    pinNoticeTimerRef.current = setTimeout(() => setPinNotice(null), adding && !settings.pinNoticeSeenAtISO ? 3200 : 1600);
     setFrequentPinned(origin.id, adding);
   }, [origin, isPinned, setFrequentPinned, settings.quickLogHistory, settings.frequentPins, settings.pinNoticeSeenAtISO]);
 
@@ -645,7 +648,7 @@ export function IdentityLogSheet() {
         <>
         <Callout
           visible={!!pinNotice}
-          title={pinNotice ? tr(`identityLog.pin.notice.${pinNotice}.title`) : ''}
+          title={pinNotice === 'added' || pinNotice === 'addedFirst' ? tr(`identityLog.pin.notice.${pinNotice}.title`) : undefined}
           message={pinNotice ? tr(`identityLog.pin.notice.${pinNotice}.message`) : ' '}
           arrowAlign="center"
           testID="ils-pin-notice"

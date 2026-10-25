@@ -467,6 +467,12 @@
         "addedFirst": {
           "title": "Added to ⭐️",
           "message": "A ⭐️ tab now appears on Home."
+        },
+        "shortAdded": {
+          "message": "Added to ⭐️"
+        },
+        "shortRemoved": {
+          "message": "Removed from ⭐️"
         }
       }
     },
