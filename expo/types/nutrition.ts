@@ -249,6 +249,11 @@ export interface AppSettings {
    */
   frequentHidden?: string[];
   /**
+   * ⭐️ をシートで初めて押したとき、結果を伝える吹き出しを出した時刻。`null` の間は最初の1回だけ出す。
+   * 押すたびに出るとうるさいので、生涯1回 (roughHintSeenAtISO と同じ扱い)。
+   */
+  pinNoticeSeenAtISO?: string | null;
+  /**
    * Identity-first IA schema version applied to the persisted FoodLog list.
    * Bumped when a one-shot backfill of `identityId` runs at boot.
    *   undefined / 0 — never migrated yet

@@ -467,10 +467,6 @@
         "addedFirst": {
           "title": "Added to ⭐️",
           "message": "A ⭐️ tab now appears on Home."
-        },
-        "removed": {
-          "title": "Removed from ⭐️",
-          "message": "If you log it often, it can still appear automatically."
         }
       }
     },

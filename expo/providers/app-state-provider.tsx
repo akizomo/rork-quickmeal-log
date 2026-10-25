@@ -167,6 +167,7 @@ function migrateSettings(raw: Partial<AppSettings> | undefined): AppSettings {
     currentDefaultTab: raw?.currentDefaultTab,
     frequentPins: castIdList(raw?.frequentPins),
     frequentHidden: castIdList(raw?.frequentHidden),
+    pinNoticeSeenAtISO: raw?.pinNoticeSeenAtISO ?? null,
     diagnostics: castDiagnostics(raw?.diagnostics),
   };
 }
@@ -754,9 +755,14 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
         identityId,
         pinned,
       );
-      updateSettingsValues({ frequentPins: next.pins, frequentHidden: next.hidden });
+      // 結果を伝える吹き出しは最初の1回だけ (シート側が、押す前のこの値を見て出すか決める)。同じ保存にまとめて書く
+      updateSettingsValues({
+        frequentPins: next.pins,
+        frequentHidden: next.hidden,
+        ...(pinned && !settings.pinNoticeSeenAtISO ? { pinNoticeSeenAtISO: new Date().toISOString() } : null),
+      });
     },
-    [settings.frequentHidden, settings.frequentPins, updateSettingsValues]
+    [settings.frequentHidden, settings.frequentPins, settings.pinNoticeSeenAtISO, updateSettingsValues]
   );
 
   /** ピン留めの並びを1つ上 / 下へ動かす。 */

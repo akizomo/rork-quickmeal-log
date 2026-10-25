@@ -284,8 +284,9 @@ export function IdentityLogSheet() {
   // ⭐️ トグル (PRD §6.5.3)。いま選んでいる Identity を ⭐️ タブのピン留めに入れる / 外す。
   // ⭐️ タブ以外 (食材・料理タブ・検索) から開いたシートでも押せる。追加は末尾。
   const isPinned = !!origin && (settings.frequentPins ?? []).includes(origin.id);
-  // 押したあと何が起きたかを、フッターの吹き出しで一言伝える (ネイティブのシートの上には、アプリ全体のトーストが出ないため)
-  const [pinNotice, setPinNotice] = useState<'added' | 'addedFirst' | 'removed' | null>(null);
+  // 初めて ⭐️ に入れたときだけ、何が起きたかを吹き出しで伝える (ネイティブのシートの上にはアプリ全体のトーストが出ない)。
+  // 押すたびに出るとうるさいので、生涯1回。以降は星の塗りの変化だけで伝える
+  const [pinNotice, setPinNotice] = useState<'added' | 'addedFirst' | null>(null);
   const pinNoticeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(
     () => () => {
@@ -296,17 +297,19 @@ export function IdentityLogSheet() {
   const handleTogglePin = useCallback(() => {
     if (!origin) return;
     const adding = !isPinned;
-    // ⭐️ タブがまだ出ていない人の最初の1件は、タブが現れることも伝える
-    const historyEntries = Object.values((settings.quickLogHistory ?? {}) as Record<string, unknown[]>).reduce(
-      (sum, arr) => sum + arr.length,
-      0,
-    );
-    const tabWasHidden = !shouldShowFrequentTab(historyEntries, settings.frequentPins);
+    if (adding && !settings.pinNoticeSeenAtISO) {
+      // ⭐️ タブがまだ出ていない人は、タブが現れることも伝える
+      const historyEntries = Object.values((settings.quickLogHistory ?? {}) as Record<string, unknown[]>).reduce(
+        (sum, arr) => sum + arr.length,
+        0,
+      );
+      const tabWasHidden = !shouldShowFrequentTab(historyEntries, settings.frequentPins);
+      setPinNotice(tabWasHidden ? 'addedFirst' : 'added');
+      if (pinNoticeTimerRef.current) clearTimeout(pinNoticeTimerRef.current);
+      pinNoticeTimerRef.current = setTimeout(() => setPinNotice(null), 3200);
+    }
     setFrequentPinned(origin.id, adding);
-    setPinNotice(adding ? (tabWasHidden ? 'addedFirst' : 'added') : 'removed');
-    if (pinNoticeTimerRef.current) clearTimeout(pinNoticeTimerRef.current);
-    pinNoticeTimerRef.current = setTimeout(() => setPinNotice(null), 2600);
-  }, [origin, isPinned, setFrequentPinned, settings.quickLogHistory, settings.frequentPins]);
+  }, [origin, isPinned, setFrequentPinned, settings.quickLogHistory, settings.frequentPins, settings.pinNoticeSeenAtISO]);
 
   const handleSelectIdentity = useCallback((identity: Identity) => {
     const attrKey = defaultAttributeKey(identity);
