@@ -15,13 +15,12 @@ import {
   Callout,
   Caption,
   Chip,
-  Icon,
   IconButton,
   TallSheetScreen,
   useTheme,
 } from '@/design-system';
 import { openAmountEditor } from '@/components/AmountEditSheet';
-import { buildIdentityAmountEditConfig } from '@/utils/amount-edit';
+import { buildIdentityAmountEditConfig, decrementBy, incrementBy } from '@/utils/amount-edit';
 import { useAppState } from '@/providers/app-state-provider';
 import { useLocale } from '@/hooks/useLocale';
 import { useT } from '@/hooks/useT';
@@ -528,6 +527,17 @@ export function IdentityLogSheet() {
     });
   }, [amountConfig, displayAmountValue, isAltMode, altAmountSpec]);
 
+  // 量欄の −/＋。刻みは量入力シートのステッパーと同じ (amount-edit.ts の段階制)
+  const stepAmount = useCallback((direction: 'up' | 'down') => {
+    if (!amountConfig) return;
+    const next = direction === 'up'
+      ? incrementBy(displayAmountValue, amountConfig)
+      : decrementBy(displayAmountValue, amountConfig);
+    setAmountValue(isAltMode && altAmountSpec ? next * altAmountSpec.gramsPerUnit : next);
+  }, [amountConfig, displayAmountValue, isAltMode, altAmountSpec]);
+  const atAmountMin = !amountConfig || displayAmountValue <= amountConfig.min;
+  const atAmountMax = !amountConfig || displayAmountValue >= amountConfig.max;
+
   const canSave = !!resolved && resolved.totalMacro.kcal > 0;
 
   // 記録時の安心ヒント (PRD §6.5.2)。詳細シートで初めて kcal が出たときに生涯1回だけ。
@@ -727,28 +737,56 @@ export function IdentityLogSheet() {
                 ) : null}
               </ChipRow>
             ) : null}
-            <Pressable
-              onPress={openAmountSheet}
+            {/* [ 値 (タップでキーボード入力) ]  [−][＋] */}
+            <View
               style={[
                 ilsStyles.amountRow,
                 {
                   marginTop: hasChipRow ? t.spacing['2'] : 0,
+                  paddingRight: t.spacing['2'],
+                  gap: t.spacing['2'],
                   backgroundColor: t.colors.surface.raised,
                   borderRadius: t.radius.lg,
                 },
               ]}
-              accessibilityRole="button"
-              accessibilityLabel={tr('dishEntry.a11yAmountChange', { value: displayAmountValue, unit: amtUnitLabel })}
-              testID="ils-amount-row"
             >
-              <Text style={[ilsStyles.amountRowValue, { color: t.colors.content.primary, fontSize: t.typography.fontSize['2xl'] }]}>
-                {displayAmountValue}
-                <Text style={{ color: t.colors.content.secondary, fontSize: t.typography.fontSize.sm }}>
-                  {' '}{amtUnitLabel}
+              <Pressable
+                onPress={openAmountSheet}
+                style={[ilsStyles.amountRowValueArea, { paddingLeft: t.spacing['4'] }]}
+                accessibilityRole="button"
+                accessibilityLabel={tr('dishEntry.a11yAmountChange', { value: displayAmountValue, unit: amtUnitLabel })}
+                testID="ils-amount-row"
+              >
+                <Text style={[ilsStyles.amountRowValue, { color: t.colors.content.primary, fontSize: t.typography.fontSize['2xl'] }]}>
+                  {displayAmountValue}
+                  <Text style={{ color: t.colors.content.secondary, fontSize: t.typography.fontSize.sm }}>
+                    {' '}{amtUnitLabel}
+                  </Text>
                 </Text>
-              </Text>
-              <Icon name="edit" size={16} color={t.colors.content.tertiary} />
-            </Pressable>
+              </Pressable>
+              <View style={[ilsStyles.amountStepper, { gap: t.spacing['3'] }]}>
+                <IconButton
+                  icon="remove"
+                  variant="outlined"
+                  size="lg"
+                  hitSlop={4}
+                  onPress={() => stepAmount('down')}
+                  disabled={atAmountMin}
+                  accessibilityLabel={tr('amountEdit.decreaseA11y')}
+                  testID="ils-amount-dec"
+                />
+                <IconButton
+                  icon="add"
+                  variant="outlined"
+                  size="lg"
+                  hitSlop={4}
+                  onPress={() => stepAmount('up')}
+                  disabled={atAmountMax}
+                  accessibilityLabel={tr('amountEdit.increaseA11y')}
+                  testID="ils-amount-inc"
+                />
+              </View>
+            </View>
             {/* amount-spec: identity-level — referenceDescription は Identity 基準量の説明 (例: 1個=衣+主菜) なので、単位と数え方 (個/枚) が Identity 共通のときだけ出す */}
             {amountRefIdentity.referenceDescription && amt.unit === amountRefIdentity.amount.unit && (amt.unitLabel ?? '') === (amountRefIdentity.amount.unitLabel ?? '') ? (
               <Caption tone="tertiary" style={{ marginTop: t.spacing['2'] }} testID="ils-amount-ref">
@@ -812,10 +850,18 @@ const ilsStyles = StyleSheet.create({
   amountRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    minHeight: 48,
+    paddingVertical: 8,
+    minHeight: 58,
+  },
+  // 値の領域は行の残り幅いっぱい・高さいっぱいをタップ可能にする
+  amountRowValueArea: {
+    flex: 1,
+    alignSelf: 'stretch',
+    justifyContent: 'center',
+  },
+  amountStepper: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   amountRowValue: {
     fontWeight: '700',
