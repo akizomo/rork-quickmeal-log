@@ -15,7 +15,9 @@ import {
   Callout,
   Caption,
   Chip,
+  Icon,
   IconButton,
+  Label,
   TallSheetScreen,
   useTheme,
 } from '@/design-system';
@@ -601,7 +603,22 @@ export function IdentityLogSheet() {
         onPress: handleSave,
         disabled: !canSave,
       }}
-      footerLeft={<FooterPreview macro={resolved?.totalMacro ?? null} />}
+      footerLeft={
+        <FooterPreview
+          macro={resolved?.totalMacro ?? null}
+          // ⭐️ は「いま選んでいる Identity」に付く。名前と並べて、何を ⭐️ にするのかを見せる (記録の編集中は出さない)
+          pin={
+            origin && !editingLog
+              ? {
+                  // チップと同じ言語の名前を出す (origin.label は辞書の既定言語)
+                  label: identitiesInBucket.find((i) => i.id === origin.id)?.label ?? origin.label,
+                  pinned: isPinned,
+                  onToggle: handleTogglePin,
+                }
+              : undefined
+          }
+        />
+      }
       footerAccessory={
         <Callout
           visible={roughHintVisible}
@@ -614,16 +631,6 @@ export function IdentityLogSheet() {
       }
       headerRight={
         <View style={{ flexDirection: 'row', gap: t.spacing['3'], alignItems: 'center' }}>
-          {origin && !editingLog ? (
-            <IconButton
-              icon={isPinned ? 'star' : 'starOutline'}
-              size="lg"
-              tone={isPinned ? 'action' : 'secondary'}
-              onPress={handleTogglePin}
-              accessibilityLabel={tr(isPinned ? 'identityLog.pin.removeA11y' : 'identityLog.pin.addA11y', { label: origin.label })}
-              testID="ils-pin"
-            />
-          ) : null}
           {editingLog ? (
             <IconButton
               icon="delete"
@@ -894,11 +901,38 @@ const ilsStyles = StyleSheet.create({
 // appears empty.
 // ---------------------------------------------------------------------------
 
-function FooterPreview({ macro }: { macro: Macro | null }) {
+function FooterPreview({
+  macro,
+  pin,
+}: {
+  macro: Macro | null;
+  pin?: { label: string; pinned: boolean; onToggle: () => void };
+}) {
   const t = useTheme();
+  const tr = useT();
   const ready = !!macro && macro.kcal > 0;
   return (
     <View style={{ flex: 1, justifyContent: 'center' }}>
+      {pin ? (
+        <Pressable
+          onPress={pin.onToggle}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityState={{ selected: pin.pinned }}
+          accessibilityLabel={tr(pin.pinned ? 'identityLog.pin.removeA11y' : 'identityLog.pin.addA11y', { label: pin.label })}
+          style={{ flexDirection: 'row', alignItems: 'center', gap: t.spacing['1'], marginBottom: t.spacing['0.5'] }}
+          testID="ils-pin"
+        >
+          <Icon
+            name={pin.pinned ? 'star' : 'starOutline'}
+            size={18}
+            color={pin.pinned ? t.colors.action.text.default : t.colors.content.secondary}
+          />
+          <Label size="sm" tone="secondary" numberOfLines={1} style={{ flexShrink: 1 }}>
+            {pin.label}
+          </Label>
+        </Pressable>
+      ) : null}
       <Text
         style={{
           fontSize: t.typography.fontSize.lg,
