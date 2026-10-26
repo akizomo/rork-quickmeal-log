@@ -1,5 +1,8 @@
 /**
- * ⭐️ タブの編集シート (ネイティブ formSheet、PRD §6.5.3)。`/frequent-edit`
+ * ⭐️ タブの編集ページ (PRD §6.5.3)。`/frequent-edit`。通常の下層ページ (シートではない)。
+ *
+ * 2026-10-26: 当初は formSheet だったが、つまみのドラッグ (縦) がシートのスワイプ閉じと重なって
+ * 並べ替えにならなかったため、下層ページにした。戻るのは左端スワイプか左上の戻るボタン。
  *
  * 並べ替え・ピン留めを外す・自動分を「表示しない」・「表示しない」を戻す、をここにまとめる。
  * 普段のホームには操作を増やさず、整えたい人だけがここへ来る。
@@ -7,10 +10,10 @@
  * - 並べ替えは「上へ / 下へ」(ドラッグ用ライブラリを足さない。2026-10-25 の合意で可)
  * - 自動分は、ホームと同じランキングをシートを開いた時点で確定して並べる。「表示しない」にしても
  *   並びは動かず、そのぶん下の候補が繰り上がるだけ
- * - 中身がスクロールするので TallSheetScreen。ScrollView の作法は docs/SHEET_MIGRATION.md
+ * - ドラッグ中は ScrollView のスクロールを止める (縦ドラッグとスクロールが取り合わないように)
  */
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Easing, PanResponder, Pressable, StyleSheet, View } from 'react-native';
+import { Animated, Easing, PanResponder, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import {
   Body,
@@ -21,7 +24,6 @@ import {
   SettingsLinkRow,
   SettingsListCard,
   SettingsSectionLabel,
-  TallSheetScreen,
   useTheme,
 } from '@/design-system';
 import { duration, easing } from '@/design-system/tokens/primitives/motion';
@@ -232,7 +234,7 @@ function PinRow({
   );
 }
 
-export function FrequentEditSheet() {
+export function FrequentEditScreen() {
   const t = useTheme();
   const tr = useT();
   const { settings, setFrequentPinned, moveFrequentPin, moveFrequentPinTo, setFrequentHidden } = useAppState();
@@ -259,7 +261,13 @@ export function FrequentEditSheet() {
     .slice(0, FREQUENT_EDIT_AUTO_LIMIT);
 
   return (
-    <TallSheetScreen title={tr('frequentEdit.title')} scrollEnabled={!dragging} testID="frequent-edit">
+    <ScrollView
+      style={{ backgroundColor: t.colors.surface.default }}
+      contentInsetAdjustmentBehavior="automatic"
+      contentContainerStyle={{ padding: t.spacing['5'], paddingBottom: t.spacing['8'] }}
+      scrollEnabled={!dragging}
+      testID="frequent-edit"
+    >
       <View style={{ gap: t.spacing['6'] }}>
         <Body size="sm" tone="secondary">
           {tr('frequentEdit.intro')}
@@ -365,7 +373,7 @@ export function FrequentEditSheet() {
           </View>
         ) : null}
       </View>
-    </TallSheetScreen>
+    </ScrollView>
   );
 }
 

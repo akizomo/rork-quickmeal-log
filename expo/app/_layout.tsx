@@ -71,7 +71,6 @@ function RootLayoutNav() {
       <Stack.Screen name="amount-edit" options={formSheetOptions(t)} />
       {/* 背の高い記録シート (SDK 58 以上が前提。docs/SHEET_MIGRATION.md §7-6) */}
       <Stack.Screen name="log-identity" options={tallSheetOptions(t)} />
-      <Stack.Screen name="frequent-edit" options={tallSheetOptions(t)} />
       <Stack.Screen name="direct-input" options={formSheetOptions(t)} />
       <Stack.Screen name="exercise" options={tallSheetOptions(t)} />
       <Stack.Screen name="balance" options={formSheetOptions(t)} />
@@ -79,6 +78,8 @@ function RootLayoutNav() {
       <Stack.Screen name="search-miss-edit" options={formSheetOptions(t)} />
       <Stack.Screen name="search" options={{ title: tr('search.title') }} />
       <Stack.Screen name="my-foods" options={{ title: tr('nav.myFoods') }} />
+      {/* ⭐️の編集 (PRD §6.5.3): つまみの縦ドラッグがシートのスワイプ閉じと重なるので、シートではなく下層ページ */}
+      <Stack.Screen name="frequent-edit" options={{ title: tr('frequentEdit.title') }} />
       {/* My食品 (PRD §6.5.4): 倍率の記録シート / 編集画面。編集画面は記録シートの上に積む */}
       <Stack.Screen name="my-food-log" options={formSheetOptions(t)} />
       <Stack.Screen name="my-food-edit" options={formSheetOptions(t)} />
