@@ -379,6 +379,15 @@
     "countSummary": "{{count}}件 · {{kcal}} kcal"
   },
   "directInput": {
+    "myFood": {
+      "switchLabel": "My食品に保存",
+      "switchHint": "次から、名前で選んで記録できます。",
+      "alreadyExists": "「{{name}}」はすでにあります",
+      "conflictTitle": "同じ名前の My食品があります",
+      "conflictMessage": "「{{name}}」は、ほかの値ですでに保存されています。",
+      "overwrite": "今の値で上書き",
+      "rename": "別の名前にする"
+    },
     "title": "数値で入力",
     "editTitle": "記録を編集",
     "fixedNameNote": "入力した数値のまま保存します。名前は変わりません。",

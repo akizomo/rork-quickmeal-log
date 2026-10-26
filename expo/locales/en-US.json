@@ -379,6 +379,15 @@
     "countSummary": "{{count}} items · {{kcal}} kcal"
   },
   "directInput": {
+    "myFood": {
+      "switchLabel": "Save to My Foods",
+      "switchHint": "Pick it by name next time.",
+      "alreadyExists": "\"{{name}}\" is already in the database",
+      "conflictTitle": "A My Food with this name exists",
+      "conflictMessage": "\"{{name}}\" is already saved with different values.",
+      "overwrite": "Overwrite with these",
+      "rename": "Use another name"
+    },
     "title": "Enter numbers",
     "editTitle": "Edit entry",
     "fixedNameNote": "Saved with the numbers you enter. The name stays as is.",

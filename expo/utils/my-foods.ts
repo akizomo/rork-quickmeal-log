@@ -171,7 +171,7 @@ export function searchMyFoods(foods: readonly MyFood[] | undefined, query: strin
 
 /** カタカナをひらがなにそろえる (検索の一致判定専用。保存・同名判定には使わない)。 */
 function foldKana(s: string): string {
-  return s.replace(/[ァ-ヶ]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0x60));
+  return s.replace(/[ァ-ヶ]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0x60)); // i18n-ignore: カタカナ→ひらがなの正規化 (言語処理)
 }
 
 // ---------------------------------------------------------------------------
