@@ -290,6 +290,10 @@ export function IdentityLogSheet() {
   //   2回目以降に入れたとき: 結果だけの短いトースト (1.6秒。何も出ないと押せたか気になる)
   //   はずしたとき: 何も出さない (星の塗りが消えるだけ)
   const [pinNotice, setPinNotice] = useState<'added' | 'addedFirst' | 'toast' | null>(null);
+  // ⭐️ボタンの中心 x (フッター行の左端から)。吹き出し・トーストをボタンの真上に寄せるのに使う
+  const [pinCenterX, setPinCenterX] = useState<number | null>(null);
+  // フッター行の左余白 (spacing 5) と、吹き出し置き場の左余白 (spacing 4、TallSheetScreen) の差を足して、吹き出し置き場の座標にする
+  const pinAnchorX = pinCenterX === null ? undefined : pinCenterX + (t.spacing['5'] - t.spacing['4']);
   const pinNoticeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(
     () => () => {
@@ -645,6 +649,7 @@ export function IdentityLogSheet() {
                   label: identitiesInBucket.find((i) => i.id === origin.id)?.label ?? origin.label,
                   pinned: isPinned,
                   onToggle: handleTogglePin,
+                  onCenterX: setPinCenterX,
                 }
               : undefined
           }
@@ -657,9 +662,15 @@ export function IdentityLogSheet() {
           title={pinNotice === 'added' || pinNotice === 'addedFirst' ? tr(`identityLog.pin.notice.${pinNotice}.title`) : undefined}
           message={pinNotice === 'added' || pinNotice === 'addedFirst' ? tr(`identityLog.pin.notice.${pinNotice}.message`) : ' '}
           arrowAlign="center"
+          arrowOffset={pinAnchorX}
           testID="ils-pin-notice"
         />
-        <SheetToast visible={pinNotice === 'toast'} message={tr('identityLog.pin.notice.toast')} testID="ils-pin-toast" />
+        <SheetToast
+          visible={pinNotice === 'toast'}
+          message={tr('identityLog.pin.notice.toast')}
+          anchorX={pinAnchorX}
+          testID="ils-pin-toast"
+        />
         <Callout
           visible={roughHintVisible && !pinNotice}
           title={tr('identityLog.roughHint.line1')}
@@ -947,7 +958,7 @@ function FooterPreview({
   pin,
 }: {
   macro: Macro | null;
-  pin?: { label: string; pinned: boolean; onToggle: () => void };
+  pin?: { label: string; pinned: boolean; onToggle: () => void; onCenterX?: (x: number) => void };
 }) {
   const t = useTheme();
   const tr = useT();
@@ -989,15 +1000,17 @@ function FooterPreview({
   return (
     <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: t.spacing['2'] }}>
       {preview}
-      <IconButton
-        icon={pin.pinned ? 'star' : 'starOutline'}
-        size="lg"
-        variant={pin.pinned ? 'filled' : 'outlined'}
-        tone={pin.pinned ? 'action' : 'secondary'}
-        onPress={pin.onToggle}
-        accessibilityLabel={tr(pin.pinned ? 'identityLog.pin.removeA11y' : 'identityLog.pin.addA11y', { label: pin.label })}
-        testID="ils-pin"
-      />
+      <View onLayout={(e) => pin.onCenterX?.(e.nativeEvent.layout.x + e.nativeEvent.layout.width / 2)}>
+        <IconButton
+          icon={pin.pinned ? 'star' : 'starOutline'}
+          size="lg"
+          variant={pin.pinned ? 'filled' : 'outlined'}
+          tone={pin.pinned ? 'action' : 'secondary'}
+          onPress={pin.onToggle}
+          accessibilityLabel={tr(pin.pinned ? 'identityLog.pin.removeA11y' : 'identityLog.pin.addA11y', { label: pin.label })}
+          testID="ils-pin"
+        />
+      </View>
     </View>
   );
 }

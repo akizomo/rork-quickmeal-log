@@ -200,7 +200,7 @@ function CalloutSection({ t }: { t: Theme }) {
     <Section title="Callout" t={t}>
       <Caption>
         要素を指す吹き出し。面は surface.inverse、radius.md + elevation.md。尻尾は下向きで
-        arrowAlign (start/center/end) で位置を合わせる。操作は止めない。
+        arrowAlign (start/center/end) か arrowOffset (左端からの px) で位置を合わせる。操作は止めない。
       </Caption>
 
       <View style={{ gap: t.spacing['4'] }}>
@@ -214,6 +214,7 @@ function CalloutSection({ t }: { t: Theme }) {
         />
         <Callout visible message="title 無し・閉じるボタン無し (arrowAlign=center)" arrowAlign="center" />
         <Callout visible message="arrowAlign=end" arrowAlign="end" />
+        <Callout visible message="arrowOffset=120 (尻尾の中心を左端から 120px に)" arrowOffset={120} />
         <Button label={visible ? '1つ目を隠す' : '1つ目を出す'} variant="secondary" onPress={() => setVisible((v) => !v)} />
         <Button label="BottomSheet の footerAccessory で使う" variant="secondary" onPress={() => setSheetOpen(true)} />
       </View>

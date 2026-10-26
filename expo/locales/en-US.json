@@ -467,18 +467,18 @@
     "usualAmount": "Usual",
     "amountRefPrefix": "Reference",
     "pin": {
-      "addA11y": "Add {{label}} to ⭐️",
-      "removeA11y": "Remove {{label}} from ⭐️",
+      "addA11y": "Add {{label}} to favorites",
+      "removeA11y": "Remove {{label}} from favorites",
       "notice": {
         "added": {
-          "title": "Added to ⭐️",
+          "title": "Added to favorites",
           "message": "It shows up in the ⭐️ tab on Home."
         },
         "addedFirst": {
-          "title": "Added to ⭐️",
+          "title": "Added to favorites",
           "message": "A ⭐️ tab now appears on Home."
         },
-        "toast": "Added to ⭐️"
+        "toast": "Added to favorites"
       }
     },
     "roughHint": {
@@ -756,7 +756,7 @@
     },
     "frequent": {
       "edit": "Edit",
-      "editA11y": "Edit ⭐️",
+      "editA11y": "Edit favorites",
       "ingredientsHeading": "Often logged",
       "myFoodsHeading": "My Foods",
       "myFoodsAll": "All {{count}}",
@@ -768,8 +768,8 @@
     }
   },
   "frequentEdit": {
-    "title": "Edit ⭐️",
-    "intro": "Tidy what shows in ⭐️. Drag the handle to reorder, or take out what you don't need.",
+    "title": "Edit favorites",
+    "intro": "Tidy what shows in favorites. Drag the handle to reorder, or take out what you don't need.",
     "pinned": {
       "title": "Picked by you",
       "empty": "Tap ⭐️ on a log sheet and it shows up here.",
@@ -777,19 +777,19 @@
       "moveUpA11y": "Move {{label}} up",
       "moveDownA11y": "Move {{label}} down",
       "remove": "Remove",
-      "removeA11y": "Remove {{label}} from ⭐️"
+      "removeA11y": "Remove {{label}} from favorites"
     },
     "auto": {
       "title": "Filled in automatically",
       "hint": "What you log most fills the remaining space.",
       "empty": "Nothing yet",
       "hide": "Hide",
-      "hideA11y": "Hide {{label}} from ⭐️"
+      "hideA11y": "Hide {{label}} from favorites"
     },
     "hidden": {
       "title": "Hidden · {{count}}",
       "restore": "Restore",
-      "restoreA11y": "Restore {{label}} to ⭐️"
+      "restoreA11y": "Restore {{label}} to favorites"
     }
   },
   "myFoods": {
