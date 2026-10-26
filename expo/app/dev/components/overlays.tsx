@@ -21,6 +21,7 @@ import {
   useTheme,
   type Theme,
 } from '@/design-system';
+import { SheetToast } from '@/components/SheetToast';
 import { Section } from '../_shared';
 
 export default function OverlaysScreen() {
@@ -215,6 +216,13 @@ function CalloutSection({ t }: { t: Theme }) {
         <Callout visible message="title 無し・閉じるボタン無し (arrowAlign=center)" arrowAlign="center" />
         <Callout visible message="arrowAlign=end" arrowAlign="end" />
         <Callout visible message="arrowOffset=120 (尻尾の中心を左端から 120px に)" arrowOffset={120} />
+        <Callout
+          visible
+          title="鶏むね・ささみをお気に入りに追加しました"
+          titleEmphasis="鶏むね・ささみ"
+          message="ホームの⭐️タブに並びます。"
+        />
+        <SheetToast visible message="鶏むね・ささみをお気に入りに追加しました" emphasis="鶏むね・ささみ" />
         <Button label={visible ? '1つ目を隠す' : '1つ目を出す'} variant="secondary" onPress={() => setVisible((v) => !v)} />
         <Button label="BottomSheet の footerAccessory で使う" variant="secondary" onPress={() => setSheetOpen(true)} />
       </View>

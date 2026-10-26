@@ -665,11 +665,17 @@ export function IdentityLogSheet() {
           visible={pinNotice === 'added' || pinNotice === 'addedFirst'}
           title={pinNotice === 'added' || pinNotice === 'addedFirst' ? tr(`identityLog.pin.notice.${pinNotice}.title`, { label: pinNoticeLabel }) : undefined}
           message={pinNotice === 'added' || pinNotice === 'addedFirst' ? tr(`identityLog.pin.notice.${pinNotice}.message`) : ' '}
+          titleEmphasis={pinNoticeLabel}
           arrowAlign="center"
           arrowOffset={pinAnchorX}
           testID="ils-pin-notice"
         />
-        <SheetToast visible={pinNotice === 'toast'} message={tr('identityLog.pin.notice.toast', { label: pinNoticeLabel })} testID="ils-pin-toast" />
+        <SheetToast
+          visible={pinNotice === 'toast'}
+          message={tr('identityLog.pin.notice.toast', { label: pinNoticeLabel })}
+          emphasis={pinNoticeLabel}
+          testID="ils-pin-toast"
+        />
         <Callout
           visible={roughHintVisible && !pinNotice}
           title={tr('identityLog.roughHint.line1')}

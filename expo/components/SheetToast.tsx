@@ -8,12 +8,24 @@
 import React, { useEffect, useState } from 'react';
 import { Animated, Easing, StyleSheet, View } from 'react-native';
 
-import { Label, useTheme } from '@/design-system';
+import { Body, useTheme } from '@/design-system';
 import { duration, easing } from '@/design-system/tokens/primitives/motion';
 
-export function SheetToast({ visible, message, testID }: { visible: boolean; message: string; testID?: string }) {
+export function SheetToast({
+  visible,
+  message,
+  emphasis,
+  testID,
+}: {
+  visible: boolean;
+  message: string;
+  /** message の中で太字にする部分 (「◯◯をお気に入りに追加しました」の ◯◯ など、何についてのトーストかを示す主語)。 */
+  emphasis?: string;
+  testID?: string;
+}) {
   const t = useTheme();
   const [progress] = useState(() => new Animated.Value(0));
+  const at = emphasis ? message.indexOf(emphasis) : -1;
 
   useEffect(() => {
     Animated.timing(progress, {
@@ -41,7 +53,20 @@ export function SheetToast({ visible, message, testID }: { visible: boolean; mes
         accessibilityLiveRegion="polite"
         testID={testID}
       >
-        <Label tone="inverse">{message}</Label>
+        {/* 文章なので Body。主語だけ太字にして、何が起きたかを一目で読めるようにする */}
+        <Body tone="inverse">
+          {at === -1 ? (
+            message
+          ) : (
+            <>
+              {message.slice(0, at)}
+              <Body tone="inverse" weight="bold">
+                {emphasis}
+              </Body>
+              {message.slice(at + emphasis!.length)}
+            </>
+          )}
+        </Body>
       </Animated.View>
     </View>
   );

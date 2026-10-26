@@ -29,6 +29,8 @@ export type CalloutProps = {
   visible: boolean;
   /** 1行目。言いたいことそのもの (文章)。 */
   title?: string;
+  /** `title` の中で太字にする部分 (主語など)。渡すと、`title` 全体は標準の太さにして、この部分だけを太字にする。 */
+  titleEmphasis?: string;
   /** 2行目以降の補足。 */
   message: string;
   /** 尻尾の水平位置。指したい要素の位置に合わせる。default: 'start' */
@@ -48,6 +50,7 @@ const ARROW_SIZE = 10;
 export function Callout({
   visible,
   title,
+  titleEmphasis,
   message,
   arrowAlign = 'start',
   arrowOffset,
@@ -116,9 +119,19 @@ export function Callout({
       >
         <View style={styles.text}>
           {title ? (
-            <Body size="sm" weight="semibold" tone="inverse">
-              {title}
-            </Body>
+            titleEmphasis && title.includes(titleEmphasis) ? (
+              <Body size="sm" tone="inverse">
+                {title.slice(0, title.indexOf(titleEmphasis))}
+                <Body size="sm" weight="bold" tone="inverse">
+                  {titleEmphasis}
+                </Body>
+                {title.slice(title.indexOf(titleEmphasis) + titleEmphasis.length)}
+              </Body>
+            ) : (
+              <Body size="sm" weight="semibold" tone="inverse">
+                {title}
+              </Body>
+            )
           ) : null}
           <Body size="sm" tone={title ? 'inverseSecondary' : 'inverse'}>
             {message}
