@@ -248,9 +248,10 @@ const EMPTY_FREQUENT_LAYOUT = { pinned: [] as FrequentItem[], auto: [] as Freque
  * 大きさは全部同じで、並び順が位置の目印 (位置を覚えて押せるように)。
  * タップ = いつもの量で記録 / 長押し = 量シート。末尾の「編集」は編集シートを開く (PRD §6.5.3)。
  *
- * 高さは通常グリッドに揃える。**自動分だけ**、収まりきらない行のピルを出さない
- * (タブ切り替えで下のコンテンツが跳ねず、空白も残さない)。**ピン留めは枠を超えても全部出し**、
- * その分だけ縦に伸ばす (自分で選んだものを隠さない)。伸びた高さは onExtraHeightChange でホームへ伝える。
+ * 高さは通常グリッドに揃えて**固定**する (お気に入りが増えても、ホームの高さは変わらない)。
+ * **自動分だけ**、収まりきらない行のピルを出さない (空白も残さない)。**ピン留めは枠を超えても全部出し**
+ * (自分で選んだものを隠さない)、枠を超えたぶんは**縦スクロール**で見る。
+ * 横スワイプで頁を分けない: ホームの日付ページャー (横スワイプで日が変わる) と操作がぶつかるため。
  *
  * 収まる数は実測で決める: 自動分を全部並べて測り、末尾の「編集」まで収まらなければ
  * 自動分を減らして測り直す (測定中は見せない)。
@@ -259,12 +260,10 @@ const FrequentPills = memo(function FrequentPills({
   pinned,
   auto,
   height,
-  onExtraHeightChange,
 }: {
   pinned: FrequentItem[];
   auto: FrequentItem[];
   height: number;
-  onExtraHeightChange?: (extra: number) => void;
 }) {
   const { quickLogIdentity, openIdentityLogSheet } = useAppState();
   const router = useRouter();
@@ -290,7 +289,7 @@ const FrequentPills = memo(function FrequentPills({
     if (measured < total) return;
     const bottoms = bottomsRef.current;
     if (bottoms[editIndex] <= height || autoCount === 0) {
-      // 収まった。自動分が 0 でも収まらないのはピン留めが枠を超えているとき (縦に伸ばす)
+      // 収まった。自動分が 0 でも収まらないのはピン留めが枠を超えているとき (縦スクロールで見る)
       setSettledBottom(bottoms[editIndex]);
       return;
     }
@@ -301,12 +300,6 @@ const FrequentPills = memo(function FrequentPills({
     setAutoCount(Math.min(autoCount - 1, fit));
     setPass((p) => p + 1);
   };
-
-  const extra = settledBottom !== null ? Math.max(0, settledBottom - height) : 0;
-  useEffect(() => {
-    onExtraHeightChange?.(extra);
-    return () => onExtraHeightChange?.(0);
-  }, [extra, onExtraHeightChange]);
 
   const measuring = settledBottom === null;
   const hiddenWhileMeasuring = measuring ? styles.pillMeasuring : null;
@@ -338,8 +331,13 @@ const FrequentPills = memo(function FrequentPills({
   );
 
   return (
-    <View
-      style={[styles.pillWrap, { gap: t.spacing['2'], height: height + extra }]}
+    <ScrollView
+      style={{ height }}
+      contentContainerStyle={[styles.pillWrap, { gap: t.spacing['2'] }]}
+      // 枠を超えたぶんだけ縦に動く。収まっているときは動かさない (日付ページャーの横スワイプとも干渉しない)
+      scrollEnabled={settledBottom !== null && settledBottom > height}
+      showsVerticalScrollIndicator={settledBottom !== null && settledBottom > height}
+      nestedScrollEnabled
       testID="frequent-pills"
     >
       <React.Fragment key={pass}>
@@ -360,7 +358,7 @@ const FrequentPills = memo(function FrequentPills({
           />
         </View>
       </React.Fragment>
-    </View>
+    </ScrollView>
   );
 });
 
@@ -646,7 +644,6 @@ export const QuickLogSection = memo(function QuickLogSection({
           pinned={frequentLayout.pinned}
           auto={frequentLayout.auto}
           height={buttonHeight * 3 + gridGap * 2}
-          onExtraHeightChange={onExtraHeightChange}
         />
       ) : (
         <View style={styles.grid}>
