@@ -23,6 +23,7 @@ import {
 import { openAmountEditor } from '@/components/AmountEditSheet';
 import { buildIdentityAmountEditConfig, decrementBy, incrementBy } from '@/utils/amount-edit';
 import { useAppState } from '@/providers/app-state-provider';
+import { SheetToast } from '@/components/SheetToast';
 import { shouldShowFrequentTab } from '@/utils/frequent-pins';
 import { useLocale } from '@/hooks/useLocale';
 import { useT } from '@/hooks/useT';
@@ -284,9 +285,11 @@ export function IdentityLogSheet() {
   // ⭐️ トグル (PRD §6.5.3)。いま選んでいる Identity を ⭐️ タブのピン留めに入れる / 外す。
   // ⭐️ タブ以外 (食材・料理タブ・検索) から開いたシートでも押せる。追加は末尾。
   const isPinned = !!origin && (settings.frequentPins ?? []).includes(origin.id);
-  // ⭐️ を押した結果を、シート内の吹き出しで伝える (ネイティブのシートの上にはアプリ全体のトーストが出ない)。
-  // 初めて入れたときだけ説明つき (生涯1回)、以降は結果だけの短い一言を1.6秒
-  const [pinNotice, setPinNotice] = useState<'added' | 'addedFirst' | 'shortAdded' | 'shortRemoved' | null>(null);
+  // ⭐️ に入れた結果を、シート内で伝える (ネイティブのシートの上にはアプリ全体のトーストが出ない)。
+  //   初めて入れたとき: 説明つきの吹き出し (生涯1回。約3秒)
+  //   2回目以降に入れたとき: 結果だけの短いトースト (1.6秒。何も出ないと押せたか気になる)
+  //   はずしたとき: 何も出さない (星の塗りが消えるだけ)
+  const [pinNotice, setPinNotice] = useState<'added' | 'addedFirst' | 'toast' | null>(null);
   const pinNoticeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(
     () => () => {
@@ -297,20 +300,23 @@ export function IdentityLogSheet() {
   const handleTogglePin = useCallback(() => {
     if (!origin) return;
     const adding = !isPinned;
+    let notice: 'added' | 'addedFirst' | 'toast' | null = null;
     if (adding && !settings.pinNoticeSeenAtISO) {
-      // 初回: 何が起きるかを説明する。⭐️ タブがまだ出ていない人は、タブが現れることも伝える
+      // ⭐️ タブがまだ出ていない人は、タブが現れることも伝える
       const historyEntries = Object.values((settings.quickLogHistory ?? {}) as Record<string, unknown[]>).reduce(
         (sum, arr) => sum + arr.length,
         0,
       );
       const tabWasHidden = !shouldShowFrequentTab(historyEntries, settings.frequentPins);
-      setPinNotice(tabWasHidden ? 'addedFirst' : 'added');
-    } else {
-      // 2回目以降: 説明は付けず、結果だけを短く (何も出ないと押せたか気になる)
-      setPinNotice(adding ? 'shortAdded' : 'shortRemoved');
+      notice = tabWasHidden ? 'addedFirst' : 'added';
+    } else if (adding) {
+      notice = 'toast';
     }
+    setPinNotice(notice);
     if (pinNoticeTimerRef.current) clearTimeout(pinNoticeTimerRef.current);
-    pinNoticeTimerRef.current = setTimeout(() => setPinNotice(null), adding && !settings.pinNoticeSeenAtISO ? 3200 : 1600);
+    if (notice) {
+      pinNoticeTimerRef.current = setTimeout(() => setPinNotice(null), notice === 'toast' ? 1600 : 3200);
+    }
     setFrequentPinned(origin.id, adding);
   }, [origin, isPinned, setFrequentPinned, settings.quickLogHistory, settings.frequentPins, settings.pinNoticeSeenAtISO]);
 
@@ -647,12 +653,13 @@ export function IdentityLogSheet() {
       footerAccessory={
         <>
         <Callout
-          visible={!!pinNotice}
+          visible={pinNotice === 'added' || pinNotice === 'addedFirst'}
           title={pinNotice === 'added' || pinNotice === 'addedFirst' ? tr(`identityLog.pin.notice.${pinNotice}.title`) : undefined}
-          message={pinNotice ? tr(`identityLog.pin.notice.${pinNotice}.message`) : ' '}
+          message={pinNotice === 'added' || pinNotice === 'addedFirst' ? tr(`identityLog.pin.notice.${pinNotice}.message`) : ' '}
           arrowAlign="center"
           testID="ils-pin-notice"
         />
+        <SheetToast visible={pinNotice === 'toast'} message={tr('identityLog.pin.notice.toast')} testID="ils-pin-toast" />
         <Callout
           visible={roughHintVisible && !pinNotice}
           title={tr('identityLog.roughHint.line1')}
