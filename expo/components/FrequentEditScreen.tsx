@@ -6,6 +6,7 @@
  *
  * 並べ替え・ピン留めを外す・自動分を「表示しない」・「表示しない」を戻す、をここにまとめる。
  * 普段のホームには操作を増やさず、整えたい人だけがここへ来る。
+ * 「自分で選んだもの」の下に My食品ページ (倉庫) への入口を置く。ホームの⭐️には置かない (PRD v1.18 / P-007 Story h)。
  *
  * - 並べ替えは「上へ / 下へ」(ドラッグ用ライブラリを足さない。2026-10-25 の合意で可)
  * - 自動分は、ホームと同じランキングをシートを開いた時点で確定して並べる。「表示しない」にしても
@@ -14,6 +15,8 @@
  */
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, PanResponder, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+
+import { useRouter } from 'expo-router';
 
 import {
   Body,
@@ -86,29 +89,29 @@ function PinnedList({
   return (
     <SettingsListCard testID="frequent-edit-pinned">
       {items.map((item, index) => {
-        const dragging = drag?.id === item.identityId;
+        const dragging = drag?.id === item.key;
         return (
           <PinRow
-            key={item.identityId}
+            key={item.key}
             item={item}
             index={index}
             last={index === items.length - 1}
             dragging={dragging}
             dragY={dragY}
-            shiftTarget={shiftTargetOf(item.identityId, index)}
+            shiftTarget={shiftTargetOf(item.key, index)}
             anyDragging={drag !== null}
             onDragStart={() => {
               onDraggingChange(true);
-              setDrag({ id: item.identityId, from: index, to: index });
+              setDrag({ id: item.key, from: index, to: index });
             }}
             onDragMove={(dy) => {
               dragY.setValue(dy);
               const to = Math.max(0, Math.min(items.length - 1, Math.round(index + dy / PIN_ROW_HEIGHT)));
               setDrag((d) => (d && d.to !== to ? { ...d, to } : d));
             }}
-            onDragEnd={(dy, commit) => finish(item.identityId, index, dy, commit)}
-            onMoveStep={(dir) => onMoveStep(item.identityId, dir)}
-            onRemove={() => onRemove(item.identityId)}
+            onDragEnd={(dy, commit) => finish(item.key, index, dy, commit)}
+            onMoveStep={(dir) => onMoveStep(item.key, dir)}
+            onRemove={() => onRemove(item.key)}
             t={t}
             tr={tr}
           />
@@ -199,7 +202,7 @@ function PinRow({
         // 持ち上げている行は、ほかの行の上に浮かせる (影は覆いかぶさるものにだけ付ける)
         dragging ? { backgroundColor: t.colors.surface.raised, borderRadius: t.radius.md, ...t.elevation.md } : null,
       ]}
-      testID={`frequent-edit-pin-${item.identityId}`}
+      testID={`frequent-edit-pin-${item.key}`}
     >
       <View style={{ flex: 1 }}>
         <Body numberOfLines={1}>{item.label}</Body>
@@ -210,7 +213,7 @@ function PinRow({
         size="sm"
         onPress={onRemove}
         accessibilityLabel={tr('frequentEdit.pinned.removeA11y', { label: item.label })}
-        testID={`frequent-edit-unpin-${item.identityId}`}
+        testID={`frequent-edit-unpin-${item.key}`}
       />
       <View
         {...pan.panHandlers}
@@ -226,7 +229,7 @@ function PinRow({
           if (e.nativeEvent.actionName === 'decrement') onMoveStep('up');
           if (e.nativeEvent.actionName === 'increment') onMoveStep('down');
         }}
-        testID={`frequent-edit-handle-${item.identityId}`}
+        testID={`frequent-edit-handle-${item.key}`}
       >
         <Icon name="dragHandle" size={22} color={t.colors.content.tertiary} />
       </View>
@@ -237,6 +240,7 @@ function PinRow({
 export function FrequentEditScreen() {
   const t = useTheme();
   const tr = useT();
+  const router = useRouter();
   const { settings, setFrequentPinned, moveFrequentPin, moveFrequentPinTo, setFrequentHidden } = useAppState();
   const [hiddenOpen, setHiddenOpen] = useState(false);
   const [dragging, setDragging] = useState(false);
@@ -252,8 +256,9 @@ export function FrequentEditScreen() {
     [history],
   );
 
-  const pinnedItems = resolvePinnedItems(pins);
-  const pinnedIds = new Set(pinnedItems.map((i) => i.identityId));
+  const myFoods = settings.myFoods ?? [];
+  const pinnedItems = resolvePinnedItems(pins, myFoods);
+  const pinnedIds = new Set(pinnedItems.map((i) => i.key));
   const hiddenItems = resolveHiddenItems(hidden);
   const hiddenIds = new Set(hiddenItems.map((i) => i.identityId));
   const autoItems = rankedCandidates
@@ -289,6 +294,17 @@ export function FrequentEditScreen() {
               onDraggingChange={setDragging}
             />
           )}
+          {/* 倉庫から選んでお気に入りに入れる入口 (My食品の記録シートの ⭐️ で入れる)。0件なら出さない */}
+          {myFoods.length > 0 ? (
+            <SettingsListCard testID="frequent-edit-my-foods">
+              <SettingsLinkRow
+                label={tr('frequentEdit.myFoods', { count: myFoods.length })}
+                sub={tr('frequentEdit.myFoodsSub')}
+                onPress={() => router.push('/my-foods')}
+                testID="frequent-edit-my-foods-link"
+              />
+            </SettingsListCard>
+          ) : null}
         </View>
 
         {/* 自動で入るもの */}

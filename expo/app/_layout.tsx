@@ -81,8 +81,9 @@ function RootLayoutNav() {
       {/* ⭐️の編集 (PRD §6.5.3): つまみの縦ドラッグがシートのスワイプ閉じと重なるので、シートではなく下層ページ */}
       <Stack.Screen name="frequent-edit" options={{ title: tr('frequentEdit.title') }} />
       {/* My食品 (PRD §6.5.4): 倍率の記録シート / 編集画面。編集画面は記録シートの上に積む */}
-      <Stack.Screen name="my-food-log" options={formSheetOptions(t)} />
-      <Stack.Screen name="my-food-edit" options={formSheetOptions(t)} />
+      {/* 下部に食材の記録シートと同じボトムアクション (⭐️ + 記録) を置くため、背の高いシートの作り。中身は短いので低めに開く */}
+      <Stack.Screen name="my-food-log" options={tallSheetOptions(t, [0.6, 1.0])} />
+      <Stack.Screen name="my-food-edit" options={{ title: tr('myFoods.editTitle') }} />
       {__DEV__ ? <Stack.Screen name="dev" options={{ headerShown: false }} /> : null}
       {/* SHEET_MIGRATION.md Phase 0 スパイク (使い捨て)。テストビルドの設定画面からのみ導線あり */}
       <Stack.Screen name="spike/index" />

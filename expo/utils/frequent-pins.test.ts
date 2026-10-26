@@ -14,6 +14,9 @@ import {
   effectivePinCount,
   movePin,
   movePinTo,
+  myFoodIdFromPinKey,
+  myFoodPinKey,
+  pruneMyFoodPins,
   removeHidden,
   removePin,
   resolveHiddenItems,
@@ -22,6 +25,7 @@ import {
   shouldShowFrequentTab,
 } from './frequent-pins';
 import { FREQUENT_TAB_MIN_LOGS } from './quick-log-history';
+import type { MyFood } from '@/types/my-food';
 import type { QuickLogHistoryMap, QuickLogSelection } from '@/types/quick-log';
 
 const NOW = new Date().toISOString();
@@ -46,7 +50,12 @@ const HISTORY: QuickLogHistoryMap = {
   lean_protein: [makeSel('lean_protein', 'chicken_lean', 10)],
 };
 
-const ids = (items: { identityId: string }[]) => items.map((i) => i.identityId);
+/** ピン留めの値 (Identity は ID そのもの、My食品は `myfood:<id>`) */
+const ids = (items: { key: string }[]) => items.map((i) => i.key);
+
+function makeFood(id: string, name: string): MyFood {
+  return { id, name, kcal: 120, protein: null, fat: null, carbs: null, createdAtISO: NOW, lastUsedAtISO: NOW };
+}
 
 // ---------------------------------------------------------------------------
 // composeFrequentItems — 並び
@@ -99,7 +108,7 @@ describe('composeFrequentItems — 並び', () => {
     });
     expect(ids(pinned)).toEqual(['tofu']);
     expect(ids(auto)).not.toContain('tofu');
-    expect(pinned[0].bucketKey).toBeTruthy();
+    expect(pinned[0].kind === 'identity' && pinned[0].bucketKey).toBeTruthy();
     expect(pinned[0].label).toBeTruthy();
   });
 
@@ -305,9 +314,67 @@ describe('shouldShowFrequentTab', () => {
     expect(shouldShowFrequentTab(0, ['ghost'])).toBe(false);
   });
 
-  it('記録が5件未満・ピン留めなしでも、My食品が1件あれば出す', () => {
-    expect(shouldShowFrequentTab(0, [], 1)).toBe(true);
-    expect(shouldShowFrequentTab(FREQUENT_TAB_MIN_LOGS - 1, undefined, 3)).toBe(true);
-    expect(shouldShowFrequentTab(0, [], 0)).toBe(false);
+  it('My食品を保存しただけでは出さない (v1.18。お気に入りに入れたら出す)', () => {
+    const foods = [makeFood('a', 'いつものプロテイン')];
+    expect(shouldShowFrequentTab(0, [], foods)).toBe(false);
+    expect(shouldShowFrequentTab(0, [myFoodPinKey('a')], foods)).toBe(true);
+  });
+
+  it('削除した My食品だけのピン留めでは出さない', () => {
+    expect(shouldShowFrequentTab(0, [myFoodPinKey('gone')], [makeFood('a', 'x')])).toBe(false);
+    expect(shouldShowFrequentTab(0, [myFoodPinKey('a')], undefined)).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// My食品のピン留め (PRD v1.18)
+// ---------------------------------------------------------------------------
+
+describe('My食品のピン留め', () => {
+  const foods = [makeFood('a', 'いつものプロテイン'), makeFood('b', '社食の日替わり')];
+
+  it('ピン留めの値と My食品の id を行き来できる。Identity の ID は My食品と見なさない', () => {
+    expect(myFoodIdFromPinKey(myFoodPinKey('a'))).toBe('a');
+    expect(myFoodIdFromPinKey('rice')).toBeNull();
+  });
+
+  it('Identity と My食品を、保存された順のまま1本に並べる', () => {
+    const { pinned } = composeFrequentItems(HISTORY, {
+      pins: ['natto', myFoodPinKey('b'), 'rice', myFoodPinKey('a')],
+      myFoods: foods,
+      nowISO: NOW,
+      autoLimit: 20,
+    });
+    expect(ids(pinned)).toEqual(['natto', myFoodPinKey('b'), 'rice', myFoodPinKey('a')]);
+    const b = pinned[1];
+    expect(b.kind).toBe('myFood');
+    expect(b.kind === 'myFood' && b.myFoodId).toBe('b');
+    expect(b.label).toBe('社食の日替わり');
+    expect(pinned.every((i) => i.source === 'pinned')).toBe(true);
+  });
+
+  it('自動の補充には My食品を混ぜない', () => {
+    const { auto } = composeFrequentItems(HISTORY, { pins: [myFoodPinKey('a')], myFoods: foods, nowISO: NOW, autoLimit: 20 });
+    expect(auto.every((i) => i.kind === 'identity')).toBe(true);
+    expect(ids(auto)).toEqual(['udon', 'rice', 'natto', 'chicken_lean']);
+  });
+
+  it('削除した My食品のピン留めは黙って除く (myFoods を渡さなければ My食品はすべて除く)', () => {
+    expect(ids(resolvePinnedItems([myFoodPinKey('gone'), 'rice', myFoodPinKey('a')], foods))).toEqual(['rice', myFoodPinKey('a')]);
+    expect(ids(resolvePinnedItems([myFoodPinKey('a'), 'rice']))).toEqual(['rice']);
+    expect(effectivePinCount([myFoodPinKey('a'), 'rice'], foods)).toBe(2);
+  });
+
+  it('My食品を削除したら、その My食品のピン留めだけ外す (Identity は辞書に無くても残す)', () => {
+    const pins = ['rice', myFoodPinKey('a'), 'ghost', myFoodPinKey('b')];
+    expect(pruneMyFoodPins(pins, [foods[1]])).toEqual(['rice', 'ghost', myFoodPinKey('b')]);
+    expect(pruneMyFoodPins(pins, [])).toEqual(['rice', 'ghost']);
+  });
+
+  it('並べ替え・外す・追加は、Identity と同じ操作で効く', () => {
+    const pins = ['rice', myFoodPinKey('a')];
+    expect(movePin(pins, myFoodPinKey('a'), 'up')).toEqual([myFoodPinKey('a'), 'rice']);
+    expect(removePin(pins, myFoodPinKey('a'))).toEqual(['rice']);
+    expect(setPinned({ pins: ['rice'] }, myFoodPinKey('b'), true).pins).toEqual(['rice', myFoodPinKey('b')]);
   });
 });

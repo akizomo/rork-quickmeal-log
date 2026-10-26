@@ -210,6 +210,7 @@ describe('castDiagnostics', () => {
       frequentPinnedTapCount: 5,
       frequentAutoTapCount: 1,
       myFoodShelfTapCount: 3,
+      myFoodsPageOpenCount: 4,
       myFoodSavedCount: 6,
       myFoodSavedLayer1Count: 2,
     };

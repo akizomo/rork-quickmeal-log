@@ -33,7 +33,7 @@ export default function DevDiagnostics() {
   const tabUsage = settings.tabUsageCounts ?? { ingredient: 0, dish: 0, frequent: 0 };
 
   // ⭐️ のピン留め (frequent_tap_source、PRD §6.5.3 / §10.2.1)
-  const pinCount = effectivePinCount(settings.frequentPins);
+  const pinCount = effectivePinCount(settings.frequentPins, settings.myFoods);
   const hiddenCount = effectiveHiddenCount(settings.frequentHidden);
   // My食品 (PRD §6.5.4): 名前を、現在の検索で DB に着地するかで分ける (着地あり = 語彙の穴 / なし = DB の穴)
   const { foodRegion } = useLocale();
@@ -72,6 +72,7 @@ export default function DevDiagnostics() {
         savedCount: diagnostics?.myFoodSavedCount ?? 0,
         savedLayer1Count: diagnostics?.myFoodSavedLayer1Count ?? 0,
         shelfTapCount: diagnostics?.myFoodShelfTapCount ?? 0,
+        pageOpenCount: diagnostics?.myFoodsPageOpenCount ?? 0,
         namesNotLanded: myFoodSplit.notLanded.map((f) => f.name),
         namesLanded: myFoodSplit.landed.map((f) => f.name),
       },
@@ -184,7 +185,8 @@ export default function DevDiagnostics() {
         <StatRow t={t} label="My食品の件数 (いま)" value={settings.myFoods?.length ?? 0} />
         <StatRow t={t} label="保存した数" value={diagnostics?.myFoodSavedCount ?? 0} />
         <StatRow t={t} label="そのうち保存時に層1で着地" value={diagnostics?.myFoodSavedLayer1Count ?? 0} />
-        <StatRow t={t} label="⭐️下段の行から記録" value={diagnostics?.myFoodShelfTapCount ?? 0} />
+        <StatRow t={t} label="⭐️の My食品のピルから記録" value={diagnostics?.myFoodShelfTapCount ?? 0} />
+        <StatRow t={t} label="My食品ページを開いた" value={diagnostics?.myFoodsPageOpenCount ?? 0} />
         <Caption tone="secondary">DB に着地しない名前 (= DB の穴の手がかり)</Caption>
         {myFoodSplit.notLanded.length === 0 ? (
           <Body tone="secondary">なし</Body>

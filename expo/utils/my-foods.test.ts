@@ -13,7 +13,6 @@ import {
   normalizeMyFoodName,
   overwriteMyFood,
   pushSearchRecent,
-  recentMyFoods,
   saveMyFood,
   SEARCH_RECENT_LIMIT,
   searchMyFoods,
@@ -110,9 +109,15 @@ describe('overwriteMyFood / hasSameValues', () => {
     expect(next[0]).toMatchObject({ kcal: 999, lastUsedAtISO: T2 });
   });
 
-  it('単位名も値の一部として比べる', () => {
-    expect(hasSameValues(food('a', 'x', T0, { unitLabel: '本' }), input('x', 300, { unitLabel: '本' }))).toBe(true);
-    expect(hasSameValues(food('a', 'x'), input('x', 300, { unitLabel: '本' }))).toBe(false);
+  it('kcal・PFC がすべて同じなら同じ値。ひとつでも違えば違う値', () => {
+    expect(hasSameValues(food('a', 'x'), input('x', 300))).toBe(true);
+    expect(hasSameValues(food('a', 'x'), input('x', 301))).toBe(false);
+    expect(hasSameValues(food('a', 'x'), input('x', 300, { protein: null }))).toBe(false);
+  });
+
+  it('保存済みの単位名は読み込み時に捨てる (v1.19 で廃止)', () => {
+    const [loaded] = castMyFoods([{ id: 'a', name: 'x', kcal: 100, unitLabel: '本' }]);
+    expect(loaded).not.toHaveProperty('unitLabel');
   });
 });
 
@@ -147,10 +152,9 @@ describe('deleteMyFood / touchMyFood / 並び', () => {
     expect(deleteMyFood([food('a', 'x'), food('b', 'y')], 'a').map((f) => f.id)).toEqual(['b']);
   });
 
-  it('最近使った順 (新しい順) に並べ、棚には上位だけ出す', () => {
+  it('最近使った順 (新しい順) に並べる', () => {
     const foods = [food('a', 'a', T0), food('b', 'b', T2), food('c', 'c', T1)];
     expect(sortMyFoodsByRecent(foods).map((f) => f.id)).toEqual(['b', 'c', 'a']);
-    expect(recentMyFoods(foods, 2).map((f) => f.id)).toEqual(['b', 'c']);
   });
 
   it('使うと先頭に上がる', () => {
@@ -165,10 +169,10 @@ describe('deleteMyFood / touchMyFood / 並び', () => {
   });
 });
 
-describe('myFoodMacro / myFoodAmountLabel', () => {
+describe('myFoodMacro / myFoodAmountLabel (保存した値 = 100%)', () => {
   const f = food('a', 'バー', T0, { kcal: 200, protein: 10, fat: null, carbs: 25 });
 
-  it('1回分 × 倍率。PFC が null は 0', () => {
+  it('保存した値 × 倍率。PFC が null は 0', () => {
     expect(myFoodMacro(f, 1)).toEqual({ kcal: 200, protein: 10, fat: 0, carbs: 25 });
     expect(myFoodMacro(f, 1.5)).toEqual({ kcal: 300, protein: 15, fat: 0, carbs: 37.5 });
   });
@@ -178,10 +182,15 @@ describe('myFoodMacro / myFoodAmountLabel', () => {
     expect(myFoodMacro(f, NaN).kcal).toBe(200);
   });
 
-  it('量の表示: 単位名があれば「2本」、無ければ ×1 は空・それ以外は「× 2」', () => {
-    expect(myFoodAmountLabel(f, 1)).toBeUndefined();
-    expect(myFoodAmountLabel(f, 2)).toBe('× 2');
-    expect(myFoodAmountLabel({ ...f, unitLabel: '本' }, 2)).toBe('2本');
+  it('70% の量は 7割の値になる', () => {
+    expect(myFoodMacro(f, 0.7)).toEqual({ kcal: 140, protein: 7, fat: 0, carbs: 17.5 });
+  });
+
+  it('量の表示: 100% は空、それ以外は「70%」', () => {
+    expect(myFoodAmountLabel(1)).toBeUndefined();
+    expect(myFoodAmountLabel(0.7)).toBe('70%');
+    expect(myFoodAmountLabel(2)).toBe('200%');
+    expect(myFoodAmountLabel(NaN)).toBeUndefined();
   });
 });
 

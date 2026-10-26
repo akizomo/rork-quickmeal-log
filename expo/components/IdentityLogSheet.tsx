@@ -9,21 +9,21 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, View } from 'react-native';
 
 import {
   Callout,
   Caption,
   Chip,
   IconButton,
-  Label,
   TallSheetScreen,
   useTheme,
 } from '@/design-system';
 import { openAmountEditor } from '@/components/AmountEditSheet';
 import { buildIdentityAmountEditConfig, decrementBy, incrementBy } from '@/utils/amount-edit';
 import { useAppState } from '@/providers/app-state-provider';
-import { SheetToast } from '@/components/SheetToast';
+import { AmountStepperRow } from '@/components/AmountStepperRow';
+import { LogFooterPreview, usePinNotice } from '@/components/LogSheetFooter';
 import { shouldShowFrequentTab } from '@/utils/frequent-pins';
 import { useLocale } from '@/hooks/useLocale';
 import { useT } from '@/hooks/useT';
@@ -54,7 +54,6 @@ import {
   getEffectiveDefaultAddonIds,
   getHiddenAddonIds,
 } from '@/utils/identity-attribute';
-import { Macro } from '@/types/nutrition';
 import type { AppLocale } from '@/types/locale';
 import { UNIT_LABELS } from '@/utils/unit-labels';
 
@@ -285,48 +284,26 @@ export function IdentityLogSheet() {
   // ⭐️ トグル (PRD §6.5.3)。いま選んでいる Identity を ⭐️ タブのピン留めに入れる / 外す。
   // ⭐️ タブ以外 (食材・料理タブ・検索) から開いたシートでも押せる。追加は末尾。
   const isPinned = !!origin && (settings.frequentPins ?? []).includes(origin.id);
-  // ⭐️ に入れた結果を、シート内で伝える (ネイティブのシートの上にはアプリ全体のトーストが出ない)。
-  //   初めて入れたとき: 説明つきの吹き出し (生涯1回。約3秒)
-  //   2回目以降に入れたとき: 結果だけの短いトースト (1.6秒。何も出ないと押せたか気になる)
-  //   はずしたとき: 何も出さない (星の塗りが消えるだけ)
-  const [pinNotice, setPinNotice] = useState<'added' | 'addedFirst' | 'toast' | null>(null);
-  // 通知の主語 (何をお気に入りに追加したか)。通知が出ている間に別のチップへ切り替えても、押した時点の名前のままにする
-  const [pinNoticeLabel, setPinNoticeLabel] = useState('');
-  // ⭐️ボタンの中心 x (フッター行の左端から)。初回の吹き出しの尻尾をボタンに向けるのに使う (トーストは中央のまま)
-  const [pinCenterX, setPinCenterX] = useState<number | null>(null);
-  // フッター行の左余白 (spacing 5) と、吹き出し置き場の左余白 (spacing 4、TallSheetScreen) の差を足して、吹き出し置き場の座標にする
-  const pinAnchorX = pinCenterX === null ? undefined : pinCenterX + (t.spacing['5'] - t.spacing['4']);
-  const pinNoticeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(
-    () => () => {
-      if (pinNoticeTimerRef.current) clearTimeout(pinNoticeTimerRef.current);
-    },
-    [],
-  );
+  // ⭐️ に入れた結果を、シート内で伝える (components/LogSheetFooter.tsx。My食品の記録シートと共通)
+  const pinNoticeState = usePinNotice('ils');
+  const pinNotice = pinNoticeState.notice;
   const handleTogglePin = useCallback(() => {
     if (!origin) return;
     const adding = !isPinned;
-    let notice: 'added' | 'addedFirst' | 'toast' | null = null;
-    if (adding && !settings.pinNoticeSeenAtISO) {
+    const historyEntries = Object.values((settings.quickLogHistory ?? {}) as Record<string, unknown[]>).reduce(
+      (sum, arr) => sum + arr.length,
+      0,
+    );
+    pinNoticeState.announce({
+      adding,
+      // チップと同じ言語の名前 (origin.label は辞書の既定言語)
+      label: identitiesInBucket.find((i) => i.id === origin.id)?.label ?? origin.label,
+      firstEver: !settings.pinNoticeSeenAtISO,
       // ⭐️ タブがまだ出ていない人は、タブが現れることも伝える
-      const historyEntries = Object.values((settings.quickLogHistory ?? {}) as Record<string, unknown[]>).reduce(
-        (sum, arr) => sum + arr.length,
-        0,
-      );
-      const tabWasHidden = !shouldShowFrequentTab(historyEntries, settings.frequentPins);
-      notice = tabWasHidden ? 'addedFirst' : 'added';
-    } else if (adding) {
-      notice = 'toast';
-    }
-    setPinNotice(notice);
-    // チップと同じ言語の名前 (origin.label は辞書の既定言語)
-    setPinNoticeLabel(identitiesInBucket.find((i) => i.id === origin.id)?.label ?? origin.label);
-    if (pinNoticeTimerRef.current) clearTimeout(pinNoticeTimerRef.current);
-    if (notice) {
-      pinNoticeTimerRef.current = setTimeout(() => setPinNotice(null), notice === 'toast' ? 1600 : 3200);
-    }
+      tabWasHidden: !shouldShowFrequentTab(historyEntries, settings.frequentPins, settings.myFoods),
+    });
     setFrequentPinned(origin.id, adding);
-  }, [origin, isPinned, identitiesInBucket, setFrequentPinned, settings.quickLogHistory, settings.frequentPins, settings.pinNoticeSeenAtISO]);
+  }, [origin, isPinned, identitiesInBucket, setFrequentPinned, pinNoticeState, settings.quickLogHistory, settings.frequentPins, settings.myFoods, settings.pinNoticeSeenAtISO]);
 
   const handleSelectIdentity = useCallback((identity: Identity) => {
     const attrKey = defaultAttributeKey(identity);
@@ -643,7 +620,7 @@ export function IdentityLogSheet() {
         disabled: !canSave,
       }}
       footerLeft={
-        <FooterPreview
+        <LogFooterPreview
           macro={resolved?.totalMacro ?? null}
           // ⭐️ は「いま選んでいる Identity」に付く。名前と並べて、何を ⭐️ にするのかを見せる (記録の編集中は出さない)
           pin={
@@ -653,7 +630,7 @@ export function IdentityLogSheet() {
                   label: identitiesInBucket.find((i) => i.id === origin.id)?.label ?? origin.label,
                   pinned: isPinned,
                   onToggle: handleTogglePin,
-                  onCenterX: setPinCenterX,
+                  onCenterX: pinNoticeState.onCenterX,
                 }
               : undefined
           }
@@ -661,21 +638,7 @@ export function IdentityLogSheet() {
       }
       footerAccessory={
         <>
-        <Callout
-          visible={pinNotice === 'added' || pinNotice === 'addedFirst'}
-          title={pinNotice === 'added' || pinNotice === 'addedFirst' ? tr(`identityLog.pin.notice.${pinNotice}.title`, { label: pinNoticeLabel }) : undefined}
-          message={pinNotice === 'added' || pinNotice === 'addedFirst' ? tr(`identityLog.pin.notice.${pinNotice}.message`) : ' '}
-          titleEmphasis={pinNoticeLabel}
-          arrowAlign="center"
-          arrowOffset={pinAnchorX}
-          testID="ils-pin-notice"
-        />
-        <SheetToast
-          visible={pinNotice === 'toast'}
-          message={tr('identityLog.pin.notice.toast', { label: pinNoticeLabel })}
-          emphasis={pinNoticeLabel}
-          testID="ils-pin-toast"
-        />
+        {pinNoticeState.accessory}
         <Callout
           visible={roughHintVisible && !pinNotice}
           title={tr('identityLog.roughHint.line1')}
@@ -820,56 +783,18 @@ export function IdentityLogSheet() {
                 ) : null}
               </ChipRow>
             ) : null}
-            {/* [ 値 (タップでキーボード入力) ]  [−][＋] */}
-            <View
-              style={[
-                ilsStyles.amountRow,
-                {
-                  marginTop: hasChipRow ? t.spacing['2'] : 0,
-                  paddingRight: t.spacing['2'],
-                  gap: t.spacing['2'],
-                  backgroundColor: t.colors.surface.raised,
-                  borderRadius: t.radius.lg,
-                },
-              ]}
-            >
-              <Pressable
-                onPress={openAmountSheet}
-                style={[ilsStyles.amountRowValueArea, { paddingLeft: t.spacing['4'] }]}
-                accessibilityRole="button"
-                accessibilityLabel={tr('dishEntry.a11yAmountChange', { value: displayAmountValue, unit: amtUnitLabel })}
-                testID="ils-amount-row"
-              >
-                <Text style={[ilsStyles.amountRowValue, { color: t.colors.content.primary, fontSize: t.typography.fontSize['2xl'] }]}>
-                  {displayAmountValue}
-                  <Text style={{ color: t.colors.content.secondary, fontSize: t.typography.fontSize.sm }}>
-                    {' '}{amtUnitLabel}
-                  </Text>
-                </Text>
-              </Pressable>
-              <View style={[ilsStyles.amountStepper, { gap: t.spacing['3'] }]}>
-                <IconButton
-                  icon="remove"
-                  variant="outlined"
-                  size="lg"
-                  hitSlop={4}
-                  onPress={() => stepAmount('down')}
-                  disabled={atAmountMin}
-                  accessibilityLabel={tr('amountEdit.decreaseA11y')}
-                  testID="ils-amount-dec"
-                />
-                <IconButton
-                  icon="add"
-                  variant="outlined"
-                  size="lg"
-                  hitSlop={4}
-                  onPress={() => stepAmount('up')}
-                  disabled={atAmountMax}
-                  accessibilityLabel={tr('amountEdit.increaseA11y')}
-                  testID="ils-amount-inc"
-                />
-              </View>
-            </View>
+            {/* [ 値 (タップでキーボード入力) ]  [−][＋] (My食品の記録シートと共通。components/AmountStepperRow.tsx) */}
+            <AmountStepperRow
+              value={displayAmountValue}
+              unitLabel={amtUnitLabel}
+              onPressValue={openAmountSheet}
+              onStep={stepAmount}
+              atMin={atAmountMin}
+              atMax={atAmountMax}
+              valueA11yLabel={tr('dishEntry.a11yAmountChange', { value: displayAmountValue, unit: amtUnitLabel })}
+              testIDPrefix="ils-amount"
+              style={{ marginTop: hasChipRow ? t.spacing['2'] : 0 }}
+            />
             {/* amount-spec: identity-level — referenceDescription は Identity 基準量の説明 (例: 1個=衣+主菜) なので、単位と数え方 (個/枚) が Identity 共通のときだけ出す */}
             {amountRefIdentity.referenceDescription && amt.unit === amountRefIdentity.amount.unit && (amt.unitLabel ?? '') === (amountRefIdentity.amount.unitLabel ?? '') ? (
               <Caption tone="tertiary" style={{ marginTop: t.spacing['2'] }} testID="ils-amount-ref">
@@ -921,101 +846,5 @@ export function IdentityLogSheet() {
         </>
       ) : null}
     </TallSheetScreen>
-  );
-}
-
-
-// ---------------------------------------------------------------------------
-// Styles
-// ---------------------------------------------------------------------------
-
-const ilsStyles = StyleSheet.create({
-  amountRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-    minHeight: 58,
-  },
-  // 値の領域は行の残り幅いっぱい・高さいっぱいをタップ可能にする
-  amountRowValueArea: {
-    flex: 1,
-    alignSelf: 'stretch',
-    justifyContent: 'center',
-  },
-  amountStepper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  amountRowValue: {
-    fontWeight: '700',
-  },
-});
-
-// ---------------------------------------------------------------------------
-// FooterPreview — passed to BottomSheet's `footerLeft` slot. Renders
-// `kcal` + `P/F/C` next to the primary CTA, EC-cart style. Shows muted
-// placeholder text when no resolvable amount is set so the footer never
-// appears empty.
-// ---------------------------------------------------------------------------
-
-function FooterPreview({
-  macro,
-  pin,
-}: {
-  macro: Macro | null;
-  pin?: { label: string; pinned: boolean; onToggle: () => void; onCenterX?: (x: number) => void };
-}) {
-  const t = useTheme();
-  const tr = useT();
-  const ready = !!macro && macro.kcal > 0;
-  const preview = (
-    <View style={{ flex: 1, justifyContent: 'center' }}>
-      {pin ? (
-        <Label size="sm" tone="secondary" numberOfLines={1} testID="ils-preview-name">
-          {pin.label}
-        </Label>
-      ) : null}
-      <Text
-        style={{
-          fontSize: t.typography.fontSize.lg,
-          fontWeight: '700',
-          color: ready ? t.colors.content.primary : t.colors.content.tertiary,
-        }}
-        testID="ils-preview-kcal"
-      >
-        {ready ? `${Math.round(macro!.kcal)} kcal` : '— kcal'}
-      </Text>
-      <Text
-        style={{
-          fontSize: t.typography.fontSize.xs,
-          color: t.colors.content.secondary,
-          marginTop: 2,
-        }}
-        testID="ils-preview-pfc"
-      >
-        {ready
-          ? `P${Math.round(macro!.protein)} · F${Math.round(macro!.fat)} · C${Math.round(macro!.carbs)}`
-          : 'P— · F— · C—'}
-      </Text>
-    </View>
-  );
-  if (!pin) return preview;
-  // ⭐️ は「プレビューしたものを、⭐️ に入れるか、記録に追加するか」の流れで、保存ボタンのすぐ左に置く。
-  // 押せると分かるよう、枠つきの丸ボタン (入れたら塗り + 色)
-  return (
-    <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: t.spacing['2'] }}>
-      {preview}
-      <View onLayout={(e) => pin.onCenterX?.(e.nativeEvent.layout.x + e.nativeEvent.layout.width / 2)}>
-        <IconButton
-          icon={pin.pinned ? 'star' : 'starOutline'}
-          size="lg"
-          variant={pin.pinned ? 'filled' : 'outlined'}
-          tone={pin.pinned ? 'action' : 'secondary'}
-          onPress={pin.onToggle}
-          accessibilityLabel={tr(pin.pinned ? 'identityLog.pin.removeA11y' : 'identityLog.pin.addA11y', { label: pin.label })}
-          testID="ils-pin"
-        />
-      </View>
-    </View>
   );
 }

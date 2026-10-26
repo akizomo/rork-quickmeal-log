@@ -24,7 +24,7 @@ import { castHistoryMap, deriveDefaultTab, rankFrequentSelections, recordSelecti
 import type { MyFood } from '@/types/my-food';
 import { castMyFoods, castSearchRecents, myFoodAmountLabel, myFoodMacro, pushSearchRecent, touchMyFood } from '@/utils/my-foods';
 import { DIRECT_INPUT_CATEGORY_KEY } from '@/utils/log-edit-route';
-import { addHidden, castIdList, movePin, movePinTo, removeHidden, setPinned, type FrequentSource } from '@/utils/frequent-pins';
+import { addHidden, castIdList, movePin, movePinTo, pruneMyFoodPins, removeHidden, setPinned, type FrequentSource } from '@/utils/frequent-pins';
 import {
   bumpDiagnosticCounter,
   castDiagnostics,
@@ -766,12 +766,15 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
   );
 
   // ⭐️ タブのピン留め・非表示 (PRD §6.5.3)。純ロジックは utils/frequent-pins.ts。
-  /** Identity を ⭐️ にピン留めする / 外す。追加は末尾。ピン留めすると「表示しない」は解く。 */
+  /**
+   * ⭐️ にピン留めする / 外す。追加は末尾。ピン留めすると「表示しない」は解く。
+   * pinKey: Identity は ID、My食品は `myFoodPinKey(id)` (utils/frequent-pins.ts)
+   */
   const setFrequentPinned = useCallback(
-    (identityId: string, pinned: boolean) => {
+    (pinKey: string, pinned: boolean) => {
       const next = setPinned(
         { pins: settings.frequentPins, hidden: settings.frequentHidden },
-        identityId,
+        pinKey,
         pinned,
       );
       // 結果を伝える吹き出しは最初の1回だけ (シート側が、押す前のこの値を見て出すか決める)。同じ保存にまとめて書く
@@ -805,12 +808,12 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
   // 記録 (logs) と設定を同じ保存にまとめて書く (別々に書くと、古い値で上書きし合う)。
   // ---------------------------------------------------------------------------
 
-  /** My食品の一覧を差し替える (編集・削除・記録を伴わない保存)。 */
+  /** My食品の一覧を差し替える (編集・削除・記録を伴わない保存)。削除したものは、同じ保存で⭐️のお気に入りからも外す。 */
   const setMyFoods = useCallback(
     (next: MyFood[]) => {
-      updateSettingsValues({ myFoods: next });
+      updateSettingsValues({ myFoods: next, frequentPins: pruneMyFoodPins(settings.frequentPins, next) });
     },
-    [updateSettingsValues]
+    [settings.frequentPins, updateSettingsValues]
   );
 
   /**
@@ -838,8 +841,8 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
   );
 
   /**
-   * My食品を「1回分 × 倍率」で記録する。保存値は変えず、最近使った時刻を更新する。
-   * source: 'frequent' = ⭐️タブの下段 (棚) / 'search' = 検索ページ (「最近」に入れる) / 'list' = My食品ページ
+   * My食品を「保存した値 × 倍率 (= %/100)」で記録する。保存値は変えず、最近使った時刻を更新する。
+   * source: 'frequent' = ⭐️タブ (お気に入りのピル・その長押しの記録シート) / 'search' = 検索ページ (「最近」に入れる) / 'list' = My食品ページ
    */
   const recordMyFood = useCallback(
     async (foodId: string, multiplier: number, source: 'frequent' | 'search' | 'list') => {
@@ -857,7 +860,7 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
         mode: 'ingredient',
         categoryKey: DIRECT_INPUT_CATEGORY_KEY,
         categoryLabel: food.name,
-        amountLabel: myFoodAmountLabel(food, multiplier),
+        amountLabel: myFoodAmountLabel(multiplier),
         macro: myFoodMacro(food, multiplier),
       };
       const log = applyLoggingDate(baseLog);

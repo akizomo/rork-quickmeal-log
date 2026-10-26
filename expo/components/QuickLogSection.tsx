@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { useT } from '@/hooks/useT';
 
-import { Body, Button, Icon, IconButton, Label, Overline, useTheme } from '@/design-system';
+import { Body, Button, Icon, IconButton, Label, useTheme } from '@/design-system';
 import { duration } from '@/design-system/tokens/primitives/motion';
 import { radius } from '@/design-system/tokens/primitives/radius';
 import { SegmentedControl } from '@/design-system';
@@ -23,8 +23,6 @@ import type { BucketDef, BucketKey } from '@/types/identity';
 import { buildRegistry } from '@/constants/identity';
 import { deriveDefaultTab, FREQUENT_TAB_MIN_LOGS } from '@/utils/quick-log-history';
 import { composeFrequentItems, shouldShowFrequentTab, type FrequentItem } from '@/utils/frequent-pins';
-import type { MyFood } from '@/types/my-food';
-import { MY_FOOD_SHELF_LIMIT, recentMyFoods } from '@/utils/my-foods';
 import type { QuickLogTabKey } from '@/types/quick-log';
 import { widgetRequestPin } from '@/utils/widget-bridge';
 
@@ -241,12 +239,15 @@ const FREQUENT_TAB_OPTION = { key: 'frequent' as const, label: '⭐️' };
  */
 const FREQUENT_PILL_CANDIDATES = 20;
 
-const EMPTY_FREQUENT_LAYOUT = { pinned: [] as FrequentItem[], auto: [] as FrequentItem[], shelfIds: [] as string[], settingsKey: '' };
+const EMPTY_FREQUENT_LAYOUT = { pinned: [] as FrequentItem[], auto: [] as FrequentItem[], settingsKey: '' };
 
 /**
  * ⭐️ タブ: ピン留め (ユーザーが決めた順) → 自動 (よく選ぶ順) を、区切りなしで続けて名前だけのピルで並べる (ピン留めかどうかは編集シートで分かる)。
+ * ピン留めには Identity と My食品が混ざる (PRD v1.18。見た目は同じ。自分で名前を付けたものなので名前で分かる)。
+ * 見出しは付けない。2026-10-26 に「My食品が1件以上なら2段 (上段 = ピル1行の横スクロール / 下段 = My食品のリスト)」をやめた
+ * (文字だらけになり、9ボタンの高さにも収まらず、横スクロールが日付ページャーと重なったため。PROBLEMS.md P-007 Story g)。
  * 大きさは全部同じで、並び順が位置の目印 (位置を覚えて押せるように)。
- * タップ = いつもの量で記録 / 長押し = 量シート。末尾の「編集」は編集シートを開く (PRD §6.5.3)。
+ * タップ = いつもの量で記録 (My食品は1回分) / 長押し = 量シート (My食品は倍率の記録シート)。末尾の「編集」は編集ページを開く (PRD §6.5.3)。
  *
  * 高さは通常グリッドに揃えて**固定**する (お気に入りが増えても、ホームの高さは変わらない)。
  * **自動分だけ**、収まりきらない行のピルを出さない (空白も残さない)。**ピン留めは枠を超えても全部出し**
@@ -265,7 +266,7 @@ const FrequentPills = memo(function FrequentPills({
   auto: FrequentItem[];
   height: number;
 }) {
-  const { quickLogIdentity, openIdentityLogSheet } = useAppState();
+  const { quickLogIdentity, openIdentityLogSheet, recordMyFood } = useAppState();
   const router = useRouter();
   const t = useTheme();
   const tr = useT();
@@ -306,27 +307,43 @@ const FrequentPills = memo(function FrequentPills({
 
   const renderPill = (item: FrequentItem, index: number) => (
     <View
-      key={item.identityId}
+      key={item.key}
       onLayout={(e) => handleLayout(index, e)}
       // 測定中は見せない (はみ出す行が一瞬見えるのを防ぐ)
       style={[styles.pillItem, hiddenWhileMeasuring]}
       pointerEvents={measuring ? 'none' : 'auto'}
     >
-      <Button
-        label={item.label}
-        variant="raised"
-        size="sm"
-        onPress={() => void quickLogIdentity(item.identityId, 'frequent', { frequentSource: item.source })}
-        onLongPress={() =>
-          openIdentityLogSheet(item.bucketKey as BucketKey, {
-            identityId: item.identityId,
-            sourceTab: 'frequent',
-            frequentSource: item.source,
-          })
-        }
-        delayLongPress={320}
-        testID={`frequent-pill-${item.identityId}`}
-      />
+      {item.kind === 'myFood' ? (
+        // My食品: タップ = 1回分 ×1 で記録 / 長押し = 倍率の記録シート
+        <Button
+          label={item.label}
+          variant="raised"
+          size="sm"
+          // 長い名前は1行で切る (ピルが枠の幅を超えないように)
+          style={styles.pillButton}
+          labelStyle={styles.pillLabel}
+          onPress={() => void recordMyFood(item.myFoodId, 1, 'frequent')}
+          onLongPress={() => router.push({ pathname: '/my-food-log', params: { id: item.myFoodId, source: 'frequent' } })}
+          delayLongPress={320}
+          testID={`frequent-pill-myfood-${item.myFoodId}`}
+        />
+      ) : (
+        <Button
+          label={item.label}
+          variant="raised"
+          size="sm"
+          onPress={() => void quickLogIdentity(item.identityId, 'frequent', { frequentSource: item.source })}
+          onLongPress={() =>
+            openIdentityLogSheet(item.bucketKey as BucketKey, {
+              identityId: item.identityId,
+              sourceTab: 'frequent',
+              frequentSource: item.source,
+            })
+          }
+          delayLongPress={320}
+          testID={`frequent-pill-${item.identityId}`}
+        />
+      )}
     </View>
   );
 
@@ -362,163 +379,7 @@ const FrequentPills = memo(function FrequentPills({
   );
 });
 
-/** ⭐️のピル1つ。タップ = いつもの量で記録 / 長押し = 量シート。ピン留め由来か自動由来かを計測に引き継ぐ。 */
-function FrequentPillButton({ item }: { item: FrequentItem }) {
-  const { quickLogIdentity, openIdentityLogSheet } = useAppState();
-  return (
-    <Button
-      label={item.label}
-      variant="raised"
-      size="sm"
-      onPress={() => void quickLogIdentity(item.identityId, 'frequent', { frequentSource: item.source })}
-      onLongPress={() =>
-        openIdentityLogSheet(item.bucketKey as BucketKey, {
-          identityId: item.identityId,
-          sourceTab: 'frequent',
-          frequentSource: item.source,
-        })
-      }
-      delayLongPress={320}
-      testID={`frequent-pill-${item.identityId}`}
-    />
-  );
-}
-
-/** 下段 (棚) の1行の高さ。4行 + 見出しでも、ホームが窮屈にならない範囲に収める。 */
-const SHELF_ROW_HEIGHT = 40;
-
-/**
- * ⭐️タブの2段レイアウト (My食品が1件以上のとき。PRD §6.5.3)。
- *   上段: 食材ピル (ピン留め → 自動) を1行の横スクロールで。縦に伸びず、枠を超えて見えなくなることもない
- *   下段: My食品の棚 = 最近使った順の数件。行のタップ = 1回分 ×1 で即記録 / 長押し = 倍率の記録シート。「すべて N件 ›」で倉庫 (My食品ページ)
- * 通常グリッドより背が高くなるので、増えたぶんの高さをホームへ伝える (onExtraHeightChange)。
- */
-const FrequentTwoTier = memo(function FrequentTwoTier({
-  pinned,
-  auto,
-  shelf,
-  myFoodCount,
-  baseHeight,
-  onExtraHeightChange,
-}: {
-  pinned: FrequentItem[];
-  auto: FrequentItem[];
-  shelf: MyFood[];
-  myFoodCount: number;
-  baseHeight: number;
-  onExtraHeightChange?: (extra: number) => void;
-}) {
-  const { recordMyFood } = useAppState();
-  const router = useRouter();
-  const t = useTheme();
-  const tr = useT();
-  const [extra, setExtra] = useState(0);
-
-  useEffect(() => {
-    onExtraHeightChange?.(extra);
-    return () => onExtraHeightChange?.(0);
-  }, [extra, onExtraHeightChange]);
-
-  const handleLayout = (e: LayoutChangeEvent) => {
-    const next = Math.max(0, Math.round(e.nativeEvent.layout.height - baseHeight));
-    setExtra((prev) => (prev === next ? prev : next));
-  };
-
-  return (
-    <View onLayout={handleLayout} style={{ gap: t.spacing['2'] }} testID="frequent-two-tier">
-      {/* 上段: よく記録する食材 */}
-      <View style={styles.tierHeader}>
-        <Overline>{tr('quicklog.frequent.ingredientsHeading')}</Overline>
-        <Pressable
-          onPress={() => router.push('/frequent-edit')}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel={tr('quicklog.frequent.editA11y')}
-          testID="frequent-edit-open"
-        >
-          <Label size="sm" tone="link">{tr('quicklog.frequent.edit')}</Label>
-        </Pressable>
-      </View>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        // 影 (elevation.xs) が切れないよう、縦に少しだけ余白を持たせる
-        contentContainerStyle={{ gap: t.spacing['2'], paddingVertical: t.spacing['1'] }}
-        testID="frequent-pills"
-      >
-        {[...pinned, ...auto].map((item) => (
-          <FrequentPillButton key={item.identityId} item={item} />
-        ))}
-      </ScrollView>
-
-      {/* 下段: My食品 (最近使った順の棚) */}
-      <View style={[styles.tierHeader, { marginTop: t.spacing['1'] }]}>
-        <Overline>{tr('quicklog.frequent.myFoodsHeading')}</Overline>
-        <Pressable
-          onPress={() => router.push('/my-foods')}
-          hitSlop={8}
-          accessibilityRole="button"
-          style={styles.allLink}
-          testID="frequent-my-foods-all"
-        >
-          <Label size="sm" tone="link">{tr('quicklog.frequent.myFoodsAll', { count: myFoodCount })}</Label>
-          <Icon name="chevronRight" size={16} color={t.colors.action.text.default} />
-        </Pressable>
-      </View>
-      <View
-        style={{ backgroundColor: t.colors.surface.raised, borderRadius: t.radius.md, ...t.elevation.xs }}
-        testID="frequent-my-foods"
-      >
-        {shelf.map((food, index) => (
-          <View
-            key={food.id}
-            style={[
-              styles.shelfRow,
-              {
-                borderTopWidth: index > 0 ? StyleSheet.hairlineWidth : 0,
-                borderTopColor: t.colors.border.subtle,
-                paddingLeft: t.spacing['4'],
-                paddingRight: t.spacing['3'],
-              },
-            ]}
-          >
-            <Pressable
-              onPress={() => void recordMyFood(food.id, 1, 'frequent')}
-              onLongPress={() => router.push({ pathname: '/my-food-log', params: { id: food.id, source: 'list' } })}
-              delayLongPress={320}
-              accessibilityRole="button"
-              accessibilityHint={tr('quicklog.frequent.myFoodHint')}
-              style={({ pressed }) => [styles.shelfRowMain, { opacity: pressed ? 0.6 : 1 }]}
-              testID={`frequent-my-food-${food.id}`}
-            >
-              <Label size="sm" numberOfLines={1} style={{ flex: 1 }}>{food.name}</Label>
-              <Body size="sm" tone="secondary" numberOfLines={1}>
-                {food.unitLabel ? `1${food.unitLabel} · ` : ''}{`${Math.round(food.kcal)} kcal`}
-              </Body>
-            </Pressable>
-            {/* 押すと記録される = 「追加」だと分かるように。行全体も同じ動作 (長押しは量の選択) */}
-            <IconButton
-              icon="add"
-              variant="outlined"
-              size="sm"
-              tone="action"
-              onPress={() => void recordMyFood(food.id, 1, 'frequent')}
-              accessibilityLabel={tr('quicklog.frequent.myFoodAddA11y', { name: food.name })}
-              testID={`frequent-my-food-add-${food.id}`}
-            />
-          </View>
-        ))}
-      </View>
-    </View>
-  );
-});
-
-export const QuickLogSection = memo(function QuickLogSection({
-  onExtraHeightChange,
-}: {
-  /** ⭐️ のピン留めが枠を超えて縦に伸びたぶんの高さ (px)。ホームが下の余白に足す。 */
-  onExtraHeightChange?: (extra: number) => void;
-}) {
+export const QuickLogSection = memo(function QuickLogSection() {
   const { selectedMode, setSelectedMode, settings, bumpDiagnostic } = useAppState();
   const tr = useT();
   const { foodRegion: locale, uiLanguage } = useLocale();
@@ -535,9 +396,8 @@ export const QuickLogSection = memo(function QuickLogSection({
     if (!history) return 0;
     return Object.values(history).reduce((sum, arr) => sum + arr.length, 0);
   }, [history]);
-  // 記録が一定数たまるか、ピン留めが1件でもあれば出す (PRD §6.5.3)。
-  const myFoodCount = settings.myFoods?.length ?? 0;
-  const showFrequentTab = shouldShowFrequentTab(totalHistoryEntries, settings.frequentPins, myFoodCount);
+  // 記録が一定数たまるか、ピン留め (Identity・My食品) が1件でもあれば出す (PRD §6.5.3)。
+  const showFrequentTab = shouldShowFrequentTab(totalHistoryEntries, settings.frequentPins, settings.myFoods);
 
   const [selectedTab, setSelectedTab] = useState<QuickLogTabKey>(() =>
     deriveDefaultTab(history, settings.tabUsageCounts, settings.currentDefaultTab)
@@ -569,8 +429,6 @@ export const QuickLogSection = memo(function QuickLogSection({
   const [frequentLayout, setFrequentLayout] = useState<{
     pinned: FrequentItem[];
     auto: FrequentItem[];
-    /** ⭐️タブの下段 (My食品の棚) に出す id。開いたときに確定し、表示中は動かさない (押した行が動かないように) */
-    shelfIds: string[];
     settingsKey: string;
   }>(EMPTY_FREQUENT_LAYOUT);
   useEffect(() => {
@@ -578,19 +436,19 @@ export const QuickLogSection = memo(function QuickLogSection({
       setFrequentLayout((prev) => (prev === EMPTY_FREQUENT_LAYOUT ? prev : EMPTY_FREQUENT_LAYOUT));
       return;
     }
-    // My食品は、増減したとき (保存・削除) だけ取り直す。記録して最近使った時刻が変わっても並びは動かさない
-    const settingsKey = `${(frequentPins ?? []).join(',')}|${(frequentHidden ?? []).join(',')}|${(myFoods ?? []).map((f) => f.id).sort().join(',')}`;
+    // My食品は、増減・名前の変更 (保存・削除・編集) のときだけ取り直す。記録して最近使った時刻が変わっても並びは動かさない
+    const settingsKey = `${(frequentPins ?? []).join(',')}|${(frequentHidden ?? []).join(',')}|${(myFoods ?? []).map((f) => `${f.id}:${f.name}`).sort().join(',')}`;
     setFrequentLayout((prev) => {
-      const isEmpty = prev.pinned.length + prev.auto.length + prev.shelfIds.length === 0;
+      const isEmpty = prev.pinned.length + prev.auto.length === 0;
       if (!isEmpty && prev.settingsKey === settingsKey) return prev;
       return {
         ...composeFrequentItems(history, {
           pins: frequentPins,
           hidden: frequentHidden,
+          myFoods,
           nowISO: new Date().toISOString(),
           autoLimit: FREQUENT_PILL_CANDIDATES,
         }),
-        shelfIds: recentMyFoods(myFoods, MY_FOOD_SHELF_LIMIT).map((f) => f.id),
         settingsKey,
       };
     });
@@ -639,22 +497,9 @@ export const QuickLogSection = memo(function QuickLogSection({
         />
       </View>
 
-      {activeTab === 'frequent' && myFoodCount > 0 ? (
-        // My食品が1件以上のときは2段 (上段 = ピル1行の横スクロール / 下段 = My食品の棚)。PRD §6.5.3
-        <FrequentTwoTier
-          key={`${frequentLayout.settingsKey}@${buttonHeight}`}
-          pinned={frequentLayout.pinned}
-          auto={frequentLayout.auto}
-          shelf={frequentLayout.shelfIds
-            .map((id) => (myFoods ?? []).find((f) => f.id === id))
-            .filter((f): f is MyFood => !!f)}
-          myFoodCount={myFoodCount}
-          baseHeight={buttonHeight * 3 + gridGap * 2}
-          onExtraHeightChange={onExtraHeightChange}
-        />
-      ) : activeTab === 'frequent' ? (
+      {activeTab === 'frequent' ? (
         <FrequentPills
-          key={`${frequentLayout.pinned.map((i) => i.identityId).join(',')}/${frequentLayout.auto.map((i) => i.identityId).join(',')}@${buttonHeight}`}
+          key={`${frequentLayout.pinned.map((i) => i.key).join(',')}/${frequentLayout.auto.map((i) => i.key).join(',')}@${buttonHeight}`}
           pinned={frequentLayout.pinned}
           auto={frequentLayout.auto}
           height={buttonHeight * 3 + gridGap * 2}
@@ -726,32 +571,16 @@ const styles = StyleSheet.create({
   pillItem: {
     flexDirection: 'row',
     alignItems: 'center',
+    maxWidth: '100%',
   },
   pillMeasuring: {
     opacity: 0,
   },
-  tierHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+  pillButton: {
+    maxWidth: '100%',
   },
-  allLink: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-  },
-  shelfRow: {
-    height: SHELF_ROW_HEIGHT,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  shelfRowMain: {
-    flex: 1,
-    height: SHELF_ROW_HEIGHT,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
+  pillLabel: {
+    flexShrink: 1,
   },
   cell: {
     width: '100%',

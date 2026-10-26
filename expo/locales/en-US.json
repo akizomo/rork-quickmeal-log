@@ -214,7 +214,6 @@
       "noDataBody": "There may be no data in Health, or Hachibu may not have permission to read it.\n\nYou can change this in the Health app: tap your profile at the top right → Apps → Hachibu.",
       "openHealth": "Open Health",
       "retrySync": "Sync again",
-
       "sync": "Health sync"
     },
     "timeAgo": {
@@ -751,12 +750,7 @@
     },
     "frequent": {
       "edit": "Edit",
-      "editA11y": "Edit favorites",
-      "ingredientsHeading": "Favorites",
-      "myFoodsHeading": "My Foods",
-      "myFoodAddA11y": "Log {{name}}",
-      "myFoodsAll": "All {{count}}",
-      "myFoodHint": "Tap to log one serving. Long-press to pick an amount."
+      "editA11y": "Edit favorites"
     },
     "a11y": {
       "search": "Search food",
@@ -775,6 +769,8 @@
       "remove": "Remove",
       "removeA11y": "Remove {{label}} from favorites"
     },
+    "myFoods": "My Foods ({{count}})",
+    "myFoodsSub": "Tap ⭐️ on a food's log sheet to add it to Favorites",
     "auto": {
       "title": "Filled in automatically",
       "hint": "What you log most fills the remaining space.",
@@ -795,17 +791,19 @@
     "shareNote": "Foods that search could not find are candidates to add to the app. If you like, share just the names listed here. No numbers or logs are included.",
     "empty": "Foods you enter by numbers stay here. Name one when you log it, and you can pick it next time.",
     "record": "Log",
-    "editEntry": "Edit",
     "editTitle": "Edit My Food",
     "perServingTitle": "Calories and PFC",
-    "unitTitle": "Unit name (optional)",
-    "unitPlaceholder": "e.g. 1 bar, 1 cup",
     "duplicate": "That name already exists",
     "notFound": "This food could not be found.",
     "recordsUnchanged": "Editing here does not change your past logs.",
     "delete": "Delete this food",
     "deleteTitle": "Delete \"{{name}}\"?",
-    "deleteMessage": "It will be removed from My Foods. Your past logs stay as they are."
+    "deleteMessage": "It will be removed from My Foods. Your past logs stay as they are.",
+    "percentNote": "Your saved values are 100%. Change the amount from there.",
+    "favorite": "Add to Favorites",
+    "nameTitle": "Name",
+    "editValues": "Edit values",
+    "saveValues": "Save these values"
   },
   "stats": {
     "title": "Progress",

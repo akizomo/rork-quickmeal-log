@@ -27,6 +27,7 @@ export function emptyDiagnostics(): DiagnosticsData {
     frequentPinnedTapCount: 0,
     frequentAutoTapCount: 0,
     myFoodShelfTapCount: 0,
+    myFoodsPageOpenCount: 0,
     myFoodSavedCount: 0,
     myFoodSavedLayer1Count: 0,
   };
@@ -80,6 +81,7 @@ export type DiagnosticCounterKey =
   | 'frequentPinnedTapCount'
   | 'frequentAutoTapCount'
   | 'myFoodShelfTapCount'
+  | 'myFoodsPageOpenCount'
   | 'myFoodSavedCount'
   | 'myFoodSavedLayer1Count';
 
@@ -130,6 +132,7 @@ export function castDiagnostics(input: unknown): DiagnosticsData {
     frequentPinnedTapCount: num(raw.frequentPinnedTapCount),
     frequentAutoTapCount: num(raw.frequentAutoTapCount),
     myFoodShelfTapCount: num(raw.myFoodShelfTapCount),
+    myFoodsPageOpenCount: num(raw.myFoodsPageOpenCount),
     myFoodSavedCount: num(raw.myFoodSavedCount),
     myFoodSavedLayer1Count: num(raw.myFoodSavedLayer1Count),
   };

@@ -3,20 +3,30 @@
  *
  * - 同名は1件にまとめる。同名の判定は NFKC + trim + 大文字小文字無視 (ひらがな / カタカナの違いは別名)
  * - 並びは「最近使った順」の固定 (並べ替えは持たない)
- * - 値は「1回分」あたり。量は「1回分 × 倍率」
+ * - 値は保存した1回の食事の分。量は「保存した値 = 100%」として%で変える (2026-10-26 v1.19。単位名は持たない)
  */
 
 import type { MyFood, MyFoodInput, SearchRecent } from '@/types/my-food';
 import type { Macro } from '@/types/nutrition';
 
-/** ⭐️タブの下段に出す最近使った My食品の件数。 */
-export const MY_FOOD_SHELF_LIMIT = 4;
 /** 「最近」(検索経由) の保持件数。表示は先頭5件前後。 */
 export const SEARCH_RECENT_LIMIT = 20;
 export const SEARCH_RECENT_VISIBLE = 5;
 
-/** 倍率の選択肢 (記録シートのチップ)。 */
-export const MY_FOOD_MULTIPLIERS = [0.5, 1, 1.5, 2, 3] as const;
+/**
+ * 記録シートの量欄 (食材の記録シートの%の量欄と同じ部品を使う)。保存した値 = 100%。
+ * チップは「半分・そのまま・1.5倍・2倍」のショートカット。
+ */
+export const MY_FOOD_AMOUNT_SPEC = {
+  unit: 'percent',
+  default: 100,
+  chips: [
+    { label: '50', value: 50 },
+    { label: '100', value: 100 },
+    { label: '150', value: 150 },
+    { label: '200', value: 200 },
+  ],
+} as const;
 
 const MAX_NAME_LENGTH = 40;
 
@@ -42,36 +52,29 @@ function roundMacro(v: number | null | undefined): number | null {
 
 /** 保存する値をそろえる (PFC の負値・非数は null、kcal は整数、名前は NFKC + trim)。 */
 export function sanitizeMyFoodInput(input: MyFoodInput): MyFoodInput {
-  const unit = input.unitLabel?.normalize('NFKC').trim();
   return {
     name: cleanName(input.name),
     kcal: Math.max(0, Math.round(Number.isFinite(input.kcal) ? input.kcal : 0)),
     protein: roundMacro(input.protein),
     fat: roundMacro(input.fat),
     carbs: roundMacro(input.carbs),
-    unitLabel: unit ? unit.slice(0, 12) : undefined,
   };
 }
 
-/** 名前以外の値 (kcal・PFC・単位名) がすべて同じか。 */
+/** 名前以外の値 (kcal・PFC) がすべて同じか。 */
 export function hasSameValues(food: MyFood, input: MyFoodInput): boolean {
   const next = sanitizeMyFoodInput(input);
   return (
     food.kcal === next.kcal &&
     (food.protein ?? null) === next.protein &&
     (food.fat ?? null) === next.fat &&
-    (food.carbs ?? null) === next.carbs &&
-    (food.unitLabel ?? undefined) === next.unitLabel
+    (food.carbs ?? null) === next.carbs
   );
 }
 
 /** 最近使った順 (新しい順)。同時刻は元の並びを保つ。 */
 export function sortMyFoodsByRecent(foods: readonly MyFood[] | undefined): MyFood[] {
   return [...(foods ?? [])].sort((a, b) => b.lastUsedAtISO.localeCompare(a.lastUsedAtISO));
-}
-
-export function recentMyFoods(foods: readonly MyFood[] | undefined, limit = MY_FOOD_SHELF_LIMIT): MyFood[] {
-  return sortMyFoodsByRecent(foods).slice(0, limit);
 }
 
 export type SaveMyFoodResult =
@@ -150,7 +153,7 @@ export function touchMyFood(foods: readonly MyFood[] | undefined, id: string, no
   return (foods ?? []).map((f) => (f.id === id ? { ...f, lastUsedAtISO: nowISO } : f));
 }
 
-/** 「1回分 × 倍率」の Macro。PFC が null のものは 0 として扱う (直接入力と同じ)。 */
+/** 保存した値 × 倍率 (= %/100) の Macro。PFC が null のものは 0 として扱う (直接入力と同じ)。 */
 export function myFoodMacro(food: MyFood, multiplier: number): Macro {
   const m = Number.isFinite(multiplier) && multiplier > 0 ? multiplier : 1;
   const round = (v: number) => Math.round(v * 10) / 10;
@@ -219,7 +222,6 @@ export function castMyFoods(input: unknown): MyFood[] {
       protein: num(r.protein),
       fat: num(r.fat),
       carbs: num(r.carbs),
-      unitLabel: typeof r.unitLabel === 'string' && r.unitLabel.length > 0 ? r.unitLabel : undefined,
       createdAtISO: created,
       lastUsedAtISO: typeof r.lastUsedAtISO === 'string' ? r.lastUsedAtISO : created,
     });
@@ -227,9 +229,8 @@ export function castMyFoods(input: unknown): MyFood[] {
   return out;
 }
 
-/** 記録の量欄に出す文字。単位名があれば「2本」、無ければ ×1 は空 (「1回分」は書かない)、それ以外は「× 2」。 */
-export function myFoodAmountLabel(food: MyFood, multiplier: number): string | undefined {
+/** 記録の量欄に出す文字。保存した値そのまま (100%) は空、それ以外は「70%」。 */
+export function myFoodAmountLabel(multiplier: number): string | undefined {
   const m = Number.isFinite(multiplier) && multiplier > 0 ? multiplier : 1;
-  if (food.unitLabel) return `${m}${food.unitLabel}`;
-  return m === 1 ? undefined : `× ${m}`;
+  return m === 1 ? undefined : `${Math.round(m * 100)}%`;
 }
