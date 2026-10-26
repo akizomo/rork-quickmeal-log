@@ -756,7 +756,11 @@
     },
     "frequent": {
       "edit": "編集",
-      "editA11y": "⭐️の並びを編集"
+      "editA11y": "⭐️の並びを編集",
+      "ingredientsHeading": "よく記録する食材",
+      "myFoodsHeading": "My食品",
+      "myFoodsAll": "すべて {{count}}件",
+      "myFoodHint": "タップで1回分を記録。長押しで量を選ぶ"
     },
     "a11y": {
       "search": "食品を検索",

@@ -756,7 +756,11 @@
     },
     "frequent": {
       "edit": "Edit",
-      "editA11y": "Edit ⭐️"
+      "editA11y": "Edit ⭐️",
+      "ingredientsHeading": "Often logged",
+      "myFoodsHeading": "My Foods",
+      "myFoodsAll": "All {{count}}",
+      "myFoodHint": "Tap to log one serving. Long-press to pick an amount."
     },
     "a11y": {
       "search": "Search food",

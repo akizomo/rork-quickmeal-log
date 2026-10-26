@@ -304,4 +304,10 @@ describe('shouldShowFrequentTab', () => {
   it('辞書に無い ID だけのピン留めでは出さない', () => {
     expect(shouldShowFrequentTab(0, ['ghost'])).toBe(false);
   });
+
+  it('記録が5件未満・ピン留めなしでも、My食品が1件あれば出す', () => {
+    expect(shouldShowFrequentTab(0, [], 1)).toBe(true);
+    expect(shouldShowFrequentTab(FREQUENT_TAB_MIN_LOGS - 1, undefined, 3)).toBe(true);
+    expect(shouldShowFrequentTab(0, [], 0)).toBe(false);
+  });
 });

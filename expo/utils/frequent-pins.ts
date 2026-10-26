@@ -192,13 +192,13 @@ export function effectiveHiddenCount(hidden: readonly string[] | undefined): num
 // ---------------------------------------------------------------------------
 
 /**
- * ⭐️ タブを出すか。記録が FREQUENT_TAB_MIN_LOGS 件に達している、または
- * ピン留めが1件でもあれば出す (PRD §6.5.3)。
- * My食品が1件以上あるときも出す条件は、My食品の実装 (PRD §6.5.4) で足す。
+ * ⭐️ タブを出すか。記録が FREQUENT_TAB_MIN_LOGS 件に達している、ピン留めが1件でもある、
+ * または My食品が1件でもあれば出す (PRD §6.5.3)。
  */
 export function shouldShowFrequentTab(
   totalHistoryEntries: number,
   pins: readonly string[] | undefined,
+  myFoodCount = 0,
 ): boolean {
-  return totalHistoryEntries >= FREQUENT_TAB_MIN_LOGS || effectivePinCount(pins) > 0;
+  return totalHistoryEntries >= FREQUENT_TAB_MIN_LOGS || effectivePinCount(pins) > 0 || myFoodCount > 0;
 }
