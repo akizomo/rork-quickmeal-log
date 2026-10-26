@@ -290,7 +290,9 @@ export function IdentityLogSheet() {
   //   2回目以降に入れたとき: 結果だけの短いトースト (1.6秒。何も出ないと押せたか気になる)
   //   はずしたとき: 何も出さない (星の塗りが消えるだけ)
   const [pinNotice, setPinNotice] = useState<'added' | 'addedFirst' | 'toast' | null>(null);
-  // ⭐️ボタンの中心 x (フッター行の左端から)。吹き出し・トーストをボタンの真上に寄せるのに使う
+  // 通知の主語 (何をお気に入りに追加したか)。通知が出ている間に別のチップへ切り替えても、押した時点の名前のままにする
+  const [pinNoticeLabel, setPinNoticeLabel] = useState('');
+  // ⭐️ボタンの中心 x (フッター行の左端から)。初回の吹き出しの尻尾をボタンに向けるのに使う (トーストは中央のまま)
   const [pinCenterX, setPinCenterX] = useState<number | null>(null);
   // フッター行の左余白 (spacing 5) と、吹き出し置き場の左余白 (spacing 4、TallSheetScreen) の差を足して、吹き出し置き場の座標にする
   const pinAnchorX = pinCenterX === null ? undefined : pinCenterX + (t.spacing['5'] - t.spacing['4']);
@@ -317,12 +319,14 @@ export function IdentityLogSheet() {
       notice = 'toast';
     }
     setPinNotice(notice);
+    // チップと同じ言語の名前 (origin.label は辞書の既定言語)
+    setPinNoticeLabel(identitiesInBucket.find((i) => i.id === origin.id)?.label ?? origin.label);
     if (pinNoticeTimerRef.current) clearTimeout(pinNoticeTimerRef.current);
     if (notice) {
       pinNoticeTimerRef.current = setTimeout(() => setPinNotice(null), notice === 'toast' ? 1600 : 3200);
     }
     setFrequentPinned(origin.id, adding);
-  }, [origin, isPinned, setFrequentPinned, settings.quickLogHistory, settings.frequentPins, settings.pinNoticeSeenAtISO]);
+  }, [origin, isPinned, identitiesInBucket, setFrequentPinned, settings.quickLogHistory, settings.frequentPins, settings.pinNoticeSeenAtISO]);
 
   const handleSelectIdentity = useCallback((identity: Identity) => {
     const attrKey = defaultAttributeKey(identity);
@@ -659,18 +663,13 @@ export function IdentityLogSheet() {
         <>
         <Callout
           visible={pinNotice === 'added' || pinNotice === 'addedFirst'}
-          title={pinNotice === 'added' || pinNotice === 'addedFirst' ? tr(`identityLog.pin.notice.${pinNotice}.title`) : undefined}
+          title={pinNotice === 'added' || pinNotice === 'addedFirst' ? tr(`identityLog.pin.notice.${pinNotice}.title`, { label: pinNoticeLabel }) : undefined}
           message={pinNotice === 'added' || pinNotice === 'addedFirst' ? tr(`identityLog.pin.notice.${pinNotice}.message`) : ' '}
           arrowAlign="center"
           arrowOffset={pinAnchorX}
           testID="ils-pin-notice"
         />
-        <SheetToast
-          visible={pinNotice === 'toast'}
-          message={tr('identityLog.pin.notice.toast')}
-          anchorX={pinAnchorX}
-          testID="ils-pin-toast"
-        />
+        <SheetToast visible={pinNotice === 'toast'} message={tr('identityLog.pin.notice.toast', { label: pinNoticeLabel })} testID="ils-pin-toast" />
         <Callout
           visible={roughHintVisible && !pinNotice}
           title={tr('identityLog.roughHint.line1')}

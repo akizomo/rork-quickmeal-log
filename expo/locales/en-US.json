@@ -471,14 +471,14 @@
       "removeA11y": "Remove {{label}} from favorites",
       "notice": {
         "added": {
-          "title": "Added to favorites",
+          "title": "Added {{label}} to favorites",
           "message": "It shows up in the ⭐️ tab on Home."
         },
         "addedFirst": {
-          "title": "Added to favorites",
+          "title": "Added {{label}} to favorites",
           "message": "A ⭐️ tab now appears on Home."
         },
-        "toast": "Added to favorites"
+        "toast": "Added {{label}} to favorites"
       }
     },
     "roughHint": {

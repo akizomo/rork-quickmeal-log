@@ -471,14 +471,14 @@
       "removeA11y": "{{label}}をお気に入りからはずす",
       "notice": {
         "added": {
-          "title": "お気に入りに追加しました",
+          "title": "{{label}}をお気に入りに追加しました",
           "message": "ホームの⭐️タブに並びます。"
         },
         "addedFirst": {
-          "title": "お気に入りに追加しました",
+          "title": "{{label}}をお気に入りに追加しました",
           "message": "ホームに⭐️タブが現れます。"
         },
-        "toast": "お気に入りに追加しました"
+        "toast": "{{label}}をお気に入りに追加しました"
       }
     },
     "roughHint": {

@@ -11,26 +11,9 @@ import { Animated, Easing, StyleSheet, View } from 'react-native';
 import { Label, useTheme } from '@/design-system';
 import { duration, easing } from '@/design-system/tokens/primitives/motion';
 
-export function SheetToast({
-  visible,
-  message,
-  anchorX,
-  testID,
-}: {
-  visible: boolean;
-  message: string;
-  /** 指したい要素の中心の x (この行の左端から)。渡すと、その真上に寄せる (はみ出すときは端で止める)。省略時は中央。 */
-  anchorX?: number;
-  testID?: string;
-}) {
+export function SheetToast({ visible, message, testID }: { visible: boolean; message: string; testID?: string }) {
   const t = useTheme();
   const [progress] = useState(() => new Animated.Value(0));
-  const [rowWidth, setRowWidth] = useState(0);
-  const [pillWidth, setPillWidth] = useState(0);
-  const left =
-    anchorX !== undefined && rowWidth > 0 && pillWidth > 0
-      ? Math.max(0, Math.min(rowWidth - pillWidth, anchorX - pillWidth / 2))
-      : undefined;
 
   useEffect(() => {
     Animated.timing(progress, {
@@ -42,16 +25,9 @@ export function SheetToast({
   }, [visible, progress]);
 
   return (
-    <View
-      style={[styles.row, left !== undefined ? { alignItems: 'flex-start' } : null]}
-      onLayout={(e) => setRowWidth(e.nativeEvent.layout.width)}
-      pointerEvents="none"
-      importantForAccessibility={visible ? 'auto' : 'no-hide-descendants'}
-    >
+    <View style={styles.row} pointerEvents="none" importantForAccessibility={visible ? 'auto' : 'no-hide-descendants'}>
       <Animated.View
-        onLayout={(e) => setPillWidth(e.nativeEvent.layout.width)}
         style={[
-          left !== undefined ? { marginLeft: left } : null,
           t.elevation.lg,
           {
             backgroundColor: t.colors.surface.inverse,
