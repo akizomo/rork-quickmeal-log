@@ -6,10 +6,12 @@
  * 入口は検索ページの「My食品 N件 ›」と設定。0件でも開け、使い方を一言添える。
  */
 import { useIsFocused, useRouter } from 'expo-router';
-import React, { useEffect, useRef } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import React, { useCallback, useEffect, useRef } from 'react';
+import { Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
 
-import { Body, Card, Icon, Label, useTheme } from '@/design-system';
+import { Body, Button, Card, Icon, Label, useTheme } from '@/design-system';
+import { useLocale } from '@/hooks/useLocale';
+import { buildMyFoodShareText } from '@/utils/my-food-landing';
 import { useT } from '@/hooks/useT';
 import { useAppState } from '@/providers/app-state-provider';
 import { formatMyFoodSummary } from '@/utils/my-food-format';
@@ -21,6 +23,12 @@ export function MyFoodsScreen() {
   const router = useRouter();
   const { settings, undoState } = useAppState();
   const foods = sortMyFoodsByRecent(settings.myFoods);
+  const { foodRegion } = useLocale();
+
+  // 開発者への共有 (PRD §6.5.4「DB拡張への接続」): 画面に出ている名前と、DB に着地するかだけ。押したときだけ送る
+  const handleShareNames = useCallback(() => {
+    void Share.share({ message: buildMyFoodShareText(foods, new Date().toISOString(), foodRegion) });
+  }, [foods, foodRegion]);
 
   // 記録したらホームまで戻す (検索ページと同じ。記録できたかをホームの合計と取り消しトーストで見せる)
   const isFocused = useIsFocused();
@@ -73,6 +81,19 @@ export function MyFoodsScreen() {
           ))}
         </Card>
       )}
+
+      {foods.length > 0 ? (
+        <View style={{ marginTop: t.spacing['6'], gap: t.spacing['2'], alignItems: 'flex-start' }}>
+          <Body size="sm" tone="secondary">{tr('myFoods.shareNote')}</Body>
+          <Button
+            label={tr('myFoods.share')}
+            variant="secondary"
+            size="sm"
+            onPress={handleShareNames}
+            testID="my-foods-share"
+          />
+        </View>
+      ) : null}
     </ScrollView>
   );
 }

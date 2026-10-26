@@ -794,6 +794,8 @@
   },
   "myFoods": {
     "title": "My Foods",
+    "share": "Send names to the developer",
+    "shareNote": "Only the names shown here are sent, and only when you tap. No numbers or logs are included. It helps us add foods that search is missing.",
     "empty": "Foods you enter by numbers stay here. Name one when you log it, and you can pick it next time.",
     "perServing": "1 serving",
     "record": "Log",

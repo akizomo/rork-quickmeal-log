@@ -17,6 +17,8 @@ import { useAppState } from '@/providers/app-state-provider';
 import { rankFrequentSelections } from '@/utils/quick-log-history';
 import { effectiveHiddenCount, effectivePinCount } from '@/utils/frequent-pins';
 import { sortedSearchMisses } from '@/utils/diagnostics';
+import { classifyMyFoodNames } from '@/utils/my-food-landing';
+import { useLocale } from '@/hooks/useLocale';
 import type { QuickLogHistoryMap } from '@/types/quick-log';
 import { Section } from './_shared';
 
@@ -33,6 +35,9 @@ export default function DevDiagnostics() {
   // ⭐️ のピン留め (frequent_tap_source、PRD §6.5.3 / §10.2.1)
   const pinCount = effectivePinCount(settings.frequentPins);
   const hiddenCount = effectiveHiddenCount(settings.frequentHidden);
+  // My食品 (PRD §6.5.4): 名前を、現在の検索で DB に着地するかで分ける (着地あり = 語彙の穴 / なし = DB の穴)
+  const { foodRegion } = useLocale();
+  const myFoodSplit = useMemo(() => classifyMyFoodNames(settings.myFoods, foodRegion), [settings.myFoods, foodRegion]);
   const pinnedTaps = diagnostics?.frequentPinnedTapCount ?? 0;
   const autoTaps = diagnostics?.frequentAutoTapCount ?? 0;
 
@@ -62,6 +67,14 @@ export default function DevDiagnostics() {
         pinnedTapCount: pinnedTaps,
         autoTapCount: autoTaps,
       },
+      myFoods: {
+        count: settings.myFoods?.length ?? 0,
+        savedCount: diagnostics?.myFoodSavedCount ?? 0,
+        savedLayer1Count: diagnostics?.myFoodSavedLayer1Count ?? 0,
+        shelfTapCount: diagnostics?.myFoodShelfTapCount ?? 0,
+        namesNotLanded: myFoodSplit.notLanded.map((f) => f.name),
+        namesLanded: myFoodSplit.landed.map((f) => f.name),
+      },
       currentDefaultTab: settings.currentDefaultTab ?? null,
       diagnostics: diagnostics ?? null,
       topRanked: topRanked.map((r) => ({
@@ -72,7 +85,7 @@ export default function DevDiagnostics() {
       })),
     };
     void Share.share({ message: JSON.stringify(payload, null, 2) });
-  }, [diagnostics, historyEntryCount, logs.length, settings.currentDefaultTab, tabUsage, topRanked]);
+  }, [diagnostics, historyEntryCount, logs.length, settings.currentDefaultTab, settings.myFoods, myFoodSplit, tabUsage, topRanked, pinCount, hiddenCount, pinnedTaps, autoTaps]);
 
   const handleReset = useCallback(() => {
     Alert.alert('診断データを消去', '検索の未ヒット記録とカウンタを初期化します。食事ログには影響しません。', [
@@ -160,6 +173,30 @@ export default function DevDiagnostics() {
         <StatRow t={t} label="自動由来の記録" value={autoTaps} />
         <StatRow t={t} label="ピン留め件数 (いま)" value={pinCount} note="0 ならピン留めは未使用" />
         <StatRow t={t} label="「表示しない」件数 (いま)" value={hiddenCount} />
+      </Section>
+
+      {/* ── My食品 (PRD §6.5.4) ──────────────────────────────────────── */}
+      <Section title="My食品" t={t}>
+        <Body size="sm" tone="secondary">
+          保存した数と、そのうち保存時に名前が検索の確実な一致 (層1) で DB に着地していた数。
+          「気づかず My食品にした」予想 (自動保存にしたため) が当たっているかの実測。名前の集計は、いまの検索で DB に着地するかで分ける。
+        </Body>
+        <StatRow t={t} label="My食品の件数 (いま)" value={settings.myFoods?.length ?? 0} />
+        <StatRow t={t} label="保存した数" value={diagnostics?.myFoodSavedCount ?? 0} />
+        <StatRow t={t} label="そのうち保存時に層1で着地" value={diagnostics?.myFoodSavedLayer1Count ?? 0} />
+        <StatRow t={t} label="⭐️下段の行から記録" value={diagnostics?.myFoodShelfTapCount ?? 0} />
+        <Caption tone="secondary">DB に着地しない名前 (= DB の穴の手がかり)</Caption>
+        {myFoodSplit.notLanded.length === 0 ? (
+          <Body tone="secondary">なし</Body>
+        ) : (
+          myFoodSplit.notLanded.map((f) => <Body key={f.id}>{f.name}</Body>)
+        )}
+        <Caption tone="secondary">DB に着地する名前 (= 検索の語彙の穴)</Caption>
+        {myFoodSplit.landed.length === 0 ? (
+          <Body tone="secondary">なし</Body>
+        ) : (
+          myFoodSplit.landed.map((f) => <Body key={f.id}>{f.name}</Body>)
+        )}
       </Section>
 
       {/* ── ランキング品質の目視確認 ───────────────────────────────────── */}
