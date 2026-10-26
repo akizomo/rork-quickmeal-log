@@ -2,6 +2,7 @@
   "nav": {
     "back": "Back",
     "about": "About",
+    "myFoods": "My Foods",
     "searchMisses": "Foods not found",
     "goalEdit": "Edit Goals",
     "help": "How to Use Hachibu",
@@ -669,6 +670,11 @@
     }
   },
   "settings": {
+    "myFoods": {
+      "title": "My Foods",
+      "row": "My Foods",
+      "count": "{{count}}"
+    },
     "theme": {
       "title": "Theme",
       "system": "System",
@@ -781,6 +787,23 @@
       "restore": "Restore",
       "restoreA11y": "Restore {{label}} to ⭐️"
     }
+  },
+  "myFoods": {
+    "title": "My Foods",
+    "empty": "Foods you enter by numbers stay here. Name one when you log it, and you can pick it next time.",
+    "perServing": "1 serving",
+    "record": "Log",
+    "editEntry": "Edit",
+    "editTitle": "Edit My Food",
+    "perServingTitle": "Per serving",
+    "unitTitle": "Unit name (optional)",
+    "unitPlaceholder": "e.g. 1 bar, 1 cup",
+    "duplicate": "That name already exists",
+    "notFound": "This food could not be found.",
+    "recordsUnchanged": "Editing here does not change your past logs.",
+    "delete": "Delete this food",
+    "deleteTitle": "Delete \"{{name}}\"?",
+    "deleteMessage": "It will be removed from My Foods. Your past logs stay as they are."
   },
   "stats": {
     "title": "Progress",

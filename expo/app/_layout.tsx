@@ -78,6 +78,10 @@ function RootLayoutNav() {
       <Stack.Screen name="weekly-balance" options={formSheetOptions(t)} />
       <Stack.Screen name="search-miss-edit" options={formSheetOptions(t)} />
       <Stack.Screen name="search" options={{ title: tr('search.title') }} />
+      <Stack.Screen name="my-foods" options={{ title: tr('nav.myFoods') }} />
+      {/* My食品 (PRD §6.5.4): 倍率の記録シート / 編集画面。編集画面は記録シートの上に積む */}
+      <Stack.Screen name="my-food-log" options={formSheetOptions(t)} />
+      <Stack.Screen name="my-food-edit" options={formSheetOptions(t)} />
       {__DEV__ ? <Stack.Screen name="dev" options={{ headerShown: false }} /> : null}
       {/* SHEET_MIGRATION.md Phase 0 スパイク (使い捨て)。テストビルドの設定画面からのみ導線あり */}
       <Stack.Screen name="spike/index" />

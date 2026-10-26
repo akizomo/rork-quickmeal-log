@@ -204,6 +204,19 @@ export default function SettingsRoute() {
               </SettingsListCard>
             </View>
 
+            {/* §My食品 (PRD §6.5.4)。消したいときの入口なので、記録の導線の外 (設定) にも置く。0件でも開ける */}
+            <View style={styles.section}>
+              <SettingsSectionLabel>{t('settings.myFoods.title')}</SettingsSectionLabel>
+              <SettingsListCard>
+                <SettingsLinkRow
+                  label={t('settings.myFoods.row')}
+                  sub={(settings.myFoods?.length ?? 0) > 0 ? t('settings.myFoods.count', { count: settings.myFoods?.length ?? 0 }) : undefined}
+                  onPress={() => router.push('/my-foods')}
+                  testID="settings-link-my-foods"
+                />
+              </SettingsListCard>
+            </View>
+
             {/* §データ */}
             <View style={styles.section}>
               <SettingsSectionLabel>{t('settings.data.title')}</SettingsSectionLabel>

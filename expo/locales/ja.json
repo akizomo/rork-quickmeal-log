@@ -2,6 +2,7 @@
   "nav": {
     "back": "戻る",
     "about": "アプリについて",
+    "myFoods": "My食品",
     "searchMisses": "見つからなかった食品",
     "goalEdit": "目標を変更",
     "help": "Hachibu の使い方",
@@ -669,6 +670,11 @@
     }
   },
   "settings": {
+    "myFoods": {
+      "title": "My食品",
+      "row": "My食品",
+      "count": "{{count}}件"
+    },
     "theme": {
       "title": "テーマ",
       "system": "端末に合わせる",
@@ -781,6 +787,23 @@
       "restore": "戻す",
       "restoreA11y": "{{label}}を⭐️に戻す"
     }
+  },
+  "myFoods": {
+    "title": "My食品",
+    "empty": "数値で入力した食品は、ここに残ります。名前をつけて記録すると、次から選べます。",
+    "perServing": "1回分",
+    "record": "記録",
+    "editEntry": "編集",
+    "editTitle": "My食品を編集",
+    "perServingTitle": "1回分の値",
+    "unitTitle": "単位名 (任意)",
+    "unitPlaceholder": "例: 1本、1杯",
+    "duplicate": "同じ名前があります",
+    "notFound": "この食品は見つかりませんでした。",
+    "recordsUnchanged": "ここで直しても、これまでの記録は変わりません。",
+    "delete": "この食品を削除",
+    "deleteTitle": "「{{name}}」を削除しますか？",
+    "deleteMessage": "My食品から消えます。これまでの記録は変わりません。"
   },
   "stats": {
     "title": "実績",
