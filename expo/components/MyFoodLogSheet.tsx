@@ -19,13 +19,14 @@ export default function MyFoodLogRoute() {
   const t = useTheme();
   const tr = useT();
   const router = useRouter();
-  const { settings, recordMyFood } = useAppState();
+  const { settings, recordMyFood, isHydrating } = useAppState();
   const { id, source } = useLocalSearchParams<{ id?: string; source?: string }>();
   const food = (settings.myFoods ?? []).find((f) => f.id === id);
   const [multiplier, setMultiplier] = useState<number>(1);
 
+  if (isHydrating) return null; // 設定の読み込みを待つ (読み込み前に「見つかりません」を出さない)
   if (!food) {
-    // 開いている間に削除された等。何も出さず閉じられるようにする
+    // 開いている間に削除された等
     return (
       <SheetScreen title={tr('myFoods.title')} testID="my-food-log">
         <Body tone="secondary">{tr('myFoods.notFound')}</Body>

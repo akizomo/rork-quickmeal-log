@@ -13,28 +13,20 @@ import { Alert, StyleSheet, TextInput, View } from 'react-native';
 import { Body, Button, Caption, NumberField, Overline, SheetScreen, useTheme } from '@/design-system';
 import { useT } from '@/hooks/useT';
 import { useAppState } from '@/providers/app-state-provider';
+import type { MyFood } from '@/types/my-food';
 import { deleteMyFood, updateMyFood } from '@/utils/my-foods';
 
 const toStr = (n: number | null) => (n == null ? '' : String(n));
 const toNum = (s: string): number | null => (s.trim() === '' ? null : parseFloat(s) || 0);
 
 export default function MyFoodEditRoute() {
-  const t = useTheme();
   const tr = useT();
-  const router = useRouter();
-  const { settings, setMyFoods } = useAppState();
+  const { settings, isHydrating } = useAppState();
   const { id } = useLocalSearchParams<{ id?: string }>();
   const food = (settings.myFoods ?? []).find((f) => f.id === id);
 
-  // 開いた時点の値で初期化する (編集中に値が変わっても入力欄を書き換えない)
-  const [name, setName] = useState(food?.name ?? '');
-  const [kcal, setKcal] = useState(food ? String(food.kcal) : '');
-  const [protein, setProtein] = useState(toStr(food?.protein ?? null));
-  const [fat, setFat] = useState(toStr(food?.fat ?? null));
-  const [carbs, setCarbs] = useState(toStr(food?.carbs ?? null));
-  const [unit, setUnit] = useState(food?.unitLabel ?? '');
-  const [duplicate, setDuplicate] = useState(false);
-
+  // 設定の読み込み前に初期値を取ると空のまま固まるので、読み込みを待ってから入力欄を作る
+  if (isHydrating) return null;
   if (!food) {
     return (
       <SheetScreen title={tr('myFoods.editTitle')} testID="my-food-edit">
@@ -42,6 +34,23 @@ export default function MyFoodEditRoute() {
       </SheetScreen>
     );
   }
+  return <MyFoodEditForm key={food.id} food={food} />;
+}
+
+function MyFoodEditForm({ food }: { food: MyFood }) {
+  const t = useTheme();
+  const tr = useT();
+  const router = useRouter();
+  const { settings, setMyFoods } = useAppState();
+
+  // 開いた時点の値で初期化する (編集中に値が変わっても入力欄を書き換えない)
+  const [name, setName] = useState(food.name);
+  const [kcal, setKcal] = useState(String(food.kcal));
+  const [protein, setProtein] = useState(toStr(food.protein));
+  const [fat, setFat] = useState(toStr(food.fat));
+  const [carbs, setCarbs] = useState(toStr(food.carbs));
+  const [unit, setUnit] = useState(food.unitLabel ?? '');
+  const [duplicate, setDuplicate] = useState(false);
 
   const kcalValue = parseFloat(kcal) || 0;
   const canSave = name.trim().length > 0 && kcalValue > 0;

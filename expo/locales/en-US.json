@@ -1090,6 +1090,9 @@
     "hint": "You can undo this if needed"
   },
   "search": {
+    "recents": "Recent",
+    "myFoodsLink": "My Foods ({{count}})",
+    "myFoodsHeading": "My Foods",
     "title": "Search food",
     "placeholder": "e.g. avocado, chicken, ramen",
     "clearA11y": "Clear search",
