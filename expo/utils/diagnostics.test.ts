@@ -209,6 +209,9 @@ describe('castDiagnostics', () => {
       widgetLogCount: 7,
       frequentPinnedTapCount: 5,
       frequentAutoTapCount: 1,
+      myFoodShelfTapCount: 3,
+      myFoodSavedCount: 6,
+      myFoodSavedLayer1Count: 2,
     };
     expect(castDiagnostics(raw)).toEqual(raw);
   });

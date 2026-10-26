@@ -49,4 +49,10 @@ export interface DiagnosticsData {
    * これがほとんど増えないなら、自動の補充は使われておらず、⭐️の降格・撤去の判断材料になる (PROBLEMS.md P-007 Story d)。
    */
   frequentAutoTapCount: number;
+  /** ⭐️タブの下段 (My食品の棚) の行から記録した回数。上段のピルのタップ (上の2つ) とは混ぜない。 */
+  myFoodShelfTapCount: number;
+  /** My食品として保存した数 (新規作成のみ。同名の更新・上書きは数えない)。 */
+  myFoodSavedCount: number;
+  /** 上のうち、保存時に名前が検索の確実な一致 (層1) で DB に着地していた数。「気づかず My食品にした」予想の実測。 */
+  myFoodSavedLayer1Count: number;
 }

@@ -21,6 +21,9 @@ import { adjustedTargetKcal, calcBaselineActiveKcal, calcExerciseGrossKcal, calc
 import { computeWeeklyBalance, isWeeklyBalanceWorthProposing } from '@/utils/weekly-balance';
 import { getWeekRange, isSameDay } from '@/utils/history';
 import { castHistoryMap, deriveDefaultTab, rankFrequentSelections, recordSelection, recordTabUsage } from '@/utils/quick-log-history';
+import type { MyFood } from '@/types/my-food';
+import { castMyFoods, castSearchRecents, myFoodAmountLabel, myFoodMacro, pushSearchRecent, touchMyFood } from '@/utils/my-foods';
+import { DIRECT_INPUT_CATEGORY_KEY } from '@/utils/log-edit-route';
 import { addHidden, castIdList, movePin, movePinTo, removeHidden, setPinned, type FrequentSource } from '@/utils/frequent-pins';
 import {
   bumpDiagnosticCounter,
@@ -168,6 +171,8 @@ function migrateSettings(raw: Partial<AppSettings> | undefined): AppSettings {
     frequentPins: castIdList(raw?.frequentPins),
     frequentHidden: castIdList(raw?.frequentHidden),
     pinNoticeSeenAtISO: raw?.pinNoticeSeenAtISO ?? null,
+    myFoods: castMyFoods(raw?.myFoods),
+    searchRecents: castSearchRecents(raw?.searchRecents),
     diagnostics: castDiagnostics(raw?.diagnostics),
   };
 }
@@ -222,6 +227,8 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     sourceTab?: QuickLogTabKey;
     /** ⭐️ タブから開いたとき、ピン留め由来か自動由来か (frequent_tap_source の計測用)。 */
     frequentSource?: FrequentSource;
+    /** 検索ページから開いた (記録したら検索の「最近」に入れる。PRD §6.5.4)。 */
+    viaSearch?: boolean;
   }>({ visible: false });
   /** Called when IdentityLogSheet is dismissed via × / backdrop (not on save). */
   const identityLogSheetOnDismissRef = useRef<(() => void) | null>(null);
@@ -511,6 +518,8 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
         sourceTab?: QuickLogTabKey;
         /** ⭐️ タブのピルから開くとき。ピン留め由来か自動由来かを記録時の計測に引き継ぐ。 */
         frequentSource?: FrequentSource;
+        /** 検索ページから開くとき。記録したら検索の「最近」に入れる。 */
+        viaSearch?: boolean;
         onDismiss?: () => void;
       }
     ) => {
@@ -533,6 +542,7 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
         editingLogId: opts?.editingLogId,
         sourceTab: opts?.sourceTab,
         frequentSource: opts?.frequentSource,
+        viaSearch: opts?.viaSearch,
       });
     },
     []
@@ -573,6 +583,7 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       identityLogSheetOnDismissRef.current = null; // save — onDismiss should not fire
       const editingLogId = opts?.editingLogId ?? identityLogSheet.editingLogId;
       const sourceTab = opts?.sourceTab ?? identityLogSheet.sourceTab;
+      const viaSearch = !editingLogId && identityLogSheet.viaSearch === true;
       const frequentSource = sourceTab === 'frequent' ? (opts?.frequentSource ?? identityLogSheet.frequentSource) : undefined;
 
       // Edit-mode: update the existing FoodLog in place (preserve id/date/timestamp/mealSlot).
@@ -648,6 +659,14 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
         tabUsageCounts: nextTabUsageCounts,
         currentDefaultTab: nextDefaultTab,
         diagnostics: nextDiagnostics,
+        // 検索から選んで記録したものだけ「最近」に入れる (9ボタン・⭐️経由は入れない)
+        searchRecents: viaSearch
+          ? pushSearchRecent(settings.searchRecents, {
+              kind: 'identity',
+              id: log.originIdentityId ?? log.identityId ?? log.subTypeKey ?? log.categoryKey,
+              atISO: log.timestamp,
+            })
+          : settings.searchRecents,
       };
       setSettings(nextSettings);
       persist(profile, [log, ...logs], nextSettings, weights, bodyFatEntries);
@@ -656,7 +675,7 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       setIdentityLogSheet({ visible: false });
       return log;
     },
-    [identityLogSheet.editingLogId, identityLogSheet.sourceTab, identityLogSheet.frequentSource, logs, replaceLog, applyLoggingDate, pushLog, settings, setSettings, persist, profile, weights, bodyFatEntries]
+    [identityLogSheet.editingLogId, identityLogSheet.sourceTab, identityLogSheet.frequentSource, identityLogSheet.viaSearch, logs, replaceLog, applyLoggingDate, pushLog, settings, setSettings, persist, profile, weights, bodyFatEntries]
   );
 
   /**
@@ -779,6 +798,90 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       updateSettingsValues({ frequentPins: movePinTo(settings.frequentPins, identityId, toIndex) });
     },
     [settings.frequentPins, updateSettingsValues]
+  );
+
+  // ---------------------------------------------------------------------------
+  // My食品 (PRD §6.5.4)。純ロジックは utils/my-foods.ts。
+  // 記録 (logs) と設定を同じ保存にまとめて書く (別々に書くと、古い値で上書きし合う)。
+  // ---------------------------------------------------------------------------
+
+  /** My食品の一覧を差し替える (編集・削除・記録を伴わない保存)。 */
+  const setMyFoods = useCallback(
+    (next: MyFood[]) => {
+      updateSettingsValues({ myFoods: next });
+    },
+    [updateSettingsValues]
+  );
+
+  /**
+   * 数値入力の記録 (DirectInputSheet) を保存する。名前つきで My食品へも残すときは、
+   * 更新後の My食品の一覧 (utils/my-foods.ts の saveMyFood / overwriteMyFood の結果) を渡す。
+   * `savedNew` / `savedLayer1`: 新規に作ったか / そのとき名前が検索の層1で DB に着地していたか (診断用)。
+   */
+  const recordDirectInputLog = useCallback(
+    async (
+      log: FoodLog,
+      opts?: { myFoods?: MyFood[]; savedNew?: boolean; savedLayer1?: boolean },
+    ) => {
+      await pushLog(log);
+      if (!opts?.myFoods) return;
+      let diagnostics = settings.diagnostics;
+      if (opts.savedNew) {
+        diagnostics = bumpDiagnosticCounter(diagnostics, 'myFoodSavedCount');
+        if (opts.savedLayer1) diagnostics = bumpDiagnosticCounter(diagnostics, 'myFoodSavedLayer1Count');
+      }
+      const nextSettings: AppSettings = { ...settings, myFoods: opts.myFoods, diagnostics };
+      setSettings(nextSettings);
+      persist(profile, [log, ...logs], nextSettings, weights, bodyFatEntries);
+    },
+    [bodyFatEntries, logs, persist, profile, pushLog, settings, setSettings, weights]
+  );
+
+  /**
+   * My食品を「1回分 × 倍率」で記録する。保存値は変えず、最近使った時刻を更新する。
+   * source: 'frequent' = ⭐️タブの下段 (棚) / 'search' = 検索ページ (「最近」に入れる) / 'list' = My食品ページ
+   */
+  const recordMyFood = useCallback(
+    async (foodId: string, multiplier: number, source: 'frequent' | 'search' | 'list') => {
+      const food = (settings.myFoods ?? []).find((f) => f.id === foodId);
+      if (!food) {
+        console.log('[app-state] recordMyFood: unknown my food', foodId);
+        return null;
+      }
+      const now = new Date();
+      const baseLog: FoodLog = {
+        id: generateId('log'),
+        date: formatDateKey(now),
+        timestamp: now.toISOString(),
+        mealSlot: getMealSlot(now),
+        mode: 'ingredient',
+        categoryKey: DIRECT_INPUT_CATEGORY_KEY,
+        categoryLabel: food.name,
+        amountLabel: myFoodAmountLabel(food, multiplier),
+        macro: myFoodMacro(food, multiplier),
+      };
+      const log = applyLoggingDate(baseLog);
+      await pushLog(log);
+      const nextTabUsageCounts = source === 'frequent' ? recordTabUsage(settings.tabUsageCounts, 'frequent') : settings.tabUsageCounts;
+      const nextSettings: AppSettings = {
+        ...settings,
+        myFoods: touchMyFood(settings.myFoods, foodId, log.timestamp),
+        tabUsageCounts: nextTabUsageCounts,
+        currentDefaultTab:
+          source === 'frequent' && nextTabUsageCounts
+            ? deriveDefaultTab(settings.quickLogHistory as QuickLogHistoryMap | undefined, nextTabUsageCounts, settings.currentDefaultTab)
+            : settings.currentDefaultTab,
+        diagnostics: source === 'frequent' ? bumpDiagnosticCounter(settings.diagnostics, 'myFoodShelfTapCount') : settings.diagnostics,
+        searchRecents:
+          source === 'search'
+            ? pushSearchRecent(settings.searchRecents, { kind: 'myFood', id: foodId, atISO: log.timestamp })
+            : settings.searchRecents,
+      };
+      setSettings(nextSettings);
+      persist(profile, [log, ...logs], nextSettings, weights, bodyFatEntries);
+      return log;
+    },
+    [applyLoggingDate, bodyFatEntries, logs, persist, profile, pushLog, settings, setSettings, weights]
   );
 
   /** 自動分を ⭐️ に「表示しない」 / 戻す。 */
@@ -1637,6 +1740,9 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     moveFrequentPin,
     moveFrequentPinTo,
     setFrequentHidden,
+    setMyFoods,
+    recordDirectInputLog,
+    recordMyFood,
     // KPI計装 Layer 1 (docs/ROADMAP.md §3.0)
     recordSearchMissEvent,
     bumpDiagnostic,

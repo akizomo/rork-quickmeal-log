@@ -26,6 +26,9 @@ export function emptyDiagnostics(): DiagnosticsData {
     widgetLogCount: 0,
     frequentPinnedTapCount: 0,
     frequentAutoTapCount: 0,
+    myFoodShelfTapCount: 0,
+    myFoodSavedCount: 0,
+    myFoodSavedLayer1Count: 0,
   };
 }
 
@@ -75,7 +78,10 @@ export type DiagnosticCounterKey =
   | 'directInputOpenCount'
   | 'widgetLogCount'
   | 'frequentPinnedTapCount'
-  | 'frequentAutoTapCount';
+  | 'frequentAutoTapCount'
+  | 'myFoodShelfTapCount'
+  | 'myFoodSavedCount'
+  | 'myFoodSavedLayer1Count';
 
 /** カウンタ系フィールドを +1 する。 */
 export function bumpDiagnosticCounter(
@@ -123,6 +129,9 @@ export function castDiagnostics(input: unknown): DiagnosticsData {
     widgetLogCount: num(raw.widgetLogCount),
     frequentPinnedTapCount: num(raw.frequentPinnedTapCount),
     frequentAutoTapCount: num(raw.frequentAutoTapCount),
+    myFoodShelfTapCount: num(raw.myFoodShelfTapCount),
+    myFoodSavedCount: num(raw.myFoodSavedCount),
+    myFoodSavedLayer1Count: num(raw.myFoodSavedLayer1Count),
   };
 }
 
