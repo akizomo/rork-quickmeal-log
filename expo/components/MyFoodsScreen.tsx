@@ -9,7 +9,7 @@ import { useIsFocused, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useRef } from 'react';
 import { Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
 
-import { Body, Button, Card, Icon, Label, useTheme } from '@/design-system';
+import { Body, Button, Card, IconButton, Label, useTheme } from '@/design-system';
 import { useLocale } from '@/hooks/useLocale';
 import { buildMyFoodShareText } from '@/utils/my-food-landing';
 import { useT } from '@/hooks/useT';
@@ -47,6 +47,9 @@ export function MyFoodsScreen() {
     }
   }, [isFocused, router]);
 
+  const openFood = (food: { id: string }) =>
+    router.push({ pathname: '/my-food-log', params: { id: food.id, source: 'list' } });
+
   return (
     <ScrollView
       style={{ backgroundColor: t.colors.surface.default }}
@@ -61,23 +64,33 @@ export function MyFoodsScreen() {
       ) : (
         <Card variant="raised" style={styles.listCard}>
           {foods.map((food, index) => (
-            <Pressable
+            // 行 (押せる領域) と「+」は兄弟にする。Pressable の中に Pressable を入れ子にしない (Web で button の入れ子になる)
+            <View
               key={food.id}
-              onPress={() => router.push({ pathname: '/my-food-log', params: { id: food.id, source: 'list' } })}
-              accessibilityRole="button"
-              style={({ pressed }) => [
+              style={[
                 styles.row,
                 { borderTopWidth: index > 0 ? StyleSheet.hairlineWidth : 0, borderTopColor: t.colors.border.subtle },
-                pressed ? { opacity: 0.6 } : null,
               ]}
-              testID={`my-food-row-${food.id}`}
             >
-              <View style={{ flex: 1 }}>
+              <Pressable
+                onPress={() => openFood(food)}
+                accessibilityRole="button"
+                style={({ pressed }) => [styles.rowMain, pressed ? { opacity: 0.6 } : null]}
+                testID={`my-food-row-${food.id}`}
+              >
                 <Label numberOfLines={1}>{food.name}</Label>
-                <Body size="sm" tone="secondary">{formatMyFoodSummary(food, tr)}</Body>
-              </View>
-              <Icon name="chevronRight" size={16} color={t.colors.content.tertiary} />
-            </Pressable>
+                <Body size="sm" tone="secondary">{formatMyFoodSummary(food)}</Body>
+              </Pressable>
+              {/* 押すと倍率の記録の画面が開く = 「追加」の入口だと分かるように */}
+              <IconButton
+                icon="add"
+                variant="outlined"
+                size="sm"
+                tone="action"
+                onPress={() => openFood(food)}
+                accessibilityLabel={tr('myFoods.addA11y', { name: food.name })}
+              />
+            </View>
           ))}
         </Card>
       )}
@@ -105,7 +118,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    paddingVertical: 12,
     minHeight: 56,
+  },
+  rowMain: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingVertical: 12,
   },
 });

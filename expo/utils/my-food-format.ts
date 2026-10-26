@@ -1,15 +1,13 @@
 /**
  * My食品の表示用の文字列 (名前の下の「200 kcal · 1本」など)。
- * 単位名があれば添え、無ければ「1回分」。tr は useT の翻訳関数。
+ * 単位名があれば添え、無ければ kcal だけ (「1回分」とは書かない。何の1回分か伝わらなかった)。
  */
 import type { MyFood } from '@/types/my-food';
 
-type Tr = (key: string, params?: Record<string, string | number>) => string;
-
-/** 「200 kcal · 1本」。単位名が無いときは「200 kcal · 1回分」。 */
-export function formatMyFoodSummary(food: MyFood, tr: Tr): string {
-  const unit = food.unitLabel ? `1${food.unitLabel}` : tr('myFoods.perServing');
-  return `${Math.round(food.kcal)} kcal · ${unit}`;
+/** 「200 kcal · 1本」。単位名が無いときは「200 kcal」。 */
+export function formatMyFoodSummary(food: MyFood): string {
+  const kcal = `${Math.round(food.kcal)} kcal`;
+  return food.unitLabel ? `${kcal} · 1${food.unitLabel}` : kcal;
 }
 
 /** 「P10 · F5 · C40」。未入力 (null) は「—」。 */

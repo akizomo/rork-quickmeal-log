@@ -670,11 +670,6 @@
     }
   },
   "settings": {
-    "myFoods": {
-      "title": "My Foods",
-      "row": "My Foods",
-      "count": "{{count}}"
-    },
     "theme": {
       "title": "Theme",
       "system": "System",
@@ -757,8 +752,9 @@
     "frequent": {
       "edit": "Edit",
       "editA11y": "Edit favorites",
-      "ingredientsHeading": "Often logged",
+      "ingredientsHeading": "Favorites",
       "myFoodsHeading": "My Foods",
+      "myFoodAddA11y": "Log {{name}}",
       "myFoodsAll": "All {{count}}",
       "myFoodHint": "Tap to log one serving. Long-press to pick an amount."
     },
@@ -794,14 +790,14 @@
   },
   "myFoods": {
     "title": "My Foods",
-    "share": "Send names to the developer",
-    "shareNote": "Only the names shown here are sent, and only when you tap. No numbers or logs are included. It helps us add foods that search is missing.",
+    "addA11y": "Log {{name}}",
+    "share": "Share My Foods names",
+    "shareNote": "Foods that search could not find are candidates to add to the app. If you like, share just the names listed here. No numbers or logs are included.",
     "empty": "Foods you enter by numbers stay here. Name one when you log it, and you can pick it next time.",
-    "perServing": "1 serving",
     "record": "Log",
     "editEntry": "Edit",
     "editTitle": "Edit My Food",
-    "perServingTitle": "Per serving",
+    "perServingTitle": "Calories and PFC",
     "unitTitle": "Unit name (optional)",
     "unitPlaceholder": "e.g. 1 bar, 1 cup",
     "duplicate": "That name already exists",
@@ -1093,6 +1089,7 @@
   },
   "search": {
     "recents": "Recent",
+    "myFoodAddA11y": "Log {{name}}",
     "myFoodsLink": "My Foods ({{count}})",
     "myFoodsHeading": "My Foods",
     "title": "Search food",

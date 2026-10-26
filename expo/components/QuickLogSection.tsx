@@ -470,29 +470,43 @@ const FrequentTwoTier = memo(function FrequentTwoTier({
         testID="frequent-my-foods"
       >
         {shelf.map((food, index) => (
-          <Pressable
+          <View
             key={food.id}
-            onPress={() => void recordMyFood(food.id, 1, 'frequent')}
-            onLongPress={() => router.push({ pathname: '/my-food-log', params: { id: food.id, source: 'list' } })}
-            delayLongPress={320}
-            accessibilityRole="button"
-            accessibilityHint={tr('quicklog.frequent.myFoodHint')}
-            style={({ pressed }) => [
+            style={[
               styles.shelfRow,
               {
                 borderTopWidth: index > 0 ? StyleSheet.hairlineWidth : 0,
                 borderTopColor: t.colors.border.subtle,
-                paddingHorizontal: t.spacing['4'],
-                opacity: pressed ? 0.6 : 1,
+                paddingLeft: t.spacing['4'],
+                paddingRight: t.spacing['3'],
               },
             ]}
-            testID={`frequent-my-food-${food.id}`}
           >
-            <Label size="sm" numberOfLines={1} style={{ flex: 1 }}>{food.name}</Label>
-            <Body size="sm" tone="secondary" numberOfLines={1}>
-              {food.unitLabel ? `1${food.unitLabel} · ` : ''}{`${Math.round(food.kcal)} kcal`}
-            </Body>
-          </Pressable>
+            <Pressable
+              onPress={() => void recordMyFood(food.id, 1, 'frequent')}
+              onLongPress={() => router.push({ pathname: '/my-food-log', params: { id: food.id, source: 'list' } })}
+              delayLongPress={320}
+              accessibilityRole="button"
+              accessibilityHint={tr('quicklog.frequent.myFoodHint')}
+              style={({ pressed }) => [styles.shelfRowMain, { opacity: pressed ? 0.6 : 1 }]}
+              testID={`frequent-my-food-${food.id}`}
+            >
+              <Label size="sm" numberOfLines={1} style={{ flex: 1 }}>{food.name}</Label>
+              <Body size="sm" tone="secondary" numberOfLines={1}>
+                {food.unitLabel ? `1${food.unitLabel} · ` : ''}{`${Math.round(food.kcal)} kcal`}
+              </Body>
+            </Pressable>
+            {/* 押すと記録される = 「追加」だと分かるように。行全体も同じ動作 (長押しは量の選択) */}
+            <IconButton
+              icon="add"
+              variant="outlined"
+              size="sm"
+              tone="action"
+              onPress={() => void recordMyFood(food.id, 1, 'frequent')}
+              accessibilityLabel={tr('quicklog.frequent.myFoodAddA11y', { name: food.name })}
+              testID={`frequent-my-food-add-${food.id}`}
+            />
+          </View>
         ))}
       </View>
     </View>
@@ -727,6 +741,13 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   shelfRow: {
+    height: SHELF_ROW_HEIGHT,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  shelfRowMain: {
+    flex: 1,
     height: SHELF_ROW_HEIGHT,
     flexDirection: 'row',
     alignItems: 'center',

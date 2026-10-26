@@ -337,37 +337,6 @@ export function DirectInputSheet() {
           )}
         </View>
 
-        {/* My食品に保存 (名前があるときだけ。PRD §6.5.4) */}
-        {canOfferMyFood ? (
-          <View style={{ gap: t.spacing['2'] }}>
-            <View style={styles.switchRow}>
-              <View style={{ flex: 1 }}>
-                <Label>{tr('directInput.myFood.switchLabel')}</Label>
-                <Body size="sm" tone="secondary">{tr('directInput.myFood.switchHint')}</Body>
-              </View>
-              <Switch
-                value={saveToMyFood}
-                onValueChange={setSaveToMyFood}
-                accessibilityLabel={tr('directInput.myFood.switchLabel')}
-                testID="direct-input-save-my-food"
-              />
-            </View>
-            {landing ? (
-              <Pressable
-                onPress={handleOpenLanding}
-                accessibilityRole="button"
-                style={({ pressed }) => [styles.landingRow, { opacity: pressed ? 0.5 : 1 }]}
-                testID="direct-input-landing"
-              >
-                <Label size="sm" tone="link" numberOfLines={1} style={{ flexShrink: 1 }}>
-                  {tr('directInput.myFood.alreadyExists', { name: landing.entry.identity.label })}
-                </Label>
-                <Icon name="chevronRight" size={16} color={t.colors.action.text.default} />
-              </Pressable>
-            ) : null}
-          </View>
-        ) : null}
-
         {/* カロリー */}
         <View style={{ gap: t.spacing['2'] }}>
           <Overline tone="secondary">{tr('directInput.sections.kcal')}</Overline>
@@ -413,6 +382,37 @@ export function DirectInputSheet() {
           </View>
           <Body size="sm" tone="secondary">{tr('directInput.gramUnit')}</Body>
         </View>
+
+        {/* My食品に保存 (名前があるときだけ。PRD §6.5.4)。入力を終えてから決める付け足しなので、一番下 */}
+        {canOfferMyFood ? (
+          <View style={{ gap: t.spacing['2'] }}>
+            <View style={styles.switchRow}>
+              <View style={{ flex: 1 }}>
+                <Label>{tr('directInput.myFood.switchLabel')}</Label>
+                <Body size="sm" tone="secondary">{tr('directInput.myFood.switchHint')}</Body>
+              </View>
+              <Switch
+                value={saveToMyFood}
+                onValueChange={setSaveToMyFood}
+                accessibilityLabel={tr('directInput.myFood.switchLabel')}
+                testID="direct-input-save-my-food"
+              />
+            </View>
+            {landing ? (
+              <Pressable
+                onPress={handleOpenLanding}
+                accessibilityRole="button"
+                style={({ pressed }) => [styles.landingRow, { opacity: pressed ? 0.5 : 1 }]}
+                testID="direct-input-landing"
+              >
+                <Label size="sm" tone="link" numberOfLines={1} style={{ flexShrink: 1 }}>
+                  {tr('directInput.myFood.alreadyExists', { name: landing.entry.identity.label })}
+                </Label>
+                <Icon name="chevronRight" size={16} color={t.colors.action.text.default} />
+              </Pressable>
+            ) : null}
+          </View>
+        ) : null}
       </View>
     </SheetScreen>
   );

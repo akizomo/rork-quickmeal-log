@@ -30,6 +30,7 @@ import {
   Card,
   Chip,
   Icon,
+  IconButton,
   Label,
   Overline,
   useTheme,
@@ -109,24 +110,35 @@ function SearchResultRow({
 function MyFoodRow({ food, onPress }: { food: MyFood; onPress: (food: MyFood) => void }) {
   const t = useTheme();
   const tr = useT();
+  // 行 (押せる領域) と「+」は兄弟にする。Pressable の中に Pressable を入れ子にしない (Web で button の入れ子になる)
   return (
-    <Pressable
-      onPress={() => onPress(food)}
-      accessibilityRole="button"
-      style={({ pressed }) => [
-        styles.resultRow,
-        {
-          paddingVertical: t.spacing['3'],
-          paddingHorizontal: t.spacing['2'],
-          borderRadius: t.radius.sm,
-          backgroundColor: pressed ? t.colors.surface.raised : 'transparent',
-        },
-      ]}
-      testID={`search-my-food-${food.id}`}
-    >
-      <Body numberOfLines={1} style={{ flexShrink: 1 }}>{food.name}</Body>
-      <Caption tone="secondary">{formatMyFoodSummary(food, tr)}</Caption>
-    </Pressable>
+    <View style={[styles.resultRow, { paddingLeft: t.spacing['2'], paddingRight: t.spacing['1'], gap: t.spacing['2'] }]}>
+      <Pressable
+        onPress={() => onPress(food)}
+        accessibilityRole="button"
+        style={({ pressed }) => [
+          styles.resultRowMain,
+          {
+            paddingVertical: t.spacing['3'],
+            borderRadius: t.radius.sm,
+            backgroundColor: pressed ? t.colors.surface.raised : 'transparent',
+          },
+        ]}
+        testID={`search-my-food-${food.id}`}
+      >
+        <Body numberOfLines={1} style={{ flexShrink: 1 }}>{food.name}</Body>
+        <Caption tone="secondary">{formatMyFoodSummary(food)}</Caption>
+      </Pressable>
+      {/* 押すと記録の画面が開く = 「追加」の入口だと分かるように */}
+      <IconButton
+        icon="add"
+        variant="outlined"
+        size="sm"
+        tone="action"
+        onPress={() => onPress(food)}
+        accessibilityLabel={tr('search.myFoodAddA11y', { name: food.name })}
+      />
+    </View>
   );
 }
 
@@ -314,9 +326,6 @@ export function SearchScreen() {
   const hasMaybe = maybeResults.length > 0 || vocabularyMatches.length > 0;
   const hasHints = categoryHints.length > 0;
   const noMatch = !isEmpty && !hasConfident && !hasMaybe && !hasHints && myFoodResults.length === 0 && !findNegligible(debounced, locale);
-  // 層1 (confident) が無い = 探し物が見つかっていない可能性が高い。このときは
-  // 「数値で入力する」を末尾の小さなリンクではなくボタンとして出す (§4.4)。
-  const showDirectInputCta = !isEmpty && !hasConfident;
   // 「記録しなくていい」語 (お茶・ブラックコーヒー・調味料…) は、見つからなかったのではなく
   // 記録不要と案内する。完全一致のみ。未ヒット診断にも数えない (DB拡張の候補ではないため)。
   const negligible = useMemo(() => (isEmpty ? null : findNegligible(debounced, locale)), [debounced, isEmpty, locale]);
@@ -508,34 +517,19 @@ export function SearchScreen() {
           </Body>
         ) : null}
 
-        {showDirectInputCta ? (
-          /* 数値で入力する — 見つからなかったときの CTA */
-          <View style={{ marginTop: t.spacing['5'], gap: t.spacing['2'], alignItems: 'flex-start' }}>
-            <Body size="sm" tone="secondary">{tr('search.notFoundPrompt')}</Body>
-            <Button
-              variant="secondary"
-              size="sm"
-              label={tr('search.enterManually')}
-              leading={<Icon name="edit" size={16} color={t.colors.content.primary} />}
-              onPress={handleOpenDirectInput}
-              accessibilityLabel={tr('search.enterManuallyA11y')}
-              testID="search-direct-input-cta"
-            />
-          </View>
-        ) : (
-          /* 数値で入力する — 常設テキストリンク (見つかっているときは控えめに) */
-          <View style={{ marginTop: t.spacing['5'], flexDirection: 'row', alignItems: 'center', gap: t.spacing['1'] }}>
-            <Body size="sm" tone="secondary">{tr('search.notFoundPrompt')}</Body>
-            <Pressable
-              onPress={handleOpenDirectInput}
-              style={({ pressed }) => ({ opacity: pressed ? 0.5 : 1 })}
-              accessibilityRole="button"
-              accessibilityLabel={tr('search.enterManuallyA11y')}
-            >
-              <Label size="sm" tone="link">{tr('search.enterManually')}</Label>
-            </Pressable>
-          </View>
-        )}
+        {/* 数値で入力する — 見つからなかったときも、見つかっているときも同じボタン (見た目を揃える) */}
+        <View style={{ marginTop: t.spacing['5'], gap: t.spacing['2'], alignItems: 'flex-start' }}>
+          <Body size="sm" tone="secondary">{tr('search.notFoundPrompt')}</Body>
+          <Button
+            variant="secondary"
+            size="sm"
+            label={tr('search.enterManually')}
+            leading={<Icon name="edit" size={16} color={t.colors.content.primary} />}
+            onPress={handleOpenDirectInput}
+            accessibilityLabel={tr('search.enterManuallyA11y')}
+            testID="search-direct-input-cta"
+          />
+        </View>
       </ScrollView>
     </>
   );
@@ -549,6 +543,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  resultRowMain: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
   },
   resultRowStacked: {
     flexDirection: 'column',

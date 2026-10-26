@@ -7,13 +7,13 @@
 export interface MyFood {
   id: string;
   name: string;
-  /** 「1回分」あたり */
+  /** 1回に食べる量あたり (記録の「× 倍率」の基準) */
   kcal: number;
   /** 未入力は null (直接入力と同じく PFC は任意) */
   protein: number | null;
   fat: number | null;
   carbs: number | null;
-  /** 「1本」「1杯」などの任意の単位名。無ければ「1回分」と表示する */
+  /** 「1本」「1杯」などの任意の単位名。無ければ単位は書かず kcal だけ表示する */
   unitLabel?: string;
   createdAtISO: string;
   /** 記録・保存のたびに更新。「最近使った順」の並びに使う */

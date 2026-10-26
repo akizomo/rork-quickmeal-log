@@ -670,11 +670,6 @@
     }
   },
   "settings": {
-    "myFoods": {
-      "title": "My食品",
-      "row": "My食品",
-      "count": "{{count}}件"
-    },
     "theme": {
       "title": "テーマ",
       "system": "端末に合わせる",
@@ -757,8 +752,9 @@
     "frequent": {
       "edit": "編集",
       "editA11y": "お気に入りの並びを編集",
-      "ingredientsHeading": "よく記録する食材",
+      "ingredientsHeading": "お気に入り",
       "myFoodsHeading": "My食品",
+      "myFoodAddA11y": "{{name}}を記録",
       "myFoodsAll": "すべて {{count}}件",
       "myFoodHint": "タップで1回分を記録。長押しで量を選ぶ"
     },
@@ -794,14 +790,14 @@
   },
   "myFoods": {
     "title": "My食品",
-    "share": "名前を開発者に送る",
-    "shareNote": "ここに出ている名前だけを、押したときだけ送ります。数値や記録は含みません。検索に足りない食品を増やす手がかりになります。",
+    "addA11y": "{{name}}を記録",
+    "share": "My食品の名前を共有",
+    "shareNote": "検索で見つからなかった食品は、アプリに足していく候補になります。よければ、ここに並んでいる名前だけを共有してください。数値や記録は含みません。",
     "empty": "数値で入力した食品は、ここに残ります。名前をつけて記録すると、次から選べます。",
-    "perServing": "1回分",
     "record": "記録",
     "editEntry": "編集",
     "editTitle": "My食品を編集",
-    "perServingTitle": "1回分の値",
+    "perServingTitle": "カロリーとPFC",
     "unitTitle": "単位名 (任意)",
     "unitPlaceholder": "例: 1本、1杯",
     "duplicate": "同じ名前があります",
@@ -1093,6 +1089,7 @@
   },
   "search": {
     "recents": "最近",
+    "myFoodAddA11y": "{{name}}を記録",
     "myFoodsLink": "My食品 {{count}}件",
     "myFoodsHeading": "My食品",
     "title": "食品を検索",

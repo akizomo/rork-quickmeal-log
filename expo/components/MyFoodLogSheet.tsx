@@ -52,7 +52,7 @@ export default function MyFoodLogRoute() {
       <View style={{ gap: t.spacing['5'] }}>
         <View style={styles.header}>
           <View style={{ flex: 1 }}>
-            <Body size="sm" tone="secondary">{formatMyFoodSummary(food, tr)}</Body>
+            <Body size="sm" tone="secondary">{formatMyFoodSummary(food)}</Body>
             <Body size="sm" tone="secondary">{formatMyFoodPfc(food)}</Body>
           </View>
           <Button
