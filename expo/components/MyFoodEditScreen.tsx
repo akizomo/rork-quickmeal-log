@@ -13,7 +13,7 @@
  */
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 
 import { MyFoodValueFields, myFoodValueStrings, parseMyFoodValues } from '@/components/MyFoodValueFields';
 import {
@@ -22,6 +22,7 @@ import {
   Overline,
   SettingsLinkRow,
   SettingsListCard,
+  Switch,
   useTheme,
 } from '@/design-system';
 import { useT } from '@/hooks/useT';

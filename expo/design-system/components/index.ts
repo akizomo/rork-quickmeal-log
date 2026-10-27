@@ -12,6 +12,8 @@ export { NumberField } from './NumberField';
 export type { NumberFieldProps } from './NumberField';
 export { SelectCard } from './SelectCard';
 export type { SelectCardProps } from './SelectCard';
+export { Switch } from './Switch';
+export type { SwitchProps } from './Switch';
 export { Chip } from './Chip';
 export type { ChipProps, ChipSize } from './Chip';
 export { Badge } from './Badge';

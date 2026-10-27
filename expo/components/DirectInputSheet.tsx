@@ -16,9 +16,9 @@
 
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, Pressable, StyleSheet, Switch, TextInput, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
-import { Body, Icon, Label, Overline, SheetScreen, useTheme } from '@/design-system';
+import { Body, Icon, Label, Overline, SheetScreen, Switch, useTheme } from '@/design-system';
 import { useLocale } from '@/hooks/useLocale';
 import { findLayer1Landing } from '@/utils/my-food-landing';
 import { findMyFoodByName, overwriteMyFood, saveMyFood } from '@/utils/my-foods';

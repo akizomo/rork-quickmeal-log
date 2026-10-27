@@ -649,15 +649,17 @@
         "footnote2": "Soups such as miso soup and tonjiru are under \"Set meal / Single dish / Soup\"."
       },
       "future": {
-        "body": "The more you log, the easier it becomes to find your go-to foods and dishes.",
+        "body": "The more you log, the easier your usual foods are to find.",
         "starTitle": "⭐️ Favorites tab",
-        "starBody": "Switch to the ⭐️ tab to see your most-used items at the top. Tap straight through your usual combination without searching.",
+        "starBody": "Starred items come first. The rest fills with what you log most.",
+        "myFoodTitle": "My Foods",
+        "myFoodBody": "Not in search? Enter the numbers and give it a name. Next time, pick it from search.",
         "defaultTitle": "Default tab on launch",
-        "defaultBody": "The tab shown when you open the app automatically shifts to whichever tab you use most."
+        "defaultBody": "The tab shown at launch switches to the one you use most."
       },
       "faq": {
         "q1": "What if the portion isn't exactly right?",
-        "a1": "Logging at a standard serving is fine. You can adjust to large or small after tapping. The design prioritizes \"easy to keep up\" over precision.",
+        "a1": "Logging at a standard serving is fine. To change the amount, long-press to open the logging screen and adjust it there. The design prioritizes \"easy to keep up\" over precision.",
         "q2": "Isn't one button too rough with multiple foods inside?",
         "a2": "Foods within each button are chosen so that typical portions land in roughly the same calorie range as the tap value. You can check the range in the \"Ingredient button contents\" and \"Dish button contents\" steps.",
         "q3": "Can't I log with a photo?",

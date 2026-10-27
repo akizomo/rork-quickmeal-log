@@ -1,12 +1,12 @@
 import { Stack, useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import React from 'react';
-import { Alert, Linking, Platform, ScrollView, StyleSheet, Switch, View } from 'react-native';
+import { Alert, Linking, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useT } from '@/hooks/useT';
 
 import { SettingsDivider, SettingsLinkRow, SettingsListCard, SettingsSectionLabel } from '@/design-system';
-import { Body, Icon, Label, useTheme } from '@/design-system';
+import { Body, Icon, Label, Switch, useTheme } from '@/design-system';
 import { useAppState } from '@/providers/app-state-provider';
 import { PAYWALL_SKIP_ENABLED } from '@/constants/iap';
 import { useLocale } from '@/hooks/useLocale';

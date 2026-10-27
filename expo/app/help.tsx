@@ -307,6 +307,10 @@ function StepContent({ stepKey }: { stepKey: string }) {
             <Body>{tr('help.content.future.starBody')}</Body>
           </View>
           <View style={styles.subsection}>
+            <Body style={styles.h3}>{tr('help.content.future.myFoodTitle')}</Body>
+            <Body>{tr('help.content.future.myFoodBody')}</Body>
+          </View>
+          <View style={styles.subsection}>
             <Body style={styles.h3}>{tr('help.content.future.defaultTitle')}</Body>
             <Body>{tr('help.content.future.defaultBody')}</Body>
           </View>
