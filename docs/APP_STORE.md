@@ -28,7 +28,7 @@
 ### A. 契約・口座 (最優先・待ち時間あり)
 - [x] App Store Connect > ビジネス で **有料 App 契約 (Paid Apps Agreement)** に同意 (2026-10-16)
 - [x] 銀行口座・税務情報 (W-8BEN 等) を登録 (2026-10-16 提出完了: 口座・W-8BEN (日米条約12条 0%)・米国外ステータス証明書。**契約ステータスは「有効」になった (2026-10-18 ユーザー申告)**) → Sandbox 購入テストが可能になった
-- [ ] 配信地域を決める (推奨: **まず日本のみ**。EU を含めると DSA のトレーダー申告が必要で、個人は住所が公開される)
+- [x] 配信地域を決める (推奨: **まず日本のみ**。EU を含めると DSA のトレーダー申告が必要で、個人は住所が公開される) — 2026-10-27 の提出時に設定 (日本のみで案内。実際の設定は App Store Connect で要確認)
 
 ### B. App Store Connect の初期設定
 - [x] Certificates, Identifiers & Profiles で App ID `app.akizony.hachibu` を作成し **HealthKit** capability を ON (EAS が自動作成する場合もあるが、HealthKit が付いているか確認)
@@ -41,7 +41,7 @@
   - `hachibu_premium_monthly` (1か月)
   - `hachibu_premium_annual` (1年)
 - [x] 価格を Android 版と揃えて設定、両方に **お試しオファー: 7日間無料** を付与
-- [ ] 各プロダクトの審査用スクリーンショット (paywall の画面) と表示名を登録
+- [x] 各プロダクトの審査用スクリーンショット (paywall の画面) と表示名を登録 (2026-10-27。**暫定で 10-18 の古い実機画像 (英語・ドル建て) を使った**。日本語・円建ての実機画像への差し替えは次の版か、審査で聞かれたときに)
 - [x] App Store Connect で **App 内課金用の共有シークレット** or **In-App Purchase Key (.p8)** を発行
 
 ### D. RevenueCat
@@ -68,11 +68,11 @@
 - [ ] (任意) 外部 TestFlight で数人に配布 → ベータ版審査が1回入る
 
 ### G. ストア掲載情報の入力 (文言は §4 のドラフトを貼る)
-- [ ] スクリーンショット 6.9インチ (1320×2868) 最低3枚
-- [ ] App のプライバシー (§4-3 の回答表)
-- [ ] 年齢制限の質問票 / カテゴリ (ヘルスケア/フィットネス) / 著作権表記 / サポート URL / プライバシーポリシー URL
-- [ ] バージョンページ下部の「App内課金とサブスクリプション」で 2 プロダクトにチェック (**最初のサブスクはアプリ本体と同時提出が必須**。単独では提出できない)
-- [ ] 審査メモ (§4-4) を貼って **審査へ提出**
+- [x] スクリーンショット 6.9インチ (1320×2868) 3枚 + 6.1/6.3インチ (1206×2622) 3枚 (2026-10-27)。**6.1/6.3インチの欄も必須だった** (提出時に「Dynamic Island (medium) のスクショが必要」と出る)。アルファを含めない (JPEG 書き出し)。素材は [store-assets/ios/ja/](./store-assets/ios/ja/) の生スクショ + 合成画像
+- [x] App のプライバシー (§4-3 の回答表。**購入履歴・ユーザーIDは「ユーザーに紐付く」= はい**に訂正して入力。ほか Crash / Performance / Other Diagnostic Data、Product Interaction は Sentry のパンくず次第で追加)
+- [x] 年齢制限の質問票 / カテゴリ (ヘルスケア/フィットネス) / 著作権表記 / サポート URL / プライバシーポリシー URL / Content Rights (第三者コンテンツ = はい)
+- [x] サブスクを審査提出に追加 (**最初のサブスクはアプリ本体と同時提出が必須**。今の App Store Connect は、バージョンページではなく「Draft Submission」に、サブスクグループとは別に**各商品を「Add for Review」で追加する**)
+- [x] 審査メモ (§4-4) を貼って **審査へ提出** — **2026-10-27 提出** (iOS 1.0.1 ビルド 11)。審査メモからは「カメラ」の1行を除いた (§6 参照)
 
 ---
 
@@ -181,8 +181,8 @@ Apple の定義では「端末外に送信されるもの」だけが「収集�
 
 | データの種類 | 収集 | ユーザーに紐付け | トラッキング | 目的 | 送信先 |
 |---|:---:|:---:|:---:|---|---|
-| 購入 > 購入履歴 | ✅ | いいえ | いいえ | App の機能 | RevenueCat |
-| 識別子 > ユーザ ID | ✅ | いいえ | いいえ | App の機能 | RevenueCat (匿名 ID) |
+| 購入 > 購入履歴 | ✅ | **はい** (2026-10-27 訂正。匿名 ID が端末に残り購入履歴と結びつくため、Apple の定義では「紐付く」側) | いいえ | App の機能 | RevenueCat |
+| 識別子 > ユーザ ID | ✅ | **はい** (同上) | いいえ | App の機能 | RevenueCat (匿名 ID) |
 | 診断 > クラッシュデータ | ✅ | いいえ | いいえ | App の機能 | Sentry |
 | 診断 > パフォーマンスデータ | ✅ | いいえ | いいえ | App の機能 | Sentry (トレース) |
 | ヘルスとフィットネス | ❌ | — | — | — | 端末内のみ |
@@ -190,14 +190,17 @@ Apple の定義では「端末外に送信されるもの」だけが「収集�
 > 要判断: 設定 > フィードバックの「不具合・要望を送る」は、アプリ内ブラウザで Notion の匿名フォームを開く (PRD v1.16 §6.8)。ユーザーが自分で書いた文 (と任意のスクリーンショット) が端末外に出るが、アプリが自動で送るものではなく、名前・メールアドレス・識別子も届かない。申告しない想定だが、気になる場合は「ユーザコンテンツ > その他のユーザコンテンツ」(紐付けなし・App の機能) で申告する。ポリシー本文は変えない。
 >
 > 要判断: バーコード番号の Open Food Facts 送信は個人に紐付かない商品コードのため「収集なし」とする想定。気になる場合は「その他のデータ」で申告する。
+>
+> **2026-10-27 追記**: バーコード画面 ([barcode-log.tsx](../expo/app/barcode-log.tsx)) は**どこからも到達できない** (導線なし。「コード有 ≠ 到達可能」)。今回の審査には出ていない機能なので、Open Food Facts への送信は実際には起きない。公開するときに、導線・出典表示・本節の見直しを一緒にやる (§6)。
 
 ### 4-4. 審査メモ (App Review への注記)
 ```
 Hachibu has no user accounts; all meal and body data is stored only on the device.
 The app starts with a 7-day free trial subscription (auto-renewable). You can test the purchase with a Sandbox account. "Restore Purchase" is available at the bottom of the paywall.
 HealthKit is used read-only (steps, active energy, workouts, weight, body fat %) to adjust the daily calorie target shown on the home screen. Health permission is optional; the app works fully with manual input.
-The camera is used only to scan food barcodes.
 ```
+
+> 2026-10-27: 元の文面にあった「The camera is used only to scan food barcodes.」は、バーコード画面に導線が無く今のビルドで使われないため、審査メモから外した。カメラの許可の説明文 (`expo-camera`) だけ Info.plist に残っている。聞かれたら「バーコード機能用で、今のバージョンでは未公開」と答える。
 
 ---
 
@@ -213,3 +216,37 @@ The camera is used only to scan food barcodes.
 | Health Connect のアクティブカロリー集計 | ✗ `IllegalArgumentException: Either use TimeRangeFilter with LocalDateTime or AggregateGroupByDurationRequest`。歩数と同じ呼び出し形式のため Android 17 エミュレータの挙動の可能性が高い。**SDK 54 でも出るかは未確認** (切り分けには実機か旧ビルドが必要) |
 | Health Connect の実データ取り込み | 未確認 (エミュレータにデータを入れる手段が無い) |
 | リリースビルド (R8 有効) の起動 | 未確認 |
+
+---
+
+## 6. 提出記録と、承認後のやること
+
+### 6-1. 提出記録 (2026-10-27)
+- **提出**: iOS 1.0.1 (ビルド 11)。審査待ち。状態は ROADMAP と同じ3層で、**コード有・提出済・審査結果は未確認 / 実機 (TestFlight) での購入確認は未実施**
+- **掲載情報**: 日本語のみ。価格は無料 (サブスクで課金: 月額 ¥480 / 年額 ¥4,800、7日間無料)。配信は日本のみ (想定)
+- **提出時に分かったこと** (次回以降の手順に効く)
+  - 6.1/6.3インチの欄にもスクショが必須 (6.9インチだけでは「Dynamic Island (medium)」エラー)。1320×2868 を 1206×2622 に縮めても縦横比はほぼ同じ
+  - スクショは**アルファチャンネルを含めない** (JPEG 書き出しが手軽)。1080×1920 (Android 用) は「File dimensions are invalid」で弾かれる
+  - 最初のサブスクは、バージョンページではなく **Draft Submission で各商品を「Add for Review」** する。グループだけでは「New subscription groups must be submitted with an auto-renewable subscription」で止まる。商品ごとに**審査用スクリーンショット**が必要
+  - 年齢制限は、お酒の項目 (alcohol) があるので「お酒・たばこ・薬物への言及」は Infrequent が忠実
+- **提出に含まれた意図外の項目**: Draft Submission に Custom Product Page「default」と App Screenshot 単体が入っていた (意図して作ったものか未確認)
+- **既知の未解決** (審査には出したまま): 週次ふり返りの進捗バーが見出しに重なる不具合の修正 (`baa50ab`、ブランチ `claude/practical-albattani-e8d02d`) は **main に未統合 = ビルド 11 には入っていない**
+
+### 6-2. 承認後にやること
+1. **App Store の URL を確認する**: `https://apps.apple.com/jp/app/id6823520048` (App Store Connect のアプリ ID。公開後に開けるか確認)
+2. **LP (Web) を更新する** — 今は「iPhone 版は準備中」として作ってある ([web/public/index.html](../web/public/index.html))
+   - 「iPhone をお使いなら / On iPhone?」の通知登録ボタン (data-cta="ios-notify"、**2か所**: 冒頭 CTA と末尾 CTA) → **App Store のバッジ + 上記 URL へのリンク**に置き換える (バッジは Apple 公式の「App Store からダウンロード」を使う。自作しない)
+   - 「iPhone の方は、準備が整い次第お知らせします / iPhone version coming soon」の文 (JA/EN 両方) を書き換える
+   - iOS 通知メーリングリストのモーダル (formsubmit.co、`id="form-subject"` 周辺) とその JS (`formSubject` / `data-cta="ios-notify"` のイベント) は**撤去**する
+   - `lp/` のデモ動画・画像は Android 画面のまま。差し替えは任意 (store-assets/ios/ja の画像が使える)
+   - 変更後は Vercel へデプロイ (Web は自動では反映されない)
+3. **通知登録者に1通だけ送る**: LP の登録フォームは formsubmit.co 経由で `contact@akizony.com` に届いている。公開したら、**登録者に「iOS 版を公開した」と1通だけ送る** (LP に「ローンチ時の1通のみ」と約束している。2通目は送らない)
+4. **審査用の素材を整える** (任意): paywall の審査用スクショを日本語・円建ての実機画像に差し替える
+5. **公開後すぐ**: App Store の本番版を入れて、起動 → オンボーディング → paywall の表示 (円の価格) とヘルスケアの許可を確認する。本番の購入は実際に課金されるので、購入と復元の確認は TestFlight (Sandbox) で済ませておく
+
+### 6-3. 次の版の候補 (審査結果を待つ間の準備)
+- 週次ふり返りの表示崩れの修正 (`baa50ab`) を main に統合してビルドする
+- `bun run check:deps` を通す (expo 系パッケージのパッチ版が古い)
+- Sentry の `SENTRY_AUTH_TOKEN` を EAS に登録してスタックトレースを読めるようにする
+- バーコード機能を出すか、カメラの許可の説明文を外すか決める (出す場合は導線・Open Food Facts の出典表示・プライバシー回答の見直し)
+- iOS のアプリ内「更新があります」案内 ([ROADMAP.md](./ROADMAP.md) の未着手項目)
