@@ -355,6 +355,11 @@ export function SearchScreen() {
             autoFocus: true, // Android のみ。iOS は下の useEffect で focus() する
             hideWhenScrolling: false,
             autoCapitalize: 'none',
+            // Android: 色を指定しないと、入力欄の文字・プレースホルダー・検索 / 閉じるアイコンが白で、
+            // 明るいヘッダーの上に出て見えなかった (2026-10-27)。iOS は textColor だけが効く
+            textColor: t.colors.content.primary,
+            hintTextColor: t.colors.content.tertiary,
+            headerIconColor: t.colors.content.primary,
             onChangeText: (e) => setQuery(e.nativeEvent.text),
             onCancelButtonPress: () => {
               setQuery('');
