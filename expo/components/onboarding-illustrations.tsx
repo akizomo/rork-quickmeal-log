@@ -407,14 +407,14 @@ function AnimatedGestureDemoIllustration() {
 // ---------------------------------------------------------------------------
 // FrequentTabIllustration (help §もっと、あなたに合わせて)
 // ---------------------------------------------------------------------------
+// 実物の⭐️タブ (QuickLogSection の FrequentPills) と同じく、名前だけのピルを折り返して並べ、
+// 末尾に「編集」を置く (2026-10-27。以前は頻度の順位バッジ付きの絵文字ボタンで、実物と違っていた)。
 
-type RankButton = { e: string; l: string };
-
-function getRankButtons(tr: ReturnType<typeof useT>): RankButton[] {
+function getPillLabels(tr: ReturnType<typeof useT>): string[] {
   return [
-    { e: '🍚', l: tr('onboarding.illustrations.frequentTab.rice') },
-    { e: '🍜', l: tr('onboarding.illustrations.frequentTab.ramen') },
-    { e: '🥗', l: tr('onboarding.illustrations.frequentTab.salad') },
+    tr('onboarding.illustrations.frequentTab.rice'),
+    tr('onboarding.illustrations.frequentTab.ramen'),
+    tr('onboarding.illustrations.frequentTab.salad'),
   ];
 }
 
@@ -425,7 +425,7 @@ const ACTIVE_TAB_INDEX = 2;
 export function FrequentTabIllustration() {
   const t = useTheme();
   const tr = useT();
-  const RANK_BUTTONS = getRankButtons(tr);
+  const PILL_LABELS = getPillLabels(tr);
   const TAB_SEGMENTS = tr('onboarding.illustrations.tabs', { returnObjects: true }) as string[];
   const { height: screenHeight } = useWindowDimensions();
   const scale = Math.max(0.7, Math.min(1, (screenHeight - 349) / 420));
@@ -452,19 +452,15 @@ export function FrequentTabIllustration() {
           </View>
         ))}
       </View>
-      <View style={frequentStyles.grid}>
-        {RANK_BUTTONS.map((btn, i) => (
-          <View
-            key={i}
-            style={[frequentStyles.btn, { backgroundColor: t.colors.surface.raised, borderColor: t.colors.border.default }]}
-          >
-            <View style={[frequentStyles.rankBadge, { backgroundColor: t.colors.action.primary.default }]}>
-              <Text style={[frequentStyles.rankBadgeText, { color: t.colors.content.onAction }]}>{i + 1}</Text>
-            </View>
-            <Text style={frequentStyles.btnEmoji}>{btn.e}</Text>
-            <Text style={[frequentStyles.btnLabel, { color: t.colors.content.secondary }]}>{btn.l}</Text>
+      <View style={frequentStyles.pills}>
+        {PILL_LABELS.map((label) => (
+          <View key={label} style={[frequentStyles.pill, { backgroundColor: t.colors.surface.raised, ...t.elevation.xs }]}>
+            <Text style={[frequentStyles.pillText, { color: t.colors.content.primary }]}>{label}</Text>
           </View>
         ))}
+        <View style={frequentStyles.pill}>
+          <Text style={[frequentStyles.pillText, { color: t.colors.action.text.default }]}>{tr('quicklog.frequent.edit')}</Text>
+        </View>
       </View>
     </View>
   );
@@ -896,35 +892,24 @@ const frequentStyles = StyleSheet.create({
   tabSegmentText: {
     fontSize: fs.xs,
   },
-  grid: {
+  pills: {
     flexDirection: 'row',
-    gap: 16,
-  },
-  btn: {
-    width: 70,
-    height: 70,
-    borderWidth: 1,
-    borderRadius: radius.lg,
-    alignItems: 'center',
+    flexWrap: 'wrap',
     justifyContent: 'center',
-    gap: 4,
+    gap: 8,
+    maxWidth: 260,
   },
-  rankBadge: {
-    position: 'absolute',
-    top: -7,
-    left: -7,
-    width: 20,
-    height: 20,
+  pill: {
+    height: 32,
+    paddingHorizontal: 12,
     borderRadius: radius.full,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  rankBadgeText: {
-    fontSize: fs.xs,
-    fontWeight: '700',
+  pillText: {
+    fontSize: fs.sm,
+    fontWeight: '600',
   },
-  btnEmoji: { fontSize: 28 },
-  btnLabel: { fontSize: fs.xs },
 });
 
 const progressStyles = StyleSheet.create({
