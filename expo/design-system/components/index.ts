@@ -28,6 +28,8 @@ export { Dialog } from './Dialog';
 export type { DialogProps, DialogAction } from './Dialog';
 export { Callout } from './Callout';
 export type { CalloutProps, CalloutArrowAlign } from './Callout';
+export { Toast } from './Toast';
+export type { ToastProps, ToastAction } from './Toast';
 export { MacroChip } from './MacroChip';
 export type { MacroChipProps, MacroChipKind, MacroChipSize } from './MacroChip';
 export { MacroCard } from './MacroCard';

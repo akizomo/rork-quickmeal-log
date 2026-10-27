@@ -1087,8 +1087,7 @@
   "undoToast": {
     "deleted": "{{label}} を削除しました",
     "recorded": "{{label}} を記録しました",
-    "undo": "取り消す",
-    "hint": "必要なら元に戻せます"
+    "undo": "取り消す"
   },
   "search": {
     "recents": "最近",
