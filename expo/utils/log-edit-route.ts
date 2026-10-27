@@ -4,6 +4,8 @@
  * 不変条件: どの FoodLog も、開く先が必ず 1 つに決まり、保存済みの数値を壊さない。
  *   - identity: IdentityLogSheet (編集モード)。Identity + 種類 + 量から再計算する。
  *   - numeric : DirectInputSheet (編集モード)。保存済みの kcal / PFC をそのまま読み書きする。
+ *   - myFood  : My食品の記録シート (編集モード)。記録した時点の「保存した値 = 100%」に対する%で量を直す。
+ *               My食品から記録した記録 (`log.myFood`) だけ。
  *
  * identity で開けるのは「IdentityLogSheet が自分で保存した記録」だけ。シートは
  * 保存された attrKey / styleKey / amountValue / appliedAddons から選択状態を復元し、
@@ -25,6 +27,7 @@ export const DIRECT_INPUT_CATEGORY_KEY = 'direct_input';
 
 export type LogEditRoute =
   | { kind: 'identity'; bucket: BucketKey; identityId: string }
+  | { kind: 'myFood' }
   | { kind: 'numeric' };
 
 /**
@@ -48,6 +51,8 @@ export function isLegacyFormatLog(log: FoodLog): boolean {
 }
 
 export function resolveLogEditRoute(log: FoodLog): LogEditRoute {
+  // My食品の記録は直接入力と同じ形 (categoryKey) だが、基準の値を持つので%で直せる。判定は先に行う
+  if (log.myFood) return { kind: 'myFood' };
   if (log.categoryKey === DIRECT_INPUT_CATEGORY_KEY) return { kind: 'numeric' };
   if (log.macroManual) return { kind: 'numeric' };
   if (isLegacyFormatLog(log)) return { kind: 'numeric' };

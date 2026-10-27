@@ -9,11 +9,13 @@ import {
   findMyFoodByName,
   hasSameValues,
   myFoodAmountLabel,
+  myFoodBaseMacro,
   myFoodMacro,
   normalizeMyFoodName,
   overwriteMyFood,
   pushSearchRecent,
   saveMyFood,
+  scaleMacro,
   SEARCH_RECENT_LIMIT,
   searchMyFoods,
   sortMyFoodsByRecent,
@@ -166,6 +168,31 @@ describe('deleteMyFood / touchMyFood / 並び', () => {
     const foods = [food('a', 'a', T0), food('b', 'b', T1)];
     sortMyFoodsByRecent(foods);
     expect(foods.map((f) => f.id)).toEqual(['a', 'b']);
+  });
+});
+
+describe('scaleMacro / myFoodBaseMacro (記録の編集は、記録した時点の基準の値 × %)', () => {
+  it('基準 × 倍率。kcal は整数、PFC は小数1桁', () => {
+    const base = { kcal: 187, protein: 15, fat: 6, carbs: 17 };
+    expect(scaleMacro(base, 1)).toEqual(base);
+    expect(scaleMacro(base, 1.5)).toEqual({ kcal: 281, protein: 22.5, fat: 9, carbs: 25.5 });
+    expect(scaleMacro(base, 0.5)).toEqual({ kcal: 94, protein: 7.5, fat: 3, carbs: 8.5 });
+  });
+
+  it('倍率が不正 (0・負・NaN) のときは 100% として扱う', () => {
+    const base = { kcal: 200, protein: 10, fat: 5, carbs: 20 };
+    expect(scaleMacro(base, 0)).toEqual(base);
+    expect(scaleMacro(base, -1)).toEqual(base);
+    expect(scaleMacro(base, Number.NaN)).toEqual(base);
+  });
+
+  it('My食品の基準の値は、PFC が null のとき 0', () => {
+    expect(myFoodBaseMacro({ id: 'a', name: 'x', kcal: 100, protein: null, fat: null, carbs: 12, createdAtISO: T0, lastUsedAtISO: T0 })).toEqual({
+      kcal: 100,
+      protein: 0,
+      fat: 0,
+      carbs: 12,
+    });
   });
 });
 

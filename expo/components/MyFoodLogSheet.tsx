@@ -9,12 +9,17 @@
  *
  * 下部は食材の記録シートと同じボトムアクション (名前・kcal・PFC + ⭐️ + 記録)。⭐️ で、この My食品を
  * ⭐️タブのお気に入りに入れる / はずす (PRD v1.18)。
+ *
+ * **編集モード** (`?editingLogId=…`。記録一覧から、My食品から記録した記録を開いたとき。PRD §6.5.4):
+ * 同じ%の量欄で、その記録の量を直す。基準は記録した時点の「保存した値 = 100%」(`log.myFood.baseMacro`) で、
+ * My食品を後で直したり消したりしても変わらない。⭐️・「値を直す」は出さない (記録を直す画面なので)。
+ * 保存は記録を上書き、右上のごみ箱で記録を削除する (食材の記録シートの編集モードと同じ)。
  */
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';
-import { View } from 'react-native';
+import { Alert, View } from 'react-native';
 
-import { Body, Button, Chip, TallSheetScreen, useTheme } from '@/design-system';
+import { Body, Button, Chip, IconButton, TallSheetScreen, useTheme } from '@/design-system';
 import { AmountStepperRow } from '@/components/AmountStepperRow';
 import { openAmountEditor } from '@/components/AmountEditSheet';
 import { LogFooterPreview, usePinNotice } from '@/components/LogSheetFooter';
@@ -23,23 +28,52 @@ import { useT } from '@/hooks/useT';
 import { useAppState } from '@/providers/app-state-provider';
 import { buildIdentityAmountEditConfig, decrementBy, incrementBy } from '@/utils/amount-edit';
 import { myFoodPinKey, shouldShowFrequentTab } from '@/utils/frequent-pins';
-import { MY_FOOD_AMOUNT_SPEC, myFoodMacro, updateMyFood } from '@/utils/my-foods';
+import { MY_FOOD_AMOUNT_SPEC, myFoodAmountLabel, myFoodBaseMacro, scaleMacro, updateMyFood } from '@/utils/my-foods';
+import type { MyFood } from '@/types/my-food';
+import type { FoodLog } from '@/types/nutrition';
 
 export default function MyFoodLogRoute() {
+  const tr = useT();
+  const { settings, logs, isHydrating } = useAppState();
+  const { id, source, editingLogId } = useLocalSearchParams<{ id?: string; source?: string; editingLogId?: string }>();
+  if (isHydrating) return null; // 設定の読み込みを待つ (読み込み前に「見つかりません」を出さない)
+
+  const editingLog = editingLogId ? logs.find((l) => l.id === editingLogId) ?? null : null;
+  const food = editingLogId ? null : (settings.myFoods ?? []).find((f) => f.id === id) ?? null;
+  if ((editingLogId && !editingLog?.myFood) || (!editingLogId && !food)) {
+    // 開いている間に削除された等
+    return (
+      <TallSheetScreen title={tr('myFoods.title')} testID="my-food-log">
+        <Body tone="secondary">{tr('myFoods.notFound')}</Body>
+      </TallSheetScreen>
+    );
+  }
+  // 量の初期値は開いた時点のものにしたいので、記録 / My食品ごとに作り直す
+  return <MyFoodLogSheet key={editingLogId ?? id} food={food} editingLog={editingLog} source={source} />;
+}
+
+function MyFoodLogSheet({
+  food,
+  editingLog,
+  source,
+}: {
+  food: MyFood | null;
+  editingLog: FoodLog | null;
+  source?: string;
+}) {
   const t = useTheme();
   const tr = useT();
   const router = useRouter();
-  const { settings, recordMyFood, setFrequentPinned, setMyFoods, isHydrating } = useAppState();
-  const { id, source } = useLocalSearchParams<{ id?: string; source?: string }>();
-  const food = (settings.myFoods ?? []).find((f) => f.id === id);
-  // 保存した値 = 100%。量は%で持つ
-  const [percent, setPercent] = useState<number>(MY_FOOD_AMOUNT_SPEC.default);
+  const { settings, recordMyFood, setFrequentPinned, setMyFoods, replaceLog, deleteLog } = useAppState();
+  const editing = editingLog !== null;
+  // 保存した値 = 100%。量は%で持つ。編集モードは、その記録の%から始める
+  const [percent, setPercent] = useState<number>(editingLog?.myFood?.percent ?? MY_FOOD_AMOUNT_SPEC.default);
   const pinNotice = usePinNotice('mfl');
   // 「値を直す」: kcal・PFC をこのシートの中で直す。開いた時点の保存値で入力欄を作る (null = 閉じている)
   const [valueDraft, setValueDraft] = useState<ReturnType<typeof myFoodValueStrings> | null>(null);
   const amountConfig = useMemo(() => buildIdentityAmountEditConfig({ ...MY_FOOD_AMOUNT_SPEC, chips: [...MY_FOOD_AMOUNT_SPEC.chips] }), []);
 
-  const pinKey = food ? myFoodPinKey(food.id) : null;
+  const pinKey = food && !editing ? myFoodPinKey(food.id) : null;
   const isPinned = !!pinKey && (settings.frequentPins ?? []).includes(pinKey);
   const handleTogglePin = useCallback(() => {
     if (!food || !pinKey) return;
@@ -74,21 +108,14 @@ export default function MyFoodLogRoute() {
     setPercent((p) => (direction === 'up' ? incrementBy(p, amountConfig) : decrementBy(p, amountConfig)));
   };
 
-  if (isHydrating) return null; // 設定の読み込みを待つ (読み込み前に「見つかりません」を出さない)
-  if (!food) {
-    // 開いている間に削除された等
-    return (
-      <TallSheetScreen title={tr('myFoods.title')} testID="my-food-log">
-        <Body tone="secondary">{tr('myFoods.notFound')}</Body>
-      </TallSheetScreen>
-    );
-  }
-
-  const macro = myFoodMacro(food, percent / 100);
+  // 基準 (= 100%) の値。編集モードは、記録した時点のもの (My食品を後で直しても変わらない)
+  const baseMacro = editingLog?.myFood ? editingLog.myFood.baseMacro : myFoodBaseMacro(food!);
+  const title = editingLog ? editingLog.categoryLabel : food!.name;
+  const macro = scaleMacro(baseMacro, percent / 100);
 
   const draftParsed = valueDraft ? parseMyFoodValues(valueDraft) : null;
   const handleSaveValues = () => {
-    if (!draftParsed || draftParsed.kcal <= 0) return;
+    if (!food || !draftParsed || draftParsed.kcal <= 0) return;
     const result = updateMyFood(settings.myFoods, food.id, { name: food.name, ...draftParsed });
     if (!result.ok) return;
     setMyFoods(result.foods);
@@ -96,22 +123,73 @@ export default function MyFoodLogRoute() {
   };
 
   const handleRecord = async () => {
-    await recordMyFood(food.id, percent / 100, source === 'search' ? 'search' : source === 'frequent' ? 'frequent' : 'list');
+    if (editingLog?.myFood) {
+      // 記録の量を直す: 基準は変えず、%と、その%での値だけを書き換える
+      await replaceLog({
+        ...editingLog,
+        macro,
+        amountLabel: myFoodAmountLabel(percent / 100),
+        myFood: { ...editingLog.myFood, percent },
+      });
+      router.back();
+      return;
+    }
+    await recordMyFood(food!.id, percent / 100, source === 'search' ? 'search' : source === 'frequent' ? 'frequent' : 'list');
     router.back();
+  };
+
+  const confirmDelete = () => {
+    if (!editingLog) return;
+    Alert.alert(tr('identityLog.deleteTitle'), tr('identityLog.deleteMessage'), [
+      { text: tr('common.cancel'), style: 'cancel' },
+      {
+        text: tr('common.delete'),
+        style: 'destructive',
+        onPress: () => {
+          deleteLog(editingLog.id);
+          router.back();
+        },
+      },
+    ]);
   };
 
   return (
     <TallSheetScreen
-      title={food.name}
-      primaryAction={{ label: tr('myFoods.record'), onPress: handleRecord }}
+      title={title}
+      primaryAction={{ label: editing ? tr('common.save') : tr('myFoods.record'), onPress: handleRecord }}
       footerLeft={
         <LogFooterPreview
           macro={macro}
           testIDPrefix="mfl"
-          pin={{ label: food.name, pinned: isPinned, onToggle: handleTogglePin, onCenterX: pinNotice.onCenterX }}
+          pin={
+            editing || !food
+              ? undefined
+              : { label: food.name, pinned: isPinned, onToggle: handleTogglePin, onCenterX: pinNotice.onCenterX }
+          }
         />
       }
-      footerAccessory={pinNotice.accessory}
+      footerAccessory={editing ? undefined : pinNotice.accessory}
+      headerRight={
+        editing ? (
+          <View style={{ flexDirection: 'row', gap: t.spacing['3'], alignItems: 'center' }}>
+            <IconButton
+              icon="delete"
+              size="lg"
+              tone="danger"
+              onPress={confirmDelete}
+              accessibilityLabel={tr('identityLog.deleteA11y')}
+              testID="mfl-delete"
+            />
+            <IconButton
+              icon="close"
+              size="lg"
+              onPress={() => router.back()}
+              accessibilityLabel={tr('identityLog.closeA11y')}
+              testID="mfl-close"
+            />
+          </View>
+        ) : undefined
+      }
       testID="my-food-log"
     >
       <View style={{ gap: t.spacing['2'] }}>
@@ -139,7 +217,7 @@ export default function MyFoodLogRoute() {
         />
         <Body size="sm" tone="secondary">{tr('myFoods.percentNote')}</Body>
 
-        {valueDraft ? (
+        {editing ? null : valueDraft ? (
           <View style={{ gap: t.spacing['3'], marginTop: t.spacing['4'] }} testID="mfl-values-editor">
             <MyFoodValueFields values={valueDraft} onChange={setValueDraft} testIDPrefix="mfl-values" />
             {/* 保存前から読める位置に */}
@@ -161,7 +239,7 @@ export default function MyFoodLogRoute() {
               label={tr('myFoods.editValues')}
               variant="plain"
               size="sm"
-              onPress={() => setValueDraft(myFoodValueStrings(food))}
+              onPress={() => setValueDraft(myFoodValueStrings(food!))}
               testID="mfl-values-open"
             />
           </View>

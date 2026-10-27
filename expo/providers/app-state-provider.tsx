@@ -22,7 +22,7 @@ import { computeWeeklyBalance, isWeeklyBalanceWorthProposing } from '@/utils/wee
 import { getWeekRange, isSameDay } from '@/utils/history';
 import { castHistoryMap, deriveDefaultTab, rankFrequentSelections, recordSelection, recordTabUsage } from '@/utils/quick-log-history';
 import type { MyFood } from '@/types/my-food';
-import { castMyFoods, castSearchRecents, myFoodAmountLabel, myFoodMacro, pushSearchRecent, touchMyFood } from '@/utils/my-foods';
+import { castMyFoods, castSearchRecents, myFoodAmountLabel, myFoodBaseMacro, myFoodMacro, pushSearchRecent, touchMyFood } from '@/utils/my-foods';
 import { DIRECT_INPUT_CATEGORY_KEY } from '@/utils/log-edit-route';
 import { addHidden, castIdList, movePin, movePinTo, pruneMyFoodPins, removeHidden, setPinned, type FrequentSource } from '@/utils/frequent-pins';
 import {
@@ -862,6 +862,8 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
         categoryLabel: food.name,
         amountLabel: myFoodAmountLabel(multiplier),
         macro: myFoodMacro(food, multiplier),
+        // 記録の編集で、保存した値に対する%で量を直せるように (My食品を後で直しても、この記録の基準は変わらない)
+        myFood: { id: food.id, percent: Math.round(multiplier * 100), baseMacro: myFoodBaseMacro(food) },
       };
       const log = applyLoggingDate(baseLog);
       await pushLog(log);
