@@ -5,7 +5,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import React, { useEffect } from 'react';
-import { LogBox, Platform } from 'react-native';
+import { Appearance, LogBox, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { ThemeProvider, darkTheme, formSheetOptions, lightTheme, tallSheetOptions, useTheme } from '@/design-system';
@@ -35,6 +35,13 @@ function ThemedApp({ children }: { children: React.ReactNode }) {
   const { settings } = useAppState();
   const pref = settings.themePreference ?? 'system';
   const forcedTheme = pref === 'light' ? lightTheme : pref === 'dark' ? darkTheme : undefined;
+  // アプリのテーマを「ライト」「ダーク」に固定したとき、OS の配色と食い違うと、色を指定していないネイティブ部品
+  // (ステータスバー・検索欄・キーボード・Alert・Switch など) が OS の配色のまま出る。OS がダークでアプリがライトだと、
+  // ステータスバーの時刻や検索欄の文字が白で、明るい面の上に出て見えなかった (2026-10-27、Android)。
+  // OS 側の配色もアプリの設定に合わせる ('auto' = OS に従う)。
+  useEffect(() => {
+    Appearance.setColorScheme(pref === 'system' ? 'auto' : pref);
+  }, [pref]);
   return <ThemeProvider theme={forcedTheme}>{children}</ThemeProvider>;
 }
 
