@@ -2,7 +2,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { Button, Chip, IconButton, Label, Overline, TallSheetScreen, useTheme, type Theme } from '@/design-system';
+import { Button, Chip, IconButton, Label, Overline, TallSheetScreen, Toast, useTheme, type Theme } from '@/design-system';
 import { useT } from '@/hooks/useT';
 import { fontSize as fs, letterSpacing as ls } from '@/design-system/tokens/primitives/typography';
 import { radius } from '@/design-system/tokens/primitives/radius';
@@ -17,7 +17,6 @@ import {
   getTdeeExerciseKcalForDate,
   stepsToActiveKcal,
 } from '@/utils/goals';
-import { SheetToast } from '@/components/SheetToast';
 import { useAppState } from '@/providers/app-state-provider';
 import { formatDateKey } from '@/utils/nutrition';
 import { formatDayLabel } from '@/utils/history';
@@ -82,7 +81,7 @@ export const ExerciseSheet = memo(function ExerciseSheet() {
   );
 
   // 削除直後の「取り消す」。誤タップで消した運動 (特にヘルス由来は入れ直せない) をその場で戻せるようにする。
-  // 食事ログの UndoToast と同じ4秒。シートの下に隠れるので、シート内の SheetToast で出す。
+  // 食事ログの UndoToast と同じ4秒。UndoToast はシートの下に隠れるので、シートの footerAccessory に Toast を置く。
   const [justDeleted, setJustDeleted] = useState<{ log: ExerciseLog; label: string } | null>(null);
   const [undoVisible, setUndoVisible] = useState(false);
   const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -110,6 +109,11 @@ export const ExerciseSheet = memo(function ExerciseSheet() {
     restoreExerciseLog(justDeleted.log);
     setUndoVisible(false);
   }, [justDeleted, restoreExerciseLog]);
+
+  const handleDismissUndo = useCallback(() => {
+    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+    setUndoVisible(false);
+  }, []);
 
   const handleSave = useCallback(() => {
     logExercise(selectedType, minutes);
@@ -177,11 +181,13 @@ export const ExerciseSheet = memo(function ExerciseSheet() {
       footerLeft={<Button label={tr('common.cancel')} variant="ghost" onPress={onClose} testID="exercise-sheet-secondary" />}
       primaryAction={{ label: tr('exercise.add'), onPress: handleSave }}
       footerAccessory={
-        <SheetToast
+        <Toast
           visible={undoVisible}
           message={tr('exercise.deleted', { label: justDeleted?.label ?? '' })}
           emphasis={justDeleted?.label}
           action={{ label: tr('undoToast.undo'), onPress: handleUndoDelete, testID: 'exercise-undo-button' }}
+          onDismiss={handleDismissUndo}
+          style={{ marginBottom: t.spacing['2'] }}
           testID="exercise-undo-toast"
         />
       }

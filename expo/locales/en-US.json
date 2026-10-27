@@ -1085,8 +1085,7 @@
   "undoToast": {
     "deleted": "{{label}} deleted",
     "recorded": "{{label}} logged",
-    "undo": "Undo",
-    "hint": "You can undo this if needed"
+    "undo": "Undo"
   },
   "search": {
     "recents": "Recent",

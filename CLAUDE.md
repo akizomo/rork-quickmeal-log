@@ -111,7 +111,7 @@ UI の実装・修正を行う際は**必ず以下の順序**で参照するこ�
    - アイコン単体のタップ領域 (close/削除/前後ナビ等) は必ず `IconButton` (`design-system/components/IconButton.tsx`) を使う。`Pressable + Icon` の手書きは禁止。`variant`(ghost/filled) と `size`(sm/md/lg) と `tone`(secondary/tertiary/danger/action) で表現し、新しい組み合わせが要る場合は `IconButton` 側を拡張する。
 
 3. **コンポーネントは既存の流用を優先する**
-   - 新しい UI を作る前に、必ず `design-system/components/` (Badge, Button, Card, Chip, Dialog, Icon, IconButton, MacroChip, MealLogCard, NumberField, SelectCard, Typography 等) に流用できるものがないか確認する。
+   - 新しい UI を作る前に、必ず `design-system/components/` (Badge, Button, Callout, Card, Chip, Dialog, Icon, IconButton, MacroChip, MealLogCard, NumberField, SelectCard, Toast, Typography 等) に流用できるものがないか確認する。
    - 既存コンポーネントの props / variant で表現できる場合はそれを使い、画面側でスタイルを個別に書き直さない。
    - **既存コンポーネントで賄えない新パターンが必要そうな場合は、実装前に「新規コンポーネントが必要か」をユーザーに相談・提案する。** 独断で一時しのぎの独自実装を作らない。
    - 相談の結果、新規作成が妥当と判断されたら、必ずトークン・既存コンポーネントをベースに構築し、実装後は `design-system/components/` に追加してシステムを進化させる。
