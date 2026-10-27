@@ -28,7 +28,7 @@ export function SettingsSectionLabel({ children }: { children: string }) {
  */
 export function SettingsListCard({ children, testID }: { children: React.ReactNode; testID?: string }) {
   return (
-    <Card variant="raised" style={styles.listCard} testID={testID}>
+    <Card variant="raised" style={LIST_CARD_STYLE} testID={testID}>
       {children}
     </Card>
   );
@@ -80,14 +80,17 @@ export function SettingsDivider() {
   return <View style={[styles.divider, { backgroundColor: theme.colors.border.subtle }]} />;
 }
 
+// Card は padding を inline style で持つ。StyleSheet.create の style は RN-Web では atomic class になり
+// inline に負けるため (Web プレビューだけ余白が 20px のままだった)、ここは通常のオブジェクトで渡す。
+const LIST_CARD_STYLE = {
+  paddingVertical: 4,
+  paddingHorizontal: 16,
+  gap: 0,
+} as const;
+
 const styles = StyleSheet.create({
   sectionLabel: {
     paddingHorizontal: 4,
-  },
-  listCard: {
-    paddingVertical: 4,
-    paddingHorizontal: 16,
-    gap: 0,
   },
   linkRow: {
     flexDirection: 'row',

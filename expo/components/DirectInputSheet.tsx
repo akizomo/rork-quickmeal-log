@@ -2,7 +2,7 @@
  * DirectInputSheet — 数値直接入力シート (SEARCH_SPEC v0.3 §F_direct)
  *
  * 名前(任意) + kcal(必須) + P/F/C(任意) を手入力して即座に記録する。
- * 再利用なし・使い捨て。カスタム食品管理は別スコープ (P2-S7)。
+ * 名前をつけたときは「My食品に保存」(初期 ON) で、次から選べるように残す (PRD §6.5.4)。
  *
  * `editingLog` を渡すと編集モードになり、記録済みの kcal / PFC を読み込んで上書き保存する。
  * 保存済みの数値そのものを編集するので、Identity から再計算して値が変わることはない。
@@ -16,9 +16,13 @@
 
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { StyleSheet, TextInput, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Switch, TextInput, View } from 'react-native';
 
-import { Body, Label, Overline, SheetScreen, useTheme } from '@/design-system';
+import { Body, Icon, Label, Overline, SheetScreen, useTheme } from '@/design-system';
+import { useLocale } from '@/hooks/useLocale';
+import { findLayer1Landing } from '@/utils/my-food-landing';
+import { findMyFoodByName, overwriteMyFood, saveMyFood } from '@/utils/my-foods';
+import type { MyFoodInput } from '@/types/my-food';
 import { useT } from '@/hooks/useT';
 import { useAppState } from '@/providers/app-state-provider';
 import { applyNumericEdit, DIRECT_INPUT_CATEGORY_KEY } from '@/utils/log-edit-route';
@@ -35,7 +39,8 @@ export function DirectInputSheet() {
   const router = useRouter();
   const t = useTheme();
   const tr = useT();
-  const { pushLog, replaceLog, loggingDate, settings, logs } = useAppState();
+  const { recordDirectInputLog, replaceLog, setMyFoods, openIdentityLogSheet, loggingDate, settings, logs } = useAppState();
+  const { foodRegion } = useLocale();
   // 編集対象の記録。指定時は新規追加ではなく上書き保存する。
   const { editingLogId: editingLogIdParam } = useLocalSearchParams<{ editingLogId?: string }>();
   const editingLog = editingLogIdParam ? logs.find((l) => l.id === editingLogIdParam) ?? null : null;
@@ -48,6 +53,9 @@ export function DirectInputSheet() {
       : null;
 
   const [name, setName] = useState('');
+  const nameInputRef = useRef<React.ComponentRef<typeof TextInput>>(null);
+  // My食品に保存 (PRD §6.5.4)。新規の記録は初期 ON (外せば保存しない)。過去の記録を直すときは初期 OFF (救う入口)
+  const [saveToMyFood, setSaveToMyFood] = useState(true);
   const [kcalStr, setKcalStr] = useState('');
   const [proteinStr, setProteinStr] = useState('');
   const [fatStr, setFatStr] = useState('');
@@ -72,6 +80,7 @@ export function DirectInputSheet() {
     const { kcal: k, protein: p, fat: f, carbs: c } = editingLog.macro;
     const hasPfc = p > 0 || f > 0 || c > 0;
     kcalManuallyEdited.current = true;
+    setSaveToMyFood(false);
     setName(editingLog.categoryLabel === tr('directInput.fallbackLabel') ? '' : editingLog.categoryLabel);
     setKcalStr(String(k));
     setKcalIsAuto(false);
@@ -159,6 +168,7 @@ export function DirectInputSheet() {
     setCarbsStr('');
     setKcalIsAuto(false);
     setAutoMacro(null);
+    setSaveToMyFood(true);
     kcalManuallyEdited.current = false;
   }, []);
 
@@ -170,6 +180,32 @@ export function DirectInputSheet() {
     router.back();
   }, [reset, router]);
 
+  // My食品に保存できる状態か: 名前があり、名前を固定した記録 (旧形式) ではなく、
+  // 過去の記録を直すときは同名の My食品がまだ無いとき (すでにあるものを二重に聞かない)
+  const trimmedName = name.trim();
+  const canOfferMyFood =
+    fixedName == null &&
+    trimmedName.length > 0 &&
+    (!editingLog || !findMyFoodByName(settings.myFoods, trimmedName));
+  const willSaveMyFood = canOfferMyFood && saveToMyFood;
+
+  // 名前が、すでに DB (Identity 辞書) の検索で確実に一致するときだけ、気づける一言を出す (層2以降は出さない)
+  const landing = React.useMemo(
+    () => (canOfferMyFood ? findLayer1Landing(trimmedName, foodRegion) : null),
+    [canOfferMyFood, trimmedName, foodRegion],
+  );
+
+  const handleOpenLanding = useCallback(() => {
+    if (!landing) return;
+    const { identity } = landing.entry;
+    openIdentityLogSheet(identity.primaryHome.bucket, {
+      identityId: identity.id,
+      attributeKey: landing.entry.attribute?.key,
+      styleKey: landing.entry.style?.key,
+      viaSearch: true,
+    });
+  }, [landing, openIdentityLogSheet]);
+
   const handleSave = useCallback(async () => {
     if (!canSave) return;
 
@@ -177,6 +213,47 @@ export function DirectInputSheet() {
     const fat = parseFloat(fatStr) || 0;
     const carbs = parseFloat(carbsStr) || 0;
     const label = name.trim() || tr('directInput.fallbackLabel');
+    // PFC は空欄なら「未入力」(null) で My食品に残す。記録は従来どおり 0 埋め
+    const numOrNull = (s: string) => (s.trim() === '' ? null : parseFloat(s) || 0);
+    const myFoodInput: MyFoodInput = {
+      name: label,
+      kcal,
+      protein: numOrNull(proteinStr),
+      fat: numOrNull(fatStr),
+      carbs: numOrNull(carbsStr),
+    };
+
+    // My食品への保存を決める。同名で値が違うときは、記録の前に上書き / 別の名前を選ばせる
+    let myFoodsNext: import('@/types/my-food').MyFood[] | undefined;
+    let savedNew = false;
+    if (willSaveMyFood) {
+      const nowISO = new Date().toISOString();
+      const result = saveMyFood(settings.myFoods, myFoodInput, nowISO, generateId('myfood'));
+      if (result.kind === 'conflict') {
+        const choice = await new Promise<'overwrite' | 'rename' | 'cancel'>((resolve) => {
+          Alert.alert(
+            tr('directInput.myFood.conflictTitle'),
+            tr('directInput.myFood.conflictMessage', { name: result.existing.name }),
+            [
+              { text: tr('directInput.myFood.overwrite'), onPress: () => resolve('overwrite') },
+              { text: tr('directInput.myFood.rename'), onPress: () => resolve('rename') },
+              { text: tr('common.cancel'), style: 'cancel', onPress: () => resolve('cancel') },
+            ],
+            { cancelable: true, onDismiss: () => resolve('cancel') },
+          );
+        });
+        if (choice === 'cancel') return;
+        if (choice === 'rename') {
+          // 別の名前にする: 記録せずに名前欄へ戻す
+          nameInputRef.current?.focus();
+          return;
+        }
+        myFoodsNext = overwriteMyFood(settings.myFoods, result.existing.id, myFoodInput, nowISO);
+      } else if (result.kind !== 'skipped') {
+        myFoodsNext = result.foods;
+        savedNew = result.kind === 'created';
+      }
+    }
 
     if (editingLog) {
       // 名前を変えない記録 (fixedName) は分類ラベルに触れない
@@ -184,6 +261,8 @@ export function DirectInputSheet() {
         macro: { kcal, protein, fat, carbs },
         label: fixedName != null ? undefined : label,
       }));
+      // 過去の記録を直すときの「My食品に保存」(救う入口)。記録は増やさず、My食品だけ足す
+      if (myFoodsNext) setMyFoods(myFoodsNext);
       reset();
       router.back();
       return;
@@ -199,20 +278,25 @@ export function DirectInputSheet() {
         })()
       : now;
 
-    await pushLog({
-      id: generateId('log'),
-      date: formatDateKey(logDate),
-      timestamp: logDate.toISOString(),
-      mealSlot: getMealSlot(logDate),
-      mode: 'ingredient',
-      categoryKey: DIRECT_INPUT_CATEGORY_KEY,
-      categoryLabel: label,
-      macro: { kcal, protein, fat, carbs },
-    });
+    await recordDirectInputLog(
+      {
+        id: generateId('log'),
+        date: formatDateKey(logDate),
+        timestamp: logDate.toISOString(),
+        mealSlot: getMealSlot(logDate),
+        mode: 'ingredient',
+        categoryKey: DIRECT_INPUT_CATEGORY_KEY,
+        categoryLabel: label,
+        macro: { kcal, protein, fat, carbs },
+      },
+      myFoodsNext
+        ? { myFoods: myFoodsNext, savedNew, savedLayer1: savedNew && !!findLayer1Landing(label, foodRegion) }
+        : undefined,
+    );
 
     reset();
     router.back();
-  }, [canSave, kcal, name, proteinStr, fatStr, carbsStr, loggingDate, pushLog, replaceLog, editingLog, fixedName, reset, router]);
+  }, [canSave, kcal, name, proteinStr, fatStr, carbsStr, loggingDate, recordDirectInputLog, replaceLog, setMyFoods, editingLog, fixedName, reset, router, willSaveMyFood, settings.myFoods, tr, foodRegion]);
 
   return (
     <SheetScreen
@@ -232,6 +316,7 @@ export function DirectInputSheet() {
             </>
           ) : (
           <TextInput
+            ref={nameInputRef}
             value={name}
             onChangeText={setName}
             placeholder={tr('directInput.namePlaceholder')}
@@ -297,6 +382,37 @@ export function DirectInputSheet() {
           </View>
           <Body size="sm" tone="secondary">{tr('directInput.gramUnit')}</Body>
         </View>
+
+        {/* My食品に保存 (名前があるときだけ。PRD §6.5.4)。入力を終えてから決める付け足しなので、一番下 */}
+        {canOfferMyFood ? (
+          <View style={{ gap: t.spacing['2'] }}>
+            <View style={styles.switchRow}>
+              <View style={{ flex: 1 }}>
+                <Label>{tr('directInput.myFood.switchLabel')}</Label>
+                <Body size="sm" tone="secondary">{tr('directInput.myFood.switchHint')}</Body>
+              </View>
+              <Switch
+                value={saveToMyFood}
+                onValueChange={setSaveToMyFood}
+                accessibilityLabel={tr('directInput.myFood.switchLabel')}
+                testID="direct-input-save-my-food"
+              />
+            </View>
+            {landing ? (
+              <Pressable
+                onPress={handleOpenLanding}
+                accessibilityRole="button"
+                style={({ pressed }) => [styles.landingRow, { opacity: pressed ? 0.5 : 1 }]}
+                testID="direct-input-landing"
+              >
+                <Label size="sm" tone="link" numberOfLines={1} style={{ flexShrink: 1 }}>
+                  {tr('directInput.myFood.alreadyExists', { name: landing.entry.identity.label })}
+                </Label>
+                <Icon name="chevronRight" size={16} color={t.colors.action.text.default} />
+              </Pressable>
+            ) : null}
+          </View>
+        ) : null}
       </View>
     </SheetScreen>
   );
@@ -352,6 +468,18 @@ function MacroField({
 const styles = StyleSheet.create({
   nameInput: {
     fontSize: 15,
+  },
+  switchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  landingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 2,
   },
   macroRow: {
     flexDirection: 'row',

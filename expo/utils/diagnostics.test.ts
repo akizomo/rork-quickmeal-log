@@ -164,6 +164,29 @@ describe('bumpDiagnosticCounter', () => {
     const d = bumpDiagnosticCounter(base, 'searchOpenCount');
     expect(d.searchMisses).toHaveLength(1);
   });
+
+  it('⭐️ のタップ内訳 (ピン留め由来 / 自動由来) を別々に数える', () => {
+    let d = bumpDiagnosticCounter(undefined, 'frequentPinnedTapCount');
+    d = bumpDiagnosticCounter(d, 'frequentPinnedTapCount');
+    d = bumpDiagnosticCounter(d, 'frequentAutoTapCount');
+    expect(d.frequentPinnedTapCount).toBe(2);
+    expect(d.frequentAutoTapCount).toBe(1);
+    expect(d.searchOpenCount).toBe(0);
+  });
+});
+
+describe('castDiagnostics — ⭐️ のタップ内訳', () => {
+  it('古い保存データ (内訳なし) は 0 から始まる', () => {
+    const d = castDiagnostics({ searchMisses: [], searchOpenCount: 2 });
+    expect(d.frequentPinnedTapCount).toBe(0);
+    expect(d.frequentAutoTapCount).toBe(0);
+  });
+
+  it('内訳を復元し、不正値は 0 にする', () => {
+    const d = castDiagnostics({ frequentPinnedTapCount: 4, frequentAutoTapCount: -1 });
+    expect(d.frequentPinnedTapCount).toBe(4);
+    expect(d.frequentAutoTapCount).toBe(0);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -184,6 +207,12 @@ describe('castDiagnostics', () => {
       searchOpenCount: 10,
       directInputOpenCount: 2,
       widgetLogCount: 7,
+      frequentPinnedTapCount: 5,
+      frequentAutoTapCount: 1,
+      myFoodShelfTapCount: 3,
+      myFoodsPageOpenCount: 4,
+      myFoodSavedCount: 6,
+      myFoodSavedLayer1Count: 2,
     };
     expect(castDiagnostics(raw)).toEqual(raw);
   });

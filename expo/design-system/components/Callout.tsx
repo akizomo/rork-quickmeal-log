@@ -29,10 +29,14 @@ export type CalloutProps = {
   visible: boolean;
   /** 1行目。言いたいことそのもの (文章)。 */
   title?: string;
+  /** `title` の中で太字にする部分 (主語など)。渡すと、`title` 全体は標準の太さにして、この部分だけを太字にする。 */
+  titleEmphasis?: string;
   /** 2行目以降の補足。 */
   message: string;
   /** 尻尾の水平位置。指したい要素の位置に合わせる。default: 'start' */
   arrowAlign?: CalloutArrowAlign;
+  /** 尻尾の中心を、吹き出しの左端から何 px の位置に置くか。渡すと `arrowAlign` より優先 (指したい要素の真上に合わせたいとき)。 */
+  arrowOffset?: number;
   /** 渡すと右上に閉じるボタンを出す。 */
   onDismiss?: () => void;
   /** 閉じるボタンの読み上げラベル (onDismiss を渡すときは必須)。 */
@@ -46,8 +50,10 @@ const ARROW_SIZE = 10;
 export function Callout({
   visible,
   title,
+  titleEmphasis,
   message,
   arrowAlign = 'start',
+  arrowOffset,
   onDismiss,
   dismissAccessibilityLabel,
   style,
@@ -82,7 +88,9 @@ export function Callout({
 
   const translateY = progress.interpolate({ inputRange: [0, 1], outputRange: [t.spacing['2'], 0] });
   const arrowPosition: ViewStyle =
-    arrowAlign === 'center'
+    arrowOffset !== undefined
+      ? { alignSelf: 'flex-start', marginLeft: Math.max(arrowOffset - ARROW_SIZE / 2, t.spacing['2']) }
+      : arrowAlign === 'center'
       ? { alignSelf: 'center' }
       : arrowAlign === 'end'
         ? { alignSelf: 'flex-end', marginRight: t.spacing['5'] }
@@ -111,9 +119,19 @@ export function Callout({
       >
         <View style={styles.text}>
           {title ? (
-            <Body size="sm" weight="semibold" tone="inverse">
-              {title}
-            </Body>
+            titleEmphasis && title.includes(titleEmphasis) ? (
+              <Body size="sm" tone="inverse">
+                {title.slice(0, title.indexOf(titleEmphasis))}
+                <Body size="sm" weight="bold" tone="inverse">
+                  {titleEmphasis}
+                </Body>
+                {title.slice(title.indexOf(titleEmphasis) + titleEmphasis.length)}
+              </Body>
+            ) : (
+              <Body size="sm" weight="semibold" tone="inverse">
+                {title}
+              </Body>
+            )
           ) : null}
           <Body size="sm" tone={title ? 'inverseSecondary' : 'inverse'}>
             {message}

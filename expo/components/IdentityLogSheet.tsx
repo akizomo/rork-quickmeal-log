@@ -9,7 +9,7 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, View } from 'react-native';
 
 import {
   Callout,
@@ -22,6 +22,9 @@ import {
 import { openAmountEditor } from '@/components/AmountEditSheet';
 import { buildIdentityAmountEditConfig, decrementBy, incrementBy } from '@/utils/amount-edit';
 import { useAppState } from '@/providers/app-state-provider';
+import { AmountStepperRow } from '@/components/AmountStepperRow';
+import { LogFooterPreview, usePinNotice } from '@/components/LogSheetFooter';
+import { shouldShowFrequentTab } from '@/utils/frequent-pins';
 import { useLocale } from '@/hooks/useLocale';
 import { useT } from '@/hooks/useT';
 import {
@@ -51,7 +54,6 @@ import {
   getEffectiveDefaultAddonIds,
   getHiddenAddonIds,
 } from '@/utils/identity-attribute';
-import { Macro } from '@/types/nutrition';
 import type { AppLocale } from '@/types/locale';
 import { UNIT_LABELS } from '@/utils/unit-labels';
 
@@ -149,6 +151,7 @@ export function IdentityLogSheet() {
     logs,
     settings,
     markRoughHintSeen,
+    setFrequentPinned,
   } = useAppState();
 
   const visible = identityLogSheet.visible;
@@ -277,6 +280,30 @@ export function IdentityLogSheet() {
   ]);
 
   const origin = originIdentityId ? getIdentity(originIdentityId) : undefined;
+
+  // ⭐️ トグル (PRD §6.5.3)。いま選んでいる Identity を ⭐️ タブのピン留めに入れる / 外す。
+  // ⭐️ タブ以外 (食材・料理タブ・検索) から開いたシートでも押せる。追加は末尾。
+  const isPinned = !!origin && (settings.frequentPins ?? []).includes(origin.id);
+  // ⭐️ に入れた結果を、シート内で伝える (components/LogSheetFooter.tsx。My食品の記録シートと共通)
+  const pinNoticeState = usePinNotice('ils');
+  const pinNotice = pinNoticeState.notice;
+  const handleTogglePin = useCallback(() => {
+    if (!origin) return;
+    const adding = !isPinned;
+    const historyEntries = Object.values((settings.quickLogHistory ?? {}) as Record<string, unknown[]>).reduce(
+      (sum, arr) => sum + arr.length,
+      0,
+    );
+    pinNoticeState.announce({
+      adding,
+      // チップと同じ言語の名前 (origin.label は辞書の既定言語)
+      label: identitiesInBucket.find((i) => i.id === origin.id)?.label ?? origin.label,
+      firstEver: !settings.pinNoticeSeenAtISO,
+      // ⭐️ タブがまだ出ていない人は、タブが現れることも伝える
+      tabWasHidden: !shouldShowFrequentTab(historyEntries, settings.frequentPins, settings.myFoods),
+    });
+    setFrequentPinned(origin.id, adding);
+  }, [origin, isPinned, identitiesInBucket, setFrequentPinned, pinNoticeState, settings.quickLogHistory, settings.frequentPins, settings.myFoods, settings.pinNoticeSeenAtISO]);
 
   const handleSelectIdentity = useCallback((identity: Identity) => {
     const attrKey = defaultAttributeKey(identity);
@@ -592,16 +619,35 @@ export function IdentityLogSheet() {
         onPress: handleSave,
         disabled: !canSave,
       }}
-      footerLeft={<FooterPreview macro={resolved?.totalMacro ?? null} />}
+      footerLeft={
+        <LogFooterPreview
+          macro={resolved?.totalMacro ?? null}
+          // ⭐️ は「いま選んでいる Identity」に付く。名前と並べて、何を ⭐️ にするのかを見せる (記録の編集中は出さない)
+          pin={
+            origin && !editingLog
+              ? {
+                  // チップと同じ言語の名前を出す (origin.label は辞書の既定言語)
+                  label: identitiesInBucket.find((i) => i.id === origin.id)?.label ?? origin.label,
+                  pinned: isPinned,
+                  onToggle: handleTogglePin,
+                  onCenterX: pinNoticeState.onCenterX,
+                }
+              : undefined
+          }
+        />
+      }
       footerAccessory={
+        <>
+        {pinNoticeState.accessory}
         <Callout
-          visible={roughHintVisible}
+          visible={roughHintVisible && !pinNotice}
           title={tr('identityLog.roughHint.line1')}
           message={tr('identityLog.roughHint.line2')}
           onDismiss={() => setRoughHintVisible(false)}
           dismissAccessibilityLabel={tr('identityLog.roughHint.closeA11y')}
           testID="ils-rough-hint"
         />
+        </>
       }
       headerRight={
         <View style={{ flexDirection: 'row', gap: t.spacing['3'], alignItems: 'center' }}>
@@ -737,56 +783,18 @@ export function IdentityLogSheet() {
                 ) : null}
               </ChipRow>
             ) : null}
-            {/* [ 値 (タップでキーボード入力) ]  [−][＋] */}
-            <View
-              style={[
-                ilsStyles.amountRow,
-                {
-                  marginTop: hasChipRow ? t.spacing['2'] : 0,
-                  paddingRight: t.spacing['2'],
-                  gap: t.spacing['2'],
-                  backgroundColor: t.colors.surface.raised,
-                  borderRadius: t.radius.lg,
-                },
-              ]}
-            >
-              <Pressable
-                onPress={openAmountSheet}
-                style={[ilsStyles.amountRowValueArea, { paddingLeft: t.spacing['4'] }]}
-                accessibilityRole="button"
-                accessibilityLabel={tr('dishEntry.a11yAmountChange', { value: displayAmountValue, unit: amtUnitLabel })}
-                testID="ils-amount-row"
-              >
-                <Text style={[ilsStyles.amountRowValue, { color: t.colors.content.primary, fontSize: t.typography.fontSize['2xl'] }]}>
-                  {displayAmountValue}
-                  <Text style={{ color: t.colors.content.secondary, fontSize: t.typography.fontSize.sm }}>
-                    {' '}{amtUnitLabel}
-                  </Text>
-                </Text>
-              </Pressable>
-              <View style={[ilsStyles.amountStepper, { gap: t.spacing['3'] }]}>
-                <IconButton
-                  icon="remove"
-                  variant="outlined"
-                  size="lg"
-                  hitSlop={4}
-                  onPress={() => stepAmount('down')}
-                  disabled={atAmountMin}
-                  accessibilityLabel={tr('amountEdit.decreaseA11y')}
-                  testID="ils-amount-dec"
-                />
-                <IconButton
-                  icon="add"
-                  variant="outlined"
-                  size="lg"
-                  hitSlop={4}
-                  onPress={() => stepAmount('up')}
-                  disabled={atAmountMax}
-                  accessibilityLabel={tr('amountEdit.increaseA11y')}
-                  testID="ils-amount-inc"
-                />
-              </View>
-            </View>
+            {/* [ 値 (タップでキーボード入力) ]  [−][＋] (My食品の記録シートと共通。components/AmountStepperRow.tsx) */}
+            <AmountStepperRow
+              value={displayAmountValue}
+              unitLabel={amtUnitLabel}
+              onPressValue={openAmountSheet}
+              onStep={stepAmount}
+              atMin={atAmountMin}
+              atMax={atAmountMax}
+              valueA11yLabel={tr('dishEntry.a11yAmountChange', { value: displayAmountValue, unit: amtUnitLabel })}
+              testIDPrefix="ils-amount"
+              style={{ marginTop: hasChipRow ? t.spacing['2'] : 0 }}
+            />
             {/* amount-spec: identity-level — referenceDescription は Identity 基準量の説明 (例: 1個=衣+主菜) なので、単位と数え方 (個/枚) が Identity 共通のときだけ出す */}
             {amountRefIdentity.referenceDescription && amt.unit === amountRefIdentity.amount.unit && (amt.unitLabel ?? '') === (amountRefIdentity.amount.unitLabel ?? '') ? (
               <Caption tone="tertiary" style={{ marginTop: t.spacing['2'] }} testID="ils-amount-ref">
@@ -838,70 +846,5 @@ export function IdentityLogSheet() {
         </>
       ) : null}
     </TallSheetScreen>
-  );
-}
-
-
-// ---------------------------------------------------------------------------
-// Styles
-// ---------------------------------------------------------------------------
-
-const ilsStyles = StyleSheet.create({
-  amountRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-    minHeight: 58,
-  },
-  // 値の領域は行の残り幅いっぱい・高さいっぱいをタップ可能にする
-  amountRowValueArea: {
-    flex: 1,
-    alignSelf: 'stretch',
-    justifyContent: 'center',
-  },
-  amountStepper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  amountRowValue: {
-    fontWeight: '700',
-  },
-});
-
-// ---------------------------------------------------------------------------
-// FooterPreview — passed to BottomSheet's `footerLeft` slot. Renders
-// `kcal` + `P/F/C` next to the primary CTA, EC-cart style. Shows muted
-// placeholder text when no resolvable amount is set so the footer never
-// appears empty.
-// ---------------------------------------------------------------------------
-
-function FooterPreview({ macro }: { macro: Macro | null }) {
-  const t = useTheme();
-  const ready = !!macro && macro.kcal > 0;
-  return (
-    <View style={{ flex: 1, justifyContent: 'center' }}>
-      <Text
-        style={{
-          fontSize: t.typography.fontSize.lg,
-          fontWeight: '700',
-          color: ready ? t.colors.content.primary : t.colors.content.tertiary,
-        }}
-        testID="ils-preview-kcal"
-      >
-        {ready ? `${Math.round(macro!.kcal)} kcal` : '— kcal'}
-      </Text>
-      <Text
-        style={{
-          fontSize: t.typography.fontSize.xs,
-          color: t.colors.content.secondary,
-          marginTop: 2,
-        }}
-        testID="ils-preview-pfc"
-      >
-        {ready
-          ? `P${Math.round(macro!.protein)} · F${Math.round(macro!.fat)} · C${Math.round(macro!.carbs)}`
-          : 'P— · F— · C—'}
-      </Text>
-    </View>
   );
 }

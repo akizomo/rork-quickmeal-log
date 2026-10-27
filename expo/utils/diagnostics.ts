@@ -24,6 +24,12 @@ export function emptyDiagnostics(): DiagnosticsData {
     searchOpenCount: 0,
     directInputOpenCount: 0,
     widgetLogCount: 0,
+    frequentPinnedTapCount: 0,
+    frequentAutoTapCount: 0,
+    myFoodShelfTapCount: 0,
+    myFoodsPageOpenCount: 0,
+    myFoodSavedCount: 0,
+    myFoodSavedLayer1Count: 0,
   };
 }
 
@@ -67,10 +73,22 @@ export function recordSearchMiss(
   return { ...base, searchMisses: next };
 }
 
+/** `bumpDiagnosticCounter` で加算できるカウンタ。 */
+export type DiagnosticCounterKey =
+  | 'searchOpenCount'
+  | 'directInputOpenCount'
+  | 'widgetLogCount'
+  | 'frequentPinnedTapCount'
+  | 'frequentAutoTapCount'
+  | 'myFoodShelfTapCount'
+  | 'myFoodsPageOpenCount'
+  | 'myFoodSavedCount'
+  | 'myFoodSavedLayer1Count';
+
 /** カウンタ系フィールドを +1 する。 */
 export function bumpDiagnosticCounter(
   data: DiagnosticsData | undefined,
-  key: 'searchOpenCount' | 'directInputOpenCount' | 'widgetLogCount',
+  key: DiagnosticCounterKey,
   by = 1,
 ): DiagnosticsData {
   const base = data ?? emptyDiagnostics();
@@ -111,6 +129,12 @@ export function castDiagnostics(input: unknown): DiagnosticsData {
     searchOpenCount: num(raw.searchOpenCount),
     directInputOpenCount: num(raw.directInputOpenCount),
     widgetLogCount: num(raw.widgetLogCount),
+    frequentPinnedTapCount: num(raw.frequentPinnedTapCount),
+    frequentAutoTapCount: num(raw.frequentAutoTapCount),
+    myFoodShelfTapCount: num(raw.myFoodShelfTapCount),
+    myFoodsPageOpenCount: num(raw.myFoodsPageOpenCount),
+    myFoodSavedCount: num(raw.myFoodSavedCount),
+    myFoodSavedLayer1Count: num(raw.myFoodSavedLayer1Count),
   };
 }
 

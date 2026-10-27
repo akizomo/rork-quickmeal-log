@@ -39,4 +39,25 @@ export interface DiagnosticsData {
   directInputOpenCount: number;
   /** ウィジェット経由で記録が確定した件数。ウィジェットが実用されているかの判定用。 */
   widgetLogCount: number;
+  /**
+   * ⭐️ タブで、**ピン留めしたもの**から記録した回数 (タップ・長押し→記録の両方)。
+   * `tabUsageCounts.frequent` の内訳 (PRD §10.2.1 frequent_tap_source)。
+   */
+  frequentPinnedTapCount: number;
+  /**
+   * ⭐️ タブで、**自動で補充されたもの**から記録した回数。
+   * これがほとんど増えないなら、自動の補充は使われておらず、⭐️の降格・撤去の判断材料になる (PROBLEMS.md P-007 Story d)。
+   */
+  frequentAutoTapCount: number;
+  /**
+   * ⭐️ タブで、お気に入りに入れた **My食品** のピルから1タップで記録した回数。Identity のピル (上の2つ) とは混ぜない。
+   * (2026-10-26 までは⭐️下段の My食品のリストの行のタップ。2段をやめたので、同じカウンタを引き継いだ)
+   */
+  myFoodShelfTapCount: number;
+  /** My食品ページ (倉庫) を開いた回数。入口をホームの⭐️に置かない判断の確認用 (PROBLEMS.md P-007 Story h)。 */
+  myFoodsPageOpenCount: number;
+  /** My食品として保存した数 (新規作成のみ。同名の更新・上書きは数えない)。 */
+  myFoodSavedCount: number;
+  /** 上のうち、保存時に名前が検索の確実な一致 (層1) で DB に着地していた数。「気づかず My食品にした」予想の実測。 */
+  myFoodSavedLayer1Count: number;
 }

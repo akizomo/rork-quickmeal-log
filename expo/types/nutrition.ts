@@ -240,6 +240,24 @@ export interface AppSettings {
    */
   currentDefaultTab?: 'ingredient' | 'dish' | 'frequent';
   /**
+   * ⭐️ タブのピン留め (PRD §6.5.3)。Identity ID の順序付き配列で、ユーザーが決めた順で先頭に固定する。
+   * 末尾に追加される。辞書に無い ID は表示時に黙って除く (配列自体は触らない)。
+   */
+  frequentPins?: string[];
+  /**
+   * ⭐️ タブで「表示しない」にした自動分の Identity ID。ピン留めしたものは入れない (ピン留めは「外す」)。
+   */
+  frequentHidden?: string[];
+  /**
+   * ⭐️ をシートで初めて押したとき、結果を伝える吹き出しを出した時刻。`null` の間は最初の1回だけ出す。
+   * 押すたびに出るとうるさいので、生涯1回 (roughHintSeenAtISO と同じ扱い)。
+   */
+  pinNoticeSeenAtISO?: string | null;
+  /** My食品 (PRD §6.5.4)。数値入力した名前つきの食品。Identity 辞書の外に置く。並びは lastUsedAtISO (最近使った順)。 */
+  myFoods?: import('./my-food').MyFood[];
+  /** 検索から選んで記録した Identity / My食品 (新しい順、上限20)。検索ページの「最近」に出す。9ボタン・⭐️経由は入れない。 */
+  searchRecents?: import('./my-food').SearchRecent[];
+  /**
    * Identity-first IA schema version applied to the persisted FoodLog list.
    * Bumped when a one-shot backfill of `identityId` runs at boot.
    *   undefined / 0 — never migrated yet

@@ -2,6 +2,7 @@
   "nav": {
     "back": "Back",
     "about": "About",
+    "myFoods": "My Foods",
     "searchMisses": "Foods not found",
     "goalEdit": "Edit Goals",
     "help": "How to Use Hachibu",
@@ -213,7 +214,6 @@
       "noDataBody": "There may be no data in Health, or Hachibu may not have permission to read it.\n\nYou can change this in the Health app: tap your profile at the top right → Apps → Hachibu.",
       "openHealth": "Open Health",
       "retrySync": "Sync again",
-
       "sync": "Health sync"
     },
     "timeAgo": {
@@ -379,6 +379,15 @@
     "countSummary": "{{count}} items · {{kcal}} kcal"
   },
   "directInput": {
+    "myFood": {
+      "switchLabel": "Save to My Foods",
+      "switchHint": "Pick it by name next time.",
+      "alreadyExists": "\"{{name}}\" is already in the database",
+      "conflictTitle": "A My Food with this name exists",
+      "conflictMessage": "\"{{name}}\" is already saved with different values.",
+      "overwrite": "Overwrite with these",
+      "rename": "Use another name"
+    },
     "title": "Enter numbers",
     "editTitle": "Edit entry",
     "fixedNameNote": "Saved with the numbers you enter. The name stays as is.",
@@ -456,6 +465,21 @@
     "switchToCount": "Switch to count",
     "usualAmount": "Usual",
     "amountRefPrefix": "Reference",
+    "pin": {
+      "addA11y": "Add {{label}} to favorites",
+      "removeA11y": "Remove {{label}} from favorites",
+      "notice": {
+        "added": {
+          "title": "Added {{label}} to favorites",
+          "message": "It shows up in the ⭐️ tab on Home."
+        },
+        "addedFirst": {
+          "title": "Added {{label}} to favorites",
+          "message": "A ⭐️ tab now appears on Home."
+        },
+        "toast": "Added {{label}} to favorites"
+      }
+    },
     "roughHint": {
       "line1": "A 20–30 kcal gap is about one bite of rice.",
       "line2": "Keeping a rough log going matters far more.",
@@ -724,10 +748,62 @@
       "body": "No need to open the app",
       "add": "Add widget"
     },
+    "frequent": {
+      "edit": "Edit",
+      "editA11y": "Edit favorites"
+    },
     "a11y": {
       "search": "Search food",
       "addItem": "Add {{label}}. Long-press for details."
     }
+  },
+  "frequentEdit": {
+    "title": "Edit favorites",
+    "intro": "Tidy what shows in favorites. Drag the handle to reorder, or take out what you don't need.",
+    "pinned": {
+      "title": "Picked by you",
+      "empty": "Tap ⭐️ on a log sheet and it shows up here.",
+      "handleA11y": "Reorder {{label}}",
+      "moveUpA11y": "Move {{label}} up",
+      "moveDownA11y": "Move {{label}} down",
+      "remove": "Remove",
+      "removeA11y": "Remove {{label}} from favorites"
+    },
+    "myFoods": "My Foods ({{count}})",
+    "myFoodsSub": "Tap ⭐️ on a food's log sheet to add it to Favorites",
+    "auto": {
+      "title": "Filled in automatically",
+      "hint": "What you log most fills the remaining space.",
+      "empty": "Nothing yet",
+      "hide": "Hide",
+      "hideA11y": "Hide {{label}} from favorites"
+    },
+    "hidden": {
+      "title": "Hidden · {{count}}",
+      "restore": "Restore",
+      "restoreA11y": "Restore {{label}} to favorites"
+    }
+  },
+  "myFoods": {
+    "title": "My Foods",
+    "addA11y": "Log {{name}}",
+    "share": "Share My Foods names",
+    "shareNote": "Foods that search could not find are candidates to add to the app. If you like, share just the names listed here. No numbers or logs are included.",
+    "empty": "Foods you enter by numbers stay here. Name one when you log it, and you can pick it next time.",
+    "record": "Log",
+    "editTitle": "Edit My Food",
+    "perServingTitle": "Calories and PFC",
+    "duplicate": "That name already exists",
+    "notFound": "This food could not be found.",
+    "recordsUnchanged": "Editing here does not change your past logs.",
+    "delete": "Delete this food",
+    "deleteTitle": "Delete \"{{name}}\"?",
+    "deleteMessage": "It will be removed from My Foods. Your past logs stay as they are.",
+    "percentNote": "Your saved values are 100%. Change the amount from there.",
+    "favorite": "Add to Favorites",
+    "nameTitle": "Name",
+    "editValues": "Edit values",
+    "saveValues": "Save these values"
   },
   "stats": {
     "title": "Progress",
@@ -1010,6 +1086,10 @@
     "hint": "You can undo this if needed"
   },
   "search": {
+    "recents": "Recent",
+    "myFoodAddA11y": "Log {{name}}",
+    "myFoodsLink": "My Foods ({{count}})",
+    "myFoodsHeading": "My Foods",
     "title": "Search food",
     "placeholder": "e.g. avocado, chicken, ramen",
     "clearA11y": "Clear search",

@@ -27,7 +27,8 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_ALLOW_PAYWALL_SKIP": "true"
+        "EXPO_PUBLIC_ALLOW_PAYWALL_SKIP": "true",
+        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
       }
     },
     "production": {
@@ -38,6 +39,9 @@
         "env": {
           "SENTRY_DISABLE_AUTO_UPLOAD": "true"
         }
+      },
+      "env": {
+        "SENTRY_DISABLE_AUTO_UPLOAD": "true"
       }
     }
   },

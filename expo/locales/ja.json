@@ -2,6 +2,7 @@
   "nav": {
     "back": "戻る",
     "about": "アプリについて",
+    "myFoods": "My食品",
     "searchMisses": "見つからなかった食品",
     "goalEdit": "目標を変更",
     "help": "Hachibu の使い方",
@@ -213,7 +214,6 @@
       "noDataBody": "ヘルスケアにデータが無いか、Hachibu に読み取りが許可されていない可能性があります。\n\n許可は、ヘルスケアアプリの右上のプロフィール → アプリ → Hachibu から変更できます。",
       "openHealth": "ヘルスケアを開く",
       "retrySync": "もう一度同期",
-
       "sync": "ヘルス同期"
     },
     "timeAgo": {
@@ -379,6 +379,15 @@
     "countSummary": "{{count}}件 · {{kcal}} kcal"
   },
   "directInput": {
+    "myFood": {
+      "switchLabel": "My食品に保存",
+      "switchHint": "次から、名前で選んで記録できます。",
+      "alreadyExists": "「{{name}}」はすでにあります",
+      "conflictTitle": "同じ名前の My食品があります",
+      "conflictMessage": "「{{name}}」は、ほかの値ですでに保存されています。",
+      "overwrite": "今の値で上書き",
+      "rename": "別の名前にする"
+    },
     "title": "数値で入力",
     "editTitle": "記録を編集",
     "fixedNameNote": "入力した数値のまま保存します。名前は変わりません。",
@@ -456,6 +465,21 @@
     "switchToCount": "個数に切り替え",
     "usualAmount": "いつもの",
     "amountRefPrefix": "目安",
+    "pin": {
+      "addA11y": "{{label}}をお気に入りに追加",
+      "removeA11y": "{{label}}をお気に入りからはずす",
+      "notice": {
+        "added": {
+          "title": "{{label}}をお気に入りに追加しました",
+          "message": "ホームの⭐️タブに並びます。"
+        },
+        "addedFirst": {
+          "title": "{{label}}をお気に入りに追加しました",
+          "message": "ホームに⭐️タブが現れます。"
+        },
+        "toast": "{{label}}をお気に入りに追加しました"
+      }
+    },
     "roughHint": {
       "line1": "20〜30kcalは、ごはんひと口くらいの差。",
       "line2": "ざっくりでも、記録を続けるほうがずっと大切です。",
@@ -724,10 +748,62 @@
       "body": "アプリを開かずに記録できます",
       "add": "追加する"
     },
+    "frequent": {
+      "edit": "編集",
+      "editA11y": "お気に入りの並びを編集"
+    },
     "a11y": {
       "search": "食品を検索",
       "addItem": "{{label}}を追加。長押しで詳細入力"
     }
+  },
+  "frequentEdit": {
+    "title": "お気に入りの編集",
+    "intro": "お気に入りに並ぶものを整えます。つまみをドラッグして並べ替え、いらないものははずせます。",
+    "pinned": {
+      "title": "自分で選んだもの",
+      "empty": "記録シートの ⭐️ を押すと、ここに並びます。",
+      "handleA11y": "{{label}}の並べ替え",
+      "moveUpA11y": "{{label}}を上へ",
+      "moveDownA11y": "{{label}}を下へ",
+      "remove": "はずす",
+      "removeA11y": "{{label}}をお気に入りからはずす"
+    },
+    "myFoods": "My食品 {{count}}件",
+    "myFoodsSub": "開いた先の記録シートの ⭐️ で、お気に入りに入れられます",
+    "auto": {
+      "title": "自動で入るもの",
+      "hint": "よく記録しているものを、残りの枠に並べます。",
+      "empty": "まだありません",
+      "hide": "表示しない",
+      "hideA11y": "{{label}}をお気に入りに表示しない"
+    },
+    "hidden": {
+      "title": "表示しないもの {{count}}件",
+      "restore": "戻す",
+      "restoreA11y": "{{label}}をお気に入りに戻す"
+    }
+  },
+  "myFoods": {
+    "title": "My食品",
+    "addA11y": "{{name}}を記録",
+    "share": "My食品の名前を共有",
+    "shareNote": "検索で見つからなかった食品は、アプリに足していく候補になります。よければ、ここに並んでいる名前だけを共有してください。数値や記録は含みません。",
+    "empty": "数値で入力した食品は、ここに残ります。名前をつけて記録すると、次から選べます。",
+    "record": "記録",
+    "editTitle": "My食品を編集",
+    "perServingTitle": "カロリーとPFC",
+    "duplicate": "同じ名前があります",
+    "notFound": "この食品は見つかりませんでした。",
+    "recordsUnchanged": "ここで直しても、これまでの記録は変わりません。",
+    "delete": "この食品を削除",
+    "deleteTitle": "「{{name}}」を削除しますか？",
+    "deleteMessage": "My食品から消えます。これまでの記録は変わりません。",
+    "percentNote": "保存した値を 100% として、量を変えられます。",
+    "favorite": "お気に入りに入れる",
+    "nameTitle": "名前",
+    "editValues": "値を直す",
+    "saveValues": "この値で保存"
   },
   "stats": {
     "title": "実績",
@@ -1010,6 +1086,10 @@
     "hint": "必要なら元に戻せます"
   },
   "search": {
+    "recents": "最近",
+    "myFoodAddA11y": "{{name}}を記録",
+    "myFoodsLink": "My食品 {{count}}件",
+    "myFoodsHeading": "My食品",
     "title": "食品を検索",
     "placeholder": "例: アボカド、チキン、ラーメン",
     "clearA11y": "検索をクリア",
