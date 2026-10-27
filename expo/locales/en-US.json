@@ -646,13 +646,13 @@
         "footnote2": "Soups such as miso soup and tonjiru are under \"Set meal / Single dish / Soup\"."
       },
       "future": {
-        "body": "The more you log, the easier it becomes to find your go-to foods and dishes.",
+        "body": "The more you log, the easier your usual foods are to find.",
         "starTitle": "⭐️ Favorites tab",
-        "starBody": "Tap ⭐️ on the logging screen to add it to your favorites. The ⭐️ tab shows your favorites first, then what you log most. To reorder or remove, use Edit at the end.",
+        "starBody": "Starred items come first. The rest fills with what you log most.",
         "myFoodTitle": "My Foods",
-        "myFoodBody": "If search can't find something, enter the numbers yourself. Give it a name and it stays in My Foods, ready to pick from search next time. You can add it to ⭐️ too.",
+        "myFoodBody": "Not in search? Enter the numbers and give it a name. Next time, pick it from search.",
         "defaultTitle": "Default tab on launch",
-        "defaultBody": "The tab shown when you open the app automatically shifts to whichever tab you use most."
+        "defaultBody": "The tab shown at launch switches to the one you use most."
       },
       "faq": {
         "q1": "What if the portion isn't exactly right?",
