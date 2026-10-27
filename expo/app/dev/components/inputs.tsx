@@ -5,8 +5,34 @@
 import { Stack } from 'expo-router';
 import React, { useState } from 'react';
 import { ScrollView, View } from 'react-native';
-import { Caption, Chip, NumberField, SelectCard, useTheme, type Theme } from '@/design-system';
+import { Body, Caption, Chip, NumberField, SelectCard, Switch, useTheme, type Theme } from '@/design-system';
 import { Section } from '../_shared';
+
+// ---------- Switch ----------
+function SwitchSection({ t }: { t: Theme }) {
+  const [on, setOn] = useState(true);
+  const [off, setOff] = useState(false);
+  return (
+    <Section title="Switch" t={t}>
+      <Caption>
+        OS 標準の Switch にアプリの色を当てたもの。オン = action.primary / オフ = border.interactive。色の props は受け付けない
+        (Android で既定の緑になるのを防ぐ)。
+      </Caption>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Body>オン</Body>
+        <Switch value={on} onValueChange={setOn} accessibilityLabel="オンの例" />
+      </View>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Body>オフ</Body>
+        <Switch value={off} onValueChange={setOff} accessibilityLabel="オフの例" />
+      </View>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Body tone="secondary">無効 (オン)</Body>
+        <Switch value disabled accessibilityLabel="無効の例" />
+      </View>
+    </Section>
+  );
+}
 
 export default function InputsScreen() {
   const t = useTheme();
@@ -23,6 +49,7 @@ export default function InputsScreen() {
       >
         <NumberFieldSection t={t} value={heightCm} onChange={setHeightCm} />
         <SelectCardSection t={t} selected={selectedBasis} onSelect={setSelectedBasis} />
+        <SwitchSection t={t} />
         <ChipSection
           t={t}
           selected={chipTags}
