@@ -70,6 +70,8 @@
     "skip": "スキップ",
     "next": "次へ",
     "start": "はじめる",
+    "trialNote": "{{days}}日間無料（その後は有料）",
+    "trialNoteWithPrice": "{{days}}日間無料（その後 {{price}}/月）",
     "progress": {
       "label": "体重 ・ 12週",
       "delta": "-2.3kg",

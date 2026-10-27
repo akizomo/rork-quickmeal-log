@@ -52,10 +52,10 @@ Meal Log & Body Type Tracker
 *(Shown above the description. Can be updated any time without a new app version — ideal for events or seasonal messaging.)*
 
 ```
-Nine buttons to log a meal. One tap is enough. No measuring, no searching, no deciding. Try free for 7 days.
+Nine buttons to log a meal. One tap is enough. No measuring, no searching, no deciding. Free for 7 days, then a paid plan.
 ```
 
-(108 chars)
+(122 chars)
 
 ### 2-4. Keywords (100 chars max, comma-separated)
 
@@ -74,6 +74,8 @@ The biggest enemy of meal tracking is trying to track it perfectly.
 
 Hachibu is built around the opposite idea: roughly is enough.
 
+A subscription (monthly or annual) is required. The first 7 days are free, and you won't be charged if you cancel during the trial.
+
 ■ Nine buttons, one tap (Quick Log)
 Tap a category button — kcal and macros logged instantly. Ingredient tab or dish tab, nine buttons each. Your most-logged foods rise to the top automatically. No database to search. No measuring. No deciding.
 
@@ -86,7 +88,11 @@ Enter your stats, pick a direction. Get a daily calorie and macro target — rea
 ■ No streaks, no score
 Miss a day — the app won't mention it.
 
-7-day free trial. Everything stays on your device.
+■ Pricing
+Free for the first 7 days. After that, your chosen plan renews automatically until you cancel. Cancel any time in your store's subscription settings. Prices are shown in the store.
+
+■ Privacy
+Everything stays on your device.
 
 Hachibu (八分) — the Japanese practice of stopping at 80% full. Roughly is enough.
 ```
@@ -100,10 +106,12 @@ Hachibu (八分) — the Japanese practice of stopping at 80% full. Roughly is e
 ### 3-1. Short Description (80 chars max)
 
 ```
-Just tap a button. Quick, rough logging — the meal log that sticks.
+Just tap a button. Quick, rough logging. 7 days free, then a paid plan.
 ```
 
-(67 chars)
+(71 chars)
+
+> 2026-10-27: Pricing made explicit (a subscription is required to use the app) in the short description, promo text and both descriptions, to match the Japanese listing.
 
 ### 3-2. Full Description (4000 chars max)
 
@@ -111,6 +119,8 @@ Just tap a button. Quick, rough logging — the meal log that sticks.
 The biggest enemy of meal tracking is trying to track it perfectly.
 
 Hachibu is built around the opposite idea: roughly is enough.
+
+A subscription (monthly or annual) is required. The first 7 days are free, and you won't be charged if you cancel during the trial.
 
 ■ Nine buttons, one tap (Quick Log)
 Tap a category button — kcal and macros logged instantly. Ingredient tab or dish tab, nine buttons each. Your most-logged foods rise to the top automatically. No database to search. No measuring. No deciding.
@@ -124,7 +134,11 @@ Enter your stats, pick a direction. Get a daily calorie and macro target — rea
 ■ No streaks, no score
 Miss a day — the app won't mention it.
 
-7-day free trial. Everything stays on your device.
+■ Pricing
+Free for the first 7 days. After that, your chosen plan renews automatically until you cancel. Cancel any time in your store's subscription settings. Prices are shown in the store.
+
+■ Privacy
+Everything stays on your device.
 
 Hachibu (八分) — the Japanese practice of stopping at 80% full. Roughly is enough.
 ```

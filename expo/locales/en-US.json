@@ -70,6 +70,8 @@
     "skip": "Skip",
     "next": "Next",
     "start": "Get Started",
+    "trialNote": "{{days}} days free (then a paid plan)",
+    "trialNoteWithPrice": "{{days}} days free (then {{price}}/month)",
     "progress": {
       "label": "Weight · 12 wk",
       "delta": "-2.3 kg",
