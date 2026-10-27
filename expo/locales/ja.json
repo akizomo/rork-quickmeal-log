@@ -440,6 +440,7 @@
     "burnedCaloriesLabel": "消費カロリー",
     "add": "追加",
     "deleteA11y": "{{label}} を削除",
+    "deleted": "{{label}} を削除しました",
     "typeLabels": {
       "running": "ランニング",
       "cycling": "サイクリング",

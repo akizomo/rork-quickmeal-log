@@ -223,6 +223,8 @@ function CalloutSection({ t }: { t: Theme }) {
           message="ホームの⭐️タブに並びます。"
         />
         <SheetToast visible message="鶏むね・ささみをお気に入りに追加しました" emphasis="鶏むね・ささみ" />
+        {/* action あり: 削除直後の「取り消す」。action を渡したときだけトースト自体がタップを受ける */}
+        <SheetToast visible message="ランニングを削除しました" emphasis="ランニング" action={{ label: '取り消す', onPress: () => undefined }} />
         <Button label={visible ? '1つ目を隠す' : '1つ目を出す'} variant="secondary" onPress={() => setVisible((v) => !v)} />
         <Button label="BottomSheet の footerAccessory で使う" variant="secondary" onPress={() => setSheetOpen(true)} />
       </View>

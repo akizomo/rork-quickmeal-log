@@ -440,6 +440,7 @@
     "burnedCaloriesLabel": "Calories burned",
     "add": "Add",
     "deleteA11y": "Delete {{label}}",
+    "deleted": "{{label}} deleted",
     "typeLabels": {
       "running": "Running",
       "cycling": "Cycling",
