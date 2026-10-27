@@ -16,3 +16,13 @@
 # ホーム画面ウィジェット (Glance + JS ブリッジ)。SDK 58 からリリースビルドで R8 が既定で有効になったため、
 # リフレクション経由で呼ばれる NativeModule / Receiver が削られないよう丸ごと残す。
 -keep class app.akizony.hachibu.widget.** { *; }
+
+# WorkManager (Glance ウィジェットが引く) は起動時に Room の生成クラス (WorkDatabase_Impl) をリフレクションで作る。
+# room-runtime 2.5.0 の同梱ルールはクラスだけ残して引数なしコンストラクタを残さないため、R8 に削られて
+# 「Failed to create an instance of class androidx.work.impl.WorkDatabase」で起動直後に落ちた (versionCode 81)。
+-keep class * extends androidx.room.RoomDatabase { <init>(); }
+
+# WorkManager が名前からリフレクションで作るクラスは、引数なし / (Context, WorkerParameters) のコンストラクタが必要。
+# 同梱ルールが足りず、リリースビルドで InputMerger が NoSuchMethodException になっていた (ウィジェット更新の裏処理が失敗する)。
+-keep class * extends androidx.work.InputMerger { <init>(); }
+-keep class * extends androidx.work.ListenableWorker { <init>(android.content.Context, androidx.work.WorkerParameters); }
