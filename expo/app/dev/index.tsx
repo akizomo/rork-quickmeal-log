@@ -1,7 +1,9 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import React from 'react';
-import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
-import { useTheme } from '@/design-system';
-import { useAppState } from '@/providers/app-state-provider';
+import { Alert, DevSettings, Pressable, ScrollView, Text, View } from 'react-native';
+import { Body, Button, Label, useTheme } from '@/design-system';
+import { STORAGE_KEY, useAppState } from '@/providers/app-state-provider';
+import { buildStoreDemoState } from '@/utils/store-demo-seed';
 import { NavList, type NavItem } from './_shared';
 
 const ITEMS: NavItem[] = [
@@ -90,6 +92,37 @@ export default function DevHub() {
             </Text>
           </Pressable>
         </View>
+      </View>
+
+      <View
+        style={{
+          backgroundColor: t.colors.surface.raised,
+          borderRadius: t.radius['2xl'],
+          padding: t.spacing['5'],
+          gap: t.spacing['3'],
+        }}
+      >
+        <Label size="lg">ストア撮影用データ</Label>
+        <Body size="sm" tone="secondary">
+          4週間ほど続けている人の記録 (食事・体重・体脂肪率・運動) に置き換えて再起動します。今の記録は消えます。
+        </Body>
+        <Button
+          label="撮影用データを入れる"
+          variant="secondary"
+          onPress={() => {
+            Alert.alert('撮影用データを入れる', '今の記録をすべて置き換えます。', [
+              { text: 'キャンセル', style: 'cancel' },
+              {
+                text: '置き換える',
+                style: 'destructive',
+                onPress: async () => {
+                  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(buildStoreDemoState()));
+                  DevSettings.reload();
+                },
+              },
+            ]);
+          }}
+        />
       </View>
 
       <NavList t={t} items={ITEMS} />

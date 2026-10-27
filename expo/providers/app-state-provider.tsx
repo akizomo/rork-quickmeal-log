@@ -104,7 +104,7 @@ interface UndoState {
   kind: 'add' | 'delete';
 }
 
-const STORAGE_KEY = 'quiet-nutrition-state-v1';
+export const STORAGE_KEY = 'quiet-nutrition-state-v1';
 
 const defaultPersistedState: PersistedState = {
   profile: defaultProfile,
