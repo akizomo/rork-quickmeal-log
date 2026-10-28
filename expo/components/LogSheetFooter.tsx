@@ -11,8 +11,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Text, View } from 'react-native';
 
-import { Callout, IconButton, Label, useTheme } from '@/design-system';
-import { SheetToast } from '@/components/SheetToast';
+import { Callout, IconButton, Label, Toast, useTheme } from '@/design-system';
 import { useT } from '@/hooks/useT';
 import type { Macro } from '@/types/nutrition';
 
@@ -150,10 +149,11 @@ export function usePinNotice(testIDPrefix = 'ils') {
         arrowOffset={anchorX}
         testID={`${testIDPrefix}-pin-notice`}
       />
-      <SheetToast
+      <Toast
         visible={notice === 'toast'}
         message={tr('identityLog.pin.notice.toast', { label })}
         emphasis={label}
+        style={{ marginBottom: t.spacing['2'] }}
         testID={`${testIDPrefix}-pin-toast`}
       />
     </>

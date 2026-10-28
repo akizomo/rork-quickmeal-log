@@ -540,7 +540,6 @@ function StepNumber({
           autoFocus
           testID={testID}
           inputAccessoryViewID={inputAccessoryViewID}
-          returnKeyType="next"
           onSubmitEditing={onSubmitEditing}
         />
         {unitToggle ? <View style={{ marginTop: 16, alignItems: 'center' }}>{unitToggle}</View> : null}
@@ -586,7 +585,6 @@ function StepHeightImperial({
             autoFocus
             testID="onboarding-height-ft"
             inputAccessoryViewID={inputAccessoryViewID}
-            returnKeyType="next"
           />
           <NumberField
             value={inch}
@@ -597,7 +595,6 @@ function StepHeightImperial({
             align="center"
             testID="onboarding-height-in"
             inputAccessoryViewID={inputAccessoryViewID}
-            returnKeyType="next"
             onSubmitEditing={onSubmitEditing}
           />
         </View>

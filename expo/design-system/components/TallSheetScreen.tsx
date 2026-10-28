@@ -24,7 +24,7 @@
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Platform, ScrollView, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
-import { Stack, type NativeStackNavigationOptions } from 'expo-router';
+import type { NativeStackNavigationOptions } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { Theme } from '../theme';
@@ -38,6 +38,19 @@ import type { SheetScreenAction } from './SheetScreen';
 const SHEET_CORNER_RADIUS = 28;
 
 /**
+ * Android の背の高いシートの高さ (画面高に対する比率)。**1段に固定する** (2026-10-27)。
+ *
+ * Android の formSheet は、中身を「最大の detent の高さ (= 全高)」で配置したまま上から見せるので、
+ * 60% ⇄ 全高の可変にすると、JS で下端に置いたフッターは 60% のとき画面の外に出る。
+ * react-native-screens の `unstable_sheetFooter` (下端に固定されるネイティブのフッター) で一度は直したが、
+ * **半開き (60%) のとき、実機の指のタップ (押している時間がある) だと、フッターの ⭐️ も保存ボタンも反応しなかった**
+ * (adb の瞬間タップだと反応するので、エミュレータでは見つからなかった。本文のチップは同じ押し方で反応する)。
+ * 1段なら、シートの高さ = 中身を配置する高さになり、フッターは通常の JS の位置で見える。
+ * 全高 (1.0) にすると上の余白が無くなるので 85% にする。はみ出す中身は本文の ScrollView が吸収する。
+ */
+const ANDROID_SINGLE_DETENT = 0.85;
+
+/**
  * 背の高い formSheet ルート共通の Stack.Screen options。
  * @param detents シートの高さ (画面高に対する比率、昇順)。既定は旧 BottomSheet の 60% と、引き上げ時の全高
  */
@@ -45,7 +58,7 @@ export function tallSheetOptions(t: Theme, detents: number[] = [0.6, 1.0]): Nati
   return {
     presentation: 'formSheet',
     headerShown: false,
-    sheetAllowedDetents: detents,
+    sheetAllowedDetents: Platform.OS === 'android' ? [ANDROID_SINGLE_DETENT] : detents,
     sheetInitialDetentIndex: 0,
     sheetGrabberVisible: true,
     sheetCornerRadius: SHEET_CORNER_RADIUS,
@@ -96,13 +109,8 @@ export function TallSheetScreen({
   // 見出しとフッターは ScrollView の上に重ねる (下記コメント)。本文の余白に高さを足すため実測する
   const [headerHeight, setHeaderHeight] = useState(0);
   const [footerHeight, setFooterHeight] = useState(0);
-  // Android の formSheet は、中身を「最大の detent の高さ (= 画面全体)」で配置したまま上から見せる。
-  // 最初の 60% の高さでは、JS で下端に置いたフッターが画面の外に出て押せなかった (2026-10-24 実測)。
-  // react-native-screens が formSheet の下端に固定するフッター (unstable_sheetFooter, Android 専用) に渡す。
-  const footerIsNative = Platform.OS === 'android';
-
   const footerNode = hasFooter ? (
-    <View pointerEvents="box-none" style={footerIsNative ? styles.nativeFooter : undefined}>
+    <View pointerEvents="box-none">
       {footerAccessory ? (
         <View pointerEvents="box-none" style={styles.footerAccessoryAnchor}>
           <View pointerEvents="box-none" style={[styles.footerAccessory, { left: t.spacing['4'], right: t.spacing['4'] }]}>
@@ -144,9 +152,6 @@ export function TallSheetScreen({
 
   return (
     <>
-      {footerIsNative ? (
-        <Stack.Screen options={{ unstable_sheetFooter: () => footerNode }} />
-      ) : null}
       {/* react-native-screens は formSheet 内の ScrollView の frame を「シート全体 (原点 0,0)」に強制補正する
           (RNSScreen.mm の applyFrameCorrectionForDescendantScrollView)。ScrollView を見出しの兄弟として
           flex で並べると、Yoga の位置 (見出しの下) と無視されて、本文が見出しの上へはみ出して描画された
@@ -196,7 +201,7 @@ export function TallSheetScreen({
         )}
       </View>
 
-      {hasFooter && !footerIsNative ? footerNode : null}
+      {hasFooter ? footerNode : null}
       </View>
     </>
   );
@@ -218,7 +223,6 @@ const styles = StyleSheet.create({
   footerItem: {
     flex: 1,
   },
-  nativeFooter: { width: '100%' },
   footerAccessoryAnchor: {
     height: 0,
     zIndex: 1,

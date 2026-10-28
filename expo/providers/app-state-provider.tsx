@@ -34,6 +34,7 @@ import {
   removeSearchMiss,
 } from '@/utils/diagnostics';
 import { beginSpan } from '@/utils/perf';
+import { isDeletedHealthWorkout, pruneDeletedHealthWorkouts, toDeletedHealthWorkout } from '@/utils/health-sync/deleted-workouts';
 import { widgetUpdateKcal, widgetDrainPendingQueue, widgetUpdateCategories, widgetUpdateUiLanguage } from '@/utils/widget-bridge';
 import { resolveLog, ResolveInput, ResolveResult } from '@/utils/identity-resolver';
 import { logDraftToFoodLog } from '@/utils/identity-log-bridge';
@@ -1165,10 +1166,44 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
 
   const deleteExerciseLog = useCallback(
     (id: string) => {
+      const target = exerciseLogs.find((e) => e.id === id);
       const nextExerciseLogs = exerciseLogs.filter((e) => e.id !== id);
       setExerciseLogs(nextExerciseLogs);
-      persist(profile, logs, settings, weights, bodyFatEntries, nextExerciseLogs);
+      // ヘルス由来は削除したことを残す。残さないと次の同期で同じワークアウトが取り込み直される
+      const mark = target ? toDeletedHealthWorkout(target) : null;
+      let nextSettings = settings;
+      if (mark) {
+        nextSettings = {
+          ...settings,
+          deletedHealthWorkouts: [...(settings.deletedHealthWorkouts ?? []), mark],
+        };
+        setSettings(nextSettings);
+      }
+      persist(profile, logs, nextSettings, weights, bodyFatEntries, nextExerciseLogs);
       console.log('[app-state] Exercise log deleted', id);
+    },
+    [bodyFatEntries, exerciseLogs, logs, persist, profile, settings, weights]
+  );
+
+  /**
+   * 削除した運動ログを元に戻す (削除直後の「取り消す」用)。
+   * ヘルス由来なら削除時に残した印も外す。印を残したままだと、次の同期で再び弾かれてしまう。
+   */
+  const restoreExerciseLog = useCallback(
+    (log: ExerciseLog) => {
+      if (exerciseLogs.some((e) => e.id === log.id)) return;
+      const nextExerciseLogs = [log, ...exerciseLogs];
+      setExerciseLogs(nextExerciseLogs);
+      let nextSettings = settings;
+      if (log.healthSyncId && settings.deletedHealthWorkouts?.some((d) => d.healthSyncId === log.healthSyncId)) {
+        nextSettings = {
+          ...settings,
+          deletedHealthWorkouts: settings.deletedHealthWorkouts.filter((d) => d.healthSyncId !== log.healthSyncId),
+        };
+        setSettings(nextSettings);
+      }
+      persist(profile, logs, nextSettings, weights, bodyFatEntries, nextExerciseLogs);
+      console.log('[app-state] Exercise log restored', log.id);
     },
     [bodyFatEntries, exerciseLogs, logs, persist, profile, settings, weights]
   );
@@ -1191,8 +1226,18 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       const startedAt = input.startedAt;
       const startMs = new Date(startedAt).getTime();
       if (!Number.isFinite(startMs)) return;
-      // すでに同期済みならスキップ
+      // すでに同期済み、またはユーザーが削除したものならスキップ
       if (exerciseLogs.some((e) => e.healthSyncId === input.healthSyncId)) return;
+      if (
+        isDeletedHealthWorkout(settings.deletedHealthWorkouts ?? [], {
+          healthSyncId: input.healthSyncId,
+          exerciseTypeKey: input.exerciseType,
+          startedAt,
+          minutes: input.minutes,
+        })
+      ) {
+        return;
+      }
       const dateKey = formatDateKey(new Date(startedAt));
       const activityLevel = profile.activityLevel ?? 1;
       const netKcal = calcExerciseNetKcal(input.grossKcal, activityLevel);
@@ -1350,8 +1395,14 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       const activityLevel = profile.activityLevel ?? 1;
       const weightKg = profile.currentWeightKg ?? 60;
       const dedupWindowMs = 15 * 60 * 1000;
+      const deletedHealthWorkouts = pruneDeletedHealthWorkouts(
+        settings.deletedHealthWorkouts ?? [],
+        new Date(result.syncedAt)
+      );
       for (const w of result.workouts) {
         if (nextExerciseLogs.some((e) => e.healthSyncId === w.healthSyncId)) continue;
+        // ユーザーが削除したワークアウトは取り込み直さない (消費カロリーに勝手に戻さない)
+        if (isDeletedHealthWorkout(deletedHealthWorkouts, w)) continue;
         const startMs = new Date(w.startedAt).getTime();
         if (!Number.isFinite(startMs)) continue;
         const dateKey = formatDateKey(new Date(w.startedAt));
@@ -1428,7 +1479,12 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       }
 
       // 6) 最終同期時刻を settings に記録 (foreground 自動再同期のスロットル判定用)
-      const nextSettings: AppSettings = { ...settings, lastHealthSyncAtISO: result.syncedAt };
+      //    削除済みワークアウトの印もここで保持期間を過ぎた分を刈る
+      const nextSettings: AppSettings = {
+        ...settings,
+        lastHealthSyncAtISO: result.syncedAt,
+        deletedHealthWorkouts: [...deletedHealthWorkouts],
+      };
 
       // 7) state まとめて更新 + persist は 1 回 (全て明示的に渡す)
       setProfile(nextProfile);
@@ -1715,6 +1771,7 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     todayDailyActivity,
     logExercise,
     deleteExerciseLog,
+    restoreExerciseLog,
     addExerciseLogFromHealth,
     upsertDailyActivity,
     ingestHealthSyncResult,

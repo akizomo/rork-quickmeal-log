@@ -167,6 +167,18 @@ export interface ExerciseLog {
   healthSyncId?: string;
 }
 
+/** ユーザーが削除したヘルス由来ワークアウトの印。ID が同期ごとに揺れても照合できるよう種別と時刻も持つ */
+export interface DeletedHealthWorkout {
+  healthSyncId: string;
+  /** YYYY-MM-DD */
+  date: string;
+  exerciseType: string;
+  /** ワークアウト開始時刻 (ISO) */
+  timestamp: string;
+  /** 長さ (分)。ID が変わった同じワークアウトを、時間を直されたものと区別するのに使う */
+  minutes: number;
+}
+
 /**
  * v1.7+: 1日合計の活動データ (歩数 + アクティブエネルギー)。
  * 個別 ExerciseLog (ワークアウト) と別軸でストック。日次・上書き保存。
@@ -296,6 +308,11 @@ export interface AppSettings {
    * undefined / null = 未 dismiss。一度 dismiss したら二度と表示しない。
    */
   widgetNudgeDismissedAtISO?: string | null;
+  /**
+   * ユーザーが削除したヘルス由来の運動ログ。次の同期で同じワークアウトを取り込み直さないための印
+   * (消したのに起動し直すと復活する、を防ぐ)。保持期間は utils/health-sync/deleted-workouts.ts。
+   */
+  deletedHealthWorkouts?: DeletedHealthWorkout[];
 
   /**
    * ウィジェット導入プロトタイプ画面 (widget-intro.tsx) を見た時刻 (ISO)。

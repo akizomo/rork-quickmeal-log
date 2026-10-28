@@ -242,6 +242,28 @@ git diff app.json    # plugins への config plugin 自動追加を必ず確認�
 
 - 実績: 2026-08-20 `expo-localization@^57.0.1` (正 `~17.0.9`) + config plugin 未登録 → 内部テスト版が splash でクラッシュ。修正コミット `db60e2a`。
 
+### Android のリリースビルドだけ起動直後に落ちる (R8 がクラスを削る)
+
+**依存が合っていてもデバッグ版で動いても、リリースだけ落ちることがある。** SDK 58 から Android のリリースビルドは R8 (使われないコードを削る処理) が既定で有効 (`android.enableMinifyInReleaseBuilds=true`)。リフレクションで名前から作られるクラスは、静的には「使われていない」ように見えるので、コンストラクタごと削られる。エミュレータのデバッグ版 (`expo run:android`) は R8 が効かないため、**ここでは再現しない**。
+
+**再現する手順** (EAS のビルドを待たずに、同じ R8 設定でエミュレータに入れる。約10分):
+
+```bash
+cd expo/android
+export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"   # JDK が無ければ Android Studio 同梱のもの
+SENTRY_DISABLE_AUTO_UPLOAD=true ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a
+adb install -r app/build/outputs/apk/release/app-release.apk
+adb logcat -c && adb shell am start -n app.akizony.hachibu/.MainActivity
+adb logcat -d -b crash -v time | grep -E "FATAL|Caused by"
+adb logcat -d -v time | grep -E "NoSuchMethod|ClassNotFound|NoClassDefFound"   # 落ちないが削られている分も拾う
+```
+
+エミュレータは arm64 のもの。x86_64 なら `-PreactNativeArchitectures` を合わせる。`app/build/outputs/mapping/release/` の `usage.txt` (削られたもの) と `seeds.txt` (残ったもの) で、何が消えたか確認できる。
+
+**直し方**: [expo/android/app/proguard-rules.pro](../expo/android/app/proguard-rules.pro) に `-keep` を足す。**落ちたクラス1つだけでなく、同じ型 (リフレクションで作られるクラス) をまとめて足す**。1つ直してビルドしても、次のクラスで落ちるだけで、ビルド枠を無駄にする。
+
+- 実績: 2026-10-27 versionCode 81 (SDK 58 で初の Android production) が splash で落ちた。WorkManager (Glance ウィジェット経由) が起動時に Room の `WorkDatabase_Impl` をリフレクションで作るが、room-runtime 2.5.0 の同梱ルールはクラスだけ残してコンストラクタを残さず、R8 に削られた。`-keep class * extends androidx.room.RoomDatabase { <init>(); }` で解消 (`35bf590`)。直後のログに `OverwritingInputMerger.<init>` の `NoSuchMethodException` も出ていたため、WorkManager の `InputMerger` / `ListenableWorker` もまとめて keep した (`6f6653a`)。
+
 ### `npm install` が peer dependency エラーで失敗
 
 ```

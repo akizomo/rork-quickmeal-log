@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   FlatList,
   Linking,
@@ -14,12 +14,14 @@ import type { ListViewToken } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Logo } from '@/components/Logo';
 import { ButtonGridIllustration, GestureDemoIllustration, IntroProgressIllustration } from '@/components/onboarding-illustrations';
+import { TRIAL_DAYS } from '@/constants/iap';
 import { INTRO_VERSION, LEGAL_LINKS } from '@/constants/onboarding';
-import { Label, useTheme, type Theme } from '@/design-system';
+import { Body, Label, useTheme, type Theme } from '@/design-system';
 import { useT } from '@/hooks/useT';
 import { radius } from '@/design-system/tokens/primitives/radius';
 import { fontSize as fs, letterSpacing as ls } from '@/design-system/tokens/primitives/typography';
 import { useAppState } from '@/providers/app-state-provider';
+import { fetchOffering } from '@/utils/iap';
 
 type SlideMedia =
   | { kind: 'buttonGrid' }
@@ -45,6 +47,22 @@ export default function IntroRoute() {
   const router = useRouter();
   const t = useTheme();
   const tr = useT();
+
+  // 料金の一行に出す月額。価格は地域で変わるので固定文言にせず、ペイウォールと同じくストアから読む。
+  // 読み込めない (未初期化・オフライン・Web) ときは価格なしの文言に落とす
+  const [monthlyPrice, setMonthlyPrice] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    fetchOffering()
+      .then((offering) => {
+        const pkg = offering?.monthly ?? offering?.availablePackages.find((p) => p.packageType === 'MONTHLY');
+        if (!cancelled && pkg) setMonthlyPrice(pkg.product.priceString);
+      })
+      .catch((e) => console.log('[intro] fetchOffering failed', e));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   const styles = useMemo(() => makeStyles(t), [t]);
   const slideAccentMap = useMemo<Record<string, string>>(() => ({
     s1: t.colors.surface.raised,           // neutral: light=ivory[50], dark=#2B2620
@@ -176,14 +194,23 @@ export default function IntroRoute() {
                 {index < slides.length - 1 ? tr('intro.next') : tr('intro.start')}
               </Text>
             </Pressable>
-            <View style={styles.legalRow}>
-              <Pressable onPress={() => openLegal(LEGAL_LINKS.terms)}>
-                <Text style={styles.legalLink}>{tr('nav.terms')}</Text>
-              </Pressable>
-              <Text style={styles.legalSep}>·</Text>
-              <Pressable onPress={() => openLegal(LEGAL_LINKS.privacy)}>
-                <Text style={styles.legalLink}>{tr('nav.privacy')}</Text>
-              </Pressable>
+            {/* スキップしても目に入るよう、スライド共通の固定フッターに置く。手間をかけた
+                オンボーディングの後で初めて課金を知る流れにしないため。規約リンクと1つの注記として詰めて並べる */}
+            <View style={styles.finePrint}>
+              <Body size="sm" tone="secondary" align="center" testID="intro-trial-note">
+                {monthlyPrice
+                  ? tr('intro.trialNoteWithPrice', { days: TRIAL_DAYS, price: monthlyPrice })
+                  : tr('intro.trialNote', { days: TRIAL_DAYS })}
+              </Body>
+              <View style={styles.legalRow}>
+                <Pressable onPress={() => openLegal(LEGAL_LINKS.terms)}>
+                  <Text style={styles.legalLink}>{tr('nav.terms')}</Text>
+                </Pressable>
+                <Text style={styles.legalSep}>·</Text>
+                <Pressable onPress={() => openLegal(LEGAL_LINKS.privacy)}>
+                  <Text style={styles.legalLink}>{tr('nav.privacy')}</Text>
+                </Pressable>
+              </View>
             </View>
           </View>
         </SafeAreaView>
@@ -236,6 +263,7 @@ const makeStyles = (t: Theme) => StyleSheet.create({
     alignItems: 'center',
   },
   ctaText: { color: t.colors.content.onAction, fontSize: fs.md, fontWeight: '700', letterSpacing: ls.wide },
+  finePrint: { gap: 4 },
   legalRow: { flexDirection: 'row', justifyContent: 'center', gap: 8 },
   legalLink: { fontSize: fs.sm, color: t.colors.content.secondary, textDecorationLine: 'underline' },
   legalSep: { fontSize: fs.sm, color: t.colors.content.secondary },

@@ -3,7 +3,7 @@
  *
  * 2026-10-18 からアプリ本体はネイティブ formSheet (SheetScreen / TallSheetScreen) を使う。
  * 下の Dialog / BottomSheet (RN Modal ベース) は比較用に残しているだけで、新規には使わない (CLAUDE.md)。
- * Callout (吹き出し) はシートの種類によらず使う。
+ * Callout (吹き出し) と Toast はシートの種類によらず使う。
  */
 
 import { Stack, useRouter } from 'expo-router';
@@ -18,10 +18,10 @@ import {
   Dialog,
   Heading,
   IconButton,
+  Toast,
   useTheme,
   type Theme,
 } from '@/design-system';
-import { SheetToast } from '@/components/SheetToast';
 import { Section } from '../_shared';
 
 export default function OverlaysScreen() {
@@ -37,6 +37,7 @@ export default function OverlaysScreen() {
         <DialogSection t={t} />
         <BottomSheetSection t={t} />
         <CalloutSection t={t} />
+        <ToastSection t={t} />
       </ScrollView>
     </>
   );
@@ -192,6 +193,45 @@ function BottomSheetSection({ t }: { t: Theme }) {
   );
 }
 
+// ---------- Toast ----------
+function ToastSection({ t }: { t: Theme }) {
+  const [swipeVisible, setSwipeVisible] = useState(true);
+  const [undoVisible, setUndoVisible] = useState(true);
+  // 押したら閉じて、見本なので少しあとにまた出す
+  const handleUndo = () => {
+    setUndoVisible(false);
+    setTimeout(() => setUndoVisible(true), 1500);
+  };
+
+  return (
+    <Section title="Toast" t={t}>
+      <Caption>
+        操作の結果を一言だけ伝えるピル。面は surface.inverse、radius.full + elevation.lg。主語だけ emphasis で太字。
+        戻せる操作があるときだけ action を1つ。onDismiss を渡すと横スワイプで閉じる (縦は使わない)。
+        ホームでは UndoToast が画面下に置き、シートでは footerAccessory に直接置く。
+      </Caption>
+
+      <View style={{ gap: t.spacing['4'] }}>
+        <Toast visible message="鶏むね・ささみをお気に入りに追加しました" emphasis="鶏むね・ささみ" />
+        <Toast visible={undoVisible} message="ランニングを削除しました" emphasis="ランニング" action={{ label: '取り消す', onPress: handleUndo }} />
+        <Toast
+          visible={swipeVisible}
+          message="ごはん を記録しました"
+          emphasis="ごはん"
+          action={{ label: '取り消す', onPress: () => setSwipeVisible(false) }}
+          onDismiss={() => setSwipeVisible(false)}
+          testID="toast-demo"
+        />
+        <Button
+          label={swipeVisible ? '3つ目を隠す (横に払っても閉じる)' : '3つ目を出す'}
+          variant="secondary"
+          onPress={() => setSwipeVisible((v) => !v)}
+        />
+      </View>
+    </Section>
+  );
+}
+
 // ---------- Callout ----------
 function CalloutSection({ t }: { t: Theme }) {
   const [visible, setVisible] = useState(true);
@@ -222,7 +262,6 @@ function CalloutSection({ t }: { t: Theme }) {
           titleEmphasis="鶏むね・ささみ"
           message="ホームの⭐️タブに並びます。"
         />
-        <SheetToast visible message="鶏むね・ささみをお気に入りに追加しました" emphasis="鶏むね・ささみ" />
         <Button label={visible ? '1つ目を隠す' : '1つ目を出す'} variant="secondary" onPress={() => setVisible((v) => !v)} />
         <Button label="BottomSheet の footerAccessory で使う" variant="secondary" onPress={() => setSheetOpen(true)} />
       </View>

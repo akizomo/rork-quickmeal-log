@@ -70,6 +70,8 @@
     "skip": "Skip",
     "next": "Next",
     "start": "Get Started",
+    "trialNote": "{{days}} days free (then a paid plan)",
+    "trialNoteWithPrice": "{{days}} days free (then {{price}}/month)",
     "progress": {
       "label": "Weight · 12 wk",
       "delta": "-2.3 kg",
@@ -438,6 +440,7 @@
     "burnedCaloriesLabel": "Calories burned",
     "add": "Add",
     "deleteA11y": "Delete {{label}}",
+    "deleted": "{{label}} deleted",
     "typeLabels": {
       "running": "Running",
       "cycling": "Cycling",
@@ -1084,8 +1087,7 @@
   "undoToast": {
     "deleted": "{{label}} deleted",
     "recorded": "{{label}} logged",
-    "undo": "Undo",
-    "hint": "You can undo this if needed"
+    "undo": "Undo"
   },
   "search": {
     "recents": "Recent",

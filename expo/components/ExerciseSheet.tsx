@@ -1,8 +1,8 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { Button, Chip, IconButton, Label, Overline, TallSheetScreen, useTheme, type Theme } from '@/design-system';
+import { Button, Chip, IconButton, Label, Overline, TallSheetScreen, Toast, useTheme, type Theme } from '@/design-system';
 import { useT } from '@/hooks/useT';
 import { fontSize as fs, letterSpacing as ls } from '@/design-system/tokens/primitives/typography';
 import { radius } from '@/design-system/tokens/primitives/radius';
@@ -40,6 +40,7 @@ export const ExerciseSheet = memo(function ExerciseSheet() {
   const {
     logExercise,
     deleteExerciseLog,
+    restoreExerciseLog,
     profile,
     exerciseLogs,
     dailyActivities,
@@ -78,6 +79,41 @@ export const ExerciseSheet = memo(function ExerciseSheet() {
     () => calcExerciseGrossKcal(selectedTypeInfo.met, weightKg, minutes),
     [selectedTypeInfo.met, weightKg, minutes]
   );
+
+  // 削除直後の「取り消す」。誤タップで消した運動 (特にヘルス由来は入れ直せない) をその場で戻せるようにする。
+  // 食事ログの UndoToast と同じ4秒。UndoToast はシートの下に隠れるので、シートの footerAccessory に Toast を置く。
+  const [justDeleted, setJustDeleted] = useState<{ log: ExerciseLog; label: string } | null>(null);
+  const [undoVisible, setUndoVisible] = useState(false);
+  const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+    },
+    []
+  );
+
+  const handleDelete = useCallback(
+    (log: ExerciseLog, label: string) => {
+      deleteExerciseLog(log.id);
+      setJustDeleted({ log, label });
+      setUndoVisible(true);
+      if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+      undoTimerRef.current = setTimeout(() => setUndoVisible(false), 4000);
+    },
+    [deleteExerciseLog]
+  );
+
+  const handleUndoDelete = useCallback(() => {
+    if (!justDeleted) return;
+    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+    restoreExerciseLog(justDeleted.log);
+    setUndoVisible(false);
+  }, [justDeleted, restoreExerciseLog]);
+
+  const handleDismissUndo = useCallback(() => {
+    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+    setUndoVisible(false);
+  }, []);
 
   const handleSave = useCallback(() => {
     logExercise(selectedType, minutes);
@@ -144,6 +180,17 @@ export const ExerciseSheet = memo(function ExerciseSheet() {
       title={sheetTitle}
       footerLeft={<Button label={tr('common.cancel')} variant="ghost" onPress={onClose} testID="exercise-sheet-secondary" />}
       primaryAction={{ label: tr('exercise.add'), onPress: handleSave }}
+      footerAccessory={
+        <Toast
+          visible={undoVisible}
+          message={tr('exercise.deleted', { label: justDeleted?.label ?? '' })}
+          emphasis={justDeleted?.label}
+          action={{ label: tr('undoToast.undo'), onPress: handleUndoDelete, testID: 'exercise-undo-button' }}
+          onDismiss={handleDismissUndo}
+          style={{ marginBottom: t.spacing['2'] }}
+          testID="exercise-undo-toast"
+        />
+      }
       testID="exercise-sheet"
     >
         <View style={styles.content}>
@@ -201,7 +248,7 @@ export const ExerciseSheet = memo(function ExerciseSheet() {
                 </View>
               ) : null}
               {dateExerciseLogs.map((log) => (
-                <ExerciseHistoryRow key={log.id} log={log} onDelete={() => deleteExerciseLog(log.id)} />
+                <ExerciseHistoryRow key={log.id} log={log} onDelete={handleDelete} />
               ))}
             </View>
           ) : null}
@@ -285,7 +332,7 @@ function formatLogTime(timestamp: string): string | null {
   return `${hh}:${mm}`;
 }
 
-function ExerciseHistoryRow({ log, onDelete }: { log: ExerciseLog; onDelete: () => void }) {
+function ExerciseHistoryRow({ log, onDelete }: { log: ExerciseLog; onDelete: (log: ExerciseLog, label: string) => void }) {
   const theme = useTheme();
   const tr = useT();
   const styles = useMemo(() => makeStyles(theme), [theme]);
@@ -314,7 +361,7 @@ function ExerciseHistoryRow({ log, onDelete }: { log: ExerciseLog; onDelete: () 
       <IconButton
         icon="close"
         size="sm"
-        onPress={onDelete}
+        onPress={() => onDelete(log, localizedLabel)}
         testID={`exercise-history-delete-${log.id}`}
         accessibilityLabel={tr('exercise.deleteA11y', { label: localizedLabel })}
       />
