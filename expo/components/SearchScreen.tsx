@@ -12,7 +12,7 @@
  * 0件ヒット時: カテゴリヒントチップ (§F5a) を最大4件表示。
  */
 
-import { Stack, useIsFocused, useRouter } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import type { SearchBarCommands } from 'react-native-screens';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -146,7 +146,7 @@ export function SearchScreen() {
   const router = useRouter();
   const t = useTheme();
   const tr = useT();
-  const { openIdentityLogSheet, recordSearchMissEvent, bumpDiagnostic, settings, undoState } = useAppState();
+  const { openIdentityLogSheet, recordSearchMissEvent, bumpDiagnostic, settings } = useAppState();
   const { foodRegion: locale } = useLocale();
 
   const [query, setQuery] = useState('');
@@ -178,25 +178,7 @@ export function SearchScreen() {
 
   // iOS は headerSearchBarOptions.autoFocus が効かない (Android 専用) ので、ページ表示後に focus() で検索欄を選択状態にする
   const searchBarRef = useRef<SearchBarCommands>(null);
-  // 検索から記録したらホームまで戻す。検索ページに留まると、記録できたのか分からない
-  // (トーストは画面下でキーボードの裏に隠れる)。ホームなら、合計カロリーの更新と取り消しトーストで結果が見える。
-  // 保存は記録シート / 料理入力 / 手入力のどれでも undoState の更新として現れる。保存した瞬間はまだシートが
-  // 上に乗っているので、シートが閉じて検索ページがフォーカスを取り戻してから戻る (二重に pop しない)。
-  const isFocused = useIsFocused();
-  const savedLogIdRef = useRef<string | null>(undoState?.kind === 'add' ? undoState.log.id : null);
-  const goHomeAfterFocusRef = useRef(false);
-  useEffect(() => {
-    if (undoState?.kind !== 'add' || undoState.log.id === savedLogIdRef.current) return;
-    savedLogIdRef.current = undoState.log.id;
-    if (isFocused) router.dismissTo('/');
-    else goHomeAfterFocusRef.current = true;
-  }, [undoState, isFocused, router]);
-  useEffect(() => {
-    if (isFocused && goHomeAfterFocusRef.current) {
-      goHomeAfterFocusRef.current = false;
-      router.dismissTo('/');
-    }
-  }, [isFocused, router]);
+  // 検索から記録したらホームまで戻すのは、記録シート側の hooks/useCloseAfterRecord.ts が1回のナビゲーションで行う
   useEffect(() => {
     const id = setTimeout(() => searchBarRef.current?.focus(), 800); // 画面遷移 (約500ms) が終わってからでないと focus が効かない
     return () => clearTimeout(id);

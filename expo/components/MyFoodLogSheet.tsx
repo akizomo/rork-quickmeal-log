@@ -24,6 +24,7 @@ import { AmountStepperRow } from '@/components/AmountStepperRow';
 import { openAmountEditor } from '@/components/AmountEditSheet';
 import { LogFooterPreview, usePinNotice } from '@/components/LogSheetFooter';
 import { MyFoodValueFields, myFoodValueStrings, parseMyFoodValues } from '@/components/MyFoodValueFields';
+import { useCloseAfterRecord } from '@/hooks/useCloseAfterRecord';
 import { useT } from '@/hooks/useT';
 import { useAppState } from '@/providers/app-state-provider';
 import { buildIdentityAmountEditConfig, decrementBy, incrementBy } from '@/utils/amount-edit';
@@ -64,6 +65,7 @@ function MyFoodLogSheet({
   const t = useTheme();
   const tr = useT();
   const router = useRouter();
+  const closeAfterRecord = useCloseAfterRecord();
   const { settings, recordMyFood, setFrequentPinned, setMyFoods, replaceLog, deleteLog } = useAppState();
   const editing = editingLog !== null;
   // 保存した値 = 100%。量は%で持つ。編集モードは、その記録の%から始める
@@ -135,7 +137,7 @@ function MyFoodLogSheet({
       return;
     }
     await recordMyFood(food!.id, percent / 100, source === 'search' ? 'search' : source === 'frequent' ? 'frequent' : 'list');
-    router.back();
+    closeAfterRecord();
   };
 
   const confirmDelete = () => {

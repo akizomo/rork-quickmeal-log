@@ -230,6 +230,8 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     frequentSource?: FrequentSource;
     /** 検索ページから開いた (記録したら検索の「最近」に入れる。PRD §6.5.4)。 */
     viaSearch?: boolean;
+    /** 閉じたとき: 新しく記録して閉じたか (app/log-identity.tsx が閉じ方を選ぶ。hooks/useCloseAfterRecord.ts) */
+    recorded?: boolean;
   }>({ visible: false });
   /** Called when IdentityLogSheet is dismissed via × / backdrop (not on save). */
   const identityLogSheetOnDismissRef = useRef<(() => void) | null>(null);
@@ -673,7 +675,7 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       persist(profile, [log, ...logs], nextSettings, weights, bodyFatEntries);
 
       identityLogSheetVisibleRef.current = false;
-      setIdentityLogSheet({ visible: false });
+      setIdentityLogSheet({ visible: false, recorded: true });
       return log;
     },
     [identityLogSheet.editingLogId, identityLogSheet.sourceTab, identityLogSheet.frequentSource, identityLogSheet.viaSearch, logs, replaceLog, applyLoggingDate, pushLog, settings, setSettings, persist, profile, weights, bodyFatEntries]

@@ -3,19 +3,23 @@
  *
  * 開閉の状態は従来どおり app-state の identityLogSheet が持つ (openIdentityLogSheet が状態を立てて
  * このルートを push する)。このルートは状態とナビゲーションの橋渡しだけをする:
- *   - 保存・削除・× などで状態が閉じたら → 画面を戻す
+ *   - 保存・削除・× などで状態が閉じたら → 画面を戻す (新しく記録したときは useCloseAfterRecord。
+ *     検索経由ならシートと検索ページをまとめてホームへ戻す)
  *   - スワイプ・背景タップでシートが閉じられたら (状態はまだ開いている) → 状態を閉じる (onDismiss も発火)
  */
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef } from 'react';
 
 import { IdentityLogSheet } from '@/components/IdentityLogSheet';
+import { useCloseAfterRecord } from '@/hooks/useCloseAfterRecord';
 import { useAppState } from '@/providers/app-state-provider';
 
 export default function LogIdentityRoute() {
   const router = useRouter();
   const { identityLogSheet, closeIdentityLogSheet } = useAppState();
   const visible = identityLogSheet.visible;
+  const recorded = identityLogSheet.recorded === true;
+  const closeAfterRecord = useCloseAfterRecord();
   const wasVisibleRef = useRef(visible);
   const latestRef = useRef({ visible, closeIdentityLogSheet });
   useEffect(() => {
@@ -23,9 +27,12 @@ export default function LogIdentityRoute() {
   });
 
   useEffect(() => {
-    if (wasVisibleRef.current && !visible) router.back();
+    if (wasVisibleRef.current && !visible) {
+      if (recorded) closeAfterRecord();
+      else router.back();
+    }
     wasVisibleRef.current = visible;
-  }, [visible, router]);
+  }, [visible, recorded, router, closeAfterRecord]);
 
   useEffect(() => {
     return () => {
