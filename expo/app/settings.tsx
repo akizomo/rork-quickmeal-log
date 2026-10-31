@@ -291,6 +291,12 @@ export default function SettingsRoute() {
                   onPress={() => router.push('/about')}
                   testID="settings-link-about"
                 />
+                <SettingsDivider />
+                <SettingsLinkRow
+                  label={t('settings.info.sources')}
+                  onPress={() => router.push('/sources')}
+                  testID="settings-link-sources"
+                />
               </SettingsListCard>
             </View>
 

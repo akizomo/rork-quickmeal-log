@@ -48,6 +48,7 @@ const ICON_GLYPH = {
   levelLow: 'signal-cellular-alt-1-bar',
   levelMid: 'signal-cellular-alt-2-bar',
   levelHigh: 'signal-cellular-alt',
+  externalLink: 'open-in-new',
 } as const satisfies Record<string, React.ComponentProps<typeof MaterialIcons>['name']>;
 
 export type IconName = keyof typeof ICON_GLYPH;

@@ -16,6 +16,7 @@ import { SettingsDivider, SettingsLinkRow, SettingsListCard, SettingsSectionLabe
 import { TRIAL_DURATION_DAYS, TRIAL_REMINDER_DAYS } from '@/constants/onboarding';
 import { Body, Caption, Card, Heading, Icon, Label, MacroCard, useTheme } from '@/design-system';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
+import { SourcesLink } from '@/components/SourcesLink';
 import { useHealthSyncContext } from '@/providers/health-sync-provider';
 import type { HealthSyncStatus } from '@/utils/health-sync';
 import { useAppState } from '@/providers/app-state-provider';
@@ -211,6 +212,7 @@ export default function StatusRoute() {
                 ) : null}
               </Card>
             </Pressable>
+            <SourcesLink testID="status-sources-link" />
 
             {/* §あなた */}
             <View style={styles.section}>

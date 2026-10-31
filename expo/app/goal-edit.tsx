@@ -8,6 +8,7 @@ import { PACE_OPTIONS } from '@/constants/onboarding';
 import { Body, Button, Caption, Card, Heading, Icon, Label, MacroCard, Overline, useTheme } from '@/design-system';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { useAppState } from '@/providers/app-state-provider';
+import { SourcesLink } from '@/components/SourcesLink';
 import { useT } from '@/hooks/useT';
 import { useUnitSystem } from '@/hooks/useUnitSystem';
 import { formatDisplayWeight, fromDisplayWeight, toDisplayWeight, weightSuffix } from '@/utils/units';
@@ -428,6 +429,7 @@ export default function GoalEditRoute() {
                 <Body tone="secondary">{direction == null ? t('goalEdit.noPreviewNoPace') : t('goalEdit.noPreviewWithPace')}</Body>
               )}
             </Card>
+            <SourcesLink testID="goal-edit-sources-link" />
 
             {/* DIRECTION — segmented (手動指定中は非表示・目的は自動導出, PRD §6.4.4) */}
             {!isManual ? (

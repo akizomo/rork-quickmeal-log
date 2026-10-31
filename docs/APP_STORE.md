@@ -198,6 +198,7 @@ Apple の定義では「端末外に送信されるもの」だけが「収集�
 Hachibu has no user accounts; all meal and body data is stored only on the device.
 The app starts with a 7-day free trial subscription (auto-renewable). You can test the purchase with a Sandbox account. "Restore Purchase" is available at the bottom of the paywall.
 HealthKit is used read-only (steps, active energy, workouts, weight, body fat %) to adjust the daily calorie target shown on the home screen. Health permission is optional; the app works fully with manual input.
+The sources for all calorie and nutrition calculations are listed in Settings > Info > Calculations & Sources (also linked below the daily goal on the Status screen).
 ```
 
 > 2026-10-27: 元の文面にあった「The camera is used only to scan food barcodes.」は、バーコード画面に導線が無く今のビルドで使われないため、審査メモから外した。カメラの許可の説明文 (`expo-camera`) だけ Info.plist に残っている。聞かれたら「バーコード機能用で、今のバージョンでは未公開」と答える。
@@ -231,6 +232,34 @@ HealthKit is used read-only (steps, active energy, workouts, weight, body fat %)
   - 年齢制限は、お酒の項目 (alcohol) があるので「お酒・たばこ・薬物への言及」は Infrequent が忠実
 - **提出に含まれた意図外の項目**: Draft Submission に Custom Product Page「default」と App Screenshot 単体が入っていた (意図して作ったものか未確認)
 - **既知の未解決** (審査には出したまま): 週次ふり返りの進捗バーが見出しに重なる不具合の修正 (`baa50ab`、ブランチ `claude/practical-albattani-e8d02d`) は **main に未統合 = ビルド 11 には入っていない**
+
+### 6-1b. リジェクトと対応 (2026-10-29 審査 → 10-31 修正)
+審査端末は iPad Air 11インチ (M3)、対象はビルド 11。指摘は2件。
+
+| ガイドライン | 指摘 | 対応 |
+|---|---|---|
+| **5.1.1(iv)** 許可の誘導 | ヘルス連携の説明画面 ([health-connect.tsx](../expo/app/health-connect.tsx)) のボタンが「連携する」で、「あとで」で許可ダイアログを出さずに閉じられた | iOS では「あとで」を出さず、ボタンを「続ける / Continue」にした。説明画面からは必ず OS の許可ダイアログへ進み、許すかどうかは OS 側で選ぶ。拒否してもホームへ進む。見出しも問いかけ (「連携しますか？」) をやめた。Android は Health Connect 未インストール時の抜け道が要るので「あとで」を残す |
+| **1.4.1** 健康情報の出典 | 目標カロリーなどの計算に出典が無い | 「計算の根拠と出典」ページ ([sources.tsx](../expo/app/sources.tsx)、データは [calculation-sources.ts](../expo/constants/calculation-sources.ts)) を新設。式の説明 + 論文・公的資料へのリンク (DOI / 厚労省 / FAO / WHO / 文科省 / USDA) + 医療上の助言ではない旨。**導線は5か所**: 設定 > 情報 / ステータスの目標カード直下 / 目標の変更 / オンボーディングのペース選択と提案画面 |
+
+- 状態: **コード有・到達可能 (Web で表示とリンクを確認)・実機未確認・未提出**。iOS の許可ダイアログへの遷移は Simulator / TestFlight で確認する
+- 2026-10-31 出典の再点検 (コードの式とページの記述・文献の中身を1件ずつ照合、DOI は Crossref で書誌一致を確認):
+  - 減量・増量ペースの出典を ACSM (Donnelly 2009: 運動介入の話でペースの根拠ではない) から Helms 2014 (減量 0.5〜1%/週) と Iraki 2019 (増量 0.25〜0.5%/週) に差し替え。アプリの範囲 (減量 0.25〜0.75% / 増量 0.125〜0.375%) は両者の範囲かそれより穏やか
+  - 7,700kcal/kg は目安である旨と Hall 2008 を追加
+  - 活動係数 1.2〜1.725 は FAO/WHO/UNU の PAL 値そのものではない (FAO の座位中心は 1.40〜1.69)。一次出典が見つからない慣用値なので、「考え方は PAL にもとづく・値は広く使われている目安」と書き、運動は別に足す設計であることも明記
+  - 歩数換算 0.0005 kcal/歩/kg の根拠を追加: 1分100歩 ≒ 3METs (Tudor-Locke 2019) → 3 kcal/kg/時 ÷ 6000歩 = 0.0005
+  - 脂質の下限 0.6 g/kg は出典が無いので「アプリ独自の下限」と明記
+  - 体脂肪率の見込み (減量の75%・増量の30%が脂肪) と9分類・注意しきい値が出典ページに無かったので「体脂肪率の見込み」節を追加 (Forbes 2000 / Gallagher 2000)。値はアプリの目安と明記
+  - 食品: 成分表と照合済みは JP の約31% (MACRO_SOURCES.md) なので、「成分表をもとに」をやめ「主な食品を成分表・USDA・チェーン公式と照合」に修正
+- 式や係数 (`utils/goals.ts`) を変えたら、`calculation-sources.ts` と `locales/*.json` の `sources.sections.*` も同じ変更で直す
+- 審査への返信文 (Resolution Center、英語):
+
+```
+Thank you for the review. We have addressed both issues in the new build.
+
+Guideline 5.1.1(iv): The screen shown before the HealthKit permission request no longer has a "Later" button, and its button now reads "Continue". Tapping it always proceeds to the system permission request, where the user decides. The app works fully if permission is denied.
+
+Guideline 1.4.1: We added a "Calculations & Sources" page that explains each calculation (resting metabolic rate, daily energy expenditure, calorie target, macros, exercise calories, BMI range, food nutrition data) with links to the original sources (peer-reviewed papers via DOI, FAO/WHO, the Japanese Ministry of Health, Labour and Welfare, MEXT, and USDA). It can be opened from Settings > Info, directly below the daily goal card on the Status screen, on the Edit Goal screen, and on the pace and plan screens at the end of onboarding.
+```
 
 ### 6-2. 承認後にやること
 1. **App Store の URL を確認する**: `https://apps.apple.com/jp/app/id6823520048` (App Store Connect のアプリ ID。公開後に開けるか確認)

@@ -15,7 +15,8 @@
     "subscription": "Subscription",
     "notFound": "Not Found",
     "modal": "About",
-    "barcodeLog": "Barcode Scan"
+    "barcodeLog": "Barcode Scan",
+    "sources": "Calculations & Sources"
   },
   "common": {
     "save": "Save",
@@ -50,7 +51,8 @@
       "lbs": "lbs",
       "cm": "cm"
     },
-    "yesterday": "Yesterday"
+    "yesterday": "Yesterday",
+    "sourcesLink": "Calculations & sources"
   },
   "intro": {
     "slides": [
@@ -148,8 +150,8 @@
     ]
   },
   "healthConnect": {
-    "title": "Connect to Health Data?",
-    "subtitle": "Automatically sync steps, workouts, and weight to lighten your daily logging. You can change this anytime.",
+    "title": "Health Data",
+    "subtitle": "Sync steps, workouts, and weight automatically to make daily logging a little lighter. On the next screen, you can choose which data to share. You can change this anytime.",
     "dataLabel": "Data we'll sync",
     "dataItems": [
       "Weight / Body Fat",
@@ -161,7 +163,7 @@
     "providerInstallMsg": "On Android, data syncs via Google's Health Connect app. Install it from the Play Store, then come back.",
     "unsupported": "Health data sync is not available on this platform.",
     "skip": "Later",
-    "ctaConnect": "Connect",
+    "ctaConnect": "Continue",
     "ctaStart": "Get Started",
     "ctaUpdate": "Update on Play Store",
     "ctaInstall": "Get Health Connect"
@@ -704,7 +706,8 @@
     },
     "info": {
       "title": "Info",
-      "aboutApp": "About Hachibu"
+      "aboutApp": "About Hachibu",
+      "sources": "Calculations & Sources"
     },
     "feedback": {
       "title": "Feedback",
@@ -1123,5 +1126,43 @@
     "editSave": "Save",
     "countUnit": "×",
     "editDelete": "Remove this word"
+  },
+  "sources": {
+    "intro": "Calorie targets, macros, and calories burned in Hachibu are calculated with the formulas and references below. Tap an item to open its source.",
+    "disclaimer": "All numbers are rough estimates, not medical advice. If you have a medical condition, are pregnant or breastfeeding, or are still growing, please talk with a doctor or registered dietitian.",
+    "sections": {
+      "rmr": {
+        "title": "Resting metabolic rate",
+        "body": "Estimated from height, weight, and age with the Mifflin-St Jeor equation. When your body fat % is known, we use the Katch-McArdle equation (370 + 21.6 × lean body mass in kg)."
+      },
+      "tdee": {
+        "title": "Daily calories burned",
+        "body": "Resting metabolic rate multiplied by the factor for your activity level (1.2–1.725). This factor covers everyday movement only; exercise you log is added separately. Estimating daily needs by multiplying resting metabolism by an activity level follows the physical activity level (PAL) approach used by FAO/WHO/UNU and the Japanese Ministry of Health, Labour and Welfare. The factor values are widely used estimates."
+      },
+      "pace": {
+        "title": "Calorie target and pace",
+        "body": "We treat 1 kg of body weight as about 7,700 kcal when adjusting daily calories (this is an estimate; the real value depends on body composition). Weekly change is about 0.25–0.75% of body weight for losing and about 0.125–0.375% for gaining, depending on the pace. Calorie targets have a floor of 1,200 / 1,500 kcal."
+      },
+      "pfc": {
+        "title": "Protein, fat, and carbs",
+        "body": "Protein is 1.2–2.3 g per kg of body weight (adjusted for activity and goal). Fat is at least 20% of calories, and the app also keeps it at no less than 0.6 g per kg as its own lower limit. Carbs fill the rest. We use 4 / 9 / 4 kcal per gram."
+      },
+      "activity": {
+        "title": "Exercise and steps",
+        "body": "Exercise is calculated as METs × body weight (kg) × hours. When only steps are available, we treat walking at 100 steps per minute as about 3 METs, which gives steps × body weight (kg) × 0.0005 kcal. For calories burned from Health, we subtract what your activity factor already covers and the thermic effect of food (about 10%), and add only the excess to your target (up to 800 kcal a day)."
+      },
+      "bodyfat": {
+        "title": "Projected body fat",
+        "body": "Target body fat % is estimated by assuming that about 75% of weight lost, or about 30% of weight gained (assuming strength training), is fat. The actual share depends on your starting body fat and exercise. Body fat ranges for the 9 body types, and the notes shown when a target is too low or too high, are app guidelines based on research on healthy body fat ranges."
+      },
+      "bmi": {
+        "title": "Weight range",
+        "body": "When you enter a target weight manually, we use BMI 18.5–25 as the reference range."
+      },
+      "food": {
+        "title": "Food nutrition data",
+        "body": "Food calories and macros are rough values for a typical serving. Major foods are checked against the Standard Tables of Food Composition in Japan, USDA data, and restaurant chains' official nutrition information."
+      }
+    }
   }
 }

@@ -39,8 +39,9 @@ function ThemedApp({ children }: { children: React.ReactNode }) {
   // (ステータスバー・検索欄・キーボード・Alert・Switch など) が OS の配色のまま出る。OS がダークでアプリがライトだと、
   // ステータスバーの時刻や検索欄の文字が白で、明るい面の上に出て見えなかった (2026-10-27、Android)。
   // OS 側の配色もアプリの設定に合わせる ('auto' = OS に従う)。
+  // react-native-web の Appearance には setColorScheme が無く、Web 起動時に落ちるので存在を確かめて呼ぶ。
   useEffect(() => {
-    Appearance.setColorScheme(pref === 'system' ? 'auto' : pref);
+    Appearance.setColorScheme?.(pref === 'system' ? 'auto' : pref);
   }, [pref]);
   return <ThemeProvider theme={forcedTheme}>{children}</ThemeProvider>;
 }
@@ -69,6 +70,7 @@ function RootLayoutNav() {
       <Stack.Screen name="subscription" options={{ title: tr('nav.subscription') }} />
       <Stack.Screen name="about" options={{ title: tr('nav.about') }} />
       <Stack.Screen name="help" options={{ title: tr('nav.help') }} />
+      <Stack.Screen name="sources" options={{ title: tr('nav.sources') }} />
       <Stack.Screen name="legal/privacy" options={{ title: tr('nav.privacy') }} />
       <Stack.Screen name="legal/terms" options={{ title: tr('nav.terms') }} />
       <Stack.Screen name="settings" options={{ title: tr('nav.settings') }} />

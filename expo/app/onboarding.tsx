@@ -17,6 +17,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BodyTypeMatrix } from '@/components/BodyTypeMatrix';
+import { SourcesLink } from '@/components/SourcesLink';
 import {
   bodyType9ToStage,
   deriveTargetCellFromDirection,
@@ -862,6 +863,7 @@ function StepPlan({
             </Body>
           ) : null}
         </Card>
+        <SourcesLink testID="onboarding-plan-sources-link" />
       </View>
     );
   }
@@ -945,6 +947,7 @@ function StepPlan({
             </Pressable>
           );
         })}
+        <SourcesLink testID="onboarding-pace-sources-link" />
       </View>
     </View>
   );
@@ -1006,6 +1009,7 @@ function StepPreview({
           </Body>
         ) : null}
       </Card>
+      <SourcesLink testID="onboarding-preview-sources-link" />
 
       {tips.length ? (
         <Card variant="raised" style={{ gap: theme.spacing['2'] }}>

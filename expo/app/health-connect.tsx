@@ -1,7 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { Stack, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle, Path, Polyline } from 'react-native-svg';
 
@@ -47,6 +47,11 @@ const DATA_ICONS: IconName[] = ['balance', 'steps', 'exercise'];
  *
  * `decideInitialRoute()` が `healthConnectSeenAtISO` を見て遷移する。
  * 連携 / スキップどちらでも `markHealthConnectSeen()` を呼び、`/` へ戻す。
+ *
+ * iOS では「あとで」を出さず、CTA は「続ける」にする (App Store Guideline 5.1.1(iv), 2026-10-29 リジェクト)。
+ * 許可を求める前の説明画面からは必ず OS の許可ダイアログへ進ませ、許可するかどうかは
+ * OS のダイアログ側で選ばせる。拒否しても `/` へ進むので、アプリはそのまま使える。
+ * Android は Health Connect 未インストール時に抜け道が要るため「あとで」を残す。
  *
  * v1.7+: Android の Health Connect プロバイダ未インストール / 要更新時は、
  * 自動 Play Store 遷移を回避してユーザーに明示的に伝える。「インストールへ」
@@ -182,7 +187,7 @@ export default function HealthConnectRoute() {
                 testID="health-connect-cta"
               />
             )}
-            {healthSync.supported ? (
+            {healthSync.supported && Platform.OS !== 'ios' ? (
               <Button
                 label={tr('healthConnect.skip')}
                 variant="ghost"
