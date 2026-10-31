@@ -1133,7 +1133,7 @@
     "sections": {
       "rmr": {
         "title": "Resting metabolic rate",
-        "body": "Estimated from height, weight, and age with the Mifflin-St Jeor equation. When your body fat % is known, we use the Katch-McArdle equation (370 + 21.6 × lean body mass in kg)."
+        "body": "Estimated from height, weight, and age with the Mifflin-St Jeor equation. When a body fat % is available (one you entered, or the estimate from the body type you chose), we use the Katch-McArdle equation (370 + 21.6 × lean body mass in kg)."
       },
       "tdee": {
         "title": "Daily calories burned",
@@ -1141,23 +1141,23 @@
       },
       "pace": {
         "title": "Calorie target and pace",
-        "body": "We treat 1 kg of body weight as about 7,700 kcal when adjusting daily calories (this is an estimate; the real value depends on body composition). Weekly change is about 0.25–0.75% of body weight for losing and about 0.125–0.375% for gaining, depending on the pace. Calorie targets have a floor of 1,200 / 1,500 kcal."
+        "body": "We treat 1 kg of body weight as about 7,700 kcal when adjusting daily calories (this is an estimate; the real value depends on body composition). Weekly change is about 0.25–0.75% of body weight for losing and about 0.125–0.375% for gaining, depending on the pace. Calorie targets have a floor of 1,200 / 1,500 kcal, and weekly balance adjustments never take a day below 1,000 kcal."
       },
       "pfc": {
         "title": "Protein, fat, and carbs",
-        "body": "Protein is 1.2–2.3 g per kg of body weight (adjusted for activity and goal). Fat is at least 20% of calories, and the app also keeps it at no less than 0.6 g per kg as its own lower limit. Carbs fill the rest. We use 4 / 9 / 4 kcal per gram."
+        "body": "Protein is 1.2–2.3 g per kg of body weight (adjusted for activity and goal). Fat is at least 20% of calories, and the app also keeps it at no less than 0.6 g per kg as its own lower limit. Carbs fill the rest. On days when exercise raises your calorie target, the extra goes to carbs. We use 4 / 9 / 4 kcal per gram."
       },
       "activity": {
         "title": "Exercise and steps",
-        "body": "Exercise is calculated as METs × body weight (kg) × hours. When only steps are available, we treat walking at 100 steps per minute as about 3 METs, which gives steps × body weight (kg) × 0.0005 kcal. For calories burned from Health, we subtract what your activity factor already covers and the thermic effect of food (about 10%), and add only the excess to your target (up to 800 kcal a day)."
+        "body": "Exercise is calculated as METs × body weight (kg) × hours, using MET values from the 2024 Adult Compendium of Physical Activities (sports use a representative value). When only steps are available, we treat walking at 100 steps per minute as about 3 METs, which gives steps × body weight (kg) × 0.0005 kcal. What we add to your target is that day's burn (active energy from Health or the step estimate, plus logged exercise) minus what your activity factor already covers (excluding the thermic effect of food, about 10%). The Health or step portion is capped at 800 kcal a day, and exercise already included in Health is not counted twice."
       },
       "bodyfat": {
         "title": "Projected body fat",
-        "body": "Target body fat % is estimated by assuming that about 75% of weight lost, or about 30% of weight gained (assuming strength training), is fat. The actual share depends on your starting body fat and exercise. Body fat ranges for the 9 body types, and the notes shown when a target is too low or too high, are app guidelines based on research on healthy body fat ranges."
+        "body": "Target body fat % is estimated with the Forbes equation: the lean share of a weight change is 10.4 ÷ (10.4 + fat mass in kg), so the leaner you are, the more lean mass changes along with fat and the less your body fat % moves. It does not account for strength training. For recomposition at the same weight, we assume body fat drops about 0.5 points a month at the standard pace. Actual results depend on your exercise and diet. Targets below essential fat levels (5% for men, 13% for women) can't be saved. The notes for targets that are low or high (men below 10% or above 25%, women below 18% or above 32%) and the body fat ranges for the 9 body types are app guidelines based on the ACE body fat categories and research on healthy body fat ranges."
       },
       "bmi": {
         "title": "Weight range",
-        "body": "When you enter a target weight manually, we use BMI 18.5–25 as the reference range."
+        "body": "When you enter a target weight manually, we use BMI 18.5–25 as the reference range. Targets below BMI 17.5 can't be saved, as a safety limit set by the app."
       },
       "food": {
         "title": "Food nutrition data",

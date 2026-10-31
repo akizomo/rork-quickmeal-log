@@ -49,6 +49,32 @@ export function deriveTransitionWarning(
   return null;
 }
 
+/**
+ * Forbes の式で、体重が変わったあとの脂肪量 (kg) を推定する (PRD §6.4.1 v1.20)。
+ *
+ * 体重の微小な変化のうち除脂肪量の割合は 10.4 / (10.4 + 脂肪量kg) (Forbes 2000 / Hall 2007)。
+ * 体重 = 脂肪量 + 除脂肪量 なので d除脂肪量 / d脂肪量 = 10.4 / 脂肪量 となり、積分すると
+ *   除脂肪量の変化 = 10.4 × ln(変化後の脂肪量 / 今の脂肪量)
+ * これを「変化後の脂肪量 + 変化後の除脂肪量 = 目標体重」について二分法で解く
+ * (左辺は脂肪量について単調増加なので解は1つ)。
+ * 体脂肪の少ない人ほど、体重の変化のうち脂肪の割合が小さくなる。筋トレの効果は見込まない。
+ */
+const FORBES_CONSTANT_KG = 10.4;
+
+function projectFatMassAtWeight(fatMassKg: number, weightKg: number, targetWeightKg: number): number {
+  if (fatMassKg <= 0 || targetWeightKg === weightKg) return fatMassKg;
+  const leanMassKg = weightKg - fatMassKg;
+  const weightAt = (fat: number) => fat + leanMassKg + FORBES_CONSTANT_KG * Math.log(fat / fatMassKg);
+  let lo = 1e-6;
+  let hi = Math.max(fatMassKg, targetWeightKg);
+  for (let i = 0; i < 60; i++) {
+    const mid = (lo + hi) / 2;
+    if (weightAt(mid) < targetWeightKg) lo = mid;
+    else hi = mid;
+  }
+  return (lo + hi) / 2;
+}
+
 export interface PlanOutcome {
   /** negative for lose, positive for gain, 0 for maintain */
   totalKgDelta: number;
@@ -64,9 +90,9 @@ export interface PlanOutcome {
 /**
  * Compute outcome of a given pace + direction over a fixed duration.
  *
- * Rate base (ACSM / ISSN):
- *   - lose standard: 0.5%/week
- *   - gain standard: 0.25%/week
+ * Rate base (出典は constants/calculation-sources.ts の 'pace'):
+ *   - lose standard: 0.5%/week (Helms 2014: 0.5–1%/week)
+ *   - gain standard: 0.25%/week (Iraki 2019: 0.25–0.5%/week)
  *   pace multiplier (0.5/1.0/1.5) modulates these base rates.
  */
 export function computePlanOutcome(
@@ -85,21 +111,15 @@ export function computePlanOutcome(
   const finalWeight = currentWeightKg + totalKgDelta;
   const bf0 = currentBodyFatPct ?? 0;
 
-  // Rough BF% projection:
-  // lose — assume 75% of weight loss is fat mass (rest is lean)
-  // gain — muscle-led: 30% of gain is fat
+  // BF% projection:
+  // lose / gain — Forbes の式 (projectFatMassAtWeight)
   // recomp — weight stays ~same, BF% drops ~0.5%/month (pace-scaled)
   let finalBF = bf0;
   if (direction === 'recomp' && bf0 > 0) {
     const bfDropPerMonth = 0.5 * multi;
     finalBF = Math.max(5, bf0 - bfDropPerMonth * durationMonths);
-  } else if (direction === 'lose' && bf0 > 0 && finalWeight > 0) {
-    const fatMassCurrent = currentWeightKg * (bf0 / 100);
-    const fatMassAfter = Math.max(0, fatMassCurrent + totalKgDelta * 0.75);
-    finalBF = (fatMassAfter / finalWeight) * 100;
-  } else if (direction === 'gain' && bf0 > 0 && finalWeight > 0) {
-    const fatMassCurrent = currentWeightKg * (bf0 / 100);
-    const fatMassAfter = fatMassCurrent + totalKgDelta * 0.3;
+  } else if ((direction === 'lose' || direction === 'gain') && bf0 > 0 && finalWeight > 0) {
+    const fatMassAfter = projectFatMassAtWeight(currentWeightKg * (bf0 / 100), currentWeightKg, finalWeight);
     finalBF = (fatMassAfter / finalWeight) * 100;
   }
 
@@ -277,8 +297,7 @@ export function classifyTargetBodyFat(
 /**
  * 「その目標体重に到達したとき体脂肪率はどのくらいか」の推定。
  *
- * `computePlanOutcome` と同じ脂肪先行モデル (減量は減った分の75%が脂肪、
- * 増量は増えた分の30%が脂肪) を、3ヶ月という固定期間ではなく
+ * `computePlanOutcome` と同じ Forbes の式 (`projectFatMassAtWeight`) を、3ヶ月という固定期間ではなく
  * **現在体重→目標体重の実際の差** に適用する。
  *
  * これにより手動指定した目標体重と目標体脂肪率が必ず整合する
@@ -294,11 +313,7 @@ export function projectBodyFatAtWeight(
   if (!targetWeightKg || targetWeightKg <= 0) return null;
   if (currentBodyFatPct == null || currentBodyFatPct <= 0) return null;
 
-  const deltaKg = targetWeightKg - currentWeightKg;
-  const fatMassCurrent = currentWeightKg * (currentBodyFatPct / 100);
-  // 減量は脂肪が先に落ち、増量は筋肉主導。computePlanOutcome と同じ係数。
-  const fatShare = deltaKg < 0 ? 0.75 : 0.3;
-  const fatMassAfter = Math.max(0, fatMassCurrent + deltaKg * fatShare);
+  const fatMassAfter = projectFatMassAtWeight(currentWeightKg * (currentBodyFatPct / 100), currentWeightKg, targetWeightKg);
   const pct = (fatMassAfter / targetWeightKg) * 100;
   if (!Number.isFinite(pct)) return null;
   return Math.round(Math.max(0, pct));
@@ -639,15 +654,19 @@ export const EXERCISE_BASELINE_KCAL: Record<ActivityLevel, number> = {
   4: 0,
 };
 
+// MET は 2024 Adult Compendium (Herrmann 2024, pacompendium.com) の値: walking for pleasure 17160 /
+// jogging general 12020 / bicycling leisure 01010 / resistance multiple exercises 02054 / yoga Hatha 02150 /
+// swimming leisurely 18310 / HIIT moderate 02210。'other' (スポーツ) は単一の項目が無いため代表値。
+// 2026-10-31 に 2011 版の値 (running 7.0 / yoga 2.5 / hiit 8.0) から更新。記録済みログの kcal は保存時の値のまま。
 // i18n-ignore-start: EXERCISE_TYPES.label is JA locale data. EN UI uses tr('exercise.typeLabels.*') in ExerciseSheet.
 export const EXERCISE_TYPES = [
   { key: 'walking', label: 'ウォーキング', emoji: '🚶', met: 3.5 },
-  { key: 'running', label: 'ランニング', emoji: '🏃', met: 7.0 },
+  { key: 'running', label: 'ランニング', emoji: '🏃', met: 7.5 },
   { key: 'cycling', label: 'サイクリング', emoji: '🚴', met: 4.0 },
   { key: 'strength', label: '筋トレ', emoji: '🏋', met: 3.5 },
-  { key: 'yoga', label: 'ヨガ', emoji: '🧘', met: 2.5 },
+  { key: 'yoga', label: 'ヨガ', emoji: '🧘', met: 2.3 },
   { key: 'swimming', label: '水泳', emoji: '🏊', met: 6.0 },
-  { key: 'hiit', label: 'HIIT', emoji: '💪', met: 8.0 },
+  { key: 'hiit', label: 'HIIT', emoji: '💪', met: 7.0 },
   { key: 'other', label: 'スポーツ', emoji: '🏅', met: 5.0 },
 ] as const;
 // i18n-ignore-end

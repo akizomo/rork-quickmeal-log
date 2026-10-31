@@ -28,7 +28,7 @@ export const BASIS_OPTIONS: { key: BiologicalBasis; label: string; hint: string 
 ];
 
 // Activity levels for TDEE & protein calculation.
-// Based on ACSM activity factors and ISSN protein guidelines (2017).
+// 活動係数・たんぱく質量の出典は constants/calculation-sources.ts ('tdee' / 'pfc')。
 export interface ActivityLevelInfo {
   level: ActivityLevel;
   label: string;
@@ -85,8 +85,8 @@ export const ACTIVITY_LEVEL_OPTIONS: ActivityLevelInfo[] = [
 
 // Pace options for how aggressively to pursue the goal.
 // multiplier is applied to the base weekly body weight change rate.
-// ACSM / ISSN reference: safe weight-loss range is 0.5-1.0 %/week;
-// standard gain is 0.25-0.5 %/week.
+// 出典は constants/calculation-sources.ts の 'pace' (Helms 2014: 減量 0.5-1.0 %/week,
+// Iraki 2019: 増量 0.25-0.5 %/week)。
 export interface PaceOption {
   key: PaceLevel;
   label: string;

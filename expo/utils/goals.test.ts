@@ -18,6 +18,7 @@ import {
   formatGoalDuration,
   healthyWeightRange,
   projectBodyFatAtWeight,
+  computePlanOutcome,
   weightForBmi,
 } from './goals';
 
@@ -232,14 +233,23 @@ describe('classifyTargetBodyFat', () => {
 });
 
 describe('projectBodyFatAtWeight', () => {
-  it('drops BF% when losing weight (fat-first)', () => {
-    // 80kg @ 25% = 20kg fat. -10kg のうち 75% (7.5kg) が脂肪 → 12.5kg / 70kg = 17.9%
-    expect(projectBodyFatAtWeight(80, 25, 70)).toBe(18);
+  it('drops BF% when losing weight (Forbes)', () => {
+    // 80kg @ 25% = 脂肪20kg / 除脂肪60kg。脂肪 F + 60 + 10.4·ln(F/20) = 70 を解くと F ≈ 13.85kg → 19.8%
+    expect(projectBodyFatAtWeight(80, 25, 70)).toBe(20);
   });
 
-  it('rises only mildly when gaining weight (muscle-led)', () => {
-    // 60kg @ 20% = 12kg fat. +5kg のうち 30% (1.5kg) が脂肪 → 13.5kg / 65kg = 20.8%
-    expect(projectBodyFatAtWeight(60, 20, 65)).toBe(21);
+  it('rises when gaining weight (Forbes)', () => {
+    // 60kg @ 20% = 脂肪12kg。F + 48 + 10.4·ln(F/12) = 65 を解くと F ≈ 14.8kg → 22.8%
+    expect(projectBodyFatAtWeight(60, 20, 65)).toBe(23);
+  });
+
+  it('loses a larger lean share when starting leaner (Forbes)', () => {
+    // 同じ -10kg でも、体脂肪率が低い人ほど落ちる体重のうち脂肪の割合が小さい
+    // (12%: 脂肪 約5kg / 35%: 脂肪 約7kg)
+    const fatLost = (bf: number) => (80 * bf) / 100 - (70 * projectBodyFatAtWeight(80, bf, 70)!) / 100;
+    expect(fatLost(12)).toBeLessThan(fatLost(35) - 1);
+    // 3か月プランでも同じ式を使う
+    expect(computePlanOutcome(70, 18, 'standard', 'lose').finalBodyFatPct).toBe(16);
   });
 
   it('is unchanged when the target equals the current weight', () => {

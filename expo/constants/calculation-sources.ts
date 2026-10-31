@@ -54,7 +54,7 @@ export const CALCULATION_SECTIONS: CalculationSection[] = [
     ],
   },
   {
-    // computePlanOutcome / computeKcalDelta (PACE_OPTIONS) / recommendGoal の minKcal
+    // computePlanOutcome / computeKcalDelta (PACE_OPTIONS) / recommendGoal の minKcal / CARRYOVER_HARD_FLOOR_KCAL
     key: 'pace',
     refs: [
       {
@@ -85,7 +85,7 @@ export const CALCULATION_SECTIONS: CalculationSection[] = [
     ],
   },
   {
-    // computePfc
+    // computePfc / getAdjustedPfcForDate
     key: 'pfc',
     refs: [
       {
@@ -106,13 +106,18 @@ export const CALCULATION_SECTIONS: CalculationSection[] = [
     ],
   },
   {
-    // EXERCISE_TYPES.met / KCAL_PER_STEP_PER_KG / calcBaselineActiveKcal (TEF_FRACTION)
+    // EXERCISE_TYPES.met (2024 Compendium の値) / KCAL_PER_STEP_PER_KG / calcBaselineActiveKcal (TEF_FRACTION) / calcGoalAdditionKcal
     key: 'activity',
     refs: [
       {
         title: 'Herrmann SD, et al. (2024)',
-        detail: '2024 Adult Compendium of Physical Activities. J Sport Health Sci. 13(1):6–12',
+        detail: '2024 Adult Compendium of Physical Activities: A third update of the energy costs of human activities. J Sport Health Sci. 13(1):6–12',
         url: 'https://doi.org/10.1016/j.jshs.2023.10.010',
+      },
+      {
+        title: 'Adult Compendium of Physical Activities',
+        detail: 'MET values (walking 17160, jogging 12020, bicycling 01010, resistance training 02054, yoga 02150, swimming 18310, HIIT 02210)',
+        url: 'https://pacompendium.com/',
       },
       {
         title: 'Tudor-Locke C, et al. (2019)',
@@ -127,13 +132,22 @@ export const CALCULATION_SECTIONS: CalculationSection[] = [
     ],
   },
   {
-    // computePlanOutcome / projectBodyFatAtWeight の脂肪比率、BF_*_PCT、constants/body-matrix.ts
+    // projectFatMassAtWeight (Forbes の式)、BF_*_PCT、constants/body-matrix.ts
     key: 'bodyfat',
     refs: [
       {
         title: 'Forbes GB. (2000)',
         detail: 'Body fat content influences the body composition response to nutrition and exercise. Ann N Y Acad Sci. 904:359–365',
         url: 'https://doi.org/10.1111/j.1749-6632.2000.tb06482.x',
+      },
+      {
+        title: 'Hall KD. (2007)',
+        detail: "Body fat and fat-free mass inter-relationships: Forbes's theory revisited. Br J Nutr. 97(6):1059–1063",
+        url: 'https://doi.org/10.1017/S0007114507691946',
+      },
+      {
+        title: 'American Council on Exercise',
+        detail: 'ACE Personal Trainer Manual – body fat % classification (essential fat: men 2–5%, women 10–13%; obese: men 25%+, women 32%+)',
       },
       {
         title: 'Gallagher D, et al. (2000)',
@@ -143,7 +157,7 @@ export const CALCULATION_SECTIONS: CalculationSection[] = [
     ],
   },
   {
-    // BMI_UNDERWEIGHT / BMI_OVERWEIGHT
+    // BMI_UNDERWEIGHT / BMI_OVERWEIGHT (BMI_HARD_FLOOR はアプリ独自の安全線)
     key: 'bmi',
     refs: [
       {
