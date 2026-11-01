@@ -68,10 +68,11 @@ describe('computeWeeklyBalance', () => {
 });
 
 describe('isWeeklyBalanceWorthProposing', () => {
-  it('proposes in both directions past 15% of the base goal', () => {
-    expect(isWeeklyBalanceWorthProposing(301, 2000)).toBe(true);
-    expect(isWeeklyBalanceWorthProposing(-301, 2000)).toBe(true);
-    expect(isWeeklyBalanceWorthProposing(300, 2000)).toBe(false);
+  it('proposes in both directions past 20% of the base goal', () => {
+    expect(isWeeklyBalanceWorthProposing(401, 2000)).toBe(true);
+    expect(isWeeklyBalanceWorthProposing(-401, 2000)).toBe(true);
+    expect(isWeeklyBalanceWorthProposing(400, 2000)).toBe(false);
+    expect(isWeeklyBalanceWorthProposing(-300, 2000)).toBe(false);
     expect(isWeeklyBalanceWorthProposing(500, 0)).toBe(false);
   });
 });

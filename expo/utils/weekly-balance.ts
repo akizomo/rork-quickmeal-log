@@ -8,8 +8,11 @@ import { CARRYOVER_HARD_FLOOR_KCAL, classifyCarryoverDeduction, type CarryoverVe
 // 今日から日曜までの残り日数に均等に割り、今日の目標に加減する。
 // オプション機能: 呼び出し側がユーザーの有効化を確認してから使う。
 
-/** 提案バナーを出す閾値。|週の差| がベース目標のこの割合を超えたら提案する。 */
-export const WEEKLY_BALANCE_PROPOSE_RATIO = 0.15;
+/**
+ * 提案バナーを出す閾値。|週の差| がベース目標のこの割合を超えたら提案する。
+ * 15% (2,000 kcal で 300 kcal) では1日少し多いだけで出てしまい厳しかったため 20% に緩めた (2026-11-01)。
+ */
+export const WEEKLY_BALANCE_PROPOSE_RATIO = 0.2;
 
 /**
  * ゆとり側 (少なめの週) の 1日あたり上限 = ベース目標の割合。
