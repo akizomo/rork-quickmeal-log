@@ -564,19 +564,15 @@
       "lead": "Last week\nin review",
       "tapHint": "Tap to continue"
     },
-    "days": {
-      "label": "Days logged",
-      "lead": "Last week, you logged on",
-      "outOf": " of 7 days",
-      "prevWeek": "The week before: {{days}} days"
-    },
     "kcal": {
       "label": "Calories",
       "lead": "Last week, your daily average was",
-      "target": "Goal: {{kcal}} kcal",
       "baseline": "Prior 4-week average: {{kcal}} kcal",
       "usualMore": "More than usual",
-      "usualLess": "Less than usual"
+      "usualLess": "Less than usual",
+      "basis": "From {{days}} days of logs",
+      "barActual": "Last week",
+      "barTarget": "Goal"
     },
     "insight": {
       "label": "{{macro}}",
@@ -606,15 +602,6 @@
       "label": "Most logged",
       "lead": "Last week, you logged this the most",
       "count": "{{count}} times"
-    },
-    "newFoods": {
-      "label": "First time",
-      "lead": "Last week, new to your log"
-    },
-    "comebackFoods": {
-      "label": "Welcome back",
-      "lead": "Last week, back after a while",
-      "weeksSince": "{{weeks}} weeks since"
     },
     "macroSources": {
       "label": "Where {{macro}} came from",

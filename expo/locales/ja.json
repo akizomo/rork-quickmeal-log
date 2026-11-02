@@ -564,19 +564,15 @@
       "lead": "先週の\nごはんを\nふりかえる",
       "tapHint": "タップして進む"
     },
-    "days": {
-      "label": "記録日数",
-      "lead": "先週、記録が残っていたのは",
-      "outOf": "／7日",
-      "prevWeek": "その前の週は {{days}}日"
-    },
     "kcal": {
       "label": "カロリー",
       "lead": "先週、1日あたり食べていたのは",
-      "target": "目標 {{kcal}}kcal",
       "baseline": "前の4週の平均 {{kcal}}kcal",
       "usualMore": "いつもより 多め",
-      "usualLess": "いつもより 少なめ"
+      "usualLess": "いつもより 少なめ",
+      "basis": "{{days}}日分の記録から",
+      "barActual": "先週の平均",
+      "barTarget": "目標"
     },
     "insight": {
       "label": "{{macro}}",
@@ -606,15 +602,6 @@
       "label": "いちばん多く",
       "lead": "先週、いちばん多く記録したのは",
       "count": "{{count}}回"
-    },
-    "newFoods": {
-      "label": "はじめて",
-      "lead": "先週、はじめて記録したのは"
-    },
-    "comebackFoods": {
-      "label": "ひさしぶり",
-      "lead": "先週、ひさしぶりに記録したのは",
-      "weeksSince": "{{weeks}}週ぶり"
     },
     "macroSources": {
       "label": "{{macro}}のもと",

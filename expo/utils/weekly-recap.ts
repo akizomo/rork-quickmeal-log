@@ -7,16 +7,17 @@
  *   - 記録が1日も無い週は null (「0日記録」は評価的に響くため出さない)
  *   - 進行中の今週は対象外 (完了週のみ)
  *
- * 発見プール方式 (PRD v1.8 §6.7.5): 固定の数値だけでは毎週同じ内容になるため、
- * 「いつもの自分との差」「はじめて/ひさしぶり」の候補をスコア付きで集め、
- * 枠 (DISCOVERY_CARD_BUDGET) に収まる分だけ選んで `discoveries` に入れる。
- * 選抜は記録データだけから決定的に求める (同じ週なら何度開いても同じ内容)。
+ * 構成 (PRD v1.23 §6.7.5): どのカードも「量・配分・選び方・中身」のどれかに答える。
+ * `discoveries` は 配分 (macro: インサイト+アドバイス) → 中身 (macroSources) → いちばん多く の固定順で、
+ * データの無いものだけを飛ばす。記録データだけから決定的に求める (同じ週なら何度開いても同じ内容)。
+ * v1.8〜v1.22 の発見プール (はじめて/ひさしぶりを含むスコア選抜) は、次の選択が変わらないカードを
+ * 生み、行動につながる PFC が枠の取り合いで出ない週があったため廃止した。
  *
  * 詳細は docs/ROADMAP.md §3.0「次の一手」実行順3 (週次振り返りの報酬化)。
  */
 
 import type { DailyActivitySummary, ExerciseLog, FoodLog, Macro, UserProfile } from '@/types/nutrition';
-import { addDays, diffInDays, formatWeekRangeLabel, getDailyMacros, getWeekRange, startOfDay, type DateRange } from '@/utils/history';
+import { addDays, formatWeekRangeLabel, getDailyMacros, getWeekRange, startOfDay, type DateRange } from '@/utils/history';
 import { formatDateKey } from '@/utils/nutrition';
 import { adjustedTargetKcal } from '@/utils/goals';
 import { ALL_IDENTITIES, getIdentity } from '@/constants/identity';
@@ -201,9 +202,6 @@ const BASELINE_MIN_DAYS = 7;
 /** 平均kcalを「いつもより多め/少なめ」と言える最小乖離率。 */
 const VS_USUAL_THRESHOLD_RATIO = 0.1;
 
-/** 「ひさしぶり」とみなす、直前の記録からの最小空白日数。 */
-const COMEBACK_MIN_GAP_DAYS = 28;
-
 /** 「いちばん多く」を出す最小回数。2回程度では「よく食べた」と言えない。 */
 const TOP_FOOD_MIN_COUNT = 3;
 
@@ -216,16 +214,7 @@ const SOURCES_MIN_TOTAL_GRAMS = 1;
 /** macroSources の対象栄養素を週ごとに回す順序。 */
 const SOURCE_AXIS_ROTATION: MacroAxis[] = ['protein', 'fat', 'carbs'];
 
-/** 食材リスト系の発見に並べる最大件数。 */
-const MAX_FOOD_ITEMS = 3;
-
-/** 発見スライドの枠 (カード枚数)。固定部と合わせて全体 6〜7 枚に収める。 */
-const DISCOVERY_CARD_BUDGET = 3;
-
-/** これ未満のスコアの候補は「休ませる」。他に出せる発見が1つも無い週だけ使う。 */
-const REST_SCORE = 0.2;
-
-/** PFC の連続週数を遡る上限。1週目 / 3週目 / それ以外、を区別できれば足りる。 */
+/** PFC の連続週数を遡る上限。「N週続けて」と言える範囲。 */
 const MAX_STREAK_LOOKBACK = 4;
 
 /**
@@ -324,14 +313,12 @@ export interface WeeklyFoodItem {
 }
 
 /**
- * 発見スライド1件。表示順は DISCOVERY_ORDER で固定 (スコア順ではなく物語の流れ優先)。
- * macro だけはインサイト+アドバイスで最大2枚ぶんの枠を使う。
+ * 可変部のカード1件。表示は 配分 (macro) → 中身 (macroSources) → いちばん多く (topFood) の固定順。
+ * macro はインサイト+アドバイスの最大2枚になる。
  */
 export type WeeklyDiscovery =
-  // note: 掲載食材のうち最初に豆知識を持つ1件 (無ければ null)。食べたものについて語るので読まれやすい (PRD §6.7.5)。
-  | { kind: 'topFood'; item: WeeklyFoodItem; count: number; note: WeeklyFoodFact | null }
-  | { kind: 'newFoods'; items: WeeklyFoodItem[]; note: WeeklyFoodFact | null }
-  | { kind: 'comebackFoods'; items: (WeeklyFoodItem & { weeksSince: number })[]; note: WeeklyFoodFact | null }
+  // note: その食材の照合済みの豆知識。豆知識が無い週はカード自体を出さない (PRD v1.23 §6.7.5)。
+  | { kind: 'topFood'; item: WeeklyFoodItem; count: number; note: WeeklyFoodFact }
   // note: 並んだ食材のうち、その栄養素の話 (topics) の豆知識を持つ最初の1件 (無ければ null)。
   | { kind: 'macroSources'; axis: MacroAxis; sources: WeeklyMacroSource[]; note: WeeklyFoodFact | null }
   | {
@@ -351,8 +338,6 @@ export interface WeeklyMacroSource {
 }
 
 export type WeeklyDiscoveryKind = WeeklyDiscovery['kind'];
-
-const DISCOVERY_ORDER: WeeklyDiscoveryKind[] = ['topFood', 'newFoods', 'comebackFoods', 'macroSources', 'macro'];
 
 export interface WeeklyRecap {
   /** 対象週の月曜日 (dateKey)。dismiss 済み判定のキーにも使う。 */
@@ -482,30 +467,22 @@ export function computeWeeklyRecap(
     if (Math.abs(ratio) >= VS_USUAL_THRESHOLD_RATIO) kcalVsUsual = ratio > 0 ? 'more' : 'less';
   }
 
-  // ── 発見プール ──
-  const candidates: ScoredDiscovery[] = [
-    ...computeFoodDiscoveries(logs, range, pastWeeks[0]?.range ?? null, weekKey),
-  ];
-  const sources = computeMacroSources(logs, range, SOURCE_AXIS_ROTATION[weekIndex % SOURCE_AXIS_ROTATION.length], weekKey);
-  if (sources) {
-    // 常に出せるので、他に強い発見がある週には譲る (穴埋め役)。
-    candidates.push({ discovery: sources, score: 0.5, cost: 1 });
-  }
+  // ── 配分 → 中身 → いちばん多く (PRD v1.23 §6.7.5) ──
+  const discoveries: WeeklyDiscovery[] = [];
   if (macroInsight) {
+    // ずれがあれば必ず出す。続いている週は「N週続けて」と添える (休ませない)。
     let streakWeeks = 1;
     for (let k = 2; k <= MAX_STREAK_LOOKBACK + 1; k++) {
       const prev = core(k).macroInsight;
       if (!prev || prev.axis !== macroInsight.axis || prev.direction !== macroInsight.direction) break;
       streakWeeks += 1;
     }
-    candidates.push({
-      discovery: { kind: 'macro', insight: macroInsight, streakWeeks, boost: macroBoost },
-      // 1週目は新しい情報。3週目は「3週続けて」と一度だけ言う (VOICE.md の例文)。
-      // それ以外の連続週は、同じことを繰り返さないよう休ませる。
-      score: streakWeeks === 1 ? 0.7 : streakWeeks === 3 ? 0.75 : 0.05,
-      cost: macroBoost ? 2 : 1,
-    });
+    discoveries.push({ kind: 'macro', insight: macroInsight, streakWeeks, boost: macroBoost });
   }
+  const sources = computeMacroSources(logs, range, SOURCE_AXIS_ROTATION[weekIndex % SOURCE_AXIS_ROTATION.length], weekKey);
+  if (sources) discoveries.push(sources);
+  const topFood = computeTopFood(logs, range, pastWeeks[0]?.range ?? null, weekKey);
+  if (topFood) discoveries.push(topFood);
 
   return {
     weekKey,
@@ -520,44 +497,28 @@ export function computeWeeklyRecap(
     prevWeekDaysLogged: prevDays > 0 ? prevDays : null,
     baselineAvgKcal,
     kcalVsUsual,
-    discoveries: dedupeNotes(selectDiscoveries(candidates)),
+    discoveries: dedupeNotes(discoveries),
   };
 }
 
 /** 同じ週に同じ文面の豆知識を2度出さない (表示順で先に出たほうを残す)。料理どうしで文面を共有するノートがあるため。 */
 function dedupeNotes(discoveries: WeeklyDiscovery[]): WeeklyDiscovery[] {
   const seen = new Set<string>();
-  return discoveries.map((d) => {
-    if (!('note' in d) || !d.note) return d;
-    if (seen.has(d.note.note.text)) return { ...d, note: null };
+  const out: WeeklyDiscovery[] = [];
+  for (const d of discoveries) {
+    if (!('note' in d) || !d.note) {
+      out.push(d);
+      continue;
+    }
+    if (seen.has(d.note.note.text)) {
+      // いちばん多くは豆知識がそのカードの中身なので、重なるならカードごと出さない。
+      if (d.kind !== 'topFood') out.push({ ...d, note: null });
+      continue;
+    }
     seen.add(d.note.note.text);
-    return d;
-  });
-}
-
-export interface ScoredDiscovery {
-  discovery: WeeklyDiscovery;
-  /** 0〜1。「いつもとの差」「新しさ」が大きいほど高い。 */
-  score: number;
-  /** 使うカード枚数。 */
-  cost: number;
-}
-
-/**
- * スコアの高い順に枠へ詰め、表示は DISCOVERY_ORDER の順に並べ直す。
- * REST_SCORE 未満の候補は、それ以上の候補が1つも無い週だけ使う。
- */
-export function selectDiscoveries(candidates: ScoredDiscovery[]): WeeklyDiscovery[] {
-  const strong = candidates.filter((c) => c.score >= REST_SCORE);
-  const pool = (strong.length > 0 ? strong : candidates).slice().sort((a, b) => b.score - a.score);
-  const picked: WeeklyDiscovery[] = [];
-  let used = 0;
-  for (const c of pool) {
-    if (used + c.cost > DISCOVERY_CARD_BUDGET) continue;
-    picked.push(c.discovery);
-    used += c.cost;
+    out.push(d);
   }
-  return picked.sort((a, b) => DISCOVERY_ORDER.indexOf(a.kind) - DISCOVERY_ORDER.indexOf(b.kind));
+  return out;
 }
 
 /** 週の通し番号 (ローテーション用)。タイムゾーン/DST に左右されないよう暦日から求める。 */
@@ -573,99 +534,42 @@ function rotate<T>(list: T[], n: number, weekIndex: number): T[] {
   return Array.from({ length: n }, (_, i) => list[(start + i) % list.length]);
 }
 
-/** topFood / newFoods / comebackFoods の候補。Identity を持たない旧形式ログは対象外。 */
-function computeFoodDiscoveries(
+/**
+ * いちばん多く記録した食材 (週内で TOP_FOOD_MIN_COUNT 回以上。同数なら週内で先に出た方)。
+ * 照合済みの豆知識が無い、または前の週と同じ食材なら出さない (同じ話を毎週しない)。
+ * Identity を持たない旧形式ログは対象外。
+ */
+function computeTopFood(
   logs: FoodLog[],
   range: DateRange,
   prevRange: DateRange | null,
   weekKey: string,
-): ScoredDiscovery[] {
+): WeeklyDiscovery | null {
   const startKey = formatDateKey(range.start);
   const endKey = formatDateKey(range.end);
-
   const firstInWeek = new Map<string, string>();
   const countInWeek = new Map<string, number>();
-  const lastBefore = new Map<string, string>();
-  let hasPriorHistory = false;
-
   for (const log of logs) {
-    if (log.date < startKey) hasPriorHistory = true;
-    if (!log.identityId) continue;
+    if (!log.identityId || log.date < startKey || log.date > endKey) continue;
     const id = log.identityId;
-    if (log.date < startKey) {
-      const prev = lastBefore.get(id);
-      if (!prev || log.date > prev) lastBefore.set(id, log.date);
-    } else if (log.date <= endKey) {
-      countInWeek.set(id, (countInWeek.get(id) ?? 0) + 1);
-      const first = firstInWeek.get(id);
-      if (!first || log.date < first) firstInWeek.set(id, log.date);
-    }
+    countInWeek.set(id, (countInWeek.get(id) ?? 0) + 1);
+    const first = firstInWeek.get(id);
+    if (!first || log.date < first) firstInWeek.set(id, log.date);
   }
-
-  const toItem = (id: string): WeeklyFoodItem | null => {
-    const identity = getIdentity(id);
-    return identity ? { identityId: id, label: identity.label } : null;
-  };
-
-  /** 掲載食材のうち最初に豆知識を持つもの。食材ごとの選択は週で決定的。 */
-  const firstNote = (ids: string[]): WeeklyFoodFact | null => {
-    for (const id of ids) {
-      const identity = getIdentity(id);
-      const picked = identity?.nutritionNotes ? pickNutritionNote(identity.nutritionNotes, id, weekKey) : null;
-      if (identity && picked) return { identityId: id, identityLabel: identity.label, note: picked };
-    }
-    return null;
-  };
-
-  const out: ScoredDiscovery[] = [];
-
-  // いちばん多く (同数なら週内で先に出た方)
   const top = [...countInWeek.entries()]
     .filter(([, n]) => n >= TOP_FOOD_MIN_COUNT)
     .sort((a, b) => b[1] - a[1] || firstInWeek.get(a[0])!.localeCompare(firstInWeek.get(b[0])!))[0];
-  const topItem = top ? toItem(top[0]) : null;
-  if (top && topItem) {
-    const prevTop = prevRange ? topIdentityIn(logs, prevRange) : null;
-    out.push({
-      discovery: { kind: 'topFood', item: topItem, count: top[1], note: firstNote([top[0]]) },
-      // 前週と同じ食材なら「いつも通り」なので発見としては弱い。
-      score: prevTop === top[0] ? 0.1 : 0.6,
-      cost: 1,
-    });
-  }
-
-  // はじめて (初週は全部が初登場になるので、それ以前の記録があるユーザーのみ)
-  if (hasPriorHistory) {
-    const items = [...firstInWeek.entries()]
-      .filter(([id]) => !lastBefore.has(id))
-      .sort((a, b) => a[1].localeCompare(b[1]))
-      .map(([id]) => toItem(id))
-      .filter((x): x is WeeklyFoodItem => x !== null)
-      .slice(0, MAX_FOOD_ITEMS);
-    if (items.length > 0) {
-      out.push({ discovery: { kind: 'newFoods', items, note: firstNote(items.map((i) => i.identityId)) }, score: 0.9, cost: 1 });
-    }
-  }
-
-  // ひさしぶり (空白の長い順)
-  const comebacks = [...firstInWeek.entries()]
-    .map(([id, first]) => {
-      const last = lastBefore.get(id);
-      if (!last) return null;
-      const gap = diffInDays(new Date(`${first}T00:00:00`), new Date(`${last}T00:00:00`));
-      if (gap < COMEBACK_MIN_GAP_DAYS) return null;
-      const item = toItem(id);
-      return item ? { ...item, weeksSince: Math.floor(gap / 7), gap } : null;
-    })
-    .filter((x): x is WeeklyFoodItem & { weeksSince: number; gap: number } => x !== null)
-    .sort((a, b) => b.gap - a.gap)
-    .slice(0, MAX_FOOD_ITEMS)
-    .map(({ gap: _gap, ...rest }) => rest);
-  if (comebacks.length > 0) {
-    out.push({ discovery: { kind: 'comebackFoods', items: comebacks, note: firstNote(comebacks.map((i) => i.identityId)) }, score: 0.8, cost: 1 });
-  }
-
-  return out;
+  if (!top) return null;
+  if (prevRange && topIdentityIn(logs, prevRange) === top[0]) return null;
+  const identity = getIdentity(top[0]);
+  const picked = identity?.nutritionNotes ? pickNutritionNote(identity.nutritionNotes, identity.id, weekKey) : null;
+  if (!identity || !picked) return null;
+  return {
+    kind: 'topFood',
+    item: { identityId: identity.id, label: identity.label },
+    count: top[1],
+    note: { identityId: identity.id, identityLabel: identity.label, note: picked },
+  };
 }
 
 /**

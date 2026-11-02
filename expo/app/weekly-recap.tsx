@@ -5,14 +5,16 @@
  * デザインは design_handoff_weekly_recap (2026-08-05) の構成・トーンを踏襲しつつ、
  * コンテンツは中立トーン (PRD §9.1) の観点で調整している:
  *   - カロリーのヒーロー数字は「1日あたりの平均」のみ。目標との差分・週合計はどちらも
- *     ヒーローに据えない (差分を大きく見せるのは評価的で中立トーンに反する。比較は
- *     カード4のPFCインサイト1箇所に集約する) 2026-08-06
+ *     ヒーローに据えない (差分を大きく見せるのは評価的で中立トーンに反する) 2026-08-06。
+ *     目標に対する位置は、平均と目標の2本のバーで見せる (差の数字・%は出さない) 2026-11-02
  *   - 各カードの説明キャプション (「点線は目標」等) は、見れば分かることの言葉での
  *     反復だったため削除。リード文は全カード「〜のは」で統一し、見出し→数字の
  *     ストーリー的なリズムを揃えた
  *   - 食材候補は「この週の記録」ではなく「履歴優先+全カタログ補完」(macroBoost 参照)
- *   - 固定カード (表紙/記録日数/カロリー/締め) の間に、発見スライドを最大3枚差し込む。
- *     どれを出すかは utils/weekly-recap.ts の発見プールが決める (PRD v1.8 §6.7.5)
+ *   - 構成は 表紙 → カロリー (量) → PFC (配分) → アドバイス (選び方) → もと (中身) → いちばん多く → 締め
+ *     の固定順。データの無いカードだけを飛ばす (PRD v1.23 §6.7.5)。記録日数はカロリーに統合
+ *   - 食材の行に絵文字は出さない。食材ごとの絵文字は持っておらず、区分 (バケット) の絵文字では
+ *     食材と合わないことがある (ツナ缶に🐓など) 2026-11-02
  * トークン対応:
  *   - light カード = surface.default 等の意味トークン (システムダークモードに自動追従)
  *   - deep カード  = sage-800/900 固定 (テーマに依存しないブランド演出色)
@@ -26,19 +28,17 @@ import { Animated, Easing, Pressable, StyleSheet, View } from 'react-native';
 import Svg, { Circle, Polyline, Rect, Text as SvgText } from 'react-native-svg';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Body, Caption, Icon, IconButton, MacroChip, Overline, useTheme, type Theme } from '@/design-system';
+import { Body, Caption, IconButton, MacroChip, Overline, useTheme, type Theme } from '@/design-system';
 import { useT } from '@/hooks/useT';
-import { colors } from '@/design-system/tokens/primitives/colors';
 import { Logo } from '@/components/Logo';
 import { duration, easing } from '@/design-system/tokens/primitives/motion';
 import { radius } from '@/design-system/tokens/primitives/radius';
-import { getBucketDef, getIdentity } from '@/constants/identity';
+import { getIdentity } from '@/constants/identity';
 import { useAppState } from '@/providers/app-state-provider';
 import {
   computeWeeklyRecap,
   type WeeklyDiscovery,
   type WeeklyFoodFact,
-  type WeeklyFoodItem,
   type WeeklyRecap,
 } from '@/utils/weekly-recap';
 
@@ -208,57 +208,9 @@ function buildCards(recap: WeeklyRecap, styles: Styles, tr: Tr): Card[] {
     ),
   });
 
-  // 2. 記録日数 (light)
-  const daysLabel = section(tr('weeklyRecap.days.label'));
-  cards.push({
-    bg: 'light',
-    render: (t) => (
-      <>
-        <Overline tone="secondary">{daysLabel}</Overline>
-        <View style={{ marginTop: t.spacing['6'] }}>
-          <Body size="lg" style={{ lineHeight: 26 }}>{tr('weeklyRecap.days.lead')}</Body>
-          <View style={[styles.heroRow, { marginTop: t.spacing['5'] }]}>
-            <Body style={heroTextStyle(t, 88)}>{recap.daysLogged}</Body>
-            <Body style={[heroUnitStyle(t), { marginLeft: t.spacing['2'] }]}>{tr('weeklyRecap.days.outOf')}</Body>
-          </View>
-          {/* 方向語 (多い/少ない) は付けない。少なかった週を責めないため (PRD §6.7.5)。 */}
-          {recap.prevWeekDaysLogged ? (
-            <Body size="sm" tone="secondary" style={{ marginTop: t.spacing['2'] }}>
-              {tr('weeklyRecap.days.prevWeek', { days: recap.prevWeekDaysLogged })}
-            </Body>
-          ) : null}
-        </View>
-        <View style={[styles.spacer, { justifyContent: 'center' }]}>
-          <View style={styles.dotsRow}>
-            {recap.days.map((d) => (
-              <View
-                key={d.dateKey}
-                style={[
-                  styles.dot,
-                  d.logged
-                    // アクション色は本来インタラクティブ要素専用。「記録した日」は
-                    // 状態表示なのでstatus.successを使う (2026-08-07指摘)。
-                    ? { backgroundColor: t.colors.status.success.default }
-                    : { backgroundColor: 'transparent', borderWidth: 1.5, borderColor: t.colors.border.default, borderStyle: 'dashed' },
-                ]}
-              >
-                {d.logged ? <Icon name="check" size={16} color={colors.stone[900]} /> : null}
-              </View>
-            ))}
-          </View>
-          <View style={[styles.dotsRow, { marginTop: t.spacing['2'] }]}>
-            {recap.days.map((d) => (
-              <Caption key={d.dateKey} style={styles.dotLabel}>{d.weekdayLabel}</Caption>
-            ))}
-          </View>
-        </View>
-      </>
-    ),
-  });
-
-  // 3. カロリー (light) — ヒーロー数字は「1日あたりの平均」のみ。目標との差を強調しない
-  // (差分を大きく見せるのは中立トーンに反するため不採用。比較はカード4のPFCインサイトに任せる)
-  // 「いつも」(前4週) との差は補足行に小さく添える。ずれが小さい週は基準値だけを出す。
+  // 2. カロリー (量) — ヒーロー数字は「1日あたりの平均」。目標に対する位置は平均と目標の2本のバーで見せる
+  // (差の数字や%は出さない。差分を大きく見せるのは中立トーンに反する)。何日分の記録かを添える (旧「記録日数」カード)。
+  // 「いつも」(前4週) との差は補足行に小さく添える。日ごとの棒は傾向として下に置く (記録のない日は棒を出さない)。
   const kcalLabel = section(tr('weeklyRecap.kcal.label'));
   cards.push({
     bg: 'light',
@@ -271,13 +223,34 @@ function buildCards(recap: WeeklyRecap, styles: Styles, tr: Tr): Card[] {
             <Body style={heroTextStyle(t, 60)}>{recap.avgKcal.toLocaleString('ja-JP')}</Body>
             <Body style={[heroUnitStyle(t), { marginLeft: t.spacing['2'] }]}>kcal</Body>
           </View>
+          <Body size="sm" tone="secondary" style={{ marginTop: t.spacing['2'] }}>
+            {tr('weeklyRecap.kcal.basis', { days: recap.daysLogged })}
+          </Body>
           {recap.avgTargetKcal > 0 ? (
-            <Body size="sm" tone="secondary" style={{ marginTop: t.spacing['2'] }}>
-              {tr('weeklyRecap.kcal.target', { kcal: recap.avgTargetKcal.toLocaleString('ja-JP') })}
-            </Body>
+            <View style={{ gap: t.spacing['4'], marginTop: t.spacing['5'] }}>
+              <MacroBar
+                label={tr('weeklyRecap.kcal.barActual')}
+                value={recap.avgKcal}
+                unit="kcal"
+                max={Math.max(recap.avgKcal, recap.avgTargetKcal)}
+                color={t.colors.content.primary}
+                t={t}
+                styles={styles}
+              />
+              <MacroBar
+                label={tr('weeklyRecap.kcal.barTarget')}
+                value={recap.avgTargetKcal}
+                unit="kcal"
+                max={Math.max(recap.avgKcal, recap.avgTargetKcal)}
+                color={t.colors.border.default}
+                t={t}
+                styles={styles}
+                muted
+              />
+            </View>
           ) : null}
           {recap.baselineAvgKcal ? (
-            <Body size="sm" tone="secondary" style={{ marginTop: t.spacing['1'] }}>
+            <Body size="sm" tone="secondary" style={{ marginTop: t.spacing['4'] }}>
               {tr('weeklyRecap.kcal.baseline', { kcal: recap.baselineAvgKcal.toLocaleString('ja-JP') })}
               {recap.kcalVsUsual ? (
                 <Body size="sm" weight="medium">
@@ -295,7 +268,7 @@ function buildCards(recap: WeeklyRecap, styles: Styles, tr: Tr): Card[] {
     ),
   });
 
-  // 4〜. 発見スライド (PRD §6.7.5) — computeWeeklyRecap がスコア選抜・並べ替え済み
+  // 3〜. 配分 (PFC+アドバイス) → 中身 (もと) → いちばん多く (PRD v1.23 §6.7.5)。順番は computeWeeklyRecap が決める
   for (const d of recap.discoveries) {
     pushDiscoveryCards(d);
   }
@@ -309,43 +282,11 @@ function buildCards(recap: WeeklyRecap, styles: Styles, tr: Tr): Card[] {
           <>
             <Overline tone="secondary">{label}</Overline>
             <Body size="lg" style={{ marginTop: t.spacing['6'], lineHeight: 26 }}>{tr('weeklyRecap.topFood.lead')}</Body>
-            <Body style={{ marginTop: t.spacing['5'], fontSize: 56, lineHeight: 64 }}>{foodEmoji(d.item)}</Body>
-            <Body style={[heroTextStyle(t, 40), { marginTop: t.spacing['2'] }]}>{d.item.label}</Body>
+            <Body style={[heroTextStyle(t, 40), { marginTop: t.spacing['5'] }]}>{d.item.label}</Body>
             <Body size="lg" tone="secondary" style={{ marginTop: t.spacing['3'] }}>
               {tr('weeklyRecap.topFood.count', { count: d.count })}
             </Body>
             <View style={styles.spacer} />
-            {renderNote(t, d.note, tr)}
-          </>
-        ),
-      });
-      return;
-    }
-
-    if (d.kind === 'newFoods' || d.kind === 'comebackFoods') {
-      const key = d.kind === 'newFoods' ? 'newFoods' : 'comebackFoods';
-      const label = section(tr(`weeklyRecap.${key}.label`));
-      cards.push({
-        bg: 'light',
-        render: (t) => (
-          <>
-            <Overline tone="secondary">{label}</Overline>
-            <Body size="lg" style={{ marginTop: t.spacing['6'], lineHeight: 26 }}>{tr(`weeklyRecap.${key}.lead`)}</Body>
-            <View style={[styles.spacer, { justifyContent: 'center' }]}>
-              <View style={{ gap: t.spacing['3'] }}>
-                {d.items.map((item) => (
-                  <View key={item.identityId} style={[styles.candidateCard, { backgroundColor: t.colors.surface.raised }]}>
-                    <Body style={{ fontSize: 20 }}>{foodEmoji(item)}</Body>
-                    <Body weight="medium" style={{ flex: 1, color: t.colors.content.primary }}>{item.label}</Body>
-                    {'weeksSince' in item ? (
-                      <Body size="sm" tone="secondary">
-                        {tr('weeklyRecap.comebackFoods.weeksSince', { weeks: item.weeksSince })}
-                      </Body>
-                    ) : null}
-                  </View>
-                ))}
-              </View>
-            </View>
             {renderNote(t, d.note, tr)}
           </>
         ),
@@ -373,7 +314,7 @@ function buildCards(recap: WeeklyRecap, styles: Styles, tr: Tr): Card[] {
                     <View key={src.identityId ?? src.label}>
                       <View style={styles.barCaptionRow}>
                         <Body weight="medium" style={{ flex: 1, color: t.colors.content.primary }}>
-                          {src.identityId ? `${foodEmoji({ identityId: src.identityId, label: src.label })}  ` : ''}{src.label}
+                          {src.label}
                         </Body>
                         <Body tone="secondary">{tr('weeklyRecap.macroSources.share', { pct: src.sharePct })}</Body>
                       </View>
@@ -395,7 +336,7 @@ function buildCards(recap: WeeklyRecap, styles: Styles, tr: Tr): Card[] {
 
     if (d.kind !== 'macro') return;
 
-    // 4. PFCインサイト (light)
+    // 3. PFCインサイト (配分)
     {
       const insight = d.insight;
       const macroName = tr(`common.macros.${insight.axis}`);
@@ -448,7 +389,7 @@ function buildCards(recap: WeeklyRecap, styles: Styles, tr: Tr): Card[] {
       });
     }
 
-    // 5. アドバイス+豆知識 (light, 条件あり: direction='less' = 増やす候補 / 'more' = 代替案)
+    // 4. アドバイス+豆知識 (選び方。direction='less' = 増やす候補 / 'more' = 置き換え表)
     if (d.boost) {
       const boost = d.boost;
       const adviceLabel = section(tr('weeklyRecap.advice.label'));
@@ -469,14 +410,12 @@ function buildCards(recap: WeeklyRecap, styles: Styles, tr: Tr): Card[] {
               <View style={{ gap: t.spacing['3'] }}>
                 {boost.candidates.map((c) => {
                   const identity = getIdentity(c.identityId);
-                  const bucket = identity ? getBucketDef(identity.primaryHome.bucket) : undefined;
                   const axisGrams = c.axisGrams ?? identity?.defaultMacro[boost.axis] ?? 0;
                   return (
                     <View
                       key={c.identityId}
                       style={[styles.candidateCard, { backgroundColor: t.colors.surface.raised }]}
                     >
-                      <Body style={{ fontSize: 20 }}>{bucket?.emoji ?? '🍽️'}</Body>
                       <View style={{ flex: 1 }}>
                         <Body weight="medium" style={{ color: t.colors.content.primary }}>
                           {c.label}
@@ -501,7 +440,7 @@ function buildCards(recap: WeeklyRecap, styles: Styles, tr: Tr): Card[] {
     }
   }
 
-  // 6. アウトロ (deep)
+  // 最後. アウトロ (deep)
   cards.push({
     bg: 'deep',
     render: (t) => (
@@ -547,12 +486,6 @@ function renderNote(t: Theme, fact: WeeklyFoodFact | null, tr: Tr): React.ReactN
   );
 }
 
-function foodEmoji(item: WeeklyFoodItem): string {
-  const identity = getIdentity(item.identityId);
-  const bucket = identity ? getBucketDef(identity.primaryHome.bucket) : undefined;
-  return bucket?.emoji ?? '🍽️';
-}
-
 function OutroButton({ t, styles, tr }: { t: Theme; styles: Styles; tr: Tr }) {
   const router = useRouter();
   return (
@@ -589,9 +522,11 @@ function MacroBar({
   t,
   styles,
   muted,
+  unit = '%',
 }: {
   label: string;
   value: number;
+  unit?: string;
   max: number;
   color: string;
   t: Theme;
@@ -604,7 +539,7 @@ function MacroBar({
       <View style={styles.barCaptionRow}>
         <Body size="sm" tone="secondary">{label}</Body>
         <Body weight="regular" style={{ fontSize: 17, color: muted ? t.colors.content.secondary : t.colors.content.primary }}>
-          {value}%
+          {unit === '%' ? `${value}%` : `${value.toLocaleString('ja-JP')} ${unit}`}
         </Body>
       </View>
       <View style={[styles.track, { backgroundColor: t.colors.surface.sunken, marginTop: t.spacing['1'] }]}>
@@ -724,9 +659,6 @@ function makeStyles(t: Theme) {
     cardBody: { flex: 1, paddingHorizontal: t.spacing['6'], paddingTop: t.spacing['16'], paddingBottom: t.spacing['8'], zIndex: 20 },
     spacer: { flex: 1 },
     heroRow: { flexDirection: 'row', alignItems: 'flex-end' },
-    dotsRow: { flexDirection: 'row', justifyContent: 'space-between' },
-    dot: { width: 28, height: 28, borderRadius: radius.full, alignItems: 'center', justifyContent: 'center' },
-    dotLabel: { width: 28, textAlign: 'center', marginTop: t.spacing['2'] },
     pill: { alignSelf: 'flex-start', borderRadius: radius.full, paddingVertical: t.spacing['2'], paddingHorizontal: t.spacing['4'] },
     track: { height: 10, borderRadius: radius.full, overflow: 'hidden' },
     trackFill: { height: '100%', borderRadius: radius.full },
