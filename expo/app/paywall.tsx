@@ -114,7 +114,7 @@ export default function PaywallRoute() {
   const annualPkg = offering?.annual ?? offering?.availablePackages.find((p) => p.packageType === 'ANNUAL');
 
   // 年額が月額の何ヶ月分お得か。価格は地域で変わるので固定文言にせず、ストアの価格から計算する
-  // (例: ¥480 × 12 = ¥5,760 に対して ¥4,800 → 約2ヶ月分)。1ヶ月未満しか差が無ければ従来の「お得」に戻す
+  // (例: ¥300 × 12 = ¥3,600 に対して ¥3,000 → 約2ヶ月分)。1ヶ月未満しか差が無ければ従来の「お得」に戻す
   const savedMonths =
     monthlyPkg && annualPkg && monthlyPkg.product.price > 0
       ? Math.round((monthlyPkg.product.price * 12 - annualPkg.product.price) / monthlyPkg.product.price)
@@ -244,7 +244,7 @@ function PlanCard({
 }: {
   pkg: PurchasesPackage;
   label: string;
-  /** 「¥480 / 月」のように請求額と期間をセットで示す (App Store 審査 3.1.2) */
+  /** 「¥300 / 月」のように請求額と期間をセットで示す (App Store 審査 3.1.2) */
   priceLabel: string;
   badgeLabel?: string;
   isPurchasing: boolean;
