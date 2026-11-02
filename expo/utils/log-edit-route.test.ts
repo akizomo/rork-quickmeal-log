@@ -133,6 +133,23 @@ describe('resolveLogEditRoute — 数値を再計算させない記録', () => {
   });
 });
 
+describe('resolveLogEditRoute — My食品の記録 (%で量を直す)', () => {
+  const myFoodLog: FoodLog = {
+    ...directInputLog,
+    amountLabel: '150%',
+    macro: { kcal: 280, protein: 22.5, fat: 9, carbs: 25.5 },
+    myFood: { id: 'mf1', percent: 150, baseMacro: { kcal: 187, protein: 15, fat: 6, carbs: 17 } },
+  };
+
+  it('My食品から記録した記録は myFood。直接入力の形 (categoryKey) でも、先に myFood と判定する', () => {
+    expect(resolveLogEditRoute(myFoodLog)).toEqual({ kind: 'myFood' });
+  });
+
+  it('印の無い直接入力は、従来どおり numeric', () => {
+    expect(resolveLogEditRoute(directInputLog)).toEqual({ kind: 'numeric' });
+  });
+});
+
 describe('applyNumericEdit — 数値で編集した記録は固定される', () => {
   it('Identity 記録を数値で直すと、以後ずっと numeric で、macro は入力値のまま', () => {
     const original = identityNativeLog('chicken_lean');

@@ -19,6 +19,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { Body, Icon, Label, Overline, SheetScreen, Switch, useTheme } from '@/design-system';
+import { useCloseAfterRecord } from '@/hooks/useCloseAfterRecord';
 import { useLocale } from '@/hooks/useLocale';
 import { findLayer1Landing } from '@/utils/my-food-landing';
 import { findMyFoodByName, overwriteMyFood, saveMyFood } from '@/utils/my-foods';
@@ -37,6 +38,7 @@ const KCAL_PER_GRAM: Record<MacroKey, number> = { protein: 4, fat: 9, carbs: 4 }
 
 export function DirectInputSheet() {
   const router = useRouter();
+  const closeAfterRecord = useCloseAfterRecord();
   const t = useTheme();
   const tr = useT();
   const { recordDirectInputLog, replaceLog, setMyFoods, openIdentityLogSheet, loggingDate, settings, logs } = useAppState();
@@ -295,8 +297,8 @@ export function DirectInputSheet() {
     );
 
     reset();
-    router.back();
-  }, [canSave, kcal, name, proteinStr, fatStr, carbsStr, loggingDate, recordDirectInputLog, replaceLog, setMyFoods, editingLog, fixedName, reset, router, willSaveMyFood, settings.myFoods, tr, foodRegion]);
+    closeAfterRecord();
+  }, [canSave, kcal, name, proteinStr, fatStr, carbsStr, loggingDate, recordDirectInputLog, replaceLog, setMyFoods, editingLog, fixedName, reset, router, closeAfterRecord, willSaveMyFood, settings.myFoods, tr, foodRegion]);
 
   return (
     <SheetScreen
@@ -384,8 +386,9 @@ export function DirectInputSheet() {
         </View>
 
         {/* My食品に保存 (名前があるときだけ。PRD §6.5.4)。入力を終えてから決める付け足しなので、一番下 */}
+        {/* 一番下の要素なので、下に余白を足す (キーボード表示中はシート下端の余白が詰まり、スイッチが端に張り付いていた) */}
         {canOfferMyFood ? (
-          <View style={{ gap: t.spacing['2'] }}>
+          <View style={{ gap: t.spacing['2'], paddingBottom: t.spacing['4'] }}>
             <View style={styles.switchRow}>
               <View style={{ flex: 1 }}>
                 <Label>{tr('directInput.myFood.switchLabel')}</Label>

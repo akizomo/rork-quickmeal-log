@@ -153,16 +153,26 @@ export function touchMyFood(foods: readonly MyFood[] | undefined, id: string, no
   return (foods ?? []).map((f) => (f.id === id ? { ...f, lastUsedAtISO: nowISO } : f));
 }
 
-/** 保存した値 × 倍率 (= %/100) の Macro。PFC が null のものは 0 として扱う (直接入力と同じ)。 */
-export function myFoodMacro(food: MyFood, multiplier: number): Macro {
+/** 基準の値 (= 100%) × 倍率 (= %/100) の Macro。kcal は整数、PFC は小数1桁。 */
+export function scaleMacro(base: Macro, multiplier: number): Macro {
   const m = Number.isFinite(multiplier) && multiplier > 0 ? multiplier : 1;
   const round = (v: number) => Math.round(v * 10) / 10;
   return {
-    kcal: Math.round(food.kcal * m),
-    protein: round((food.protein ?? 0) * m),
-    fat: round((food.fat ?? 0) * m),
-    carbs: round((food.carbs ?? 0) * m),
+    kcal: Math.round(base.kcal * m),
+    protein: round(base.protein * m),
+    fat: round(base.fat * m),
+    carbs: round(base.carbs * m),
   };
+}
+
+/** My食品の保存した値 (= 100%)。PFC が null のものは 0 として扱う (直接入力と同じ)。 */
+export function myFoodBaseMacro(food: MyFood): Macro {
+  return { kcal: food.kcal, protein: food.protein ?? 0, fat: food.fat ?? 0, carbs: food.carbs ?? 0 };
+}
+
+/** 保存した値 × 倍率 (= %/100) の Macro。 */
+export function myFoodMacro(food: MyFood, multiplier: number): Macro {
+  return scaleMacro(myFoodBaseMacro(food), multiplier);
 }
 
 /** 検索語で My食品を探す。名前の部分一致 (NFKC・大文字小文字無視。ひらがな/カタカナも同一視して探しやすくする)。 */

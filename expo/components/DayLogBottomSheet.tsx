@@ -43,7 +43,15 @@ function formatTime(timestamp: string): string {
   return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
 }
 
-function LogListItem({ log, onEditNumeric }: { log: FoodLog; onEditNumeric: (log: FoodLog) => void }) {
+function LogListItem({
+  log,
+  onEditNumeric,
+  onEditMyFood,
+}: {
+  log: FoodLog;
+  onEditNumeric: (log: FoodLog) => void;
+  onEditMyFood: (log: FoodLog) => void;
+}) {
   const { deleteLog, openIdentityLogSheet, settings } = useAppState();
   const display = getLogDisplayInfo(log, settings.uiLanguage);
   const handlePress = () => {
@@ -51,6 +59,10 @@ function LogListItem({ log, onEditNumeric }: { log: FoodLog; onEditNumeric: (log
     const route = resolveLogEditRoute(log);
     if (route.kind === 'identity') {
       openIdentityLogSheet(route.bucket, { identityId: route.identityId, editingLogId: log.id });
+      return;
+    }
+    if (route.kind === 'myFood') {
+      onEditMyFood(log);
       return;
     }
     onEditNumeric(log);
@@ -100,6 +112,11 @@ export const DayLogBottomSheet = memo(
   // 数値で編集する記録は formSheet ルート (/direct-input) を編集モードで開く。
   const handleEditNumeric = useCallback(
     (log: FoodLog) => router.push({ pathname: '/direct-input', params: { editingLogId: log.id } }),
+    [router],
+  );
+  // My食品の記録は、My食品の記録シートを編集モードで開き、%で量を直す
+  const handleEditMyFood = useCallback(
+    (log: FoodLog) => router.push({ pathname: '/my-food-log', params: { editingLogId: log.id } }),
     [router],
   );
 
@@ -294,7 +311,7 @@ export const DayLogBottomSheet = memo(
               <Text style={[styles.emptyText, { color: t.colors.content.secondary }]}>{tr('dayLog.emptyText')}</Text>
             </View>
           ) : (
-            dayLogs.map((log) => <LogListItem key={log.id} log={log} onEditNumeric={handleEditNumeric} />)
+            dayLogs.map((log) => <LogListItem key={log.id} log={log} onEditNumeric={handleEditNumeric} onEditMyFood={handleEditMyFood} />)
           )}
         </ScrollView>
       </Animated.View>

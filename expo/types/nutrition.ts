@@ -133,6 +133,12 @@ export interface FoodLog {
    * rebuild the numbers from default amounts) — see utils/log-edit-route.ts.
    */
   macroManual?: boolean;
+  /**
+   * My食品から記録したときの印 (PRD §6.5.4)。`baseMacro` は記録した時点の「保存した値 = 100%」で、
+   * 記録の編集は、この値に対する%で量を直す (My食品を後で編集・削除しても、過去の記録は変わらない)。
+   * 無い記録 (数値の直接入力・v1.19 より前に My食品から記録したもの) は、従来どおり数値で編集する。
+   */
+  myFood?: { id: string; percent: number; baseMacro: Macro };
 }
 
 /**
