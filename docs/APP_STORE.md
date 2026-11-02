@@ -241,7 +241,7 @@ The sources for all calorie and nutrition calculations are listed in Settings > 
 | **5.1.1(iv)** 許可の誘導 | ヘルス連携の説明画面 ([health-connect.tsx](../expo/app/health-connect.tsx)) のボタンが「連携する」で、「あとで」で許可ダイアログを出さずに閉じられた | iOS では「あとで」を出さず、ボタンを「続ける / Continue」にした。説明画面からは必ず OS の許可ダイアログへ進み、許すかどうかは OS 側で選ぶ。拒否してもホームへ進む。見出しも問いかけ (「連携しますか？」) をやめた。Android は Health Connect 未インストール時の抜け道が要るので「あとで」を残す |
 | **1.4.1** 健康情報の出典 | 目標カロリーなどの計算に出典が無い | 「計算の根拠と出典」ページ ([sources.tsx](../expo/app/sources.tsx)、データは [calculation-sources.ts](../expo/constants/calculation-sources.ts)) を新設。式の説明 + 論文・公的資料へのリンク (DOI / 厚労省 / FAO / WHO / 文科省 / USDA) + 医療上の助言ではない旨。**導線は5か所**: 設定 > 情報 / ステータスの目標カード直下 / 目標の変更 / オンボーディングのペース選択と提案画面 |
 
-- 状態: **コード有・到達可能 (Web で表示とリンクを確認)・実機未確認・未提出**。iOS の許可ダイアログへの遷移は Simulator / TestFlight で確認する
+- 状態: **コード有・到達可能 (Web で表示とリンクを確認)・実機未確認**。**2026-11-02 時点で再提出済・審査中** (再提出日とビルド番号は未記録)。iOS の許可ダイアログへの遷移は Simulator / TestFlight で確認する
 - 2026-10-31 出典の再点検 (コードの式とページの記述・文献の中身を1件ずつ照合、DOI は Crossref で書誌一致を確認):
   - 減量・増量ペースの出典を ACSM (Donnelly 2009: 運動介入の話でペースの根拠ではない) から Helms 2014 (減量 0.5〜1%/週) と Iraki 2019 (増量 0.25〜0.5%/週) に差し替え。アプリの範囲 (減量 0.25〜0.75% / 増量 0.125〜0.375%) は両者の範囲かそれより穏やか
   - 7,700kcal/kg は目安である旨と Hall 2008 を追加
@@ -271,6 +271,7 @@ Guideline 1.4.1: We added a "Calculations & Sources" page that explains each cal
 ```
 
 ### 6-2. 承認後にやること
+0. **公開する前に価格を月額 ¥300 / 年額 ¥3,000 に変える** (PRD v1.21。審査は ¥480 / ¥4,800 のまま出している)。価格の変更は審査なしで反映される。公開の方法を「手動で公開」にできていれば、承認 → 価格変更 → 公開の順にする。自動公開だった場合は公開後すぐに変える (値下げは既存の購読者にも自動で適用される)。説明文の価格は審査中のバージョンでは直せないので、次の版で直す
 1. **App Store の URL を確認する**: `https://apps.apple.com/jp/app/id6823520048` (App Store Connect のアプリ ID。公開後に開けるか確認)
 2. **LP (Web) を更新する** — 今は「iPhone 版は準備中」として作ってある ([web/public/index.html](../web/public/index.html))
    - 「iPhone をお使いなら / On iPhone?」の通知登録ボタン (data-cta="ios-notify"、**2か所**: 冒頭 CTA と末尾 CTA) → **App Store のバッジ + 上記 URL へのリンク**に置き換える (バッジは Apple 公式の「App Store からダウンロード」を使う。自作しない)
