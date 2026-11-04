@@ -1280,6 +1280,19 @@ body[lang="ja"] .en {
   line-height: var(--lh-relaxed);
 }
 
+/* アプリ入手の選択 (PC 向け): App Store バッジと Android を縦に並べる */
+.lp-get-options {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.lp-get-options .cta {
+  width: 100%;
+  align-items: center;
+}
+
 /* Android 参加手順ステップリスト */
 .lp-modal-steps {
   list-style: none;

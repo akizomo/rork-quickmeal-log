@@ -68,10 +68,10 @@
         <a
           class="lp-header-cta"
           href="#start"
-          data-cta="header-start"
+          data-cta="header-get"
         >
-          <span class="ja">はじめる</span>
-          <span class="en">Get started</span>
+          <span class="ja">アプリを入手</span>
+          <span class="en">Get the app</span>
         </a>
       </div>
     </header>
@@ -561,6 +561,57 @@
       </div>
     </footer>
 
+    <!-- アプリ入手の選択 (PC など、端末で行き先を決められないとき) -->
+    <dialog id="get-modal" class="lp-modal" aria-labelledby="get-title">
+      <button
+        type="button"
+        class="lp-modal-close"
+        aria-label="閉じる"
+        onclick="document.getElementById('get-modal').close()"
+      >
+        ×
+      </button>
+
+      <div class="lp-modal-body">
+        <h2 id="get-title" class="lp-modal-title">
+          <span class="ja">アプリを入手</span>
+          <span class="en">Get the app</span>
+        </h2>
+        <p class="lp-modal-sub ja">お使いのスマートフォンにあわせて選んでください。</p>
+        <p class="lp-modal-sub en">Choose your phone.</p>
+
+        <div class="lp-get-options">
+          <a
+            class="cta-store"
+            href="https://apps.apple.com/jp/app/id6823520048"
+            target="_blank"
+            rel="noopener noreferrer"
+            data-cta="app-store-modal"
+          >
+            <img class="ja" src="/lp/app-store-badge-ja.svg" alt="App Store からダウンロード" height="56" decoding="async" />
+            <img class="en" src="/lp/app-store-badge-en.svg" alt="Download on the App Store" height="56" decoding="async" />
+          </a>
+          <a
+            class="cta cta-secondary"
+            href="https://groups.google.com/g/hachibu-testers"
+            target="_blank"
+            rel="noopener noreferrer"
+            data-cta="android-group"
+            aria-label="Googleグループに参加して Android クローズドテストに参加する"
+          >
+            <span class="cta-mute">
+              <span class="ja">Android をお使いなら</span>
+              <span class="en">On Android?</span>
+            </span>
+            <span class="cta-strong">
+              <span class="ja">クローズドテストに参加</span>
+              <span class="en">Join the closed beta</span>
+            </span>
+          </a>
+        </div>
+      </div>
+    </dialog>
+
     <!-- Android クローズドテスト参加手順モーダル -->
     <dialog id="android-modal" class="lp-modal" aria-labelledby="android-title">
       <button
@@ -693,6 +744,40 @@
         androidModal.addEventListener('click', function (e) {
           if (e.target === androidModal) androidModal.close();
         });
+      })();
+
+      // ── Header「アプリを入手」: 端末で行き先を変える ─────────────────────────────
+      // iPhone/iPad → App Store、Android → クローズドテストの参加手順、それ以外 (PC) → 両方を出す
+      (function () {
+        var btn = document.querySelector('a[data-cta="header-get"]');
+        var getModal = document.getElementById('get-modal');
+        var androidModal = document.getElementById('android-modal');
+        if (!btn) return;
+        var ua = navigator.userAgent || '';
+        var isAndroid = /Android/i.test(ua);
+        // iPadOS 13+ は Mac と同じ UA を名乗るので、タッチ点の数で見分ける
+        var isIOS = /iPhone|iPad|iPod/i.test(ua) || (/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1);
+        btn.addEventListener('click', function (e) {
+          if (isIOS) {
+            e.preventDefault();
+            window.location.href = 'https://apps.apple.com/jp/app/id6823520048';
+          } else if (isAndroid && androidModal && typeof androidModal.showModal === 'function') {
+            e.preventDefault();
+            androidModal.showModal();
+          } else if (getModal && typeof getModal.showModal === 'function') {
+            e.preventDefault();
+            getModal.showModal();
+          }
+          // どれにも当てはまらない (dialog 非対応) ときは #start へのリンクのまま
+        });
+        if (getModal) {
+          getModal.addEventListener('click', function (e) {
+            if (e.target === getModal) getModal.close();
+          });
+          // 選択から Android の参加手順へ進むときは、選択を閉じてから開く
+          var a = getModal.querySelector('a[data-cta="android-group"]');
+          if (a) a.addEventListener('click', function () { getModal.close(); });
+        }
       })();
 
       // Scroll reveal (IntersectionObserver)
