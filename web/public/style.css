@@ -729,6 +729,24 @@ body[lang="ja"] .en {
   font-weight: 600;
 }
 
+/* App Store バッジ: Apple 公式の画像をそのまま使う (枠・影・色の加工はしない)。高さだけ CTA にそろえる */
+.cta-store {
+  display: inline-flex;
+  align-items: center;
+  height: var(--cta-height);
+  border-radius: var(--radius-control);
+  transition: transform var(--dur-fast) var(--ease-standard);
+}
+
+.cta-store:active {
+  transform: translateY(1px);
+}
+
+.cta-store img {
+  height: 100%;
+  width: auto;
+}
+
 /* ---------- §01 Concept ---------- */
 .lp-concept {
   text-align: left;
@@ -1178,7 +1196,7 @@ body[lang="ja"] .en {
   font-weight: 700;
 }
 
-/* ---------- Modal (iOS notify / Android steps) ---------- */
+/* ---------- Modal (Android steps) ---------- */
 .lp-modal {
   border: none;
   padding: 0;
@@ -1238,8 +1256,7 @@ body[lang="ja"] .en {
   color: var(--ink);
 }
 
-.lp-modal-body,
-.lp-modal-thanks {
+.lp-modal-body {
   padding: var(--space-10) var(--space-8) var(--space-8);
   /* 低い画面でもボタンがはみ出さないよう、本体側でスクロールさせる */
   max-height: calc(100dvh - var(--space-10));
@@ -1261,64 +1278,6 @@ body[lang="ja"] .en {
   color: var(--ink-soft);
   margin: 0 0 var(--space-6);
   line-height: var(--lh-relaxed);
-}
-
-.lp-modal-field {
-  display: block;
-  margin-bottom: var(--space-5);
-}
-
-.lp-modal-label {
-  display: block;
-  font-size: var(--fs-meta);
-  font-weight: 600;
-  color: var(--ink-soft);
-  letter-spacing: var(--ls-label);
-  margin-bottom: var(--space-2);
-}
-
-.lp-modal-input {
-  width: 100%;
-  padding: var(--space-4);
-  border: 1px solid var(--border-soft);
-  border-radius: var(--radius-md);
-  font-size: var(--fs-base);
-  color: var(--ink);
-  background: var(--paper);
-  font-family: inherit;
-  box-sizing: border-box;
-  transition: border-color var(--dur-fast) var(--ease-standard),
-    box-shadow var(--dur-fast) var(--ease-standard);
-}
-
-.lp-modal-input:focus {
-  outline: none;
-  border-color: var(--action-text);
-  box-shadow: 0 0 0 3px var(--focus-ring);
-}
-
-.lp-modal-bullets {
-  list-style: none;
-  padding: 0;
-  margin: 0 0 var(--space-6);
-  display: grid;
-  gap: var(--space-2);
-}
-
-.lp-modal-bullets li {
-  font-size: var(--fs-meta);
-  color: var(--ink-soft);
-  padding-left: var(--space-5);
-  position: relative;
-  line-height: var(--lh-compact);
-}
-
-.lp-modal-bullets li::before {
-  content: "✓";
-  position: absolute;
-  left: 0;
-  color: var(--action-text);
-  font-weight: 700;
 }
 
 /* Android 参加手順ステップリスト */
@@ -1428,32 +1387,14 @@ body[lang="ja"] .en {
   text-decoration: underline;
 }
 
-/* honeypot hidden (formsubmit anti-spam) */
-.lp-modal input[name="_honey"] {
-  display: none;
-}
-
 @media (max-width: 480px) {
-  .lp-modal-body,
-  .lp-modal-thanks {
+  .lp-modal-body {
     padding: var(--space-8) var(--space-5) var(--space-6);
   }
 
   .lp-modal-title {
     font-size: var(--fs-title-sm);
   }
-}
-
-/* ---------- Form error (inline) ---------- */
-.lp-form-error {
-  font-size: var(--fs-label);
-  color: var(--danger-text);
-  margin: 0 0 var(--space-4);
-  line-height: var(--lh-compact);
-}
-
-.lp-form-error[hidden] {
-  display: none;
 }
 
 /* ---------- Scroll reveal ----------
@@ -1634,6 +1575,10 @@ body[lang="ja"] .en {
 
   .cta-secondary {
     align-items: center;
+  }
+
+  .cta-store {
+    align-self: center;
   }
 
   .lp-feature-grid {

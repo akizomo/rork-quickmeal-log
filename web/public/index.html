@@ -7,14 +7,14 @@
     <meta
       name="description"
       id="meta-description"
-      content="Hachibu — ざっくりで、続く食事ログ。9つのボタンを、タップだけで。Android クローズドテスト 募集中。"
+      content="Hachibu — ざっくりで、続く食事ログ。9つのボタンを、タップだけで。iPhone 版を App Store で配信中。"
     />
     <meta property="og:type" content="website" />
     <meta property="og:title" id="og-title" content="Hachibu — ざっくりで、続く食事ログ。" />
     <meta
       property="og:description"
       id="og-description"
-      content="9つのボタンを、タップだけで。計らない、調べない、迷わない。Android クローズドテスト 募集中。"
+      content="9つのボタンを、タップだけで。計らない、調べない、迷わない。iPhone 版を App Store で配信中。"
     />
     <meta name="theme-color" content="#F6F3EC" />
     <title>Hachibu — ざっくりで、続く食事ログ。</title>
@@ -67,14 +67,11 @@
         </div>
         <a
           class="lp-header-cta"
-          href="https://groups.google.com/g/hachibu-testers"
-          target="_blank"
-          rel="noopener noreferrer"
-          data-cta="android-group-header"
-          aria-label="Googleグループに参加して Android クローズドテストに参加する"
+          href="#start"
+          data-cta="header-start"
         >
-          <span class="ja">Androidで試す</span>
-          <span class="en">Try on Android</span>
+          <span class="ja">はじめる</span>
+          <span class="en">Get started</span>
         </a>
       </div>
     </header>
@@ -85,8 +82,8 @@
         <div class="lp-hero-grid">
           <div class="lp-hero-copy" data-reveal>
             <p class="lp-eyebrow">
-              <span class="ja">Android クローズドテスト 募集中</span>
-              <span class="en">Android Closed Beta — Join Now</span>
+              <span class="ja">App Store で配信中</span>
+              <span class="en">Now on the App Store</span>
             </p>
             <h1 id="hero-title" class="lp-hero-title">
               <span class="ja">ざっくりで、<br />続く食事ログ。</span>
@@ -102,39 +99,48 @@
             </p>
 
             <div class="lp-cta-row">
-              <!-- Primary: Android (Googleグループ経由でクローズドテスト参加) -->
+              <!-- Primary: iPhone (App Store。バッジは Apple 公式の配布物 (marketing tools の SVG) を /lp/ に置いてそのまま使う。加工しない) -->
               <a
-                class="cta cta-primary"
-                href="https://groups.google.com/g/hachibu-testers"
+                class="cta-store"
+                href="https://apps.apple.com/jp/app/id6823520048"
                 target="_blank"
                 rel="noopener noreferrer"
-                data-cta="android-group"
-                aria-label="Googleグループに参加して Android クローズドテストに参加する"
+                data-cta="app-store"
               >
-                <span class="ja">Androidで試す</span>
-                <span class="en">Try on Android</span>
+                <img
+                  class="ja"
+                  src="/lp/app-store-badge-ja.svg"
+                  alt="App Store からダウンロード"
+                  height="56"
+                  decoding="async"
+                />
+                <img
+                  class="en"
+                  src="/lp/app-store-badge-en.svg"
+                  alt="Download on the App Store"
+                  height="56"
+                  decoding="async"
+                />
               </a>
-              <!-- Secondary: iPhone notify (iOS リリース待ち層) -->
+              <!-- Secondary: Android (Googleグループ経由でクローズドテスト参加) -->
               <div class="lp-cta-secondary-wrap">
                 <a
                   class="cta cta-secondary"
-                  href="mailto:contact@akizony.com?subject=Hachibu%20iOS%E7%89%88%20%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B%E5%B8%8C%E6%9C%9B&body=iOS%E7%89%88%E3%81%8C%E3%83%AA%E3%83%AA%E3%83%BC%E3%82%B9%E3%81%95%E3%82%8C%E3%81%9F%E3%82%89%E3%81%93%E3%81%AE%E3%83%A1%E3%83%BC%E3%83%AB%E3%82%A2%E3%83%89%E3%83%AC%E3%82%B9%E3%81%B8%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B%E3%82%92%E3%81%8A%E9%A1%98%E3%81%84%E3%81%97%E3%81%BE%E3%81%99%E3%80%82"
-                  data-cta="ios-notify"
-                  aria-label="iOS リリース通知メーリングリストに登録する"
+                  href="https://groups.google.com/g/hachibu-testers"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-cta="android-group"
+                  aria-label="Googleグループに参加して Android クローズドテストに参加する"
                 >
                   <span class="cta-mute">
-                    <span class="ja">iPhone をお使いなら</span>
-                    <span class="en">On iPhone?</span>
+                    <span class="ja">Android をお使いなら</span>
+                    <span class="en">On Android?</span>
                   </span>
                   <span class="cta-strong">
-                    <span class="ja">知らせを受け取る</span>
-                    <span class="en">Get notified</span>
+                    <span class="ja">クローズドテストに参加</span>
+                    <span class="en">Join the closed beta</span>
                   </span>
                 </a>
-                <p class="lp-cta-note">
-                  <span class="ja">iOSローンチ時の1通のみ</span>
-                  <span class="en">One email when iOS launches</span>
-                </p>
               </div>
             </div>
           </div>
@@ -457,53 +463,63 @@
               <span class="en">Start logging,<br />roughly.</span>
             </h2>
             <p class="lp-start-sub ja">
-              いま試せるのは Android のクローズドテスト。<br />
-              iPhone の方は、準備が整い次第お知らせします。
+              iPhone は App Store から。<br />
+              Android は、クローズドテストで試せます。
             </p>
             <p class="lp-start-sub en">
-              Android closed beta is open now.<br />
-              iPhone version coming soon — sign up and we'll let you know.
+              On iPhone, get it from the App Store.<br />
+              On Android, join the closed beta.
             </p>
 
-            <ul class="lp-start-bullets" aria-label="テスト参加条件">
-              <li><span class="ja">全機能、無料</span><span class="en">Free, full access</span></li>
-              <li><span class="ja">クレカ不要</span><span class="en">No credit card</span></li>
-              <li><span class="ja">合わなければアンインストールするだけ</span><span class="en">Uninstall any time</span></li>
+            <ul class="lp-start-bullets" aria-label="はじめかた">
+              <li><span class="ja">はじめの7日間は無料</span><span class="en">First 7 days free</span></li>
+              <li><span class="ja">期間内に解約すれば料金はかからない</span><span class="en">Cancel within the trial, pay nothing</span></li>
+              <li><span class="ja">Android のテストは全機能無料</span><span class="en">Android beta is free</span></li>
             </ul>
 
             <div class="lp-cta-row">
-              <!-- Primary: Android (Googleグループ経由でクローズドテスト参加) -->
+              <!-- Primary: iPhone (App Store。バッジは Apple 公式の配布物 (marketing tools の SVG) を /lp/ に置いてそのまま使う。加工しない) -->
               <a
-                class="cta cta-primary"
-                href="https://groups.google.com/g/hachibu-testers"
+                class="cta-store"
+                href="https://apps.apple.com/jp/app/id6823520048"
                 target="_blank"
                 rel="noopener noreferrer"
-                data-cta="android-group"
-                aria-label="Googleグループに参加して Android クローズドテストに参加する"
+                data-cta="app-store"
               >
-                <span class="ja">Androidで試す</span>
-                <span class="en">Try on Android</span>
+                <img
+                  class="ja"
+                  src="/lp/app-store-badge-ja.svg"
+                  alt="App Store からダウンロード"
+                  height="56"
+                  decoding="async"
+                />
+                <img
+                  class="en"
+                  src="/lp/app-store-badge-en.svg"
+                  alt="Download on the App Store"
+                  height="56"
+                  decoding="async"
+                />
               </a>
+              <!-- Secondary: Android (Googleグループ経由でクローズドテスト参加) -->
               <div class="lp-cta-secondary-wrap">
                 <a
                   class="cta cta-secondary"
-                  href="mailto:contact@akizony.com?subject=Hachibu%20iOS%E7%89%88%20%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B%E5%B8%8C%E6%9C%9B&body=iOS%E7%89%88%E3%81%8C%E3%83%AA%E3%83%AA%E3%83%BC%E3%82%B9%E3%81%95%E3%82%8C%E3%81%9F%E3%82%89%E3%81%93%E3%81%AE%E3%83%A1%E3%83%BC%E3%83%AB%E3%82%A2%E3%83%89%E3%83%AC%E3%82%B9%E3%81%B8%E3%81%8A%E7%9F%A5%E3%82%89%E3%81%9B%E3%82%92%E3%81%8A%E9%A1%98%E3%81%84%E3%81%97%E3%81%BE%E3%81%99%E3%80%82"
-                  data-cta="ios-notify"
-                  aria-label="iOS リリース通知メーリングリストに登録する"
+                  href="https://groups.google.com/g/hachibu-testers"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-cta="android-group"
+                  aria-label="Googleグループに参加して Android クローズドテストに参加する"
                 >
                   <span class="cta-mute">
-                    <span class="ja">iPhone をお使いなら</span>
-                    <span class="en">On iPhone?</span>
+                    <span class="ja">Android をお使いなら</span>
+                    <span class="en">On Android?</span>
                   </span>
                   <span class="cta-strong">
-                    <span class="ja">知らせを受け取る</span>
-                    <span class="en">Get notified</span>
+                    <span class="ja">クローズドテストに参加</span>
+                    <span class="en">Join the closed beta</span>
                   </span>
                 </a>
-                <p class="lp-cta-note">
-                  <span class="ja">iOSローンチ時の1通のみ</span>
-                  <span class="en">One email when iOS launches</span>
-                </p>
               </div>
             </div>
           </div>
@@ -544,108 +560,6 @@
         <span class="lp-footer-copy">© 2026 Hachibu</span>
       </div>
     </footer>
-
-    <!-- iOS リリース通知メーリングリスト登録モーダル -->
-    <dialog id="subscribe-modal" class="lp-modal" aria-labelledby="subscribe-title">
-      <button
-        type="button"
-        class="lp-modal-close"
-        aria-label="閉じる"
-        onclick="document.getElementById('subscribe-modal').close()"
-      >
-        ×
-      </button>
-
-      <div class="lp-modal-body" data-state="form">
-        <h2 id="subscribe-title" class="lp-modal-title">
-          <span class="ja">iOS版の準備ができたら、<br />お知らせします。</span>
-          <span class="en">We'll let you know<br />when iOS is ready.</span>
-        </h2>
-        <p class="lp-modal-sub ja">
-          登録はメールアドレスだけ。他には何も聞きません。
-        </p>
-        <p class="lp-modal-sub en">
-          Just your email. Nothing else.
-        </p>
-
-        <form
-          id="subscribe-form"
-          action="https://formsubmit.co/contact@akizony.com"
-          method="POST"
-        >
-          <input type="hidden" name="_subject" id="form-subject" value="Hachibu iOS版 お知らせ希望" />
-          <input type="hidden" name="_captcha" value="false" />
-          <input type="hidden" name="_template" value="table" />
-          <input type="hidden" name="_honey" value="" />
-
-          <label class="lp-modal-field">
-            <span class="lp-modal-label">
-              <span class="ja">メールアドレス</span>
-              <span class="en">Email address</span>
-            </span>
-            <input
-              type="email"
-              name="email"
-              placeholder="your@email.com"
-              required
-              autocomplete="email"
-              inputmode="email"
-              class="lp-modal-input"
-            />
-          </label>
-
-          <ul class="lp-modal-bullets" aria-label="ポリシー">
-            <li>
-              <span class="ja">iOSローンチ時の1通だけお送りします</span>
-              <span class="en">One email when iOS launches</span>
-            </li>
-            <li>
-              <span class="ja">他社への共有・販売はありません</span>
-              <span class="en">Never shared or sold</span>
-            </li>
-          </ul>
-
-          <p class="lp-form-error" id="subscribe-error" role="alert" hidden>
-            <span class="ja">送信に失敗しました。時間をおいて、もう一度お試しください。</span>
-            <span class="en">Submission failed. Please try again in a moment.</span>
-          </p>
-
-          <button type="submit" class="cta cta-primary lp-modal-submit">
-            <span class="ja">登録する</span>
-            <span class="en">Subscribe</span>
-          </button>
-
-          <p class="lp-modal-finep">
-            <span class="ja">登録すると <a href="/privacy">プライバシーポリシー</a> に同意したものとみなします。</span>
-            <span class="en">By subscribing you agree to our <a href="/privacy">Privacy Policy</a>.</span>
-          </p>
-        </form>
-      </div>
-
-      <div class="lp-modal-thanks" data-state="thanks" hidden>
-        <h2 class="lp-modal-title">
-          <span class="ja">ありがとうございます。</span>
-          <span class="en">You're in.</span>
-        </h2>
-        <p class="lp-modal-sub ja">
-          iOSローンチの準備ができたら、<br />
-          ご登録いただいたアドレスへ 1 通だけお知らせします。
-        </p>
-        <p class="lp-modal-sub en">
-          We'll send one email when iOS is ready.<br />
-          Your address won't be used for anything else.
-        </p>
-        <p class="lp-modal-sub ja">他の用途には一切使いません。</p>
-        <button
-          type="button"
-          class="cta cta-primary lp-modal-submit"
-          onclick="document.getElementById('subscribe-modal').close()"
-        >
-          <span class="ja">閉じる</span>
-          <span class="en">Close</span>
-        </button>
-      </div>
-    </dialog>
 
     <!-- Android クローズドテスト参加手順モーダル -->
     <dialog id="android-modal" class="lp-modal" aria-labelledby="android-title">
@@ -725,17 +639,15 @@
       var LP_META = {
         ja: {
           title: 'Hachibu — ざっくりで、続く食事ログ。',
-          description: 'Hachibu — ざっくりで、続く食事ログ。9つのボタンを、タップだけで。Android クローズドテスト 募集中。',
+          description: 'Hachibu — ざっくりで、続く食事ログ。9つのボタンを、タップだけで。iPhone 版を App Store で配信中。',
           ogTitle: 'Hachibu — ざっくりで、続く食事ログ。',
-          ogDescription: '9つのボタンを、タップだけで。計らない、調べない、迷わない。Android クローズドテスト 募集中。',
-          formSubject: 'Hachibu iOS版 お知らせ希望',
+          ogDescription: '9つのボタンを、タップだけで。計らない、調べない、迷わない。iPhone 版を App Store で配信中。',
         },
         en: {
           title: 'Hachibu — Rough logging. Lasting habit.',
-          description: 'Hachibu — rough, quick meal logging. Nine buttons, one tap. No measuring, no searching, no deciding. Android closed beta open now.',
+          description: 'Hachibu — rough, quick meal logging. Nine buttons, one tap. No measuring, no searching, no deciding. Now on the App Store for iPhone.',
           ogTitle: 'Hachibu — Rough logging. Lasting habit.',
-          ogDescription: 'Nine buttons. One tap each. No measuring. No searching. No deciding. Android closed beta open now.',
-          formSubject: 'Hachibu iOS notify request',
+          ogDescription: 'Nine buttons. One tap each. No measuring. No searching. No deciding. Now on the App Store for iPhone.',
         },
       };
 
@@ -749,8 +661,6 @@
         document.getElementById('meta-description').setAttribute('content', m.description);
         document.getElementById('og-title').setAttribute('content', m.ogTitle);
         document.getElementById('og-description').setAttribute('content', m.ogDescription);
-        var subjectEl = document.getElementById('form-subject');
-        if (subjectEl) subjectEl.value = m.formSubject;
 
         document.querySelectorAll('.lp-lang-btn').forEach(function (btn) {
           btn.classList.toggle('active', btn.dataset.lang === lang);
@@ -768,71 +678,20 @@
         if (browserLang.indexOf('ja') !== 0) setLang('en');
       })();
 
-      // ── Subscribe modal ──────────────────────────────────────────────────────
+      // ── Android closed beta modal ────────────────────────────────────────────
       (function () {
-        var modal = document.getElementById('subscribe-modal');
-        if (!modal) return;
-
-        document.querySelectorAll('a[data-cta="ios-notify"]').forEach(function (a) {
+        var androidModal = document.getElementById('android-modal');
+        if (!androidModal) return;
+        document.querySelectorAll('a[data-cta="android-group"]').forEach(function (a) {
           a.addEventListener('click', function (e) {
-            if (typeof modal.showModal === 'function') {
+            if (typeof androidModal.showModal === 'function') {
               e.preventDefault();
-              modal.showModal();
+              androidModal.showModal();
             }
           });
         });
-
-        modal.addEventListener('click', function (e) {
-          if (e.target === modal) modal.close();
-        });
-
-        var androidModal = document.getElementById('android-modal');
-        if (androidModal) {
-          document
-            .querySelectorAll('a[data-cta="android-group"], a[data-cta="android-group-header"]')
-            .forEach(function (a) {
-              a.addEventListener('click', function (e) {
-                if (typeof androidModal.showModal === 'function') {
-                  e.preventDefault();
-                  androidModal.showModal();
-                }
-              });
-            });
-          androidModal.addEventListener('click', function (e) {
-            if (e.target === androidModal) androidModal.close();
-          });
-        }
-
-        var form = document.getElementById('subscribe-form');
-        var formBody = modal.querySelector('[data-state="form"]');
-        var thanks = modal.querySelector('[data-state="thanks"]');
-        form.addEventListener('submit', function (e) {
-          e.preventDefault();
-          var btn = form.querySelector('button[type="submit"]');
-          var isEn = document.body.lang === 'en';
-          var errorEl = document.getElementById('subscribe-error');
-          errorEl.hidden = true;
-          btn.disabled = true;
-          btn.innerHTML = isEn
-            ? '<span class="en">Sending…</span>'
-            : '<span class="ja">送信中...</span>';
-          fetch(form.action, {
-            method: 'POST',
-            body: new FormData(form),
-            headers: { Accept: 'application/json' }
-          })
-            .then(function (r) {
-              if (!r.ok) throw new Error('submission failed');
-              formBody.hidden = true;
-              thanks.hidden = false;
-            })
-            .catch(function () {
-              btn.disabled = false;
-              btn.innerHTML = isEn
-                ? '<span class="en">Subscribe</span>'
-                : '<span class="ja">登録する</span>';
-              errorEl.hidden = false;
-            });
+        androidModal.addEventListener('click', function (e) {
+          if (e.target === androidModal) androidModal.close();
         });
       })();
 

@@ -271,9 +271,15 @@ Guideline 1.4.1: We added a "Calculations & Sources" page that explains each cal
 ```
 
 ### 6-2. 承認後にやること
+> **2026-11-04 承認 → ビルド 15 で公開した (2026-11-04 10:13 JST、iTunes Lookup で確認。ストア URL `https://apps.apple.com/jp/app/hachibu/id6823520048`)。** 承認されたのはビルド 15 (`91deaa5`、10-31)。公開方法は「手動で公開」。ビルド 16 (`098309e`、11-02) には週次ふり返りの作り直し・My食品の記録編集で%調整・検索から記録後の戻り1回・多め/少なめ判定 20%・Android の価格直書きの撤去が入っているが、iOS で急ぐ修正は無く、ふり返りの作り直しが大きいため実機未確認のまま出さない。15 の iOS 画面に価格の直書きは無い (ペイウォールはストアの価格を表示)。**16 もバージョンは 1.0.1 なので、15 を公開したら使えない**。16 の内容と `baa50ab` (進捗バーの重なり。15・16 とも未収録) は 1.0.2 として作り直し、TestFlight で確認してから審査に出す (§6-3)
+
 0. ~~**公開する前に価格を月額 ¥300 / 年額 ¥3,000 に変える**~~ → **2026-11-02 審査中に変更済**。公開前に Sandbox でペイウォールが ¥300 / ¥3,000 になっているかだけ確認する。以下は当初の手順: (PRD v1.21。審査は ¥480 / ¥4,800 のまま出している)。価格の変更は審査なしで反映される。公開の方法を「手動で公開」にできていれば、承認 → 価格変更 → 公開の順にする。自動公開だった場合は公開後すぐに変える (値下げは既存の購読者にも自動で適用される)。説明文の価格は審査中のバージョンでは直せないので、次の版で直す
 1. **App Store の URL を確認する**: `https://apps.apple.com/jp/app/id6823520048` (App Store Connect のアプリ ID。公開後に開けるか確認)
 2. **LP (Web) を更新する** — 今は「iPhone 版は準備中」として作ってある ([web/public/index.html](../web/public/index.html))
+   - **2026-11-04 書き換え済 (コード有・ローカルで表示とボタン動作を確認・未デプロイ)**: 冒頭/末尾 CTA = App Store バッジ (主) + 「Android をお使いなら / クローズドテストに参加」(従)。ヘッダーのボタンは「はじめる」(#start へ)。ヒーロー上の小さな文・meta/OG・末尾の文と箇条書き (7日間無料・期間内の解約で無料・Android のテストは無料) を更新。通知登録モーダル・JS・専用 CSS を撤去
+   - **バッジ**: Apple 公式の素材 ZIP (Download-on-the-App-Store) から JP / US-UK の黒の SVG を `web/public/lp/app-store-badge-ja.svg` / `app-store-badge-en.svg` として同梱 (2026-11-04)。直リンクにしなかったのは外部サーバー依存と訪問者の IP が Apple に渡るのを避けるため
+   - デプロイは **iOS を公開 → `https://apps.apple.com/jp/app/id6823520048` が開けるのを確認 → Vercel** の順
+   - 以下は当初のメモ:
    - 「iPhone をお使いなら / On iPhone?」の通知登録ボタン (data-cta="ios-notify"、**2か所**: 冒頭 CTA と末尾 CTA) → **App Store のバッジ + 上記 URL へのリンク**に置き換える (バッジは Apple 公式の「App Store からダウンロード」を使う。自作しない)
    - 「iPhone の方は、準備が整い次第お知らせします / iPhone version coming soon」の文 (JA/EN 両方) を書き換える
    - iOS 通知メーリングリストのモーダル (formsubmit.co、`id="form-subject"` 周辺) とその JS (`formSubject` / `data-cta="ios-notify"` のイベント) は**撤去**する
