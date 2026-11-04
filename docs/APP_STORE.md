@@ -276,7 +276,7 @@ Guideline 1.4.1: We added a "Calculations & Sources" page that explains each cal
 0. ~~**公開する前に価格を月額 ¥300 / 年額 ¥3,000 に変える**~~ → **2026-11-02 審査中に変更済**。公開前に Sandbox でペイウォールが ¥300 / ¥3,000 になっているかだけ確認する。以下は当初の手順: (PRD v1.21。審査は ¥480 / ¥4,800 のまま出している)。価格の変更は審査なしで反映される。公開の方法を「手動で公開」にできていれば、承認 → 価格変更 → 公開の順にする。自動公開だった場合は公開後すぐに変える (値下げは既存の購読者にも自動で適用される)。説明文の価格は審査中のバージョンでは直せないので、次の版で直す
 1. **App Store の URL を確認する**: `https://apps.apple.com/jp/app/id6823520048` (App Store Connect のアプリ ID。公開後に開けるか確認)
 2. **LP (Web) を更新する** — 今は「iPhone 版は準備中」として作ってある ([web/public/index.html](../web/public/index.html))
-   - **2026-11-04 書き換え済 (コード有・ローカルで表示とボタン動作を確認・未デプロイ)**: 冒頭/末尾 CTA = App Store バッジ (主) + 「Android をお使いなら / クローズドテストに参加」(従)。ヘッダーのボタンは「はじめる」(#start へ)。ヒーロー上の小さな文・meta/OG・末尾の文と箇条書き (7日間無料・期間内の解約で無料・Android のテストは無料) を更新。通知登録モーダル・JS・専用 CSS を撤去
+   - **2026-11-04 書き換え・デプロイ済 (`5763b3c`。push で Vercel に自動反映、本番でバッジ表示を確認)**: 冒頭/末尾 CTA = App Store バッジ (主) + 「Android をお使いなら / クローズドテストに参加」(従)。ヘッダーのボタンは「はじめる」(#start へ)。ヒーロー上の小さな文・meta/OG・末尾の文と箇条書き (7日間無料・期間内の解約で無料・Android のテストは無料) を更新。通知登録モーダル・JS・専用 CSS を撤去
    - **バッジ**: Apple 公式の素材 ZIP (Download-on-the-App-Store) から JP / US-UK の黒の SVG を `web/public/lp/app-store-badge-ja.svg` / `app-store-badge-en.svg` として同梱 (2026-11-04)。直リンクにしなかったのは外部サーバー依存と訪問者の IP が Apple に渡るのを避けるため
    - デプロイは **iOS を公開 → `https://apps.apple.com/jp/app/id6823520048` が開けるのを確認 → Vercel** の順
    - 以下は当初のメモ:
