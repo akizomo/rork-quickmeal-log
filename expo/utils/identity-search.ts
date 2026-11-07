@@ -20,6 +20,9 @@ import { ALL_IDENTITIES, ALL_US_IDENTITIES, JP_PRESETS, getAddonLabel, getBucket
 import { DISH_VOCABULARY } from '@/constants/identity/dish-vocabulary';
 import { HEAD_NOUNS, type HeadNounTarget } from '@/constants/identity/head-nouns';
 import { aliasesFor } from '@/constants/identity/search-aliases';
+import { usAliasesFor } from '@/constants/identity/search-aliases.us';
+import { usCategoryHints, usVocabularyMatches } from '@/utils/identity-vocabulary-en';
+import { buildEnEntryInfo, makeEnQuery, scoreEnglish, vocabularyOf, type EnEntryInfo } from '@/utils/identity-search-en';
 import { normalize, romajiVariant } from '@/utils/identity-normalize';
 import {
   labelParts,
@@ -427,6 +430,52 @@ const JP_GENERIC_LABELS = buildGenericAttributeLabels(ALL_IDENTITIES);
 const JP_INDEX: IndexedEntry[] = buildIndex(ALL_IDENTITIES, JP_GENERIC_LABELS, JP_PRESETS, true);
 const US_GENERIC_LABELS = buildGenericAttributeLabels(ALL_US_IDENTITIES);
 const US_INDEX: IndexedEntry[] = buildIndex(ALL_US_IDENTITIES, US_GENERIC_LABELS, [], false);
+/** US 索引と同じ並びの、英語の語単位の照合情報 (identity-search-en.ts)。 */
+const US_EN_INFO: EnEntryInfo[] = US_INDEX.map(({ entry }) => {
+  const key = entry.attribute
+    ? `${entry.identity.id}/${entry.attribute.key}`
+    : entry.style
+      ? `${entry.identity.id}[${entry.style.key}]`
+      : entry.identity.id;
+  return buildEnEntryInfo(entry.identity, { attribute: entry.attribute, style: entry.style }, usAliasesFor(key), getBucketDef(entry.identity.primaryHome.bucket)?.tab === 'dish');
+});
+const US_EN_VOCAB = vocabularyOf(US_EN_INFO);
+
+/**
+ * 文脈に縛られた種類の名前 (日本語版の contextBound の英語版)。
+ *
+ * 一皿料理の種類 (属性・スタイル) の名前が、**別の食材 Identity の名前・別名と同じ**とき (トマトスープの「Tomato」、
+ * 野菜サンドの「Veggie」、チキンサラダの「Chicken」)、その語だけを打った人は、種類ではなく
+ * その食品そのもの (トマト・野菜・鶏肉) を探している。種類の名前の完全一致は 4.1 と強く、別名 (3.95) より
+ * 上に来てしまうので、この語がそのまま打たれたときだけ下げる (複合 `tomato soup` は下げない)。
+ */
+const phraseKey = (tokens: Set<string>) => [...tokens].sort().join(' ');
+const US_OWNERS: Map<string, Set<string>> = (() => {
+  const m = new Map<string, Set<string>>();
+  US_INDEX.forEach(({ entry }, i) => {
+    if (entry.attribute || entry.style) return;
+    if (getBucketDef(entry.identity.primaryHome.bucket)?.tab === 'dish') return; // 持ち主は食材 (基本の食品) だけ
+    for (const ph of US_EN_INFO[i].phrases) {
+      const k = phraseKey(ph.tokens);
+      let set = m.get(k);
+      if (!set) { set = new Set(); m.set(k, set); }
+      set.add(entry.identity.id);
+    }
+  });
+  return m;
+})();
+const US_CONTEXT_BOUND: Set<string>[] = US_INDEX.map(({ entry }, i) => {
+  const out = new Set<string>();
+  if (!entry.attribute && !entry.style) return out;
+  if (getBucketDef(entry.identity.primaryHome.bucket)?.tab !== 'dish') return out; // 縛られるのは一皿料理の種類だけ
+  for (const ph of US_EN_INFO[i].phrases) {
+    if (ph.kind !== 'name') continue;
+    const k = phraseKey(ph.tokens);
+    const owners = US_OWNERS.get(k);
+    if (owners && [...owners].some((id) => id !== entry.identity.id)) out.add(k);
+  }
+  return out;
+});
 
 // ---------------------------------------------------------------------------
 // 照合
@@ -633,8 +682,10 @@ export function searchEntriesFuzzy(query: string, opts?: SearchOptions): SearchE
   const sortLocale = isUS ? 'en' : 'ja';
 
   const results: SearchEntryResult[] = [];
+  const enQuery = isUS ? makeEnQuery(query, US_EN_VOCAB) : null;
 
-  for (const { entry, targets } of index) {
+  for (let idx = 0; idx < index.length; idx++) {
+    const { entry, targets } = index[idx];
     const identityLevel = !entry.preset && !entry.attribute && !entry.style;
     let best: (Hit & { net: number }) | null = null;
     for (const q of variants) {
@@ -666,7 +717,20 @@ export function searchEntriesFuzzy(query: string, opts?: SearchOptions): SearchE
         }
       }
     }
+    // 英語: 語単位の照合 (identity-search-en.ts)。文字列の照合より強いときだけ置き換える。
+    // 同点は登録順 (食材タブ → 料理タブ) で決めるため、ごくわずかに下げる。
+    const eh = enQuery ? scoreEnglish(enQuery, US_EN_INFO[idx], US_EN_VOCAB) : null;
+    if (eh) {
+      const net = eh.score - (eh.viaTag ? 0.05 : 0);
+      if (!best || net > best.net) best = { score: eh.score, method: eh.method, tier: 'confident', net };
+    }
     if (!best) continue;
+    if (isUS) {
+      // 文脈に縛られた種類の名前がそのまま打たれたときは、食品そのものを先にする (US_CONTEXT_BOUND)。
+      const bound = !!enQuery && best.method === 'exact' && US_CONTEXT_BOUND[idx].has(phraseKey(enQuery.tokens));
+      // 同点は登録順 (食材タブ → 料理タブ)。ラベル順にしない
+      best = { ...best, net: best.net - idx * 1e-6 - (bound ? 0.6 : 0) };
+    }
     // Preset の途中一致は通常エントリより 0.1 下げる。「ごはん」と打ったときに、タグ
     // (たまごかけごはん…) へ途中一致した Preset がごはん本体・おにぎり等を押しのけない
     // ため。完全一致・前方一致 (= 料理名そのものを打った) は割り引かない。
@@ -796,8 +860,12 @@ function matchHeadNouns(queryVariants: string[]): HeadNounTarget[] {
  * するより具体的で信頼できるため。
  */
 export function getVocabularyMatches(query: string, locale?: AppLocale): VocabularyMatch[] {
-  // 主辞辞書・料理名辞書は JP 専用。en-US は英語の Identity ラベルで直接マッチするため不要。
-  if (locale === 'en-US') return [];
+  if (locale === 'en-US') {
+    // 英語の語彙辞書 (vocabulary.us.ts)。名前そのもの・複合で着地している (層1の1位が強い) ときは案内しない。
+    const top = searchEntriesFuzzy(query, { locale }).confident[0];
+    if (top && top.score >= 3.9) return [];
+    return usVocabularyMatches(query);
+  }
   const keys = queryVariants(query).map((v) => v.key);
   if (keys.length === 0) return [];
 
@@ -819,8 +887,7 @@ export function getVocabularyMatches(query: string, locale?: AppLocale): Vocabul
  * データソースは DISH_VOCABULARY (旧 CATEGORY_KEYWORD_MAP を統合・置換、§5.4.6)。
  */
 export function getCategoryHints(query: string, locale?: AppLocale): BucketKey[] {
-  // カテゴリヒントは JP 料理名辞書ベース。en-US は将来 US dish vocabulary で対応予定。
-  if (locale === 'en-US') return [];
+  if (locale === 'en-US') return usCategoryHints(query);
   const keys = queryVariants(query).map((v) => v.key);
   if (keys.length === 0) return [];
 

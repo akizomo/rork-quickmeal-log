@@ -19,7 +19,7 @@
 import { BucketKey } from '@/types/identity';
 import type { AppLocale } from '@/types/locale';
 
-import { buildRegistry, getIdentitiesInBucket, getBucketDef } from './index';
+import { buildRegistry, getBucketDef } from './index';
 
 // ---------------------------------------------------------------------------
 // 1. Modal-set membership table
@@ -56,7 +56,7 @@ export const MODAL_SETS: Record<BucketKey, string[]> = {
   pizza: ['pizza_simple', 'pizza_meat', 'pizza_cheese'], // bucket quickTapDisabled
   misc_dish: ['teishoku', 'bento', 'fried_main', 'sashimi', 'nabe'], // bucket quickTapDisabled
 
-  // ---- US dish (Phase 2 — identities not yet available) ----
+  // ---- US dish: MODAL_SETS_US を参照 (ここは JP 用) ----
   burger_sandwich: [],
   pizza_pasta:     [],
   chicken:         [],
@@ -67,6 +67,46 @@ export const MODAL_SETS: Record<BucketKey, string[]> = {
   asian_takeout:   [],
   breakfast:       [],
 };
+
+/**
+ * US 食事データ (foodRegion='en-US') 用の modal-set。
+ *
+ * 食材タブのバケットキーは JP と共有だが中身の Identity が違うので、別の表として持つ。
+ * 選び方は JP と同じ規則 (docs/IA-identity-spec.md §1.4) に揃えた:
+ *   - そのボタンで日常的に食べる主力 (docs/US-food-db-design.md §2-4 の接地データ) を入れる
+ *   - 添え物・トッピング扱い (bacon / sausage / canned tuna) は除外 (JP の ham / bacon_sausage /
+ *     canned_lean_fish と同じ扱い)
+ *   - PFC が他と大きく違うもの (beans: C+P で 225kcal、peanut butter / nuts: 1食量が別物) は除外
+ * NHANES の摂取シェアで1件ずつ順位付けしたものではなく、設計書の Identity 選定を踏まえた暫定の選定。
+ * 2026-11-07 追加 (ヘルプの表が US 選択時も日本の食事のままだった問題の対応)。
+ */
+export const MODAL_SETS_US: Partial<Record<BucketKey, string[]>> = {
+  // ---- ingredient ----
+  staple: ['us_bread', 'us_rice_cup', 'us_pasta_plain', 'us_potato', 'us_tortilla'],
+  lean_protein: ['us_chicken_breast', 'us_turkey_breast', 'us_white_fish', 'us_shrimp'],
+  egg: ['us_egg'],
+  fatty_protein: ['us_ground_beef', 'us_steak', 'us_pork_chop', 'us_salmon'],
+  dairy_soy: ['us_milk', 'us_cheese_slice', 'us_greek_yogurt', 'us_tofu_us'],
+  veggies: ['us_salad_greens', 'us_broccoli', 'us_mixed_veg', 'us_corn'],
+  fruit: ['us_banana', 'us_apple', 'us_berries', 'us_orange'],
+  added_fat: ['us_butter', 'us_olive_oil', 'us_mayo_tbsp', 'us_ranch_tbsp'],
+  snack_drink: ['us_chips', 'us_cookies', 'us_ice_cream', 'us_soda', 'us_coffee_drink'], // 表示用。bucket は quickTapDisabled
+
+  // ---- dish ----
+  burger_sandwich: ['us_cheeseburger', 'us_hamburger', 'us_chicken_sandwich', 'us_deli_sub'],
+  pizza_pasta: ['us_pizza_pepperoni', 'us_pizza_cheese', 'us_pasta_tomato', 'us_pasta_meat', 'us_mac_cheese'], // bucket quickTapDisabled
+  chicken: ['us_fried_chicken', 'us_tenders_nuggets', 'us_wings', 'us_rotisserie_grilled'],
+  mexican: ['us_burrito', 'us_tacos', 'us_quesadilla', 'us_burrito_bowl'],
+  american_plate: ['us_steak_potato', 'us_meatloaf_mash', 'us_bbq_plate', 'us_roast_plate'], // bucket quickTapDisabled
+  soup_stew: ['us_chili', 'us_soup_light', 'us_soup_creamy'],
+  bowl_salad: ['us_entree_salad', 'us_grain_bowl', 'us_protein_salad'],
+  asian_takeout: ['us_chinese_combo', 'us_lo_mein_fried_rice', 'us_teriyaki_bowl', 'us_sushi_roll', 'us_ramen_pho'], // bucket quickTapDisabled
+  breakfast: ['us_eggs_bacon', 'us_pancakes_waffles', 'us_breakfast_sandwich', 'us_breakfast_burrito'],
+};
+
+export function getModalSet(bucketKey: BucketKey, foodRegion: AppLocale = 'ja'): string[] {
+  return (foodRegion === 'en-US' ? MODAL_SETS_US[bucketKey] : MODAL_SETS[bucketKey]) ?? [];
+}
 
 // ---------------------------------------------------------------------------
 // 2. Computed bucket-level metadata for help / infographic
@@ -178,13 +218,19 @@ export interface BucketHelpView {
  * - bucket level または default Identity level で quickTapDisabled の場合は
  *   modal range を null にして UI 側で「長押し」表記にする
  */
-export function resolveBucketHelpView(bucketKey: BucketKey, uiLanguage: AppLocale = 'ja'): BucketHelpView {
-  const bucketDef = getBucketDef(bucketKey);
-  const localizedLabel = buildRegistry('ja', uiLanguage).buckets.find((b) => b.key === bucketKey)?.label
-    ?? bucketDef?.label
-    ?? '';
-  const identities = getIdentitiesInBucket(bucketKey);
-  const modalIds = MODAL_SETS[bucketKey] ?? [];
+export function resolveBucketHelpView(
+  bucketKey: BucketKey,
+  uiLanguage: AppLocale = 'ja',
+  foodRegion: AppLocale = 'ja',
+): BucketHelpView {
+  // 表はユーザーが選んでいる食事データ (foodRegion) のボタン・中身で出す。
+  // JP 固定の getIdentitiesInBucket を使うと US 選択時も日本の食事が出てしまう。
+  const registry = buildRegistry(foodRegion, uiLanguage);
+  const localizedDef = registry.buckets.find((b) => b.key === bucketKey);
+  const bucketDef = localizedDef ?? getBucketDef(bucketKey);
+  const localizedLabel = localizedDef?.label ?? bucketDef?.label ?? '';
+  const identities = registry.byBucket[bucketKey] ?? [];
+  const modalIds = getModalSet(bucketKey, foodRegion);
 
   const isBucketDisabled = bucketDef?.quickTapDisabled === true;
   const defaultIdentity = identities[0] ?? null;

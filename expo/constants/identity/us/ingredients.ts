@@ -433,7 +433,7 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
       { key: 'tenderloin', label: 'Tenderloin', factor: { kcal: 0.7, fat: 0.45 } },
       { key: 'ribs', label: 'Ribs', factor: { kcal: 1.4, fat: 2.0 } },
     ],
-    searchTags: ['pork', 'pork chop', 'pork tenderloin', 'ribs', 'pulled pork'],
+    searchTags: ['pork', 'pork chop', 'pork tenderloin', 'ribs'],
   },
   {
     id: 'us_bacon_strip',
@@ -572,7 +572,7 @@ const BUCKET_DAIRY_SOY: Identity[] = [
     attributes: [
       { key: 'nonfat', label: 'Nonfat', isDefault: true },
       { key: '2pct', label: '2%', factor: { kcal: 1.3, fat: 6.0 } },
-      { key: 'whole', label: 'Whole Milk', factor: { kcal: 1.6, fat: 12.0 } },
+      { key: 'whole', label: 'Whole', factor: { kcal: 1.6, fat: 12.0 } },
     ],
     searchTags: ['greek yogurt', 'yogurt', 'nonfat greek yogurt', 'protein yogurt'],
   },

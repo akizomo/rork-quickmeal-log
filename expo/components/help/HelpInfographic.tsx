@@ -2,7 +2,7 @@
  * HelpInfographic — bucket一覧の精度infographic (help / tour stop で再利用可能)
  *
  * Spec: docs/help-content.md §2 / §3 (食材・料理タブ)
- * Data: constants/identity/modal-sets.ts (`MODAL_SETS` + `resolveBucketHelpView`)
+ * Data: constants/identity/modal-sets.ts (`getModalSet` + `resolveBucketHelpView`)
  *
  * 表示要素 (各 row):
  *   - emoji + ボタン表示ラベル (bucket label = 実画面ボタンと完全一致)
@@ -29,6 +29,7 @@ import {
 import type { BucketKey } from '@/types/identity';
 
 interface HelpInfographicProps {
+  /** 選んでいる食事データ (foodRegion) のバケットを渡す。help.tsx 参照 */
   bucketKeys: BucketKey[];
   /** kcal scale 上限。食材タブ=300、料理タブ=1000 想定 */
   scaleMaxKcal: number;
@@ -37,8 +38,8 @@ interface HelpInfographicProps {
 export function HelpInfographic({ bucketKeys, scaleMaxKcal }: HelpInfographicProps) {
   const t = useTheme();
   const tr = useT();
-  const { uiLanguage } = useLocale();
-  const views = bucketKeys.map((k) => resolveBucketHelpView(k, uiLanguage));
+  const { uiLanguage, foodRegion } = useLocale();
+  const views = bucketKeys.map((k) => resolveBucketHelpView(k, uiLanguage, foodRegion));
 
   return (
     <View style={[styles.container, { backgroundColor: t.colors.surface.raised }]}>

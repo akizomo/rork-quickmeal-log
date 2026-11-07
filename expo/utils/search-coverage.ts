@@ -11,14 +11,15 @@
  * 機械で測り、weak / gap だけを人が仕分ける。
  */
 import { getCategoryHints, getVocabularyMatches, searchEntriesFuzzy } from './identity-search';
+import type { AppLocale } from '@/types/locale';
 import { findNegligible } from './negligible-foods';
 
 export type CoverageStatus = 'named' | 'inferred' | 'negligible' | 'weak' | 'gap';
 
-export function classifyCoverage(q: string): { status: CoverageStatus; detail: string } {
-  const negligible = findNegligible(q, 'ja');
+export function classifyCoverage(q: string, locale: AppLocale = 'ja'): { status: CoverageStatus; detail: string } {
+  const negligible = findNegligible(q, locale);
   if (negligible) return { status: 'negligible', detail: negligible };
-  const { confident, maybe } = searchEntriesFuzzy(q, { locale: 'ja' });
+  const { confident, maybe } = searchEntriesFuzzy(q, { locale });
   const fmt = (r: (typeof confident)[number]) =>
     r.entry.preset
       ? `★${r.entry.preset.label}`
@@ -26,12 +27,12 @@ export function classifyCoverage(q: string): { status: CoverageStatus; detail: s
   const sure = confident.filter((r) => r.method !== 'contains').slice(0, 3);
   if (sure.length > 0) return { status: 'named', detail: sure.map(fmt).join(', ') };
   if (confident.length > 0) return { status: 'inferred', detail: confident.slice(0, 3).map(fmt).join(', ') };
-  const vocab = getVocabularyMatches(q, 'ja');
+  const vocab = getVocabularyMatches(q, locale);
   if (maybe.length > 0 || vocab.length > 0) {
     // i18n-ignore: 開発者向けの監査レポート文言 (UI には出さない)
     return { status: 'weak', detail: `L2=${maybe.slice(0, 3).map(fmt).join(',') || '∅'} 語彙=${vocab.map((v) => v.identity ?? `b:${v.bucket}`).join(',') || '∅'}` };
   }
-  const hints = getCategoryHints(q, 'ja');
+  const hints = getCategoryHints(q, locale);
   // i18n-ignore: 開発者向けの監査レポート文言 (UI には出さない)
   return { status: 'gap', detail: `ヒント=${hints.join(',') || '∅'}` };
 }

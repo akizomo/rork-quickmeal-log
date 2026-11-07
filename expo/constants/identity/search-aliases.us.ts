@@ -1,0 +1,183 @@
+/**
+ * search-aliases.us.ts — US 版の検索の別名 (語彙) の表。日本語版は search-aliases.ts。
+ *
+ * IA spec §1.5 の判定 1「検索で着地しないだけで、既存 Identity で記録自体はできるか」の受け皿。
+ * Identity / 種類ごとの searchTags に散らさず、**どの語がどの食品に寄せられているか**を表1枚で
+ * レビューできるようにする (誤った寄せ先を見つけるため)。
+ *
+ * キー: 'us_identity' / 'us_identity/attributeKey' / 'us_identity[styleKey]'
+ * 値:   その食品として記録したい語 (大文字小文字・複数形・つなぎ語は検索側で畳み込まれる)。
+ *
+ * 寄せ先は「Roughly is enough」(docs/VOICE.md) の範囲で近いもの。**マクロが2倍以上ちがうなら
+ * 寄せずに**、種類の新設 (§1.5 判定 2) か凍結リスト (search-coverage.us.known-gaps) にする。
+ * 寄せ先の1位着地は search-coverage.us.test.ts が保証する。
+ *
+ * チェーンの商品名は、同じ食品を指す Identity の種類に寄せる (Big Mac → ダブルチーズバーガー)。
+ * 公式値との照合 (③) の前なので、kcal の差は「近い」ことしか保証していない。
+ */
+export const US_SEARCH_ALIASES: Record<string, string[]> = {
+  // ---- 穀類・いも・豆 ----
+  'us_beans_legumes/chickpeas': ['garbanzo beans', 'garbanzo', 'chick peas'],
+  'us_beans_legumes': ['kidney beans', 'navy beans', 'baked beans', 'refried beans', 'white beans', 'edamame'],
+  'us_potato': ['tater tots', 'hash browns', 'home fries', 'sweet potato', 'yam'],
+  'us_potato/fries': ['waffle fries', 'curly fries', 'shoestring fries', 'chips and fries'],
+  'us_oatmeal': ['oats', 'porridge', 'rolled oats', 'steel cut oats', 'grits'],
+  'us_cereal': ['corn flakes', 'cornflakes', 'cheerios', 'frosted flakes', 'froot loops', 'muesli', 'rice krispies'],
+  'us_bread': ['english muffin', 'pita', 'pita bread', 'naan', 'dinner roll', 'roll', 'bun', 'cornbread', 'garlic bread', 'texas toast'],
+  'us_pasta_plain': ['penne', 'egg noodles', 'noodles', 'angel hair', 'rotini', 'ziti', 'orzo'],
+  'us_rice_cup': ['jasmine rice', 'basmati rice', 'wild rice', 'rice pilaf', 'sticky rice', 'couscous', 'quinoa'],
+  // ---- 肉・魚・卵 ----
+  'us_chicken_breast': ['chicken thigh', 'chicken legs', 'chicken drumstick', 'grilled chicken breast'],
+  'us_turkey_breast': ['ground turkey'],
+  'us_ground_beef': ['hamburger patty', 'beef patty', 'burger patty', 'ground meat', 'taco meat'],
+  'us_steak': ['flank steak', 'skirt steak', 'new york strip', 'strip steak', 'tbone', 't-bone', 'roast beef', 'prime rib', 'carne asada'],
+  'us_pork_chop': ['pork loin', 'pork roast', 'pork shoulder', 'lamb chop', 'lamb'],
+  'us_pork_chop/ribs': ['spare ribs', 'pork ribs'],
+  'us_bacon_strip': ['bacon strips', 'bacon slices'],
+  'us_sausage': ['bratwurst', 'breakfast sausage', 'sausage links', 'kielbasa', 'chorizo', 'salami'],
+  'us_salmon': ['lox', 'salmon fillet'],
+  'us_white_fish': ['catfish', 'mahi mahi', 'haddock', 'sea bass', 'fish fillet', 'fish sticks', 'flounder', 'trout', 'swordfish'],
+  'us_shrimp': ['prawns', 'crab', 'lobster', 'scallops', 'crawfish'],
+  'us_egg': ['omelette', 'omelet', 'egg omelet', 'over easy eggs', 'sunny side up', 'deviled eggs', 'egg'],
+  'us_egg/fried': ['over easy eggs', 'over easy', 'sunny side up', 'over medium eggs'],
+  'us_egg/scrambled': ['omelette', 'omelet', 'egg scramble'],
+  // ---- 乳 ----
+  'us_cheese_slice': ['cream cheese', 'provolone', 'pepper jack', 'gouda', 'brie', 'feta', 'goat cheese', 'parmesan', 'string cheese', 'shredded cheese', 'cheese stick', 'colby', 'monterey jack', 'ricotta'],
+  'us_greek_yogurt': ['yogurt', 'vanilla yogurt', 'plain yogurt', 'skyr', 'kefir'],
+  'us_milk': ['chocolate milk', 'buttermilk', 'lactose free milk'],
+  'us_milk/skim': ['nonfat milk', 'fat free milk', 'skim', '1% milk'],
+  'us_milk/2pct': ['reduced fat milk', '2 percent milk'],
+  'us_plant_milk/soy': ['soymilk'],
+  // ---- 野菜・果物 ----
+  'us_salad_greens': ['lettuce', 'iceberg lettuce', 'arugula', 'kale', 'cabbage', 'bok choy', 'collard greens', 'swiss chard', 'coleslaw'],
+  'us_salad_greens/spinach': ['baby spinach'],
+  'us_mixed_veg': ['carrots', 'baby carrots', 'celery', 'onion', 'onions', 'tomato', 'tomatoes', 'cucumber', 'bell pepper', 'peppers', 'cauliflower', 'green beans', 'asparagus', 'mushrooms', 'zucchini', 'squash', 'eggplant', 'brussels sprouts', 'peas', 'beets', 'artichoke', 'vegetables', 'veggies', 'sauteed vegetables', 'steamed vegetables'],
+  'us_mixed_veg/frozen': ['frozen veggies'],
+  'us_apple': ['pear', 'peach', 'nectarine'],
+  'us_orange': ['mandarin', 'clementine', 'tangerine', 'grapefruit', 'satsuma'],
+  'us_grapes': ['cherries', 'cherry'],
+  'us_berries': ['raspberries', 'blackberries', 'cranberries', 'mixed berries'],
+  // ---- 油脂・ナッツ ----
+  'us_olive_oil': ['extra virgin olive oil', 'vegetable oil', 'canola oil', 'coconut oil', 'cooking oil', 'avocado oil'],
+  'us_butter': ['margarine', 'ghee'],
+  'us_peanut_butter': ['almond butter', 'nut butter', 'cashew butter', 'nutella', 'sunflower butter'],
+  'us_nuts_mixed': ['pecans', 'pistachios', 'peanuts', 'trail mix', 'hazelnuts', 'macadamia nuts', 'pine nuts', 'sunflower seeds', 'pumpkin seeds', 'chia seeds'],
+  'us_mayo_tbsp': ['mayonnaise', 'aioli'],
+  'us_ranch_tbsp': ['salad dressing', 'italian dressing', 'caesar dressing', 'blue cheese dressing', 'honey mustard', 'thousand island'],
+  // ---- 間食・飲み物 ----
+  'us_chips': ['doritos', 'pringles', 'cheetos', 'fritos', 'lays', 'cheese puffs', 'pita chips', 'veggie chips', 'kettle chips', 'popcorn', 'pretzels', 'pork rinds'],
+  'us_chips/baked': ['baked chips'],
+  'us_cookies': ['brownie', 'brownies', 'biscotti', 'shortbread', 'sugar cookie', 'oatmeal cookie', 'macaroon'],
+  'us_ice_cream': ['gelato', 'frozen yogurt', 'sorbet', 'sundae', 'ice cream cone', 'ice cream sandwich', 'popsicle', 'milkshake', 'shake', 'blizzard', 'mcflurry', 'frosty', 'dairy queen blizzard', 'wendys frosty', 'banana split'],
+  'us_soda': ['coke', 'coca cola', 'cola', 'pepsi', 'sprite', '7up', 'dr pepper', 'mountain dew', 'root beer', 'ginger ale', 'fanta', 'orange soda', 'lemonade', 'pop', 'soft drink', 'cream soda', 'sparkling soda'],
+  'us_soda/diet': ['zero sugar soda', 'coke zero', 'diet coke', 'diet pepsi', 'sugar free soda', 'zero soda', 'diet cola', 'pepsi zero'],
+  'us_energy_drink': ['red bull', 'monster', 'monster energy', 'rockstar', 'celsius', 'bang', 'prime energy', 'gatorade', 'powerade', 'sports drink', 'vitamin water'],
+  'us_energy_drink/sugar_free': ['zero sugar energy drink'],
+  'us_coffee_drink/latte': ['cappuccino', 'mocha', 'macchiato', 'caramel macchiato', 'flat white', 'pumpkin spice latte', 'psl', 'iced latte', 'chai latte', 'matcha latte', 'starbucks latte', 'hot chocolate'],
+  'us_coffee_drink/frappuccino': ['mocha frappuccino', 'caramel frappuccino', 'starbucks frappuccino', 'blended coffee', 'frappe'],
+  'us_coffee_drink/iced_coffee': ['cold brew', 'iced americano', 'nitro cold brew', 'dunkin iced coffee'],
+  'us_smoothie': ['fruit smoothie', 'acai bowl', 'smoothie bowl'],
+  'us_smoothie/fruit_blend': ['fruit smoothie'],
+  'us_smoothie/protein': ['protein shake', 'protein drink'],
+  'us_sweet_tea/half_half': ['arnold palmer'],
+  'us_sweet_tea/unsweet': ['unsweetened tea', 'unsweetened iced tea'],
+  'us_protein_bar': ['granola bar', 'clif bar', 'kind bar', 'cereal bar', 'energy bar', 'rxbar', 'candy bar', 'snickers', 'twix', 'kit kat', 'reeses', 'm&ms', 'chocolate bar'],
+  'us_crackers_snack': ['saltines', 'saltine crackers', 'goldfish', 'goldfish crackers', 'cheez its', 'triscuits', 'graham crackers', 'rice cakes', 'rice cake', 'pretzel crisps'],
+  'us_beer': ['lager', 'pilsner', 'ale', 'pale ale', 'stout', 'budweiser', 'corona', 'hard cider', 'cider'],
+  'us_wine/red': ['merlot', 'pinot noir', 'cabernet', 'cabernet sauvignon', 'malbec', 'shiraz', 'syrah', 'zinfandel', 'red wine'],
+  'us_wine/white': ['chardonnay', 'sauvignon blanc', 'pinot grigio', 'prosecco', 'champagne', 'sparkling wine', 'riesling', 'white wine'],
+  'us_wine/sweet': ['moscato', 'dessert wine', 'port'],
+  'us_cocktail': ['mojito', 'old fashioned', 'cosmopolitan', 'moscow mule', 'pina colada', 'long island iced tea', 'bloody mary', 'mimosa', 'sangria', 'whiskey', 'vodka', 'bourbon', 'tequila', 'rum', 'gin', 'vodka soda', 'rum and coke'],
+  'us_cocktail/whiskey_soda': ['jack and coke', 'whiskey and coke', 'whiskey coke'],
+  'us_cocktail/shot': ['tequila shot', 'vodka shot', 'whiskey shot'],
+  'us_hard_seltzer': ['white claw', 'truly', 'spiked seltzer', 'high noon', 'spiked'],
+  // ---- 一皿: サンドイッチ・バーガー ----
+  'us_cheeseburger': ['whopper', 'quarter pounder', 'big mac', 'mcdouble', 'in n out burger', 'five guys burger', 'shake shack burger', 'smashburger', 'burger', 'veggie burger', 'turkey burger'],
+  'us_cheeseburger/double': ['big mac', 'double quarter pounder', 'double double', 'double burger'],
+  'us_cheeseburger/bacon': ['bacon burger', 'baconator'],
+  'us_hamburger': ['plain burger', 'jr burger'],
+  'us_chicken_sandwich': ['mcchicken', 'chick fil a sandwich', 'popeyes chicken sandwich', 'chicken burger', 'fried chicken sandwich'],
+  'us_chicken_sandwich/crispy': ['chick fil a sandwich', 'chick-fil-a sandwich', 'crispy chicken burger'],
+  'us_deli_sub': ['footlong', 'subway sandwich', 'subway', 'jimmy johns', 'jersey mikes sub', 'sub', 'submarine', 'grinder', 'po boy', 'club sandwich', 'italian beef', 'meatball sub', 'meatball sandwich', 'cold cut sandwich', 'sandwich', 'sandwiches'],
+  'us_deli_sub/turkey': ['turkey sandwich', 'turkey club', 'turkey sub', 'turkey and cheese', 'subway turkey sub'],
+  'us_deli_sub/ham': ['ham sandwich', 'ham and cheese', 'ham sub'],
+  'us_grilled_cheese': ['grilled cheese sandwich', 'cheese toastie', 'patty melt', 'tuna melt'],
+  'us_wrap': ['chicken wrap', 'chicken caesar wrap', 'burrito wrap', 'gyro', 'shawarma', 'falafel wrap', 'pita sandwich'],
+  'us_hot_dog': ['brat', 'frankfurter', 'franks', 'coney dog', 'chicago dog'],
+  'us_pbj': ['pb and j', 'pb&j', 'peanut butter and jelly sandwich', 'peanut butter jelly sandwich', 'peanut butter sandwich'],
+  // ---- 一皿: ピザ・パスタ ----
+  'us_pizza_pepperoni': ['pizza', 'pizza slice', 'dominos pizza', 'papa johns pizza', 'pizza hut pizza', 'pan pizza', 'deep dish pizza', 'thin crust pizza', 'sausage pizza', 'hawaiian pizza', 'bbq chicken pizza'],
+  'us_pizza_pepperoni/supreme': ['meat lovers pizza', 'meat lovers', 'combo pizza', 'sausage pizza'],
+  'us_pizza_cheese': ['plain pizza', 'margherita pizza', 'margherita', 'white pizza'],
+  'us_pasta_tomato': ['marinara pasta', 'spaghetti marinara', 'pasta pomodoro', 'penne arrabbiata', 'pasta with tomato sauce', 'spaghetti with marinara'],
+  'us_pasta_meat': ['spaghetti bolognese', 'bolognese', 'spaghetti and meat sauce', 'spaghetti with meatballs', 'meat sauce pasta'],
+  'us_pasta_alfredo': ['fettuccine alfredo', 'chicken alfredo', 'carbonara', 'creamy pasta', 'cream sauce pasta', 'penne alfredo'],
+  'us_mac_cheese': ['mac n cheese', 'macaroni and cheese', 'mac & cheese', 'kraft mac and cheese', 'macaroni cheese'],
+  'us_lasagna': ['baked ziti', 'stuffed shells', 'ravioli', 'manicotti', 'cannelloni', 'eggplant parmesan', 'chicken parmesan', 'calzone', 'stromboli'],
+  // ---- 一皿: 鶏・メキシカン ----
+  'us_fried_chicken': ['kfc', 'kfc chicken', 'popeyes chicken', 'fried chicken legs', 'fried chicken thigh', 'fried chicken breast'],
+  'us_tenders_nuggets': ['mcnuggets', 'chicken strips', 'chicken fingers', 'popcorn chicken', 'chick fil a nuggets', 'chicken bites', 'chicken tenders', 'cane\'s', 'raising canes'],
+  'us_wings/buffalo': ['hot wings', 'buffalo wings', 'wingstop', 'boneless wings'],
+  'us_rotisserie_grilled': ['rotisserie chicken', 'bbq chicken', 'baked chicken', 'roast chicken'],
+  'us_burrito': ['chipotle burrito', 'taco bell burrito', 'bean burrito', 'bean and cheese burrito', 'burritos', 'chimichanga'],
+  'us_burrito/beef': ['steak burrito', 'carne asada burrito'],
+  'us_burrito/carnitas': ['pork carnitas burrito', 'pork burrito'],
+  'us_burrito_bowl': ['chipotle bowl', 'chipotle chicken bowl', 'chipotle burrito bowl', 'qdoba bowl', 'rice bowl'],
+  'us_tacos': ['taco', 'soft tacos', 'fish tacos', 'breakfast tacos', 'taco bell taco', 'doritos locos taco', 'tostada', 'taquitos', 'tamales'],
+  'us_nachos': ['loaded nachos', 'chips and cheese', 'chips and salsa', 'chips and guacamole', 'chips and queso'],
+  'us_quesadilla': ['chicken quesadilla', 'cheese quesadilla', 'crunchwrap supreme', 'crunchwrap'],
+  // ---- 一皿: 皿・汁・サラダ ----
+  'us_steak_potato': ['steak dinner', 'steak and potatoes', 'steak and fries', 'steakhouse dinner', 'ribeye dinner', 'texas roadhouse steak', 'outback steak'],
+  'us_meatloaf_mash': ['meat loaf', 'salisbury steak', 'chicken fried steak', 'pork chops and applesauce'],
+  'us_bbq_plate/ribs': ['bbq ribs', 'baby back ribs', 'ribs plate', 'chilis baby back ribs'],
+  'us_roast_plate/pot_roast': ['roast beef dinner', 'beef roast dinner'],
+  'us_roast_plate/turkey': ['turkey dinner', 'thanksgiving dinner', 'roast turkey dinner'],
+  'us_pot_pie': ['chicken pot pie', 'shepherds pie', 'pot pie', 'cottage pie', 'pie'],
+  'us_casserole': ['green bean casserole', 'tuna casserole', 'tater tot casserole', 'hotdish', 'stuffed peppers'],
+  'us_seafood_plate/fried': ['fish and chips', 'fried fish', 'fried fish plate', 'fish fry', 'crab cakes', 'calamari', 'fried calamari', 'fried catfish'],
+  'us_chili/con_carne': ['beef chili', 'chili con carne', 'chili'],
+  'us_soup_light/chicken_noodle': ['chicken soup', 'chicken and dumplings'],
+  'us_soup_light/vegetable': ['minestrone', 'vegetable soup', 'veggie soup', 'lentil soup', 'miso soup', 'split pea soup'],
+  'us_soup_creamy/clam_chowder': ['new england clam chowder', 'seafood chowder', 'corn chowder', 'potato soup', 'panera soup'],
+  'us_soup_creamy/broccoli_cheddar': ['panera broccoli cheddar soup'],
+  'us_stew_gumbo/beef_stew': ['stew', 'irish stew', 'pot au feu'],
+  'us_entree_salad/caesar': ['chicken caesar salad', 'caesar'],
+  'us_entree_salad': ['house salad', 'garden salad', 'chef salad', 'taco salad', 'spinach salad', 'wedge salad', 'side salad', 'caesar side salad', 'sweetgreen salad', 'green salad', 'cobb', 'salad'],
+  'us_protein_salad/chicken': ['chicken salad sandwich'],
+  'us_protein_salad/tuna': ['tuna salad plate', 'tuna salad sandwich'],
+  'us_protein_salad/egg': ['egg salad sandwich'],
+  'us_grain_bowl': ['quinoa bowl', 'buddha bowl', 'power bowl', 'harvest bowl', 'cava bowl', 'protein bowl', 'grain salad', 'veggie bowl'],
+  'us_poke_bowl': ['ahi poke bowl', 'tuna poke', 'sushi bowl', 'salmon poke bowl'],
+  // ---- 一皿: アジア・朝食 ----
+  'us_chinese_combo': ['panda express', 'sesame chicken', 'sweet and sour chicken', 'sweet and sour pork', 'mongolian beef', 'beef and broccoli', 'orange beef', 'broccoli beef', 'chinese food', 'szechuan chicken', 'honey walnut shrimp', 'egg foo young'],
+  'us_chinese_combo/orange_chicken': ['panda express orange chicken', 'panda orange chicken'],
+  'us_chinese_combo/general_tso': ['general tsos chicken', 'general tao chicken', 'general tsos'],
+  'us_chinese_combo/kung_pao': ['kung pao shrimp', 'kung pao'],
+  'us_lo_mein_fried_rice/lo_mein': ['chow mein', 'vegetable lo mein', 'chicken lo mein', 'chinese noodles', 'singapore noodles'],
+  'us_lo_mein_fried_rice/fried_rice': ['shrimp fried rice', 'chicken fried rice', 'egg fried rice', 'panda express fried rice'],
+  'us_teriyaki_bowl/beef': ['teriyaki beef'],
+  'us_teriyaki_bowl/chicken': ['chicken teriyaki', 'teriyaki'],
+  'us_pad_thai': ['pad see ew', 'drunken noodles', 'thai noodles'],
+  'us_sushi_roll': ['sushi', 'maki', 'sushi rolls', 'nigiri', 'sashimi', 'sushi platter', 'tuna roll', 'salmon roll', 'philadelphia roll', 'rainbow roll', 'hand roll', 'veggie roll'],
+  'us_ramen_pho/ramen': ['ramen noodle soup', 'tonkotsu ramen', 'miso ramen', 'instant ramen'],
+  'us_ramen_pho/pho': ['beef pho', 'chicken pho', 'vietnamese noodle soup', 'udon'],
+  'us_curry_asian/thai': ['green curry', 'red curry', 'yellow curry', 'panang curry', 'massaman curry'],
+  'us_curry_asian/indian': ['chicken tikka masala', 'tikka masala', 'butter chicken', 'chicken curry', 'curry', 'korma', 'saag paneer', 'chana masala', 'biryani', 'vindaloo'],
+  'us_pancakes_waffles/pancakes': ['buttermilk pancakes', 'blueberry pancakes', 'hotcakes', 'crepes', 'ihop pancakes', 'denny\'s grand slam'],
+  'us_pancakes_waffles/waffles': ['belgian waffle', 'belgian waffles', 'waffle house waffle'],
+  'us_eggs_bacon/bacon': ['bacon and eggs', 'bacon egg', 'ham and eggs', 'breakfast plate', 'breakfast platter', 'scrambled eggs and toast', 'eggs and toast'],
+  'us_eggs_bacon/sausage': ['sausage and eggs', 'eggs and sausage', 'sausage egg plate', 'grits and eggs'],
+  'us_breakfast_sandwich': ['egg sandwich', 'egg and cheese sandwich', 'bacon egg and cheese', 'sausage egg and cheese', 'egg and cheese', 'sausage mcmuffin', 'mcgriddle', 'croissant sandwich', 'breakfast croissant'],
+  'us_breakfast_sandwich/english_muffin': ['egg mcmuffin', 'english muffin sandwich', 'egg and cheese english muffin'],
+  'us_breakfast_sandwich/biscuit': ['sausage biscuit', 'egg and cheese biscuit', 'bojangles chicken biscuit', 'chicken biscuit', 'bacon egg and cheese biscuit'],
+  'us_breakfast_sandwich/bagel': ['bagel sandwich', 'bagel with egg', 'bagel and cream cheese', 'bagel with cream cheese', 'lox bagel'],
+  'us_breakfast_burrito': ['breakfast wrap'],
+  'us_avocado_toast': ['avocado on toast', 'smashed avocado toast', 'avocado', 'guacamole'],
+  'us_biscuits_gravy': ['gravy and biscuits', 'biscuits and sausage gravy', 'sausage gravy', 'biscuits'],
+  'us_pancakes_waffles': ['cinnamon roll', 'cinnamon rolls', 'danish', 'muffin', 'blueberry muffin', 'scone', 'croissant', 'donut', 'doughnut', 'donuts', 'krispy kreme donut', 'dunkin donut', 'pop tarts', 'pastry'],
+};
+
+/** 'us_identity' / 'us_identity/attribute' / 'us_identity[style]' のキーに対する別名。 */
+export function usAliasesFor(key: string): string[] {
+  return US_SEARCH_ALIASES[key] ?? [];
+}

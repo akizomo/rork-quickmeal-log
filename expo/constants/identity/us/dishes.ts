@@ -475,7 +475,7 @@ const BUCKET_AMERICAN_PLATE: Identity[] = [
       default: 100,
       chips: [{ label: '1 plate', value: 100 }],
     },
-    searchTags: ['meatloaf', 'mashed potatoes', 'comfort food', 'american dinner'],
+    searchTags: ['meatloaf', 'comfort food', 'american dinner'],
   },
   {
     id: 'us_bbq_plate',

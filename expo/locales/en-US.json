@@ -630,12 +630,17 @@
       "ingredients": {
         "body": "Each button groups foods commonly eaten in Japan. The calorie value logged on tap stays close to a typical portion.",
         "footnote1": "Top foods are selected based on consumption share within each category in Japan's National Health and Nutrition Survey (NHNS).",
-        "footnote2": "Buttons labelled \"long-press\" require a selection each time because the calorie range varies significantly by type."
+        "footnote2": "Buttons labelled \"long-press\" require a selection each time because the calorie range varies significantly by type.",
+      "bodyUS": "Each button groups foods commonly eaten in the US. The calorie value logged on tap stays close to a typical portion.",
+      "footnote1US": "Top foods are based on US dietary survey data (NHANES) and popular chain-restaurant menus."
       },
       "dishes": {
         "body": "Dish buttons log a representative value for a complete meal. Pick the dish closest to what you ate.",
         "footnote1": "Many dish buttons (set meals, sushi, pizza, ramen, etc.) have a wide calorie range, so long-press is the default for those.",
-        "footnote2": "Soups such as miso soup and tonjiru are under \"Set meal / Single dish / Soup\"."
+        "footnote2": "Soups such as miso soup and tonjiru are under \"Set meal / Single dish / Soup\".",
+      "bodyUS": "Dish buttons log a representative value for a complete meal. Pick the dish closest to what you ate.",
+      "footnote1US": "Some dish buttons (Pizza & Pasta, American Plates, Asian Takeout) have a wide calorie range, so long-press is the default for those.",
+      "footnote2US": "Chili and soups are under \"Soups & Stews\"."
       },
       "future": {
         "body": "The more you log, the easier your usual foods are to find.",
@@ -654,7 +659,7 @@
         "q3": "Can't I log with a photo?",
         "a3": "Photo → recognition → confirmation adds friction that makes it hard to sustain. A few taps is all it takes, so you can log every day without effort.",
         "q4": "What if I want more precise tracking?",
-        "a4": "This app is designed around \"roughly, consistently\". For gram-level precision, pairing with a food-composition app (e.g. Asken) works well."
+        "a4": "This app is designed around \"roughly, consistently\". For gram-level precision, pairing it with a calorie-counting app that weighs each food works well."
       }
     },
     "infographic": {
@@ -705,9 +710,11 @@
       "review": "Rate on the store"
     },
     "region": {
-      "title": "Food Region",
-      "ja": "Japan (Japanese food)",
-      "enUS": "US (Western food)"
+      "title": "Food List",
+      "ja": "Japanese",
+      "jaSub": "Japanese dishes, Japanese portions",
+      "enUS": "American",
+      "enUSSub": "US dishes & chains, US portions"
     },
     "unitSystem": {
       "title": "Unit System",

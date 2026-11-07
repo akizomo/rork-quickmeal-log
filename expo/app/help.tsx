@@ -25,6 +25,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { HelpInfographic } from '@/components/help/HelpInfographic';
 import { FrequentTabIllustration, GestureDemoIllustration } from '@/components/onboarding-illustrations';
 import { Body, Heading, Icon, useTheme } from '@/design-system';
+import { useLocale } from '@/hooks/useLocale';
 import { useT } from '@/hooks/useT';
 import { fontSize as fs } from '@/design-system/tokens/primitives/typography';
 import { duration, easing } from '@/design-system/tokens/primitives/motion';
@@ -46,7 +47,8 @@ const INGREDIENT_BUCKETS: BucketKey[] = [
   'snack_drink',
 ];
 
-const DISH_BUCKETS: BucketKey[] = [
+// 食材タブのキーは JP/US 共有。料理タブは食事データごとに別のバケット。
+const DISH_BUCKETS_JA: BucketKey[] = [
   'rice_dish',
   'curry',
   'chinese_noodles',
@@ -56,6 +58,18 @@ const DISH_BUCKETS: BucketKey[] = [
   'sandwich',
   'pizza',
   'misc_dish',
+];
+
+const DISH_BUCKETS_US: BucketKey[] = [
+  'burger_sandwich',
+  'pizza_pasta',
+  'chicken',
+  'mexican',
+  'american_plate',
+  'soup_stew',
+  'bowl_salad',
+  'asian_takeout',
+  'breakfast',
 ];
 
 // 汎用の M3 Standard は motion.ts の easing.standard を使う (Easing.bezier(...easing.standard))。
@@ -248,6 +262,8 @@ function StepIndicator({ total, current }: { total: number; current: number }) {
 }
 
 function StepContent({ stepKey }: { stepKey: string }) {
+  const { foodRegion } = useLocale();
+  const isUS = foodRegion === 'en-US';
   const t = useTheme();
   const tr = useT();
 
@@ -270,12 +286,12 @@ function StepContent({ stepKey }: { stepKey: string }) {
     case 'ingredients':
       return (
         <View style={styles.stepContent}>
-          <Body>{tr('help.content.ingredients.body')}</Body>
+          <Body>{tr(isUS ? 'help.content.ingredients.bodyUS' : 'help.content.ingredients.body')}</Body>
           <View style={styles.infographicWrap}>
             <HelpInfographic bucketKeys={INGREDIENT_BUCKETS} scaleMaxKcal={300} />
           </View>
           <View style={styles.footnotes}>
-            <Footnote>{tr('help.content.ingredients.footnote1')}</Footnote>
+            <Footnote>{tr(isUS ? 'help.content.ingredients.footnote1US' : 'help.content.ingredients.footnote1')}</Footnote>
             <Footnote>{tr('help.content.ingredients.footnote2')}</Footnote>
           </View>
         </View>
@@ -284,13 +300,13 @@ function StepContent({ stepKey }: { stepKey: string }) {
     case 'dishes':
       return (
         <View style={styles.stepContent}>
-          <Body>{tr('help.content.dishes.body')}</Body>
+          <Body>{tr(isUS ? 'help.content.dishes.bodyUS' : 'help.content.dishes.body')}</Body>
           <View style={styles.infographicWrap}>
-            <HelpInfographic bucketKeys={DISH_BUCKETS} scaleMaxKcal={1000} />
+            <HelpInfographic bucketKeys={isUS ? DISH_BUCKETS_US : DISH_BUCKETS_JA} scaleMaxKcal={1000} />
           </View>
           <View style={styles.footnotes}>
-            <Footnote>{tr('help.content.dishes.footnote1')}</Footnote>
-            <Footnote>{tr('help.content.dishes.footnote2')}</Footnote>
+            <Footnote>{tr(isUS ? 'help.content.dishes.footnote1US' : 'help.content.dishes.footnote1')}</Footnote>
+            <Footnote>{tr(isUS ? 'help.content.dishes.footnote2US' : 'help.content.dishes.footnote2')}</Footnote>
           </View>
         </View>
       );

@@ -19,9 +19,11 @@ const LANGUAGE_OPTIONS: { key: 'ja' | 'en-US'; label: string }[] = [
   { key: 'ja', label: '日本語' }, // i18n-ignore: language option always shown in its own language
   { key: 'en-US', label: 'English (US)' },
 ];
-const REGION_OPTIONS: { key: 'ja' | 'en-US'; labelKey: string }[] = [
-  { key: 'ja', labelKey: 'settings.region.ja' },
-  { key: 'en-US', labelKey: 'settings.region.enUS' },
+// 国(住んでいる場所)ではなく「どの食事データを使うか」を選ぶ項目。
+// 選択肢は料理の種類で名付け、中身(料理・一人前の量)を補足に書く。
+const REGION_OPTIONS: { key: 'ja' | 'en-US'; labelKey: string; subKey: string }[] = [
+  { key: 'ja', labelKey: 'settings.region.ja', subKey: 'settings.region.jaSub' },
+  { key: 'en-US', labelKey: 'settings.region.enUS', subKey: 'settings.region.enUSSub' },
 ];
 
 export default function SettingsRoute() {
@@ -139,7 +141,7 @@ export default function SettingsRoute() {
               </SettingsListCard>
             </View>
 
-            {/* §食事DB地域 / Food Region */}
+            {/* §食事データ / Food List */}
             <View style={styles.section}>
               <SettingsSectionLabel>{t('settings.region.title')}</SettingsSectionLabel>
               <SettingsListCard>
@@ -150,6 +152,7 @@ export default function SettingsRoute() {
                       {i > 0 ? <SettingsDivider /> : null}
                       <SettingsLinkRow
                         label={t(option.labelKey)}
+                        sub={t(option.subKey)}
                         showChevron={false}
                         onPress={() => setFoodRegion(option.key)}
                         trailing={

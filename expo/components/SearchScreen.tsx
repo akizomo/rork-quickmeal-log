@@ -455,7 +455,9 @@ export function SearchScreen() {
                   const identity = match.identity ? getIdentity(match.identity) : undefined;
                   const bucket = getBucketDef(match.bucket);
                   if (!bucket) return null;
-                  const label = identity ? identity.label : `${bucket.emoji} ${bucket.label}`;
+                  // 食材バケット (staple / fruit …) は US でも日本語・英語のラベルを registry から引く (def.label は日本語)
+                  const bucketLabel = buildRegistry('ja', settings.uiLanguage).buckets.find((b) => b.key === match.bucket)?.label ?? bucket.label;
+                  const label = identity ? identity.label : `${bucket.emoji} ${bucketLabel}`;
                   return (
                     <Chip
                       key={`${match.bucket}-${match.identity ?? i}`}
