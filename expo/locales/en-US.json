@@ -4,6 +4,7 @@
     "about": "About",
     "myFoods": "My Foods",
     "searchMisses": "Foods not found",
+    "dataExport": "Export data",
     "goalEdit": "Edit Goals",
     "help": "How to Use Hachibu",
     "privacy": "Privacy Policy",
@@ -594,7 +595,8 @@
     },
     "outro": {
       "lead": "Roughly is\nenough",
-      "nextWeek": "Next week's recap drops on Monday."
+      "nextWeek": "Next week's recap drops on Monday.",
+      "export": "Export this week's data"
     },
     "nutritionNote": "Fun fact · {{label}}",
     "sectionLabel": "{{num}} — {{label}}",
@@ -686,6 +688,8 @@
       "aboutLabel": "About Your Data",
       "body1": "Hachibu works without an account — your data is stored only on this device. Deleting the app or switching phones will erase your meal logs, weight, and body fat records.",
       "body2": "Subscriptions are tied to your Apple ID / Google Account. You can restore a previous purchase from the Subscription screen after reinstalling.",
+      "exportLabel": "Export data",
+      "exportSub": "Share as CSV to review with an AI",
       "resetLabel": "Reset Data",
       "resetTitle": "Reset Data",
       "resetMessage": "All data stored on this device — including your profile, goals, weight, body fat, and meal logs — will be permanently deleted. Continue?",
@@ -1103,6 +1107,29 @@
     "negligibleZero": "About 0 kcal. No need to log it.",
     "negligibleSmall": "Tiny at a normal amount. Skipping it barely changes anything.",
     "negligibleInDish": "Roux is already counted in curry and stew entries."
+  },
+  "dataExport": {
+    "lead": "Share your log as CSV. Paste it into an AI like ChatGPT or Claude to review how you eat or ask for advice.",
+    "formatTitle": "What to export",
+    "formatFood": "Food log",
+    "formatFoodSub": "One row per entry",
+    "formatDaily": "Daily summary",
+    "formatDailySub": "One row per day: intake, weight, exercise, steps",
+    "periodTitle": "Period",
+    "thisWeek": "This week ({{from}} to {{to}})",
+    "period7": "7 days",
+    "period30": "30 days",
+    "period90": "90 days",
+    "periodAll": "All",
+    "rows": "{{count}} rows",
+    "empty": "No entries in this period.",
+    "privacy": "Only food names and logged numbers are shared. Your profile and settings are not included. The app you share to receives this data as is. You choose each time whether to share.",
+    "shareFile": "Share (CSV file)",
+    "destinations": "Choose where to send it: email (attached), Files, Drive, an AI app, and more.",
+    "fileDialogTitle": "Hachibu log (CSV)",
+    "fileFailedTitle": "Couldn't share the file",
+    "fileFailedMessage": "You can share it as text instead.",
+    "share": "Share as text"
   },
   "searchMisses": {
     "lead": "Words you searched for but didn't find are saved on this device. Sharing them helps decide which foods to add next.",

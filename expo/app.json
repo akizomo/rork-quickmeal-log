@@ -105,7 +105,8 @@
           "backgroundColor": "#355E52"
         }
       ],
-      "expo-status-bar"
+      "expo-status-bar",
+      "expo-sharing"
     ],
     "experiments": {
       "typedRoutes": true

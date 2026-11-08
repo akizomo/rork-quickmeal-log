@@ -75,6 +75,7 @@ function RootLayoutNav() {
       <Stack.Screen name="legal/terms" options={{ title: tr('nav.terms') }} />
       <Stack.Screen name="settings" options={{ title: tr('nav.settings') }} />
       <Stack.Screen name="search-misses" options={{ title: tr('nav.searchMisses') }} />
+      <Stack.Screen name="data-export" options={{ title: tr('nav.dataExport') }} />
       {/* ネイティブ formSheet (docs/SHEET_MIGRATION.md 方針 B: 中身の高さで収まる小さいシートのみ) */}
       <Stack.Screen name="record-body" options={formSheetOptions(t)} />
       <Stack.Screen name="amount-edit" options={formSheetOptions(t)} />

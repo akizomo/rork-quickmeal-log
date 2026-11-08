@@ -236,6 +236,13 @@ export default function SettingsRoute() {
                     label={t('settings.widget.addLabel')}
                     showChevron={false}
                     onPress={() => { void widgetRequestPin(); }}
+                <SettingsLinkRow
+                  label={t('settings.data.exportLabel')}
+                  sub={t('settings.data.exportSub')}
+                  onPress={() => router.push('/data-export')}
+                  testID="settings-link-data-export"
+                />
+                <SettingsDivider />
                   />
                 </SettingsListCard>
               </View>

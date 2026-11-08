@@ -462,6 +462,7 @@ function buildCards(recap: WeeklyRecap, styles: Styles, tr: Tr): Card[] {
           {tr('weeklyRecap.outro.nextWeek')}
         </Body>
         <View style={styles.spacer} />
+        <ExportButton t={t} styles={styles} tr={tr} weekKey={recap.weekKey} />
         <OutroButton t={t} styles={styles} tr={tr} />
       </>
     ),
@@ -483,6 +484,34 @@ function renderNote(t: Theme, fact: WeeklyFoodFact | null, tr: Tr): React.ReactN
         {tr('weeklyRecap.advice.sourcePrefix')}{[fact.note.source, ...(fact.note.alsoSources ?? [])].map((x) => x.label).join(' / ')}
       </Caption>
     </View>
+  );
+}
+
+/**
+ * この週の食事データを書き出す入口 (PRD §6.9)。ふり返りを読んだ直後に、記録を AI などへ渡せるようにする。
+ * 押したときだけ書き出し画面へ進み、期間はこの週 (月〜日) に固定される。
+ */
+function ExportButton({ t, styles, tr, weekKey }: { t: Theme; styles: Styles; tr: Tr; weekKey: string }) {
+  const router = useRouter();
+  const [y, m, d] = weekKey.split('-').map(Number);
+  const end = new Date(y, m - 1, d + 6);
+  const to = `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, '0')}-${String(end.getDate()).padStart(2, '0')}`;
+  return (
+    <Pressable
+      onPress={() => router.push({ pathname: '/data-export', params: { from: weekKey, to } })}
+      style={({ pressed }) => [
+        styles.outroBtn,
+        {
+          borderColor: t.tokens.colors.ivory[100],
+          backgroundColor: pressed ? `${t.tokens.colors.ivory[100]}1A` : 'transparent',
+          marginBottom: t.spacing['3'],
+        },
+      ]}
+      accessibilityRole="button"
+      testID="weekly-recap-export"
+    >
+      <Body style={{ color: t.tokens.colors.ivory[100] }}>{tr('weeklyRecap.outro.export')}</Body>
+    </Pressable>
   );
 }
 

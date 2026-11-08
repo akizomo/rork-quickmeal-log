@@ -4,6 +4,7 @@
     "about": "アプリについて",
     "myFoods": "My食品",
     "searchMisses": "見つからなかった食品",
+    "dataExport": "データを書き出す",
     "goalEdit": "目標を変更",
     "help": "Hachibu の使い方",
     "privacy": "プライバシーポリシー",
@@ -594,7 +595,8 @@
     },
     "outro": {
       "lead": "ざっくりが、\n続くコツ",
-      "nextWeek": "来週の振り返りは、次の月曜に。"
+      "nextWeek": "来週の振り返りは、次の月曜に。",
+      "export": "この週のデータを書き出す"
     },
     "nutritionNote": "豆知識 · {{label}}",
     "sectionLabel": "{{num}} — {{label}}",
@@ -686,6 +688,8 @@
       "aboutLabel": "データの保存について",
       "body1": "Hachibu はアカウント不要で使えるかわりに、記録したデータはこの端末内にのみ保存されます。アプリを削除したり、機種変更すると食事ログ・体重・体脂肪率などのデータは失われます。",
       "body2": "サブスクリプションは Apple ID / Google アカウントに紐付くため、再インストール時に「購入を復元」から再開できます。",
+      "exportLabel": "データを書き出す",
+      "exportSub": "CSV で共有。AI に渡して振り返れます",
       "resetLabel": "データをリセット",
       "resetTitle": "データをリセット",
       "resetMessage": "プロフィール・目標・体重・体脂肪・食事ログなど、この端末に保存されているすべてのデータが消去されます。よろしいですか？",
@@ -1103,6 +1107,29 @@
     "negligibleZero": "ほぼ0kcal。記録しなくて大丈夫です。",
     "negligibleSmall": "ふつうの量なら、ごくわずか。記録しなくても、ほぼ変わりません。",
     "negligibleInDish": "ルーは、カレーやシチューの数字にふくまれています。"
+  },
+  "dataExport": {
+    "lead": "記録を CSV にして共有できます。ChatGPT や Claude などの AI に貼り付けると、食べ方の振り返りや相談に使えます。",
+    "formatTitle": "書き出す内容",
+    "formatFood": "食事ログ",
+    "formatFoodSub": "1回の記録が1行",
+    "formatDaily": "日別まとめ",
+    "formatDailySub": "1日が1行。摂取・体重・運動・歩数",
+    "periodTitle": "期間",
+    "thisWeek": "この週 ({{from}} 〜 {{to}})",
+    "period7": "7日",
+    "period30": "30日",
+    "period90": "90日",
+    "periodAll": "すべて",
+    "rows": "{{count}}行",
+    "empty": "この期間の記録はありません。",
+    "privacy": "共有されるのは、記録の数値と食品名だけです。プロフィールや設定は含まれません。共有先のアプリには、このデータがそのまま渡ります。共有するかどうかは、そのつど選べます。",
+    "shareFile": "共有する (CSV ファイル)",
+    "destinations": "共有先は、メール (添付)・ファイルに保存・Drive・AI アプリなどから選べます。",
+    "fileDialogTitle": "Hachibu の記録 (CSV)",
+    "fileFailedTitle": "ファイルを共有できませんでした",
+    "fileFailedMessage": "かわりに、本文のテキストで共有できます。",
+    "share": "テキストで共有"
   },
   "searchMisses": {
     "lead": "検索で見つからなかった言葉が、この端末に貯まっています。共有すると、次の更新で足す食品の参考になります。",
