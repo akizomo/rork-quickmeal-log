@@ -16,6 +16,7 @@
  * 後追いタスク: `bun add expo-notifications` 実行 + Android 通知チャネル設定。
  */
 
+import { track } from '@/utils/analytics';
 import { Platform } from 'react-native';
 
 const TRIAL_NOTIFY_SCHEDULE_ID = 'hachibu_trial_expiry';
@@ -82,7 +83,9 @@ export async function requestTrialNotificationPermission(): Promise<boolean> {
     const existing = await N.getPermissionsAsync();
     if (existing.granted || existing.status === 'granted') return true;
     const result = await N.requestPermissionsAsync();
-    return result.granted || result.status === 'granted';
+    const granted = result.granted || result.status === 'granted';
+    track('notification_permission_result', { result: granted ? 'granted' : 'denied' });
+    return granted;
   } catch (e) {
     console.log('[trial-notify] permission request failed', e);
     return false;

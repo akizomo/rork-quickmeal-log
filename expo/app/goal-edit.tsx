@@ -13,6 +13,7 @@ import { useT } from '@/hooks/useT';
 import { useUnitSystem } from '@/hooks/useUnitSystem';
 import { formatDisplayWeight, fromDisplayWeight, toDisplayWeight, weightSuffix } from '@/utils/units';
 import { BodyType9, GoalDirection, PaceLevel } from '@/types/nutrition';
+import { track } from '@/utils/analytics';
 import {
   bmiFromWeight,
   classifyTargetBodyFat,
@@ -202,6 +203,7 @@ export default function GoalEditRoute() {
       targetWeightKg: preview.targetWeightKg,
       targetBodyFatPct: preview.targetBodyFatPct,
     });
+    track('goal_edited');
     router.back();
   }, [effectiveDirection, paceLevel, derivedTarget, preview, updateProfileValues, router]);
 

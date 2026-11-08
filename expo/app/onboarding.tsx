@@ -57,6 +57,7 @@ import {
   GoalDirection,
   PaceLevel,
 } from '@/types/nutrition';
+import { track } from '@/utils/analytics';
 import { computePlanOutcome, recommendGoal, type GoalRecommendation } from '@/utils/goals';
 import { useUnitSystem } from '@/hooks/useUnitSystem';
 import { cmToFtIn, ftInToCm, kgToLbs, lbsToKg, weightSuffix, formatDisplayWeight, type UnitSystem } from '@/utils/units';
@@ -159,6 +160,7 @@ export default function OnboardingRoute() {
   }, [setOnboardingStep]);
   useEffect(() => {
     setOnboardingStepRef.current(step);
+    track('onboarding_step_viewed', { step });
   }, [step]);
 
   const recommendation = useMemo(() => {

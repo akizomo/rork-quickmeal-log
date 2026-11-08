@@ -12,8 +12,9 @@
 import React, { useCallback, useMemo } from 'react';
 import { Alert, ScrollView, Share, Text, View } from 'react-native';
 
-import { Body, Button, Caption, Label, useTheme } from '@/design-system';
+import { Body, Button, Caption, Label, Switch, useTheme } from '@/design-system';
 import { useAppState } from '@/providers/app-state-provider';
+import { isAnalyticsAvailable } from '@/utils/analytics';
 import { rankFrequentSelections } from '@/utils/quick-log-history';
 import { effectiveHiddenCount, effectivePinCount } from '@/utils/frequent-pins';
 import { sortedSearchMisses } from '@/utils/diagnostics';
@@ -24,7 +25,7 @@ import { Section } from './_shared';
 
 export default function DevDiagnostics() {
   const t = useTheme();
-  const { settings, logs, resetDiagnostics } = useAppState();
+  const { settings, logs, resetDiagnostics, updateSettingsValues } = useAppState();
 
   const diagnostics = settings.diagnostics;
   const misses = useMemo(() => sortedSearchMisses(diagnostics), [diagnostics]);
@@ -103,6 +104,31 @@ export default function DevDiagnostics() {
       <Body size="sm" tone="secondary">
         DEV 専用 — 端末内に貯めた計測データ。ベンダー導入前の暫定手段 (ROADMAP §3.0 Layer 1)。
       </Body>
+
+      {/* ── 利用状況の送信 (Layer 2): 自分の端末を集計から外す ─────────── */}
+      <Section title="利用状況の送信 (Layer 2)" t={t}>
+        <StatRow
+          t={t}
+          label="この端末から送れる状態か"
+          value={isAnalyticsAvailable() ? 'はい' : 'いいえ'}
+          note={
+            isAnalyticsAvailable()
+              ? '設定 > 使われ方 がオンなら送る'
+              : 'キー未設定、または開発ビルド (EXPO_PUBLIC_POSTHOG_KEY / EXPO_PUBLIC_ANALYTICS_IN_DEV=1)'
+          }
+        />
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: t.spacing['3'] }}>
+          <View style={{ flex: 1, gap: t.spacing['0.5'] }}>
+            <Label>この端末を内部扱いにする</Label>
+            <Caption tone="secondary">is_internal を立てる。PostHog 側で除外して、自分の操作を集計に混ぜない</Caption>
+          </View>
+          <Switch
+            value={settings.analyticsInternal === true}
+            onValueChange={(value) => updateSettingsValues({ analyticsInternal: value })}
+            testID="dev-analytics-internal-switch"
+          />
+        </View>
+      </Section>
 
       {/* ── 未ヒットクエリ: DB拡張順の一次ソース ───────────────────────── */}
       <Section title="検索で見つからなかった語" t={t}>

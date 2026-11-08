@@ -7,7 +7,7 @@ import { SettingsDivider, SettingsLinkRow, SettingsListCard, SettingsSectionLabe
 import { LEGAL_LINKS, TRIAL_DURATION_DAYS } from '@/constants/onboarding';
 import { Body, Caption, Card, Label, useTheme } from '@/design-system';
 import { useAppState } from '@/providers/app-state-provider';
-import { getEffectiveSubscriptionStatus, trialDaysRemaining } from '@/utils/goals';
+import { getEffectiveSubscriptionStatus, trialDaysRemaining, trialEndMs } from '@/utils/goals';
 import { useT } from '@/hooks/useT';
 
 export default function SubscriptionRoute() {
@@ -16,7 +16,7 @@ export default function SubscriptionRoute() {
   const t = useT();
   const { settings, restorePurchase } = useAppState();
 
-  const trialDays = trialDaysRemaining(settings.trialStartedAtISO, TRIAL_DURATION_DAYS);
+  const trialDays = trialDaysRemaining(settings, TRIAL_DURATION_DAYS);
   const status = getEffectiveSubscriptionStatus(settings, TRIAL_DURATION_DAYS);
 
   const statusLabel =
@@ -34,13 +34,8 @@ export default function SubscriptionRoute() {
       : t('subscription.statusSub.inactive');
 
   // トライアル終了日 (表示用)
-  const trialEndDate =
-    status === 'trialing' && settings.trialStartedAtISO
-      ? new Date(
-          new Date(settings.trialStartedAtISO).getTime() +
-            TRIAL_DURATION_DAYS * 24 * 60 * 60 * 1000
-        )
-      : null;
+  const trialEndAt = status === 'trialing' ? trialEndMs(settings, TRIAL_DURATION_DAYS) : null;
+  const trialEndDate = trialEndAt !== null ? new Date(trialEndAt) : null;
   const trialEndLabel = trialEndDate
     ? t('subscription.trialEndDate', {
         date: `${trialEndDate.getMonth() + 1}/${trialEndDate.getDate()}`,

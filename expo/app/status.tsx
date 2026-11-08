@@ -33,7 +33,7 @@ export default function StatusRoute() {
   const healthSync = useHealthSyncContext();
 
   const { unitSystem } = useUnitSystem();
-  const trialDays = trialDaysRemaining(settings.trialStartedAtISO, TRIAL_DURATION_DAYS);
+  const trialDays = trialDaysRemaining(settings, TRIAL_DURATION_DAYS);
   const effectiveStatus = getEffectiveSubscriptionStatus(settings, TRIAL_DURATION_DAYS);
   const subscriptionLabel =
     effectiveStatus === 'trialing'

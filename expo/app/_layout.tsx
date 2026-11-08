@@ -7,6 +7,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import React, { useEffect } from 'react';
 import { Appearance, LogBox, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { AnalyticsBridge } from '@/components/AnalyticsBridge';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { ThemeProvider, darkTheme, formSheetOptions, lightTheme, tallSheetOptions, useTheme } from '@/design-system';
 import { useT } from '@/hooks/useT';
@@ -50,6 +51,8 @@ function RootLayoutNav() {
   const t = useTheme();
   const tr = useT();
   return (
+    <>
+    <AnalyticsBridge />
     <Stack
       screenOptions={{
         headerBackTitle: tr('nav.back'),
@@ -124,6 +127,7 @@ function RootLayoutNav() {
         }}
       />
     </Stack>
+    </>
   );
 }
 

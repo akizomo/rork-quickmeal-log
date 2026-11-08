@@ -28,6 +28,7 @@
       },
       "env": {
         "EXPO_PUBLIC_ALLOW_PAYWALL_SKIP": "true",
+        "EXPO_PUBLIC_BUILD_CHANNEL": "preview",
         "SENTRY_DISABLE_AUTO_UPLOAD": "true"
       }
     },
@@ -41,6 +42,7 @@
         }
       },
       "env": {
+        "EXPO_PUBLIC_BUILD_CHANNEL": "production",
         "SENTRY_DISABLE_AUTO_UPLOAD": "true"
       }
     }

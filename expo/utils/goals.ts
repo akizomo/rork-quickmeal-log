@@ -907,11 +907,30 @@ export function getAdjustedPfcForDate(
   };
 }
 
-export function trialDaysRemaining(startedAtISO: string | null | undefined, trialDays: number): number {
-  if (!startedAtISO) return 0;
-  const started = new Date(startedAtISO).getTime();
-  if (!Number.isFinite(started)) return 0;
-  const endMs = started + trialDays * 24 * 60 * 60 * 1000;
+type TrialSettings = Pick<AppSettings, 'trialStartedAtISO' | 'trialEndsAtISO'>;
+
+/**
+ * 無料期間の終わり (epoch ms)。分からなければ null。
+ *
+ * ストア (RevenueCat) が返した期限 `trialEndsAtISO` を優先する。オファーコードで
+ * 1か月・3か月の無料になった人もいるため、無料期間の長さはアプリが決め打ちできない。
+ * 期限がまだ届いていないとき (購入直後・旧バージョンで始めた人) だけ、
+ * 開始時刻 + `fallbackTrialDays` で見積もる。
+ */
+export function trialEndMs(settings: TrialSettings, fallbackTrialDays: number): number | null {
+  if (settings.trialEndsAtISO) {
+    const end = new Date(settings.trialEndsAtISO).getTime();
+    if (Number.isFinite(end)) return end;
+  }
+  if (!settings.trialStartedAtISO) return null;
+  const started = new Date(settings.trialStartedAtISO).getTime();
+  if (!Number.isFinite(started)) return null;
+  return started + fallbackTrialDays * 24 * 60 * 60 * 1000;
+}
+
+export function trialDaysRemaining(settings: TrialSettings, fallbackTrialDays: number): number {
+  const endMs = trialEndMs(settings, fallbackTrialDays);
+  if (endMs === null) return 0;
   const remainingMs = endMs - Date.now();
   if (remainingMs <= 0) return 0;
   return Math.ceil(remainingMs / (24 * 60 * 60 * 1000));
@@ -931,11 +950,11 @@ export function trialDaysRemaining(startedAtISO: string | null | undefined, tria
  * - `trialing` & 残日数 <= 0 (trialStartedAtISO 未記録を含む) → `active`
  */
 export function getEffectiveSubscriptionStatus(
-  settings: Pick<AppSettings, 'subscriptionStatus' | 'trialStartedAtISO'>,
+  settings: Pick<AppSettings, 'subscriptionStatus' | 'trialStartedAtISO' | 'trialEndsAtISO'>,
   trialDays: number
 ): SubscriptionStatus {
   const current = settings.subscriptionStatus ?? 'none';
   if (current !== 'trialing') return current;
-  const remaining = trialDaysRemaining(settings.trialStartedAtISO, trialDays);
+  const remaining = trialDaysRemaining(settings, trialDays);
   return remaining <= 0 ? 'active' : 'trialing';
 }

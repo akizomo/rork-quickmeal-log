@@ -9,6 +9,8 @@
 
 import { Linking, Platform } from 'react-native';
 
+import { track } from '@/utils/analytics';
+
 import { healthAdapter } from './adapter';
 import type { HealthDiagnostics, HealthSyncResult, HealthSyncStatus } from './types';
 
@@ -35,8 +37,10 @@ export function isHealthSyncSupported(): boolean {
 }
 
 /** 権限リクエスト。許可されたら true */
-export function requestHealthPermissions(): Promise<boolean> {
-  return healthAdapter.requestPermissions();
+export async function requestHealthPermissions(): Promise<boolean> {
+  const granted = await healthAdapter.requestPermissions();
+  track('health_permission_result', { result: granted ? 'granted' : 'denied' });
+  return granted;
 }
 
 /** 直近 N 日分のデータを取得 */

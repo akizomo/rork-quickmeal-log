@@ -741,6 +741,7 @@ export const defaultSettings: AppSettings = {
   favoriteItemIds: [],
   portionTendency: 'normal',
   trialStartedAtISO: null,
+  trialEndsAtISO: null,
   subscriptionStatus: 'none',
 };
 

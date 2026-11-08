@@ -20,6 +20,9 @@ import {
   projectBodyFatAtWeight,
   computePlanOutcome,
   weightForBmi,
+  trialDaysRemaining,
+  trialEndMs,
+  getEffectiveSubscriptionStatus,
 } from './goals';
 
 describe('bmiFromWeight / weightForBmi', () => {
@@ -268,5 +271,35 @@ describe('projectBodyFatAtWeight', () => {
     expect(projectBodyFatAtWeight(80, null, 70)).toBeNull();
     expect(projectBodyFatAtWeight(null, 25, 70)).toBeNull();
     expect(projectBodyFatAtWeight(80, 25, null)).toBeNull();
+  });
+});
+
+// ── 無料期間の残り日数: ストアの期限を優先する (オファーコードの1か月・3か月対応) ──
+describe('trialDaysRemaining / getEffectiveSubscriptionStatus', () => {
+  const DAY = 24 * 60 * 60 * 1000;
+  const iso = (offsetMs: number) => new Date(Date.now() + offsetMs).toISOString();
+
+  test('期限が無ければ 開始時刻 + 既定日数 で数える', () => {
+    expect(trialDaysRemaining({ trialStartedAtISO: iso(-2 * DAY), trialEndsAtISO: null }, 7)).toBe(5);
+  });
+
+  test('ストアの期限があればそちらを使う (3か月のオファーコード)', () => {
+    const settings = { trialStartedAtISO: iso(-10 * DAY), trialEndsAtISO: iso(80 * DAY) };
+    expect(trialDaysRemaining(settings, 7)).toBe(80);
+    expect(getEffectiveSubscriptionStatus({ ...settings, subscriptionStatus: 'trialing' }, 7)).toBe('trialing');
+  });
+
+  test('期限を過ぎたら active 扱い (ペイウォールへは戻さない)', () => {
+    const settings = { trialStartedAtISO: iso(-40 * DAY), trialEndsAtISO: iso(-1 * DAY) };
+    expect(trialDaysRemaining(settings, 7)).toBe(0);
+    expect(getEffectiveSubscriptionStatus({ ...settings, subscriptionStatus: 'trialing' }, 7)).toBe('active');
+  });
+
+  test('壊れた期限は無視して既定日数で数える', () => {
+    expect(trialDaysRemaining({ trialStartedAtISO: iso(-1 * DAY), trialEndsAtISO: 'not-a-date' }, 7)).toBe(6);
+  });
+
+  test('trialEndMs: 開始も期限も無ければ null', () => {
+    expect(trialEndMs({ trialStartedAtISO: null, trialEndsAtISO: null }, 7)).toBeNull();
   });
 });

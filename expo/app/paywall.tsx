@@ -13,6 +13,7 @@ import { fontSize as fs, lineHeight as lh } from '@/design-system/tokens/primiti
 import { useAppState } from '@/providers/app-state-provider';
 import { useT } from '@/hooks/useT';
 import { useLocale } from '@/hooks/useLocale';
+import { track } from '@/utils/analytics';
 import { fetchOffering, purchase } from '@/utils/iap';
 import {
   cancelTrialExpiryNotification,
@@ -65,6 +66,7 @@ export default function PaywallRoute() {
         if (info) {
           // subscriptionStatus を即座に更新してからナビゲート (タイミング問題を防ぐ)
           completePurchase(info);
+          track('trial_started', { plan: pkg.packageType === 'ANNUAL' ? 'annual' : pkg.packageType === 'MONTHLY' ? 'monthly' : 'unknown' });
 
           // トライアル開始 → 終了48h前のローカル通知をスケジュール
           // 通知許諾は購入完了直後に文脈一致でリクエスト (ユーザー保護のため)
@@ -95,6 +97,7 @@ export default function PaywallRoute() {
   const handleRestore = useCallback(async () => {
     const restored = await restorePurchase();
     if (restored) {
+      track('purchase_restored');
       markPaywallSeen();
       await cancelTrialExpiryNotification();
       router.replace('/');

@@ -207,6 +207,25 @@ export default function SettingsRoute() {
               </SettingsListCard>
             </View>
 
+            {/* §使われ方 — 匿名の利用状況 (docs/ANALYTICS.md)。既定オン、ここでいつでも止められる */}
+            <View style={styles.section}>
+              <SettingsSectionLabel>{t('settings.analytics.title')}</SettingsSectionLabel>
+              <SettingsListCard>
+                <SettingsLinkRow
+                  label={t('settings.analytics.label')}
+                  sub={t('settings.analytics.sub')}
+                  showChevron={false}
+                  trailing={
+                    <Switch
+                      value={settings.analyticsEnabled !== false}
+                      onValueChange={(value) => updateSettingsValues({ analyticsEnabled: value })}
+                      testID="settings-analytics-switch"
+                    />
+                  }
+                />
+              </SettingsListCard>
+            </View>
+
             {/* §データ */}
             <View style={styles.section}>
               <SettingsSectionLabel>{t('settings.data.title')}</SettingsSectionLabel>
@@ -216,6 +235,13 @@ export default function SettingsRoute() {
                   <Body size="sm" tone="secondary">{t('settings.data.body1')}</Body>
                   <Body size="sm" tone="secondary">{t('settings.data.body2')}</Body>
                 </View>
+                <SettingsDivider />
+                <SettingsLinkRow
+                  label={t('settings.data.exportLabel')}
+                  sub={t('settings.data.exportSub')}
+                  onPress={() => router.push('/data-export')}
+                  testID="settings-link-data-export"
+                />
                 <SettingsDivider />
                 <SettingsLinkRow
                   label={t('settings.data.resetLabel')}
@@ -236,13 +262,6 @@ export default function SettingsRoute() {
                     label={t('settings.widget.addLabel')}
                     showChevron={false}
                     onPress={() => { void widgetRequestPin(); }}
-                <SettingsLinkRow
-                  label={t('settings.data.exportLabel')}
-                  sub={t('settings.data.exportSub')}
-                  onPress={() => router.push('/data-export')}
-                  testID="settings-link-data-export"
-                />
-                <SettingsDivider />
                   />
                 </SettingsListCard>
               </View>

@@ -683,6 +683,11 @@
       "title": "Haptics",
       "label": "Haptics"
     },
+    "analytics": {
+      "title": "Usage",
+      "label": "Share usage",
+      "sub": "Sends anonymous info such as which screens you open and whether you logged. Never what you ate or your numbers. Used only to improve the app."
+    },
     "data": {
       "title": "Data",
       "aboutLabel": "About Your Data",

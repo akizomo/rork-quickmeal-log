@@ -211,6 +211,12 @@ export interface AppSettings {
   favoriteItemIds?: string[];
   portionTendency?: PortionTendency;
   trialStartedAtISO?: string | null;
+  /**
+   * 無料期間の終わり。ストア (RevenueCat の entitlement.expirationDate) が返した値。
+   * オファーコードで 1か月・3か月になる人がいるので、残り日数はこれを優先して出す。
+   * 未取得なら null (開始時刻 + TRIAL_DURATION_DAYS で見積もる)。
+   */
+  trialEndsAtISO?: string | null;
   subscriptionStatus?: SubscriptionStatus;
   onboardingCompletedAtISO?: string | null;
   paywallSeenAtISO?: string | null;
@@ -327,6 +333,17 @@ export interface AppSettings {
    * 読み書きは `utils/diagnostics.ts` の純関数を通す。
    */
   diagnostics?: DiagnosticsData;
+
+  /**
+   * KPI計装 Layer 2: 使われ方 (画面・操作の種類) を匿名で送るか。未設定 = 送る (既定オン)。
+   * 設定 > 使われ方 のスイッチで切り替える。送るのは食事・身体の中身を含まない区分値だけ。
+   * 設計は docs/ANALYTICS.md。
+   */
+  analyticsEnabled?: boolean;
+  /** 開発者の端末か。立てると集計から除外できる (docs/ANALYTICS.md §5.6)。`/dev/diagnostics` で切り替える。 */
+  analyticsInternal?: boolean;
+  /** 送信を始めた日 (days_since_install の起点)。端末内にだけ持つ。 */
+  analyticsFirstSeenISO?: string;
 
   /**
    * 週次振り返りバナーを dismiss (または閲覧) 済みの対象週キー (月曜 dateKey)。

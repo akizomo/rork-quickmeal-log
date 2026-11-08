@@ -1184,6 +1184,8 @@ Home ヘッダー右上の **設定アイコンを実績アイコンに置き換
 同一日の重複エントリは最新で上書き (両 Entry 共通)。
 
 ### 8.3 Analytics Events
+> **2026-11-06**: イベント一覧の正本は [ANALYTICS.md](./ANALYTICS.md) §5 (記録・画面・許可・設定を追加。食事の中身・数値・自由入力は載せない原則を含む)。以下は初期案。
+
 `app_intro_viewed`, `trial_cta_tapped`, `onboarding_started`, `current_body_type_computed`, `goal_body_type_selected`, `goal_plan_confirmed`, `onboarding_completed`, `first_quick_log_opened`, `first_log_completed`, `status_edited`, `weight_recorded`, `body_fat_recorded`, `goal_edited`
 
 ---

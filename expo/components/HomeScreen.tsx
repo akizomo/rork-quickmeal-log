@@ -45,7 +45,7 @@ const Header = memo(function Header({ viewedDate }: { viewedDate?: Date }) {
 
   const showTrialBadge = useMemo(() => {
     if (getEffectiveSubscriptionStatus(settings, TRIAL_DURATION_DAYS) !== 'trialing') return false;
-    const remaining = trialDaysRemaining(settings.trialStartedAtISO, TRIAL_DURATION_DAYS);
+    const remaining = trialDaysRemaining(settings, TRIAL_DURATION_DAYS);
     return remaining > 0 && remaining <= TRIAL_REMINDER_DAYS;
   }, [settings]);
 

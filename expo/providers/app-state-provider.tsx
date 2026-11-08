@@ -34,6 +34,8 @@ import {
   removeSearchMiss,
 } from '@/utils/diagnostics';
 import { beginSpan } from '@/utils/perf';
+import { track } from '@/utils/analytics';
+import type { MealLogSource } from '@/types/analytics';
 import { isDeletedHealthWorkout, pruneDeletedHealthWorkouts, toDeletedHealthWorkout } from '@/utils/health-sync/deleted-workouts';
 import { widgetUpdateKcal, widgetDrainPendingQueue, widgetUpdateCategories, widgetUpdateUiLanguage } from '@/utils/widget-bridge';
 import { resolveLog, ResolveInput, ResolveResult } from '@/utils/identity-resolver';
@@ -160,6 +162,7 @@ function migrateSettings(raw: Partial<AppSettings> | undefined): AppSettings {
     onboardingStep: raw?.onboardingStep ?? 0,
     portionTendency: raw?.portionTendency ?? 'normal',
     trialStartedAtISO: raw?.trialStartedAtISO ?? null,
+    trialEndsAtISO: raw?.trialEndsAtISO ?? null,
     subscriptionStatus: raw?.subscriptionStatus ?? 'none',
     onboardingCompletedAtISO: raw?.onboardingCompletedAtISO ?? null,
     paywallSeenAtISO: raw?.paywallSeenAtISO ?? null,
@@ -192,6 +195,17 @@ function mapCustomerInfoToStatus(info: CustomerInfo): SubscriptionStatus {
   const all = info.entitlements.all[ENTITLEMENT_ID];
   if (all && all.expirationDate) return 'expired';
   return 'none';
+}
+
+/**
+ * 無料期間中なら、ストアが持っている期限 (= 次の課金日) を返す。
+ * 7日のお試しオファーでも、オファーコードの1か月・3か月でも同じ値で取れる。
+ * 無料期間中でない / 期限が無いときは null。
+ */
+function trialEndsAtFromCustomerInfo(info: CustomerInfo): string | null {
+  const ent = info.entitlements.active[ENTITLEMENT_ID];
+  if (!ent || (ent.periodType !== 'TRIAL' && ent.periodType !== 'INTRO')) return null;
+  return ent.expirationDate ?? null;
 }
 
 export const [AppStateProvider, useAppState] = createContextHook(() => {
@@ -362,7 +376,15 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     const sync = (info: CustomerInfo | null) => {
       if (!mounted || !info) return;
       const next = mapCustomerInfoToStatus(info);
-      setSettings((prev) => {
+      const trialEndsAtISO = trialEndsAtFromCustomerInfo(info);
+      setSettings((current) => {
+        // 期限は無料期間中のときだけ更新する。'none' の一時的な揺れで消さない。
+        const nextTrialEndsAtISO =
+          next === 'trialing' && trialEndsAtISO ? trialEndsAtISO : current.trialEndsAtISO ?? null;
+        const prev: AppSettings =
+          nextTrialEndsAtISO === (current.trialEndsAtISO ?? null)
+            ? current
+            : { ...current, trialEndsAtISO: nextTrialEndsAtISO };
         // RC がサーバー側処理遅延で 'none' を返すことがある。
         // trialing/active を持つユーザーを 'none' でダウングレードしない。
         // 'expired' は明示的な失効信号なので許可する。
@@ -454,7 +476,7 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
   }, []);
 
   const pushLog = useCallback(
-    async (log: FoodLog) => {
+    async (log: FoodLog, analytics?: { source: MealLogSource; tab?: string }) => {
       if (settings.hapticsEnabled) {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch((error) => {
           console.log('[app-state] Haptics error', error);
@@ -466,6 +488,8 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       triggerFeedback(log);
       triggerUndo(log, 'add');
       persist(profile, nextLogs, settings, weights, bodyFatEntries);
+      // 利用状況: 入口と区分だけ。食品名・Identity・量・栄養値は載せない (docs/ANALYTICS.md §3)。
+      if (analytics) track('meal_logged', { ...analytics, is_first: logs.length === 0 });
     },
     [bodyFatEntries, logs, persist, profile, settings, triggerFeedback, triggerUndo, weights]
   );
@@ -478,6 +502,7 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
         console.log('[app-state] replaceLog: log not found', updated.id);
         return;
       }
+      track('meal_log_edited');
       const nextLogs = [...logs.slice(0, idx), updated, ...logs.slice(idx + 1)];
       setLogs(nextLogs);
       persist(profile, nextLogs, settings, weights, bodyFatEntries);
@@ -617,7 +642,13 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
         wasShortTap: opts?.wasShortTap,
       }, settings.uiLanguage);
       const log = applyLoggingDate(baseLog);
-      await pushLog(log);
+      // 入口: ⭐️(ピン留め/自動) > ウィジェット (⭐️でfrequentSourceなし) > 検索 > 9ボタン
+      const analyticsSource: MealLogSource = frequentSource
+        ? frequentSource === 'pinned' ? 'frequent_pinned' : 'frequent_auto'
+        : sourceTab === 'frequent' ? 'widget'
+        : viaSearch ? 'search'
+        : 'quick_tab';
+      await pushLog(log, { source: analyticsSource, tab: sourceTab });
 
       // Record selection in history (⭐️ frequent tab, recent + frequency).
       // categoryKey/subTypeKey already mirror the legacy bucket/subcategory
@@ -735,6 +766,7 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       setLogs(nextLogs);
       if (target) {
         triggerUndo(target, 'delete');
+        track('meal_log_deleted');
       }
       persist(profile, nextLogs, settings, weights, bodyFatEntries);
     },
@@ -829,7 +861,8 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       log: FoodLog,
       opts?: { myFoods?: MyFood[]; savedNew?: boolean; savedLayer1?: boolean },
     ) => {
-      await pushLog(log);
+      await pushLog(log, { source: 'direct_input' });
+      if (opts?.savedNew) track('my_food_saved', { landed_layer1: opts.savedLayer1 === true });
       if (!opts?.myFoods) return;
       let diagnostics = settings.diagnostics;
       if (opts.savedNew) {
@@ -869,7 +902,7 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
         myFood: { id: food.id, percent: Math.round(multiplier * 100), baseMacro: myFoodBaseMacro(food) },
       };
       const log = applyLoggingDate(baseLog);
-      await pushLog(log);
+      await pushLog(log, { source: source === 'frequent' ? 'my_food_shelf' : source === 'search' ? 'search' : 'my_food_page' });
       const nextTabUsageCounts = source === 'frequent' ? recordTabUsage(settings.tabUsageCounts, 'frequent') : settings.tabUsageCounts;
       const nextSettings: AppSettings = {
         ...settings,
@@ -923,6 +956,7 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
   const recordSearchMissEvent = useCallback(
     (query: string, hadHints: boolean) => {
       applyDiagnostics((d) => recordSearchMiss(d, query, hadHints, new Date().toISOString()));
+      track('search_missed', { had_hints: hadHints }); // 検索語は載せない
     },
     [applyDiagnostics]
   );
@@ -931,6 +965,10 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
   const bumpDiagnostic = useCallback(
     (key: DiagnosticCounterKey, by = 1) => {
       applyDiagnostics((d) => bumpDiagnosticCounter(d, key, by));
+      // 診断カウンタと同じ瞬間に利用状況イベントも送る (計装を 2 系統に割らない)
+      if (key === 'searchOpenCount') track('search_opened');
+      else if (key === 'directInputOpenCount') track('direct_input_opened');
+      else if (key === 'widgetLogCount') track('widget_log_committed', { count: by });
     },
     [applyDiagnostics]
   );
@@ -1010,6 +1048,7 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
         subscriptionStatus: status,
         paywallSeenAtISO: new Date().toISOString(),
         trialStartedAtISO: nextTrialStartedAtISO,
+        trialEndsAtISO: trialEndsAtFromCustomerInfo(info) ?? settings.trialEndsAtISO ?? null,
       };
       setSettings(next);
       persist(profile, logs, next, weights, bodyFatEntries);
@@ -1023,7 +1062,11 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     const info = await iapRestore();
     if (!info) return false;
     const status = mapCustomerInfoToStatus(info);
-    const next: AppSettings = { ...settings, subscriptionStatus: status };
+    const next: AppSettings = {
+      ...settings,
+      subscriptionStatus: status,
+      trialEndsAtISO: trialEndsAtFromCustomerInfo(info) ?? settings.trialEndsAtISO ?? null,
+    };
     setSettings(next);
     persist(profile, logs, next, weights, bodyFatEntries);
     return status === 'active' || status === 'trialing';
@@ -1047,6 +1090,7 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     };
     setSettings(next);
     persist(profile, logs, next, weights, bodyFatEntries);
+    if (!settings.onboardingCompleted) track('onboarding_completed');
     console.log('[app-state] Onboarding complete');
   }, [bodyFatEntries, logs, persist, profile, settings, weights]);
 
@@ -1061,6 +1105,7 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       healthConnectSeenAtISO: null,
       subscriptionStatus: 'none',
       trialStartedAtISO: null,
+      trialEndsAtISO: null,
     };
     setSettings(next);
     persist(profile, logs, next, weights, bodyFatEntries);
@@ -1085,6 +1130,7 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       if (options?.healthSyncId && weights.some((w) => w.healthSyncId === options.healthSyncId)) {
         return;
       }
+      if (source === 'manual') track('weight_recorded'); // 値は載せない。ヘルス取り込みは数えない
       const nextEntry: WeightEntry = {
         id: `w-${now.getTime()}`,
         date: dateKey,
@@ -1120,6 +1166,7 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       ) {
         return;
       }
+      if (source === 'manual') track('body_fat_recorded');
       const nextEntry: BodyFatEntry = {
         id: `bf-${now.getTime()}`,
         date: dateKey,
