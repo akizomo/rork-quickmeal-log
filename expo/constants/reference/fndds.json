@@ -1,0 +1,972 @@
+{
+ "source": "USDA FoodData Central, FNDDS (Survey Foods) 2021-2023, CSV 2022-10-28",
+ "url": "https://fdc.nal.usda.gov/download-datasets",
+ "retrievedAt": "2026-11-07",
+ "foods": {
+  "2341206": {
+   "name": "Grilled cheese sandwich, American cheese, on white bread",
+   "per100g": {
+    "kcal": 331,
+    "protein": 10.77,
+    "carbs": 28.7,
+    "fat": 19.3
+   },
+   "portions": [
+    {
+     "desc": "Quantity not specified",
+     "grams": 116
+    },
+    {
+     "desc": "1 sandwich",
+     "grams": 116
+    }
+   ]
+  },
+  "2341208": {
+   "name": "Grilled cheese sandwich, cheddar cheese, on white bread",
+   "per100g": {
+    "fat": 23.26,
+    "carbs": 26.38,
+    "protein": 13.38,
+    "kcal": 368
+   },
+   "portions": [
+    {
+     "desc": "1 sandwich",
+     "grams": 116
+    },
+    {
+     "desc": "Quantity not specified",
+     "grams": 116
+    }
+   ]
+  },
+  "2341474": {
+   "name": "Chicken wing, fried, coated, from restaurant",
+   "per100g": {
+    "fat": 21.28,
+    "carbs": 15,
+    "protein": 17.77,
+    "kcal": 323
+   },
+   "portions": [
+    {
+     "desc": "1 drummette",
+     "grams": 22
+    },
+    {
+     "desc": "1 wing, any size",
+     "grams": 55
+    },
+    {
+     "desc": "Quantity not specified",
+     "grams": 110
+    }
+   ]
+  },
+  "2341499": {
+   "name": "Chicken nuggets, from fast food",
+   "per100g": {
+    "kcal": 307,
+    "fat": 20.36,
+    "carbs": 14.93,
+    "protein": 15.92
+   },
+   "portions": [
+    {
+     "desc": "1 chicken bite",
+     "grams": 16
+    },
+    {
+     "desc": "Quantity not specified",
+     "grams": 80
+    },
+    {
+     "desc": "1 nugget",
+     "grams": 16
+    },
+    {
+     "desc": "1 cup",
+     "grams": 140
+    }
+   ]
+  },
+  "2341636": {
+   "name": "Chicken salad spread",
+   "per100g": {
+    "fat": 13.52,
+    "kcal": 200,
+    "carbs": 7.41,
+    "protein": 11.64
+   },
+   "portions": [
+    {
+     "desc": "1 cup",
+     "grams": 208
+    },
+    {
+     "desc": "Quantity not specified",
+     "grams": 42
+    },
+    {
+     "desc": "1 can (7.5 oz)",
+     "grams": 213
+    }
+   ]
+  },
+  "2342284": {
+   "name": "Tuna salad with egg",
+   "per100g": {
+    "carbs": 2.67,
+    "protein": 10.33,
+    "kcal": 190,
+    "fat": 15.4
+   },
+   "portions": [
+    {
+     "desc": "Quantity not specified",
+     "grams": 119
+    },
+    {
+     "desc": "1 cup",
+     "grams": 238
+    }
+   ]
+  },
+  "2342334": {
+   "name": "Cheeseburger, from fast food, 1 small patty",
+   "per100g": {
+    "kcal": 300,
+    "fat": 14.87,
+    "carbs": 23.92,
+    "protein": 16.47
+   },
+   "portions": [
+    {
+     "desc": "Quantity not specified",
+     "grams": 115
+    },
+    {
+     "desc": "1 cheeseburger",
+     "grams": 115
+    }
+   ]
+  },
+  "2342354": {
+   "name": "Cheeseburger, from fast food, 1 large patty",
+   "per100g": {
+    "fat": 17.68,
+    "protein": 18.78,
+    "carbs": 15.23,
+    "kcal": 300
+   },
+   "portions": [
+    {
+     "desc": "1 cheeseburger",
+     "grams": 210
+    },
+    {
+     "desc": "Quantity not specified",
+     "grams": 210
+    }
+   ]
+  },
+  "2342366": {
+   "name": "Hamburger, from fast food, 1 small patty",
+   "per100g": {
+    "kcal": 285,
+    "protein": 15.51,
+    "carbs": 28.27,
+    "fat": 11.68
+   },
+   "portions": [
+    {
+     "desc": "Quantity not specified",
+     "grams": 90
+    },
+    {
+     "desc": "1 hamburger",
+     "grams": 90
+    }
+   ]
+  },
+  "2342375": {
+   "name": "Hamburger, from fast food, 1 large patty",
+   "per100g": {
+    "protein": 18.43,
+    "kcal": 289,
+    "carbs": 17.12,
+    "fat": 15.63
+   },
+   "portions": [
+    {
+     "desc": "1 hamburger",
+     "grams": 175
+    },
+    {
+     "desc": "Quantity not specified",
+     "grams": 175
+    }
+   ]
+  },
+  "2342437": {
+   "name": "Chicken salad sandwich wrap",
+   "per100g": {
+    "fat": 16.61,
+    "kcal": 269,
+    "protein": 12.95,
+    "carbs": 16.92
+   },
+   "portions": [
+    {
+     "desc": "Quantity not specified",
+     "grams": 200
+    },
+    {
+     "desc": "1 sandwich, any size",
+     "grams": 200
+    }
+   ]
+  },
+  "2342453": {
+   "name": "Chicken fillet sandwich, fried, on white bun",
+   "per100g": {
+    "fat": 11.67,
+    "protein": 12.45,
+    "carbs": 28.11,
+    "kcal": 269
+   },
+   "portions": [
+    {
+     "desc": "1 regular sandwich",
+     "grams": 140
+    },
+    {
+     "desc": "Quantity not specified",
+     "grams": 140
+    },
+    {
+     "desc": "1 sandwich (1 slice bread)",
+     "grams": 70
+    },
+    {
+     "desc": "1 miniature/slider",
+     "grams": 70
+    },
+    {
+     "desc": "1 submarine",
+     "grams": 280
+    },
+    {
+     "desc": "1 large sandwich",
+     "grams": 280
+    }
+   ]
+  },
+  "2342455": {
+   "name": "Chicken fillet sandwich, fried, on wheat bun",
+   "per100g": {
+    "kcal": 264,
+    "protein": 13.19,
+    "carbs": 26.64,
+    "fat": 11.71
+   },
+   "portions": [
+    {
+     "desc": "1 miniature/slider",
+     "grams": 70
+    },
+    {
+     "desc": "1 submarine",
+     "grams": 280
+    },
+    {
+     "desc": "Quantity not specified",
+     "grams": 140
+    },
+    {
+     "desc": "1 large sandwich",
+     "grams": 280
+    },
+    {
+     "desc": "1 regular sandwich",
+     "grams": 140
+    },
+    {
+     "desc": "1 sandwich (1 slice bread)",
+     "grams": 70
+    }
+   ]
+  },
+  "2342462": {
+   "name": "Chicken fillet wrap sandwich, grilled, from fast food",
+   "per100g": {
+    "fat": 10.48,
+    "carbs": 17.28,
+    "kcal": 253,
+    "protein": 20.87
+   },
+   "portions": [
+    {
+     "desc": "Quantity not specified",
+     "grams": 161
+    },
+    {
+     "desc": "1 sandwich, any size",
+     "grams": 161
+    }
+   ]
+  },
+  "2342606": {
+   "name": "Clam chowder, New England, prepared with milk",
+   "per100g": {
+    "protein": 3.25,
+    "kcal": 62,
+    "carbs": 7.54,
+    "fat": 2.1
+   },
+   "portions": [
+    {
+     "desc": "Quantity not specified",
+     "grams": 305
+    },
+    {
+     "desc": "1 cup",
+     "grams": 248
+    },
+    {
+     "desc": "1 can (10.75 oz), prepared to directions",
+     "grams": 602
+    }
+   ]
+  },
+  "2342794": {
+   "name": "Egg sandwich on croissant",
+   "per100g": {
+    "kcal": 310,
+    "carbs": 21.32,
+    "fat": 19.8,
+    "protein": 11.5
+   },
+   "portions": [
+    {
+     "desc": "Quantity not specified",
+     "grams": 135
+    },
+    {
+     "desc": "1 large",
+     "grams": 205
+    },
+    {
+     "desc": "1 regular",
+     "grams": 135
+    }
+   ]
+  },
+  "2342803": {
+   "name": "Egg sandwich on bagel",
+   "per100g": {
+    "protein": 12,
+    "carbs": 31.79,
+    "fat": 8.48,
+    "kcal": 252
+   },
+   "portions": [
+    {
+     "desc": "Quantity not specified",
+     "grams": 185
+    },
+    {
+     "desc": "1 large",
+     "grams": 280
+    },
+    {
+     "desc": "1 regular",
+     "grams": 185
+    },
+    {
+     "desc": "1 miniature/slider",
+     "grams": 95
+    }
+   ]
+  },
+  "2343030": {
+   "name": "Peanut butter and jelly sandwich, NFS",
+   "per100g": {
+    "protein": 11.51,
+    "carbs": 45.22,
+    "kcal": 373,
+    "fat": 16.53
+   },
+   "portions": [
+    {
+     "desc": "1 sandwich",
+     "grams": 112
+    },
+    {
+     "desc": "Quantity not specified",
+     "grams": 112
+    },
+    {
+     "desc": "1 sandwich (1 slice bread)",
+     "grams": 56
+    }
+   ]
+  },
+  "2343037": {
+   "name": "Peanut butter and jelly sandwich, frozen commercial product without crusts",
+   "per100g": {
+    "carbs": 45.22,
+    "fat": 16.53,
+    "protein": 11.51,
+    "kcal": 373
+   },
+   "portions": [
+    {
+     "desc": "1 sandwich",
+     "grams": 60
+    },
+    {
+     "desc": "Quantity not specified",
+     "grams": 60
+    },
+    {
+     "desc": "1 sandwich (1 slice bread)",
+     "grams": 30
+    }
+   ]
+  },
+  "2344019": {
+   "name": "Burrito, beef, cheese",
+   "per100g": {
+    "carbs": 28.32,
+    "protein": 13.32,
+    "fat": 10.71,
+    "kcal": 267
+   },
+   "portions": [
+    {
+     "desc": "Quantity not specified",
+     "grams": 190
+    },
+    {
+     "desc": "1 cup",
+     "grams": 120
+    },
+    {
+     "desc": "1 small/regular",
+     "grams": 190
+    },
+    {
+     "desc": "1 miniature",
+     "grams": 95
+    },
+    {
+     "desc": "1 large",
+     "grams": 285
+    }
+   ]
+  },
+  "2344027": {
+   "name": "Burrito, chicken, cheese",
+   "per100g": {
+    "fat": 8.09,
+    "kcal": 244,
+    "carbs": 28.32,
+    "protein": 13.78
+   },
+   "portions": [
+    {
+     "desc": "Quantity not specified",
+     "grams": 220
+    },
+    {
+     "desc": "1 cup",
+     "grams": 120
+    },
+    {
+     "desc": "1 large",
+     "grams": 330
+    },
+    {
+     "desc": "1 miniature",
+     "grams": 110
+    },
+    {
+     "desc": "1 small/regular",
+     "grams": 220
+    }
+   ]
+  },
+  "2344040": {
+   "name": "Burrito bowl, beef or pork",
+   "per100g": {
+    "fat": 14.34,
+    "kcal": 215,
+    "carbs": 0.24,
+    "protein": 20.14
+   },
+   "portions": [
+    {
+     "desc": "1 cup",
+     "grams": 120
+    },
+    {
+     "desc": "1 item, any size",
+     "grams": 225
+    },
+    {
+     "desc": "Quantity not specified",
+     "grams": 225
+    }
+   ]
+  },
+  "2344045": {
+   "name": "Burrito bowl, chicken, with rice",
+   "per100g": {
+    "fat": 5.05,
+    "carbs": 14.19,
+    "protein": 12.52,
+    "kcal": 156
+   },
+   "portions": [
+    {
+     "desc": "Quantity not specified",
+     "grams": 270
+    },
+    {
+     "desc": "1 item, any size",
+     "grams": 270
+    },
+    {
+     "desc": "1 cup",
+     "grams": 120
+    }
+   ]
+  },
+  "2344049": {
+   "name": "Enchilada, NFS",
+   "per100g": {
+    "protein": 10.13,
+    "carbs": 14.61,
+    "fat": 9.1,
+    "kcal": 179
+   },
+   "portions": [
+    {
+     "desc": "Quantity not specified",
+     "grams": 150
+    },
+    {
+     "desc": "1 cup",
+     "grams": 170
+    },
+    {
+     "desc": "1 enchilada, any size",
+     "grams": 150
+    }
+   ]
+  },
+  "2344051": {
+   "name": "Enchilada, pork",
+   "per100g": {
+    "fat": 10.82,
+    "protein": 9.63,
+    "kcal": 193,
+    "carbs": 14.61
+   },
+   "portions": [
+    {
+     "desc": "Quantity not specified",
+     "grams": 150
+    },
+    {
+     "desc": "1 cup",
+     "grams": 170
+    },
+    {
+     "desc": "1 enchilada, any size",
+     "grams": 150
+    }
+   ]
+  },
+  "2344060": {
+   "name": "Nachos, NFS",
+   "per100g": {
+    "fat": 15.73,
+    "protein": 7.69,
+    "carbs": 23.79,
+    "kcal": 265
+   },
+   "portions": [
+    {
+     "desc": "1 order",
+     "grams": 250
+    },
+    {
+     "desc": "1 cup",
+     "grams": 135
+    },
+    {
+     "desc": "1 chip",
+     "grams": 7
+    },
+    {
+     "desc": "Quantity not specified",
+     "grams": 125
+    },
+    {
+     "desc": "1 item, any size",
+     "grams": 250
+    }
+   ]
+  },
+  "2344066": {
+   "name": "Nachos, with beans",
+   "per100g": {
+    "kcal": 209,
+    "fat": 11.28,
+    "carbs": 23.23,
+    "protein": 4.69
+   },
+   "portions": [
+    {
+     "desc": "1 cup",
+     "grams": 135
+    },
+    {
+     "desc": "1 chip",
+     "grams": 7
+    },
+    {
+     "desc": "1 item, any size",
+     "grams": 250
+    },
+    {
+     "desc": "1 order",
+     "grams": 250
+    },
+    {
+     "desc": "Quantity not specified",
+     "grams": 125
+    }
+   ]
+  },
+  "2344075": {
+   "name": "Quesadilla, cheese only",
+   "per100g": {
+    "kcal": 319,
+    "fat": 16.44,
+    "carbs": 28.52,
+    "protein": 13.65
+   },
+   "portions": [
+    {
+     "desc": "1 full circle",
+     "grams": 120
+    },
+    {
+     "desc": "1 triangular piece",
+     "grams": 30
+    },
+    {
+     "desc": "Quantity not specified",
+     "grams": 60
+    },
+    {
+     "desc": "1 cup",
+     "grams": 95
+    },
+    {
+     "desc": "1 half circle",
+     "grams": 60
+    }
+   ]
+  },
+  "2344077": {
+   "name": "Quesadilla, chicken",
+   "per100g": {
+    "kcal": 288,
+    "fat": 13.08,
+    "carbs": 27.28,
+    "protein": 14.56
+   },
+   "portions": [
+    {
+     "desc": "1 full circle",
+     "grams": 140
+    },
+    {
+     "desc": "Quantity not specified",
+     "grams": 70
+    },
+    {
+     "desc": "1 cup",
+     "grams": 95
+    },
+    {
+     "desc": "1 triangular piece",
+     "grams": 35
+    },
+    {
+     "desc": "1 half circle",
+     "grams": 70
+    }
+   ]
+  },
+  "2344088": {
+   "name": "Fajita, chicken",
+   "per100g": {
+    "fat": 9.83,
+    "carbs": 17.9,
+    "kcal": 205,
+    "protein": 11.36
+   },
+   "portions": [
+    {
+     "desc": "1 cup",
+     "grams": 120
+    },
+    {
+     "desc": "1 fajita",
+     "grams": 95
+    },
+    {
+     "desc": "Quantity not specified",
+     "grams": 95
+    }
+   ]
+  },
+  "2344123": {
+   "name": "Pizza with pepperoni, from restaurant or fast food, thin crust",
+   "per100g": {
+    "protein": 14.01,
+    "fat": 17.61,
+    "kcal": 331,
+    "carbs": 29
+   },
+   "portions": [
+    {
+     "desc": "1 piece, large pizza",
+     "grams": 91
+    },
+    {
+     "desc": "1 piece, small pizza",
+     "grams": 62
+    },
+    {
+     "desc": "Quantity not specified",
+     "grams": 182
+    },
+    {
+     "desc": "1 piece, extra-large pizza",
+     "grams": 105
+    },
+    {
+     "desc": "1 small pizza (8-10\" diameter)",
+     "grams": 369
+    },
+    {
+     "desc": "1 personal size pizza (5-7\" diameter)",
+     "grams": 133
+    },
+    {
+     "desc": "1 piece, medium pizza",
+     "grams": 66
+    },
+    {
+     "desc": "1 surface inch",
+     "grams": 4.9
+    },
+    {
+     "desc": "1 large pizza (13-15\" diameter)",
+     "grams": 728
+    },
+    {
+     "desc": "1 piece, NFS",
+     "grams": 91
+    },
+    {
+     "desc": "1 medium pizza (11-12\" diameter)",
+     "grams": 528
+    },
+    {
+     "desc": "1 extra-large pizza (16-18\" diameter)",
+     "grams": 1046
+    }
+   ]
+  },
+  "2344234": {
+   "name": "Lasagna with meat",
+   "per100g": {
+    "protein": 7.45,
+    "kcal": 139,
+    "carbs": 16.17,
+    "fat": 4.97
+   },
+   "portions": [
+    {
+     "desc": "1 cup",
+     "grams": 250
+    },
+    {
+     "desc": "1 piece (1/8 of 7\" x 12\", approx 3-1/2\" x 3\")",
+     "grams": 232
+    },
+    {
+     "desc": "1 piece (1/6 of 8\" square, approx 2-1/2\" x 4\")",
+     "grams": 206
+    },
+    {
+     "desc": "1 surface inch",
+     "grams": 20.7
+    },
+    {
+     "desc": "Quantity not specified",
+     "grams": 250
+    }
+   ]
+  },
+  "2344282": {
+   "name": "Lo mein, NFS",
+   "per100g": {
+    "protein": 4.77,
+    "fat": 2.35,
+    "carbs": 20.16,
+    "kcal": 121
+   },
+   "portions": [
+    {
+     "desc": "Quantity not specified",
+     "grams": 200
+    },
+    {
+     "desc": "1 cup",
+     "grams": 200
+    }
+   ]
+  },
+  "2344285": {
+   "name": "Lo mein, with pork",
+   "per100g": {
+    "carbs": 16.18,
+    "fat": 3.79,
+    "protein": 9.48,
+    "kcal": 138
+   },
+   "portions": [
+    {
+     "desc": "Quantity not specified",
+     "grams": 200
+    },
+    {
+     "desc": "1 cup",
+     "grams": 200
+    }
+   ]
+  },
+  "2344288": {
+   "name": "Pad Thai, NFS",
+   "per100g": {
+    "fat": 7.5,
+    "kcal": 154,
+    "carbs": 14.36,
+    "protein": 8.13
+   },
+   "portions": [
+    {
+     "desc": "1 cup",
+     "grams": 200
+    },
+    {
+     "desc": "Quantity not specified",
+     "grams": 200
+    }
+   ]
+  },
+  "2344292": {
+   "name": "Pad Thai with meat",
+   "per100g": {
+    "kcal": 160,
+    "protein": 8.18,
+    "carbs": 14.73,
+    "fat": 7.92
+   },
+   "portions": [
+    {
+     "desc": "1 cup",
+     "grams": 200
+    },
+    {
+     "desc": "Quantity not specified",
+     "grams": 200
+    }
+   ]
+  },
+  "2344296": {
+   "name": "Macaroni or noodles with cheese",
+   "per100g": {
+    "fat": 10.5,
+    "carbs": 23.08,
+    "kcal": 223,
+    "protein": 8.68
+   },
+   "portions": [
+    {
+     "desc": "Quantity not specified",
+     "grams": 230
+    },
+    {
+     "desc": "1 cup",
+     "grams": 230
+    }
+   ]
+  },
+  "2344447": {
+   "name": "Sushi roll, eel",
+   "per100g": {
+    "protein": 5.95,
+    "carbs": 15.3,
+    "kcal": 116,
+    "fat": 2.98
+   },
+   "portions": [
+    {
+     "desc": "1 cup",
+     "grams": 150
+    },
+    {
+     "desc": "Quantity not specified",
+     "grams": 180
+    },
+    {
+     "desc": "1 piece",
+     "grams": 30
+    }
+   ]
+  },
+  "2344450": {
+   "name": "Sushi roll tuna",
+   "per100g": {
+    "carbs": 15.3,
+    "protein": 7.4,
+    "kcal": 97,
+    "fat": 0.26
+   },
+   "portions": [
+    {
+     "desc": "1 cup",
+     "grams": 150
+    },
+    {
+     "desc": "Quantity not specified",
+     "grams": 180
+    },
+    {
+     "desc": "1 piece",
+     "grams": 30
+    }
+   ]
+  }
+ }
+}

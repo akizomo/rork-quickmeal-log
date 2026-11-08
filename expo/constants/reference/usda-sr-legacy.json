@@ -1,0 +1,1470 @@
+{
+ "source": "USDA FoodData Central, SR Legacy (April 2018)",
+ "url": "https://fdc.nal.usda.gov/download-datasets",
+ "retrievedAt": "2026-11-07",
+ "foods": {
+  "167575": {
+   "name": "Ice creams, vanilla",
+   "per100g": {
+    "carbs": 23.6,
+    "kcal": 207,
+    "fat": 11,
+    "protein": 3.5
+   },
+   "portions": [
+    {
+     "desc": "1 serving 1/2 cup",
+     "grams": 66
+    }
+   ]
+  },
+  "167827": {
+   "name": "Pork, fresh, loin, center loin (chops), bone-in, separable lean and fat, cooked, broiled",
+   "per100g": {
+    "protein": 25.61,
+    "fat": 11.06,
+    "carbs": 0,
+    "kcal": 209
+   },
+   "portions": [
+    {
+     "desc": "3 oz",
+     "grams": 85
+    },
+    {
+     "desc": "1 chop without refuse (Yield from 1 cooked chop, with refuse, weighing 209g)",
+     "grams": 157
+    }
+   ]
+  },
+  "168322": {
+   "name": "Pork, cured, bacon, pre-sliced, cooked, pan-fried",
+   "per100g": {
+    "protein": 33.92,
+    "fat": 35.09,
+    "carbs": 1.7,
+    "kcal": 468
+   },
+   "portions": [
+    {
+     "desc": "3 oz",
+     "grams": 85
+    },
+    {
+     "desc": "1 slice",
+     "grams": 11.5
+    }
+   ]
+  },
+  "168599": {
+   "name": "Nuts, mixed nuts, dry roasted, with peanuts, with salt added",
+   "per100g": {
+    "protein": 17.3,
+    "fat": 51.45,
+    "carbs": 25.35,
+    "kcal": 594
+   },
+   "portions": [
+    {
+     "desc": "1 cup",
+     "grams": 137
+    },
+    {
+     "desc": "1 oz",
+     "grams": 28.35
+    }
+   ]
+  },
+  "168746": {
+   "name": "Alcoholic beverage, beer, regular, all",
+   "per100g": {
+    "protein": 0.46,
+    "carbs": 3.55,
+    "kcal": 43,
+    "fat": 0
+   },
+   "portions": [
+    {
+     "desc": "1 fl oz",
+     "grams": 29.7
+    },
+    {
+     "desc": "1 can",
+     "grams": 356
+    }
+   ]
+  },
+  "168749": {
+   "name": "Alcoholic beverage, beer, light",
+   "per100g": {
+    "fat": 0,
+    "carbs": 1.64,
+    "kcal": 29,
+    "protein": 0.24
+   },
+   "portions": [
+    {
+     "desc": "1 fl oz",
+     "grams": 29.5
+    },
+    {
+     "desc": "1 can or bottle (12 fl oz)",
+     "grams": 354
+    }
+   ]
+  },
+  "168878": {
+   "name": "Rice, white, long-grain, regular, enriched, cooked",
+   "per100g": {
+    "protein": 2.69,
+    "fat": 0.28,
+    "carbs": 28.17,
+    "kcal": 130
+   },
+   "portions": [
+    {
+     "desc": "1 cup",
+     "grams": 158
+    }
+   ]
+  },
+  "169092": {
+   "name": "Melons, cantaloupe, raw",
+   "per100g": {
+    "carbs": 8.16,
+    "kcal": 34,
+    "protein": 0.84,
+    "fat": 0.19
+   },
+   "portions": [
+    {
+     "desc": "1 cup, balls",
+     "grams": 177
+    },
+    {
+     "desc": "1 cup, cubes",
+     "grams": 160
+    },
+    {
+     "desc": "1 cup, diced",
+     "grams": 156
+    },
+    {
+     "desc": "1 melon, large (about 6-1/2\" dia)",
+     "grams": 814
+    },
+    {
+     "desc": "1 wedge, large (1/8 of large melon)",
+     "grams": 102
+    },
+    {
+     "desc": "1 melon, medium (about 5\" dia)",
+     "grams": 552
+    },
+    {
+     "desc": "1 wedge, medium (1/8 of medium melon)",
+     "grams": 69
+    },
+    {
+     "desc": "1 melon, small (about 4-1/4\" dia)",
+     "grams": 441
+    },
+    {
+     "desc": "1 wedge, small (1/8 of small melon)",
+     "grams": 55
+    },
+    {
+     "desc": "10 cantaloupe balls",
+     "grams": 138
+    },
+    {
+     "desc": "1 NLEA serving",
+     "grams": 134
+    }
+   ]
+  },
+  "169097": {
+   "name": "Oranges, raw, all commercial varieties",
+   "per100g": {
+    "fat": 0.12,
+    "carbs": 11.75,
+    "kcal": 47,
+    "protein": 0.94
+   },
+   "portions": [
+    {
+     "desc": "1 cup, sections",
+     "grams": 180
+    },
+    {
+     "desc": "1 large (3-1/16\" dia)",
+     "grams": 184
+    },
+    {
+     "desc": "1 small (2-3/8\" dia)",
+     "grams": 96
+    },
+    {
+     "desc": "1 fruit (2-5/8\" dia)",
+     "grams": 131
+    }
+   ]
+  },
+  "169098": {
+   "name": "Orange juice, raw (Includes foods for USDA's Food Distribution Program)",
+   "per100g": {
+    "protein": 0.7,
+    "fat": 0.2,
+    "carbs": 10.4,
+    "kcal": 45
+   },
+   "portions": [
+    {
+     "desc": "1 cup",
+     "grams": 248
+    },
+    {
+     "desc": "1 fl oz",
+     "grams": 31
+    },
+    {
+     "desc": "1 fruit yields",
+     "grams": 86
+    }
+   ]
+  },
+  "169124": {
+   "name": "Pineapple, raw, all varieties",
+   "per100g": {
+    "protein": 0.54,
+    "fat": 0.12,
+    "carbs": 13.12,
+    "kcal": 50
+   },
+   "portions": [
+    {
+     "desc": "1 cup, chunks",
+     "grams": 165
+    },
+    {
+     "desc": "1 fruit",
+     "grams": 905
+    },
+    {
+     "desc": "1 slice (4-2/3\" dia x 3/4\" thick)",
+     "grams": 166
+    },
+    {
+     "desc": "1 slice (3-1/2\" dia x 3/4\" thick)",
+     "grams": 84
+    },
+    {
+     "desc": "1 slice, thin (3-1/2\" dia x 1/2\" thick)",
+     "grams": 56
+    }
+   ]
+  },
+  "169247": {
+   "name": "Lettuce, cos or romaine, raw",
+   "per100g": {
+    "carbs": 3.29,
+    "kcal": 17,
+    "fat": 0.3,
+    "protein": 1.23
+   },
+   "portions": [
+    {
+     "desc": "1 cup shredded",
+     "grams": 47
+    },
+    {
+     "desc": "1 leaf inner",
+     "grams": 6
+    },
+    {
+     "desc": "1 leaf outer",
+     "grams": 28
+    },
+    {
+     "desc": "1 head",
+     "grams": 626
+    },
+    {
+     "desc": "1 NLEA serving",
+     "grams": 85
+    }
+   ]
+  },
+  "169677": {
+   "name": "Snacks, potato chips, plain, salted",
+   "per100g": {
+    "fat": 33.98,
+    "carbs": 53.83,
+    "kcal": 532,
+    "protein": 6.39
+   },
+   "portions": [
+    {
+     "desc": "1 oz",
+     "grams": 28
+    },
+    {
+     "desc": "22 chips",
+     "grams": 28
+    },
+    {
+     "desc": "1 oz",
+     "grams": 28.35
+    },
+    {
+     "desc": "1 bag (8 oz)",
+     "grams": 227
+    }
+   ]
+  },
+  "169737": {
+   "name": "Pasta, cooked, enriched, without added salt",
+   "per100g": {
+    "fat": 0.93,
+    "protein": 5.8,
+    "carbs": 30.86,
+    "kcal": 158
+   },
+   "portions": [
+    {
+     "desc": "1 cup spaghetti not packed",
+     "grams": 124
+    },
+    {
+     "desc": "1 cup spaghetti packed",
+     "grams": 151
+    },
+    {
+     "desc": "1 cup elbows not packed",
+     "grams": 120
+    },
+    {
+     "desc": "1 cup elbows packed",
+     "grams": 132
+    },
+    {
+     "desc": "1 cup penne",
+     "grams": 107
+    },
+    {
+     "desc": "1 cup farfalle",
+     "grams": 107
+    },
+    {
+     "desc": "1 cup rotini",
+     "grams": 107
+    },
+    {
+     "desc": "1 cup shells",
+     "grams": 105
+    },
+    {
+     "desc": "1 cup lasagne",
+     "grams": 116
+    }
+   ]
+  },
+  "169967": {
+   "name": "Broccoli, cooked, boiled, drained, without salt",
+   "per100g": {
+    "fat": 0.41,
+    "protein": 2.38,
+    "carbs": 7.18,
+    "kcal": 35
+   },
+   "portions": [
+    {
+     "desc": "0.5 cup, chopped",
+     "grams": 78
+    },
+    {
+     "desc": "1 stalk, large (11\"-12\" long)",
+     "grams": 280
+    },
+    {
+     "desc": "1 stalk, medium (7-1/2\" - 8\" long)",
+     "grams": 180
+    },
+    {
+     "desc": "1 stalk, small (5\" long)",
+     "grams": 140
+    },
+    {
+     "desc": "1 spear (about 5\" long)",
+     "grams": 37
+    }
+   ]
+  },
+  "169999": {
+   "name": "Corn, sweet, yellow, cooked, boiled, drained, without salt",
+   "per100g": {
+    "fat": 1.5,
+    "carbs": 20.98,
+    "kcal": 96,
+    "protein": 3.41
+   },
+   "portions": [
+    {
+     "desc": "1 ear small (5-1/2\" to 6-1/2\" long)",
+     "grams": 89
+    },
+    {
+     "desc": "1 ear medium (6-3/4\" to 7-1/2\" long)",
+     "grams": 103
+    },
+    {
+     "desc": "1 ear large (7-3/4\" to 9\" long)",
+     "grams": 118
+    },
+    {
+     "desc": "1 cup cut",
+     "grams": 149
+    },
+    {
+     "desc": "1 baby ear",
+     "grams": 8
+    }
+   ]
+  },
+  "170093": {
+   "name": "Potatoes, baked, flesh and skin, without salt",
+   "per100g": {
+    "protein": 2.5,
+    "fat": 0.13,
+    "carbs": 21.15,
+    "kcal": 93
+   },
+   "portions": [
+    {
+     "desc": "1 NLEA serving",
+     "grams": 148
+    },
+    {
+     "desc": "1 potato large",
+     "grams": 299
+    },
+    {
+     "desc": "1 potato medium",
+     "grams": 173
+    },
+    {
+     "desc": "1 potato small",
+     "grams": 138
+    }
+   ]
+  },
+  "170472": {
+   "name": "Vegetables, mixed, frozen, cooked, boiled, drained, without salt",
+   "per100g": {
+    "carbs": 13.09,
+    "kcal": 65,
+    "protein": 2.86,
+    "fat": 0.15
+   },
+   "portions": [
+    {
+     "desc": "0.5 cup",
+     "grams": 91
+    },
+    {
+     "desc": "1 package (10 oz) yields",
+     "grams": 275
+    }
+   ]
+  },
+  "170894": {
+   "name": "Yogurt, Greek, plain, nonfat (Includes foods for USDA's Food Distribution Program)",
+   "per100g": {
+    "protein": 10.19,
+    "fat": 0.39,
+    "carbs": 3.6,
+    "kcal": 59
+   },
+   "portions": [
+    {
+     "desc": "1 container",
+     "grams": 170
+    }
+   ]
+  },
+  "170899": {
+   "name": "Cheese, cheddar, sharp, sliced",
+   "per100g": {
+    "protein": 24.25,
+    "fat": 33.82,
+    "carbs": 2.13,
+    "kcal": 410
+   },
+   "portions": [
+    {
+     "desc": "1 slice (2/3 oz)",
+     "grams": 19
+    },
+    {
+     "desc": "1 slice (3/4 oz)",
+     "grams": 21
+    },
+    {
+     "desc": "1 slice (1 oz)",
+     "grams": 28
+    }
+   ]
+  },
+  "171009": {
+   "name": "Salad dressing, mayonnaise, regular",
+   "per100g": {
+    "protein": 0.96,
+    "fat": 74.85,
+    "carbs": 0.57,
+    "kcal": 680
+   },
+   "portions": [
+    {
+     "desc": "1 tbsp",
+     "grams": 13.8
+    },
+    {
+     "desc": "1 cup",
+     "grams": 220
+    },
+    {
+     "desc": "1 packet",
+     "grams": 10
+    }
+   ]
+  },
+  "171267": {
+   "name": "Milk, reduced fat, fluid, 2% milkfat, with added vitamin A and vitamin D",
+   "per100g": {
+    "protein": 3.3,
+    "carbs": 4.8,
+    "kcal": 50,
+    "fat": 1.98
+   },
+   "portions": [
+    {
+     "desc": "1 cup",
+     "grams": 244
+    },
+    {
+     "desc": "1 fl oz",
+     "grams": 30.5
+    },
+    {
+     "desc": "1 quart",
+     "grams": 976
+    }
+   ]
+  },
+  "171287": {
+   "name": "Egg, whole, raw, fresh",
+   "per100g": {
+    "kcal": 143,
+    "protein": 12.56,
+    "fat": 9.51,
+    "carbs": 0.72
+   },
+   "portions": [
+    {
+     "desc": "1 large",
+     "grams": 50
+    },
+    {
+     "desc": "1 extra large",
+     "grams": 56
+    },
+    {
+     "desc": "1 jumbo",
+     "grams": 63
+    },
+    {
+     "desc": "1 cup (4.86 large eggs)",
+     "grams": 243
+    },
+    {
+     "desc": "1 medium",
+     "grams": 44
+    },
+    {
+     "desc": "1 small",
+     "grams": 38
+    }
+   ]
+  },
+  "171413": {
+   "name": "Oil, olive, salad or cooking",
+   "per100g": {
+    "fat": 100,
+    "carbs": 0,
+    "kcal": 884,
+    "protein": 0
+   },
+   "portions": [
+    {
+     "desc": "1 tablespoon",
+     "grams": 13.5
+    },
+    {
+     "desc": "1 cup",
+     "grams": 216
+    },
+    {
+     "desc": "1 tsp",
+     "grams": 4.5
+    }
+   ]
+  },
+  "171477": {
+   "name": "Chicken, broilers or fryers, breast, meat only, cooked, roasted",
+   "per100g": {
+    "fat": 3.57,
+    "carbs": 0,
+    "kcal": 165,
+    "protein": 31.02
+   },
+   "portions": [
+    {
+     "desc": "1 cup, chopped or diced",
+     "grams": 140
+    },
+    {
+     "desc": "1 unit (yield from 1 lb ready-to-cook chicken)",
+     "grams": 52
+    },
+    {
+     "desc": "0.5 breast, bone and skin removed",
+     "grams": 86
+    }
+   ]
+  },
+  "171688": {
+   "name": "Apples, raw, with skin (Includes foods for USDA's Food Distribution Program)",
+   "per100g": {
+    "carbs": 13.81,
+    "kcal": 52,
+    "fat": 0.17,
+    "protein": 0.26
+   },
+   "portions": [
+    {
+     "desc": "1 cup, quartered or chopped",
+     "grams": 125
+    },
+    {
+     "desc": "1 cup slices",
+     "grams": 109
+    },
+    {
+     "desc": "1 large (3-1/4\" dia)",
+     "grams": 223
+    },
+    {
+     "desc": "1 medium (3\" dia)",
+     "grams": 182
+    },
+    {
+     "desc": "1 small (2-3/4\" dia)",
+     "grams": 149
+    },
+    {
+     "desc": "1 extra small (2-1/2\" dia)",
+     "grams": 101
+    },
+    {
+     "desc": "1 NLEA serving",
+     "grams": 242
+    }
+   ]
+  },
+  "171711": {
+   "name": "Blueberries, raw",
+   "per100g": {
+    "carbs": 14.49,
+    "kcal": 57,
+    "fat": 0.33,
+    "protein": 0.74
+   },
+   "portions": [
+    {
+     "desc": "1 cup",
+     "grams": 148
+    },
+    {
+     "desc": "50 berries",
+     "grams": 68
+    }
+   ]
+  },
+  "171888": {
+   "name": "Beverages, tea, black, ready-to-drink, lemon, sweetened",
+   "per100g": {
+    "fat": 0.22,
+    "carbs": 10.8,
+    "kcal": 45,
+    "protein": 0
+   },
+   "portions": [
+    {
+     "desc": "1 cup",
+     "grams": 271
+    }
+   ]
+  },
+  "171956": {
+   "name": "Fish, cod, Atlantic, cooked, dry heat",
+   "per100g": {
+    "kcal": 105,
+    "fat": 0.86,
+    "carbs": 0,
+    "protein": 22.83
+   },
+   "portions": [
+    {
+     "desc": "3 oz",
+     "grams": 85
+    },
+    {
+     "desc": "1 fillet",
+     "grams": 180
+    }
+   ]
+  },
+  "172165": {
+   "name": "Beef, rib eye steak, boneless, lip off, separable lean and fat, trimmed to 0\" fat, choice, cooked, grilled",
+   "per100g": {
+    "protein": 23.89,
+    "fat": 21.1,
+    "carbs": 0,
+    "kcal": 285
+   },
+   "portions": [
+    {
+     "desc": "3 oz",
+     "grams": 85
+    },
+    {
+     "desc": "1 steak",
+     "grams": 242
+    }
+   ]
+  },
+  "172179": {
+   "name": "Cheese, cottage, creamed, large or small curd",
+   "per100g": {
+    "carbs": 3.38,
+    "kcal": 98,
+    "protein": 11.12,
+    "fat": 4.3
+   },
+   "portions": [
+    {
+     "desc": "4 oz",
+     "grams": 113
+    },
+    {
+     "desc": "1 cup, large curd (not packed)",
+     "grams": 210
+    },
+    {
+     "desc": "1 cup, small curd (not packed)",
+     "grams": 225
+    }
+   ]
+  },
+  "172183": {
+   "name": "Egg, white, raw, fresh",
+   "per100g": {
+    "protein": 10.9,
+    "fat": 0.17,
+    "kcal": 52,
+    "carbs": 0.73
+   },
+   "portions": [
+    {
+     "desc": "1 large",
+     "grams": 33
+    },
+    {
+     "desc": "1 cup",
+     "grams": 243
+    }
+   ]
+  },
+  "172448": {
+   "name": "Tofu, firm, prepared with calcium sulfate and magnesium chloride (nigari)",
+   "per100g": {
+    "protein": 9.04,
+    "carbs": 2.85,
+    "kcal": 78,
+    "fat": 4.17
+   },
+   "portions": [
+    {
+     "desc": "0.5 cup",
+     "grams": 126
+    },
+    {
+     "desc": "0.25 block",
+     "grams": 81
+    },
+    {
+     "desc": "0.2 block",
+     "grams": 91
+    }
+   ]
+  },
+  "172716": {
+   "name": "Cookies, chocolate chip, commercially prepared, regular, higher fat, enriched",
+   "per100g": {
+    "protein": 5.1,
+    "fat": 24.72,
+    "carbs": 65.36,
+    "kcal": 492
+   },
+   "portions": [
+    {
+     "desc": "1 cookie",
+     "grams": 12.9
+    },
+    {
+     "desc": "1 cookie Pepperidge Farm Chocolate Chunk Pecan",
+     "grams": 12
+    },
+    {
+     "desc": "1 oz",
+     "grams": 28.35
+    },
+    {
+     "desc": "1 cookie (average weight of 1 cookie, variety of brands)",
+     "grams": 12.2
+    },
+    {
+     "desc": "1 cookie Pepperidge Farm Chocolate Chunk Pecan",
+     "grams": 12
+    },
+    {
+     "desc": "1 cookie, big (3-1/2\" - 4\" dia) (include Grandma brand)",
+     "grams": 40
+    },
+    {
+     "desc": "1 cookie, medium (2-1/4\" dia)",
+     "grams": 10
+    },
+    {
+     "desc": "1 cookie, large (include Keebler Rich 'n Chips, Pecan Chips Delux)",
+     "grams": 14
+    },
+    {
+     "desc": "1 cookie, bite size (include Mini Chips Ahoy!)",
+     "grams": 2.2
+    }
+   ]
+  },
+  "173190": {
+   "name": "Alcoholic beverage, wine, table, red",
+   "per100g": {
+    "fat": 0,
+    "carbs": 2.61,
+    "kcal": 85,
+    "protein": 0.07
+   },
+   "portions": [
+    {
+     "desc": "1 fl oz",
+     "grams": 29.4
+    },
+    {
+     "desc": "1 serving (5 fl oz)",
+     "grams": 147
+    }
+   ]
+  },
+  "173210": {
+   "name": "Beverages, Energy drink, RED BULL",
+   "per100g": {
+    "protein": 0.46,
+    "fat": 0,
+    "carbs": 10.23,
+    "kcal": 43
+   },
+   "portions": [
+    {
+     "desc": "1 can 8.4 fl oz",
+     "grams": 258
+    },
+    {
+     "desc": "1 serving 12 fl oz",
+     "grams": 369
+    },
+    {
+     "desc": "1 serving 16 fl oz",
+     "grams": 492
+    }
+   ]
+  },
+  "173410": {
+   "name": "Butter, salted",
+   "per100g": {
+    "kcal": 717,
+    "fat": 81.11,
+    "carbs": 0.06,
+    "protein": 0.85
+   },
+   "portions": [
+    {
+     "desc": "1 pat (1\" sq, 1/3\" high)",
+     "grams": 5
+    },
+    {
+     "desc": "1 tbsp",
+     "grams": 14.2
+    },
+    {
+     "desc": "1 cup",
+     "grams": 227
+    },
+    {
+     "desc": "1 stick",
+     "grams": 113
+    }
+   ]
+  },
+  "173592": {
+   "name": "Salad dressing, ranch dressing, regular",
+   "per100g": {
+    "protein": 1.32,
+    "fat": 44.54,
+    "carbs": 5.9,
+    "kcal": 430
+   },
+   "portions": [
+    {
+     "desc": "1 tablespoon",
+     "grams": 15
+    },
+    {
+     "desc": "1 serving",
+     "grams": 30
+    }
+   ]
+  },
+  "173709": {
+   "name": "Fish, tuna, light, canned in water, drained solids (Includes foods for USDA's Food Distribution Program)",
+   "per100g": {
+    "fat": 0.96,
+    "kcal": 86,
+    "protein": 19.44,
+    "carbs": 0
+   },
+   "portions": [
+    {
+     "desc": "1 oz",
+     "grams": 28.35
+    },
+    {
+     "desc": "3 oz",
+     "grams": 85
+    },
+    {
+     "desc": "1 can",
+     "grams": 165
+    },
+    {
+     "desc": "1 cup, solid or chunks",
+     "grams": 154
+    },
+    {
+     "desc": "1 can (12.5 oz), drained",
+     "grams": 315
+    }
+   ]
+  },
+  "173735": {
+   "name": "Beans, black, mature seeds, cooked, boiled, without salt",
+   "per100g": {
+    "fat": 0.54,
+    "carbs": 23.71,
+    "kcal": 132,
+    "protein": 8.86
+   },
+   "portions": [
+    {
+     "desc": "1 cup",
+     "grams": 172
+    }
+   ]
+  },
+  "173884": {
+   "name": "Cereals ready-to-eat, GENERAL MILLS, CHEERIOS",
+   "per100g": {
+    "protein": 12.4,
+    "fat": 6.6,
+    "kcal": 372,
+    "carbs": 73.2
+   },
+   "portions": [
+    {
+     "desc": "1 cup (1 NLEA serving)",
+     "grams": 28
+    }
+   ]
+  },
+  "173905": {
+   "name": "Cereals, oats, regular and quick, unenriched, cooked with water (includes boiling and microwaving), without salt",
+   "per100g": {
+    "protein": 2.54,
+    "fat": 1.52,
+    "carbs": 12,
+    "kcal": 71
+   },
+   "portions": [
+    {
+     "desc": "1 cup",
+     "grams": 234
+    },
+    {
+     "desc": "1 tbsp",
+     "grams": 14.6
+    },
+    {
+     "desc": "0.75 cup",
+     "grams": 175
+    }
+   ]
+  },
+  "173944": {
+   "name": "Bananas, raw",
+   "per100g": {
+    "carbs": 22.84,
+    "kcal": 89,
+    "protein": 1.09,
+    "fat": 0.33
+   },
+   "portions": [
+    {
+     "desc": "1 cup, mashed",
+     "grams": 225
+    },
+    {
+     "desc": "1 cup, sliced",
+     "grams": 150
+    },
+    {
+     "desc": "1 extra small (less than 6\" long)",
+     "grams": 81
+    },
+    {
+     "desc": "1 small (6\" to 6-7/8\" long)",
+     "grams": 101
+    },
+    {
+     "desc": "1 medium (7\" to 7-7/8\" long)",
+     "grams": 118
+    },
+    {
+     "desc": "1 large (8\" to 8-7/8\" long)",
+     "grams": 136
+    },
+    {
+     "desc": "1 extra large (9\" or longer)",
+     "grams": 152
+    },
+    {
+     "desc": "1 NLEA serving",
+     "grams": 126
+    }
+   ]
+  },
+  "174032": {
+   "name": "Beef, ground, 85% lean meat / 15% fat, patty, cooked, broiled",
+   "per100g": {
+    "protein": 25.93,
+    "fat": 15.41,
+    "kcal": 250,
+    "carbs": 0
+   },
+   "portions": [
+    {
+     "desc": "3 oz",
+     "grams": 85
+    },
+    {
+     "desc": "1 patty (yield from 1/4 lb raw meat)",
+     "grams": 77
+    }
+   ]
+  },
+  "174266": {
+   "name": "Peanut butter, smooth style, with salt (Includes foods for USDA's Food Distribution Program)",
+   "per100g": {
+    "protein": 22.21,
+    "fat": 51.36,
+    "carbs": 22.31,
+    "kcal": 598
+   },
+   "portions": [
+    {
+     "desc": "2 tbsp",
+     "grams": 32
+    },
+    {
+     "desc": "1 cup",
+     "grams": 258
+    }
+   ]
+  },
+  "174289": {
+   "name": "Hummus, commercial",
+   "per100g": {
+    "protein": 7.78,
+    "fat": 17.82,
+    "carbs": 15,
+    "kcal": 237
+   },
+   "portions": [
+    {
+     "desc": "1 tbsp",
+     "grams": 15
+    },
+    {
+     "desc": "1 cup",
+     "grams": 246
+    }
+   ]
+  },
+  "174516": {
+   "name": "Turkey, retail parts, breast, meat only, cooked, roasted",
+   "per100g": {
+    "protein": 29.51,
+    "fat": 1.97,
+    "carbs": 0,
+    "kcal": 136
+   },
+   "portions": [
+    {
+     "desc": "1 breast",
+     "grams": 863
+    },
+    {
+     "desc": "3 oz",
+     "grams": 85
+    }
+   ]
+  },
+  "174683": {
+   "name": "Grapes, red or green (European type, such as Thompson seedless), raw",
+   "per100g": {
+    "fat": 0.16,
+    "protein": 0.72,
+    "carbs": 18.1,
+    "kcal": 69
+   },
+   "portions": [
+    {
+     "desc": "1 cup",
+     "grams": 151
+    },
+    {
+     "desc": "10 grapes",
+     "grams": 49
+    },
+    {
+     "desc": "1 NLEA serving",
+     "grams": 126
+    }
+   ]
+  },
+  "174852": {
+   "name": "Beverages, carbonated, cola, regular",
+   "per100g": {
+    "fat": 0.25,
+    "carbs": 10.36,
+    "kcal": 42,
+    "protein": 0
+   },
+   "portions": [
+    {
+     "desc": "1 fl oz",
+     "grams": 30.7
+    },
+    {
+     "desc": "1 can or bottle (12 fl oz)",
+     "grams": 370
+    },
+    {
+     "desc": "1 can or bottle (16 fl oz)",
+     "grams": 492
+    },
+    {
+     "desc": "1 drink, small (16 fl oz)",
+     "grams": 492
+    },
+    {
+     "desc": "1 drink, medium (22 fl oz)",
+     "grams": 676
+    },
+    {
+     "desc": "1 drink, large (32 fl oz)",
+     "grams": 984
+    },
+    {
+     "desc": "1 drink, extra large (44 fl oz)",
+     "grams": 1353
+    }
+   ]
+  },
+  "174899": {
+   "name": "Bagels, plain, enriched, with calcium propionate (includes onion, poppy, sesame)",
+   "per100g": {
+    "protein": 10.56,
+    "fat": 1.32,
+    "carbs": 52.38,
+    "kcal": 264
+   },
+   "portions": [
+    {
+     "desc": "1 bagel",
+     "grams": 99
+    },
+    {
+     "desc": "1 mini bagel (2-1/2\" dia)",
+     "grams": 26
+    },
+    {
+     "desc": "1 small bagel (3\" dia)",
+     "grams": 69
+    },
+    {
+     "desc": "1 medium bagel (3-1/2\" to 4\" dia)",
+     "grams": 105
+    },
+    {
+     "desc": "1 large bagel (4-1/2\")",
+     "grams": 131
+    },
+    {
+     "desc": "1 oz",
+     "grams": 28.35
+    }
+   ]
+  },
+  "174924": {
+   "name": "Bread, white, commercially prepared (includes soft bread crumbs)",
+   "per100g": {
+    "fat": 3.33,
+    "carbs": 49.42,
+    "kcal": 266,
+    "protein": 8.85
+   },
+   "portions": [
+    {
+     "desc": "1 slice",
+     "grams": 29
+    },
+    {
+     "desc": "1 oz",
+     "grams": 28.35
+    },
+    {
+     "desc": "1 cup, crumbs",
+     "grams": 45
+    },
+    {
+     "desc": "1 cup, cubes",
+     "grams": 35
+    },
+    {
+     "desc": "1 slice, large",
+     "grams": 30
+    },
+    {
+     "desc": "1 slice",
+     "grams": 25
+    },
+    {
+     "desc": "1 slice crust not eaten",
+     "grams": 12
+    },
+    {
+     "desc": "1 slice, thin",
+     "grams": 20
+    },
+    {
+     "desc": "1 slice thin, crust not eaten",
+     "grams": 9
+    },
+    {
+     "desc": "1 slice, very thin",
+     "grams": 15
+    }
+   ]
+  },
+  "174944": {
+   "name": "Cake, yellow, commercially prepared, with chocolate frosting, in-store bakery",
+   "per100g": {
+    "protein": 3.16,
+    "fat": 17.75,
+    "carbs": 55.36,
+    "kcal": 379
+   },
+   "portions": [
+    {
+     "desc": "1 piece (1/12 of a cake)",
+     "grams": 144
+    },
+    {
+     "desc": "1 cake",
+     "grams": 1729
+    },
+    {
+     "desc": "1 piece (1/8 of 18 oz cake)",
+     "grams": 64
+    },
+    {
+     "desc": "1 oz",
+     "grams": 28.35
+    }
+   ]
+  },
+  "174982": {
+   "name": "Crackers, standard snack-type, regular",
+   "per100g": {
+    "kcal": 510,
+    "fat": 26.43,
+    "carbs": 61.3,
+    "protein": 6.64
+   },
+   "portions": [
+    {
+     "desc": "5 crackers",
+     "grams": 16
+    },
+    {
+     "desc": "5 crackers, regular size, round (1 serving)",
+     "grams": 16
+    },
+    {
+     "desc": "1 cracker, round",
+     "grams": 3.2
+    },
+    {
+     "desc": "1 cracker, rectangular",
+     "grams": 4
+    },
+    {
+     "desc": "1 cup crushed",
+     "grams": 52
+    }
+   ]
+  },
+  "174987": {
+   "name": "Croissants, butter",
+   "per100g": {
+    "protein": 8.2,
+    "fat": 21,
+    "carbs": 45.8,
+    "kcal": 406
+   },
+   "portions": [
+    {
+     "desc": "1 oz",
+     "grams": 28.35
+    },
+    {
+     "desc": "1 croissant, mini",
+     "grams": 28
+    },
+    {
+     "desc": "1 croissant, small",
+     "grams": 42
+    },
+    {
+     "desc": "1 croissant, medium",
+     "grams": 57
+    },
+    {
+     "desc": "1 croissant, large",
+     "grams": 67
+    }
+   ]
+  },
+  "175037": {
+   "name": "Tortillas, ready-to-bake or -fry, flour, refrigerated",
+   "per100g": {
+    "fat": 7.99,
+    "carbs": 49.38,
+    "kcal": 306,
+    "protein": 8.2
+   },
+   "portions": [
+    {
+     "desc": "1 tortilla",
+     "grams": 48
+    },
+    {
+     "desc": "1 oz",
+     "grams": 28.35
+    },
+    {
+     "desc": "1 tortilla medium (approx 6\" dia)",
+     "grams": 30
+    },
+    {
+     "desc": "1 package",
+     "grams": 407
+    },
+    {
+     "desc": "1 tortilla (approx 10\" dia)",
+     "grams": 72
+    },
+    {
+     "desc": "1 tortilla (approx 12\" dia)",
+     "grams": 117
+    },
+    {
+     "desc": "1 tortilla (approx 7-8\" dia)",
+     "grams": 49
+    }
+   ]
+  },
+  "175168": {
+   "name": "Fish, salmon, Atlantic, farmed, cooked, dry heat",
+   "per100g": {
+    "fat": 12.35,
+    "carbs": 0,
+    "protein": 22.1,
+    "kcal": 206
+   },
+   "portions": [
+    {
+     "desc": "3 oz",
+     "grams": 85
+    },
+    {
+     "desc": "0.5 fillet",
+     "grams": 178
+    }
+   ]
+  },
+  "175180": {
+   "name": "Crustaceans, shrimp, cooked",
+   "per100g": {
+    "protein": 23.98,
+    "fat": 0.28,
+    "carbs": 0.2,
+    "kcal": 99
+   },
+   "portions": [
+    {
+     "desc": "3 oz",
+     "grams": 85
+    }
+   ]
+  }
+ }
+}

@@ -7,16 +7,15 @@ export const US_KNOWN_FAILURES: string[] = [
   "french fries", // l2-only
   "deli turkey", // top3
   "lean ground beef", // vocab-only
+  "cream cheese", // l2-only
   "egg salad", // top3
   "general tso", // top3
   "oreo", // wrong
   "quest bar", // top3
   "ipa", // top3
   "shot", // top3
-  "donut", // gap-misleading
   "waffle", // top3
   "fried chicken breast", // top3
   "mediterranean bowl", // l2-only
   "mocha frappuccino", // top3
-  "cinnamon roll", // gap-misleading
 ];

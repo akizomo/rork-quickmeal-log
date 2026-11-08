@@ -43,7 +43,7 @@ const BUCKET_STAPLE: Identity[] = [
     id: 'us_rice_cup',
     label: 'Cooked Rice',
     primaryHome: { tab: 'ingredient', bucket: 'staple' },
-    defaultMacro: { kcal: 206, protein: 4, fat: 0.4, carbs: 45 },
+    defaultMacro: { kcal: 242, protein: 5, fat: 0.5, carbs: 52 },
     amount: {
       unit: 'g',
       default: 186,
@@ -347,7 +347,7 @@ const BUCKET_EGG: Identity[] = [
     id: 'us_egg_whites',
     label: 'Egg Whites',
     primaryHome: { tab: 'ingredient', bucket: 'egg' },
-    defaultMacro: { kcal: 52, protein: 11, fat: 0.2, carbs: 0.7 },
+    defaultMacro: { kcal: 62, protein: 13, fat: 0.2, carbs: 0.9 },
     amount: {
       unit: 'g',
       default: 120,
@@ -395,7 +395,7 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
     id: 'us_steak',
     label: 'Steak',
     primaryHome: { tab: 'ingredient', bucket: 'fatty_protein' },
-    defaultMacro: { kcal: 271, protein: 26, fat: 18, carbs: 0 },
+    defaultMacro: { kcal: 485, protein: 41, fat: 36, carbs: 0 },
     amount: {
       unit: 'g',
       default: 170,
@@ -417,7 +417,7 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
     id: 'us_pork_chop',
     label: 'Pork',
     primaryHome: { tab: 'ingredient', bucket: 'fatty_protein' },
-    defaultMacro: { kcal: 242, protein: 27, fat: 14, carbs: 0 },
+    defaultMacro: { kcal: 314, protein: 38, fat: 16.6, carbs: 0 },
     amount: {
       unit: 'g',
       default: 150,
@@ -486,7 +486,7 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
     id: 'us_salmon',
     label: 'Salmon',
     primaryHome: { tab: 'ingredient', bucket: 'fatty_protein' },
-    defaultMacro: { kcal: 208, protein: 28, fat: 10, carbs: 0 },
+    defaultMacro: { kcal: 309, protein: 33, fat: 18.5, carbs: 0 },
     amount: {
       unit: 'g',
       default: 150,
@@ -599,7 +599,7 @@ const BUCKET_DAIRY_SOY: Identity[] = [
     id: 'us_tofu_us',
     label: 'Tofu',
     primaryHome: { tab: 'ingredient', bucket: 'dairy_soy' },
-    defaultMacro: { kcal: 76, protein: 8, fat: 4.3, carbs: 2 },
+    defaultMacro: { kcal: 109, protein: 12.7, fat: 5.8, carbs: 4 },
     amount: {
       unit: 'g',
       default: 140,
@@ -732,7 +732,7 @@ const BUCKET_VEGGIES: Identity[] = [
     id: 'us_mixed_veg',
     label: 'Mixed Vegetables',
     primaryHome: { tab: 'ingredient', bucket: 'veggies' },
-    defaultMacro: { kcal: 59, protein: 4, fat: 0.2, carbs: 12 },
+    defaultMacro: { kcal: 118, protein: 5.2, fat: 0.3, carbs: 24 },
     amount: {
       unit: 'g',
       default: 182,
@@ -859,6 +859,31 @@ const BUCKET_FRUIT: Identity[] = [
       { key: 'honeydew', label: 'Honeydew', factor: { kcal: 1.28, carbs: 1.27 } },
     ],
     searchTags: ['melon', 'watermelon', 'cantaloupe', 'honeydew'],
+  },
+  {
+    id: 'us_fruit_other',
+    label: 'Other Fruit',
+    primaryHome: { tab: 'ingredient', bucket: 'fruit' },
+    defaultMacro: { kcal: 75, protein: 0.8, fat: 0.2, carbs: 20 },
+    amount: {
+      unit: 'g',
+      default: 150,
+      step: 30,
+      chips: [
+        { label: '1 cup', value: 150 },
+        { label: '2 cups', value: 300 },
+      ],
+    },
+    attributes: [
+      { key: 'pineapple', label: 'Pineapple', isDefault: true }, // USDA SR 169124 Pineapple, raw, 150g
+      { key: 'mango', label: 'Mango', factor: { kcal: 1.2, protein: 1.52, fat: 3.17, carbs: 1.14 } }, // USDA SR 169910 Mangos, raw
+      { key: 'peach', label: 'Peach', factor: { kcal: 0.78, protein: 1.69, fat: 2.08, carbs: 0.73 } }, // USDA SR 169928 Peaches, yellow, raw
+      { key: 'pear', label: 'Pear', factor: { kcal: 1.14, protein: 0.67, fat: 1.17, carbs: 1.16 } }, // USDA SR 169118 Pears, raw
+      { key: 'kiwi', label: 'Kiwi', factor: { kcal: 1.22, protein: 2.11, fat: 4.33, carbs: 1.12 } }, // USDA SR 168153 Kiwifruit, green, raw
+      { key: 'cherries', label: 'Cherries', factor: { kcal: 1.26, protein: 1.96, fat: 1.67, carbs: 1.22 } }, // USDA SR 171719 Cherries, sweet, raw
+      { key: 'plum', label: 'Plum', factor: { kcal: 0.92, protein: 1.3, fat: 2.33, carbs: 0.87 } }, // USDA SR 169949 Plums, raw
+    ],
+    searchTags: ['fruit', 'pineapple', 'mango', 'peach', 'pear', 'kiwi', 'cherries', 'cherry', 'plum', 'nectarine'],
   },
 ];
 
@@ -993,6 +1018,28 @@ const BUCKET_ADDED_FAT: Identity[] = [
     asAddon: { unit: 'g', unitAmount: 28, addedMacro: { kcal: 90, protein: 3, fat: 8, carbs: 3 }, defaultLabel: 'Nuts (1 oz)' },
     searchTags: ['nuts', 'almonds', 'walnuts', 'cashews', 'mixed nuts', 'trail mix'],
   },
+  {
+    id: 'us_dip_spread',
+    label: 'Dips & Spreads',
+    primaryHome: { tab: 'ingredient', bucket: 'added_fat' },
+    defaultMacro: { kcal: 71, protein: 2.3, fat: 5.3, carbs: 4.5 },
+    referenceDescription: '2 tbsp',
+    amount: {
+      unit: 'g',
+      default: 30,
+      step: 15,
+      chips: [
+        { label: '2 tbsp', value: 30 },
+        { label: '¼ cup', value: 60 },
+      ],
+    },
+    attributes: [
+      { key: 'hummus', label: 'Hummus', isDefault: true }, // USDA SR 174289 Hummus, commercial, 2 tbsp 30g
+      { key: 'guacamole', label: 'Guacamole', factor: { kcal: 0.56, protein: 0.2, fat: 0.69, carbs: 0.59 } }, // avocado (USDA SR 171706) 80% + 玉ねぎ・ライム等 20% の仮定。USDA SR に guacamole が無い
+      { key: 'cream_cheese', label: 'Cream cheese', factor: { kcal: 1.43, protein: 0.76, fat: 1.87, carbs: 0.36 } }, // USDA SR 173418 Cheese, cream, 2 tbsp 29g
+    ],
+    searchTags: ['hummus', 'guacamole', 'cream cheese', 'dip', 'spread'],
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -1018,8 +1065,10 @@ const BUCKET_SNACK_DRINK: Identity[] = [
       { key: 'potato', label: 'Potato Chips', isDefault: true },
       { key: 'tortilla', label: 'Tortilla Chips', factor: { kcal: 0.9, fat: 0.75, carbs: 1.07 } },
       { key: 'baked', label: 'Baked', factor: { kcal: 0.6, fat: 0.28, carbs: 1.07 } },
+      { key: 'popcorn', label: 'Popcorn (air-popped)', factor: { kcal: 0.7, protein: 1.81, fat: 0.13, carbs: 1.45 } }, // USDA SR 167959 Snacks, popcorn, air-popped, 28g
+      { key: 'pretzels', label: 'Pretzels', factor: { kcal: 0.69, protein: 1.41, fat: 0.08, carbs: 1.5 } }, // USDA SR 167555 Snacks, pretzels, hard, plain, salted, 28g
     ],
-    searchTags: ['chips', 'potato chips', 'tortilla chips', 'Lays', 'Doritos', 'Fritos'],
+    searchTags: ['chips', 'potato chips', 'tortilla chips', 'Lays', 'Doritos', 'Fritos', 'popcorn', 'pretzels'],
   },
   {
     id: 'us_cookies',
@@ -1103,7 +1152,7 @@ const BUCKET_SNACK_DRINK: Identity[] = [
     id: 'us_crackers_snack',
     label: 'Crackers',
     primaryHome: { tab: 'ingredient', bucket: 'snack_drink' },
-    defaultMacro: { kcal: 153, protein: 3, fat: 5, carbs: 25 },
+    defaultMacro: { kcal: 153, protein: 2, fat: 7.9, carbs: 18.4 },
     amount: {
       unit: 'g',
       default: 30,
@@ -1143,7 +1192,7 @@ const BUCKET_SNACK_DRINK: Identity[] = [
     id: 'us_energy_drink',
     label: 'Energy Drink',
     primaryHome: { tab: 'ingredient', bucket: 'snack_drink' },
-    defaultMacro: { kcal: 110, protein: 0, fat: 0, carbs: 27 },
+    defaultMacro: { kcal: 212, protein: 2, fat: 0, carbs: 50 },
     amount: {
       unit: 'ml',
       default: 473,
@@ -1182,7 +1231,7 @@ const BUCKET_SNACK_DRINK: Identity[] = [
     id: 'us_sweet_tea',
     label: 'Sweet Tea',
     primaryHome: { tab: 'ingredient', bucket: 'snack_drink' },
-    defaultMacro: { kcal: 91, protein: 0.2, fat: 0, carbs: 23 },
+    defaultMacro: { kcal: 165, protein: 0, fat: 0, carbs: 40 },
     amount: {
       unit: 'ml',
       default: 355,
@@ -1281,6 +1330,73 @@ const BUCKET_SNACK_DRINK: Identity[] = [
       { key: 'flavored', label: 'Flavored', factor: { kcal: 1.0, carbs: 1.5 } },
     ],
     searchTags: ['hard seltzer', 'White Claw', 'Truly', 'Bud Light seltzer', 'seltzer'],
+  },
+  {
+    id: 'us_pastry',
+    label: 'Pastries',
+    primaryHome: { tab: 'ingredient', bucket: 'snack_drink' },
+    defaultMacro: { kcal: 231, protein: 4.7, fat: 12, carbs: 26 },
+    referenceDescription: '1 pastry (croissant / donut / muffin / danish)',
+    amount: {
+      unit: 'piece',
+      default: 1,
+      chips: [
+        { label: '1', value: 1 },
+        { label: '2', value: 2 },
+      ],
+    },
+    attributes: [
+      { key: 'croissant', label: 'Croissant', isDefault: true }, // USDA SR 174987 Croissants, butter, medium 57g
+      { key: 'donut', label: 'Donut (glazed)', factor: { kcal: 1.04, protein: 0.82, fat: 1.14, carbs: 1.02 } }, // USDA SR 175062 Doughnuts, yeast-leavened, glazed, medium 60g
+      { key: 'muffin', label: 'Muffin', factor: { kcal: 1.83, protein: 1.09, fat: 1.52, carbs: 2.29 } }, // USDA SR 172765 Muffins, blueberry, commercially prepared, medium 113g
+      { key: 'danish', label: 'Danish / Cinnamon roll', factor: { kcal: 1.13, protein: 0.97, fat: 1.22, carbs: 1.11 } }, // USDA SR 172753 Danish pastry, cinnamon, 65g
+    ],
+    searchTags: ['pastry', 'croissant', 'donut', 'doughnut', 'muffin', 'danish', 'cinnamon roll', 'scone', 'bakery'],
+  },
+  {
+    id: 'us_dessert',
+    label: 'Cake & Sweets',
+    primaryHome: { tab: 'ingredient', bucket: 'snack_drink' },
+    defaultMacro: { kcal: 379, protein: 3.2, fat: 18, carbs: 55 },
+    referenceDescription: '1 slice / 1 piece of cake, cheesecake, pie or a brownie',
+    amount: {
+      unit: 'piece',
+      default: 1,
+      chips: [
+        { label: '1', value: 1 },
+        { label: '2', value: 2 },
+      ],
+    },
+    attributes: [
+      { key: 'cake', label: 'Cake slice', isDefault: true }, // USDA SR 174944 Cake, yellow, with chocolate frosting, 100g slice
+      { key: 'cheesecake', label: 'Cheesecake', factor: { kcal: 1.06, protein: 2.18, fat: 1.58, carbs: 0.58 } }, // USDA SR 172711 Cake, cheesecake, 1 NLEA piece 125g
+      { key: 'pie', label: 'Pie slice', factor: { kcal: 0.78, protein: 0.75, fat: 0.77, carbs: 0.77 } }, // USDA SR 175011 Pie, apple, commercially prepared, 1/8 of 9" 125g
+      { key: 'brownie', label: 'Brownie', factor: { kcal: 0.6, protein: 0.85, fat: 0.51, carbs: 0.65 } }, // USDA SR 172713 Cookies, brownies, commercially prepared, large square 56g
+    ],
+    searchTags: ['cake', 'cheesecake', 'pie', 'brownie', 'cupcake', 'dessert', 'sweets'],
+  },
+  {
+    id: 'us_juice',
+    label: 'Juice',
+    primaryHome: { tab: 'ingredient', bucket: 'snack_drink' },
+    defaultMacro: { kcal: 112, protein: 1.7, fat: 0.5, carbs: 26 },
+    referenceDescription: '1 cup (8 oz) of juice',
+    amount: {
+      unit: 'ml',
+      default: 240,
+      step: 60,
+      chips: [
+        { label: '8 oz', value: 240 },
+        { label: '12 oz', value: 355 },
+        { label: '16 oz', value: 473 },
+      ],
+    },
+    attributes: [
+      { key: 'orange', label: 'Orange juice', isDefault: true }, // USDA SR 169098 Orange juice, raw, 1 cup 248g
+      { key: 'apple', label: 'Apple juice', factor: { kcal: 1.02, protein: 0.14, fat: 0.65, carbs: 1.09 } }, // USDA SR 173933 Apple juice, canned or bottled, unsweetened, 1 cup 248g
+      { key: 'cranberry', label: 'Cranberry juice cocktail', factor: { kcal: 1.22, protein: 0.0, fat: 0.51, carbs: 1.33 } }, // USDA SR 171903 Cranberry juice cocktail, bottled, 1 cup 253g
+    ],
+    searchTags: ['juice', 'orange juice', 'apple juice', 'cranberry juice', 'OJ'],
   },
 ];
 

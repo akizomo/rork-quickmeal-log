@@ -781,7 +781,8 @@ const BUCKET_ASIAN_TAKEOUT: Identity[] = [
     id: 'us_sushi_roll',
     label: 'Sushi Roll',
     primaryHome: { tab: 'dish', bucket: 'asian_takeout' },
-    defaultMacro: { kcal: 500, protein: 18, fat: 14, carbs: 78 },
+    // 2026-11-07: 500kcal → 290kcal。FNDDS の寿司巻 8 切れは 230〜280kcal (30g/切れ)。500 は倍近く多かった (docs/ROADMAP.md)
+    defaultMacro: { kcal: 290, protein: 9, fat: 7.5, carbs: 46 },
     referenceDescription: '8 pieces / 1 roll (California / spicy tuna)',
     amount: {
       unit: 'slice',
@@ -903,7 +904,7 @@ const BUCKET_BREAKFAST: Identity[] = [
     searchTags: ['breakfast burrito', 'egg burrito', 'morning burrito'],
   },
   {
-    id: 'us_oatmeal',
+    id: 'us_oatmeal_bowl', // 2026-11-07: 食材の us_oatmeal と ID が重複していたため改名 (docs/ROADMAP.md)
     label: 'Oatmeal',
     primaryHome: { tab: 'dish', bucket: 'breakfast' },
     defaultMacro: { kcal: 300, protein: 10, fat: 8, carbs: 50 },

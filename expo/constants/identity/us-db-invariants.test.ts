@@ -8,11 +8,11 @@ const registry = buildRegistry('en-US', 'en-US');
 const all = Object.entries(registry.byBucket).flatMap(([bucket, ids]) => ids.map((i) => ({ bucket, i })));
 
 /**
- * 同じ ID の Identity が 2 つの入口 (食材タブと料理タブ) にある。
- * 保存済みのログは ID で引くため、どちらの定義 (1食 150kcal の食材 / 300kcal の料理) で表示されるかが
- * 登録順で決まってしまう (GLOBAL_BY_ID は後勝ち)。直すときは保存済みログの移行 (utils/log-migrations.ts) とセット。
+ * 既知の ID 重複 (増やさない)。`us_oatmeal` が食材タブと料理タブで重複していたが、料理側を `us_oatmeal_bowl` に
+ * 改名して解消した (2026-11-07)。保存済みのログは ID で引くため、重複していると食材のオートミール (g・150kcal) が
+ * 料理 (% ・300kcal) の定義で読まれてしまっていた。
  */
-const KNOWN_DUPLICATE_IDS: string[] = ['us_oatmeal'];
+const KNOWN_DUPLICATE_IDS: string[] = [];
 
 describe('US 食事データ — Identity の不変条件', () => {
   it('ID が全バケットで一意 (既知の重複を除く。増やさない・解消したら外す)', () => {

@@ -100,6 +100,34 @@ constants/identity/external-checks.ts (公式・USDA)          ├─▶ utils/s
 
 **読み取りの確からしさ**: 吉野家・ココイチ・モスは公式PDFを取得して `pdftotext` で表を直接読んだ (`table`)。マクドナルド・松屋・バーガーキング・やよい軒・幸楽苑・日高屋は公式ページの値を検索結果の要約経由で得た (`page`)。後者は表を直接は読んでいない。
 
+## 3.6 US の食材・料理の USDA 照合 (2026-11-07 追加)
+
+日本語版の成分表照合 (§1〜3) と同じ形を US に作った。**出典は USDA FoodData Central の2つ**: 食材は **SR Legacy** (2018年4月、`FoodData_Central_sr_legacy_food_csv_2018-04.zip`)、料理は **FNDDS** (米国人の食事調査 What We Eat in America の標準食品、`FoodData_Central_survey_food_csv_2022-10-28.zip`)。どちらも https://fdc.nal.usda.gov/download-datasets の公式配布 (取得 2026-11-07)。API (`DEMO_KEY`) は 1時間に10回までで全件に足りないため、CSV を使った。
+
+| 何を | 表 | 抜粋 | 検査 | 再生成 |
+|---|---|---|---|---|
+| 食材 (58件のうち52件) | `constants/identity/us-usda-links.ts` (fdcId・既定量の重さ・根拠) | `constants/reference/usda-sr-legacy.json` | `us-usda-verification.test.ts` | `bun scripts/usda-sync.ts <CSV のフォルダ>` / 差の一覧は `bun scripts/usda-report.ts` |
+| 料理 (57件のうち23件) | `constants/identity/us-fndds-links.ts` (幅の両端の fdcId・重さ) | `constants/reference/fndds.json` | `us-fndds-verification.test.ts` | `bun scripts/fndds-sync.ts <CSV のフォルダ>` / 差の一覧は `bun scripts/fndds-report.ts` |
+
+**食材**: 「既定値は既定量ぶんの合計」なので、USDA の100gあたり × 既定量の重さと比べる (kcal は 20% かつ 15kcal、P/F/C は 30% かつ 4g を超えたら食い違い)。重さが USDA の portion (gram_weight) から取れたものは `portion`、通例値・換算は `assumed`。**初回の照合で 10件が食い違っていた** (多くは「既定量が 170g なのに値が 100g ぶん」という基準量の取り違え):
+
+| 食材 | 修正前 → 修正後 (既定量ぶんの kcal) | 理由 |
+|---|---|---|
+| ステーキ (170g) | 271 → 485 | リブアイ 6 oz。値が約 100g ぶんだった |
+| サーモン (150g) | 208 → 309 | 同上 |
+| ポークチョップ (150g) | 242 → 314 | 同上 |
+| 豆腐 (140g) | 76 → 109 | 同上 |
+| ミックス野菜 (182g) | 59 → 118 | 約半量ぶんだった |
+| エナジードリンク (473ml) | 110 → 212 | 110 は 8.4oz 缶の値。既定量は 16oz |
+| スイートティー (355ml) | 91 → 165 | USDA の RTD レモンティー (加糖) は 45kcal/100g |
+| ごはん (186g) | 206 → 242 | 206 は 1 cup (158g) の値だった |
+| 卵白 (120g) | 52 → 62 | 100g ぶんだった |
+| クラッカー (30g) | P3/F5/C25 → P2/F7.9/C18.4 | kcal は合っていたが内訳が USDA と違った |
+
+**料理**: FNDDS は標準の1人前 (チェーンより小さめ) なので、1点でなく**幅**で見る: 下端×0.8 〜 上端×1.35 の内側。**初回で 3件が幅の外**: 寿司巻 8切れ (500 → **290kcal に修正**。FNDDS は 230〜280) と、`us_quesadilla` (600) / `us_burrito_bowl` (700) は FNDDS より外食の盛りが大きいことが理由で、**誤りではないと見て凍結** (`KNOWN_DEVIATIONS`、理由つき)。残りの料理 34件は、FNDDS に近い料理が無い・組み合わせ料理・種類が広い等で照合していない (理由は `FNDDS_UNLINKED` に1件ずつ)。
+
+**US で照合していないもの**: ① 食材のうち `us_sausage` / `us_plant_milk` / `us_protein_bar` / `us_coffee_drink` / `us_smoothie` / `us_cocktail` (理由は `USDA_UNLINKED`) ② 料理の 34件 (上記) ③ **チェーン公式の栄養表との照合** — チェーンの公式サイトは JavaScript で描画され取得できなかった。USDA の Branded Foods (商品ごとの表示値) は API なら引けるが `DEMO_KEY` の上限 (10回/時間) で足りない。API キーの取得 (無料・メール登録) が要る。**チェーン基準の料理 (Big Mac・Chipotle・Olive Garden 等) の公式値との照合は未実施**。
+
 ## 4. 照合していないもの (できないもの) と理由
 
 1. **%基準の料理のうち 75行** (§3.5 の26行を除く) — チャーハン・オムライス・ラーメンの大半・つけ麺・担々麺・焼そば・冷麺・そば・そうめん・パスタ・寿司・鍋・弁当の一部・ピザ・中華おかず・和風おかず・ガパオ・ビビンバ。チェーンの公式が取れなかったもの: **かつや** (検索結果なし)、**はなまるうどん** (公式PDFの URL が HTML を返し取得不可)、**丸亀製麺** (栄養成分の一覧が見つからない)、**リンガーハット・餃子の王将** (数値なし)、**大戸屋** (証明書の期限切れで個別ページ不可)、**サイゼリヤ** (アレルギー情報ページに数値が出ない)、**スシロー** (一覧PDFなし、店舗ページに1皿の値のみ)、**日高屋** (kcal のみ)、**ケンタッキー** (公式の栄養成分表の所在が見つからない)。**次の候補**: ラーメン・パスタ・寿司は、チェーンが公式の一覧を公開していても検索で拾えないものが多い。個別にURLを教えてもらえれば、PDFを取得して同じ方法で読める。」

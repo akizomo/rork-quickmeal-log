@@ -181,7 +181,7 @@ export const US_PURE_ADDONS: Addon[] = [
     unitLabel: '1 tbsp',
     addedMacro: { kcal: 50, protein: 0, fat: 0, carbs: 13 },
     allowedIdentityIds: [
-      'us_pancakes_waffles', 'us_eggs_bacon', 'us_oatmeal',
+      'us_pancakes_waffles', 'us_eggs_bacon', 'us_oatmeal', 'us_oatmeal_bowl',
       'us_chicken_and_waffles', 'us_breakfast_sandwich',
     ],
   },
@@ -192,7 +192,7 @@ export const US_PURE_ADDONS: Addon[] = [
     unitAmount: 15,
     unitLabel: '2 tbsp',
     addedMacro: { kcal: 25, protein: 0, fat: 2, carbs: 2 },
-    allowedIdentityIds: ['us_pancakes_waffles', 'us_oatmeal'],
+    allowedIdentityIds: ['us_pancakes_waffles', 'us_oatmeal', 'us_oatmeal_bowl'],
   },
   {
     id: 'us_jam',
@@ -201,7 +201,7 @@ export const US_PURE_ADDONS: Addon[] = [
     unitAmount: 18,
     unitLabel: '1 tbsp',
     addedMacro: { kcal: 50, protein: 0, fat: 0, carbs: 13 },
-    allowedIdentityIds: ['us_avocado_toast', 'us_oatmeal'],
+    allowedIdentityIds: ['us_avocado_toast', 'us_oatmeal', 'us_oatmeal_bowl'],
   },
   {
     id: 'us_honey',
@@ -210,7 +210,7 @@ export const US_PURE_ADDONS: Addon[] = [
     unitAmount: 21,
     unitLabel: '1 tbsp',
     addedMacro: { kcal: 60, protein: 0, fat: 0, carbs: 16 },
-    allowedIdentityIds: ['us_avocado_toast', 'us_oatmeal', 'us_tenders_nuggets'],
+    allowedIdentityIds: ['us_avocado_toast', 'us_oatmeal', 'us_oatmeal_bowl', 'us_tenders_nuggets'],
   },
   {
     id: 'us_peanut_butter_packet',
@@ -219,7 +219,7 @@ export const US_PURE_ADDONS: Addon[] = [
     unitAmount: 15,
     unitLabel: '1 tbsp',
     addedMacro: { kcal: 95, protein: 3.5, fat: 8, carbs: 3 },
-    allowedIdentityIds: ['us_oatmeal', 'us_avocado_toast'],
+    allowedIdentityIds: ['us_oatmeal', 'us_oatmeal_bowl', 'us_avocado_toast'],
   },
   {
     id: 'us_butter_pat',
@@ -251,7 +251,7 @@ export const US_PURE_ADDONS: Addon[] = [
     unitAmount: 50,
     unitLabel: '50g',
     addedMacro: { kcal: 25, protein: 0.4, fat: 0.2, carbs: 6 },
-    allowedIdentityIds: ['us_oatmeal', 'us_pancakes_waffles'],
+    allowedIdentityIds: ['us_oatmeal', 'us_oatmeal_bowl', 'us_pancakes_waffles'],
   },
   {
     id: 'us_banana_slice',
@@ -260,7 +260,7 @@ export const US_PURE_ADDONS: Addon[] = [
     unitAmount: 50,
     unitLabel: '½ banana',
     addedMacro: { kcal: 45, protein: 0.5, fat: 0.1, carbs: 11 },
-    allowedIdentityIds: ['us_oatmeal', 'us_pancakes_waffles'],
+    allowedIdentityIds: ['us_oatmeal', 'us_oatmeal_bowl', 'us_pancakes_waffles'],
   },
 
   // ---- Protein boosters ----
