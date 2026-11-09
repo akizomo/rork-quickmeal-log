@@ -710,3 +710,36 @@ describe('buildIdentityAmountEditConfig', () => {
 
 // buildIngredientAmountEditConfig と QuickIngredientSheet は到達不能なため削除済み
 // (Identity-first IA 移行により openQuickIngredientSheet の呼び出し元が消滅)。
+
+describe('buildIdentityAmountEditConfig: 書かれた値は必ず有効 (量が化けない)', () => {
+  it('刻み 25g の食材に 3oz=85g のチップ → 格子を 1g に落とし、85 が 75 に丸められない', () => {
+    const config = buildIdentityAmountEditConfig({
+      unit: 'g', default: 100, step: 25,
+      chips: [{ label: '3 oz', value: 85 }, { label: '4 oz', value: 113 }, { label: '6 oz', value: 170 }],
+    });
+    expect(snapToStep(85, config)).toBe(85);
+    expect(snapToStep(113, config)).toBe(113);
+  });
+
+  it('小さじ 5g のチップが min(10g) を下回らない', () => {
+    const config = buildIdentityAmountEditConfig({
+      unit: 'g', default: 14, step: 10, chips: [{ label: '1 tsp', value: 5 }, { label: '1 tbsp', value: 14 }],
+    });
+    expect(isValidAmount(5, config)).toBe(true);
+  });
+
+  it('大 1.3個・小 0.75個 が混在しても格子に載る', () => {
+    const config = buildIdentityAmountEditConfig({
+      unit: 'piece', default: 1, chips: [{ label: 'small', value: 0.75 }, { label: 'large', value: 1.3 }],
+    });
+    expect(isValidAmount(1.3, config)).toBe(true);
+    expect(isValidAmount(0.75, config)).toBe(true);
+  });
+
+  it('書かれた値が元から載る食材は従来どおりの格子のまま', () => {
+    const config = buildIdentityAmountEditConfig({
+      unit: 'g', default: 100, step: 25, chips: [{ label: '50g', value: 50 }, { label: '100g', value: 100 }],
+    });
+    expect(config.step).toBe(25);
+  });
+});

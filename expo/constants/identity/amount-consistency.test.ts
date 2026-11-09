@@ -13,7 +13,7 @@
  * ステッパー刻みから分離した (数え物 0.25 / % 1) ことで全単位が整合したため
  * 除外を解除した。
  */
-import { ALL_IDENTITIES } from './index';
+import { ALL_IDENTITIES, ALL_US_IDENTITIES } from './index';
 import { buildIdentityAmountEditConfig, isValidAmount } from '@/utils/amount-edit';
 import { AmountSpec } from '@/types/identity';
 
@@ -30,7 +30,8 @@ function checkSpec(label: string, spec: AmountSpec) {
 }
 
 describe('Identity amount spec consistency (min/step/chips alignment)', () => {
-  for (const identity of ALL_IDENTITIES) {
+  // US 版も対象 (以前は日本版だけで、oz チップ 85g/113g が 25g 刻みの格子外だった27件を見逃した)。
+  for (const identity of [...ALL_IDENTITIES, ...ALL_US_IDENTITIES]) {
     checkSpec(identity.id, identity.amount);
     for (const attr of identity.attributes ?? []) {
       if (attr.amount) checkSpec(`${identity.id}.attributes.${attr.key}`, attr.amount);

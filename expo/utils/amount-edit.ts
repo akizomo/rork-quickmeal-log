@@ -317,15 +317,29 @@ export function buildIdentityAmountEditConfig(
   const isCount = COUNT_UNITS.has(spec.unit);
   const stepperStep = spec.step ?? (isPercent ? 10 : 1);
 
-  // 入力グリッド。ステッパーより細かく打てることが目的なので、単位ごとに固定。
-  // 数え物: 1/4個 まで。% : 1% まで (67%/133% 等の非10刻みチップが実在する)。
-  // g/ml: 従来どおり spec.step と一致 (10g 刻みの食材は 10g 単位のまま)。
-  const step = isCount ? 0.25 : isPercent ? 1 : stepperStep;
+  // 入力グリッド。ステッパーより細かく打てることが目的。基本は単位ごとに固定:
+  // 数え物 1/4個、% は 1%、g/ml は spec.step (10g 刻みの食材は 10g 単位のまま)。
+  // ただし下の fit で、書かれた値が載らないときだけ細かくする。
   const presets: number[] = (spec.chips ?? []).map((c) => c.value);
+  // 入力グリッドは「spec が書いた値 (既定・チップ) をすべて載せられる刻み」。
+  // 例: 刻み 25g の食材に 3oz=85g / 4oz=113g のチップがあると、85 は格子外になり、
+  // ダイアログを開いた瞬間に snapToStep が 75 へ黙って丸める (量が化ける)。
+  // 書かれた値を格子に合わせて丸めるのではなく、格子のほうを細かくする。
+  const authoredValues = [spec.default, ...presets];
+  const onGrid = (v: number, g: number) => {
+    const q = v / g;
+    return Math.abs(q - Math.round(q)) < EPS;
+  };
+  const fit = (candidates: readonly number[]): number =>
+    candidates.find((g) => authoredValues.every((v) => onGrid(v, g))) ?? candidates[candidates.length - 1];
+  // 数え物: 1/4個 → (大 1.3個・小 0.75個 等が混在する食材は 1/20個) / g・ml: spec 刻み → 1 / %: 常に 1
+  const step = isCount ? fit([0.25, 0.05]) : isPercent ? 1 : fit([stepperStep, 1]);
 
   // min の既定は「その単位で最小の意味ある量」。入力グリッドは0起点なので、
   // min を動かしてもチップ値の有効性には影響しない。
-  const derivedMin = spec.min ?? (isPercent ? 10 : isCount ? 0.25 : stepperStep);
+  // 書かれた最小のチップ (小さじ 1 = 5g 等) が min を下回ると、有効な値として扱われない。
+  const smallestAuthored = Math.min(spec.default, ...presets);
+  const derivedMin = spec.min ?? Math.min(isPercent ? 10 : isCount ? 0.25 : stepperStep, smallestAuthored);
   const lastChipValue = presets.at(-1);
   const derivedMax =
     spec.max ??
