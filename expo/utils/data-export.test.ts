@@ -81,11 +81,11 @@ describe('buildFoodCsv', () => {
 
   it('gives numeric amount + unit, specific food name, input kind; sorted, filtered, escaped', () => {
     const lines = buildFoodCsv(logs, 30, NOW).split('\n');
-    expect(lines[0]).toBe('date,time,meal,food,category,detail,amount_value,amount_unit,amount_label,add_ons,input,kcal,protein_g,fat_g,carbs_g');
+    expect(lines[0]).toBe('date,time,meal,food,category,detail,amount_value,amount_unit,amount_label,standard_serving,add_ons,input,kcal,protein_g,fat_g,carbs_g');
     expect(lines).toHaveLength(4); // header + 3 (the 2026-10-01 log is out of range)
     // 「普通」でも 150 g と分かる。bucket 名は category へ
-    expect(lines[1]).toBe('2026-11-08,08:05,breakfast,ごはん,ごはんパン麺,,150,g,普通,,standard_amount_tap,252,3.8,0.5,55.7');
-    expect(lines[2]).toBe('2026-11-08,12:30,lunch,ごはん,ごはんパン麺,,220,g,大,,adjusted,343,5.5,0.7,82');
+    expect(lines[1]).toBe('2026-11-08,08:05,breakfast,ごはん,ごはんパン麺,,150,g,普通,150 g,,standard_amount_tap,252,3.8,0.5,55.7');
+    expect(lines[2]).toBe('2026-11-08,12:30,lunch,ごはん,ごはんパン麺,,220,g,大,150 g,,adjusted,343,5.5,0.7,82');
     // Identity なしの古い記録: 倍率は x_standard_portion、カンマは引用符で囲む
     expect(lines[3]).toContain('"カレー, 辛口"');
     expect(lines[3]).toContain(',1.5,x_one_standard_serving,');
@@ -99,6 +99,8 @@ describe('buildFoodCsv', () => {
     ], 30, NOW).split('\n').slice(1);
     expect(rows[0]).toContain(',2,count,');
     expect(rows[1]).toContain(',80,percent_of_one_standard_serving,');
+    // 標準の中身も一緒に出る (丼は説明から、g の食品は標準量から)
+    expect(rows[1]).toContain('ご飯200g + 主菜80g (1人前)');
   });
 
   it("'all' includes everything", () => {

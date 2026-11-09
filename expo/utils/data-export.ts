@@ -17,6 +17,7 @@ import type {
 import { migrateAmountValueForUnit } from './amount-migration';
 import { getEffectiveAmountSpec } from './identity-attribute';
 import { getLogDisplayInfo } from './log-display';
+import { UNIT_LABELS } from './unit-labels';
 
 export type ExportFormat = 'food' | 'daily';
 /** 日数 / すべて / 日付を指定した範囲 (YYYY-MM-DD、両端を含む。週次ふり返りの「この週」で使う) */
@@ -36,12 +37,14 @@ export interface ExportSource {
 //                count   (個・本・枚・切・皿などの数え物。単位名は amount_label の「2本」などに出る)
 //                percent_of_one_standard_serving (標準の1人前を 100 とした割合。丼・定食・麺など。g のデータは無い)
 //                x_one_standard_serving (標準の1人前の何倍か。古い記録)
+//   standard_serving: その食品の「標準」が何を指すか (例: 「ご飯200g + 主菜80g (1人前)」「150 g」)。
+//                percent_of_one_standard_serving の 100 は、これ 1つぶん
 //   どの単位でも kcal / protein_g / fat_g / carbs_g は常に実数で、量の絶対的な目安になる
 //   input: standard_amount_tap (標準量をタップ=量は実測ではない) / adjusted (量を選んだ) /
 //          manual_numbers (kcal・PFC を数値で直接入力) / my_food (保存した My食品)
 const FOOD_HEADER = [
   'date', 'time', 'meal', 'food', 'category', 'detail',
-  'amount_value', 'amount_unit', 'amount_label', 'add_ons', 'input',
+  'amount_value', 'amount_unit', 'amount_label', 'standard_serving', 'add_ons', 'input',
   'kcal', 'protein_g', 'fat_g', 'carbs_g',
 ];
 const DAILY_HEADER = [
@@ -118,6 +121,22 @@ function amountParts(log: FoodLog): { value: number | ''; unit: string } {
   return { value: '', unit: '' };
 }
 
+/**
+ * 「標準」が何を指すか。丼・定食などは Identity の説明 (referenceDescription) を使い、
+ * 説明が無い g / ml / 数え物は、標準量そのもの (150 g など) を返す。
+ * 種類 (Attribute) が量の単位を上書きしているときは、Identity の説明は当てはまらないので使わない。
+ */
+function standardServing(log: FoodLog, uiLanguage: AppLocale): string {
+  const identity = log.identityId ? getIdentity(log.identityId) : undefined;
+  if (!identity) return '';
+  const attrOverridesAmount = !!identity.attributes?.find((a) => a.key === log.attrKey)?.amount;
+  if (!attrOverridesAmount && identity.referenceDescription) return identity.referenceDescription;
+  const spec = getEffectiveAmountSpec(identity, log.attrKey);
+  if (spec.unit === 'percent') return '';
+  const suffix = spec.unitLabel ?? UNIT_LABELS[uiLanguage][spec.unit];
+  return `${spec.default} ${suffix}`;
+}
+
 /** どう入力された記録か。標準量のタップは「量が実測ではない」ことが AI の解釈に効く */
 function inputKind(log: FoodLog): string {
   if (log.macroManual) return 'manual_numbers';
@@ -157,6 +176,7 @@ export function buildFoodCsv(
         amount.value,
         amount.unit,
         info.amountText,
+        standardServing(l, uiLanguage),
         addOns,
         inputKind(l),
         Math.round(l.macro.kcal),
