@@ -1132,6 +1132,7 @@
     "shareFile": "共有する (CSV ファイル)",
     "destinations": "共有先は、メール (添付)・ファイルに保存・Drive・AI アプリなどから選べます。",
     "fileDialogTitle": "Hachibu の記録 (CSV)",
+    "fileSubject": "Hachibu の食事データ ({{range}})",
     "fileFailedTitle": "ファイルを共有できませんでした",
     "fileFailedMessage": "かわりに、本文のテキストで共有できます。",
     "share": "テキストで共有"

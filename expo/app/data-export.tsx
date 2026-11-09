@@ -1,6 +1,6 @@
 import { Stack, useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useMemo, useState } from 'react';
-import { Alert, ScrollView, Share, StyleSheet, View } from 'react-native';
+import { Alert, Platform, ScrollView, Share, StyleSheet, View } from 'react-native';
 import * as Sharing from 'expo-sharing';
 import { File, Paths } from 'expo-file-system';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -49,6 +49,9 @@ export default function DataExportRoute() {
 
   const periodLabel = (p: 7 | 30 | 90 | 'all') => t(p === 'all' ? 'dataExport.periodAll' : `dataExport.period${p}`);
 
+  // 件名に入れる期間の言い方 (週に固定のときは日付、そうでなければ「30日」など)
+  const rangeText = typeof period === 'object' ? `${period.from} - ${period.to}` : periodLabel(period);
+
   const handleShare = useCallback(() => {
     void Share.share({ message: csv });
   }, [csv]);
@@ -66,8 +69,13 @@ export default function DataExportRoute() {
   // メール (添付)・「ファイルに保存」・Drive・AI アプリなどは、この共有シートから選べる。
   const handleFile = useCallback(async () => {
     try {
-      if (!(await Sharing.isAvailableAsync())) throw new Error('sharing unavailable');
       const file = await writeCsvFile();
+      if (Platform.OS === 'ios') {
+        // iOS: 共有先がメールのとき件名になる (件名を渡せるのは RN の Share だけ。expo-sharing には口が無い)
+        await Share.share({ url: file.uri }, { subject: t('dataExport.fileSubject', { range: rangeText }) });
+        return;
+      }
+      if (!(await Sharing.isAvailableAsync())) throw new Error('sharing unavailable');
       await Sharing.shareAsync(file.uri, {
         mimeType: 'text/csv',
         UTI: 'public.comma-separated-values-text',
@@ -79,7 +87,7 @@ export default function DataExportRoute() {
         { text: t('dataExport.share'), onPress: handleShare },
       ]);
     }
-  }, [writeCsvFile, t, handleShare]);
+  }, [writeCsvFile, t, handleShare, rangeText]);
 
   return (
     <>

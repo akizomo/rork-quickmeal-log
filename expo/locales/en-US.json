@@ -1132,6 +1132,7 @@
     "shareFile": "Share (CSV file)",
     "destinations": "Choose where to send it: email (attached), Files, Drive, an AI app, and more.",
     "fileDialogTitle": "Hachibu log (CSV)",
+    "fileSubject": "Hachibu food data ({{range}})",
     "fileFailedTitle": "Couldn't share the file",
     "fileFailedMessage": "You can share it as text instead.",
     "share": "Share as text"
