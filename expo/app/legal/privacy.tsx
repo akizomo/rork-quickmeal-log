@@ -9,7 +9,7 @@ import { useLocale } from '@/hooks/useLocale';
 const CONTENT = {
   ja: {
     title: 'プライバシーポリシー',
-    lastUpdated: '最終更新日: 2026-11-06',
+    lastUpdated: '最終更新日: 2026-11-09',
     intro: 'Hachibu (以下「本アプリ」) は、ユーザーのプライバシーを尊重します。本ポリシーは、本アプリが収集する情報、利用目的、および管理方法について説明します。',
     sections: [
       {
@@ -43,6 +43,10 @@ const CONTENT = {
           {
             title: '1.7 使われ方 (匿名の利用状況)',
             body: 'アプリの改善のため、PostHog を使って、どの画面を開いたか、記録や購入などの操作があったかといった利用状況を匿名で送信します。送るのは、画面名や操作の種類、アプリのバージョン、端末の種類、言語、導入からの日数といった区分値だけです。食事の内容、体重・体脂肪率・身長・年齢などの数値、検索した言葉、入力した文字は送りません。氏名・メールアドレス・広告用の識別子 (IDFA) も使わず、IP アドレスは保存しない設定にしています。設定の「使われ方」からいつでも止められます。',
+          },
+          {
+            title: '1.8 データの書き出し (利用者が選んだときだけ)',
+            body: '設定、または週次の振り返りの最後で「データを書き出す」を押したときだけ、食事ログ・体重・運動などの記録を CSV にして、端末の共有シートに渡します。渡す先 (メール、ファイル、AI アプリなど) は利用者が選び、渡したあとのデータの扱いは、選んだアプリの方針に従います。本アプリが自動で送ることはなく、プロフィールや設定は含まれません。',
           },
         ],
       },
@@ -80,7 +84,7 @@ const CONTENT = {
   },
   en: {
     title: 'Privacy Policy',
-    lastUpdated: 'Last updated: November 6, 2026',
+    lastUpdated: 'Last updated: November 9, 2026',
     intro: 'Hachibu (the "App") respects your privacy. This policy explains what information the App collects, how it is used, and how it is managed.',
     sections: [
       {
@@ -114,6 +118,10 @@ const CONTENT = {
           {
             title: '1.7 Usage (anonymous)',
             body: 'To improve the App, it uses PostHog to send anonymous usage information, such as which screens you open and whether actions like logging or purchasing happened. Only categories are sent: screen and action types, app version, device type, language, and days since install. What you ate, numbers such as weight, body fat, height and age, search words, and typed text are never sent. The App does not use your name, email, or advertising ID (IDFA), and IP addresses are not stored. You can turn this off anytime in Settings > Usage.',
+          },
+          {
+            title: '1.8 Data Export (only when you choose)',
+            body: 'Only when you tap "Export data" (in Settings, or at the end of the weekly recap), the App turns your records, such as meals, weight, and exercise, into a CSV file and hands it to your device\'s share sheet. You choose where it goes, for example email, Files, or an AI app. Once shared, the data is handled under the policy of the app you chose. The App never sends it by itself, and your profile and settings are not included.',
           },
         ],
       },

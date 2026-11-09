@@ -296,3 +296,26 @@ Guideline 1.4.1: We added a "Calculations & Sources" page that explains each cal
 - Sentry の `SENTRY_AUTH_TOKEN` を EAS に登録してスタックトレースを読めるようにする
 - バーコード機能を出すか、カメラの許可の説明文を外すか決める (出す場合は導線・Open Food Facts の出典表示・プライバシー回答の見直し)
 - iOS のアプリ内「更新があります」案内 ([ROADMAP.md](./ROADMAP.md) の未着手項目)
+
+---
+
+## 7. 米国ストアで出す前の確認 (2026-11-09 追記)
+
+英語の掲載文は [STORE_EN.md](./STORE_EN.md)、US 向けの品質の物差しと公開条件は [US_CLOSED_TEST.md](./US_CLOSED_TEST.md)。ここでは **審査で止まりやすいところ**だけを並べる。
+
+| 項目 | 状態 | 内容 |
+|---|---|---|
+| 英語のプライバシーポリシー | ✅ コード有 (`web/public/en/privacy.html`)・**未公開** | main に push して Vercel に出す → `https://hachibu.vercel.app/en/privacy` を一度開く → App Store Connect の米国向けローカライズの URL に入れる。LP のフッターも英語表示のときはこちらへ向く。アプリ内の画面 ([privacy.tsx](../expo/app/legal/privacy.tsx)) は元から英語あり。1.8「データの書き出し」を日英に足した |
+| App のプライバシー | 変更なし | §4-3 のまま。書き出しは利用者が選んだときだけ端末の共有シートへ渡し、開発者側へは送らないので「収集」に当たらない。PostHog (使用状況データ) は **1.0.2 から入るので、その版を出す前に入力が要る** |
+| 利用規約 (EULA) | 要判断 | Web の `terms` は日本語のみ。Apple 標準の EULA を使うなら Web の英語版は要らない。独自規約を使うなら英語の Web ページを足す (アプリ内の規約は英語あり) |
+| サブスクの米国価格・英語表示 | **未決** | [STORE_EN.md](./STORE_EN.md) §7 に提案 ($1.99 / $19.99)。審査用スクリーンショットは、暫定で英語・ドル建ての実機画像 (2026-10-18) を使っている (§1 の 2026-10-27)。米国向けにはそのまま使えるが、**今の価格 (ドル建ての新価格) の画面で撮り直す**のが確実 |
+| 審査メモ (英語) | 下を足す | §4-4 の文面に、米国の食事データの選び方を1行足す |
+| EU を配信先に含めるか | 要判断 | 含めるなら DSA の取引者情報の公開 (個人だと住所などが出る) と、分析の同意の取り方が要る。US だけなら後回し |
+| 実機での起動確認 | **未了** | 依存を `expo install --fix` でそろえた (SDK 58 のパッチ遅れが起動時クラッシュの原因だった) あと、シミュレーターでは起動・書き出し・共有シートまで通ったが、**TestFlight の実機は未確認**。提出前に1回通す |
+| US の検索・データ品質 | 公開の条件に届かず | 辞書・別名にない新しい語の1位正解 55.8% (目安 80%)。英語テスター 5〜10 人は未実施。審査は通るが、初見の離脱につながる。公開の判断はあなたに委ねる |
+
+**審査メモに足す1行 (米国向け)**
+```
+The food database defaults to Japanese foods. For US testing, open Settings > Food List > American (and Settings > Language > English (US)) to see US dishes, chain-restaurant items and US serving sizes.
+```
+

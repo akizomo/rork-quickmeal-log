@@ -16,8 +16,8 @@
 | Bundle ID / Package | `app.akizony.hachibu` |
 | Category (primary) | Health & Fitness |
 | Contact email | contact@akizony.com |
-| Privacy policy URL | *(Vercel published URL)* |
-| Support URL | *(Vercel about page URL)* |
+| Privacy policy URL | `https://hachibu.vercel.app/en/privacy` (English page added 2026-11-09; the JP policy is `/privacy`) |
+| Support URL | `https://hachibu.vercel.app/` (the LP has an English toggle; contact@akizony.com is linked in the footer) |
 
 ---
 
@@ -236,6 +236,8 @@ Questions or feedback: contact@akizony.com
 
 > Prices are set per-region in App Store Connect / Play Console. Do not hard-code a price in the description — Apple and Google prohibit it.
 
+**US price — to decide (not decided yet).** Japan is ¥300 / month and ¥3,000 / year (2026-11-02). Apple's US price points near that are $1.99 / month and $19.99 / year ($2.99 / $29.99 if the goal is revenue rather than reach, as in Japan the goal is share). Pick one pair, enter it per region, and check that the paywall and the Intro footer show it in dollars (they read the price from the store, so no app build is needed).
+
 ---
 
 ## 8. Pre-Launch Checklist (English Release)
@@ -243,7 +245,9 @@ Questions or feedback: contact@akizony.com
 - [ ] English screenshots captured with device in English + US region
 - [ ] App Store Connect listing filled (name / subtitle / keywords / promo text / description / what's new)
 - [ ] Play Console listing filled (short desc / full desc / release notes)
-- [ ] Privacy policy URL live and accessible (same URL as JP — policy now renders in English)
+- [ ] Privacy policy URL live and accessible: `https://hachibu.vercel.app/en/privacy` (**the web policy was Japanese-only until 2026-11-09; push to main so Vercel publishes `web/public/en/privacy.html`, then open the URL once**)
+- [ ] App Privacy (nutrition label) re-checked against [APP_STORE.md](./APP_STORE.md) §4-3, including anonymous usage analytics (PostHog), which is on by default from 1.0.2
+- [ ] **US price decided** and set per region in App Store Connect / Play Console (proposal below, §7)
 - [ ] Subscription products created in App Store Connect with English display names
 - [ ] RevenueCat product IDs match App Store / Play Console entries
 - [ ] TestFlight / Internal Testing build distributed with `uiLanguage='en-US'` default
