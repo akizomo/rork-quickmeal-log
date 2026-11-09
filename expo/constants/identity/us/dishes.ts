@@ -53,7 +53,7 @@ const BUCKET_BURGER_SANDWICH: Identity[] = [
     primaryHome: { tab: 'dish', bucket: 'burger_sandwich' },
     defaultMacro: { kcal: 540, protein: 30, fat: 25, carbs: 46 },
     referenceDescription: '1 sandwich (Chick-fil-A / Popeyes basis)',
-    amount: { unit: 'piece', default: 1, chips: [{ label: '1', value: 1 }] },
+    amount: { unit: 'piece', default: 1, chips: [{ label: 'Half', value: 0.5 }, { label: 'Whole', value: 1 }] },
     attributes: [
       { key: 'crispy', label: 'Crispy', isDefault: true },
       { key: 'grilled', label: 'Grilled', factor: { kcal: 0.70, protein: 1.07, fat: 0.44, carbs: 0.91 } },
@@ -327,7 +327,7 @@ const BUCKET_CHICKEN: Identity[] = [
     amount: {
       unit: 'percent',
       default: 100,
-      chips: [{ label: '1 plate', value: 100 }],
+      chips: [{ label: 'Half', value: 50 }, { label: '1 plate', value: 100 }, { label: 'Large', value: 150 }],
     },
     searchTags: ['chicken and waffles', 'chicken waffles'],
   },
@@ -344,7 +344,7 @@ const BUCKET_MEXICAN: Identity[] = [
     primaryHome: { tab: 'dish', bucket: 'mexican' },
     defaultMacro: { kcal: 1000, protein: 45, fat: 38, carbs: 110 },
     referenceDescription: '1 burrito (Chipotle chicken burrito basis)',
-    amount: { unit: 'piece', default: 1, chips: [{ label: '1', value: 1 }] },
+    amount: { unit: 'piece', default: 1, chips: [{ label: 'Half', value: 0.5 }, { label: 'Whole', value: 1 }] },
     attributes: [
       { key: 'chicken', label: 'Chicken', isDefault: true },
       { key: 'beef', label: 'Beef / Steak', factor: { kcal: 1.05, protein: 1.07, fat: 1.13, carbs: 1.0 } },
@@ -412,7 +412,7 @@ const BUCKET_MEXICAN: Identity[] = [
     amount: {
       unit: 'percent',
       default: 100,
-      chips: [{ label: '1 bowl', value: 100 }],
+      chips: [{ label: 'Half', value: 50 }, { label: '1 bowl', value: 100 }, { label: 'Large', value: 150 }],
     },
     defaultAddonIds: ['us_guacamole', 'us_sour_cream', 'us_salsa'],
     allowedAddonIds: ['us_guacamole', 'us_sour_cream', 'us_salsa', 'us_queso', 'us_extra_cheese'],
@@ -440,7 +440,7 @@ const BUCKET_MEXICAN: Identity[] = [
     amount: {
       unit: 'percent',
       default: 100,
-      chips: [{ label: '1 plate', value: 100 }],
+      chips: [{ label: 'Half', value: 50 }, { label: '1 plate', value: 100 }, { label: 'Large', value: 150 }],
     },
     searchTags: ['fajitas', 'chicken fajitas', 'steak fajitas', 'sizzling fajitas'],
   },
@@ -473,7 +473,7 @@ const BUCKET_AMERICAN_PLATE: Identity[] = [
     amount: {
       unit: 'percent',
       default: 100,
-      chips: [{ label: '1 plate', value: 100 }],
+      chips: [{ label: 'Half', value: 50 }, { label: '1 plate', value: 100 }, { label: 'Large', value: 150 }],
     },
     searchTags: ['meatloaf', 'comfort food', 'american dinner'],
   },
@@ -486,7 +486,7 @@ const BUCKET_AMERICAN_PLATE: Identity[] = [
     amount: {
       unit: 'percent',
       default: 100,
-      chips: [{ label: '1 plate', value: 100 }],
+      chips: [{ label: 'Half', value: 50 }, { label: '1 plate', value: 100 }, { label: 'Large', value: 150 }],
     },
     attributes: [
       { key: 'pulled_pork', label: 'Pulled Pork', isDefault: true },
@@ -504,7 +504,7 @@ const BUCKET_AMERICAN_PLATE: Identity[] = [
     amount: {
       unit: 'percent',
       default: 100,
-      chips: [{ label: '1 plate', value: 100 }],
+      chips: [{ label: 'Half', value: 50 }, { label: '1 plate', value: 100 }, { label: 'Large', value: 150 }],
     },
     attributes: [
       { key: 'turkey', label: 'Turkey', isDefault: true },
@@ -544,7 +544,7 @@ const BUCKET_AMERICAN_PLATE: Identity[] = [
     amount: {
       unit: 'percent',
       default: 100,
-      chips: [{ label: '1 plate', value: 100 }],
+      chips: [{ label: 'Half', value: 50 }, { label: '1 plate', value: 100 }, { label: 'Large', value: 150 }],
     },
     attributes: [
       { key: 'fried', label: 'Fried (Fish & Chips)', isDefault: true },
@@ -624,7 +624,7 @@ const BUCKET_SOUP_STEW: Identity[] = [
     amount: {
       unit: 'percent',
       default: 100,
-      chips: [{ label: 'Bowl', value: 100 }],
+      chips: [{ label: 'Half', value: 50 }, { label: 'Bowl', value: 100 }, { label: 'Large', value: 150 }],
     },
     attributes: [
       { key: 'beef_stew', label: 'Beef Stew', isDefault: true },
@@ -669,7 +669,7 @@ const BUCKET_BOWL_SALAD: Identity[] = [
     amount: {
       unit: 'percent',
       default: 100,
-      chips: [{ label: '1 bowl', value: 100 }],
+      chips: [{ label: 'Half', value: 50 }, { label: '1 bowl', value: 100 }, { label: 'Large', value: 150 }],
     },
     searchTags: ['grain bowl', 'quinoa bowl', 'buddha bowl', 'power bowl', 'sweetgreen'],
   },
@@ -695,7 +695,7 @@ const BUCKET_BOWL_SALAD: Identity[] = [
     amount: {
       unit: 'percent',
       default: 100,
-      chips: [{ label: '1 plate', value: 100 }],
+      chips: [{ label: 'Half', value: 50 }, { label: '1 plate', value: 100 }, { label: 'Large', value: 150 }],
     },
     attributes: [
       { key: 'chicken', label: 'Grilled Chicken', isDefault: true },
@@ -720,7 +720,7 @@ const BUCKET_ASIAN_TAKEOUT: Identity[] = [
     amount: {
       unit: 'percent',
       default: 100,
-      chips: [{ label: '1 plate', value: 100 }],
+      chips: [{ label: 'Half', value: 50 }, { label: '1 plate', value: 100 }, { label: 'Large', value: 150 }],
     },
     attributes: [
       { key: 'orange_chicken', label: 'Orange Chicken', isDefault: true },
@@ -738,7 +738,7 @@ const BUCKET_ASIAN_TAKEOUT: Identity[] = [
     amount: {
       unit: 'percent',
       default: 100,
-      chips: [{ label: '1 plate', value: 100 }],
+      chips: [{ label: 'Half', value: 50 }, { label: '1 plate', value: 100 }, { label: 'Large', value: 150 }],
     },
     attributes: [
       { key: 'lo_mein', label: 'Lo Mein / Chow Mein', isDefault: true },
@@ -755,7 +755,7 @@ const BUCKET_ASIAN_TAKEOUT: Identity[] = [
     amount: {
       unit: 'percent',
       default: 100,
-      chips: [{ label: '1 bowl', value: 100 }],
+      chips: [{ label: 'Half', value: 50 }, { label: '1 bowl', value: 100 }, { label: 'Large', value: 150 }],
     },
     attributes: [
       { key: 'chicken', label: 'Chicken', isDefault: true },
@@ -773,7 +773,7 @@ const BUCKET_ASIAN_TAKEOUT: Identity[] = [
     amount: {
       unit: 'percent',
       default: 100,
-      chips: [{ label: '1 plate', value: 100 }],
+      chips: [{ label: 'Half', value: 50 }, { label: '1 plate', value: 100 }, { label: 'Large', value: 150 }],
     },
     searchTags: ['pad thai', 'thai food', 'thai noodles', 'thai restaurant'],
   },
@@ -809,7 +809,7 @@ const BUCKET_ASIAN_TAKEOUT: Identity[] = [
     amount: {
       unit: 'percent',
       default: 100,
-      chips: [{ label: '1 bowl', value: 100 }],
+      chips: [{ label: 'Half', value: 50 }, { label: '1 bowl', value: 100 }, { label: 'Large', value: 150 }],
     },
     attributes: [
       { key: 'ramen', label: 'Ramen', isDefault: true },
@@ -826,7 +826,7 @@ const BUCKET_ASIAN_TAKEOUT: Identity[] = [
     amount: {
       unit: 'percent',
       default: 100,
-      chips: [{ label: '1 plate', value: 100 }],
+      chips: [{ label: 'Half', value: 50 }, { label: '1 plate', value: 100 }, { label: 'Large', value: 150 }],
     },
     attributes: [
       { key: 'thai', label: 'Thai Green / Red', isDefault: true },
@@ -850,7 +850,7 @@ const BUCKET_BREAKFAST: Identity[] = [
     amount: {
       unit: 'percent',
       default: 100,
-      chips: [{ label: '1 plate', value: 100 }],
+      chips: [{ label: 'Half', value: 50 }, { label: '1 plate', value: 100 }, { label: 'Large', value: 150 }],
     },
     attributes: [
       { key: 'bacon', label: 'With Bacon', isDefault: true },
@@ -912,7 +912,7 @@ const BUCKET_BREAKFAST: Identity[] = [
     amount: {
       unit: 'percent',
       default: 100,
-      chips: [{ label: '1 bowl', value: 100 }],
+      chips: [{ label: 'Half', value: 50 }, { label: '1 bowl', value: 100 }, { label: 'Large', value: 150 }],
     },
     defaultAddonIds: ['us_maple_syrup', 'us_berry_top', 'us_banana_slice'],
     allowedAddonIds: ['us_maple_syrup', 'us_berry_top', 'us_banana_slice', 'us_peanut_butter_packet'],

@@ -38,3 +38,23 @@ describe('Identity amount spec consistency (min/step/chips alignment)', () => {
     }
   }
 });
+
+/**
+ * チップが1つだけで、その値がデフォルトと同じなら、押しても何も変わらない (選択肢になっていない)。
+ * 日本版は「並/大盛」のように必ず上下の選択肢を持つ。US 版の一皿料理が `1 plate` だけだった型の再発防止。
+ * チップなし (0個) は有効: 数え物は +/- が主で、日本版にも多数ある。
+ */
+describe('Identity amount chips are real choices', () => {
+  for (const identity of [...ALL_IDENTITIES, ...ALL_US_IDENTITIES]) {
+    const specs: [string, AmountSpec][] = [[identity.id, identity.amount]];
+    for (const attr of identity.attributes ?? []) if (attr.amount) specs.push([`${identity.id}.${attr.key}`, attr.amount]);
+    for (const [label, spec] of specs) {
+      const chips = spec.chips ?? [];
+      if (chips.length === 1) {
+        it(`${label}: sole chip must differ from default`, () => {
+          expect(chips[0].value).not.toBe(spec.default);
+        });
+      }
+    }
+  }
+});
