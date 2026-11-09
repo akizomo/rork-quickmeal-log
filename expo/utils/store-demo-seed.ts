@@ -43,6 +43,9 @@ function createRng(seed: number) {
 
 type Meal = string[];
 
+/** 撮影データの地域。'ja' = 日本の食事 (日本語 UI) / 'en-US' = アメリカの食事 (英語 UI・ポンド・インチ)。 */
+export type StoreDemoRegion = 'ja' | 'en-US';
+
 // 実在の Identity ID だけで組む。存在しない ID は下で黙って飛ばす。
 const BREAKFASTS: Meal[] = [
   ['bread', 'egg', 'yogurt'],
@@ -77,6 +80,41 @@ const DINNERS: Meal[] = [
 
 const SNACKS: Meal[] = [['chocolate'], ['cookie'], ['apple_pear'], ['citrus'], ['protein_drink'], ['alcohol'], ['cake'], ['banana']];
 
+// アメリカ版 (US 撮影用)。実在の us_ ID だけ。
+const US_BREAKFASTS: Meal[] = [
+  ['us_oatmeal', 'us_banana', 'us_greek_yogurt'],
+  ['us_egg', 'us_bacon_strip', 'us_bread'],
+  ['us_bagel', 'us_dip_spread', 'us_orange'],
+  ['us_cereal', 'us_milk', 'us_banana'],
+  ['us_breakfast_sandwich', 'us_coffee_drink'],
+  ['us_avocado_toast', 'us_egg'],
+];
+const US_LUNCHES: Meal[] = [
+  ['us_chicken_sandwich'],
+  ['us_entree_salad'],
+  ['us_burrito_bowl'],
+  ['us_deli_sub', 'us_apple'],
+  ['us_soup_light', 'us_bread'],
+  ['us_poke_bowl'],
+  ['us_grilled_cheese', 'us_soup_light'],
+  ['us_wrap', 'us_chips'],
+];
+const US_DINNERS: Meal[] = [
+  ['us_salmon', 'us_rice_cup', 'us_broccoli'],
+  ['us_chicken_breast', 'us_potato', 'us_salad_greens'],
+  ['us_burrito', 'us_chips'],
+  ['us_pasta_meat', 'us_salad_greens'],
+  ['us_steak', 'us_potato', 'us_broccoli'],
+  ['us_tacos', 'us_beans_legumes'],
+  ['us_pizza_pepperoni', 'us_salad_greens'],
+  ['us_teriyaki_bowl'],
+];
+const US_SNACKS: Meal[] = [['us_cookies'], ['us_apple'], ['us_protein_bar'], ['us_nuts_mixed'], ['us_ice_cream'], ['us_beer'], ['us_chips'], ['us_banana']];
+
+const US_EXERCISE_LABELS: Record<string, string> = {
+  walking: 'Walking', running: 'Running', cycling: 'Cycling', strength: 'Strength', yoga: 'Yoga', swimming: 'Swimming', hiit: 'HIIT', other: 'Sports',
+};
+
 const SLOT_HOURS: Record<MealSlot, [number, number]> = {
   breakfast: [7, 30],
   lunch: [12, 15],
@@ -94,7 +132,12 @@ export interface StoreDemoState {
   dailyActivities: [];
 }
 
-export function buildStoreDemoState(now: Date = new Date()): StoreDemoState {
+export function buildStoreDemoState(now: Date = new Date(), region: StoreDemoRegion = 'ja'): StoreDemoState {
+  const us = region === 'en-US';
+  const breakfasts = us ? US_BREAKFASTS : BREAKFASTS;
+  const lunches = us ? US_LUNCHES : LUNCHES;
+  const dinners = us ? US_DINNERS : DINNERS;
+  const snacks = us ? US_SNACKS : SNACKS;
   const rand = createRng(20261025);
   const pick = <T,>(list: T[]): T => list[Math.floor(rand() * list.length)];
 
@@ -124,7 +167,7 @@ export function buildStoreDemoState(now: Date = new Date()): StoreDemoState {
     paceLevel: 'gentle',
     targetBodyType9,
     currentBodyFatPct: 27,
-    locale: 'ja',
+    locale: region,
   });
 
   const createdAt = new Date(today);
@@ -177,7 +220,7 @@ export function buildStoreDemoState(now: Date = new Date()): StoreDemoState {
           mealSlot: slot,
           wasShortTap: true,
         },
-        'ja',
+        region,
       );
       logs.push(log);
 
@@ -203,14 +246,14 @@ export function buildStoreDemoState(now: Date = new Date()): StoreDemoState {
     // ただしホームの週リングに空きが出ないよう、記録しない日は先週より前だけにする
     const skipDay = rand() < 0.06;
     if (skipDay && daysAgo > 7) continue;
-    if (rand() > 0.12) addMeal(pick(BREAKFASTS), dayAt(daysAgo, 'breakfast', Math.floor(rand() * 30)), 'breakfast');
-    addMeal(pick(LUNCHES), dayAt(daysAgo, 'lunch', Math.floor(rand() * 40)), 'lunch');
-    if (rand() < 0.8) addMeal(pick(SNACKS), dayAt(daysAgo, 'snack', Math.floor(rand() * 60)), 'snack');
-    addMeal(pick(DINNERS), dayAt(daysAgo, 'dinner', Math.floor(rand() * 60)), 'dinner');
+    if (rand() > 0.12) addMeal(pick(breakfasts), dayAt(daysAgo, 'breakfast', Math.floor(rand() * 30)), 'breakfast');
+    addMeal(pick(lunches), dayAt(daysAgo, 'lunch', Math.floor(rand() * 40)), 'lunch');
+    if (rand() < 0.8) addMeal(pick(snacks), dayAt(daysAgo, 'snack', Math.floor(rand() * 60)), 'snack');
+    addMeal(pick(dinners), dayAt(daysAgo, 'dinner', Math.floor(rand() * 60)), 'dinner');
   }
   // 今日は朝と昼まで (ホームのリングが途中の状態になる)
-  addMeal(['bread', 'egg', 'yogurt'], dayAt(0, 'breakfast', 5), 'breakfast');
-  addMeal(['soba', 'salad_chicken'], dayAt(0, 'lunch', 10), 'lunch');
+  addMeal(us ? ['us_egg', 'us_bacon_strip', 'us_bread'] : ['bread', 'egg', 'yogurt'], dayAt(0, 'breakfast', 5), 'breakfast');
+  addMeal(us ? ['us_chicken_sandwich'] : ['soba', 'salad_chicken'], dayAt(0, 'lunch', 10), 'lunch');
 
   logs.reverse();
 
@@ -246,7 +289,7 @@ export function buildStoreDemoState(now: Date = new Date()): StoreDemoState {
       date: formatDateKey(at),
       timestamp: at.toISOString(),
       exerciseType: type.key,
-      exerciseLabel: type.label,
+      exerciseLabel: us ? (US_EXERCISE_LABELS[type.key] ?? type.label) : type.label,
       minutes,
       grossKcal,
       netKcal: calcExerciseNetKcal(grossKcal),
@@ -277,9 +320,9 @@ export function buildStoreDemoState(now: Date = new Date()): StoreDemoState {
     currentDefaultTab: deriveDefaultTab(history, tabUsageCounts, undefined),
     appliedMigrations: MIGRATIONS.map((m) => m.id),
     iaSchemaVersion: 2,
-    uiLanguage: 'ja',
-    foodRegion: 'ja',
-    unitSystem: 'metric',
+    uiLanguage: region,
+    foodRegion: region,
+    unitSystem: us ? 'imperial' : 'metric',
     lastHealthSyncAtISO: nowISO,
     weeklyRecapDismissedWeekKey: formatDateKey(lastWeekMonday),
   };

@@ -107,6 +107,23 @@ export default function DevHub() {
           4週間ほど続けている人の記録 (食事・体重・体脂肪率・運動) に置き換えて再起動します。今の記録は消えます。
         </Body>
         <Button
+          label="US 撮影用データを入れる (英語・American・lbs)"
+          variant="secondary"
+          onPress={() => {
+            Alert.alert('US 撮影用データを入れる', '今の記録をすべて置き換えます。', [
+              { text: 'キャンセル', style: 'cancel' },
+              {
+                text: '置き換える',
+                style: 'destructive',
+                onPress: async () => {
+                  await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(buildStoreDemoState(new Date(), 'en-US')));
+                  DevSettings.reload();
+                },
+              },
+            ]);
+          }}
+        />
+        <Button
           label="撮影用データを入れる"
           variant="secondary"
           onPress={() => {
