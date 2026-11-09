@@ -27,7 +27,7 @@ const PERIODS: (7 | 30 | 90 | 'all')[] = [7, 30, 90, 'all'];
 export default function DataExportRoute() {
   const theme = useTheme();
   const t = useT();
-  const { logs, weights, bodyFatEntries, exerciseLogs, dailyActivities } = useAppState();
+  const { logs, weights, bodyFatEntries, exerciseLogs, dailyActivities, settings } = useAppState();
   const [format, setFormat] = useState<ExportFormat>('food');
   // 週次ふり返りから来たときは、その週 (from〜to) に固定する。設定から来たときは期間を選べる
   const params = useLocalSearchParams<{ from?: string; to?: string }>();
@@ -41,8 +41,9 @@ export default function DataExportRoute() {
         { logs, weights, bodyFatEntries, exerciseLogs, dailyActivities: dailyActivities ?? [] },
         period,
         new Date(),
+        settings.uiLanguage,
       ),
-    [format, period, logs, weights, bodyFatEntries, exerciseLogs, dailyActivities],
+    [format, period, logs, weights, bodyFatEntries, exerciseLogs, dailyActivities, settings.uiLanguage],
   );
   const rows = countRows(csv);
 

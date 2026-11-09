@@ -60,22 +60,49 @@ describe('periodRange', () => {
 });
 
 describe('buildFoodCsv', () => {
+  const T = { id: 't', label: '卵', macroDelta: { kcal: 0, protein: 0, fat: 0, carbs: 0 } };
   const logs: FoodLog[] = [
-    food({ date: '2026-11-08', timestamp: ts('2026-11-08', 19, 30), mealSlot: 'dinner', categoryLabel: 'カレー, 辛口', toppings: [{ id: 't', label: '卵', macroDelta: { kcal: 0, protein: 0, fat: 0, carbs: 0 } }] }),
-    food({ date: '2026-11-08', timestamp: ts('2026-11-08', 8, 5), mealSlot: 'breakfast', amountLabel: '150g' }),
+    // 標準量をタップしただけの記録 (ラベルは「普通」。量は実測ではない)
+    food({
+      date: '2026-11-08', timestamp: ts('2026-11-08', 8, 5), mealSlot: 'breakfast',
+      identityId: 'rice', categoryKey: 'carb', categoryLabel: 'ごはんパン麺', subTypeLabel: 'ごはん',
+      amountValue: 150, amountUnit: 'g', amountLabel: '普通', wasShortTap: true,
+    }),
+    // 量を選んだ記録 (大盛 = 220g)
+    food({
+      date: '2026-11-08', timestamp: ts('2026-11-08', 12, 30), mealSlot: 'lunch',
+      identityId: 'rice', categoryLabel: 'ごはんパン麺', subTypeLabel: 'ごはん',
+      amountValue: 220, amountUnit: 'g', amountLabel: '大', macro: { kcal: 343, protein: 5.5, fat: 0.7, carbs: 82 },
+    }),
+    // 数値を直接入力した記録 / 古い記録 (Identity なし)
+    food({ date: '2026-11-08', timestamp: ts('2026-11-08', 19, 30), mealSlot: 'dinner', categoryLabel: 'カレー, 辛口', toppings: [T], portionValue: 1.5, macroManual: true }),
     food({ date: '2026-10-01', timestamp: ts('2026-10-01', 12, 0) }),
   ];
 
-  it('sorts ascending, filters by period, escapes and rounds', () => {
+  it('gives numeric amount + unit, specific food name, input kind; sorted, filtered, escaped', () => {
     const lines = buildFoodCsv(logs, 30, NOW).split('\n');
-    expect(lines[0]).toBe('date,time,meal,food,variant,amount,toppings,kcal,protein_g,fat_g,carbs_g');
-    expect(lines).toHaveLength(3); // header + 2 (the 2026-10-01 log is out of range)
-    expect(lines[1]).toBe('2026-11-08,08:05,breakfast,ごはん,,150g,,252,3.8,0.5,55.7');
-    expect(lines[2]).toBe('2026-11-08,19:30,dinner,"カレー, 辛口",,,卵,252,3.8,0.5,55.7');
+    expect(lines[0]).toBe('date,time,meal,food,category,detail,amount_value,amount_unit,amount_label,add_ons,input,kcal,protein_g,fat_g,carbs_g');
+    expect(lines).toHaveLength(4); // header + 3 (the 2026-10-01 log is out of range)
+    // 「普通」でも 150 g と分かる。bucket 名は category へ
+    expect(lines[1]).toBe('2026-11-08,08:05,breakfast,ごはん,ごはんパン麺,,150,g,普通,,standard_amount_tap,252,3.8,0.5,55.7');
+    expect(lines[2]).toBe('2026-11-08,12:30,lunch,ごはん,ごはんパン麺,,220,g,大,,adjusted,343,5.5,0.7,82');
+    // Identity なしの古い記録: 倍率は x_standard_portion、カンマは引用符で囲む
+    expect(lines[3]).toContain('"カレー, 辛口"');
+    expect(lines[3]).toContain(',1.5,x_one_standard_serving,');
+    expect(lines[3]).toContain(',manual_numbers,');
+  });
+
+  it('count units and percent-of-serving foods are labelled so an AI is not misled', () => {
+    const rows = buildFoodCsv([
+      food({ date: '2026-11-08', timestamp: ts('2026-11-08', 7, 0), identityId: 'onigiri', amountValue: 2, amountUnit: 'piece', amountLabel: '2個' }),
+      food({ date: '2026-11-08', timestamp: ts('2026-11-08', 12, 0), identityId: 'gyudon_class', amountValue: 80, amountUnit: 'piece', amountLabel: '小盛' }),
+    ], 30, NOW).split('\n').slice(1);
+    expect(rows[0]).toContain(',2,count,');
+    expect(rows[1]).toContain(',80,percent_of_one_standard_serving,');
   });
 
   it("'all' includes everything", () => {
-    expect(countRows(buildFoodCsv(logs, 'all', NOW))).toBe(3);
+    expect(countRows(buildFoodCsv(logs, 'all', NOW))).toBe(4);
   });
 
   it('header only when empty', () => {
