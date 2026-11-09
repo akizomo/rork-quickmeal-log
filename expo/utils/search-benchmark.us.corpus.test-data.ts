@@ -14,10 +14,14 @@
  *   に寄っている。実ユーザーの未ヒット語が集まったら、そちらを正本にして足す。
  */
 import { C, type Item } from './search-benchmark.corpus.test-data';
+import { US_FRESH1_CORPUS } from './search-benchmark.us.fresh1.test-data';
+import { US_FRESH2_CORPUS } from './search-benchmark.us.fresh2.test-data';
+import { US_FRESH3_CORPUS } from './search-benchmark.us.fresh3.test-data';
+import { US_HOLDOUT_CORPUS } from './search-benchmark.us.holdout.test-data';
 import { US_MOVED_FROM_HOLDOUT } from './search-benchmark.us.moved.test-data';
 
 // prettier-ignore
-export const US_TUNING_CORPUS: Item[] = [
+const US_TUNING_BASE: Item[] = [
   ...C('grains', 'base', [
     ['bread', 'us_bread'], ['white bread', 'us_bread/white'], ['whole wheat bread', 'us_bread/whole_wheat'], ['sourdough', 'us_bread/sourdough'],
     ['rye bread', 'us_bread/rye'], ['toast', 'us_bread'], ['bagel', 'us_bagel'], ['everything bagel', 'us_bagel/everything'],
@@ -161,6 +165,20 @@ export const US_TUNING_CORPUS: Item[] = [
   // ホールドアウトから移した語 (別名表と重なったため。経緯は moved ファイル)
   ...US_MOVED_FROM_HOLDOUT,
 ];
+
+/**
+ * 2026-11-09: 新しい語の第1束 (search-benchmark.us.fresh1.test-data.ts)。規則を見る前に書き、失敗の型を直したあとに
+ * チューニング用へ移した。**汎化の測定には使えない**。ホールドアウトや既存のチューニング用と同じ語は除く
+ * (私が思い付く語は、前に書いた語と重なりやすい — 380語のうち231語が重なった)。
+ */
+const FRESH1_TAKEN = new Set([...US_TUNING_BASE, ...US_HOLDOUT_CORPUS].map((i) => i.q));
+const FRESH1_NEW = US_FRESH1_CORPUS.filter((i) => !FRESH1_TAKEN.has(i.q));
+/** 2026-11-09: 第2束 (第1束の失敗を直したあとに書いて測り、失敗の型を直したあとチューニング用へ移した)。 */
+const FRESH2_TAKEN = new Set([...FRESH1_TAKEN, ...FRESH1_NEW.map((i) => i.q)]);
+const FRESH2_NEW = US_FRESH2_CORPUS.filter((i) => !FRESH2_TAKEN.has(i.q));
+/** 2026-11-09: 第3束 (第2束を直したあとに書き、見ずに測った。失敗の型を直したあとチューニング用へ移した)。 */
+const FRESH3_TAKEN = new Set([...FRESH2_TAKEN, ...FRESH2_NEW.map((i) => i.q)]);
+export const US_TUNING_CORPUS: Item[] = [...US_TUNING_BASE, ...FRESH1_NEW, ...FRESH2_NEW, ...US_FRESH3_CORPUS.filter((i) => !FRESH3_TAKEN.has(i.q))];
 
 /** 「打鍵途中」の測定 (正解が上位3に出る文字数)。日本語版 PREFIX_TARGETS の US 版。 */
 export const US_PREFIX_TARGETS: [string, string[]][] = [

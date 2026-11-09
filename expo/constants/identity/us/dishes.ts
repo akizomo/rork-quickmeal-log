@@ -155,7 +155,7 @@ const BUCKET_PIZZA_PASTA: Identity[] = [
       { key: 'supreme', label: 'Supreme / Meat', factor: { kcal: 1.12, protein: 1.15, fat: 1.23, carbs: 1.0 } },
       { key: 'veggie', label: 'Veggie', factor: { kcal: 0.85, protein: 0.85, fat: 0.73, carbs: 1.04 } },
     ],
-    searchTags: ['pizza', 'pepperoni pizza', 'cheese pizza', 'dominos', 'papa johns'],
+    searchTags: ['pizza', 'dominos', 'papa johns'],
   },
   {
     id: 'us_pizza_cheese',
@@ -577,7 +577,7 @@ const BUCKET_SOUP_STEW: Identity[] = [
     ],
     defaultAddonIds: ['us_sour_cream', 'us_extra_cheese'],
     allowedAddonIds: ['us_sour_cream', 'us_extra_cheese', 'us_crackers'],
-    searchTags: ['chili', 'beef chili', 'chili con carne', 'wendy chili'],
+    searchTags: ['chili', 'chili con carne', 'wendy chili'],
   },
   {
     id: 'us_soup_light',
@@ -700,7 +700,7 @@ const BUCKET_BOWL_SALAD: Identity[] = [
     attributes: [
       { key: 'chicken', label: 'Grilled Chicken', isDefault: true },
       { key: 'tuna', label: 'Tuna', factor: { kcal: 0.90, protein: 1.0, fat: 0.75, carbs: 1.0 } },
-      { key: 'egg', label: 'Hard Boiled Egg', factor: { kcal: 0.80, protein: 0.87, fat: 0.92, carbs: 0.81 } },
+      { key: 'egg', label: 'Egg', factor: { kcal: 0.80, protein: 0.87, fat: 0.92, carbs: 0.81 } },
     ],
     searchTags: ['protein salad', 'chicken salad', 'tuna salad', 'egg salad'],
   },
@@ -858,7 +858,7 @@ const BUCKET_BREAKFAST: Identity[] = [
     ],
     defaultAddonIds: ['us_maple_syrup'],
     allowedAddonIds: ['us_maple_syrup', 'us_extra_cheese', 'us_butter_pat'],
-    searchTags: ['eggs', 'bacon', 'eggs and bacon', 'breakfast plate', 'scrambled eggs'],
+    searchTags: ['eggs', 'bacon', 'breakfast plate', 'scrambled eggs'],
   },
   {
     id: 'us_pancakes_waffles',

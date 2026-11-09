@@ -37,7 +37,7 @@ const BUCKET_STAPLE: Identity[] = [
       { key: 'sourdough', label: 'Sourdough', factor: { kcal: 1.05 } },
       { key: 'rye', label: 'Rye', factor: { kcal: 0.95, protein: 1.1 } },
     ],
-    searchTags: ['bread', 'toast', 'slice', 'sandwich bread', 'white bread', 'wheat bread', 'sourdough'],
+    searchTags: ['bread', 'toast', 'slice', 'sandwich bread', 'wheat bread', 'sourdough'],
   },
   {
     id: 'us_rice_cup',
@@ -101,7 +101,7 @@ const BUCKET_STAPLE: Identity[] = [
       { key: 'mashed', label: 'Mashed', factor: { kcal: 1.2, fat: 4.0, carbs: 0.95 } },
       { key: 'fries', label: 'Fries', factor: { kcal: 1.5, fat: 8.0, carbs: 1.1 } },
     ],
-    searchTags: ['potato', 'baked potato', 'mashed potato', 'sweet potato', 'fries'],
+    searchTags: ['potato', 'sweet potato', 'fries'],
   },
   {
     id: 'us_oatmeal',
@@ -145,7 +145,7 @@ const BUCKET_STAPLE: Identity[] = [
       { key: 'corn', label: 'Corn', factor: { kcal: 0.7, protein: 0.8, fat: 0.5, carbs: 0.75 } },
       { key: 'whole_wheat', label: 'Whole Wheat', factor: { kcal: 0.95, protein: 1.1 } },
     ],
-    searchTags: ['tortilla', 'flour tortilla', 'corn tortilla', 'wrap'],
+    searchTags: ['tortilla', 'wrap'],
   },
   {
     id: 'us_bagel',
@@ -167,7 +167,7 @@ const BUCKET_STAPLE: Identity[] = [
     ],
     defaultAddonIds: ['us_cream_cheese'],
     allowedAddonIds: ['us_cream_cheese', 'us_butter_pat', 'us_jam', 'us_peanut_butter_packet'],
-    searchTags: ['bagel', 'everything bagel', 'plain bagel'],
+    searchTags: ['bagel'],
   },
   {
     id: 'us_cereal',
@@ -341,7 +341,7 @@ const BUCKET_EGG: Identity[] = [
       { key: 'poached', label: 'Poached', factor: { kcal: 1.0, fat: 1.0 } },
     ],
     asAddon: { unit: 'piece', unitAmount: 1, addedMacro: { kcal: 90, protein: 6, fat: 7, carbs: 1 }, defaultLabel: 'Egg' },
-    searchTags: ['egg', 'eggs', 'scrambled egg', 'fried egg', 'hard boiled', 'poached egg'],
+    searchTags: ['egg', 'eggs', 'hard boiled'],
   },
   {
     id: 'us_egg_whites',
@@ -433,7 +433,7 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
       { key: 'tenderloin', label: 'Tenderloin', factor: { kcal: 0.7, fat: 0.45 } },
       { key: 'ribs', label: 'Ribs', factor: { kcal: 1.4, fat: 2.0 } },
     ],
-    searchTags: ['pork', 'pork chop', 'pork tenderloin', 'ribs'],
+    searchTags: ['pork', 'ribs'],
   },
   {
     id: 'us_bacon_strip',
@@ -458,7 +458,7 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
       { key: 'thick_cut', label: 'Thick-cut', factor: { kcal: 1.5, fat: 1.5, protein: 1.4 } },
     ],
     asAddon: { unit: 'piece', unitAmount: 2, addedMacro: { kcal: 90, protein: 6, fat: 7, carbs: 0 }, defaultLabel: 'Bacon' },
-    searchTags: ['bacon', 'bacon strip', 'breakfast bacon', 'turkey bacon'],
+    searchTags: ['bacon', 'bacon strip', 'breakfast bacon'],
   },
   {
     id: 'us_sausage',
@@ -480,7 +480,7 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
       { key: 'chicken', label: 'Chicken Sausage', factor: { kcal: 0.6, fat: 0.4 } },
     ],
     asAddon: { unit: 'piece', unitAmount: 1, addedMacro: { kcal: 145, protein: 8, fat: 12, carbs: 1 }, defaultLabel: 'Sausage Patty' },
-    searchTags: ['sausage', 'pork sausage', 'italian sausage', 'breakfast sausage', 'sausage link'],
+    searchTags: ['sausage', 'breakfast sausage', 'sausage link'],
   },
   {
     id: 'us_salmon',
@@ -502,7 +502,7 @@ const BUCKET_FATTY_PROTEIN: Identity[] = [
       { key: 'wild', label: 'Wild-caught', factor: { kcal: 0.85, fat: 0.65 } },
       { key: 'smoked', label: 'Smoked (lox)', factor: { kcal: 0.6, fat: 0.5 } },
     ],
-    searchTags: ['salmon', 'atlantic salmon', 'wild salmon', 'smoked salmon', 'lox'],
+    searchTags: ['salmon', 'wild salmon'], // smoked salmon / lox は種類 (smoked) の別名 (search-aliases.us.ts)
   },
 ];
 
@@ -531,7 +531,7 @@ const BUCKET_DAIRY_SOY: Identity[] = [
       { key: '2pct', label: '2%', factor: { kcal: 0.82, fat: 0.5 } },
       { key: 'skim', label: 'Skim', factor: { kcal: 0.68, fat: 0.1 } },
     ],
-    searchTags: ['milk', 'whole milk', '2% milk', 'skim milk', 'dairy milk'],
+    searchTags: ['milk', 'dairy milk'],
   },
   {
     id: 'us_cheese_slice',
@@ -554,7 +554,7 @@ const BUCKET_DAIRY_SOY: Identity[] = [
       { key: 'swiss', label: 'Swiss', factor: { kcal: 1.05, protein: 1.1 } },
     ],
     asAddon: { unit: 'piece', unitAmount: 1, addedMacro: { kcal: 100, protein: 6, fat: 8, carbs: 1 }, defaultLabel: 'Cheese (1 slice)' },
-    searchTags: ['cheese', 'cheddar', 'american cheese', 'mozzarella', 'swiss', 'shredded cheese'],
+    searchTags: ['cheese', 'cheddar', 'mozzarella', 'swiss', 'shredded cheese'],
   },
   {
     id: 'us_greek_yogurt',
@@ -574,7 +574,7 @@ const BUCKET_DAIRY_SOY: Identity[] = [
       { key: '2pct', label: '2%', factor: { kcal: 1.3, fat: 6.0 } },
       { key: 'whole', label: 'Whole', factor: { kcal: 1.6, fat: 12.0 } },
     ],
-    searchTags: ['greek yogurt', 'yogurt', 'nonfat greek yogurt', 'protein yogurt'],
+    searchTags: ['greek yogurt', 'yogurt', 'protein yogurt'],
   },
   {
     id: 'us_cottage_cheese',
@@ -615,7 +615,7 @@ const BUCKET_DAIRY_SOY: Identity[] = [
       { key: 'silken', label: 'Silken', factor: { kcal: 0.7, protein: 0.75, fat: 0.6 } },
       { key: 'extra_firm', label: 'Extra Firm', factor: { kcal: 1.1, protein: 1.1, fat: 1.05 } },
     ],
-    searchTags: ['tofu', 'firm tofu', 'silken tofu', 'soy'],
+    searchTags: ['tofu', 'soy'],
   },
   {
     id: 'us_plant_milk',
@@ -686,7 +686,7 @@ const BUCKET_VEGGIES: Identity[] = [
       { key: 'steamed', label: 'Steamed', factor: { kcal: 1.0 } },
       { key: 'roasted', label: 'Roasted', factor: { kcal: 1.3, fat: 3.0 } },
     ],
-    searchTags: ['broccoli', 'steamed broccoli', 'roasted broccoli'],
+    searchTags: ['broccoli'],
   },
   {
     id: 'us_beans_legumes',
@@ -726,7 +726,7 @@ const BUCKET_VEGGIES: Identity[] = [
       { key: 'cooked', label: 'Cooked', isDefault: true },
       { key: 'on_cob', label: 'On the Cob', factor: { kcal: 0.58, protein: 0.6, carbs: 0.58 } },
     ],
-    searchTags: ['corn', 'sweet corn', 'corn on the cob', 'kernel corn'],
+    searchTags: ['corn', 'sweet corn', 'kernel corn'],
   },
   {
     id: 'us_mixed_veg',
@@ -805,7 +805,7 @@ const BUCKET_FRUIT: Identity[] = [
       { key: 'strawberry', label: 'Strawberries', factor: { kcal: 0.64, carbs: 0.75 } },
       { key: 'blueberry', label: 'Blueberries', factor: { kcal: 1.14, carbs: 1.17 } },
     ],
-    searchTags: ['berries', 'strawberry', 'blueberry', 'mixed berries', 'raspberries'],
+    searchTags: ['berries', 'strawberry', 'blueberry', 'raspberries'],
   },
   {
     id: 'us_orange',
@@ -913,7 +913,7 @@ const BUCKET_ADDED_FAT: Identity[] = [
       { key: 'kerrygold', label: 'Grass-fed', factor: { kcal: 1.0 } },
     ],
     asAddon: { unit: 'g', unitAmount: 14, addedMacro: { kcal: 100, protein: 0, fat: 11, carbs: 0 }, defaultLabel: 'Butter (1 tbsp)' },
-    searchTags: ['butter', 'grass-fed butter', 'unsalted butter'],
+    searchTags: ['butter'],
   },
   {
     id: 'us_olive_oil',
@@ -951,7 +951,7 @@ const BUCKET_ADDED_FAT: Identity[] = [
       { key: 'regular', label: 'Regular', isDefault: true },
       { key: 'light', label: 'Light Mayo', factor: { kcal: 0.4, fat: 0.35 } },
     ],
-    searchTags: ['mayo', 'mayonnaise', 'light mayo'],
+    searchTags: ['mayo', 'mayonnaise'],
   },
   {
     id: 'us_ranch_tbsp',
@@ -1016,7 +1016,7 @@ const BUCKET_ADDED_FAT: Identity[] = [
       { key: 'walnuts', label: 'Walnuts', factor: { kcal: 1.1, fat: 1.1, carbs: 0.65 } },
     ],
     asAddon: { unit: 'g', unitAmount: 28, addedMacro: { kcal: 90, protein: 3, fat: 8, carbs: 3 }, defaultLabel: 'Nuts (1 oz)' },
-    searchTags: ['nuts', 'almonds', 'walnuts', 'cashews', 'mixed nuts', 'trail mix'],
+    searchTags: ['nuts', 'almonds', 'walnuts', 'cashews', 'trail mix'],
   },
   {
     id: 'us_dip_spread',
@@ -1068,7 +1068,7 @@ const BUCKET_SNACK_DRINK: Identity[] = [
       { key: 'popcorn', label: 'Popcorn (air-popped)', factor: { kcal: 0.7, protein: 1.81, fat: 0.13, carbs: 1.45 } }, // USDA SR 167959 Snacks, popcorn, air-popped, 28g
       { key: 'pretzels', label: 'Pretzels', factor: { kcal: 0.69, protein: 1.41, fat: 0.08, carbs: 1.5 } }, // USDA SR 167555 Snacks, pretzels, hard, plain, salted, 28g
     ],
-    searchTags: ['chips', 'potato chips', 'tortilla chips', 'Lays', 'Doritos', 'Fritos', 'popcorn', 'pretzels'],
+    searchTags: ['chips', 'Lays', 'popcorn', 'pretzels'], // Doritos / Fritos は種類 (tortilla) の別名
   },
   {
     id: 'us_cookies',
@@ -1088,7 +1088,7 @@ const BUCKET_SNACK_DRINK: Identity[] = [
       { key: 'chocolate_chip', label: 'Chocolate Chip', isDefault: true },
       { key: 'oreo', label: 'Sandwich Cookie', factor: { kcal: 0.85, fat: 0.85, carbs: 1.0 } },
     ],
-    searchTags: ['cookies', 'chocolate chip cookies', 'Oreos', 'biscuit'],
+    searchTags: ['cookies', 'biscuit'], // Oreos は種類 (oreo) の別名
   },
   {
     id: 'us_ice_cream',
@@ -1185,6 +1185,8 @@ const BUCKET_SNACK_DRINK: Identity[] = [
       { key: 'latte', label: 'Latte', isDefault: true },
       { key: 'frappuccino', label: 'Frappuccino', factor: { kcal: 1.3, fat: 1.6, carbs: 1.4 } },
       { key: 'iced_coffee', label: 'Iced Coffee', factor: { kcal: 0.3, protein: 0.4, fat: 0.35, carbs: 0.35 } },
+      // ブラックコーヒー (砂糖・ミルクなし)。ラテの 2% の 5 kcal。飲み物のログで「ほぼ 0 kcal」を選べる
+      { key: 'black', label: 'Black Coffee', factor: { kcal: 0.02, protein: 0.1, fat: 0, carbs: 0.02 } },
     ],
     searchTags: ['coffee', 'latte', 'frappuccino', 'iced latte', 'specialty coffee', 'Starbucks'],
   },
@@ -1225,7 +1227,7 @@ const BUCKET_SNACK_DRINK: Identity[] = [
       { key: 'protein', label: 'Protein Smoothie', factor: { kcal: 1.1, protein: 2.5, fat: 1.2 } },
       { key: 'green', label: 'Green Smoothie', factor: { kcal: 0.7, protein: 1.1, carbs: 0.75 } },
     ],
-    searchTags: ['smoothie', 'protein smoothie', 'fruit smoothie', 'Jamba Juice', 'green smoothie'],
+    searchTags: ['smoothie', 'fruit smoothie', 'Jamba Juice'],
   },
   {
     id: 'us_sweet_tea',
@@ -1246,7 +1248,7 @@ const BUCKET_SNACK_DRINK: Identity[] = [
       { key: 'half_half', label: 'Half & Half (Arnold Palmer)', factor: { kcal: 0.5, carbs: 0.5 } },
       { key: 'unsweet', label: 'Unsweetened', factor: { kcal: 0.02, carbs: 0.0 } },
     ],
-    searchTags: ['sweet tea', 'iced tea', 'Southern sweet tea', 'unsweet tea'],
+    searchTags: ['iced tea', 'Southern sweet tea', 'unsweet tea'],
   },
   // ── Alcohol cluster (§4.1) ─────────────────────────────────────────────
   {
@@ -1268,7 +1270,7 @@ const BUCKET_SNACK_DRINK: Identity[] = [
       { key: 'light', label: 'Light Beer', factor: { kcal: 0.65, protein: 0.75, carbs: 0.54 } },
       { key: 'ipa', label: 'IPA (~7% ABV)', factor: { kcal: 1.25, protein: 1.2, carbs: 1.2 } },
     ],
-    searchTags: ['beer', 'lager', 'IPA', 'light beer', 'craft beer', 'ale'],
+    searchTags: ['beer', 'lager', 'IPA', 'craft beer', 'ale'],
   },
   {
     id: 'us_wine',
@@ -1289,7 +1291,7 @@ const BUCKET_SNACK_DRINK: Identity[] = [
       { key: 'rosé', label: 'Rosé', factor: { kcal: 0.96, carbs: 0.875 } },
       { key: 'sweet', label: 'Sweet / Dessert', factor: { kcal: 1.5, carbs: 4.5 } },
     ],
-    searchTags: ['wine', 'red wine', 'white wine', 'rosé', 'pinot', 'cabernet'],
+    searchTags: ['wine', 'rosé', 'pinot', 'cabernet'],
   },
   {
     id: 'us_cocktail',
@@ -1396,7 +1398,7 @@ const BUCKET_SNACK_DRINK: Identity[] = [
       { key: 'apple', label: 'Apple juice', factor: { kcal: 1.02, protein: 0.14, fat: 0.65, carbs: 1.09 } }, // USDA SR 173933 Apple juice, canned or bottled, unsweetened, 1 cup 248g
       { key: 'cranberry', label: 'Cranberry juice cocktail', factor: { kcal: 1.22, protein: 0.0, fat: 0.51, carbs: 1.33 } }, // USDA SR 171903 Cranberry juice cocktail, bottled, 1 cup 253g
     ],
-    searchTags: ['juice', 'orange juice', 'apple juice', 'cranberry juice', 'OJ'],
+    searchTags: ['juice', 'cranberry juice', 'OJ'],
   },
 ];
 

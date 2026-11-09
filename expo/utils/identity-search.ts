@@ -22,7 +22,7 @@ import { HEAD_NOUNS, type HeadNounTarget } from '@/constants/identity/head-nouns
 import { aliasesFor } from '@/constants/identity/search-aliases';
 import { usAliasesFor } from '@/constants/identity/search-aliases.us';
 import { usCategoryHints, usVocabularyMatches } from '@/utils/identity-vocabulary-en';
-import { buildEnEntryInfo, makeEnQuery, scoreEnglish, vocabularyOf, type EnEntryInfo } from '@/utils/identity-search-en';
+import { FLAVOR_DAIRY, buildEnEntryInfo, enTokens, makeEnQueries, noiseWordsOf, scoreEnglish, stripChainsRaw, stripMeasureLead, stripNoiseRaw, vocabularyOf, type EnEntryInfo, type EnHit } from '@/utils/identity-search-en';
 import { normalize, romajiVariant } from '@/utils/identity-normalize';
 import {
   labelParts,
@@ -55,6 +55,8 @@ export interface SearchEntryResult {
   tier: 'confident' | 'maybe';
   /** 一致の方式 (exact / prefix / substring / contains / bigram)。層の調整とベンチマーク用。 */
   method: MatchMethod;
+  /** 英語の語単位の照合で決まったときの種別 (compound = 名前の語が全部入力に含まれる複合)。同じ食品の中の並びに使う。 */
+  enKind?: 'exact' | 'compound' | 'partial';
 }
 
 export interface SearchEntriesResult {
@@ -430,6 +432,45 @@ const JP_GENERIC_LABELS = buildGenericAttributeLabels(ALL_IDENTITIES);
 const JP_INDEX: IndexedEntry[] = buildIndex(ALL_IDENTITIES, JP_GENERIC_LABELS, JP_PRESETS, true);
 const US_GENERIC_LABELS = buildGenericAttributeLabels(ALL_US_IDENTITIES);
 const US_INDEX: IndexedEntry[] = buildIndex(ALL_US_IDENTITIES, US_GENERIC_LABELS, [], false);
+/**
+ * 一皿料理のバケットの一般名。「blt sandwich」「tomato soup」「cobb salad」の sandwich / soup / salad は、
+ * 打っても食品を変えない (BLT は sandwich) ので、そのバケットの食品の文脈に入れる。ピザ・パスタ・鶏・メキシカンなどは、
+ * 一般名が食品名そのものなので入れない。
+ */
+const US_BUCKET_NOUNS: Partial<Record<string, string[]>> = {
+  burger_sandwich: ['sandwich'],
+  soup_stew: ['soup'],
+  bowl_salad: ['salad', 'bowl'],
+  american_plate: ['plate', 'dinner'],
+  // パスタの形 (penne with marinara = トマトソースのパスタ)
+  pizza_pasta: ['spaghetti', 'penne', 'rigatoni', 'linguine', 'fettuccine', 'rotini', 'ziti', 'noodles'],
+};
+/** 味違いのある食品 (strawberry yogurt / blueberry waffles / cherry coke)。味の語 (FLAVOR_WORDS) を文脈に入れる。 */
+const US_FLAVOR_BUCKETS = new Set<string>(['snack_drink', 'dairy_soy', 'breakfast']);
+const US_FLAVOR_IDENTITIES = new Set<string>(['us_bagel', 'us_oatmeal', 'us_cereal', 'us_bread']);
+/** チーズ・クリーム・チョコを「味・具」として許す食品 (cheese danish / cream cheese bagel / chocolate cheesecake)。 */
+const US_DAIRY_FLAVOR_IDENTITIES = new Set<string>(['us_pastry', 'us_dessert', 'us_bagel', 'us_pancakes_waffles', 'us_cookies', 'us_ice_cream']);
+/** 語 → その語をラベル (食品名・種類名) に持つ Identity の集合。別名の語を文脈にするとき、他の食品の名前の語 (sandwich) を除くのに使う。 */
+const US_LABEL_OWNERS: Map<string, Set<string>> = (() => {
+  const m = new Map<string, Set<string>>();
+  for (const identity of ALL_US_IDENTITIES) {
+    const labels = [identity.label, ...(identity.attributes ?? []).map((a) => a.label), ...(identity.styles ?? []).map((s) => s.label)];
+    for (const label of labels) {
+      for (const t of enTokens(label.replace(/[/()—–-]/g, ' '))) {
+        let set = m.get(t);
+        if (!set) { set = new Set(); m.set(t, set); }
+        set.add(identity.id);
+      }
+    }
+  }
+  return m;
+})();
+/** 別名の語のうち、この Identity 以外の食品名・種類名には使われていない語だけ (steel / cut / dr / pepper は残り、sandwich / chips は外れる)。 */
+const ownAliasTokens = (id: string, aliases: string[]): string[] =>
+  aliases.flatMap((a) => enTokens(a)).filter((t) => {
+    const owners = US_LABEL_OWNERS.get(t);
+    return !owners || [...owners].every((o) => o === id);
+  });
 /** US 索引と同じ並びの、英語の語単位の照合情報 (identity-search-en.ts)。 */
 const US_EN_INFO: EnEntryInfo[] = US_INDEX.map(({ entry }) => {
   const key = entry.attribute
@@ -437,9 +478,43 @@ const US_EN_INFO: EnEntryInfo[] = US_INDEX.map(({ entry }) => {
     : entry.style
       ? `${entry.identity.id}[${entry.style.key}]`
       : entry.identity.id;
-  return buildEnEntryInfo(entry.identity, { attribute: entry.attribute, style: entry.style }, usAliasesFor(key), getBucketDef(entry.identity.primaryHome.bucket)?.tab === 'dish');
+  const bucket = entry.identity.primaryHome.bucket;
+  const flavorable = US_FLAVOR_BUCKETS.has(bucket) || US_FLAVOR_IDENTITIES.has(entry.identity.id);
+  return buildEnEntryInfo(
+    entry.identity,
+    { attribute: entry.attribute, style: entry.style },
+    usAliasesFor(key),
+    getBucketDef(bucket)?.tab === 'dish',
+    US_BUCKET_NOUNS[bucket] ?? [],
+    // 文脈にする別名は、食品全体の別名 (キーが Identity) と、その種類自身の別名だけ。他の種類の別名の語
+    // (fries の "chips and fries" の chips) を文脈にすると、baked chips が「焼いたポテト」に着地する。
+    ownAliasTokens(entry.identity.id, [...usAliasesFor(entry.identity.id), ...(key === entry.identity.id ? [] : usAliasesFor(key))]),
+    flavorable,
+    US_DAIRY_FLAVOR_IDENTITIES.has(entry.identity.id) ? FLAVOR_DAIRY : [],
+  );
 });
 const US_EN_VOCAB = vocabularyOf(US_EN_INFO);
+/** 取り除いてよい量・大きさの語 (どの食品・種類の名前にも使われていない語)。 */
+/** 店名を取り除いた形の下げ幅。店名つきの別名 (kfc chicken = フライドチキン) より後ろに置く。 */
+const CHAIN_PENALTY = 0.25;
+/** 「X with Y」の X だけの形の下げ幅。Y を含む形 (X with Y という名前の食品・別名) を先に置く。 */
+const WITH_PENALTY = 0.25;
+const withHead = (q: string): string | null => {
+  const m = q.split(/\s+(?:with|w\/|without|w\/o|no|plus)\s+/i);
+  const head = m[0]?.trim();
+  return m.length > 1 && head ? head : null;
+};
+/**
+ * 「X and Y」(chicken nuggets and fries / salmon and asparagus) は2品。1品ずつ記録するので、X の形 (先) と Y の形 (後) も照合する。
+ * 「mac and cheese」「bacon and eggs」のように、and を含む名前・別名でそのまま当たるものは、元の形のほうが強い (下げ幅の差)。
+ */
+const AND_HEAD_PENALTY = 0.2;
+const AND_TAIL_PENALTY = 0.4;
+const andParts = (q: string): { head: string; tail: string } | null => {
+  const m = q.split(/\s+(?:and|&|\+)\s+|\s*,\s*/i).map((x) => x.trim()).filter(Boolean);
+  return m.length === 2 ? { head: m[0], tail: m[1] } : null;
+};
+const US_NOISE = noiseWordsOf(new Set(US_EN_INFO.flatMap((info) => info.phrases.filter((p) => p.kind !== 'tag').flatMap((p) => [...p.tokens]))));
 
 /**
  * 文脈に縛られた種類の名前 (日本語版の contextBound の英語版)。
@@ -485,6 +560,8 @@ interface Hit {
   score: number;
   method: MatchMethod;
   tier: 'confident' | 'maybe';
+  /** 英語の語単位の照合で決まったときの種別。 */
+  enKind?: 'exact' | 'compound' | 'partial';
 }
 
 interface QueryKey extends QueryVariant {
@@ -673,16 +750,70 @@ export interface SearchOptions {
  * 絞り込み済み。finalScore = matchScore × 頻度倍率 (§5.3) — 層の判定自体は
  * マッチスコアの時点で確定しており、頻度は同じ層の中の並び順にのみ影響する。
  */
-export function searchEntriesFuzzy(query: string, opts?: SearchOptions): SearchEntriesResult {
+export function searchEntriesFuzzy(rawQuery: string, opts?: SearchOptions): SearchEntriesResult {
+  // 英語: 前後の句読点 ("gumbo." / "pizza!") は意味を足さない。文字列照合の「打った形そのまま」加点が外れないよう先に落とす。
+  // 先頭の my / some / the も同じ (「my gumbo」は「gumbo」を打ったのと同じ)。
+  const query =
+    opts?.locale === 'en-US'
+      ? stripMeasureLead(rawQuery.replace(/^[\s.,!?;:]+|[\s.,!?;:]+$/g, '').replace(/^(?:(?:my|some|the|a|an)\s+)+(?=\S)/i, ''))
+      : rawQuery;
   const variants: QueryKey[] = queryVariants(query).map((v) => ({ ...v, bg: bigrams(v.key) }));
   if (variants.length === 0) return { confident: [], maybe: [] };
 
   const isUS = opts?.locale === 'en-US';
+  if (isUS) {
+    // 量・大きさの語を取り除いた文字列も、文字列照合にそのまま渡す (大きさ・個数を付けても、その語をそのまま打ったのと
+    // 同じに扱う)。少し下げて、元の形で打った語を先にする。
+    const stripped = stripNoiseRaw(query, US_NOISE);
+    if (stripped) {
+      for (const v of queryVariants(stripped)) variants.push({ ...v, penalty: v.penalty + 0.02, bg: bigrams(v.key) });
+    }
+    const head = withHead(query);
+    if (head) for (const v of queryVariants(head)) variants.push({ ...v, penalty: v.penalty + WITH_PENALTY, bg: bigrams(v.key) });
+    const parts = andParts(query);
+    if (parts) {
+      for (const v of queryVariants(parts.head)) variants.push({ ...v, penalty: v.penalty + AND_HEAD_PENALTY, bg: bigrams(v.key) });
+      for (const v of queryVariants(parts.tail)) variants.push({ ...v, penalty: v.penalty + AND_TAIL_PENALTY, bg: bigrams(v.key) });
+    }
+    const chainless = stripChainsRaw(query);
+    if (chainless) {
+      for (const v of queryVariants(chainless)) variants.push({ ...v, penalty: v.penalty + CHAIN_PENALTY, bg: bigrams(v.key) });
+      const both = stripNoiseRaw(chainless, US_NOISE);
+      if (both) for (const v of queryVariants(both)) variants.push({ ...v, penalty: v.penalty + CHAIN_PENALTY + 0.02, bg: bigrams(v.key) });
+    }
+  }
   const index = isUS ? US_INDEX : JP_INDEX;
   const sortLocale = isUS ? 'en' : 'ja';
 
   const results: SearchEntryResult[] = [];
-  const enQuery = isUS ? makeEnQuery(query, US_EN_VOCAB) : null;
+  const enQueries = isUS ? makeEnQueries(query, US_EN_VOCAB, US_NOISE) : [];
+  if (isUS) {
+    // 店名を取り除いた文字列からも、語の形を作る (同じ語の集合は1つにまとめる)。店名つきの別名 (kfc chicken) が
+    // 先に着地するよう、店名を取り除いた形は強く下げる (文字列照合側は下の variants で同じ下げ幅)。
+    // 「with / no / without」より後ろの足し物 (cereal with milk / everything bagel with butter / double cheeseburger no bun)
+    // を除いた形も照合する。足し物の語は、その食品の文脈にないことが多い。
+    const head = withHead(query);
+    if (head) {
+      for (const q of makeEnQueries(head, US_EN_VOCAB, US_NOISE)) {
+        if (!enQueries.some((x) => x.corrected === q.corrected && phraseKey(x.tokens) === phraseKey(q.tokens))) enQueries.push({ ...q, stripped: true, penalty: WITH_PENALTY });
+      }
+    }
+    const parts = andParts(query);
+    if (parts) {
+      for (const [text, penalty] of [[parts.head, AND_HEAD_PENALTY], [parts.tail, AND_TAIL_PENALTY]] as const) {
+        for (const q of makeEnQueries(text, US_EN_VOCAB, US_NOISE)) {
+          if (!enQueries.some((x) => x.corrected === q.corrected && phraseKey(x.tokens) === phraseKey(q.tokens))) enQueries.push({ ...q, stripped: true, penalty });
+        }
+      }
+    }
+    const chainless = stripChainsRaw(query);
+    if (chainless) {
+      for (const q of makeEnQueries(chainless, US_EN_VOCAB, US_NOISE)) {
+        if (!enQueries.some((x) => x.corrected === q.corrected && phraseKey(x.tokens) === phraseKey(q.tokens))) enQueries.push({ ...q, stripped: true, penalty: CHAIN_PENALTY });
+      }
+    }
+  }
+  const enQuery = enQueries[0] ?? null;
 
   for (let idx = 0; idx < index.length; idx++) {
     const { entry, targets } = index[idx];
@@ -719,17 +850,33 @@ export function searchEntriesFuzzy(query: string, opts?: SearchOptions): SearchE
     }
     // 英語: 語単位の照合 (identity-search-en.ts)。文字列の照合より強いときだけ置き換える。
     // 同点は登録順 (食材タブ → 料理タブ) で決めるため、ごくわずかに下げる。
-    const eh = enQuery ? scoreEnglish(enQuery, US_EN_INFO[idx], US_EN_VOCAB) : null;
+    let eh: EnHit | null = null;
+    let ehKey = '';
+    for (const eq of enQueries) {
+      const h = scoreEnglish(eq, US_EN_INFO[idx], US_EN_VOCAB);
+      if (h && (!eh || h.score > eh.score)) { eh = h; ehKey = phraseKey(eq.tokens); }
+    }
+    let englishWon = false;
     if (eh) {
       const net = eh.score - (eh.viaTag ? 0.05 : 0);
-      if (!best || net > best.net) best = { score: eh.score, method: eh.method, tier: 'confident', net };
+      if (!best || net > best.net) { best = { score: eh.score, method: eh.method, tier: 'confident', net, enKind: eh.kind }; englishWon = true; }
     }
     if (!best) continue;
     if (isUS) {
       // 文脈に縛られた種類の名前がそのまま打たれたときは、食品そのものを先にする (US_CONTEXT_BOUND)。
-      const bound = !!enQuery && best.method === 'exact' && US_CONTEXT_BOUND[idx].has(phraseKey(enQuery.tokens));
+      // 量・大きさの語を取り除いた形 (tuna packet → tuna) でも判定する: どの形で当たったかは文字列照合側にもあるので、
+      // 形のどれか1つでも「縛られた種類の名前」なら縛る。
+      // (with より前だけ・店名を取り除いた形は、打った語そのものではないので含めない)
+      const qKeys = enQueries.filter((q) => q.penalty === undefined).map((q) => phraseKey(q.tokens));
+      const bound = !!enQuery && best.method === 'exact' && qKeys.some((k) => US_CONTEXT_BOUND[idx].has(k));
+      // 食材が「打った語そのまま」を名前・別名に持つとき (breakfast sausage = ソーセージ)、一皿料理の種類が
+      // 文脈つきの複合 (4.08) で上に来て食材を押しのけない。
+      const ownedByIngredient =
+        !!enQuery && best.method === 'prefix' && !!(entry.attribute || entry.style) &&
+        getBucketDef(entry.identity.primaryHome.bucket)?.tab === 'dish' &&
+        qKeys.some((k) => [...(US_OWNERS.get(k) ?? [])].some((id) => id !== entry.identity.id));
       // 同点は登録順 (食材タブ → 料理タブ)。ラベル順にしない
-      best = { ...best, net: best.net - idx * 1e-6 - (bound ? 0.6 : 0) };
+      best = { ...best, net: best.net - idx * 1e-6 - (bound || ownedByIngredient ? 0.6 : 0) };
     }
     // Preset の途中一致は通常エントリより 0.1 下げる。「ごはん」と打ったときに、タグ
     // (たまごかけごはん…) へ途中一致した Preset がごはん本体・おにぎり等を押しのけない
@@ -740,7 +887,7 @@ export function searchEntriesFuzzy(query: string, opts?: SearchOptions): SearchE
       entry.preset && best.method === 'substring' ? best.net - 0.1
       : entry.preset && best.method === 'prefix' ? best.net - 1.5
       : best.net;
-    results.push({ entry, score, tier: best.tier, method: best.method });
+    results.push({ entry, score, tier: best.tier, method: best.method, enKind: best.enKind });
   }
 
   const freqMap = buildUserFrequencyMap(opts?.history);
@@ -766,8 +913,29 @@ export function searchEntriesFuzzy(query: string, opts?: SearchOptions): SearchE
     const sibling = bestSpecific.get(r.entry.identity.id);
     return sibling !== undefined && sibling >= r.score ? 0 : 0.02;
   };
+  // 英語: 同じ食品の中で、「種類の名前が全部入力に含まれる複合」の一致が、食品全体の一致 (完全一致を除く) より少し低いだけなら、
+  // 種類を食品全体のすぐ上に置く (walnut halves → ナッツ全体 (タグ) より「くるみ」 / cranberry juice → ジュース全体より「クランベリー」)。
+  // 種類の名前を打った人は、より具体的な方を探している。入力が種類の名前の一部にすぎないもの (oat ⊂ overnight oats) と、
+  // 食品全体の完全一致 (nuts / juice と打った)、点が大きく離れるものは動かさない。
+  const familyLift = new Map<string, number>();
+  if (isUS) {
+    const identityScore = new Map<string, SearchEntryResult>();
+    for (const r of results) if (!r.entry.preset && !r.entry.attribute && !r.entry.style) identityScore.set(r.entry.identity.id, r);
+    for (const r of results) {
+      if (r.entry.preset || !(r.entry.attribute || r.entry.style) || r.enKind !== 'compound') continue;
+      const id = identityScore.get(r.entry.identity.id);
+      if (!id || id.method === 'exact' || r.score >= id.score || r.score < id.score - 0.35) continue;
+      const cur = familyLift.get(r.entry.identity.id);
+      const target = id.score + 0.001;
+      if (cur === undefined || r.score > cur) familyLift.set(`${r.entry.identity.id}|${entryFrequencyKey(r.entry)}`, target);
+    }
+  }
+  const baseScore = (r: SearchEntryResult) => {
+    if (!(r.entry.attribute || r.entry.style) || r.entry.preset) return r.score;
+    return familyLift.get(`${r.entry.identity.id}|${entryFrequencyKey(r.entry)}`) ?? r.score;
+  };
   const finalScore = (r: SearchEntryResult) =>
-    (r.score + nudge(r)) * frequencyMultiplier(freqMap.get(entryFrequencyKey(r.entry)) ?? 0);
+    (baseScore(r) + nudge(r)) * frequencyMultiplier(freqMap.get(entryFrequencyKey(r.entry)) ?? 0);
   const label = (r: SearchEntryResult) =>
     r.entry.preset?.label ?? r.entry.attribute?.label ?? r.entry.style?.label ?? r.entry.identity.label;
   results.sort((a, b) => finalScore(b) - finalScore(a) || label(a).localeCompare(label(b), sortLocale));

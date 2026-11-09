@@ -104,7 +104,10 @@ describe('US 検索ベンチマーク — ラチェット (チューニング用
 describe('US 検索ベンチマーク — 取り違え (0件より悪い失敗)', () => {
   // 取り違え = 層1に別物だけが出る。気づかず誤ったカロリーで記録される。ホールドアウトの数を別に持ち、増やさない。
   const wrongCount = (rs: ReturnType<typeof evaluate>[]) => rs.filter((r) => r.item.kind !== 'chain' && r.status === 'wrong').length;
-  const MAX_WRONG_TUNING = 1; // 2026-11-07 ② の後の実数 (初回測定は 8)
+  // 2026-11-09: 新しい語の束 (第1〜3束) を取り込んで 1 → 6。中身: 期待が種類 (turkey breast/deli) なのに食品全体に着地した語 /
+  // 期待の付け方が曖昧な語 (chicken parmesan・shrimp scampi: パスタのどれか) / 味つきの食品 (white claw mango) /
+  // peanut butter banana toast (フレンチトーストに取られる)。増やさない。
+  const MAX_WRONG_TUNING = 6; // 初回測定は 8 (turkey meatballs が「ターキーサブ」に着地するのも含む)
   const MAX_WRONG_HOLDOUT = 2; // 同上 (初回測定は 1。補充した新しい語で 2 になった。増やさない)
   it('取り違えが増えていない (チューニング用)', () => { expect(wrongCount(tuning)).toBeLessThanOrEqual(MAX_WRONG_TUNING); });
   it('取り違えが増えていない (ホールドアウト)', () => { expect(wrongCount(holdout)).toBeLessThanOrEqual(MAX_WRONG_HOLDOUT); });

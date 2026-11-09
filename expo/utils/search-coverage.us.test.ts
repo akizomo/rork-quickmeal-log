@@ -67,7 +67,7 @@ describe('別名テーブル (search-aliases.us.ts)', () => {
  * 残りは、別名より Identity のタグの完全一致が強い語 (sandwich → PB&J のタグ) など。
  */
 const KNOWN_ALIAS_MISSES = [
-  'breakfast sausage', 'mocha frappuccino', 'sandwich',
+  'sandwich',
   'bbq chicken', 'baked chicken', 'chipotle chicken bowl', 'fried fish', 'fried fish plate', 'spinach salad', 'green salad', 'biscuits',
 ];
 

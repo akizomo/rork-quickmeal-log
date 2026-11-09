@@ -2,7 +2,10 @@
  * US 食事データの不変条件 (日本語版は db-invariants.test.ts)。
  * 初回測定 (2026-11-07) で見つかった食い違いは、凍結して増やさないことから始める。
  */
+import { enTokens } from '@/utils/identity-search-en';
+
 import { buildRegistry } from './index';
+import { usAliasesFor } from './search-aliases.us';
 
 const registry = buildRegistry('en-US', 'en-US');
 const all = Object.entries(registry.byBucket).flatMap(([bucket, ids]) => ids.map((i) => ({ bucket, i })));
@@ -45,5 +48,23 @@ describe('US 食事データ — Identity の不変条件', () => {
       return !(m.kcal >= 0 && m.protein >= 0 && m.fat >= 0 && m.carbs >= 0);
     });
     expect(bad.map(({ i }) => i.id)).toEqual([]);
+  });
+
+  it('食品全体のタグ・別名が、「種類の名前 + 食品名」と同じ語句になっていない (種類を飛ばして食品に着地する原因)', () => {
+    // 例: us_milk のタグ "whole milk" は、種類 Whole + 食品名 Milk の複合で検索側が既に扱う。タグに置くと
+    // 食品全体の完全一致 (4.05) が先に来て、種類 (whole) に着地しない。2026-11-09 に 47 件を外した。
+    const key = (xs: string[]) => [...new Set(xs)].sort().join(' ');
+    const bad: string[] = [];
+    for (const { i } of all) {
+      const idTok = enTokens(i.label.replace(/[/()—–-]/g, ' '));
+      const phrases = [...(i.searchTags ?? []), ...usAliasesFor(i.id)];
+      for (const t of phrases) {
+        for (const a of i.attributes ?? []) {
+          const at = enTokens(a.label.replace(/[/()—–-]/g, ' '));
+          if (key([...at, ...idTok]) === key(enTokens(t))) bad.push(`${i.id}: "${t}" = ${a.key} + ${i.label}`);
+        }
+      }
+    }
+    expect(bad).toEqual([]);
   });
 });
