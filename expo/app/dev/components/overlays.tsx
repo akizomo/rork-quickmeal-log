@@ -206,7 +206,7 @@ function ToastSection({ t }: { t: Theme }) {
   return (
     <Section title="Toast" t={t}>
       <Caption>
-        操作の結果を一言だけ伝えるピル。面は surface.inverse、radius.full + elevation.lg。主語だけ emphasis で太字。
+        操作の結果を一言だけ伝えるピル。面は surface.inverse、radius.full + elevation.lg。主語だけ emphasis で太字。補足 (量など) があるときは description で2段にし、角丸は radius.xl。
         戻せる操作があるときだけ action を1つ。onDismiss を渡すと横スワイプで閉じる (縦は使わない)。
         ホームでは UndoToast が画面下に置き、シートでは footerAccessory に直接置く。
       </Caption>
@@ -222,6 +222,11 @@ function ToastSection({ t }: { t: Theme }) {
           onDismiss={() => setSwipeVisible(false)}
           testID="toast-demo"
         />
+        {/* 記録トーストは 見出し (◯◯を記録しました) + 補足 (量)。実際に出る文面の長さを見るための見本 */}
+        <Toast visible message="ごはん を記録しました" emphasis="ごはん" description="150g（普通）" action={{ label: '取り消す', onPress: () => {} }} />
+        <Toast visible message="ベーコン・ソーセージ を記録しました" emphasis="ベーコン・ソーセージ" description="2枚" action={{ label: '取り消す', onPress: () => {} }} />
+        <Toast visible message="プロテイン を記録しました" emphasis="プロテイン" description="P15 (200ml)" action={{ label: '取り消す', onPress: () => {} }} />
+        <Toast visible message="豚バラ生姜焼き定食 を記録しました" emphasis="豚バラ生姜焼き定食" description="180g（大）" action={{ label: '取り消す', onPress: () => {} }} />
         <Button
           label={swipeVisible ? '3つ目を隠す (横に払っても閉じる)' : '3つ目を出す'}
           variant="secondary"

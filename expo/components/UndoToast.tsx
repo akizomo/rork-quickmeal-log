@@ -20,13 +20,16 @@ export const UndoToast = memo(function UndoToast() {
   if (!active) return null;
 
   const label = getLogDisplayInfo(active.log, settings.uiLanguage).title;
-  // 何が・どれだけ入ったかを読めるように量を添える (タップで即記録されたときに量が見えなかった)
+  // 何が・どれだけ入ったかを読めるように、見出し (「◯◯を記録しました」) + 補足 (量) の2段にする
   const amount = getLogAmountSummary(active.log, settings.uiLanguage);
   const key = active.kind === 'delete' ? 'deleted' : 'recorded';
+  const title = tr(`undoToast.${key}`, { label });
   return (
     <Toast
       visible={!!undoState}
-      message={amount ? tr(`undoToast.${key}WithAmount`, { label, amount }) : tr(`undoToast.${key}`, { label })}
+      message={title}
+      description={amount}
+      accessibilityLabel={amount ? tr(`undoToast.${key}WithAmount`, { label, amount }) : undefined}
       emphasis={label}
       action={{ label: tr('undoToast.undo'), onPress: undoLastLog, testID: 'undo-button' }}
       onDismiss={dismissUndo}

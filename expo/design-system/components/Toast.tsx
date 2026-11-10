@@ -7,13 +7,16 @@
  * 見た目の規約:
  *   - 面は `surface.inverse` (反転面)、角丸 `radius.full`、影 `elevation.lg` (CLAUDE.md の影ルール: トースト)
  *   - 文章は1行の `Body`。何についてのトーストかを示す主語だけ `emphasis` で太字にする
+ *   - 文 + 補足の2段にしたいときは `description` を渡す (下記)。`message` が見出しの文
+ *     (「◯◯を記録しました」)、`description` が補足 (小さく淡く・1行)。ピルは2段になるので角丸が `radius.xl` に変わる
  *   - 操作ボタンは暗い面の上のテキストボタン色 (`action.text.onInverse`)
  *
- * description (2文目) は持たない。Toast は「いまの操作で何が起きたか」の一文で完結させる。
+ * description は「何が」と「どれだけ」のように、1文に詰めると折り返してしまう結果のためのもの
+ * (2026-11-10 追加。記録トーストが「ごはん 150g（普通） を記録しました」と長くなり、1文だと
+ * 単語の途中で折り返したため、見出し + 補足に分けた)。文章を2文に増やすためには使わない。
  *   - 画面の要素を指して補足したい → `Callout` (title + message の2段)
  *   - 読んで判断してもらう必要がある (エラー・確認) → `Alert.alert`
- *   - 2行にするとピル (radius.full) が間延びするので、足すなら形も変えることになる
- *   指す対象が無く、2文目が無いと意味が欠ける結果が出てきたときに、形ごと見直す。
+ *   - 2段にするとピル (radius.full) が間延びするので、description があるときだけ `radius.xl` にする
  *
  * スワイプ: `onDismiss` を渡すと、横に払って閉じられる (一般的な Snackbar と同じく横のみ。
  *   シートの中では縦に払うとシートごと閉じるので、縦は使わない)。
@@ -45,6 +48,10 @@ export type ToastAction = { label: string; onPress: () => void; testID?: string 
 export type ToastProps = {
   visible: boolean;
   message: string;
+  /** 見出し (`message`) の下に置く補足 (量など)。渡すと2段のトーストになる。1行に収まる短さにする (はみ出したら省略)。 */
+  description?: string;
+  /** スクリーンリーダーに読ませる文。見出し+補足だけでは何が起きたかが欠けるとき (「記録しました」) に渡す。 */
+  accessibilityLabel?: string;
   /** `message` の中で太字にする部分 (「◯◯を削除しました」の ◯◯ など、何についてのトーストかを示す主語)。 */
   emphasis?: string;
   /** 文の右に並べる操作ボタン (取り消すなど)。 */
@@ -62,7 +69,7 @@ const SWIPE_VELOCITY = 0.5;
 // タップ (操作ボタン) と区別するため、この距離を横に動くまではジェスチャーを奪わない
 const SWIPE_SLOP = 6;
 
-export function Toast({ visible, message, emphasis, action, onDismiss, style, testID }: ToastProps) {
+export function Toast({ visible, message, description, accessibilityLabel, emphasis, action, onDismiss, style, testID }: ToastProps) {
   const t = useTheme();
   const { width: screenWidth } = useWindowDimensions();
   const [mounted, setMounted] = useState(visible);
@@ -131,6 +138,12 @@ export function Toast({ visible, message, emphasis, action, onDismiss, style, te
   });
   const translateY = progress.interpolate({ inputRange: [0, 1], outputRange: [t.spacing['2'], 0] });
 
+  const actionNode = action ? (
+    <Pressable onPress={action.onPress} hitSlop={t.spacing['3']} accessibilityRole="button" testID={action.testID}>
+      <Label style={{ color: t.colors.action.text.onInverse }}>{action.label}</Label>
+    </Pressable>
+  ) : null;
+
   return (
     <View
       style={[styles.row, style]}
@@ -144,7 +157,7 @@ export function Toast({ visible, message, emphasis, action, onDismiss, style, te
           styles.pill,
           {
             backgroundColor: t.colors.surface.inverse,
-            borderRadius: t.radius.full,
+            borderRadius: description ? t.radius.xl : t.radius.full,
             paddingHorizontal: t.spacing['5'],
             paddingVertical: t.spacing['3'],
             gap: t.spacing['4'],
@@ -153,28 +166,45 @@ export function Toast({ visible, message, emphasis, action, onDismiss, style, te
           },
         ]}
         accessibilityLiveRegion="polite"
+        accessibilityLabel={accessibilityLabel}
         onAccessibilityEscape={onDismiss}
         testID={testID}
       >
         {/* 文章なので Body。主語だけ太字にして、何が起きたかを一目で読めるようにする */}
-        <Body tone="inverse" style={styles.message}>
-          {at === -1 ? (
-            message
-          ) : (
-            <>
-              {message.slice(0, at)}
-              <Body tone="inverse" weight="bold">
+        <View style={styles.message}>
+          {description && at === 0 ? (
+            // 2段のときは見出しを「主語 / 述語」の行にする。長い主語は1行で省略し、述語
+            // (「を記録しました」) は折り返さない (文の途中で切れて「記/録しました」になるのを防ぐ)
+            <View style={styles.titleRow}>
+              <Body tone="inverse" weight="bold" numberOfLines={1} style={styles.titleSubject}>
                 {emphasis}
               </Body>
-              {message.slice(at + emphasis!.length)}
-            </>
+              <Body tone="inverse" style={[styles.titlePredicate, { marginLeft: t.spacing['1'] }]}>
+                {message.slice(emphasis!.length).trim()}
+              </Body>
+            </View>
+          ) : (
+          <Body tone="inverse">
+            {at === -1 ? (
+              message
+            ) : (
+              <>
+                {message.slice(0, at)}
+                <Body tone="inverse" weight="bold">
+                  {emphasis}
+                </Body>
+                {message.slice(at + emphasis!.length)}
+              </>
+            )}
+          </Body>
           )}
-        </Body>
-        {action ? (
-          <Pressable onPress={action.onPress} hitSlop={t.spacing['3']} accessibilityRole="button" testID={action.testID}>
-            <Label style={{ color: t.colors.action.text.onInverse }}>{action.label}</Label>
-          </Pressable>
-        ) : null}
+          {description ? (
+            <Body tone="inverseSecondary" size="sm" numberOfLines={1}>
+              {description}
+            </Body>
+          ) : null}
+        </View>
+        {actionNode}
       </Animated.View>
     </View>
   );
@@ -184,4 +214,7 @@ const styles = StyleSheet.create({
   row: { alignItems: 'center' },
   pill: { flexDirection: 'row', alignItems: 'center' },
   message: { flexShrink: 1 },
+  titleRow: { flexDirection: 'row', alignItems: 'baseline' },
+  titleSubject: { flexShrink: 1 },
+  titlePredicate: { flexShrink: 0 },
 });
