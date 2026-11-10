@@ -1091,6 +1091,8 @@
     "burnedSuffix": " · Burned {{kcal}}"
   },
   "undoToast": {
+    "deletedWithAmount": "{{label}} {{amount}} deleted",
+    "recordedWithAmount": "{{label}} {{amount}} logged",
     "deleted": "{{label}} deleted",
     "recorded": "{{label}} logged",
     "undo": "Undo"

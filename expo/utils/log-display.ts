@@ -128,6 +128,40 @@ function formatAmountValue(v: number): string {
   return v.toFixed(1).replace(/\.0$/, '');
 }
 
+const NUMERIC_CHIP_RE = /^\d+(\.\d+)?$/;
+
+/**
+ * 記録・削除のトーストに添える量の要約。「何が・どれだけ入ったか」を、記録した
+ * その場で読めるようにする (タップで即記録されたとき、どの量で入ったかが見えなかった)。
+ *
+ *   - g / ml: 数値を必ず出し、名前のある量チップ (「普通」「1枚」) に当たれば括弧で添える
+ *     → 「150g（普通）」「60g（1枚）」。数字だけのチップ (「100」) や数値を含むチップ
+ *     (「60g」) は数値と同じことを言うだけなので添えない
+ *   - 数え物・% など: チップ名がそのまま量を言っている (「半丁」「1缶」「P15 (200ml)」) ので
+ *     チップ名だけ。当たらなければ数値+単位
+ *   - Identity の無い旧ログは一覧と同じ旧表記。何も無ければ undefined (トーストは名前だけ)
+ */
+export function getLogAmountSummary(log: FoodLog, uiLanguage: AppLocale = 'ja'): string | undefined {
+  const identity = log.identityId ? getIdentity(log.identityId) : undefined;
+  if (!identity) return legacyAmountText(log, uiLanguage) || undefined;
+
+  const spec = getEffectiveAmountSpec(identity, log.attrKey);
+  const value = migrateAmountValueForUnit(log.amountValue ?? spec.default, log.amountUnit, spec.unit);
+  const suffix = spec.unitLabel ?? UNIT_LABELS[uiLanguage][spec.unit];
+  const numeric = formatAmountValue(value);
+  // 日本語は「150g」と詰める。英語は単位の前に空白を置く
+  const measured = uiLanguage === 'ja' ? `${numeric}${suffix}` : `${numeric} ${suffix}`;
+  const chip = spec.chips?.find((c) => c.value === value);
+  const chipLabel = chip?.label.trim();
+
+  if (spec.unit !== 'g' && spec.unit !== 'ml') {
+    if (!chipLabel) return measured;
+    return NUMERIC_CHIP_RE.test(chipLabel) ? measured : chipLabel;
+  }
+  if (!chipLabel || NUMERIC_CHIP_RE.test(chipLabel) || chipLabel.includes(numeric)) return measured;
+  return uiLanguage === 'ja' ? `${measured}（${chipLabel}）` : `${measured} (${chipLabel})`;
+}
+
 // ---------------------------------------------------------------------------
 // Addon labels (Identity流用 or Pure Addon)
 // ---------------------------------------------------------------------------

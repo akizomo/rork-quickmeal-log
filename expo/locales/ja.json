@@ -1091,6 +1091,8 @@
     "burnedSuffix": " · 消費 {{kcal}}"
   },
   "undoToast": {
+    "deletedWithAmount": "{{label}} {{amount}} を削除しました",
+    "recordedWithAmount": "{{label}} {{amount}} を記録しました",
     "deleted": "{{label}} を削除しました",
     "recorded": "{{label}} を記録しました",
     "undo": "取り消す"

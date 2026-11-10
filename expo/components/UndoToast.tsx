@@ -7,7 +7,7 @@ import React, { memo, useState } from 'react';
 import { Toast, useTheme } from '@/design-system';
 import { useT } from '@/hooks/useT';
 import { useAppState } from '@/providers/app-state-provider';
-import { getLogDisplayInfo } from '@/utils/log-display';
+import { getLogAmountSummary, getLogDisplayInfo } from '@/utils/log-display';
 
 export const UndoToast = memo(function UndoToast() {
   const { undoState, undoLastLog, dismissUndo, settings } = useAppState();
@@ -20,10 +20,13 @@ export const UndoToast = memo(function UndoToast() {
   if (!active) return null;
 
   const label = getLogDisplayInfo(active.log, settings.uiLanguage).title;
+  // 何が・どれだけ入ったかを読めるように量を添える (タップで即記録されたときに量が見えなかった)
+  const amount = getLogAmountSummary(active.log, settings.uiLanguage);
+  const key = active.kind === 'delete' ? 'deleted' : 'recorded';
   return (
     <Toast
       visible={!!undoState}
-      message={tr(active.kind === 'delete' ? 'undoToast.deleted' : 'undoToast.recorded', { label })}
+      message={amount ? tr(`undoToast.${key}WithAmount`, { label, amount }) : tr(`undoToast.${key}`, { label })}
       emphasis={label}
       action={{ label: tr('undoToast.undo'), onPress: undoLastLog, testID: 'undo-button' }}
       onDismiss={dismissUndo}
