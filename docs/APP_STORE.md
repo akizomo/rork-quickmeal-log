@@ -172,6 +172,20 @@
 
 > 文言は [VOICE.md](./VOICE.md) に沿って最終確認する。
 
+### 4-1b. 日本語の掲載文 (1.0.2 向け・2026-11-11)
+プロモーションテキスト (170字まで。審査なしで更新できる):
+```
+9つのボタンをタップするだけ。量らず、迷わず、ざっくり記録。週ごとのふり返りと、データの書き出しにも対応。はじめの7日間は無料、その後は有料プランです。
+```
+説明文は [PLAY_STORE.md](./PLAY_STORE.md) §2-2 を土台に、次を変える:
+- 「■ 週に一度の、静かなふり返り」「■ データは、持ち出せる」「■ ヘルスケアと連携 (読み取りのみ・いつでもオフ)」を足す
+- **「■ プライバシー」を事実に合わせる**: 「外部サーバーへの送信は行いません」は 1.0.2 の匿名の利用状況計測 (PostHog) と合わない → 「食事や体の記録は端末内にだけ保存。アカウント登録は不要。アプリの改善のため、匿名の利用回数だけを送る。設定からいつでもオフにできる。広告のトラッキングは行わない」
+- **「■ 利用規約」を足す** (§6-1c の差し戻し対応): 末尾の「■ お問い合わせ」の前に、次の2行
+```
+■ 利用規約
+https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
+```
+
 ### 4-2. URL
 - プライバシーポリシー: `https://hachibu.vercel.app/privacy`
 - サポート URL (必須): `https://hachibu.vercel.app/` (LP。問い合わせ先 contact@akizony.com が辿れること)
@@ -270,6 +284,17 @@ Guideline 5.1.1(iv): The screen shown before the HealthKit permission request no
 
 Guideline 1.4.1: We added a "Calculations & Sources" page that explains each calculation (resting metabolic rate, daily energy expenditure, calorie target, macros, exercise calories, BMI range, food nutrition data) with links to the original sources (peer-reviewed papers via DOI, FAO/WHO, the Japanese Ministry of Health, Labour and Welfare, MEXT, and USDA). It can be opened from Settings > Info, directly below the daily goal card on the Status screen, on the Edit Goal screen, and on the pace and plan screens at the end of onboarding.
 ```
+
+### 6-1c. 自動審査の差し戻し: 利用規約 (EULA) のリンクが無い (2026-11-11)
+審査に進む前の自動メッセージ。**サブスクを出すアプリは、App Store の商品ページから辿れる場所に利用規約 (EULA) のリンクが要る。**
+
+| 指摘 | 対応 |
+|---|---|
+| 「Hachibu 月額 / 年額」の自動更新サブスクがあるのに、App メタデータに利用規約 (EULA) への機能するリンクが無い | **Apple 標準の EULA を使う**。リンク `https://www.apple.com/legal/internet-services/itunes/dev/stdeula/` を、**説明文に、ローカライズごとに**書く (日本語・English (U.S.) の両方)。独自の EULA を使う場合は、App Store Connect の「App 情報 > ライセンス契約」に登録する |
+
+- 日本語の説明文 (末尾の「■ お問い合わせ」の前) に足す文: `■ 利用規約` の下に URL を1行。英語の説明文 ([STORE_EN.md](./STORE_EN.md) §2-5) にも `■ Terms of Use` + URL を足した。
+- 局所の見直しではなく型として: 「ローカライズを足すたびに、説明文に EULA リンクが要る」。**英語のローカライズを足すときにも同じ指摘が出るので、先回りして入れた**。独自規約 (Web の `terms.html`) に切り替えるなら、App 情報の登録に加えて、英語版の Web ページが要る (§7)。
+- アプリ内には、ペイウォール・規約画面があり、App Review ではこちらも見られる。メタデータ側の不足だけが指摘された。
 
 ### 6-2. 承認後にやること
 > **2026-11-04 承認 → ビルド 15 で公開した (2026-11-04 10:13 JST、iTunes Lookup で確認。ストア URL `https://apps.apple.com/jp/app/hachibu/id6823520048`)。** 承認されたのはビルド 15 (`91deaa5`、10-31)。公開方法は「手動で公開」。ビルド 16 (`098309e`、11-02) には週次ふり返りの作り直し・My食品の記録編集で%調整・検索から記録後の戻り1回・多め/少なめ判定 20%・Android の価格直書きの撤去が入っているが、iOS で急ぐ修正は無く、ふり返りの作り直しが大きいため実機未確認のまま出さない。15 の iOS 画面に価格の直書きは無い (ペイウォールはストアの価格を表示)。**16 もバージョンは 1.0.1 なので、15 を公開したら使えない**。16 の内容と `baa50ab` (進捗バーの重なり。15・16 とも未収録) は 1.0.2 として作り直し、TestFlight で確認してから審査に出す (§6-3)

@@ -106,6 +106,9 @@ Free for the first 7 days. After that, your chosen plan renews automatically unt
 ■ Privacy
 Your meals and body data stay on your device. No account needed. The app sends only anonymous usage counts to help improve it, and you can turn that off in Settings.
 
+■ Terms of Use
+https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
+
 Hachibu (八分) — the Japanese practice of stopping at 80% full. Roughly is enough.
 ```
 
