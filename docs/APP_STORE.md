@@ -41,6 +41,10 @@
   - `hachibu_premium_monthly` (1か月)
   - `hachibu_premium_annual` (1年)
 - [x] 価格を Android 版と揃えて設定、両方に **お試しオファー: 7日間無料** を付与
+- [ ] **サブスクの英語ローカライズ (English (U.S.))** — 各サブスク > App Store ローカリゼーション。表示名は30字・説明は45字まで。無料トライアルには触れない (3.1.2(c) の指摘に合わせる)
+  - グループ `Hachibu Premium`: グループ表示名 `Hachibu Premium` / アプリ名のカスタム: `Hachibu`
+  - `hachibu_premium_monthly`: 表示名 `Hachibu Monthly` / 説明 `Full access to Hachibu, billed monthly.` (39字)
+  - `hachibu_premium_annual`: 表示名 `Hachibu Annual` / 説明 `Full access to Hachibu, billed yearly.` (38字)
 - [x] 各プロダクトの審査用スクリーンショット (paywall の画面) と表示名を登録 (2026-10-27。**暫定で 10-18 の古い実機画像 (英語・ドル建て) を使った**。日本語・円建ての実機画像への差し替えは次の版か、審査で聞かれたときに)
 - [x] App Store Connect で **App 内課金用の共有シークレット** or **In-App Purchase Key (.p8)** を発行
 
@@ -147,6 +151,9 @@
 
 - [ ] 起動 → intro → オンボーディング → paywall まで進める (splash で落ちない)
 - [ ] paywall: 年額・月額が「¥◯◯ / 年」「¥◯◯ / 月」で出る / Sandbox で購入 → ホームへ / 再インストール後「購入を復元」で戻る
+- [ ] **審査差し戻し 3.1.2(c) (2026-11-11, v1.0.2 build 19)**: 「提出したサブスクに無料トライアルが無いのに、購入フローが無料を謳っている」。ASC では 7日間無料を登録済みのつもりだったので、原因は未特定。候補: ①審査用 Apple ID が既に無料期間を使い切っている (アプリは固定で「7日間無料」と出していた) / ②月額・年額の両方・配信地域・開始日のどれかが漏れている / ③RevenueCat の商品情報が古い。
+  - **コード側の対応**: 無料の文言は固定値をやめ、ストアの `introPrice` が無料 かつ (iOS は) 利用資格あり のときだけ出す (`fetchFreeTrialDays` in `utils/iap.ts`)。無ければ「無料」を謳わない文言に切り替え、終了前通知も予約しない。
+  - **ASC で確認すること**: 各サブスク > 購読オファー に導入オファー (無料・7日) があり、全配信地域・開始日が過去になっているか。再提出時に審査メモで「審査アカウントは既にトライアル使用済みの場合、無料表示は出ず通常課金の表示になる」と伝える。
 - [ ] トライアル終了通知の許可ダイアログが購入直後に出る
 - [ ] ヘルスケア: 許可ダイアログの文言 / 歩数・アクティブエネルギー・ワークアウト・体重・体脂肪が取り込まれる / 日付をまたいだ再同期 / ホームの pull-to-refresh
 - [ ] ヘルスケアの許可を「すべてオフ」にしてもクラッシュせず、手入力で使える
@@ -211,12 +218,12 @@ Apple の定義では「端末外に送信されるもの」だけが「収集�
 ### 4-4. 審査メモ (App Review への注記)
 ```
 Hachibu has no user accounts; all meal and body data is stored only on the device.
-The app starts with a 7-day free trial subscription (auto-renewable). You can test the purchase with a Sandbox account. "Restore Purchase" is available at the bottom of the paywall.
+Subscriptions (auto-renewable, monthly and annual) include a 7-day free introductory offer, which is configured in App Store Connect for both products. The free trial can be used only once per Apple ID. The paywall and the intro screen show "7 days free" only when the App Store reports that the current Apple ID is eligible for the offer. If the account has already used the trial (for example, a test account used in an earlier review), no free-trial wording is shown and the standard price is displayed instead. To see the free-trial wording and the trial start, please use a Sandbox account that has not purchased before. "Restore Purchase" is available at the bottom of the paywall.
 HealthKit is used read-only (steps, active energy, workouts, weight, body fat %) to adjust the daily calorie target shown on the home screen. Health permission is optional; the app works fully with manual input.
 The sources for all calorie and nutrition calculations are listed in Settings > Info > Calculations & Sources (also linked below the daily goal on the Status screen).
 ```
 
-> 2026-10-27: 元の文面にあった「The camera is used only to scan food barcodes.」は、バーコード画面に導線が無く今のビルドで使われないため、審査メモから外した。カメラの許可の説明文 (`expo-camera`) だけ Info.plist に残っている。聞かれたら「バーコード機能用で、今のバージョンでは未公開」と答える。
+> **2026-11-12**: 3.1.2(c) 差し戻し (無料トライアルが無いのに無料と表示) への対応として、無料トライアルの説明を「Apple ID ごとに1回限り / 資格がある時だけ表示」に書き換えた。再提出時にこの文面を貼る。\n>\n> 2026-10-27: 元の文面にあった「The camera is used only to scan food barcodes.」は、バーコード画面に導線が無く今のビルドで使われないため、審査メモから外した。カメラの許可の説明文 (`expo-camera`) だけ Info.plist に残っている。聞かれたら「バーコード機能用で、今のバージョンでは未公開」と答える。
 
 ---
 

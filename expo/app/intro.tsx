@@ -14,14 +14,13 @@ import type { ListViewToken } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Logo } from '@/components/Logo';
 import { ButtonGridIllustration, GestureDemoIllustration, IntroProgressIllustration } from '@/components/onboarding-illustrations';
-import { TRIAL_DAYS } from '@/constants/iap';
 import { INTRO_VERSION, LEGAL_LINKS } from '@/constants/onboarding';
 import { Body, Label, useTheme, type Theme } from '@/design-system';
 import { useT } from '@/hooks/useT';
 import { radius } from '@/design-system/tokens/primitives/radius';
 import { fontSize as fs, letterSpacing as ls } from '@/design-system/tokens/primitives/typography';
 import { useAppState } from '@/providers/app-state-provider';
-import { fetchOffering } from '@/utils/iap';
+import { fetchFreeTrialDays, fetchOffering } from '@/utils/iap';
 
 type SlideMedia =
   | { kind: 'buttonGrid' }
@@ -51,12 +50,17 @@ export default function IntroRoute() {
   // 料金の一行に出す月額。価格は地域で変わるので固定文言にせず、ペイウォールと同じくストアから読む。
   // 読み込めない (未初期化・オフライン・Web) ときは価格なしの文言に落とす
   const [monthlyPrice, setMonthlyPrice] = useState<string | null>(null);
+  // ストアが実際に提示する無料トライアル日数 (0 = なし)。固定の「7日間無料」を出さない (審査 3.1.2(c))
+  const [trialDays, setTrialDays] = useState<number>(0);
   useEffect(() => {
     let cancelled = false;
     fetchOffering()
-      .then((offering) => {
+      .then(async (offering) => {
         const pkg = offering?.monthly ?? offering?.availablePackages.find((p) => p.packageType === 'MONTHLY');
-        if (!cancelled && pkg) setMonthlyPrice(pkg.product.priceString);
+        const days = await fetchFreeTrialDays(pkg);
+        if (cancelled) return;
+        if (pkg) setMonthlyPrice(pkg.product.priceString);
+        setTrialDays(days);
       })
       .catch((e) => console.log('[intro] fetchOffering failed', e));
     return () => {
@@ -198,9 +202,13 @@ export default function IntroRoute() {
                 オンボーディングの後で初めて課金を知る流れにしないため。規約リンクと1つの注記として詰めて並べる */}
             <View style={styles.finePrint}>
               <Body size="sm" tone="secondary" align="center" testID="intro-trial-note">
-                {monthlyPrice
-                  ? tr('intro.trialNoteWithPrice', { days: TRIAL_DAYS, price: monthlyPrice })
-                  : tr('intro.trialNote', { days: TRIAL_DAYS })}
+                {trialDays > 0
+                  ? monthlyPrice
+                    ? tr('intro.trialNoteWithPrice', { days: trialDays, price: monthlyPrice })
+                    : tr('intro.trialNote', { days: trialDays })
+                  : monthlyPrice
+                    ? tr('intro.planNoteWithPrice', { price: monthlyPrice })
+                    : tr('intro.planNote')}
               </Body>
               <View style={styles.legalRow}>
                 <Pressable onPress={() => openLegal(LEGAL_LINKS.terms)}>

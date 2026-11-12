@@ -75,6 +75,8 @@
     "start": "Get Started",
     "trialNote": "{{days}} days free (then a paid plan)",
     "trialNoteWithPrice": "{{days}} days free (then {{price}}/month)",
+    "planNote": "Monthly and annual paid plans",
+    "planNoteWithPrice": "From {{price}}/month. Annual plan also available",
     "progress": {
       "label": "Weight · 12 wk",
       "delta": "-2.3 kg",
@@ -277,6 +279,7 @@
   "paywall": {
     "badge": "{{days}} days free",
     "title": "Meal logging you'll actually stick with",
+    "subtitleNoTrial": "Keep your daily logging going with a monthly or annual plan.",
     "subtitle": "Start free for {{days}} days. Then continue with a monthly or annual plan.",
     "benefits": [
       "Log ingredients and full meals in seconds",
@@ -288,6 +291,7 @@
     "loadError": "Could not load plans",
     "loadErrorHint": "Check your connection and try again.",
     "reload": "Try again",
+    "priceHintNoTrial": "Payment is charged at purchase, and your chosen plan renews automatically each period until you cancel. Cancel at least 24 hours before the next renewal to avoid being charged. You can cancel anytime in your store subscription settings.",
     "priceHint": "After your {{days}}-day free trial, your chosen plan is billed automatically and renews each period until you cancel. Cancel at least 24 hours before the next renewal to avoid being charged. You can cancel anytime in your store subscription settings.",
     "annual": "Annual Plan",
     "monthly": "Monthly Plan",

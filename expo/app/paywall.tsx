@@ -5,7 +5,7 @@ import { ActivityIndicator, Alert, Linking, Pressable, ScrollView, StyleSheet, T
 import { SafeAreaView } from 'react-native-safe-area-context';
 import type { PurchasesOffering, PurchasesPackage } from 'react-native-purchases';
 
-import { PAYWALL_SKIP_ENABLED, TRIAL_DAYS } from '@/constants/iap';
+import { ENTITLEMENT_ID, PAYWALL_SKIP_ENABLED } from '@/constants/iap';
 import { LEGAL_LINKS } from '@/constants/onboarding';
 import { Badge, Body, Button, Icon, Label, useTheme, type Theme } from '@/design-system';
 import { radius } from '@/design-system/tokens/primitives/radius';
@@ -14,7 +14,7 @@ import { useAppState } from '@/providers/app-state-provider';
 import { useT } from '@/hooks/useT';
 import { useLocale } from '@/hooks/useLocale';
 import { track } from '@/utils/analytics';
-import { fetchOffering, purchase } from '@/utils/iap';
+import { fetchFreeTrialDays, fetchOffering, purchase } from '@/utils/iap';
 import {
   cancelTrialExpiryNotification,
   getTrialNotificationPermissionStatus,
@@ -33,6 +33,8 @@ export default function PaywallRoute() {
 
   const [offering, setOffering] = useState<PurchasesOffering | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  // ストアが実際に提示する無料トライアル日数。0 = トライアルなし (文言で無料を謳わない)
+  const [trialDays, setTrialDays] = useState<number>(0);
   const [purchasing, setPurchasing] = useState<string | null>(null); // identifier of purchasing pkg
 
   const isTrialOrActive = settings.subscriptionStatus === 'trialing' || settings.subscriptionStatus === 'active';
@@ -44,8 +46,11 @@ export default function PaywallRoute() {
     let cancelled = false;
     setLoading(true);
     fetchOffering()
-      .then((res) => {
+      .then(async (res) => {
+        const pkg = res?.monthly ?? res?.availablePackages.find((p) => p.packageType === 'MONTHLY');
+        const days = await fetchFreeTrialDays(pkg);
         if (cancelled) return;
+        setTrialDays(days);
         setOffering(res);
       })
       .catch((e) => console.log('[paywall] fetchOffering failed', e))
@@ -66,21 +71,24 @@ export default function PaywallRoute() {
         if (info) {
           // subscriptionStatus を即座に更新してからナビゲート (タイミング問題を防ぐ)
           completePurchase(info);
+          const startedTrial = trialDays > 0 && ['TRIAL', 'INTRO'].includes(info.entitlements.active[ENTITLEMENT_ID]?.periodType ?? '');
           track('trial_started', { plan: pkg.packageType === 'ANNUAL' ? 'annual' : pkg.packageType === 'MONTHLY' ? 'monthly' : 'unknown' });
 
           // トライアル開始 → 終了48h前のローカル通知をスケジュール
           // 通知許諾は購入完了直後に文脈一致でリクエスト (ユーザー保護のため)
           // 許可ダイアログの前に、何のための通知かを先に伝える (初回のみ)
-          if ((await getTrialNotificationPermissionStatus()) === 'undetermined') {
+          if (startedTrial && (await getTrialNotificationPermissionStatus()) === 'undetermined') {
             await new Promise<void>((resolve) => {
               Alert.alert(tr('paywall.alerts.notifyPreTitle'), tr('paywall.alerts.notifyPreBody'), [
                 { text: tr('paywall.alerts.notifyPreOk'), onPress: () => resolve() },
               ], { onDismiss: () => resolve() });
             });
           }
-          await requestTrialNotificationPermission();
-          const trialStartedAtISO = new Date().toISOString();
-          await scheduleTrialExpiryNotification(trialStartedAtISO, TRIAL_DAYS, uiLanguage);
+          if (startedTrial) {
+            await requestTrialNotificationPermission();
+            const trialStartedAtISO = new Date().toISOString();
+            await scheduleTrialExpiryNotification(trialStartedAtISO, trialDays, uiLanguage);
+          }
 
           router.replace('/');
         }
@@ -91,7 +99,7 @@ export default function PaywallRoute() {
         setPurchasing(null);
       }
     },
-    [purchasing, completePurchase, router]
+    [purchasing, completePurchase, router, trialDays, uiLanguage]
   );
 
   const handleRestore = useCallback(async () => {
@@ -133,9 +141,11 @@ export default function PaywallRoute() {
           <View style={styles.closeRow} />
 
           <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-            <Badge tone="accent" size="md">{tr('paywall.badge', { days: TRIAL_DAYS })}</Badge>
+            {trialDays > 0 ? <Badge tone="accent" size="md">{tr('paywall.badge', { days: trialDays })}</Badge> : null}
             <Text style={styles.title}>{tr('paywall.title')}</Text>
-            <Text style={styles.subtitle}>{tr('paywall.subtitle', { days: TRIAL_DAYS })}</Text>
+            <Text style={styles.subtitle}>
+              {trialDays > 0 ? tr('paywall.subtitle', { days: trialDays }) : tr('paywall.subtitleNoTrial')}
+            </Text>
 
             <View style={styles.benefitsCard}>
               {benefits.map((b) => (
@@ -190,7 +200,9 @@ export default function PaywallRoute() {
               </View>
             )}
 
-            <Text style={styles.priceHint}>{tr('paywall.priceHint', { days: TRIAL_DAYS })}</Text>
+            <Text style={styles.priceHint}>
+              {trialDays > 0 ? tr('paywall.priceHint', { days: trialDays }) : tr('paywall.priceHintNoTrial')}
+            </Text>
           </ScrollView>
 
           <View style={styles.footer}>

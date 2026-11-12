@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import Purchases, {
   CustomerInfo,
   PurchasesOffering,
@@ -86,4 +87,43 @@ export function isPremiumActive(info: CustomerInfo | null | undefined): boolean 
 export function addCustomerInfoListener(cb: (info: CustomerInfo) => void): () => void {
   Purchases.addCustomerInfoUpdateListener(cb);
   return () => Purchases.removeCustomerInfoUpdateListener(cb);
+}
+
+/**
+ * パッケージが「今このユーザーに」提示できる無料トライアルの日数。無ければ 0。
+ *
+ * 文言は固定値ではなく、ストアが返す導入オファーから決める (App Store 審査 3.1.2(c)):
+ * 商品に無料の導入オファーが無い、またはこの Apple ID が既に使い切っている場合に
+ * 「7日間無料」と出すと、実際には課金されるのに無料と誤認させるため。
+ * 判定できない (取得失敗・未初期化・Web) ときも 0 = トライアルを謳わない側に倒す。
+ */
+export async function fetchFreeTrialDays(pkg: PurchasesPackage | undefined | null): Promise<number> {
+  const intro = pkg?.product.introPrice;
+  if (!pkg || !intro || intro.price !== 0) return 0;
+  if (!initialized) return 0;
+  try {
+    // iOS は Apple ID ごとにトライアルを使い切ったか分かる。Android は常に UNKNOWN を返すので、
+    // 商品に無料オファーがあることだけで判断する (Play 側は購入時に資格を自動判定する)
+    if (Platform.OS === 'ios') {
+      const res = await Purchases.checkTrialOrIntroductoryPriceEligibility([pkg.product.identifier]);
+      const status = res[pkg.product.identifier]?.status;
+      if (status !== Purchases.INTRO_ELIGIBILITY_STATUS.INTRO_ELIGIBILITY_STATUS_ELIGIBLE) return 0;
+    }
+  } catch (e) {
+    console.log('[iap] trial eligibility check failed', e);
+    return 0;
+  }
+  const n = intro.periodNumberOfUnits;
+  switch (intro.periodUnit) {
+    case 'DAY':
+      return n;
+    case 'WEEK':
+      return n * 7;
+    case 'MONTH':
+      return n * 30;
+    case 'YEAR':
+      return n * 365;
+    default:
+      return 0;
+  }
 }
