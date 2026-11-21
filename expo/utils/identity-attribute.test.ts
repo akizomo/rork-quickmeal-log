@@ -5,6 +5,7 @@
  * fried_main) で検証する。Node 環境で動作 (RN API 非依存)。
  */
 
+import { resolveLog } from './identity-resolver';
 import { getIdentity } from '@/constants/identity';
 import {
   getEffectiveAltAmountSpec,
@@ -145,9 +146,18 @@ describe('getEffectiveAltAmountSpec', () => {
 });
 
 describe('getEffectiveDefaultAddonIds — 今回追加分', () => {
-  it('ramen_heavy: 味噌は Identity 既定(背脂なし default)', () => {
+  it('ramen_heavy: 味噌は背脂なし default (既定は家系)', () => {
     const ramen = getIdentity('ramen_heavy')!;
     expect(getEffectiveDefaultAddonIds(ramen, 'miso')).not.toContain('seabura');
+    expect(ramen.attributes?.find((a) => a.isDefault)?.key).toBe('iekei');
+  });
+
+  it('ramen_heavy: 基準を家系に置き直しても各種類の kcal は旧値のまま (味噌820/とんこつ722/家系927)', () => {
+    const kcal = (key: string) => resolveLog({ originIdentityId: 'ramen_heavy', attributeKey: key }).totalMacro.kcal;
+    expect(kcal('miso')).toBeCloseTo(820, -1);
+    expect(kcal('tonkotsu')).toBeCloseTo(722, -1);
+    expect(kcal('iekei')).toBeCloseTo(927, -1);
+    expect(resolveLog({ originIdentityId: 'ramen_heavy', attributeKey: 'miso' }).totalMacro.fat).toBeCloseTo(29, 0);
   });
 
   it('ramen_heavy: とんこつ/家系は背脂(seabura)が default に入る', () => {

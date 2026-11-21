@@ -69,7 +69,7 @@ export const JP_ANCHORS: UnitAnchor[] = [
   { key: 'tenshin/shumai', kcal: [30, 55], unitLabel: '個' },
   { key: 'tenshin/harumaki', kcal: [100, 180], unitLabel: '本' },
   { key: 'tenshin/xiaolongbao', kcal: [30, 70], unitLabel: '個' },
-  { key: 'fresh_roll', kcal: [50, 90], unitLabel: '本' },
+  { key: 'tenshin/fresh_roll', kcal: [50, 90], unitLabel: '本' },
   { key: 'okonomi/okonomiyaki', kcal: [450, 800], unitLabel: '枚' },
   { key: 'tenshin/nikuman', kcal: [150, 330], unitLabel: '個', note: 'コンビニ肉まん 1個 ≈ 220-250' },
   { key: 'tenshin/anman', kcal: [200, 360], unitLabel: '個', note: 'あんまん 1個 ≈ 270-290' },

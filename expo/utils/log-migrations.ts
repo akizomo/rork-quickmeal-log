@@ -30,10 +30,23 @@ export interface AmountRescaleRule {
   scale: number;
 }
 
+/**
+ * 廃止した Identity を別 Identity の「種類」に回収したときの付け替え。
+ * 量の単位と数値は据え置く (回収先の種類が同じ単位・同じ既定量を持つ前提)。
+ * 保存済みの macro は変えない。
+ */
+export interface IdentityRemapRule {
+  fromIdentityId: string;
+  toIdentityId: string;
+  toAttrKey: string;
+}
+
 export interface DataMigration {
   id: string;
   description: string;
   amountRescale: AmountRescaleRule[];
+  /** 廃止した Identity の付け替え。省略 = なし。amountRescale より先に適用する。 */
+  identityRemap?: IdentityRemapRule[];
 }
 
 export const MIGRATIONS: DataMigration[] = [
@@ -57,6 +70,15 @@ export const MIGRATIONS: DataMigration[] = [
     description: '細巻を「本」から「切」で数える。1本 = 6切 (macro は据え置き)', // i18n-ignore: 開発者向けの説明 (UI には出さない)
     amountRescale: [{ identityId: 'maki', attrKey: 'maki_thin', scale: 6 }],
   },
+  {
+    id: 'fold-oden-fresh-roll-2026-11-21',
+    description: '「定食・単品・汁」の一覧を整理するため、おでんを鍋もの、生春巻きを点心の種類に回収する (量・macro は据え置き)', // i18n-ignore: 開発者向けの説明 (UI には出さない)
+    amountRescale: [],
+    identityRemap: [
+      { fromIdentityId: 'oden', toIdentityId: 'nabe', toAttrKey: 'oden' },
+      { fromIdentityId: 'fresh_roll', toIdentityId: 'tenshin', toAttrKey: 'fresh_roll' },
+    ],
+  },
 ];
 
 const round2 = (n: number): number => Math.round(n * 100) / 100;
@@ -70,6 +92,42 @@ function relabel(identityId: string, attrKey: string, value: number, fallback: s
   const identity = getIdentity(identityId);
   // 表示ラベルは再生成する。DB に無い Identity (廃止済み等) は触らない。
   return identity ? buildAmountLabel(identity, attrKey, value, 'ja') : fallback;
+}
+
+function findRemap(remaps: IdentityRemapRule[], identityId: string | undefined): IdentityRemapRule | undefined {
+  return identityId ? remaps.find((r) => r.fromIdentityId === identityId) : undefined;
+}
+
+export function remapLog(log: FoodLog, remaps: IdentityRemapRule[]): FoodLog {
+  const to = findRemap(remaps, log.identityId);
+  const originTo = findRemap(remaps, log.originIdentityId);
+  if (!to && !originTo) return log;
+  const next: FoodLog = { ...log };
+  if (to) {
+    next.identityId = to.toIdentityId;
+    next.attrKey = to.toAttrKey;
+  }
+  if (originTo) next.originIdentityId = originTo.toIdentityId;
+  return next;
+}
+
+export function remapHistory(history: QuickLogHistoryMap, remaps: IdentityRemapRule[]): QuickLogHistoryMap {
+  const out: QuickLogHistoryMap = {};
+  for (const [key, list] of Object.entries(history)) {
+    out[key] = list.map((sel: QuickLogSelection) => {
+      const to = findRemap(remaps, sel.subcategoryKey);
+      if (!to) return sel;
+      return { ...sel, subcategoryKey: to.toIdentityId, attrKey: to.toAttrKey as QuickLogSelection['attrKey'] };
+    });
+  }
+  return out;
+}
+
+/** ⭐️ のピン留め・非表示の Identity ID を付け替える。付け替えで重複したら先に出た方を残す。 */
+export function remapIdList(ids: string[] | undefined, remaps: IdentityRemapRule[]): string[] | undefined {
+  if (!ids) return ids;
+  const mapped = ids.map((id) => findRemap(remaps, id)?.toIdentityId ?? id);
+  return mapped.filter((id, i) => mapped.indexOf(id) === i);
 }
 
 export function migrateLog(log: FoodLog, rules: AmountRescaleRule[]): FoodLog {
@@ -111,7 +169,16 @@ export function applyDataMigrations<T extends MigratableState>(state: T, migrati
 
   let logs = state.logs;
   let history = (state.settings.quickLogHistory ?? {}) as QuickLogHistoryMap;
+  let pins = state.settings.frequentPins;
+  let hidden = state.settings.frequentHidden;
   for (const m of pending) {
+    const remaps = m.identityRemap ?? [];
+    if (remaps.length > 0) {
+      logs = logs.map((l) => remapLog(l, remaps));
+      history = remapHistory(history, remaps);
+      pins = remapIdList(pins, remaps);
+      hidden = remapIdList(hidden, remaps);
+    }
     logs = logs.map((l) => migrateLog(l, m.amountRescale));
     history = migrateHistory(history, m.amountRescale);
     applied.add(m.id);
@@ -120,7 +187,13 @@ export function applyDataMigrations<T extends MigratableState>(state: T, migrati
     state: {
       ...state,
       logs,
-      settings: { ...state.settings, quickLogHistory: history, appliedMigrations: [...applied] },
+      settings: {
+        ...state.settings,
+        quickLogHistory: history,
+        frequentPins: pins,
+        frequentHidden: hidden,
+        appliedMigrations: [...applied],
+      },
     },
     changed: true,
   };

@@ -374,7 +374,7 @@ export const PURE_ADDONS: Addon[] = [
   },
 
   // ---- Oden (おでん) items ----
-  // 器 (`oden`) に乗せる具。注文するときの名前で並べ、1単位 = おでんの具1個。
+  // 鍋もの (種類=おでん) の器に乗せる具。注文するときの名前で並べ、1単位 = おでんの具1個。
   // 練り物の値は `nerimono` と同じ成分表(八訂)の値を、おでんの1個の量に掛けたもの。
   {
     id: 'oden_chikuwa',
@@ -384,7 +384,7 @@ export const PURE_ADDONS: Addon[] = [
     unitLabel: '1本',
     // 焼き竹輪 50g (おでん用の太いもの)
     addedMacro: { kcal: 60, protein: 6.1, fat: 1, carbs: 6.8 },
-    allowedIdentityIds: ['oden'],
+    allowedIdentityIds: ['nabe'],
   },
   {
     id: 'oden_hanpen',
@@ -394,7 +394,7 @@ export const PURE_ADDONS: Addon[] = [
     unitLabel: '1個',
     // はんぺん 50g (1/2枚)
     addedMacro: { kcal: 47, protein: 5, fat: 0.5, carbs: 5.7 },
-    allowedIdentityIds: ['oden'],
+    allowedIdentityIds: ['nabe'],
   },
   {
     id: 'oden_satsuma',
@@ -404,7 +404,7 @@ export const PURE_ADDONS: Addon[] = [
     unitLabel: '1個',
     // さつま揚げ 40g
     addedMacro: { kcal: 54, protein: 5, fat: 1.5, carbs: 5.6 },
-    allowedIdentityIds: ['oden'],
+    allowedIdentityIds: ['nabe'],
   },
   {
     id: 'oden_atsuage',
@@ -414,7 +414,7 @@ export const PURE_ADDONS: Addon[] = [
     unitLabel: '1個',
     // 生揚げ 60g (86/6.4/6.8/0.5) と がんもどき 50g (112/7.7/8.9/0.8) の中間
     addedMacro: { kcal: 100, protein: 7, fat: 8, carbs: 0.7 },
-    allowedIdentityIds: ['oden'],
+    allowedIdentityIds: ['nabe'],
   },
   {
     id: 'oden_gyusuji',
@@ -424,7 +424,7 @@ export const PURE_ADDONS: Addon[] = [
     unitLabel: '1串',
     // 牛すじ(ゆで) 40g: 100g あたり 155/28.3/4.9/0
     addedMacro: { kcal: 62, protein: 11.3, fat: 2, carbs: 0 },
-    allowedIdentityIds: ['oden'],
+    allowedIdentityIds: ['nabe'],
   },
   {
     id: 'oden_mochikinchaku',
@@ -434,7 +434,7 @@ export const PURE_ADDONS: Addon[] = [
     unitLabel: '1個',
     // 油揚げ 1/2枚 15g (57/3.5/5.2/0) + 切り餅 1/2個 25g (56/1/0.2/12.7)
     addedMacro: { kcal: 113, protein: 4.5, fat: 5.4, carbs: 12.7 },
-    allowedIdentityIds: ['oden'],
+    allowedIdentityIds: ['nabe'],
   },
   {
     id: 'oden_chikuwabu',
@@ -444,7 +444,7 @@ export const PURE_ADDONS: Addon[] = [
     unitLabel: '1個',
     // ちくわぶ 50g: 100g あたり 160/7.1/1.2/30.0 (小麦粉が主なので練り物ではなく主食寄り)
     addedMacro: { kcal: 80, protein: 3.6, fat: 0.6, carbs: 15 },
-    allowedIdentityIds: ['oden'],
+    allowedIdentityIds: ['nabe'],
   },
 
   // ---- Yogurt / oatmeal sweet toppings ----

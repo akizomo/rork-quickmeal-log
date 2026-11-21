@@ -472,8 +472,8 @@
     "closeA11y": "Close",
     "deleteTitle": "Delete entry",
     "deleteMessage": "Delete this entry?",
-    "switchToG": "Switch to g",
-    "switchToCount": "Switch to count",
+    "switchToG": "Log by grams",
+    "switchToCount": "Log by count",
     "usualAmount": "Usual",
     "amountRefPrefix": "Reference",
     "pin": {

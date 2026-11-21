@@ -472,8 +472,8 @@
     "closeA11y": "閉じる",
     "deleteTitle": "記録を削除",
     "deleteMessage": "この記録を削除しますか？",
-    "switchToG": "gに切り替え",
-    "switchToCount": "個数に切り替え",
+    "switchToG": "gで記録",
+    "switchToCount": "個数で記録",
     "usualAmount": "いつもの",
     "amountRefPrefix": "目安",
     "pin": {

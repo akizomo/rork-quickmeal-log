@@ -9,7 +9,7 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, Pressable, View } from 'react-native';
+import { Alert, Pressable, ScrollView, View } from 'react-native';
 
 import {
   Callout,
@@ -17,6 +17,7 @@ import {
   Chip,
   CountChip,
   IconButton,
+  Label,
   TallSheetScreen,
   useTheme,
 } from '@/design-system';
@@ -120,6 +121,20 @@ function ChipRow({ children }: { children: React.ReactNode }) {
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: t.spacing['2'] }}>
       {children}
     </View>
+  );
+}
+
+/** 上段の Identity チップ行。折り返さず横スクロール (縦に伸びてシートが窮屈になるため)。 */
+function HorizontalChipRow({ children }: { children: React.ReactNode }) {
+  const t = useTheme();
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={{ gap: t.spacing['2'], paddingRight: t.spacing['2'] }}
+    >
+      {children}
+    </ScrollView>
   );
 }
 
@@ -668,7 +683,7 @@ export function IdentityLogSheet() {
           {/* Identity chip row (no Section header — bucket emoji+label is in
               the sheet header above this row). */}
           <View style={{ marginBottom: t.spacing['3'] }}>
-            <ChipRow>
+            <HorizontalChipRow>
               {identitiesInBucket.map((id) => (
                 <Chip
                   key={id.id}
@@ -679,7 +694,7 @@ export function IdentityLogSheet() {
                   testID={`ils-identity-${id.id}`}
                 />
               ))}
-            </ChipRow>
+            </HorizontalChipRow>
           </View>
 
           {/* Attribute */}
@@ -767,7 +782,7 @@ export function IdentityLogSheet() {
                     testID="ils-amount-mode-toggle"
                     style={{ justifyContent: 'center', paddingHorizontal: t.spacing['2'] }}
                   >
-                    <Caption tone="secondary">{toggleLabel}</Caption>
+                    <Label size="sm" tone="link">{toggleLabel}</Label>
                   </Pressable>
                 ) : null}
               </ChipRow>

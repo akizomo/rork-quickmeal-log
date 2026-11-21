@@ -6,7 +6,7 @@
 import { getIdentity } from '@/constants/identity';
 import type { AppSettings, FoodLog } from '@/types/nutrition';
 import type { QuickLogHistoryMap } from '@/types/quick-log';
-import { applyDataMigrations, MIGRATIONS, migrateHistory, migrateLog } from './log-migrations';
+import { applyDataMigrations, MIGRATIONS, migrateHistory, migrateLog, remapHistory, remapIdList, remapLog } from './log-migrations';
 import { resolveLog } from './identity-resolver';
 
 const RULES = MIGRATIONS.flatMap((m) => m.amountRescale);
@@ -133,3 +133,52 @@ describe('applyDataMigrations — 冪等性と印', () => {
     expect(bad).toEqual([]);
   });
 });
+
+describe('Identity の回収 — おでん→鍋もの / 生春巻き→点心', () => {
+  const remaps = MIGRATIONS.flatMap((m) => m.identityRemap ?? []);
+
+  it('おでんのログは鍋もの/おでんに付け替わり、再計算しても macro が変わらない', () => {
+    // 旧: Identity oden (大根1切 20kcal) + ちくわ2本 + 卵1個
+    const before = resolveLogViaNew({ identity: 'nabe', attr: 'oden', amount: 3, addons: [{ refId: 'oden_chikuwa', refType: 'addon', units: 2 }, { refId: 'egg', refType: 'identity', units: 1 }] });
+    const log = oldLog({ identityId: 'oden', originIdentityId: 'oden', amountValue: 3, macro: before.totalMacro });
+    const out = remapLog(log, remaps);
+    expect(out.identityId).toBe('nabe');
+    expect(out.originIdentityId).toBe('nabe');
+    expect(out.attrKey).toBe('oden');
+    expect(out.macro).toEqual(before.totalMacro); // 保存済み macro は据え置き
+    expect(out.amountValue).toBe(3);
+  });
+
+  it('生春巻きの既定量 (2本) は旧 Identity と同じ 130kcal になる', () => {
+    const r = resolveLog({ originIdentityId: 'tenshin', attributeKey: 'fresh_roll' });
+    expect(r.totalMacro.kcal).toBeCloseTo(130, 0);
+    expect(r.totalMacro.protein).toBeCloseTo(7, 0);
+    expect(r.totalMacro.fat).toBeCloseTo(3, 0);
+    expect(r.totalMacro.carbs).toBeCloseTo(20, 0);
+  });
+
+  it('おでん1切は旧 Identity と同じ 20kcal', () => {
+    const r = resolveLog({ originIdentityId: 'nabe', attributeKey: 'oden' });
+    expect(r.totalMacro.kcal).toBeCloseTo(20, 0);
+    expect(r.baseMacro.fat).toBeLessThan(0.3);
+  });
+
+  it('履歴・⭐️ピンも付け替わり、重複は先に出た方を残す', () => {
+    const history = { k: [{ categoryKey: 'misc_dish', subcategoryKey: 'fresh_roll', amountValue: 2, amountUnit: 'piece' }] } as unknown as QuickLogHistoryMap;
+    expect(remapHistory(history, remaps).k[0]).toMatchObject({ subcategoryKey: 'tenshin', attrKey: 'fresh_roll' });
+    expect(remapIdList(['oden', 'rice', 'nabe'], remaps)).toEqual(['nabe', 'rice']);
+  });
+
+  it('applyDataMigrations で1回だけ適用され、冪等', () => {
+    const log = oldLog({ identityId: 'fresh_roll', amountValue: 2 });
+    const first = applyDataMigrations({ logs: [log], settings: settings({ frequentPins: ['fresh_roll'] }) });
+    expect(first.state.logs[0].identityId).toBe('tenshin');
+    expect(first.state.settings.frequentPins).toEqual(['tenshin']);
+    const second = applyDataMigrations(first.state);
+    expect(second.changed).toBe(false);
+  });
+});
+
+function resolveLogViaNew(a: { identity: string; attr: string; amount: number; addons: { refId: string; refType: 'identity' | 'addon'; units: number }[] }) {
+  return resolveLog({ originIdentityId: a.identity, attributeKey: a.attr, amountValue: a.amount, addons: a.addons });
+}

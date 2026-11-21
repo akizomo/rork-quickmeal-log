@@ -404,30 +404,34 @@ const BUCKET_CHINESE_NOODLES: Identity[] = [
     nutritionNotes: [
       NOTE_RAMEN,
     ],
-    defaultMacro: { kcal: 820, protein: 32, fat: 29, carbs: 99 },
+    // 既定は家系 (こってりの中で最も多く食べられる)。以前は味噌 (820kcal) が基準だったが、
+    // 基準を家系に置き直し、味噌・とんこつは家系に対する factor で表す。
+    // 保存済みの記録は attrKey を持つので、味噌 = 927×0.8846 ≒ 820 など各種類の値は変わらない。
+    defaultMacro: { kcal: 927, protein: 32, fat: 41, carbs: 99 },
     referenceDescription: '麺150g + こってりスープ・チャーシュー (汁残し前提)',
     amount: { unit: 'percent', default: 100, chips: [{ label: '小さめ', value: 75 }, { label: '普通', value: 100 }, { label: '大盛', value: 150 }] },
     attributes: [
-      { key: 'miso', label: '味噌', isDefault: true },
-      // とんこつ・家系は背脂(seabura)が定番トッピング → default に追加
+      // 家系は背脂(seabura)が定番トッピング → default に含める (Identity 直下の default と同じ)
+      { key: 'iekei', label: '家系', isDefault: true },
+      // 旧基準 (味噌 820/32/29/99) との比。とんこつは旧 0.88/0.94 × 味噌 = 722kcal/F27
       {
         key: 'tonkotsu',
         label: 'とんこつ',
-        factor: { kcal: 0.88, fat: 0.94 },
+        factor: { kcal: 0.7784, fat: 0.6649 },
         defaultAddonIds: ['seasoned_egg', 'chashu', 'menma', 'nori_furikake', 'seabura'],
       },
       {
-        key: 'iekei',
-        label: '家系',
-        factor: { kcal: 1.13, fat: 1.41 },
-        defaultAddonIds: ['seasoned_egg', 'chashu', 'nori_furikake', 'seabura'],
+        key: 'miso',
+        label: '味噌',
+        factor: { kcal: 0.8846, fat: 0.7073 },
+        defaultAddonIds: [...RAMEN_ADDONS.slice(0, 4), 'men_omori'],
       },
     ],
     styles: [
       { key: 'no_soup', label: '汁残し', isDefault: true },
       { key: 'all_soup', label: '汁全飲み', factor: { kcal: 1.24, fat: 1.34 } },
     ],
-    defaultAddonIds: [...RAMEN_ADDONS.slice(0, 4), 'men_omori'],
+    defaultAddonIds: ['seasoned_egg', 'chashu', 'nori_furikake', 'seabura'],
     allowedAddonIds: RAMEN_ADDONS,
   },
   {
@@ -1249,7 +1253,7 @@ const BUCKET_MISC_DISH: Identity[] = [
   },
   {
     id: 'tenshin',
-    label: '中華点心',
+    label: '点心・春巻き類',
     searchTags: ['ちゅうかてんしん', 'ぎょうざ'],
     primaryHome: { tab: 'dish', bucket: 'misc_dish' },
     defaultMacro: { kcal: 250, protein: 10, fat: 10, carbs: 28 },
@@ -1268,6 +1272,17 @@ const BUCKET_MISC_DISH: Identity[] = [
         amount: { unit: 'piece', default: 2, unitLabel: '本', chips: [{ label: '1本', value: 1 }, { label: '2本', value: 2 }, { label: '3本', value: 3 }] },
       },
       { key: 'xiaolongbao', label: '小籠包', factor: { kcal: 1.0, fat: 0.75, carbs: 1.14 }, searchTags: ['しょうろんぽう'] },
+      // 生春巻き (旧 Identity `fresh_roll`, 1本=ライスペーパー+エビ/鶏+野菜 ≒65kcal)。
+      // 春巻と同じく factor は既定量(2本=130kcal/P7/F3/C20)に換算済み (基準は餃子5個 250/10/10/28)。
+      // 揚げない春巻きなので脂質が低く、ラー油は付けない。
+      {
+        key: 'fresh_roll',
+        label: '生春巻き',
+        factor: { kcal: 0.52, protein: 0.7, fat: 0.3, carbs: 0.714 },
+        searchTags: ['なまはるまき', 'ベトナム', 'ライスペーパー'],
+        defaultAddonIds: [],
+        amount: { unit: 'piece', default: 2, unitLabel: '本', chips: [{ label: '1本', value: 1 }, { label: '2本', value: 2 }, { label: '3本', value: 3 }] },
+      },
       // 中華まんは1個で数える (コンビニ・蒸籠の定番)。餃子5個≒250kcal の基準から、1個ぶんの値を直接持つ。
       // 肉まん・ピザまん 1個 ≒ 230kcal/P8.5/F6/C35、あんまん 1個 ≒ 280kcal/P6/F6.5/C50。
       {
@@ -1332,8 +1347,9 @@ const BUCKET_MISC_DISH: Identity[] = [
       },
     ],
     // こってり系(すき焼き/しゃぶしゃぶ)とあっさり系(寄せ鍋/水炊き/豆乳鍋)を統合。
-    // 基準はすき焼き (旧 nabe_heavy)。おでんは具のばらつきが大きすぎるため除外し、
-    // 「大根+つゆの器 + 具を Add-on で選ぶ」別 Identity (`oden`) で表す (IA spec v1.8)。
+    // 基準はすき焼き (旧 nabe_heavy)。おでんは具のばらつきが大きすぎるため平均値にせず、
+    // 「大根+つゆの器 + 具を Add-on で選ぶ」種類 (`oden`) で表す。v1.8 では別 Identity だったが、
+    // 「鍋・汁」の仲間として一覧に1枠で並ぶのを避け、v1.16 でこの種類に回収した。
     quickTapDisabled: true,
     defaultMacro: { kcal: 700, protein: 33, fat: 35, carbs: 41 },
     referenceDescription: '肉150g+野菜+つゆ (1人前)',
@@ -1345,27 +1361,22 @@ const BUCKET_MISC_DISH: Identity[] = [
       { key: 'yose', label: '寄せ鍋', searchTags: ['よせなべ'], factor: { kcal: 0.643, protein: 0.848, fat: 0.4, carbs: 1.024 } },
       { key: 'mizutaki', label: '水炊き', searchTags: ['みずたき'], factor: { kcal: 0.611, protein: 0.848, fat: 0.4, carbs: 1.024 } },
       { key: 'tonyu_nabe', label: '豆乳鍋', searchTags: ['とうにゅうなべ'], factor: { kcal: 0.675, protein: 0.848, fat: 0.4, carbs: 1.024 } },
-    ],
-  },
-  {
-    // おでんは具の組み合わせがすべてで、平均値の Identity にしても誤差しか残らない
-    // (nabe から除外した理由)。salad_raw と同じく**ほぼ空の器 + Add-on** で表す:
-    // base = 大根1切 + しみたつゆ、具は注文するときの名前で Add-on に並べる。
-    // こんにゃく・昆布・しらたきは1個で P/F/C が ±3g 動かないため Add-on にしない (§5.5)。
-    // 旧状態は「おでん」が語彙辞書で misc_dish バケットに着地するだけで、記録先が無かった。
-    id: 'oden',
-    label: 'おでん',
-    searchTags: ['おでん', 'かんとうだき', '関東煮'],
-    primaryHome: { tab: 'dish', bucket: 'misc_dish' },
-    quickTapDisabled: true, // 中身は Add-on 次第で、器だけでは記録にならない
-    // 大根(ゆで) 100g 15/0.5/0.1/3.4 (八訂) + つゆ少量
-    defaultMacro: { kcal: 20, protein: 0.8, fat: 0.1, carbs: 4 },
-    referenceDescription: '大根1切+つゆ。ほかの具はトッピングで選ぶ (こんにゃく・昆布は記録しなくて大丈夫)',
-    amount: { unit: 'piece', default: 1, unitLabel: '切', chips: [{ label: '1切', value: 1 }, { label: '2切', value: 2 }] },
-    defaultAddonIds: ['egg', 'oden_chikuwa', 'oden_hanpen', 'oden_satsuma', 'oden_atsuage', 'oden_gyusuji'],
-    allowedAddonIds: [
-      'egg', 'oden_chikuwa', 'oden_hanpen', 'oden_satsuma', 'oden_atsuage', 'oden_gyusuji',
-      'oden_mochikinchaku', 'oden_chikuwabu',
+      // おでん: 具の組み合わせがすべての「ほぼ空の器 + Add-on」(salad_raw と同型)。
+      // base = 大根1切 + しみたつゆ (大根(ゆで)100g 15/0.5/0.1/3.4 + つゆ少量 = 20/0.8/0.1/4)。
+      // 他の種類と桁が35倍違うので factor は桁を落とす係数 (700kcal → 20kcal)。量・トッピングはこの種類だけ上書きする。
+      // こんにゃく・昆布・しらたきは1個で P/F/C が ±3g 動かないため Add-on にしない (§5.5)。
+      {
+        key: 'oden',
+        label: 'おでん',
+        searchTags: ['かんとうだき', '関東煮'],
+        factor: { kcal: 0.0286, protein: 0.0242, fat: 0.0029, carbs: 0.0976 },
+        amount: { unit: 'piece', default: 1, unitLabel: '切', chips: [{ label: '1切', value: 1 }, { label: '2切', value: 2 }] },
+        defaultAddonIds: ['egg', 'oden_chikuwa', 'oden_hanpen', 'oden_satsuma', 'oden_atsuage', 'oden_gyusuji'],
+        allowedAddonIds: [
+          'egg', 'oden_chikuwa', 'oden_hanpen', 'oden_satsuma', 'oden_atsuage', 'oden_gyusuji',
+          'oden_mochikinchaku', 'oden_chikuwabu',
+        ],
+      },
     ],
   },
   {
@@ -1389,15 +1400,6 @@ const BUCKET_MISC_DISH: Identity[] = [
       { key: 'white_fish', label: '白身魚', searchTags: ['しろみざかな'], factor: { kcal: 0.7, fat: 0.3 } },
       { key: 'ika_tako', label: 'イカ・タコ', factor: { kcal: 0.6, fat: 0.2 } },
     ],
-  },
-  {
-    id: 'fresh_roll',
-    label: '生春巻き',
-    primaryHome: { tab: 'dish', bucket: 'misc_dish' },
-    defaultMacro: { kcal: 130, protein: 7, fat: 3, carbs: 20 },
-    referenceDescription: '1本=ライスペーパー+エビ/鶏+野菜',
-    amount: { unit: 'piece', default: 2, unitLabel: '本' },
-    searchTags: ['ベトナム', 'エスニック', 'ライスペーパー', 'ヘルシー'],
   },
   {
     id: 'okonomi',

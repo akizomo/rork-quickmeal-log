@@ -138,8 +138,9 @@ describe('Add-on 参照の健全性', () => {
   });
 
   // IA spec v1.8 ユーザー指摘: おでんの入れ方が分からない / 練り物が無い
-  it('oden の default / allowed Add-on がすべて解決でき、6 枠以内', () => {
-    const oden = IDENTITY_REGISTRY.byId['oden'];
+  it('鍋もの/おでん の default / allowed Add-on がすべて解決でき、6 枠以内', () => {
+    const nabe = IDENTITY_REGISTRY.byId['nabe'];
+    const oden = nabe?.attributes?.find((a) => a.key === 'oden');
     const ids = [...(oden?.defaultAddonIds ?? []), ...(oden?.allowedAddonIds ?? [])];
     expect(ids.filter((refId) => !resolveAddonRef(refId))).toEqual([]);
     expect(oden?.defaultAddonIds?.length).toBeLessThanOrEqual(6);

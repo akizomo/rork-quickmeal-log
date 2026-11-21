@@ -97,7 +97,7 @@ export const TUNING_CORPUS: Item[] = [
     ['幕の内弁当', 'bento/makunouchi'], ['唐揚げ', KARAAGE], ['とんかつ', 'fried_main/tonkatsu'], ['ヒレカツ', 'fried_main/tonkatsu_hire'], ['メンチカツ', 'fried_main/menchi'],
     ['エビフライ', 'fried_main/ebi_fry'], ['コロッケ', 'fried_main/korokke'], ['天ぷら', 'fried_main/tempura'], ['フライドポテト', 'fried_main/fries'], ['焼き鳥', 'yakitori'],
     ['ハンバーグ', 'meat_solo/hamburg'], ['肉じゃが', 'washoku_okazu/nikujaga'], ['肉豆腐', 'washoku_okazu/niku_dofu'], ['筑前煮', 'side_seasoned'], ['すき焼き', 'nabe/sukiyaki'],
-    ['しゃぶしゃぶ', 'nabe/shabu'], ['鍋', 'nabe'], ['おでん', 'oden'], ['刺身盛り合わせ', 'sashimi/mixed'], ['お好み焼き', 'okonomi/okonomiyaki'],
+    ['しゃぶしゃぶ', 'nabe/shabu'], ['鍋', 'nabe'], ['おでん', 'nabe/oden'], ['刺身盛り合わせ', 'sashimi/mixed'], ['お好み焼き', 'okonomi/okonomiyaki'],
     ['たこ焼き', 'okonomi/takoyaki'], ['もんじゃ焼き', 'okonomi/monjayaki'], ['焼肉', ['teishoku/yakiniku', 'bento/yakiniku', 'beef_pork_fatty', 'red_meat', 'beef_pork']], ['卵かけご飯', 'preset:tkg'], ['納豆ご飯', 'preset:natto_gohan'],
   ]),
   ...C('洋食', 'base', [
@@ -114,7 +114,7 @@ export const TUNING_CORPUS: Item[] = [
     ['青椒肉絲', 'chuka_okazu/chinjao'], ['チンジャオロース', 'chuka_okazu/chinjao'], ['酢豚', 'chuka_okazu/subuta'], ['エビチリ', 'chuka_okazu/ebi_chili'], ['エビマヨ', 'chuka_okazu/ebi_mayo'],
     ['八宝菜', 'chuka_okazu/happosai'], ['油淋鶏', 'chuka_okazu/yurinchi'], ['レバニラ', 'chuka_okazu/reba_nira'], ['ビビンバ', 'bibimbap'], ['石焼ビビンバ', 'bibimbap/stone'],
     ['ガパオライス', 'gapao_rice/gapao'], ['ナシゴレン', 'gapao_rice/nasi_goreng'], ['グリーンカレー', 'soup_curry/green'], ['スープカレー', 'soup_curry/soup'], ['バターチキンカレー', 'butter_chicken'],
-    ['生春巻き', 'fresh_roll'], ['チヂミ', ['okonomi']], ['肉まん', ['tenshin']], ['天津飯', ['fried_rice_omurice', 'gyudon_class/chuka']], ['タコライス', ['gapao_rice', 'burrito_taco/bowl']],
+    ['生春巻き', 'tenshin/fresh_roll'], ['チヂミ', ['okonomi']], ['肉まん', ['tenshin']], ['天津飯', ['fried_rice_omurice', 'gyudon_class/chuka']], ['タコライス', ['gapao_rice', 'burrito_taco/bowl']],
   ]),
   ...C('チェーン・コンビニ', 'chain', [
     ['ファミチキ', 'fried_main/fried_chicken'], ['からあげクン', KARAAGE], ['ビッグマック', ['burger', 'burger_big']], ['マックポテト', 'fried_main/fries'], ['てりやきマックバーガー', 'burger/teriyaki'],
