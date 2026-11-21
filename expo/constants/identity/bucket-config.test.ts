@@ -149,4 +149,18 @@ describe('Add-on 参照の健全性', () => {
   it('練り物は炭水化物を持つ (白身魚で代用すると C が 0 になる)', () => {
     expect(IDENTITY_REGISTRY.byId['nerimono']?.defaultMacro.carbs).toBeGreaterThan(3);
   });
+  // 記録シート上段のチップは見出しにバケット名が出る文脈なので短縮ラベルを使う。
+  // 短縮で同じバケット内の別 Identity と見分けがつかなくなる事故を防ぐ。
+  it('chipLabel は label より短く、同じバケット内で一意', () => {
+    for (const bucket of [...INGREDIENT_BUCKETS, ...DISH_BUCKETS]) {
+      const ids = getIdentitiesInBucket(bucket.key);
+      const shown = ids.map((i) => i.chipLabel ?? i.label);
+      expect(new Set(shown).size).toBe(shown.length);
+      for (const i of ids) {
+        if (i.chipLabel === undefined) continue;
+        expect(i.chipLabel.length).toBeGreaterThan(0);
+        expect(i.chipLabel.length).toBeLessThan(i.label.length);
+      }
+    }
+  });
 });

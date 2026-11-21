@@ -465,6 +465,7 @@
       "amount": "量",
       "topping": "トッピング"
     },
+    "includedAddonNote": "{{names}}は最初から入っています。足したぶんだけ選んでください",
     "save": "保存して追加",
     "update": "更新",
     "deleteA11y": "この記録を削除",

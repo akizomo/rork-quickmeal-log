@@ -5,7 +5,7 @@
 import { Stack } from 'expo-router';
 import React, { useState } from 'react';
 import { ScrollView, View } from 'react-native';
-import { Body, Caption, Chip, NumberField, SelectCard, Switch, useTheme, type Theme } from '@/design-system';
+import { Body, Caption, Chip, CountChip, NumberField, SelectCard, Switch, useTheme, type Theme } from '@/design-system';
 import { Section } from '../_shared';
 
 // ---------- Switch ----------
@@ -50,6 +50,7 @@ export default function InputsScreen() {
         <NumberFieldSection t={t} value={heightCm} onChange={setHeightCm} />
         <SelectCardSection t={t} selected={selectedBasis} onSelect={setSelectedBasis} />
         <SwitchSection t={t} />
+        <CountChipSection t={t} />
         <ChipSection
           t={t}
           selected={chipTags}
@@ -108,6 +109,21 @@ function SelectCardSection({
       />
       <SelectCard label="hint なし" selected={false} />
       <SelectCard label="disabled" disabled />
+    </Section>
+  );
+}
+
+// ---------- CountChip ----------
+function CountChipSection({ t }: { t: Theme }) {
+  const [counts, setCounts] = useState<Record<string, number>>({ チーズ: 2, 卵: 0, ベーコン: 4 });
+  return (
+    <Section title="CountChip" t={t}>
+      <Caption>未選択はタップで追加 / 選択中は左半分=取り消し・右半分=1つ追加 (上限で無効)</Caption>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: t.spacing['2'] }}>
+        {Object.keys(counts).map((k) => (
+          <CountChip key={k} label={k} count={counts[k]} max={4} onChange={(n) => setCounts((p) => ({ ...p, [k]: n }))} />
+        ))}
+      </View>
     </Section>
   );
 }

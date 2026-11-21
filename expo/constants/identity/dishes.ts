@@ -207,7 +207,7 @@ const BUCKET_RICE_DISH: Identity[] = [
       // 合っていたが、たんぱく質が約3割多く脂質が約3割少なかった (チェーン公式との照合で検出)。
       { key: 'gyudon', label: '牛丼・豚丼', isDefault: true, searchTags: ['ぎゅうどん'], factor: { kcal: 0.97, protein: 0.76, fat: 1.39, carbs: 1.0 } },
       // 親子丼は卵が主菜のため egg を hidden（二重計上を避ける）
-      { key: 'oyakodon', label: '親子丼', factor: { kcal: 0.94, protein: 1.12, fat: 0.82, carbs: 0.93 }, hiddenAddonIds: ['egg'], searchTags: ['おやこどん'] },
+      { key: 'oyakodon', label: '親子丼', factor: { kcal: 0.94, protein: 1.12, fat: 0.82, carbs: 0.93 }, includedAddonIds: ['egg'], searchTags: ['おやこどん'] },
       // ねぎとろ丼は海鮮系 → rayu/kimchi は合わない
       { key: 'negitoro', label: 'ねぎとろ丼', factor: { kcal: 0.91, protein: 1, fat: 0.67, carbs: 0.97 }, defaultAddonIds: [] },
       // 中華丼は五目あんかけ → rayu は可・kimchi/egg は不自然
@@ -537,8 +537,8 @@ const BUCKET_JAPANESE_NOODLES: Identity[] = [
       // → 375/P15/F6.5/C64。油揚げ・卵の脂質が抜けて kcal と PFC が食い違っていた (旧 F2.7/F2.2)。
       // なか卯公式の きつね 並 505/P23.5/F17.8、月見 並 413/F11.4 は揚げ玉・具が多く、成分表の積み上げより大きい
       // (KNOWN_DISH_DEVIATIONS で凍結)。
-      { key: 'kitsune', label: 'きつね', searchTags: ['きつねうどん'], factor: { kcal: 1.317, protein: 1.444, fat: 5.667, carbs: 1.125 }, hiddenAddonIds: ['kitsune_top'] },
-      { key: 'tsukimi', label: '月見', searchTags: ['つきみうどん'], factor: { kcal: 1.25, protein: 1.667, fat: 4.333 }, hiddenAddonIds: ['egg'] },
+      { key: 'kitsune', label: 'きつね', searchTags: ['きつねうどん'], factor: { kcal: 1.317, protein: 1.444, fat: 5.667, carbs: 1.125 }, includedAddonIds: ['kitsune_top'] },
+      { key: 'tsukimi', label: '月見', searchTags: ['つきみうどん'], factor: { kcal: 1.25, protein: 1.667, fat: 4.333 }, includedAddonIds: ['egg'] },
       { key: 'kamaage', label: '釜揚げ', searchTags: ['かまあげうどん'], factor: { kcal: 0.91, fat: 0.78 } },
     ],
     defaultAddonIds: ['egg', 'tempura_top', 'tororo', 'udon_omori'],
@@ -563,7 +563,7 @@ const BUCKET_JAPANESE_NOODLES: Identity[] = [
       { key: 'kake', label: 'かけ', isDefault: true },
       { key: 'zaru', label: 'ざる', searchTags: ['ざるそば'], factor: { kcal: 0.89 } },
       // 山かけ = とろろを factor に織り込み済みなので tororo トッピングを隠す
-      { key: 'yamakake', label: '山かけ', searchTags: ['やまかけそば'], factor: { kcal: 1.06, protein: 1.06 }, hiddenAddonIds: ['tororo'] },
+      { key: 'yamakake', label: '山かけ', searchTags: ['やまかけそば'], factor: { kcal: 1.06, protein: 1.06 }, includedAddonIds: ['tororo'] },
     ],
     defaultAddonIds: ['egg', 'tempura_top', 'tororo', 'soba_omori'],
     allowedAddonIds: ['egg', 'tempura_top', 'kitsune_top', 'tororo', 'soba_omori'],
@@ -618,6 +618,7 @@ const BUCKET_PASTA: Identity[] = [
   {
     id: 'pasta_tomato',
     label: 'トマト系パスタ',
+    chipLabel: 'トマト系',
     searchTags: ['トマトパスタ', 'アラビアータ'],
     primaryHome: { tab: 'dish', bucket: 'pasta' },
     nutritionNotes: [
@@ -632,6 +633,7 @@ const BUCKET_PASTA: Identity[] = [
   {
     id: 'pasta_oil',
     label: 'オイル系パスタ',
+    chipLabel: 'オイル系',
     searchTags: ['ペペロンチーノ'],
     primaryHome: { tab: 'dish', bucket: 'pasta' },
     nutritionNotes: [
@@ -646,6 +648,7 @@ const BUCKET_PASTA: Identity[] = [
   {
     id: 'pasta_cream',
     label: 'クリーム系パスタ',
+    chipLabel: 'クリーム系',
     searchTags: ['カルボナーラ', 'クリームパスタ'],
     primaryHome: { tab: 'dish', bucket: 'pasta' },
     nutritionNotes: [
@@ -660,6 +663,7 @@ const BUCKET_PASTA: Identity[] = [
   {
     id: 'pasta_meat',
     label: 'ミート系パスタ',
+    chipLabel: 'ミート系',
     searchTags: ['ミートソース', 'ボロネーゼ'],
     primaryHome: { tab: 'dish', bucket: 'pasta' },
     nutritionNotes: [
@@ -674,6 +678,7 @@ const BUCKET_PASTA: Identity[] = [
   {
     id: 'pasta_japanese',
     label: '和風パスタ',
+    chipLabel: '和風',
     searchTags: ['わふうぱすた', 'たらこぱすた', 'めんたいこぱすた'],
     primaryHome: { tab: 'dish', bucket: 'pasta' },
     nutritionNotes: [
@@ -824,17 +829,17 @@ const BUCKET_SANDWICH: Identity[] = [
     attributes: [
       { key: 'beef', label: 'ビーフ', isDefault: true },
       // モスチーズバーガー 425/18.2/21.4/40.4
-      // factor にスライスチーズが織り込み済みなので cheese Add-on は隠す (二重計上防止)。
-      { key: 'cheese', label: 'チーズ', factor: { kcal: 1.12, protein: 1.21, fat: 1.19, carbs: 1.01 }, hiddenAddonIds: ['cheese'] },
+      // factor にスライスチーズ1枚が織り込み済み。cheese Add-on は「もう1枚」の追加分として出す。
+      { key: 'cheese', label: 'チーズ', factor: { kcal: 1.12, protein: 1.21, fat: 1.19, carbs: 1.01 }, includedAddonIds: ['cheese'] },
       // フィレオフィッシュ 338/15.1/14.2/37.4・モスフィッシュ 381/16.2/18.8/37.0
-      // フィレオフィッシュ等はタルタル込みの実測値なので tartar を隠す。
-      { key: 'fish', label: 'フィッシュ', searchTags: ['フィレオフィッシュ', 'さかな'], factor: { kcal: 0.95, protein: 1.04, fat: 0.92, carbs: 0.93 }, hiddenAddonIds: ['tartar'] },
+      // フィレオフィッシュ等はタルタル込みの実測値。tartar は追加分として出す。
+      { key: 'fish', label: 'フィッシュ', searchTags: ['フィレオフィッシュ', 'さかな'], factor: { kcal: 0.95, protein: 1.04, fat: 0.92, carbs: 0.93 }, includedAddonIds: ['tartar'] },
       // マックチキン 386/13.5/19.6/39.5・モスチキン 386/15.0/18.5/40.0
       { key: 'chicken', label: 'チキン', searchTags: ['とり', 'チキンフィレオ'], factor: { kcal: 1.02, protein: 0.95, fat: 1.06, carbs: 0.99 } },
       // てりやきは脂質が突出しタンパク質が低い (マックてりやき 485/P14.2/F31.3)。
       // 旧「こってり」ではこのPFCの偏りを表現できなかったため独立させる。
-      // マック/モスのてりやきはマヨ込みの実測値なので mayo を隠す。
-      { key: 'teriyaki', label: 'てりやき', searchTags: ['テリヤキ', '照り焼き'], factor: { kcal: 1.14, protein: 0.95, fat: 1.38, carbs: 0.98 }, hiddenAddonIds: ['mayo'] },
+      // マック/モスのてりやきはマヨ込みの実測値。mayo は追加分として出す。
+      { key: 'teriyaki', label: 'てりやき', searchTags: ['テリヤキ', '照り焼き'], factor: { kcal: 1.14, protein: 0.95, fat: 1.38, carbs: 0.98 }, includedAddonIds: ['mayo'] },
       // モスロースカツ 410/16.6/16.3/49.7・えびフィレオ 408/11.4/18.6/49.5
       { key: 'katsu', label: 'カツ・エビカツ', searchTags: ['かつばーがー', 'えびかつ'], factor: { kcal: 1.08, protein: 0.93, fat: 0.97, carbs: 1.24 } },
     ],
@@ -946,6 +951,7 @@ const BUCKET_PIZZA: Identity[] = [
   {
     id: 'pizza_meat',
     label: '肉系ピザ',
+    chipLabel: '肉系',
     searchTags: ['にくピザ', 'ペパロニ'],
     primaryHome: { tab: 'dish', bucket: 'pizza' },
     defaultMacro: { kcal: 350, protein: 16, fat: 16, carbs: 36 }, // 2切=350kcal
@@ -962,6 +968,7 @@ const BUCKET_PIZZA: Identity[] = [
   {
     id: 'pizza_cheese',
     label: 'チーズ系ピザ',
+    chipLabel: 'チーズ系',
     searchTags: ['ちーずピザ', 'クアトロフォルマッジ'],
     primaryHome: { tab: 'dish', bucket: 'pizza' },
     defaultMacro: { kcal: 440, protein: 22, fat: 24, carbs: 34 }, // 2切=440kcal
@@ -977,6 +984,7 @@ const BUCKET_PIZZA: Identity[] = [
   {
     id: 'pizza_seafood',
     label: 'シーフード系ピザ',
+    chipLabel: 'シーフード系',
     searchTags: ['しーふーどピザ'],
     primaryHome: { tab: 'dish', bucket: 'pizza' },
     defaultMacro: { kcal: 300, protein: 16, fat: 12, carbs: 34 }, // 2切=300kcal

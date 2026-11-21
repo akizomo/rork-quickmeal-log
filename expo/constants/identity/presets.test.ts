@@ -6,7 +6,7 @@
  * (§4.1 の死んだ searchTag と同種) ので、**書いたこと**ではなく**動くこと**を検証する。
  */
 import { JP_PRESETS, ALL_IDENTITIES, getIdentity, getAddonLabel, presetAddonInputs, resolveAddonRef } from './index';
-import { getEffectiveAllowedAddonIds, getEffectiveDefaultAddonIds, getHiddenAddonIds } from '@/utils/identity-attribute';
+import { getEffectiveAllowedAddonIds, getEffectiveDefaultAddonIds, getIncludedAddonIds } from '@/utils/identity-attribute';
 import { resolveLog } from '@/utils/identity-resolver';
 import { searchEntriesFuzzy } from '@/utils/identity-search';
 import { normalize } from '@/utils/identity-normalize';
@@ -59,18 +59,18 @@ describe('Preset データの整合性', () => {
       expect(new Set(refs).size).toBe(refs.length);
     });
 
-    it('全 Add-on が解決でき、ベースの許可 Add-on に含まれ、種類で隠されていない', () => {
+    it('全 Add-on が解決でき、ベースの許可 Add-on に含まれ、種類に織り込み済みでない', () => {
       if (!identity) return;
       const allowed = new Set([
         ...getEffectiveAllowedAddonIds(identity, preset.attributeKey),
         ...getEffectiveDefaultAddonIds(identity, preset.attributeKey),
       ]);
-      const hidden = getHiddenAddonIds(identity, preset.attributeKey);
+      const included = getIncludedAddonIds(identity, preset.attributeKey);
       const problems = preset.addons.flatMap((a) => {
         const out: string[] = [];
         if (!resolveAddonRef(a.refId)) out.push(`${a.refId}: 未登録`);
         if (!allowed.has(a.refId)) out.push(`${a.refId}: ${identity.id} の許可 Add-on に無い (シートが受け付けず消える)`);
-        if (hidden.has(a.refId)) out.push(`${a.refId}: 種類 ${preset.attributeKey} で隠される (二重計上防止で除外される)`);
+        if (included.has(a.refId)) out.push(`${a.refId}: 種類 ${preset.attributeKey} に織り込み済み (Preset が追加分として二重に足してしまう)`);
         return out;
       });
       expect(problems).toEqual([]);

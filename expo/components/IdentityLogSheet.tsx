@@ -9,12 +9,13 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, Pressable, ScrollView, View } from 'react-native';
+import { Alert, Pressable, View } from 'react-native';
 
 import {
   Callout,
   Caption,
   Chip,
+  CountChip,
   IconButton,
   TallSheetScreen,
   useTheme,
@@ -52,7 +53,7 @@ import {
   getEffectiveAmountSpec,
   getEffectiveAllowedAddonIds,
   getEffectiveDefaultAddonIds,
-  getHiddenAddonIds,
+  getIncludedAddonIds,
 } from '@/utils/identity-attribute';
 import type { AppLocale } from '@/types/locale';
 import { UNIT_LABELS } from '@/utils/unit-labels';
@@ -84,6 +85,8 @@ function withUsualChip(
 // 記録時の安心ヒント (PRD §6.5.2) を出すまでの待ち。シートの入場 spring が落ち着いてから
 // 出す (同時に動くと、どこを見ればいいか分からなくなる)。
 const ROUGH_HINT_DELAY_MS = 700;
+/** 同じトッピングを重ねられる上限。 */
+const MAX_ADDON_UNITS = 4;
 
 function defaultAttributeKey(identity: Identity | undefined): string | undefined {
   if (!identity?.attributes?.length) return undefined;
@@ -117,19 +120,6 @@ function ChipRow({ children }: { children: React.ReactNode }) {
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: t.spacing['2'] }}>
       {children}
     </View>
-  );
-}
-
-function HorizontalChipRow({ children }: { children: React.ReactNode }) {
-  const t = useTheme();
-  return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={{ gap: t.spacing['2'], paddingRight: t.spacing['2'] }}
-    >
-      {children}
-    </ScrollView>
   );
 }
 
@@ -264,9 +254,8 @@ export function IdentityLogSheet() {
     setAmountModeAlt(false);
     // Preset (例: ガーリックトースト = フランスパン + バター) の検索結果は、組み合わせを
     // 選択済みで開く。編集時の復元 (appliedAddons) と同じ形なので、以降の処理は変わらない。
-    // 種類で隠す Add-on (factor に織り込み済みの具) は二重計上防止のため通さない。
-    const hiddenForInit = identity ? getHiddenAddonIds(identity, initAttrKey) : new Set<string>();
-    setAddons((identityLogSheet.initialAddons ?? []).filter((a) => !hiddenForInit.has(a.refId)));
+    // 種類に織り込み済みの具 (チーズバーガーのチーズ等) も追加分として通す。
+    setAddons(identityLogSheet.initialAddons ?? []);
   }, [
     visible,
     bucketKey,
@@ -342,11 +331,6 @@ export function IdentityLogSheet() {
   const handleSelectAttribute = useCallback((key: string) => {
     setAttributeKey((prev) => {
       if (prev === key || !origin) return prev;
-      // 種類で factor に織り込み済みの具 (月見=卵 等) は選択から外して二重計上を防ぐ
-      const hidden = getHiddenAddonIds(origin, key);
-      if (hidden.size > 0) {
-        setAddons((cur) => cur.filter((a) => !hidden.has(a.refId)));
-      }
       setAmountModeAlt(false);
       const nextBasis = resolveAmountBasis(key, styleKey);
       if (nextBasis?.identity) {
@@ -465,22 +449,20 @@ export function IdentityLogSheet() {
     [activeAmountSpec, uiLanguage],
   );
 
-  const toggleAddon = useCallback(
-    (refId: string) => {
-      const ref = resolveAddonRef(refId);
-      if (!ref) return;
-      const refType: 'identity' | 'addon' = ref.type === 'addon' ? 'addon' : 'identity';
-      setAddons((prev) => {
-        const idx = prev.findIndex((a) => a.refId === refId);
-        if (idx >= 0) {
-          // Already present → remove on tap
-          return prev.filter((_, i) => i !== idx);
-        }
-        return [...prev, { refId, refType, units: 1 }];
-      });
-    },
-    []
-  );
+  // トッピングの個数を直接セットする (0 = 外す)。CountChip の左半分=0、右半分=現在+1。
+  const setAddonUnits = useCallback((refId: string, units: number) => {
+    const ref = resolveAddonRef(refId);
+    if (!ref) return;
+    const refType: 'identity' | 'addon' = ref.type === 'addon' ? 'addon' : 'identity';
+    const next = Math.min(Math.max(units, 0), MAX_ADDON_UNITS);
+    setAddons((prev) => {
+      const rest = prev.filter((a) => a.refId !== refId);
+      if (next === 0) return rest;
+      const idx = prev.findIndex((a) => a.refId === refId);
+      if (idx < 0) return [...rest, { refId, refType, units: next }];
+      return prev.map((a) => (a.refId === refId ? { ...a, units: next } : a));
+    });
+  }, []);
 
   // Compute resolved log on every change
   const resolved: ResolveResult | null = useMemo(() => {
@@ -600,16 +582,23 @@ export function IdentityLogSheet() {
   const visibleAddonIds = useMemo(() => {
     if (!amountBasis?.identity) return [];
     const base = getEffectiveDefaultAddonIds(amountBasis.identity, amountBasis.attributeKey);
-    const hidden = getHiddenAddonIds(amountBasis.identity, amountBasis.attributeKey);
     // 並びは選択状態に依存させない (タップでチップが跳ねないように)。
     const rest = getEffectiveAllowedAddonIds(amountBasis.identity, amountBasis.attributeKey)
       .filter((id) => !base.includes(id) && !!resolveAddonRef(id));
     const listed = [...base, ...rest];
     const selectedExtra = addons
       .map((a) => a.refId)
-      .filter((id) => !listed.includes(id) && !hidden.has(id));
+      .filter((id) => !listed.includes(id));
     return [...listed, ...selectedExtra];
   }, [amountBasis, addons]);
+
+  // 種類に1つ入っている Add-on の名前 (「チーズは入っています」の案内用)。
+  const includedAddonLabels = useMemo(() => {
+    if (!amountBasis?.identity) return [];
+    return [...getIncludedAddonIds(amountBasis.identity, amountBasis.attributeKey)]
+      .filter((id) => !!resolveAddonRef(id))
+      .map((id) => getAddonLabel(id));
+  }, [amountBasis]);
 
   return (
     <TallSheetScreen
@@ -679,18 +668,18 @@ export function IdentityLogSheet() {
           {/* Identity chip row (no Section header — bucket emoji+label is in
               the sheet header above this row). */}
           <View style={{ marginBottom: t.spacing['3'] }}>
-            <HorizontalChipRow>
+            <ChipRow>
               {identitiesInBucket.map((id) => (
                 <Chip
                   key={id.id}
-                  label={id.label}
+                  label={id.chipLabel ?? id.label}
                   selected={origin.id === id.id}
                   onPress={() => handleSelectIdentity(id)}
                   size="compact"
                   testID={`ils-identity-${id.id}`}
                 />
               ))}
-            </HorizontalChipRow>
+            </ChipRow>
           </View>
 
           {/* Attribute */}
@@ -810,20 +799,24 @@ export function IdentityLogSheet() {
             <Section title={tr('identityLog.sections.topping')}>
               <ChipRow>
                 {visibleAddonIds.map((aid) => {
-                  const selected = addons.some((a) => a.refId === aid);
+                  const units = addons.find((a) => a.refId === aid)?.units ?? 0;
                   return (
-                    <Chip
+                    <CountChip
                       key={aid}
                       label={getAddonLabel(aid)}
-                      leadingIcon={selected ? 'check' : 'add'}
-                      selected={selected}
-                      onPress={() => toggleAddon(aid)}
-                      size="compact"
+                      count={units}
+                      max={MAX_ADDON_UNITS}
+                      onChange={(n) => setAddonUnits(aid, n)}
                       testID={`ils-addon-${aid}`}
                     />
                   );
                 })}
               </ChipRow>
+              {includedAddonLabels.length > 0 ? (
+                <Caption tone="secondary" style={{ marginTop: t.spacing['2'] }} testID="ils-addon-included-note">
+                  {tr('identityLog.includedAddonNote', { names: includedAddonLabels.join('・') })}
+                </Caption>
+              ) : null}
             </Section>
           ) : null}
 

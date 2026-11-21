@@ -99,7 +99,7 @@ export interface MigrationTarget {
    * (full Attribute/Style/Add-on choice) instead of silently recording under
    * its default Attribute. Use when the destination has multiple Attributes
    * with materially different macro/add-on profiles (e.g. 丼化 → 牛丼系 has
-   * 5 Attributes spanning 0.67–1x macro and differing hiddenAddonIds/defaultAddonIds).
+   * 5 Attributes spanning 0.67–1x macro and differing includedAddonIds/defaultAddonIds).
    * Most migrations don't need this — their Attribute variance is small enough
    * that recording under the default keeps PFC convergence intact (§3 in
    * docs/IA-identity-spec.md).
@@ -158,10 +158,15 @@ export interface AttributeOption {
    */
   allowedAddonIds?: string[];
   /**
-   * この種類の factor に既に織り込まれており、二重計上を避けるため非表示にする
-   * Add-on。例: うどん「月見」は factor に卵が含まれるので egg を隠す。
+   * この種類の factor に既に1つ織り込まれている Add-on。例: うどん「月見」は
+   * factor に卵が1個含まれる。**隠さない** — 「ダブルチーズ」「卵をもう1個」のように
+   * 織り込み済みの具をさらに足すのは普通にあるので、Add-on は「織り込み済みの分に
+   * 足す追加分」として表示し、シートで「含まれています」と案内する (二重計上は
+   * 「ユーザーが追加を選んだ分だけ上乗せ」なので起きない)。
+   * 旧名 hiddenAddonIds (非表示にして二重計上を防ぐ設計) は、チーズバーガーに
+   * チーズを足せない問題を生んだため 2026-11 に置き換えた。
    */
-  hiddenAddonIds?: string[];
+  includedAddonIds?: string[];
   /**
    * この種類だけ量の単位・既定値・チップが異なる場合の上書き。
    * 省略時は Identity.amount を使う。
@@ -334,6 +339,12 @@ export interface AsAddon {
 export interface Identity {
   id: string;
   label: string;
+  /**
+   * 記録シート上段のチップ行 (同じバケットの Identity が並ぶ行) だけで使う短縮ラベル。
+   * シートの見出しにバケット名 (パスタ / ピザ) が出ているので、「トマト系パスタ」の
+   * 「パスタ」は冗長。検索結果・ログ表示など文脈の無い場所は `label` のまま。
+   */
+  chipLabel?: string;
 
   primaryHome: {
     tab: IdentityTab;

@@ -16,6 +16,8 @@ export { Switch } from './Switch';
 export type { SwitchProps } from './Switch';
 export { Chip } from './Chip';
 export type { ChipProps, ChipSize } from './Chip';
+export { CountChip } from './CountChip';
+export type { CountChipProps } from './CountChip';
 export { Badge } from './Badge';
 export type { BadgeProps, BadgeTone, BadgeSize } from './Badge';
 export { BottomSheet } from './BottomSheet';

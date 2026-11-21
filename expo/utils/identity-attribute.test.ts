@@ -10,7 +10,7 @@ import {
   getEffectiveAltAmountSpec,
   getEffectiveAmountSpec,
   getEffectiveDefaultAddonIds,
-  getHiddenAddonIds,
+  getIncludedAddonIds,
 } from './identity-attribute';
 
 describe('getEffectiveDefaultAddonIds', () => {
@@ -47,11 +47,11 @@ describe('getEffectiveDefaultAddonIds', () => {
     expect(getEffectiveAmountSpec(fried, 'tonkatsu').unit).toBe('piece');
   });
 
-  it('hiddenAddonIds の Add-on は既定リストから除外される (月見うどんの卵)', () => {
+  it('includedAddonIds の Add-on も既定リストに残る (月見うどんの卵を「もう1個」足せる)', () => {
     const udon = getIdentity('udon')!;
-    // egg は Identity 既定に含まれるが、月見では factor 織り込み済みのため隠す
     expect(getEffectiveDefaultAddonIds(udon, 'kake')).toContain('egg');
-    expect(getEffectiveDefaultAddonIds(udon, 'tsukimi')).not.toContain('egg');
+    expect(getEffectiveDefaultAddonIds(udon, 'tsukimi')).toContain('egg');
+    expect(getIncludedAddonIds(udon, 'tsukimi').has('egg')).toBe(true);
   });
 
   it('属性キー未指定なら Identity 既定を返す', () => {
@@ -60,11 +60,11 @@ describe('getEffectiveDefaultAddonIds', () => {
   });
 });
 
-describe('getHiddenAddonIds', () => {
-  it('該当属性の hiddenAddonIds を Set で返す (山かけそばのとろろ)', () => {
+describe('getIncludedAddonIds', () => {
+  it('該当属性の includedAddonIds を Set で返す (山かけそばのとろろ)', () => {
     const soba = getIdentity('soba')!;
-    expect(getHiddenAddonIds(soba, 'yamakake').has('tororo')).toBe(true);
-    expect(getHiddenAddonIds(soba, 'kake').size).toBe(0);
+    expect(getIncludedAddonIds(soba, 'yamakake').has('tororo')).toBe(true);
+    expect(getIncludedAddonIds(soba, 'kake').size).toBe(0);
   });
 });
 
@@ -156,10 +156,10 @@ describe('getEffectiveDefaultAddonIds — 今回追加分', () => {
     expect(getEffectiveDefaultAddonIds(ramen, 'iekei')).toContain('seabura');
   });
 
-  it('gyudon_class: 親子丼は egg が hidden (卵が主菜)', () => {
+  it('gyudon_class: 親子丼は egg が織り込み済み (卵が主菜)', () => {
     const gyudon = getIdentity('gyudon_class')!;
-    expect(getHiddenAddonIds(gyudon, 'oyakodon').has('egg')).toBe(true);
-    expect(getEffectiveDefaultAddonIds(gyudon, 'oyakodon')).not.toContain('egg');
+    expect(getIncludedAddonIds(gyudon, 'oyakodon').has('egg')).toBe(true);
+    expect(getEffectiveDefaultAddonIds(gyudon, 'oyakodon')).toContain('egg');
   });
 
   it('gyudon_class: 牛丼は egg が default に含まれる', () => {

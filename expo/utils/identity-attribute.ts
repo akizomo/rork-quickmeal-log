@@ -6,7 +6,7 @@
  * 上書きを置く。ここではその「実効値」を一貫したルールで解決する。
  *
  * 解決ルール: 選択中の AttributeOption に上書きがあればそれを、無ければ Identity の
- * 値にフォールバックする。hiddenAddonIds は二重計上防止のため最終結果から除外する。
+ * 値にフォールバックする。includedAddonIds (factor に1つ織り込み済み) は隠さず、追加分として表示する。
  */
 
 import { AltAmountSpec, AmountSpec, Identity } from '@/types/identity';
@@ -28,12 +28,15 @@ export function getEffectiveAltAmountSpec(
   return findAttribute(identity, attributeKey)?.altAmount;
 }
 
-/** この種類で隠すべき Add-on id の集合 (factor に織り込み済み等)。 */
-export function getHiddenAddonIds(
+/**
+ * この種類の factor に1つ織り込み済みの Add-on id の集合。
+ * 非表示にはしない。シートが「含まれています。足す分だけ選んでください」と案内する。
+ */
+export function getIncludedAddonIds(
   identity: Identity,
   attributeKey: string | undefined,
 ): Set<string> {
-  return new Set(findAttribute(identity, attributeKey)?.hiddenAddonIds ?? []);
+  return new Set(findAttribute(identity, attributeKey)?.includedAddonIds ?? []);
 }
 
 /** 種類を考慮した実効 amount spec。種類に上書きが無ければ Identity.amount。 */
@@ -44,24 +47,22 @@ export function getEffectiveAmountSpec(
   return findAttribute(identity, attributeKey)?.amount ?? identity.amount;
 }
 
-/** 「トッピング」欄に既定表示する Add-on id (hidden を除外済み)。 */
+/** 「トッピング」欄に既定表示する Add-on id。 */
 export function getEffectiveDefaultAddonIds(
   identity: Identity,
   attributeKey: string | undefined,
 ): string[] {
   const attr = findAttribute(identity, attributeKey);
   const base = attr?.defaultAddonIds ?? identity.defaultAddonIds ?? [];
-  const hidden = new Set(attr?.hiddenAddonIds ?? []);
-  return base.filter((id) => !hidden.has(id));
+  return base;
 }
 
-/** この種類で選択可能な Add-on のホワイトリスト (hidden を除外済み)。 */
+/** この種類で選択可能な Add-on のホワイトリスト。 */
 export function getEffectiveAllowedAddonIds(
   identity: Identity,
   attributeKey: string | undefined,
 ): string[] {
   const attr = findAttribute(identity, attributeKey);
   const base = attr?.allowedAddonIds ?? identity.allowedAddonIds ?? [];
-  const hidden = new Set(attr?.hiddenAddonIds ?? []);
-  return base.filter((id) => !hidden.has(id));
+  return base;
 }

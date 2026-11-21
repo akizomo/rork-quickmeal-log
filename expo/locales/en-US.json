@@ -20,6 +20,7 @@
     "sources": "Calculations & Sources"
   },
   "common": {
+    "includedAddonNote": "{{names}} already included. Only add what's extra",
     "save": "Save",
     "cancel": "Cancel",
     "done": "Done",
